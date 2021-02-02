@@ -1,0 +1,18 @@
+<idea-plugin>
+    <id>eu.ibagroup.for-mainframe</id>
+    <name>For Mainframe</name>
+    <vendor email="formainframe@yourcompany.com" url="https://ibagroup.eu">IBA Group</vendor>
+
+    <description>Not ready yet. Not ready yet. Not ready yet. Not ready yet.</description>
+
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+
+    </extensions>
+
+    <actions>
+
+    </actions>
+</idea-plugin>
