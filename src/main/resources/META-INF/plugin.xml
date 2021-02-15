@@ -1,18 +1,101 @@
 <idea-plugin>
-    <id>eu.ibagroup.for-mainframe</id>
+    <id>eu.ibagroup.formainframe</id>
+
+    <idea-version since-build="203.7148.57" />
+    
+    <extensionPoints>
+        <extensionPoint name="attributesService"
+                        interface="eu.ibagroup.formainframe.dataops.attributes.AttributesService"/>
+        <extensionPoint name="fileDataProviderFactory"
+                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
+    </extensionPoints>
+
+    <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
-    <vendor email="formainframe@yourcompany.com" url="https://ibagroup.eu">IBA Group</vendor>
+    <vendor email="formainframe@ibagroup.eu" url="http://www.ibagroup.eu">IBA Group</vendor>
 
-    <description>Not ready yet. Not ready yet. Not ready yet. Not ready yet.</description>
-
+    <description>The best plugin for Mainframe on the market.</description>
 
     <depends>com.intellij.modules.platform</depends>
 
+    <extensions defaultExtensionNs="eu.ibagroup.formainframe">
+
+        <attributesService implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesService"/>
+
+        <attributesService implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributesService"/>
+
+        <attributesService implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributesService"/>
+
+        <fileDataProviderFactory
+                implementation="eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProviderFactory"/>
+
+        <fileDataProviderFactory
+                implementation="eu.ibagroup.formainframe.dataops.fetch.MemberFileFetchProviderFactory"/>
+
+        <fileDataProviderFactory implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProviderFactory"/>
+
+    </extensions>
+
     <extensions defaultExtensionNs="com.intellij">
+
+        <applicationConfigurable id="configurable.mainframe.explorer"
+                                 displayName="For Mainframe"
+                                 provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
+
+        <toolWindow id="zOSMF" anchor="right"
+                    factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"/>
+
+        <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
+                            serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
+                            serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"/>
+
+        <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
+                           implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
+                           key="mf"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
+                            serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.Explorer"
+                            serviceImplementation="eu.ibagroup.formainframe.explorer.GlobalExplorer"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager" preload="true"
+                            serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.api.ZosmfApi"
+                            serviceImplementation="eu.ibagroup.formainframe.dataops.api.ZosmfApiImpl"/>
 
     </extensions>
 
     <actions>
 
+        <action id="eu.ibagroup.formainframe.explorer.EditMember" class="eu.ibagroup.formainframe.explorer.EditMember"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.RefreshNode" class="eu.ibagroup.formainframe.explorer.RefreshNode"
+                text="Refresh"
+                icon="AllIcons.Actions.Refresh"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.AddConnection"
+                class="eu.ibagroup.formainframe.explorer.AddConnection"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.AddWorkingSet"
+                class="eu.ibagroup.formainframe.explorer.AddWorkingSet"/>
+
+        <group id="eu.ibagroup.formainframe.actions.AddActionGroup" popup="true" icon="AllIcons.General.Add">
+            <reference id="eu.ibagroup.formainframe.explorer.AddConnection"/>
+            <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSet"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
+            <reference id="eu.ibagroup.formainframe.actions.AddActionGroup"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
+        </group>
+
     </actions>
+
 </idea-plugin>
