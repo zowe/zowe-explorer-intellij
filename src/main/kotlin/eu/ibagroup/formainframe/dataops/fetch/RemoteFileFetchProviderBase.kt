@@ -60,6 +60,10 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     })
   }
 
+  override fun cleanCache(query: RemoteQuery<Request>) {
+    cache.remove(query)
+  }
+
   abstract val responseClass: Class<out Response>
 
   override val queryClass = RemoteQuery::class.java

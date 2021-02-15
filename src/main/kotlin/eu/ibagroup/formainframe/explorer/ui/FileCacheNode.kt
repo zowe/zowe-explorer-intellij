@@ -65,6 +65,12 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
     get() = query?.let { unit.explorer.getFileFetchProvider(requestClass, queryClass, vFileClass).getCached(it) }
 
 
+  fun cleanCache() {
+    query?.let {
+      fileFetchProvider.cleanCache(it)
+    }
+  }
+
   protected abstract fun Collection<File>.toChildrenNodes(): List<AbstractTreeNode<*>>
 
   protected abstract val requestClass: Class<out R>

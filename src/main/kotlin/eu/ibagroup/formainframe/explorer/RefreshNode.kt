@@ -2,33 +2,35 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
+import eu.ibagroup.formainframe.dataops.fetch.Query
+import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.sendTopic
 
 class RefreshNode : AnAction() {
+
   override fun actionPerformed(e: AnActionEvent) {
-//    runWriteAction {
-//      val currentlySelectedFile = e.getData(ConnectorWindowKeys.CURRENTLY_SELECTED_FILE)
-//      if (currentlySelectedFile is ZSymlink) {
-//        val fetchingDir = currentlySelectedFile.file
-//        if (fetchingDir is ZRestFetchingDir<*>) {
-//          val treeModel = e.getData(ConnectorWindowKeys.TREE_MODEL)
-////          val currentDescriptor = e.getData(ConnectorWindowKeys.CURRENTLY_SELECTED_NODE_DESCRIPTOR)
-//          fetchingDir.isNeedsFetching = true
-//          fetchingDir.refresh(true, true) {
-//            treeModel?.invalidate()
-//          }
-//        }
-//      }
-//    }
+
+    val node = e.getData(CURRENT_NODE)
+
+    if (node is FileCacheNode<*,*,*,*,*>) {
+      node.cleanCache()
+    } else if (node is WorkingSetNode) {
+      node.children.filterIsInstance<DSMaskNode>().forEach {
+        it.cleanCache()
+      }
+    }
+
+    if (node != null) {
+      sendTopic(FileExplorerContent.NODE_UPDATE)(node, true)
+    }
+
+
   }
 
   override fun update(e: AnActionEvent) {
-//    val currentlySelectedFile = e.getData(ConnectorWindowKeys.CURRENTLY_SELECTED_FILE)
-//    if (currentlySelectedFile is ZSymlink) {
-//      if (currentlySelectedFile.file is ZRestFetchingDir<*>) {
-//        e.presentation.isVisible = true
-//        return
-//      }
-//    }
-//    e.presentation.isVisible = false
+    val node = e.getData(CURRENT_NODE)
+    e.presentation.isVisible = node is WorkingSetNode || node is DSMaskNode || node is UssDirNode || node is LibraryNode
   }
+
 }

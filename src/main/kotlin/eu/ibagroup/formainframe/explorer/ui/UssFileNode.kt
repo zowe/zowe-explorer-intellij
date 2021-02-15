@@ -23,7 +23,7 @@ class UssFileNode(
     presentation.setIcon(IconUtil.getIcon(value, 0, unit.explorer.project))
   }
 
-  override fun getVirtualFile(): VirtualFile {
+  override fun getVirtualFile(): MFVirtualFile {
     return value
   }
 

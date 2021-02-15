@@ -88,7 +88,7 @@ class UssDirNode(
     presentation.presentableText = text
   }
 
-  override fun getVirtualFile(): VirtualFile? {
+  override fun getVirtualFile(): MFVirtualFile? {
     return vFile
   }
 

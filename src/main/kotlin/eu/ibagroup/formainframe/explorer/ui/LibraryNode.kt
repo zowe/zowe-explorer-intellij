@@ -41,4 +41,8 @@ class LibraryNode(
       .getAttributes(value)?.volser
     volser?.let { presentation.addText(" $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
   }
+
+  override fun getVirtualFile(): MFVirtualFile {
+    return value
+  }
 }

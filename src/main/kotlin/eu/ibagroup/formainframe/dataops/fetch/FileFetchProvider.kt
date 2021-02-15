@@ -86,6 +86,8 @@ interface FileFetchProvider<R : Any, Q : Query<R>, File : VirtualFile> {
     }
   }
 
+  fun cleanCache(query: Q)
+
   fun forceReloadAsync(query: Q, callback: FetchCallback<File> = emptyCallback())
 
   val requestClass: Class<out R>

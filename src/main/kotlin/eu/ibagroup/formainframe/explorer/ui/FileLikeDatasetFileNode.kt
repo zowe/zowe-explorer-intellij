@@ -33,4 +33,8 @@ class FileLikeDatasetFileNode(
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return value.cachedChildren.map { FileLikeDatasetFileNode(file, unit, viewSettings) }.toMutableSmartList()
   }
+
+  override fun getVirtualFile(): MFVirtualFile {
+    return value
+  }
 }
