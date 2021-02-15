@@ -4,18 +4,25 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.rd.util.CancellationException
-import com.jetbrains.rd.util.ConcurrentHashMap
+import com.jetbrains.rd.util.AtomicInteger
 import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.utils.lock
+import eu.ibagroup.formainframe.utils.runIfTrue
+import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.streams.toList
 
+@Suppress("UnstableApiUsage")
 abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File : VirtualFile>(protected val explorer: Explorer) :
   FileFetchProvider<Request, RemoteQuery<Request>, File> {
 
-  protected val cache = ConcurrentHashMap<RemoteQuery<Request>, Collection<File>>()
+  private val lock = ReentrantLock()
+
+  private val cache = mutableMapOf<RemoteQuery<Request>, Collection<File>>()
+  private val cacheState = mutableMapOf<RemoteQuery<Request>, Boolean>()
 
   override fun getCached(query: RemoteQuery<Request>): Collection<File>? {
-    return cache[query]
+    return lock(lock) { cacheState[query].runIfTrue { cache[query] } }
   }
 
   protected abstract fun makeFetchTaskTitle(query: RemoteQuery<Request>): String
@@ -27,17 +34,24 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
   protected abstract fun convertResponseToFile(response: Response): File
 
   override fun forceReloadSynchronous(query: RemoteQuery<Request>): Collection<File> {
-    var responseFiles: Collection<File>? = null
-    ProgressManager.getInstance().run(object : Task.Modal(explorer.project, makeFetchTaskTitle(query), true) {
-      override fun run(indicator: ProgressIndicator) {
-        indicator.text = makeSecondaryTitle(query)
-        responseFiles = fetchResponse(query).parallelStream().map { convertResponseToFile(it) }.toList()
-      }
-    })
-    return (responseFiles ?: throw CancellationException()).also {
-      cache[query] = it
-      sendCacheUpdatedTopic().onCacheUpdated(query, it)
-    }
+    throw NotImplementedError()
+//    var responseFiles: Collection<File>? = null
+//    ProgressManager.getInstance().run(object : Task.Modal(explorer.project, makeFetchTaskTitle(query), true) {
+//      override fun run(indicator: ProgressIndicator) {
+//        indicator.text = makeSecondaryTitle(query)
+//        responseFiles = fetchResponse(query).parallelStream().map { convertResponseToFile(it) }.toList()
+//      }
+//    })
+//    return (responseFiles ?: throw CancellationException()).also {
+//      cache[query] = it
+//      sendCacheUpdatedTopic().onCacheUpdated(query, it)
+//    }
+  }
+
+  protected abstract fun cleanupUnusedFile(file: File, query: RemoteQuery<Request>)
+
+  open fun compareOldAndNewFile(oldFile: File, newFile: File): Boolean {
+    return oldFile.path == newFile.path
   }
 
   override fun forceReloadAsync(query: RemoteQuery<Request>, callback: FetchCallback<File>) {
@@ -45,10 +59,29 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
       override fun run(indicator: ProgressIndicator) {
         callback.onStart()
         try {
-          val files = fetchResponse(query).map {
-            convertResponseToFile(it)
+          val fetched = fetchResponse(query)
+          val counter = AtomicInteger(0)
+          indicator.fraction = 0.0
+          val totalCount = fetched.size
+          val files = runWriteActionOnWriteThread {
+            fetched.map {
+              val file = convertResponseToFile(it)
+              indicator.text2 = file.name
+              indicator.fraction = counter.incrementAndGet().toDouble() / totalCount
+              file
+            }
           }
+
+          cache[query]?.parallelStream()?.filter { oldFile ->
+            oldFile.isValid && files.none { compareOldAndNewFile(oldFile, it) }
+          }?.toList()?.apply {
+            runWriteActionOnWriteThread {
+              forEach { cleanupUnusedFile(it, query) }
+            }
+          }
+
           cache[query] = files
+          cacheState[query] = true
           sendCacheUpdatedTopic().onCacheUpdated(query, files)
           callback.onSuccess(files)
         } catch (t: Throwable) {
@@ -58,10 +91,11 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
         }
       }
     })
+
   }
 
   override fun cleanCache(query: RemoteQuery<Request>) {
-    cache.remove(query)
+    cacheState.remove(query)
   }
 
   abstract val responseClass: Class<out Response>

@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.vfs
 
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
@@ -117,8 +116,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   override fun deleteFile(requestor: Any?, vFile: MFVirtualFile) {
     //assertWriteAllowed()
     val event = listOf(VFileDeleteEvent(requestor, vFile, false))
-    invokeLater { sendVfsChangesTopic().before(event) }
-    var successful = false
+    sendVfsChangesTopic().before(event)
     vFile.validWriteLock {
       val parent = vFile.parent
       parent?.validWriteLock {
@@ -126,16 +124,15 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
           vFile.children?.forEach { deleteFile(requestor, it) }
         }
         if (fsGraph.removeEdge(parent, vFile) != null && fsGraph.removeVertex(vFile)) {
-          successful = true
+          vFile.isValidInternal = false
+          vFile.intermediateOldParent = parent
+          vFile.intermediateOldPathInternal = parent.path + MFVirtualFileSystem.SEPARATOR + vFile.name
+          sendVfsChangesTopic().after(event)
+          return
         }
       }
     }
-    if (successful) {
-      invokeLater { sendVfsChangesTopic().after(event) }
-      return
-    } else {
-      throw FsOperationException("delete", vFile)
-    }
+    throw FsOperationException("delete", vFile)
   }
 
   @Throws(IOException::class)
@@ -163,7 +160,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
         VFileMoveEvent(requestor, vFile, newParent)
       }
     )
-    invokeLater { sendVfsChangesTopic().after(event) }
+    sendVfsChangesTopic().after(event)
     var adding: MFVirtualFile? = null
     validWriteLock(vFile, newParent) {
       val oldParent = vFile.parent
@@ -198,20 +195,20 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
         }
       }
     }
-    return adding?.also { invokeLater { sendVfsChangesTopic().before(event) } }
+    return adding?.also { sendVfsChangesTopic().before(event) }
       ?: throw FsOperationException(if (copyName != null) "copy" else "move", vFile)
   }
 
   @Throws(IOException::class)
   override fun renameFile(requestor: Any?, vFile: MFVirtualFile, newName: String) {
     val event = listOf(VFilePropertyChangeEvent(requestor, vFile, VirtualFile.PROP_NAME, vFile.name, newName, false))
-    invokeLater { sendVfsChangesTopic().before(event) }
+    sendVfsChangesTopic().before(event)
     vFile.validReadLock {
       if (vFile.filenameInternal != newName) {
         vFile.filenameInternal = newName
       }
     }
-    invokeLater { sendVfsChangesTopic().after(event) }
+    sendVfsChangesTopic().after(event)
   }
 
   @Throws(IOException::class)
@@ -233,7 +230,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
     @Suppress("UnstableApiUsage")
     val event = listOf(VFileCreateEvent(requestor, vDir, name, attributes.isDirectory, attributes, null, false, null))
-    invokeLater { sendVfsChangesTopic().before(event) }
+    sendVfsChangesTopic().before(event)
     val file = vDir.validWriteLock {
       if (!vDir.isDirectory) {
         throw NotDirectoryException(vDir.path)
@@ -251,7 +248,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
         }
       }
     }
-    invokeLater { sendVfsChangesTopic().after(event) }
+    sendVfsChangesTopic().after(event)
     return file
   }
 
@@ -279,9 +276,9 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   override fun list(file: MFVirtualFile) = file.validReadLock {
-    getChildren(file)?.run {
+    getChildren(file).run {
       map { it.name }.asArray()
-    } ?: arrayOf()
+    }
   }
 
   override fun isDirectory(file: MFVirtualFile) = file.validReadLock(false) { file.isDirectory }
@@ -381,7 +378,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   fun getParent(file: MFVirtualFile): MFVirtualFile? {
-    return file.validReadLock(null) {
+    return file.validReadLock(file::oldParentInternal) {
       (file != root).runIfTrue {
         fsGraph.predecessorsOf(file).singleOrNull {
           isEdgeOfType(it, file, FSEdgeType.DIR)
@@ -410,7 +407,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
 
   private fun String.formatPath(): String {
     val separator = MFVirtualFileSystem.SEPARATOR
-    return replace(Regex("\\$separator+"), separator).let {
+    return replace(Regex("$separator+"), separator).let {
       if (it.startsWith(separator)) {
         it.substringAfter(separator)
       } else {
@@ -433,12 +430,16 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     file.isValidInternal.runIfTrue { file.attributes }
   }
 
-}
+  private fun <Edge> Graph<MFVirtualFile, Edge>.successorsOf(vertex: MFVirtualFile): List<MFVirtualFile> {
+    return Graphs.successorListOf(this, vertex)
+  }
 
-fun <Vertex, Edge> Graph<Vertex, Edge>.successorsOf(vertex: Vertex): List<Vertex> {
-  return Graphs.successorListOf(this, vertex)
-}
+  private fun <Edge> Graph<MFVirtualFile, Edge>.predecessorsOf(vertex: MFVirtualFile): List<MFVirtualFile> {
+    return if (vertex != root) {
+      Graphs.predecessorListOf(this, vertex)
+    } else {
+      listOf()
+    }
+  }
 
-fun <Vertex, Edge> Graph<Vertex, Edge>.predecessorsOf(vertex: Vertex): List<Vertex> {
-  return Graphs.predecessorListOf(this, vertex)
 }

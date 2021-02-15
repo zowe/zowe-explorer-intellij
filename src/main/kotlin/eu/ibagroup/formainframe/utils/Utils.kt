@@ -2,7 +2,9 @@ package eu.ibagroup.formainframe.utils
 
 import com.google.gson.Gson
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.util.containers.toArray
 import com.intellij.util.containers.toMutableSmartList
@@ -67,14 +69,14 @@ val gson by lazy { Gson() }
 
 inline fun <reified T : Any> T.clone() = clone(T::class.java)
 
-fun <T : Any> T.clone(clazz: Class<out T>) : T {
+fun <T : Any> T.clone(clazz: Class<out T>): T {
   return with(gson) {
     fromJson(toJson(this@clone), clazz)
   }
 }
 
-inline fun <T> Boolean.runIfTrue(block: () -> T): T? {
-  return if (this) {
+inline fun <T> Boolean?.runIfTrue(block: () -> T): T? {
+  return if (this == true) {
     block()
   } else null
 }
@@ -147,4 +149,19 @@ fun <E> List<E>?.toMutableSmartList() = (this ?: listOf()).toMutableSmartList()
 
 fun <R> List<R>.mergeWith(another: List<R>): MutableList<R> {
   return this.plus(another).toSet().toMutableList()
+}
+
+fun <T> submitOnWriteThread(block: () -> T): T {
+  @Suppress("UnstableApiUsage")
+  return AppUIExecutor.onWriteThread().submit(block).get()
+}
+
+inline fun <T> runWriteActionOnWriteThread(crossinline block: () -> T): T {
+  @Suppress("UnstableApiUsage")
+  return if (ApplicationManager.getApplication().isWriteThread) {
+    runWriteAction(block)
+  } else
+    submitOnWriteThread {
+      runWriteAction(block)
+    }
 }

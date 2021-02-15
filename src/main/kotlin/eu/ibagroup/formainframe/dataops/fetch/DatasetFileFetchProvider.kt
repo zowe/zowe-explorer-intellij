@@ -4,7 +4,6 @@ import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.config.connect.username
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.api.api
-import eu.ibagroup.formainframe.dataops.api.enqueue
 import eu.ibagroup.formainframe.dataops.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -15,7 +14,6 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.Dataset
 import java.io.IOException
-import java.util.concurrent.locks.ReentrantLock
 
 class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildProvider(explorer: Explorer): FileFetchProvider<*, *, *> {
@@ -49,7 +47,7 @@ class DatasetFileFetchProvider(explorer: Explorer) :
           exception = IOException("${response.code()} " + (response.errorBody()?.string() ?: ""))
         }
       }
-      onException { call, t ->
+      onException { _, t ->
         exception = t
       }
     }
@@ -74,6 +72,25 @@ class DatasetFileFetchProvider(explorer: Explorer) :
     val volser = query.request.volser
     val secondPart = if (volser.isNotBlank()) " volser $volser" else ""
     return firstPart + secondPart
+  }
+
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<DSMask>) {
+    val deletingFileAttributes = attributesService.getAttributes(file)
+    if (deletingFileAttributes != null) {
+      val needsDeletionFromFs = deletingFileAttributes.requesters.all {
+        it.user == username(query.connectionConfig) && it.queryVolser == query.request.volser
+      }
+      if (needsDeletionFromFs) {
+        attributesService.clearAttributes(file)
+        file.delete(this)
+      } else {
+        attributesService.updateAttributes(file) {
+          requesters.removeAll {
+            it.user == username(query.connectionConfig) && it.queryVolser == query.request.volser
+          }
+        }
+      }
+    }
   }
 
 }
