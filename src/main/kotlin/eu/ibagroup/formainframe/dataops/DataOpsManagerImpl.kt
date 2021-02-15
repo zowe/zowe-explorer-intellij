@@ -3,9 +3,8 @@ package eu.ibagroup.formainframe.dataops
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
-
-val dataOpsManager
-  get() = DataOpsManager.instance
+import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
+import eu.ibagroup.formainframe.dataops.fetch.Query
 
 class DataOpsManagerImpl : DataOpsManager {
 
@@ -25,6 +24,23 @@ class DataOpsManagerImpl : DataOpsManager {
 
   override fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes? {
     return attributesServices.mapNotNull { it.getAttributes(file) }.firstOrNull()
+  }
+
+  private val fileFetchProviders by lazy {
+    FileFetchProvider.EP.extensionList
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <R : Any, Q : Query<R>, File : VirtualFile> getFileFetchProvider(
+    requestClass: Class<out R>,
+    queryClass: Class<out Query<*>>,
+    vFileClass: Class<out File>
+  ): FileFetchProvider<R, Q, File> {
+    return fileFetchProviders.find {
+      it.requestClass.isAssignableFrom(requestClass)
+          && it.queryClass.isAssignableFrom(queryClass)
+          && it.vFileClass.isAssignableFrom(vFileClass)
+    } as FileFetchProvider<R, Q, File>? ?: throw Exception("TODO File Fetch Provider not registered")
   }
 
 }

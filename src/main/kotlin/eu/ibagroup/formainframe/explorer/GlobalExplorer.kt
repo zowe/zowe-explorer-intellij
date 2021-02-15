@@ -3,14 +3,10 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.*
-import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
-import eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory
-import eu.ibagroup.formainframe.dataops.fetch.Query
 import eu.ibagroup.formainframe.utils.crudable.eventAdaptor
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.indexOf
@@ -33,26 +29,6 @@ class GlobalExplorer : Explorer {
     configCrudable.getAll<WorkingSetConfig>().map { it.toGlobalWs(disposable) }.toMutableList()
   }
     get() = lock(lock.readLock()) { field }
-
-  override val dataOpsManager
-    get() = DataOpsManager.instance
-
-  private val fileFetchProviders by lazy {
-    FileFetchProviderFactory.EP.extensionList.map { it.buildProvider(this) }
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  override fun <R : Any, Q : Query<R>, File : VirtualFile> getFileFetchProvider(
-    requestClass: Class<out R>,
-    queryClass: Class<out Query<*>>,
-    vFileClass: Class<out File>
-  ): FileFetchProvider<R, Q, File> {
-    return fileFetchProviders.find {
-      it.requestClass.isAssignableFrom(requestClass)
-          && it.queryClass.isAssignableFrom(queryClass)
-          && it.vFileClass.isAssignableFrom(vFileClass)
-    } as FileFetchProvider<R, Q, File>? ?: throw Exception("TODO File Fetch Provider not registered")
-  }
 
   init {
     subscribe(ConfigService.CONFIGS_CHANGED, eventAdaptor<WorkingSetConfig> {

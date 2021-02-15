@@ -16,14 +16,13 @@ import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.utils.crudable.eventAdaptor
 import eu.ibagroup.formainframe.utils.subscribe
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.Component
-import com.intellij.openapi.actionSystem.ActionPopupMenu
 import javax.swing.event.TreeSelectionEvent
-import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 
 
@@ -44,7 +43,7 @@ class FileExplorerContent(private val explorer: Explorer, parentDisposable: Disp
     subscribe(ConfigService.CONFIGS_CHANGED, eventAdaptor<WorkingSetConfig> {
       onAdd { structure?.invalidate() }
       onDelete { structure?.invalidate() }
-      onUpdate { _, new ->
+      onUpdate { _, _ ->
         structure?.invalidate()
 //        treeModel?.accept {
 //          return@accept when (it.lastPathComponent) {
@@ -74,7 +73,7 @@ class FileExplorerContent(private val explorer: Explorer, parentDisposable: Disp
   private val currentlySelectedAttributes: VFileInfoAttributes?
     get() {
       return if (currentlySelectedFile != null) {
-        explorer.dataOpsManager.tryToGetAttributes(currentlySelectedFile!!)
+        dataOpsManager.tryToGetAttributes(currentlySelectedFile!!)
       } else {
         null
       }

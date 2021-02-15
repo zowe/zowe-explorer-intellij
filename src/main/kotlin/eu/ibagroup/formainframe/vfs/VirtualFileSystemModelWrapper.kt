@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.nio.file.Path
 
 open class VirtualFileSystemModelWrapper<File : NewVirtualFile, Model : VirtualFileSystemModel<File>>(
   private val vFileClass: Class<out File>,

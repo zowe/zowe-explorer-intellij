@@ -3,9 +3,9 @@ package eu.ibagroup.formainframe.dataops.fetch
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.rd.util.AtomicInteger
-import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.utils.lock
 import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.streams.toList
 
 @Suppress("UnstableApiUsage")
-abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File : VirtualFile>(protected val explorer: Explorer) :
+abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File : VirtualFile> :
   FileFetchProvider<Request, RemoteQuery<Request>, File> {
 
   private val lock = ReentrantLock()
@@ -33,7 +33,7 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
 
   protected abstract fun convertResponseToFile(response: Response): File
 
-  override fun forceReloadSynchronous(query: RemoteQuery<Request>): Collection<File> {
+  override fun forceReloadSynchronous(query: RemoteQuery<Request>, project: Project?): Collection<File> {
     throw NotImplementedError()
 //    var responseFiles: Collection<File>? = null
 //    ProgressManager.getInstance().run(object : Task.Modal(explorer.project, makeFetchTaskTitle(query), true) {
@@ -54,8 +54,8 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     return oldFile.path == newFile.path
   }
 
-  override fun forceReloadAsync(query: RemoteQuery<Request>, callback: FetchCallback<File>) {
-    ProgressManager.getInstance().run(object : Task.Backgroundable(explorer.project, makeFetchTaskTitle(query), true) {
+  override fun forceReloadAsync(query: RemoteQuery<Request>, project: Project?, callback: FetchCallback<File>) {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, makeFetchTaskTitle(query), true) {
       override fun run(indicator: ProgressIndicator) {
         callback.onStart()
         try {

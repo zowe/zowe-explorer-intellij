@@ -6,6 +6,11 @@ import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.attributes.AttributesListener
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
+import eu.ibagroup.formainframe.dataops.fetch.Query
+
+val dataOpsManager
+  get() = DataOpsManager.instance
 
 interface DataOpsManager {
 
@@ -23,6 +28,12 @@ interface DataOpsManager {
   ) : AttributesService<A, F>
 
   fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes?
+
+  fun <R : Any, Q : Query<R>, File : VirtualFile> getFileFetchProvider(
+    requestClass: Class<out R>,
+    queryClass: Class<out Query<*>>,
+    vFileClass: Class<out File>
+  ): FileFetchProvider<R, Q, File>
 
 }
 

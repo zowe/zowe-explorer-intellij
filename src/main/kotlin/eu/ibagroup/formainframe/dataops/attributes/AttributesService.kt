@@ -8,8 +8,6 @@ import java.io.IOException
 
 fun sendAttributesTopic(): AttributesListener = sendTopic(DataOpsManager.ATTRIBUTES_CHANGED)
 
-interface AttributesServiceFactory
-
 interface AttributesService<Attributes : VFileInfoAttributes, VFile : VirtualFile> {
 
   companion object {

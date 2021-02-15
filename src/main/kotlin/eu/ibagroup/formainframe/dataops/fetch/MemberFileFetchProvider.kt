@@ -8,21 +8,14 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.dataops.getAttributesService
-import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import java.io.IOException
 
 data class LibraryQuery(val library: MFVirtualFile)
 
-class MemberFileFetchProviderFactory : FileFetchProviderFactory {
-  override fun buildProvider(explorer: Explorer): FileFetchProvider<*, *, *> {
-    return MemberFileFetchProvider(explorer)
-  }
-}
-
-class MemberFileFetchProvider(explorer: Explorer) :
-  RemoteAttributedFileFetchBase<LibraryQuery, RemoteMemberAttributes, MFVirtualFile>(explorer) {
+class MemberFileFetchProvider :
+  RemoteAttributedFileFetchBase<LibraryQuery, RemoteMemberAttributes, MFVirtualFile>() {
 
   private val remoteDatasetAttributesService by lazy {
     dataOpsManager.getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()

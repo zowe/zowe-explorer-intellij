@@ -7,7 +7,6 @@ import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.utils.asMutableList
 import eu.ibagroup.formainframe.utils.nullIfBlank
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -15,14 +14,9 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.Dataset
 import java.io.IOException
 
-class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
-  override fun buildProvider(explorer: Explorer): FileFetchProvider<*, *, *> {
-    return DatasetFileFetchProvider(explorer)
-  }
-}
 
-class DatasetFileFetchProvider(explorer: Explorer) :
-  RemoteAttributedFileFetchBase<DSMask, RemoteDatasetAttributes, MFVirtualFile>(explorer) {
+class DatasetFileFetchProvider :
+  RemoteAttributedFileFetchBase<DSMask, RemoteDatasetAttributes, MFVirtualFile>() {
 
   override val requestClass = DSMask::class.java
 

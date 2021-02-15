@@ -7,7 +7,6 @@ import com.intellij.openapi.project.ProjectManager
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import org.snakeyaml.engine.v2.api.Load
 
 abstract class ExplorerTreeNodeBase<Value : Any>(
   value: Value,

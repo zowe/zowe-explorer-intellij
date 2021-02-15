@@ -1,12 +1,10 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.util.io.FileAttributes
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.SmartList
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
-import eu.ibagroup.r2z.FileModeValue
 
 class RemoteUssAttributesService : MFRemoteAttributesServiceBase<RemoteUssAttributes>() {
 
