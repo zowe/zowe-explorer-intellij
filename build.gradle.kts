@@ -1,5 +1,6 @@
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.net.URI
 
 plugins {
   id("org.jetbrains.intellij") version "0.6.5"
@@ -15,20 +16,17 @@ version = "0.0"
 
 repositories {
   mavenCentral()
-  flatDir {
-    dir { "libs" }
+  maven {
+    url = URI("http://10.221.23.186:8082/repository/internal/")
+    credentials {
+      username = "admin"
+      password = "password123"
+    }
+    metadataSources {
+      mavenPom()
+      artifact()
+    }
   }
-//  maven {
-//    url = URI("http://10.221.23.186:8082/repository/internal/")
-//    credentials {
-//      username = "admin"
-//      password = "password123"
-//    }
-//    metadataSources {
-//      mavenPom()
-//      artifact()
-//    }
-//  }
 
 }
 
@@ -51,7 +49,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.21")
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.21")
   implementation("org.jgrapht:jgrapht-core:1.5.0")
-  implementation("eu.ibagroup:zosmf-retrofit2:1.0")
+  implementation("eu.ibagroup:r2z:0.1")
   testImplementation("junit", "junit", "4.12")
 }
 
