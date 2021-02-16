@@ -1,5 +1,7 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -67,26 +69,24 @@ interface FileFetchProvider<R : Any, Q : Query<R>, File : VirtualFile> {
   companion object {
     @JvmStatic
     val CACHE_UPDATED = Topic.create("cacheUpdated", FileCacheListener::class.java)
+
+    @JvmStatic
+    val EP = ExtensionPointName.create<FileFetchProvider<*, *, *>>("eu.ibagroup.formainframe.fileDataProvider")
   }
 
   fun getCached(query: Q): Collection<File>?
 
-  fun forceReloadSynchronous(query: Q): Collection<File>
+  fun forceReloadSynchronous(query: Q, project: Project?): Collection<File>
 
-  fun getCachedOrReloadSynchronous(query: Q): Collection<File> {
-    return getCached(query) ?: forceReloadSynchronous(query)
+  fun forceReloadSynchronous(query: Q): Collection<File> = forceReloadSynchronous(query, null)
+
+  fun cleanCache(query: Q)
+
+  fun forceReloadAsync(query: Q, project: Project?, callback: FetchCallback<File> = emptyCallback())
+
+  fun forceReloadAsync(query: Q, callback: FetchCallback<File> = emptyCallback()) {
+    forceReloadAsync(query, null, callback)
   }
-
-  fun getCachedOrReloadAsync(query: Q, callback: FetchCallback<File> = emptyCallback()) {
-    val cached = getCached(query)
-    if (cached != null) {
-      callback.onSuccess(cached)
-    } else {
-      forceReloadAsync(query, callback)
-    }
-  }
-
-  fun forceReloadAsync(query: Q, callback: FetchCallback<File> = emptyCallback())
 
   val requestClass: Class<out R>
 

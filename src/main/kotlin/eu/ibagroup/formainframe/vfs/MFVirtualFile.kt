@@ -28,6 +28,19 @@ class MFVirtualFile internal constructor(
   internal var isValidInternal = false
 
   @Volatile
+  internal var intermediateOldParent: MFVirtualFile? = null
+
+  internal val oldParentInternal: MFVirtualFile
+    get() = intermediateOldParent ?: throw IllegalStateException("Invalid file has no info about its old parent")
+
+  @Volatile
+  internal var intermediateOldPathInternal: String? = null
+
+  private val oldPath: String
+    get() = intermediateOldPathInternal
+      ?: throw IllegalStateException("Invalid file has no info about its old path value")
+
+  @Volatile
   internal var filenameInternal = name
 
 //  @Volatile
@@ -61,7 +74,11 @@ class MFVirtualFile internal constructor(
 
   @Suppress("RecursivePropertyAccessor")
   override fun getPath(): String {
-    return (parent?.path ?: "") + name + MFVirtualFileSystem.SEPARATOR
+    return if (isValid) {
+      (parent?.path ?: "") + name + MFVirtualFileSystem.SEPARATOR
+    } else {
+      oldPath
+    }
   }
 
   override fun isWritable() = fs.isWritable(this)
@@ -148,7 +165,7 @@ class MFVirtualFile internal constructor(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun getCachedChildren() = fs.model.getChildrenList(this) ?: emptyList()
+  override fun getCachedChildren() = fs.model.getChildrenList(this)
 
   override fun iterInDbChildren() = cachedChildren
 
@@ -187,6 +204,10 @@ inline fun <T> MFVirtualFile.validReadLock(default: T, block: () -> T): T {
   return this.genericLockOr(this.readLock(), { default }, block)
 }
 
+inline fun <T> MFVirtualFile.validReadLock(default: () -> T, block: () -> T): T {
+  return this.genericLockOr(this.readLock(), default, block)
+}
+
 inline fun <T> MFVirtualFile.validReadLock(
   exception: Exception = InvalidVirtualFileAccessException(this), block: () -> T
 ): T {
@@ -195,6 +216,10 @@ inline fun <T> MFVirtualFile.validReadLock(
 
 inline fun <T> MFVirtualFile.validWriteLock(default: T, block: () -> T): T {
   return this.genericLockOr(this.writeLock(), { default }, block)
+}
+
+inline fun <T> MFVirtualFile.validWriteLock(default: () -> T, block: () -> T): T {
+  return this.genericLockOr(this.writeLock(), default, block)
 }
 
 inline fun <T> MFVirtualFile.validWriteLock(

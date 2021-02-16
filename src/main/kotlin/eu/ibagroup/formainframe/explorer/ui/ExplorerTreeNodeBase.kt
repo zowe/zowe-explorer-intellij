@@ -6,13 +6,17 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.ProjectManager
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
-import org.snakeyaml.engine.v2.api.Load
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 abstract class ExplorerTreeNodeBase<Value : Any>(
   value: Value,
   protected val explorer: Explorer,
   protected val viewSettings: ExplorerViewSettings
 ) : AbstractTreeNode<Value>(explorer.project ?: ProjectManager.getInstance().defaultProject, value), SettingsProvider {
+
+  public override fun getVirtualFile() : MFVirtualFile? {
+    return null
+  }
 
   override fun getSettings(): ViewSettings {
     return viewSettings

@@ -6,8 +6,8 @@
     <extensionPoints>
         <extensionPoint name="attributesService"
                         interface="eu.ibagroup.formainframe.dataops.attributes.AttributesService"/>
-        <extensionPoint name="fileDataProviderFactory"
-                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
+        <extensionPoint name="fileDataProvider"
+                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider"/>
     </extensionPoints>
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
@@ -26,13 +26,13 @@
 
         <attributesService implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributesService"/>
 
-        <fileDataProviderFactory
-                implementation="eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProviderFactory"/>
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProvider"/>
 
-        <fileDataProviderFactory
-                implementation="eu.ibagroup.formainframe.dataops.fetch.MemberFileFetchProviderFactory"/>
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.MemberFileFetchProvider"/>
 
-        <fileDataProviderFactory implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProviderFactory"/>
+        <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProvider"/>
 
     </extensions>
 

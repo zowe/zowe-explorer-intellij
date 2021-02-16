@@ -47,11 +47,7 @@ abstract class MFRemoteAttributesServiceBase<Attributes : MFRemoteFileAttributes
     oldAttributes: Attributes,
     newAttributes: Attributes
   ): MFVirtualFile {
-    return fsModel.findOrCreate(this, fsRoot, newAttributes.url.trimUrl(), createAttributes(directory = true))/*.also {
-      if (oldAttributes.url != newAttributes.url) {
-        fs.renameFile(this, it, newAttributes.url)
-      }
-    }*/
+    return findOrCreate(fsRoot, Pair(newAttributes.url.trimUrl(), createAttributes(directory = true)))
   }
 
   protected lateinit var subDirectory: MFVirtualFile

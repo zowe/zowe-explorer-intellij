@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.fetch.RemoteQuery
 import eu.ibagroup.formainframe.dataops.fetch.RemoteQueryImpl
@@ -36,9 +37,13 @@ class LibraryNode(
   override fun update(presentation: PresentationData) {
     presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else AllIcons.FileTypes.Any_type)
     presentation.addText(value.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-    val volser = unit.explorer.dataOpsManager
+    val volser = dataOpsManager
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
       .getAttributes(value)?.volser
     volser?.let { presentation.addText(" $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+  }
+
+  override fun getVirtualFile(): MFVirtualFile {
+    return value
   }
 }

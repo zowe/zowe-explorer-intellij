@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
@@ -24,7 +25,7 @@ class FileLikeDatasetFileNode(
   override fun update(presentation: PresentationData) {
     presentation.setIcon(if (file.isDirectory) AllIcons.Nodes.Folder else AllIcons.FileTypes.Text)
     presentation.addText(file.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-    val volser = unit.explorer.dataOpsManager
+    val volser = dataOpsManager
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
       .getAttributes(value)?.volser
     volser?.let { presentation.addText(" $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
@@ -32,5 +33,9 @@ class FileLikeDatasetFileNode(
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return value.cachedChildren.map { FileLikeDatasetFileNode(file, unit, viewSettings) }.toMutableSmartList()
+  }
+
+  override fun getVirtualFile(): MFVirtualFile {
+    return value
   }
 }

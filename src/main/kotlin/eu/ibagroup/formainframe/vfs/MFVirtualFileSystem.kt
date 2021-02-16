@@ -12,7 +12,7 @@ class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtu
     const val PROTOCOL = "mf"
     const val ROOT_NAME = "For Mainframe"
     const val ROOT_ID = 0
-    const val INVALID_ID = 0
+    const val INVALID_FILE_PATH = "INVALID_FILE"
 
     @JvmStatic
     val instance
