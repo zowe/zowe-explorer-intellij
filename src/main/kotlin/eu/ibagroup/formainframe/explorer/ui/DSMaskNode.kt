@@ -6,8 +6,8 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.dataops.fetch.RemoteQuery
-import eu.ibagroup.formainframe.dataops.fetch.RemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile

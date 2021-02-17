@@ -3,11 +3,11 @@ package eu.ibagroup.formainframe.dataops
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
+import eu.ibagroup.formainframe.dataops.allocation.Allocator
 import eu.ibagroup.formainframe.dataops.attributes.AttributesListener
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
-import eu.ibagroup.formainframe.dataops.fetch.Query
 
 val dataOpsManager
   get() = DataOpsManager.instance
@@ -23,9 +23,11 @@ interface DataOpsManager {
       get() = ApplicationManager.getApplication().getService(DataOpsManager::class.java)
   }
 
+  fun <R : Any, Q : Query<R>> getAllocator(requestClass: Class<out R>, queryClass: Class<out Query<*>>): Allocator<R, Q>
+
   fun <A : VFileInfoAttributes, F : VirtualFile> getAttributesService(
     attributesClass: Class<out A>, vFileClass: Class<out F>
-  ) : AttributesService<A, F>
+  ): AttributesService<A, F>
 
   fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes?
 

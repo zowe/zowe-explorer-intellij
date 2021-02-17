@@ -1,6 +1,6 @@
 package eu.ibagroup.formainframe.explorer.ui
 
-import eu.ibagroup.formainframe.dataops.fetch.RemoteQuery
+import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.vfs.MFVirtualFile

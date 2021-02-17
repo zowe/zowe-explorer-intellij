@@ -1,0 +1,83 @@
+package eu.ibagroup.formainframe.explorer
+
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.ui.Messages
+import eu.ibagroup.formainframe.dataops.*
+import eu.ibagroup.formainframe.dataops.allocation.AllocationStatus
+import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.r2z.DatasetOrganization
+import eu.ibagroup.r2z.RecordFormat
+
+class AllocateDataset : AnAction() {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val parentNode = e.getData(CURRENT_NODE)
+    if (parentNode is ExplorerUnitTreeNodeBase<*, *>) {
+      val config = parentNode.unit.connectionConfig
+      val urlConfig = parentNode.unit.urlConnection
+      if (config != null && urlConfig != null) {
+        val dialog = AllocationDialog(e.project, AllocationDialogState())
+        if (dialog.showAndGet()) {
+          val state = postProcessState(dialog.state)
+          dataOpsManager.getAllocator(
+            requestClass = AllocationDialogState::class.java,
+            queryClass = RemoteQuery::class.java
+          ).allocate(
+            query = RemoteQueryImpl(
+              connectionConfig = config,
+              urlConnection = urlConfig,
+              request = state
+            ),
+            callback = fetchAdapter {
+              onSuccess {
+                if (it == AllocationStatus.SUCCESS) {
+                  runInEdt {
+                    Messages.showInfoMessage(
+                      "Dataset ${state.datasetName} has been allocated on ${config.name}",
+                      "Dataset Allocated"
+                    )
+                  }
+                } else {
+                  runInEdt {
+                    Messages.showErrorDialog(
+                      "Cannot allocate dataset ${state.datasetName} on ${config.name}",
+                      "Cannot Allocate Dataset"
+                    )
+                  }
+                }
+              }
+              onThrowable {
+                runInEdt {
+                  Messages.showErrorDialog(
+                    "Cannot allocate dataset ${state.datasetName} on ${config.name}",
+                    "Cannot Allocate Dataset"
+                  )
+                }
+              }
+            }
+          )
+        }
+      }
+    }
+  }
+
+  override fun update(e: AnActionEvent) {
+    val node = e.getData(CURRENT_NODE)
+    e.presentation.isVisible = node is WorkingSetNode || node is DSMaskNode
+  }
+
+  private fun postProcessState(state: AllocationDialogState): AllocationDialogState {
+    if (state.allocationParameters.datasetOrganization != DatasetOrganization.PO) {
+      state.allocationParameters.directoryBlocks = null
+    } else if (state.allocationParameters.recordFormat != RecordFormat.FB || state.allocationParameters.recordFormat != RecordFormat.VB) {
+      state.allocationParameters.blockSize = null
+    }
+    return state
+  }
+
+  override fun isDumbAware(): Boolean {
+    return true
+  }
+}

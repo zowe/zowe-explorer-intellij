@@ -10,7 +10,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 abstract class ExplorerTreeNodeBase<Value : Any>(
   value: Value,
-  protected val explorer: Explorer,
+  val explorer: Explorer,
   protected val viewSettings: ExplorerViewSettings
 ) : AbstractTreeNode<Value>(explorer.project ?: ProjectManager.getInstance().defaultProject, value), SettingsProvider {
 

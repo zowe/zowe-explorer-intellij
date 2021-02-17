@@ -8,6 +8,8 @@
                         interface="eu.ibagroup.formainframe.dataops.attributes.AttributesService"/>
         <extensionPoint name="fileDataProvider"
                         interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider"/>
+        <extensionPoint name="allocator"
+                        interface="eu.ibagroup.formainframe.dataops.allocation.Allocator"/>
     </extensionPoints>
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
@@ -34,6 +36,7 @@
 
         <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProvider"/>
 
+        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.DatasetAllocator" />
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -83,6 +86,13 @@
         <action id="eu.ibagroup.formainframe.explorer.AddWorkingSet"
                 class="eu.ibagroup.formainframe.explorer.AddWorkingSet"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.AllocateDataset"
+                class="eu.ibagroup.formainframe.explorer.AllocateDataset"
+                text="Dataset"/>
+        <action id="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
+                class="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
+                text="File"/>
+
         <group id="eu.ibagroup.formainframe.actions.AddActionGroup" popup="true" icon="AllIcons.General.Add">
             <reference id="eu.ibagroup.formainframe.explorer.AddConnection"/>
             <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSet"/>
@@ -92,7 +102,13 @@
             <reference id="eu.ibagroup.formainframe.actions.AddActionGroup"/>
         </group>
 
-        <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
+        <group id="eu.ibagroup.formainframe.actions.NewItemGroup" text="New" popup="true" class="eu.ibagroup.formainframe.explorer.NewItemActionGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.AllocateDataset" />
+            <reference id="eu.ibagroup.formainframe.explorer.CreateUssFileAction" />
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup" >
+            <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
         </group>
 
