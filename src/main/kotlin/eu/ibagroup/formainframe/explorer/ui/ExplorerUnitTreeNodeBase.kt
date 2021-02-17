@@ -5,6 +5,6 @@ import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 
 abstract class ExplorerUnitTreeNodeBase<Value : Any, U : ExplorerUnit>(
   value: Value,
-  protected val unit: U,
+  val unit: U,
   explorerViewSettings: ExplorerViewSettings
 ) : ExplorerTreeNodeBase<Value>(value, unit.explorer, explorerViewSettings)

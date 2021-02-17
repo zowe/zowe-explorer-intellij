@@ -7,8 +7,8 @@ import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
-import eu.ibagroup.formainframe.dataops.fetch.RemoteQuery
-import eu.ibagroup.formainframe.dataops.fetch.RemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.explorer.WorkingSet

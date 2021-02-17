@@ -6,6 +6,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.rd.util.AtomicInteger
+import eu.ibagroup.formainframe.dataops.FetchCallback
+import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.utils.lock
 import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
@@ -54,7 +56,11 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     return oldFile.path == newFile.path
   }
 
-  override fun forceReloadAsync(query: RemoteQuery<Request>, project: Project?, callback: FetchCallback<File>) {
+  override fun forceReloadAsync(
+    query: RemoteQuery<Request>,
+    callback: FetchCallback<Collection<File>>,
+    project: Project?
+  ) {
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, makeFetchTaskTitle(query), true) {
       override fun run(indicator: ProgressIndicator) {
         callback.onStart()

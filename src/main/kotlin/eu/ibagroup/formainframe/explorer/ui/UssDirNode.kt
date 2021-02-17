@@ -7,8 +7,8 @@ import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.dataOpsManager
-import eu.ibagroup.formainframe.dataops.fetch.RemoteQuery
-import eu.ibagroup.formainframe.dataops.fetch.RemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings

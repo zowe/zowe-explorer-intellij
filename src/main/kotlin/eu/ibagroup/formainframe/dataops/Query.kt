@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.fetch
+package eu.ibagroup.formainframe.dataops
 
 interface Query<Request> {
 

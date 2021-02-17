@@ -31,4 +31,7 @@ class RefreshNode : AnAction() {
     e.presentation.isVisible = node is WorkingSetNode || node is DSMaskNode || node is UssDirNode || node is LibraryNode
   }
 
+  override fun isDumbAware(): Boolean {
+    return true
+  }
 }

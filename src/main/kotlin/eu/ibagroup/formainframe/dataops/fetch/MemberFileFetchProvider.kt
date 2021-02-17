@@ -2,6 +2,7 @@ package eu.ibagroup.formainframe.dataops.fetch
 
 import com.intellij.openapi.application.runReadAction
 import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes

@@ -1,22 +1,33 @@
 package eu.ibagroup.formainframe.dataops
 
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.dataops.allocation.Allocator
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
-import eu.ibagroup.formainframe.dataops.fetch.Query
 
+@Suppress("UNCHECKED_CAST")
 class DataOpsManagerImpl : DataOpsManager {
 
   private val attributesServices = AttributesService.EP.extensionList
+
+  private val allocators = Allocator.EP.extensionList
+
+  override fun <R : Any, Q : Query<R>> getAllocator(
+    requestClass: Class<out R>,
+    queryClass: Class<out Query<*>>
+  ): Allocator<R, Q> {
+    return allocators.find {
+      it.requestClass.isAssignableFrom(requestClass) && it.queryClass.isAssignableFrom(queryClass)
+    } as Allocator<R, Q>? ?: throw IllegalArgumentException("Cannot find allocator for Query: $queryClass and Request: $requestClass")
+  }
 
   override fun <A : VFileInfoAttributes, F : VirtualFile> getAttributesService(
     attributesClass: Class<out A>,
     vFileClass: Class<out F>
   ): AttributesService<A, F> {
-    @Suppress("UNCHECKED_CAST")
     return attributesServices.find {
-      attributesClass.isAssignableFrom(it.attributesClass) && vFileClass.isAssignableFrom(it.vFileClass)
+      it.attributesClass.isAssignableFrom(attributesClass) && it.vFileClass.isAssignableFrom(vFileClass)
     } as AttributesService<A, F>? ?: throw IllegalArgumentException(
       "AttributeService for attributeClass=${attributesClass.name} and vFileClass=${vFileClass.name} is not registered"
     )

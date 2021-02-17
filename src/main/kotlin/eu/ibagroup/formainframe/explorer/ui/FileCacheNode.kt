@@ -5,8 +5,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tree.LeafState
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.dataOpsManager
-import eu.ibagroup.formainframe.dataops.fetch.Query
-import eu.ibagroup.formainframe.dataops.fetch.fetchAdapter
+import eu.ibagroup.formainframe.dataops.Query
+import eu.ibagroup.formainframe.dataops.fetchAdapter
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.utils.lock
@@ -34,12 +34,12 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
     return lock(lock) {
       val childrenNodes = cachedChildren?.toChildrenNodes() ?: listOf(LoadingNode(explorer, viewSettings)).also {
         query?.let { q ->
-          fileFetchProvider.forceReloadAsync(q, unit.explorer.project, fetchAdapter {
+          fileFetchProvider.forceReloadAsync(q, fetchAdapter {
               onFinish {
                 needsToShowPlus = false
                 sendTopic(FileExplorerContent.NODE_UPDATE)(this@FileCacheNode, true)
               }
-            })
+            }, unit.explorer.project)
         }
       }
       childrenNodes.toMutableSmartList()
