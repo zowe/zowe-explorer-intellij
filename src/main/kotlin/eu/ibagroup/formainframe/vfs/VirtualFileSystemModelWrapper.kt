@@ -1,15 +1,17 @@
 package eu.ibagroup.formainframe.vfs
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
-open class VirtualFileSystemModelWrapper<File : NewVirtualFile, Model : VirtualFileSystemModel<File>>(
+open class VirtualFileSystemModelWrapper<File : VirtualFile, Model : VirtualFileSystemModel<File>>(
   private val vFileClass: Class<out File>,
   val model: Model,
   private val onIncorrectFileTypeException: (VirtualFile) -> RuntimeException = {
@@ -17,7 +19,7 @@ open class VirtualFileSystemModelWrapper<File : NewVirtualFile, Model : VirtualF
       "${it.path} is not supported by this FS. Only instances of ${vFileClass.name} are allowed"
     )
   }
-) : NewVirtualFileSystem() {
+) : VirtualFileSystem(), Disposable by model {
 
   private inline fun <R> VirtualFile.ifOurInstance(
     onOurBlock: (File) -> R
@@ -84,57 +86,57 @@ open class VirtualFileSystemModelWrapper<File : NewVirtualFile, Model : VirtualF
     }
   }
 
-  override fun exists(file: VirtualFile): Boolean {
+  fun exists(file: VirtualFile): Boolean {
     return file.ifOurInstance {
       model.exists(it)
     }
   }
 
-  override fun list(file: VirtualFile): Array<String> {
+  fun list(file: VirtualFile): Array<String> {
     return file.ifOurInstance {
       model.list(it)
     }
   }
 
-  override fun isDirectory(file: VirtualFile): Boolean {
+  fun isDirectory(file: VirtualFile): Boolean {
     return file.ifOurInstance {
       model.isDirectory(it)
     }
   }
 
-  override fun getTimeStamp(file: VirtualFile): Long {
+  fun getTimeStamp(file: VirtualFile): Long {
     return file.ifOurInstance {
-      model.getLength(it)
+      model.getTimeStamp(it)
     }
   }
 
   @Throws(IOException::class)
-  override fun setTimeStamp(file: VirtualFile, timeStamp: Long) {
+  fun setTimeStamp(file: VirtualFile, timeStamp: Long) {
     return file.ifOurInstance {
       model.setTimeStamp(it, timeStamp)
     }
   }
 
-  override fun isWritable(file: VirtualFile): Boolean {
+  fun isWritable(file: VirtualFile): Boolean {
     return file.ifOurInstance {
       model.isWritable(it)
     }
   }
 
   @Throws(IOException::class)
-  override fun setWritable(file: VirtualFile, writableFlag: Boolean) {
+  fun setWritable(file: VirtualFile, writableFlag: Boolean) {
     return file.ifOurInstance {
       model.setWritable(it, writableFlag)
     }
   }
 
-  override fun isSymLink(file: VirtualFile): Boolean {
+  fun isSymLink(file: VirtualFile): Boolean {
     return file.ifOurInstance {
       model.isSymLink(it)
     }
   }
 
-  override fun resolveSymLink(file: VirtualFile): String? {
+  fun resolveSymLink(file: VirtualFile): String? {
     return file.ifOurInstance {
       model.resolveSymLink(it)
     }
@@ -162,45 +164,45 @@ open class VirtualFileSystemModelWrapper<File : NewVirtualFile, Model : VirtualF
   }
 
   @Throws(IOException::class)
-  override fun contentsToByteArray(file: VirtualFile): ByteArray {
+  fun contentsToByteArray(file: VirtualFile): ByteArray {
     return file.ifOurInstance {
       model.contentsToByteArray(it)
     }
   }
 
   @Throws(IOException::class)
-  override fun getInputStream(file: VirtualFile): InputStream {
+  fun getInputStream(file: VirtualFile): InputStream {
     return file.ifOurInstance {
       model.getInputStream(it)
     }
   }
 
   @Throws(IOException::class)
-  override fun getOutputStream(file: VirtualFile, requestor: Any?, modStamp: Long, timeStamp: Long): OutputStream {
+  fun getOutputStream(file: VirtualFile, requestor: Any?, modStamp: Long, timeStamp: Long): OutputStream {
     return file.ifOurInstance {
       model.getOutputStream(it, requestor, modStamp, timeStamp)
     }
   }
 
-  override fun getLength(file: VirtualFile): Long {
+  fun getLength(file: VirtualFile): Long {
     return file.ifOurInstance {
       model.getLength(it)
     }
   }
 
-  override fun extractRootPath(normalizedPath: String): String {
+  fun extractRootPath(normalizedPath: String): String {
     return model.extractRootPath(normalizedPath)
   }
 
-  override fun findFileByPathIfCached(path: String): VirtualFile? {
+  fun findFileByPathIfCached(path: String): VirtualFile? {
     return model.findFileByPathIfCached(path)
   }
 
-  override fun getRank(): Int {
+  fun getRank(): Int {
     return model.getRank()
   }
 
-  override fun getAttributes(file: VirtualFile): FileAttributes? {
+  fun getAttributes(file: VirtualFile): FileAttributes? {
     return file.ifOurInstance {
       model.getAttributes(it)
     }

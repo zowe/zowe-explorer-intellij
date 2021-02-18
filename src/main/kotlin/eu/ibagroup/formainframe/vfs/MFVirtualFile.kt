@@ -1,24 +1,21 @@
 package eu.ibagroup.formainframe.vfs
 
-import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import eu.ibagroup.formainframe.utils.lock
 import eu.ibagroup.formainframe.utils.runIfTrue
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
-
-val CHILDREN_LOADED = KeyWithDefaultValue.create("childrenLoaded", false)
-//val IS_VALID = KeyWithDefaultValue.create("isValid", false)
 
 class MFVirtualFile internal constructor(
   private val fileId: Int,
   name: String,
   private val initialAttributes: FileAttributes,
-  //childrenLoaded: Boolean = true,
-) : NewVirtualFile(), ReadWriteLock by ReentrantReadWriteLock() {
+) : VirtualFile(), VirtualFileWithId, ReadWriteLock by ReentrantReadWriteLock() {
 
   companion object {
     private val fs = MFVirtualFileSystem.instance
@@ -42,13 +39,6 @@ class MFVirtualFile internal constructor(
 
   @Volatile
   internal var filenameInternal = name
-
-//  @Volatile
-//  internal var childrenLoadedInternal = childrenLoaded
-//
-//  fun setChildrenLoaded() {
-//    validWriteLock { childrenLoadedInternal = true }
-//  }
 
   @Volatile
   internal var isWritableInternal = initialAttributes.isWritable
@@ -84,13 +74,15 @@ class MFVirtualFile internal constructor(
   override fun isWritable() = fs.isWritable(this)
 
   override fun setWritable(writable: Boolean) {
-    TODO("Not yet implemented")
+    validWriteLock({}) { isWritableInternal = writable }
   }
 
   override fun isDirectory() = initialAttributes.isDirectory
 
-  override fun getCanonicalFile(): NewVirtualFile? {
-    TODO("Not yet implemented")
+  override fun getCanonicalFile(): VirtualFile? {
+    return if (fs.isSymLink(this)) {
+      fs.model.resolveAndGetSymlink(this)
+    } else null
   }
 
   override fun isValid() = fs.model.isFileValid(this)
@@ -103,10 +95,6 @@ class MFVirtualFile internal constructor(
     children?.firstOrNull { it.nameEquals(name) }
   }
 
-//  var childrenLoaded
-//    get() = getUserData(CHILDREN_LOADED)!!
-//    set(value) = putUserData(CHILDREN_LOADED, value)
-
   override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long) =
     fs.getOutputStream(this, requestor, newModificationStamp, newTimeStamp)
 
@@ -114,11 +102,29 @@ class MFVirtualFile internal constructor(
     return fs.contentsToByteArray(this)
   }
 
-  override fun setTimeStamp(time: Long) {
-    TODO("Not yet implemented")
+  @Volatile
+  private var modStamp = 0L
+
+  override fun getModificationStamp(): Long {
+    return validReadLock(0L) { modStamp }
   }
 
-  override fun getTimeStamp() = fs.getTimeStamp(this)
+  fun setModificationStamp(modStamp: Long) {
+    validWriteLock({}) { this.modStamp = modStamp; modCount.incrementAndGet() }
+  }
+
+  private val modCount = AtomicLong(0L)
+
+  override fun getModificationCount(): Long {
+    return modCount.get()
+  }
+
+  @Volatile
+  private var timeStamp = 0L
+
+  fun setTimeStamp(time: Long) = validWriteLock { timeStamp = time }
+
+  override fun getTimeStamp() = validReadLock(0L) { timeStamp }
 
   override fun getLength() = fs.getLength(this)
 
@@ -130,30 +136,28 @@ class MFVirtualFile internal constructor(
 
   override fun getId() = fileId
 
-  override fun refreshAndFindChild(name: String): NewVirtualFile? {
-    TODO("Not yet implemented")
+  fun refreshAndFindChild(name: String) = findChild(name)
+
+  fun findChildIfCached(name: String) = findChild(name)
+
+  @Volatile
+  private var markedAsDirty = false
+
+  fun markDirty() {
+    markedAsDirty = true
   }
 
-  override fun findChildIfCached(name: String) = findChild(name)
-
-  override fun getUrl(): String {
-    return super.getUrl()
+  fun markDirtyRecursively() {
+    markDirty()
+    parent?.markDirtyRecursively()
   }
 
-  override fun markDirty() {
-    TODO("Not yet implemented")
+  fun isDirty(): Boolean {
+    return markedAsDirty
   }
 
-  override fun markDirtyRecursively() {
-    TODO("Not yet implemented")
-  }
-
-  override fun isDirty(): Boolean {
-    TODO("Not yet implemented")
-  }
-
-  override fun markClean() {
-    TODO("Not yet implemented")
+  fun markClean() {
+    markedAsDirty = false
   }
 
   override fun getExtension(): String {
@@ -165,9 +169,12 @@ class MFVirtualFile internal constructor(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun getCachedChildren() = fs.model.getChildrenList(this)
+  val cachedChildren
+    get() = fs.model.getChildrenList(this)
 
-  override fun iterInDbChildren() = cachedChildren
+  fun iterInDbChildren() = cachedChildren
+
+  override fun isInLocalFileSystem() = true
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

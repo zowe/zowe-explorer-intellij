@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.project.Project
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -25,11 +26,12 @@ private fun withSlashIfNeeded(ussPath: UssPath): String {
 
 class UssDirNode(
   ussPath: UssPath,
+  project: Project,
   workingSet: WorkingSet,
   viewSettings: ExplorerViewSettings,
   private var vFile: MFVirtualFile? = null,
   private val isRootNode: Boolean = false
-) : RemoteMFFileCacheNode<UssPath, UssQuery, WorkingSet>(ussPath, workingSet, viewSettings) {
+) : RemoteMFFileCacheNode<UssPath, UssQuery, WorkingSet>(ussPath, project, workingSet, viewSettings) {
 
   override val query: RemoteQuery<UssQuery>?
     get() {
@@ -49,9 +51,9 @@ class UssDirNode(
       ?.children
       ?.map {
         if (it.isDirectory) {
-          UssDirNode(UssPath(withSlashIfNeeded(value) + it.name), unit, viewSettings, it)
+          UssDirNode(UssPath(withSlashIfNeeded(value) + it.name), notNullProject, unit, viewSettings, it)
         } else {
-          UssFileNode(it, unit, viewSettings)
+          UssFileNode(it, notNullProject, unit, viewSettings)
         }
       } ?: listOf()
   }
@@ -64,7 +66,7 @@ class UssDirNode(
         AllIcons.Nodes.Module
       }
       vFile != null -> {
-        IconUtil.getIcon(vFile!!, 0, unit.explorer.project)
+        IconUtil.getIcon(vFile!!, 0, project)
       }
       else -> {
         AllIcons.Nodes.Folder

@@ -80,16 +80,16 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
       }
       row {
         label("Owner permissions: ")
-        JBTextField(state.ussAttributes.fileMode.owner.toFileModeValue().toString()).apply { isEditable = false }()
+        JBTextField(state.ussAttributes.fileMode?.owner?.toFileModeValue().toString()).apply { isEditable = false }()
 
       }
       row {
         label("Group permissions: ")
-        JBTextField(state.ussAttributes.fileMode.group.toFileModeValue().toString()).apply { isEditable = false }()
+        JBTextField(state.ussAttributes.fileMode?.group?.toFileModeValue().toString()).apply { isEditable = false }()
       }
       row {
         label("Permissions for all users: ")
-        JBTextField(state.ussAttributes.fileMode.all.toFileModeValue().toString()).apply { isEditable = false }()
+        JBTextField(state.ussAttributes.fileMode?.all?.toFileModeValue().toString()).apply { isEditable = false }()
       }
     })
     return tabbedPanel

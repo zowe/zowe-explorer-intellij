@@ -43,7 +43,7 @@ class UssFileFetchProvider : RemoteAttributedFileFetchBase<UssQuery, RemoteUssAt
               rootPath = query.request.path,
               ussFile = it,
               url = query.urlConnection.url,
-              user = username(query.connectionConfig)
+              connectionConfig = query.connectionConfig
             )
           }
         } else {

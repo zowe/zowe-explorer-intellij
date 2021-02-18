@@ -3,13 +3,16 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.explorer.WorkingSet
 
 class WorkingSetNode(
-  private val workingSet: WorkingSet,
+  workingSet: WorkingSet,
+  project: Project,
   viewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<WorkingSet, WorkingSet>(workingSet, workingSet, viewSettings) {
+) : ExplorerUnitTreeNodeBase<WorkingSet, WorkingSet>(workingSet, project, workingSet, viewSettings) {
 
   override fun isAlwaysExpand(): Boolean {
     return true
@@ -17,10 +20,10 @@ class WorkingSetNode(
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(AllIcons.Nodes.Project)
-    presentation.presentableText = workingSet.name
+    presentation.presentableText = value.name
     when {
-      workingSet.connectionConfig == null || workingSet.urlConnection == null -> connectionIsNotSet(presentation)
-      workingSet.dsMasks.isEmpty() && workingSet.ussPaths.isEmpty() -> destinationsAreEmpty(presentation)
+      value.connectionConfig == null || value.urlConnection == null -> connectionIsNotSet(presentation)
+      value.dsMasks.isEmpty() && value.ussPaths.isEmpty() -> destinationsAreEmpty(presentation)
       viewSettings.showWorkingSetInfo -> addInfo(presentation)
     }
   }
@@ -35,8 +38,8 @@ class WorkingSetNode(
   }
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
-    return workingSet.dsMasks.map { DSMaskNode(it, workingSet, viewSettings) }.plus(
-      workingSet.ussPaths.map { UssDirNode(it, workingSet, viewSettings, isRootNode = true) }
+    return value.dsMasks.map { DSMaskNode(it, notNullProject, value, viewSettings) }.plus(
+      value.ussPaths.map { UssDirNode(it, notNullProject, value, viewSettings, isRootNode = true) }
     ).toMutableList()
   }
 

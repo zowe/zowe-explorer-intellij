@@ -1,5 +1,7 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+
 data class UssRequester(
-  override val user: String,
-  ) : Requester
+  override val connectionConfig: ConnectionConfig
+) : Requester

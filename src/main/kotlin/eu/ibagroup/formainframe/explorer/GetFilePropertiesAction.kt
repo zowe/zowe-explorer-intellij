@@ -42,7 +42,7 @@ class GetFilePropertiesAction : AnAction() {
   override fun update(e: AnActionEvent) {
     val node = e.getData(CURRENT_NODE)
     e.presentation.isVisible = node is UssFileNode
-        || node is FileLikeDatasetFileNode
+        || node is FileLikeDatasetNode
         || node is LibraryNode
         || node is UssDirNode
   }

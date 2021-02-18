@@ -16,7 +16,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
     val contentFactory = ContentFactory.SERVICE.getInstance()
     val factory = FileExplorerContentFactory()
     val content = contentFactory
-      .createContent(factory.buildComponent(toolWindow.disposable), factory.displayName, factory.isLockable)
+      .createContent(factory.buildComponent(toolWindow.disposable, project), factory.displayName, factory.isLockable)
     toolWindow.contentManager.addContent(content)
   }
 

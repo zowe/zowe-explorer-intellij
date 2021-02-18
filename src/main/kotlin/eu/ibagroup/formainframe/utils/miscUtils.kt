@@ -1,18 +1,13 @@
 package eu.ibagroup.formainframe.utils
 
 import com.google.gson.Gson
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.util.containers.toArray
 import com.intellij.util.containers.toMutableSmartList
-import com.intellij.util.messages.Topic
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
+import javax.swing.tree.TreePath
 import kotlin.streams.toList
 
 fun <E> Stream<E>.toMutableList(): MutableList<E> {
@@ -94,12 +89,24 @@ inline fun <reified T> Class<*>.isThe(): Boolean {
   return this == T::class.java
 }
 
-inline fun <reified T> Stream<T>.getAny(): T? {
+inline fun <reified T> Stream<T>.findAnyNullable(): T? {
   return this.findAny().nullable
+}
+
+fun <T> Stream<T>.filterNotNull(): Stream<T> {
+  return filter(Objects::nonNull)
+}
+
+fun <T, R> Stream<T>.mapNotNull(mapper: (T) -> R): Stream<R> {
+  return map(mapper).filterNotNull()
 }
 
 infix fun <T> Collection<T>.isTheSameAs(other: Collection<T>): Boolean {
   return this.size == other.size && (this.isEmpty() || this.containsAll(other))
+}
+
+infix fun <T> Collection<T>.isNotTheSameAs(other: Collection<T>): Boolean {
+  return !(this isTheSameAs other)
 }
 
 fun <T> Collection<T>.withoutElementsOf(other: Collection<T>): Collection<T> {
@@ -120,27 +127,6 @@ fun <T> (T.() -> Unit).toFactory(receiver: T): () -> T {
   }
 }
 
-fun <L> sendTopic(
-  topic: Topic<L>,
-  componentManager: ComponentManager = ApplicationManager.getApplication()
-): L {
-  return componentManager.messageBus.syncPublisher(topic)
-}
-
-fun <L : Any> subscribe(topic: Topic<L>, handler: L) = ApplicationManager.getApplication()
-  .messageBus
-  .connect()
-  .subscribe(topic, handler)
-
-fun <L : Any> subscribe(topic: Topic<L>, handler: L, disposable: Disposable) = ApplicationManager.getApplication()
-  .messageBus
-  .connect(disposable)
-  .subscribe(topic, handler)
-
-fun assertReadAllowed() = ApplicationManager.getApplication().assertReadAccessAllowed()
-
-fun assertWriteAllowed() = ApplicationManager.getApplication().assertWriteAccessAllowed()
-
 fun String.nullIfBlank() = (isNotBlank()).runIfTrue { this }
 
 fun <E : Any> E.asMutableList() = mutableListOf(this)
@@ -151,17 +137,10 @@ fun <R> List<R>.mergeWith(another: List<R>): MutableList<R> {
   return this.plus(another).toSet().toMutableList()
 }
 
-fun <T> submitOnWriteThread(block: () -> T): T {
-  @Suppress("UnstableApiUsage")
-  return AppUIExecutor.onWriteThread().submit(block).get()
-}
-
-inline fun <T> runWriteActionOnWriteThread(crossinline block: () -> T): T {
-  @Suppress("UnstableApiUsage")
-  return if (ApplicationManager.getApplication().isWriteThread) {
-    runWriteAction(block)
-  } else
-    submitOnWriteThread {
-      runWriteAction(block)
+fun TreePath.toIterable(): Iterable<Any> {
+  return object : Iterable<Any> {
+    override fun iterator(): Iterator<Any> {
+      return TreePathIterator(this@toIterable)
     }
+  }
 }

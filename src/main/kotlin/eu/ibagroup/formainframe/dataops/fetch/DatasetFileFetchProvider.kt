@@ -54,7 +54,7 @@ class DatasetFileFetchProvider :
       dataset,
       query.urlConnection.url,
       MaskedRequester(
-        username(query.connectionConfig),
+        query.connectionConfig,
         query.request
       ).asMutableList()
     )
@@ -73,7 +73,7 @@ class DatasetFileFetchProvider :
     val deletingFileAttributes = attributesService.getAttributes(file)
     if (deletingFileAttributes != null) {
       val needsDeletionFromFs = deletingFileAttributes.requesters.all {
-        it.user == username(query.connectionConfig) && it.queryVolser == query.request.volser
+        it.connectionConfig == query.connectionConfig && it.queryVolser == query.request.volser
       }
       if (needsDeletionFromFs) {
         attributesService.clearAttributes(file)
@@ -81,7 +81,7 @@ class DatasetFileFetchProvider :
       } else {
         attributesService.updateAttributes(file) {
           requesters.removeAll {
-            it.user == username(query.connectionConfig) && it.queryVolser == query.request.volser
+            it.connectionConfig == query.connectionConfig && it.queryVolser == query.request.volser
           }
         }
       }

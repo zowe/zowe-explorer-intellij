@@ -4,16 +4,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.CellBuilder
 import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.selectedValueMatches
-import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
+import eu.ibagroup.formainframe.dataops.allocation.DatasetAllocationParams
 import eu.ibagroup.r2z.AllocationUnit
-import eu.ibagroup.r2z.CreateDataset
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
 import java.awt.Dimension
@@ -21,8 +17,8 @@ import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JTextField
 
-class AllocationDialog(project: Project?, override var state: AllocationDialogState) :
-  DialogWrapper(project), StatefulComponent<AllocationDialogState> {
+class AllocationDialog(project: Project?, override var state: DatasetAllocationParams) :
+  DialogWrapper(project), StatefulComponent<DatasetAllocationParams> {
 
   private lateinit var recordFormatBox: JComboBox<RecordFormat>
   private lateinit var datasetOrganizationBox: JComboBox<DatasetOrganization>
@@ -264,21 +260,6 @@ class AllocationDialog(project: Project?, override var state: AllocationDialogSt
   private fun String.toNullIfEmpty(): String? {
     return if (this.isBlank()) null else this
   }
-}
-
-class AllocationDialogState(
-  var datasetName: String = "",
-  val allocationParameters: CreateDataset = CreateDataset(
-    allocationUnit = AllocationUnit.TRK,
-    primaryAllocation = 0,
-    secondaryAllocation = 0,
-    recordFormat = RecordFormat.FB,
-    datasetOrganization = DatasetOrganization.PS
-  )
-) : DialogState {
-
-  override var mode: DialogMode = DialogMode.CREATE
-
 }
 
 

@@ -1,6 +1,8 @@
 package eu.ibagroup.formainframe.vfs
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.io.FileAttributes
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import java.io.IOException
@@ -8,7 +10,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path
 
-interface VirtualFileSystemModel<File : NewVirtualFile> {
+interface VirtualFileSystemModel<File : VirtualFile>: Disposable {
 
   fun getProtocol(): String
 

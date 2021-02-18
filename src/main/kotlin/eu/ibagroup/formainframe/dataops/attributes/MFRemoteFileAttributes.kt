@@ -1,5 +1,7 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+
 interface MFRemoteFileAttributes<R> : VFileInfoAttributes {
 
   val url: String
@@ -9,5 +11,5 @@ interface MFRemoteFileAttributes<R> : VFileInfoAttributes {
 }
 
 interface Requester {
-  val user: String
+  val connectionConfig: ConnectionConfig
 }

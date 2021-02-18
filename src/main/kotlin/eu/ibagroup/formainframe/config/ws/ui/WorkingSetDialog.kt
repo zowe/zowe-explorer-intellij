@@ -16,7 +16,7 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.getAny
+import eu.ibagroup.formainframe.utils.findAnyNullable
 import java.awt.Dimension
 import java.util.*
 import javax.swing.JComponent
@@ -64,7 +64,7 @@ class WorkingSetDialog(
               return@PropertyBinding if (connectionConfig != null) {
                 connectionConfig
               } else if (!crudable.getAll<ConnectionConfig>().isEmpty()) {
-                crudable.getAll<ConnectionConfig>().getAny()?.also {
+                crudable.getAll<ConnectionConfig>().findAnyNullable()?.also {
                   state.connectionUuid = it.uuid
                 }
               } else {

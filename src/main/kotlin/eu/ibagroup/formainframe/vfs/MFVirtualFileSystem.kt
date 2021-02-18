@@ -1,6 +1,9 @@
 package eu.ibagroup.formainframe.vfs
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManager
+import eu.ibagroup.formainframe.common.appLevelPluginDisposable
+import eu.ibagroup.formainframe.dataops.dataOpsManager
 
 class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtualFileSystemModel>(
   MFVirtualFile::class.java,
@@ -22,23 +25,11 @@ class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtu
     val model = instance.model
   }
 
-  val root = model.root
+  init {
+    Disposer.register(appLevelPluginDisposable, this)
+  }
 
-//  @Throws(IOException::class)
-//  fun createChildWithAttributes(
-//    requestor: Any?, vDir: MFVirtualFile, name: String, attributes: FileAttributes
-//  ): MFVirtualFile = model.createChildWithAttributes(requestor, vDir, name, attributes)
-//
-//  @Throws(IOException::class)
-//  fun findOrCreate(
-//    requestor: Any?, vDir: MFVirtualFile, name: String, attributes: FileAttributes
-//  ): MFVirtualFile {
-//    var found = vDir.findChild(name)
-//    if (found == null) {
-//      found = createChildWithAttributes(requestor, vDir, name, attributes)
-//    }
-//    return found
-//  }
+  val root = model.root
 
   override fun isValidName(name: String) = name.isNotBlank()
 

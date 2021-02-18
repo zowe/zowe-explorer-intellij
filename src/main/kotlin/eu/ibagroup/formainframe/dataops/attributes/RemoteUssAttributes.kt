@@ -1,19 +1,11 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.username
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.FileMode
 import eu.ibagroup.r2z.FileModeValue
 import eu.ibagroup.r2z.UssFile
-
-
-/*
-
-ussPath in configs -> /u/KIRYL
-
-ussFile: ""
-u
-
- */
 
 private fun constructPath(rootPath: String, ussFile: UssFile): String {
   return when {
@@ -32,7 +24,7 @@ private fun constructPath(rootPath: String, ussFile: UssFile): String {
 data class RemoteUssAttributes(
   val path: String,
   val isDirectory: Boolean,
-  val fileMode: FileMode,
+  val fileMode: FileMode?,
   override val url: String,
   override val requesters: MutableList<UssRequester>,
   val size: Int? = null,
@@ -44,12 +36,12 @@ data class RemoteUssAttributes(
   val symlinkTarget: String? = null
 ) : MFRemoteFileAttributes<UssRequester> {
 
-  constructor(rootPath: String, ussFile: UssFile, url: String, user: String) : this(
+  constructor(rootPath: String, ussFile: UssFile, url: String, connectionConfig: ConnectionConfig) : this(
     path = constructPath(rootPath, ussFile),
     isDirectory = ussFile.isDirectory,
     fileMode = ussFile.fileMode,
     url = url,
-    requesters = mutableListOf(UssRequester(user)),
+    requesters = mutableListOf(UssRequester(connectionConfig)),
     size = ussFile.size,
     uid = ussFile.uid,
     owner = ussFile.user,
@@ -74,11 +66,11 @@ data class RemoteUssAttributes(
 
   val isWritable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any { it.user == owner }
+      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig) == owner }
       val mode = if (hasFileOwnerInRequesters) {
-        fileMode.owner
+        fileMode?.owner
       } else {
-        fileMode.all
+        fileMode?.all
       }
       return mode == FileModeValue.WRITE.mode
           || mode == FileModeValue.WRITE_EXECUTE.mode

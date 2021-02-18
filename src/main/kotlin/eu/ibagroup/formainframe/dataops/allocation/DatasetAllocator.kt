@@ -4,15 +4,14 @@ import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.api.enqueueSync
-import eu.ibagroup.formainframe.explorer.ui.AllocationDialogState
 import eu.ibagroup.r2z.DataAPI
 
-class DatasetAllocator : RemoteAllocatorBase<AllocationDialogState>() {
+class DatasetAllocator : RemoteAllocatorBase<DatasetAllocationParams>() {
 
   override val title: String
     get() = "Allocate dataset"
 
-  override fun performAllocationRequest(query: RemoteQuery<AllocationDialogState>): AllocationStatus {
+  override fun performAllocationRequest(query: RemoteQuery<DatasetAllocationParams>): AllocationStatus {
     var status = AllocationStatus.FAILED
     var throwable: Throwable? = null
     api<DataAPI>(query.connectionConfig).createDataset(
@@ -20,12 +19,12 @@ class DatasetAllocator : RemoteAllocatorBase<AllocationDialogState>() {
       datasetName = query.request.datasetName,
       body = query.request.allocationParameters
     ).enqueueSync {
-      onResponse { call, response ->
+      onResponse { _, response ->
         if (response.isSuccessful) {
           status = AllocationStatus.SUCCESS
         }
       }
-      onException { call, t ->
+      onException { _, t ->
         throwable = t
       }
 
@@ -34,6 +33,6 @@ class DatasetAllocator : RemoteAllocatorBase<AllocationDialogState>() {
     return status
   }
 
-  override val requestClass: Class<out AllocationDialogState> = AllocationDialogState::class.java
+  override val requestClass: Class<out DatasetAllocationParams> = DatasetAllocationParams::class.java
 }
 

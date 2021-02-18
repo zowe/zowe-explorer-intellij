@@ -1,7 +1,11 @@
 package eu.ibagroup.formainframe.common.ui
 
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
+import java.util.concurrent.locks.ReentrantLock
+import javax.swing.tree.TreePath
+import kotlin.concurrent.withLock
 
 
 class TreeInvalidator(
@@ -94,4 +98,22 @@ private fun <T : Any> StructureTreeModel<*>.invalidateByPredicate(
     }
   }
   invalidateByPredicate(rootNode, predicate, structure)
+}
+
+fun AsyncTreeModel.getPath(node: Any): TreePath? {
+  val lock = ReentrantLock()
+  val condition = lock.newCondition()
+  var path: TreePath? = null
+  lock.withLock {
+    onValidThread {
+      getTreePath(node).then {
+        path = it
+        condition.signalAll()
+      }
+    }
+  }
+  lock.withLock {
+    condition.await()
+  }
+  return path
 }

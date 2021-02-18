@@ -16,16 +16,15 @@ class RemoteUssAttributesService : MFRemoteAttributesServiceBase<RemoteUssAttrib
     return RemoteUssAttributes(
       path = attributes.path,
       isDirectory = attributes.isDirectory,
-      fileMode = attributes.fileMode,
+      fileMode = null,
       url = attributes.url,
       requesters = SmartList(),
-      size = attributes.size,
+      size = null,
       uid = attributes.uid,
       owner = attributes.owner,
       gid = attributes.gid,
       groupId = attributes.groupId,
-      modificationTime = attributes.modificationTime,
-      symlinkTarget = attributes.symlinkTarget
+      symlinkTarget = null
     )
   }
 

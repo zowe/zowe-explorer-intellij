@@ -18,7 +18,9 @@ abstract class RemoteAllocatorBase<R : Any> : Allocator<R, RemoteQuery<R>> {
       override fun run(indicator: ProgressIndicator) {
         try {
           callback.onStart()
-          callback.onSuccess(performAllocationRequest(query))
+          indicator.checkCanceled()
+          val response = performAllocationRequest(query)
+          callback.onSuccess(response)
         } catch (t : Throwable) {
           callback.onThrowable(t)
         } finally {

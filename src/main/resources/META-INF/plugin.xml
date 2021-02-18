@@ -1,15 +1,22 @@
 <idea-plugin>
     <id>eu.ibagroup.formainframe</id>
 
-    <idea-version since-build="203.7148.72" />
+    <idea-version since-build="203.7148.72"/>
 
     <extensionPoints>
+
         <extensionPoint name="attributesService"
                         interface="eu.ibagroup.formainframe.dataops.attributes.AttributesService"/>
+
         <extensionPoint name="fileDataProvider"
                         interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider"/>
+
         <extensionPoint name="allocator"
                         interface="eu.ibagroup.formainframe.dataops.allocation.Allocator"/>
+
+        <extensionPoint name="contentSynchronizer"
+                        interface="eu.ibagroup.formainframe.dataops.content.ContentSynchronizer"/>
+
     </extensionPoints>
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
@@ -36,11 +43,18 @@
 
         <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProvider"/>
 
-        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.DatasetAllocator" />
+        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.DatasetAllocator"/>
 
-        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.MemberAllocator" />
+        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.MemberAllocator"/>
 
-        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.UssAllocator" />
+        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.UssAllocator"/>
+
+        <contentSynchronizer implementation="eu.ibagroup.formainframe.dataops.content.MemberContentSynchronizer"/>
+
+        <contentSynchronizer implementation="eu.ibagroup.formainframe.dataops.content.SeqDatasetContentSynchronizer"/>
+
+        <contentSynchronizer implementation="eu.ibagroup.formainframe.dataops.content.UssFileContentSynchronizer"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -74,6 +88,8 @@
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.api.ZosmfApi"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.api.ZosmfApiImpl"/>
 
+        <applicationService serviceImplementation="eu.ibagroup.formainframe.common.AppLevelPluginDisposable"/>
+
     </extensions>
 
     <actions>
@@ -102,7 +118,7 @@
                 class="eu.ibagroup.formainframe.explorer.AddMemberAction" text="Member"/>
 
         <action class="eu.ibagroup.formainframe.explorer.SettingAction"
-                id = "eu.ibagroup.formainframe.explorer.SettingAction"
+                id="eu.ibagroup.formainframe.explorer.SettingAction"
                 icon="AllIcons.General.Settings"/>
 
         <action class="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"
@@ -114,19 +130,20 @@
             <reference id="eu.ibagroup.formainframe.explorer.SettingAction"/>
         </group>
 
-        <group id="eu.ibagroup.formainframe.actions.NewItemGroup" text="New" popup="true" class="eu.ibagroup.formainframe.explorer.NewItemActionGroup">
-            <reference id="eu.ibagroup.formainframe.explorer.AllocateDataset" />
-            <reference id="eu.ibagroup.formainframe.explorer.CreateUssFileAction" />
-            <reference id="eu.ibagroup.formainframe.explorer.AddMemberAction" />
+        <group id="eu.ibagroup.formainframe.actions.NewItemGroup" text="New" popup="true"
+               class="eu.ibagroup.formainframe.explorer.NewItemActionGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.AllocateDataset"/>
+            <reference id="eu.ibagroup.formainframe.explorer.AddMemberAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.CreateUssFileAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.CreateUssDirectoryAction"/>
         </group>
 
-        <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup" >
+        <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
             <reference id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"/>
         </group>
+
 
     </actions>
 

@@ -1,21 +1,23 @@
 package eu.ibagroup.formainframe.vfs
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.*
+import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.utils.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jgrapht.Graph
 import org.jgrapht.Graphs
 import org.jgrapht.graph.DirectedMultigraph
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.NotDirectoryException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class FsOperationException(operationName: String, file: MFVirtualFile) : IOException(
@@ -25,12 +27,20 @@ class FsOperationException(operationName: String, file: MFVirtualFile) : IOExcep
 internal fun sendVfsChangesTopic() = sendTopic(VirtualFileManager.VFS_CHANGES)
 
 enum class FSEdgeType {
-  DIR, SOFT_LINK, HARD_LINK
+  DIR, SOFT_LINK, HARD_LINK;
+
+  fun isSymlink(): Boolean {
+    return this == SOFT_LINK || this == HARD_LINK
+  }
 }
+
+private const val VFS_CONTENT_STORAGE_NAME = "mf_vfs_contents"
 
 class FSEdge @JvmOverloads constructor(val type: FSEdgeType = FSEdgeType.DIR)
 
 class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
+
+  private var isDisposed = false
 
   companion object {
     private val counter = AtomicInteger(MFVirtualFileSystem.ROOT_ID)
@@ -39,6 +49,10 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   private val fsGraph = AsConcurrentGraph(
     DirectedMultigraph<MFVirtualFile, FSEdge>(FSEdge::class.java)
   )
+
+  private val contentStorage = ContentStorage(VFS_CONTENT_STORAGE_NAME)
+
+  private val fileIdToStorageIdMap = ConcurrentHashMap<Int, Int>()
 
   val root = MFVirtualFile(
     generateId(), MFVirtualFileSystem.ROOT_NAME, createAttributes(
@@ -72,7 +86,6 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   fun findFileByPath(pathElements: List<String>): MFVirtualFile? {
-    //assertReadAllowed()
     var pointerIndex = 1
     return FilteringBFSIterator(fsGraph, root) { v, e ->
       v.validReadLock(false) {
@@ -86,7 +99,6 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   override fun findFileByPath(path: String): MFVirtualFile? {
-    //assertReadAllowed()
     val pathElements = path.formatPath().split(MFVirtualFileSystem.SEPARATOR)
     return findFileByPath(pathElements)
   }
@@ -105,16 +117,14 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   override fun addVirtualFileListener(listener: VirtualFileListener) {
-    throw UnsupportedOperationException()
+
   }
 
   override fun removeVirtualFileListener(listener: VirtualFileListener) {
-    throw UnsupportedOperationException()
   }
 
   @Throws(IOException::class)
   override fun deleteFile(requestor: Any?, vFile: MFVirtualFile) {
-    //assertWriteAllowed()
     val event = listOf(VFileDeleteEvent(requestor, vFile, false))
     sendVfsChangesTopic().before(event)
     vFile.validWriteLock {
@@ -124,6 +134,11 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
           vFile.children?.forEach { deleteFile(requestor, it) }
         }
         if (fsGraph.removeEdge(parent, vFile) != null && fsGraph.removeVertex(vFile)) {
+          val storageId = fileIdToStorageIdMap[vFile.id]
+          if (storageId != null) {
+            contentStorage.deleteRecord(storageId)
+            fileIdToStorageIdMap.remove(vFile.id)
+          }
           vFile.isValidInternal = false
           vFile.intermediateOldParent = parent
           vFile.intermediateOldPathInternal = parent.path + MFVirtualFileSystem.SEPARATOR + vFile.name
@@ -152,7 +167,6 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     copyName: String?,
     replace: Boolean,
   ): MFVirtualFile {
-    //assertWriteAllowed()
     val event = listOf(
       if (copyName != null) {
         VFileCopyEvent(requestor, vFile, newParent, copyName)
@@ -269,13 +283,12 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   override fun exists(file: MFVirtualFile): Boolean {
-    //assertReadAllowed()
     return lock(file.readLock()) { fsGraph.containsVertex(file) }.also {
       if (!it) file.isValidInternal = false
     }
   }
 
-  override fun list(file: MFVirtualFile) = file.validReadLock {
+  override fun list(file: MFVirtualFile) = file.validReadLock({ arrayOf() }) {
     getChildren(file).run {
       map { it.name }.asArray()
     }
@@ -284,32 +297,54 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   override fun isDirectory(file: MFVirtualFile) = file.validReadLock(false) { file.isDirectory }
 
   override fun getTimeStamp(file: MFVirtualFile): Long {
-    TODO("Not yet implemented")
+    return file.timeStamp
   }
 
   @Throws(IOException::class)
   override fun setTimeStamp(file: MFVirtualFile, timeStamp: Long) {
-    TODO("Not yet implemented")
+    file.timeStamp = timeStamp
   }
 
-  override fun isWritable(file: MFVirtualFile) = file.validReadLock { file.attributes.isWritable }
+  override fun isWritable(file: MFVirtualFile) = file.validReadLock(false) { file.attributes.isWritable }
 
   @Throws(IOException::class)
   override fun setWritable(file: MFVirtualFile, writableFlag: Boolean) {
     file.validWriteLock {
-      file.isWritableInternal = writableFlag
+      if (file.isWritable != writableFlag) {
+        val event = listOf(
+          VFilePropertyChangeEvent(
+            this,
+            file,
+            VirtualFile.PROP_WRITABLE,
+            file.isWritableInternal,
+            writableFlag,
+            false
+          )
+        )
+        sendVfsChangesTopic().before(event)
+        file.isWritableInternal = writableFlag
+        sendVfsChangesTopic().after(event)
+      }
     }
   }
 
   override fun isSymLink(file: MFVirtualFile): Boolean {
-    return fsGraph.outgoingEdgesOf(file).any { it.type == FSEdgeType.SOFT_LINK || it.type == FSEdgeType.HARD_LINK }
+    return file.validReadLock(false) {
+      fsGraph.outgoingEdgesOf(file).any { it.type.isSymlink() }
+    }
   }
 
   override fun resolveSymLink(file: MFVirtualFile): String? {
     return resolveAndGetSymlink(file)?.path
   }
 
-  fun resolveAndGetSymlink(file: MFVirtualFile): MFVirtualFile? = null
+  fun resolveAndGetSymlink(file: MFVirtualFile): MFVirtualFile? {
+    return file.validReadLock(null) {
+      fsGraph.outgoingEdgesOf(file).firstOrNull { it.type.isSymlink() }?.let {
+        fsGraph.getEdgeTarget(it)
+      }
+    }
+  }
 
   @Throws(IOException::class)
   override fun copyFile(
@@ -333,34 +368,96 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
 
   @Throws(IOException::class)
   override fun contentsToByteArray(file: MFVirtualFile): ByteArray {
-    TODO("Not yet implemented")
+    return file.validReadLock {
+      contentStorage.getBytes(getIdForStorageAccess(file))
+    }
   }
 
   @Throws(IOException::class)
   override fun getInputStream(file: MFVirtualFile): InputStream {
-    TODO("Not yet implemented")
+    return file.validReadLock {
+      val storageStream = contentStorage.readStream(getIdForStorageAccess(file))
+      object : DataInputStream(storageStream) {
+        override fun close() {
+          file.validReadLock {
+            super.close()
+          }
+        }
+      }
+    }
+  }
+
+  private fun getIdForStorageAccess(file: MFVirtualFile): Int {
+    val actualFile = if (isSymLink(file)) {
+      resolveAndGetSymlink(file) ?: throw IOException("Symlink ${file.path} cannot be resolved to a file")
+    } else file
+    if (actualFile.isDirectory) {
+      throw IOException("Cannot get storage data for directory")
+    }
+    return fileIdToStorageIdMap.getOrPut(actualFile.id) { contentStorage.createNewRecord() }
   }
 
   @Throws(IOException::class)
   override fun getOutputStream(file: MFVirtualFile, requestor: Any?, modStamp: Long, timeStamp: Long): OutputStream {
-    TODO("Not yet implemented")
+    return file.validWriteLock {
+      val oldLength = file.length
+      val oldTimeStamp = file.timeStamp
+      val oldModStamp = file.modificationStamp
+
+      val storageOutputStream = contentStorage.writeStream(getIdForStorageAccess(file))
+
+      object : DataOutputStream(storageOutputStream) {
+        private val isClosed = AtomicBoolean(false)
+        override fun close() {
+          if (isClosed.compareAndSet(false, true)) {
+            val event = listOf(
+              VFileContentChangeEvent(requestor, file, oldModStamp, timeStamp, false)
+            )
+            sendVfsChangesTopic().before(event)
+            assertWriteAllowed()
+            lock(file.writeLock()) {
+              super.close()
+              file.timeStamp = timeStamp
+              file.modificationStamp = modStamp
+            }
+            sendVfsChangesTopic().after(event)
+          }
+        }
+      }
+    }
   }
 
   override fun getLength(file: MFVirtualFile): Long {
-    return 0
+    return file.validReadLock(0L) {
+      try {
+        val id = getIdForStorageAccess(file)
+        contentStorage.getLength(id)
+      } catch (e: IOException) {
+        0L
+      }
+    }
   }
 
   override fun isReadOnly() = false
 
+  override fun dispose() {
+    isDisposed = true
+    Disposer.dispose(contentStorage)
+  }
+
   fun isFileValid(file: MFVirtualFile): Boolean {
-    return lock(file.readLock()) {
-      if (!file.isValidInternal) {
-        if (fsGraph.containsVertex(file)) {
-          addToCleanerQueue(file)
+    return if (isDisposed) {
+      false
+    } else {
+      lock(file.readLock()) {
+        if (!file.isValidInternal) {
+          if (fsGraph.containsVertex(file)) {
+            addToCleanerQueue(file)
+          }
+          false
+        } else {
+          true
         }
-        false
-      } else {
-        true
       }
     }
   }
@@ -369,9 +466,11 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
 
   private fun addToCleanerQueue(file: MFVirtualFile) {
     synchronized(cleanerLock) {
-      GlobalScope.launch {
-        lock(file.writeLock()) {
-          fsGraph.removeVertex(file)
+      runBlocking {
+        launch {
+          lock(file.writeLock()) {
+            fsGraph.removeVertex(file)
+          }
         }
       }
     }
@@ -388,11 +487,11 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   fun getChildren(file: MFVirtualFile): Array<MFVirtualFile> {
-    return file.validReadLock { getChildrenList(file).toTypedArray() }
+    return file.validReadLock({ arrayOf() }) { getChildrenList(file).toTypedArray() }
   }
 
   fun getChildrenList(file: MFVirtualFile): List<MFVirtualFile> {
-    return file.validReadLock(IOException("")) {
+    return file.validReadLock({ listOf() }) {
       fsGraph.successorsOf(file).filter {
         isFileValid(it) && isEdgeOfType(file, it, FSEdgeType.DIR)
       }

@@ -4,16 +4,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.panel
-import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
+import eu.ibagroup.formainframe.dataops.allocation.MemberAllocationParams
 import javax.swing.JComponent
 
-class AddMemberDialog(project: Project?, override var state: AddMemberState) : DialogWrapper(project),
-  StatefulComponent<AddMemberState> {
+class AddMemberDialog(project: Project?, override var state: MemberAllocationParams) : DialogWrapper(project),
+  StatefulComponent<MemberAllocationParams> {
 
   private val firstLetterRegex = Regex("[A-Z@\$#a-z]")
-  private val memberRegex = Regex("[A-Z@\$#a-z]{1}[A-Z@#\$a-z0-9]{0,7}")
+  private val memberRegex = Regex("[A-Z@$#a-z][A-Z@#\$a-z0-9]{0,7}")
 
   override fun createCenterPanel(): JComponent {
     return panel {
@@ -36,9 +35,4 @@ class AddMemberDialog(project: Project?, override var state: AddMemberState) : D
     title = "Create Member"
     init()
   }
-}
-
-class AddMemberState(override var mode: DialogMode = DialogMode.CREATE, val datasetName: String) : DialogState {
-
-  var memberName = ""
 }
