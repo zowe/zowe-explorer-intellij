@@ -2,7 +2,7 @@
     <id>eu.ibagroup.formainframe</id>
 
     <idea-version since-build="203.7148.72" />
-    
+
     <extensionPoints>
         <extensionPoint name="attributesService"
                         interface="eu.ibagroup.formainframe.dataops.attributes.AttributesService"/>
@@ -99,6 +99,10 @@
                 id = "eu.ibagroup.formainframe.explorer.SettingAction"
                 icon="AllIcons.General.Settings"/>
 
+        <action class="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"
+                id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"
+                text="Properties"/>
+
         <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
             <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.SettingAction"/>
@@ -113,6 +117,7 @@
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup" >
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
+            <reference id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"/>
         </group>
 
 
