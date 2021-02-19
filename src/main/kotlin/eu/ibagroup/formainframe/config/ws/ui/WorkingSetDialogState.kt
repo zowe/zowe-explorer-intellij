@@ -1,5 +1,6 @@
 package eu.ibagroup.formainframe.config.ws.ui
 
+import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.config.ws.DSMask
@@ -12,7 +13,7 @@ data class WorkingSetDialogState(
   var uuid: String = "",
   var connectionUuid: String = "",
   var workingSetName: String = "",
-  var maskRow: List<TableRow> = emptyList(),
+  var maskRow: MutableList<TableRow> = mutableListOf(),
   override var mode: DialogMode = DialogMode.CREATE
 ) : DialogState {
 
@@ -21,8 +22,8 @@ data class WorkingSetDialogState(
       this.uuid,
       this.workingSetName,
       this.connectionUuid,
-      this.maskRow.filter { it.type == TableRow.ZOS }.map { DSMask(it.mask, mutableListOf()) },
-      this.maskRow.filter { it.type == TableRow.USS }.map { UssPath(it.mask) }
+      this.maskRow.filter { it.type == TableRow.ZOS }.map { DSMask(it.mask, mutableListOf()) }.toMutableSmartList(),
+      this.maskRow.filter { it.type == TableRow.USS }.map { UssPath(it.mask) }.toMutableSmartList()
     )
 
   class TableRow(
@@ -50,6 +51,6 @@ fun WorkingSetConfig.toDialogState(): WorkingSetDialogState {
     workingSetName = this.name,
     maskRow = this.dsMasks.map { WorkingSetDialogState.TableRow(mask = it.mask) }.plus(this.ussPaths.map {
       WorkingSetDialogState.TableRow(mask = it.path, type = WorkingSetDialogState.TableRow.USS)
-    }),
+    }).toMutableSmartList(),
   )
 }
