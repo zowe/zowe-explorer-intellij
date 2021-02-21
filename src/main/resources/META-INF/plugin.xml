@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>eu.ibagroup.formainframe</id>
 
-    <idea-version since-build="203.7148.57" />
+    <idea-version since-build="203.7148.72" />
     
     <extensionPoints>
         <extensionPoint name="attributesService"
@@ -37,6 +37,8 @@
         <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProvider"/>
 
         <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.DatasetAllocator" />
+
+        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.MemberAllocator" />
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -93,6 +95,9 @@
                 class="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
                 text="File"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.AddMemberAction"
+                class="eu.ibagroup.formainframe.explorer.AddMemberAction" text="Member"/>
+
         <group id="eu.ibagroup.formainframe.actions.AddActionGroup" popup="true" icon="AllIcons.General.Add">
             <reference id="eu.ibagroup.formainframe.explorer.AddConnection"/>
             <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSet"/>
@@ -105,12 +110,14 @@
         <group id="eu.ibagroup.formainframe.actions.NewItemGroup" text="New" popup="true" class="eu.ibagroup.formainframe.explorer.NewItemActionGroup">
             <reference id="eu.ibagroup.formainframe.explorer.AllocateDataset" />
             <reference id="eu.ibagroup.formainframe.explorer.CreateUssFileAction" />
+            <reference id="eu.ibagroup.formainframe.explorer.AddMemberAction" />
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup" >
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
         </group>
+
 
     </actions>
 

@@ -4,9 +4,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.Messages
+import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.dataops.allocation.AllocationStatus
 import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
 
@@ -14,7 +18,8 @@ class AllocateDataset : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val parentNode = e.getData(CURRENT_NODE)
-    if (parentNode is ExplorerUnitTreeNodeBase<*, *>) {
+    if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is WorkingSet) {
+      val workingSet = parentNode.unit
       val config = parentNode.unit.connectionConfig
       val urlConfig = parentNode.unit.urlConnection
       if (config != null && urlConfig != null) {
@@ -34,10 +39,11 @@ class AllocateDataset : AnAction() {
               onSuccess {
                 if (it == AllocationStatus.SUCCESS) {
                   runInEdt {
-                    Messages.showInfoMessage(
-                      "Dataset ${state.datasetName} has been allocated on ${config.name}",
-                      "Dataset Allocated"
-                    )
+                    val workingSetConfig = configCrudable.getByUniqueKey<WorkingSetConfig>(workingSet.uuid)
+                    if (workingSetConfig != null) {
+                      workingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
+                      configCrudable.update(workingSetConfig)
+                    }
                   }
                 } else {
                   runInEdt {

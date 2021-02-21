@@ -15,18 +15,18 @@ class WorkingSetConfig : EntityWithUuid {
   var connectionConfigUuid = ""
 
   @Column
-  var dsMasks: Collection<DSMask> = listOf()
+  var dsMasks: MutableCollection<DSMask> = mutableListOf()
 
   @Column
-  var ussPaths: Collection<UssPath> = listOf()
+  var ussPaths: MutableCollection<UssPath> = mutableListOf()
 
   constructor()
 
   constructor(
     name: String,
     connectionConfigUuid: String,
-    dsMasks: Collection<DSMask>,
-    ussPaths: Collection<UssPath>
+    dsMasks: MutableCollection<DSMask>,
+    ussPaths: MutableCollection<UssPath>
   ) : super() {
     this.name = name
     this.connectionConfigUuid = connectionConfigUuid
@@ -38,8 +38,8 @@ class WorkingSetConfig : EntityWithUuid {
     uuid: String,
     name: String,
     connectionConfigUuid: String,
-    dsMasks: Collection<DSMask>,
-    ussPaths: Collection<UssPath>
+    dsMasks: MutableCollection<DSMask>,
+    ussPaths: MutableCollection<UssPath>
   ) : super(uuid) {
     this.name = name
     this.connectionConfigUuid = connectionConfigUuid
