@@ -33,7 +33,7 @@ class WSNameColumn(private val wsProvider: () -> List<WorkingSetConfig>) :
   }
 
   override fun isCellEditable(item: WorkingSetConfig?): Boolean {
-    return true
+    return false
   }
 
   override fun getWidth(table: JTable?): Int {

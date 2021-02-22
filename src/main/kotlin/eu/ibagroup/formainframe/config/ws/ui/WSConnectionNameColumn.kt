@@ -35,7 +35,7 @@ class WSConnectionNameColumn(private val crudable: Crudable) :
   }
 
   override fun isCellEditable(item: WorkingSetConfig): Boolean {
-    return true
+    return false
   }
 
   override fun getEditor(item: WorkingSetConfig): TableCellEditor {

@@ -21,10 +21,20 @@ import javax.net.ssl.X509TrustManager
 
 class ZosmfApiImpl : ZosmfApi {
 
-  private val apis = hashMapOf<Class<out Any>, MutableMap<ConnectionConfig, Any>>()
+  private data class ZosmfUrl(val url: String, val isAllowSelfSigned: Boolean)
+
+  private val apis = hashMapOf<Class<out Any>, MutableMap<ZosmfUrl, Any>>()
+
+  override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
+    val urlConnection = configCrudable
+      .getByForeignKey<ConnectionConfig, UrlConnection>(connectionConfig)
+      ?: throw RuntimeException("Cannot find url for connection ${connectionConfig.name}")
+    return getApi(apiClass, urlConnection.url, urlConnection.isAllowSelfSigned)
+  }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
+  override fun <Api : Any> getApi(apiClass: Class<out Api>, url: String, isAllowSelfSigned: Boolean): Api {
+    val zosmfUrl = ZosmfUrl(url, isAllowSelfSigned)
     if (!apis.containsKey(apiClass)) {
       synchronized(apis) {
         if (!apis.containsKey(apiClass)) {
@@ -33,19 +43,16 @@ class ZosmfApiImpl : ZosmfApi {
       }
     }
     val apiClassMap = apis[apiClass]!!
-    if (!apiClassMap.containsKey(connectionConfig)) {
+    if (!apiClassMap.containsKey(zosmfUrl)) {
       synchronized(apiClassMap) {
-        if (!apiClassMap.containsKey(connectionConfig)) {
-          val zosmfUrlConnection = configCrudable
-            .getByForeignKey<ConnectionConfig, UrlConnection>(connectionConfig)
-            ?: throw RuntimeException("Cannot find url for connection ${connectionConfig.name}")
-          val baseUrl = zosmfUrlConnection.url
-          val client = getOkHttpClient(zosmfUrlConnection)
-          apiClassMap[connectionConfig] = buildApi(baseUrl, client, apiClass)
+        if (!apiClassMap.containsKey(zosmfUrl)) {
+          val baseUrl = zosmfUrl.url
+          val client = getOkHttpClient(zosmfUrl.isAllowSelfSigned)
+          apiClassMap[zosmfUrl] = buildApi(baseUrl, client, apiClass)
         }
       }
     }
-    return apiClassMap[connectionConfig] as Api
+    return apiClassMap[zosmfUrl] as Api
   }
 
 }
@@ -64,15 +71,15 @@ private fun OkHttpClient.Builder.addThreadPool(): OkHttpClient.Builder {
   return this
 }
 
-private val unsafeOkHttpClient by lazy { buildUnsafeClient() }
-private val safeOkHttpClient by lazy {
+val unsafeOkHttpClient by lazy { buildUnsafeClient() }
+val safeOkHttpClient by lazy {
   OkHttpClient.Builder()
     .addThreadPool()
     .build()
 }
 
-private fun getOkHttpClient(urlConnection: UrlConnection): OkHttpClient {
-  return if (urlConnection.isAllowSelfSigned) {
+private fun getOkHttpClient(isAllowSelfSigned: Boolean): OkHttpClient {
+  return if (isAllowSelfSigned) {
     unsafeOkHttpClient
   } else {
     safeOkHttpClient

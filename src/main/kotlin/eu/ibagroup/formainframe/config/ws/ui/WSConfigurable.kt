@@ -21,7 +21,6 @@ import eu.ibagroup.formainframe.utils.isThe
 fun noConnectionsInSandbox() = sandboxCrudable.getAll<ConnectionConfig>().count() == 0L
 
 class WSConfigurable(
-  private val goToAddConnection: () -> Unit
 ) : BoundSearchableConfigurable("Working Sets", "mainframe") {
 
   private var panel: DialogPanel? = null

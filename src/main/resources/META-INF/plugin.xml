@@ -82,11 +82,8 @@
                 text="Refresh"
                 icon="AllIcons.Actions.Refresh"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.AddConnection"
-                class="eu.ibagroup.formainframe.explorer.AddConnection"/>
-
-        <action id="eu.ibagroup.formainframe.explorer.AddWorkingSet"
-                class="eu.ibagroup.formainframe.explorer.AddWorkingSet"/>
+        <action id="eu.ibagroup.formainframe.explorer.AddWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.AddWorkingSetAction" icon="AllIcons.General.Add"/>
 
         <action id="eu.ibagroup.formainframe.explorer.AllocateDataset"
                 class="eu.ibagroup.formainframe.explorer.AllocateDataset"
@@ -98,13 +95,13 @@
         <action id="eu.ibagroup.formainframe.explorer.AddMemberAction"
                 class="eu.ibagroup.formainframe.explorer.AddMemberAction" text="Member"/>
 
-        <group id="eu.ibagroup.formainframe.actions.AddActionGroup" popup="true" icon="AllIcons.General.Add">
-            <reference id="eu.ibagroup.formainframe.explorer.AddConnection"/>
-            <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSet"/>
-        </group>
+        <action class="eu.ibagroup.formainframe.explorer.SettingAction"
+                id = "eu.ibagroup.formainframe.explorer.SettingAction"
+                icon="AllIcons.General.Settings"/>
 
         <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
-            <reference id="eu.ibagroup.formainframe.actions.AddActionGroup"/>
+            <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.SettingAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.NewItemGroup" text="New" popup="true" class="eu.ibagroup.formainframe.explorer.NewItemActionGroup">
