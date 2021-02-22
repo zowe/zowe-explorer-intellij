@@ -3,7 +3,13 @@ package eu.ibagroup.formainframe.config.connect.ui
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.Messages
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
@@ -12,17 +18,34 @@ import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.connect.UrlConnection
+import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.utils.isThe
+import eu.ibagroup.r2z.InfoAPI
+import eu.ibagroup.r2z.buildApi
+import okhttp3.OkHttpClient
+import java.lang.Exception
+import java.lang.RuntimeException
+import java.security.SecureRandom
+import java.security.cert.CertificateException
+import java.security.cert.X509Certificate
+import java.time.Duration
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSession
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+import javax.swing.JComponent
 
 class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {
 
   var openAddDialog = false
 
   private fun addConnection() {
-    val addConnectionDialog = ConnectionDialog(sandboxCrudable)
-    if (addConnectionDialog.showAndGet()) {
-      connectionsTableModel?.addRow(addConnectionDialog.state)
+
+    val state = AddAndTestConnection(ConnectionDialogState(), sandboxCrudable, ProjectManager.getInstance().defaultProject).showUntilTested()
+    state?.let {
+      connectionsTableModel?.addRow(it)
     }
+
   }
 
   private var connectionsTableModel: ConnectionsTableModel? = null
@@ -117,5 +140,8 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
   override fun cancel() {
     reset()
   }
+
+
+
 
 }

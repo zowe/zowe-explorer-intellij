@@ -6,6 +6,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
+import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ComboBoxCellEditor
 import eu.ibagroup.formainframe.common.message
@@ -15,6 +16,7 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import eu.ibagroup.formainframe.utils.getAny
 import java.awt.Dimension
 import java.util.*
 import javax.swing.JComponent
@@ -34,7 +36,7 @@ class WorkingSetDialog(
       items = state.maskRow
     },
     disposable
-  )
+  ).apply { rowHeight = DEFAULT_ROW_HEIGHT }
 
   private val panel by lazy {
     panel {
@@ -53,17 +55,33 @@ class WorkingSetDialog(
           }
       }
       row {
-        cell(isFullWidth = true) {
-          label("Specify connection")
-          comboBox(
-            model = connectionComboBoxModel,
-            modelBinding = PropertyBinding(
-              get = { crudable.getByUniqueKey<ConnectionConfig>(state.connectionUuid) },
-              set = { config -> state.connectionUuid = config?.uuid ?: "" }
-            ),
-            renderer = SimpleListCellRenderer.create("") { it?.name }
-          )
+        label("Specify connection")
+        comboBox(
+          model = connectionComboBoxModel,
+          modelBinding = PropertyBinding(
+            get = {
+              val connectionConfig = crudable.getByUniqueKey<ConnectionConfig>(state.connectionUuid)
+              return@PropertyBinding if (connectionConfig != null) {
+                connectionConfig
+              } else if (!crudable.getAll<ConnectionConfig>().isEmpty()) {
+                crudable.getAll<ConnectionConfig>().getAny()?.also {
+                  state.connectionUuid = it.uuid
+                }
+              } else {
+                null
+              }
+            },
+            set = { config -> state.connectionUuid = config?.uuid ?: "" }
+          ),
+          renderer = SimpleListCellRenderer.create("") { it?.name }
+        ).withValidationOnApply {
+          if (it.selectedItem == null) {
+            ValidationInfo("You must provide a connection", it)
+          } else {
+            null
+          }
         }
+
       }
       row {
         toolbarTable("DS Mask included in Working Set", dsMasksTable, addDefaultActions = true) {
@@ -71,7 +89,7 @@ class WorkingSetDialog(
         }.withValidationOnApply {
           when {
             dsMasksTable.listTableModel.validationInfos.asMap.isNotEmpty() -> {
-              this.error("Fix errors in the table and try again")
+              ValidationInfo("Fix errors in the table and try again", it)
             }
             dsMasksTable.listTableModel.rowCount == 0 -> {
               this.warning("You are going to create a Working Set that doesn't fetch anything")
@@ -106,7 +124,7 @@ class WorkingSetDialog(
     }
 
     override fun setValue(item: WorkingSetDialogState.TableRow, value: String) {
-      item.mask = value
+      item.mask = if (value.length > 1 && value.endsWith("/")) value.substringBeforeLast("/") else value
     }
 
     override fun isCellEditable(item: WorkingSetDialogState.TableRow?): Boolean {
@@ -121,10 +139,22 @@ class WorkingSetDialog(
       return null
     }
 
+    private val maskRegex = Regex("[A-Za-z\$@#" + "0-9\\-" + "\\.\\*%]{0,46}")
+    private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
+
+
     override fun validateEntered(item: WorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
       return if (item.mask.isBlank()) {
-        ValidationInfo("Specify a valid, non-empty DS Mask", component)
-      } else null
+        ValidationInfo("Mask cannot be blank")
+      } else if (item.type == "z/OS" && item.mask.length > 46) {
+        ValidationInfo("Dataset mask must be less than 46 characters")
+      } else if (item.type == "z/OS" && !item.mask.matches(maskRegex)) {
+        ValidationInfo("")
+      } else if (item.type == "USS" && !item.mask.matches(ussPathRegex)) {
+        ValidationInfo("Provide a valid USS path")
+      } else {
+        null
+      }
     }
 
   }
@@ -148,7 +178,7 @@ class WorkingSetDialog(
     }
 
     override fun getWidth(table: JTable): Int {
-      return 50
+      return 100
     }
 
   }
