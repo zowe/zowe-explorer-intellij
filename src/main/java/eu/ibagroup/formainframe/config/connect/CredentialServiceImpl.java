@@ -16,6 +16,9 @@ public class CredentialServiceImpl implements CredentialService {
     String username = null;
     if (credentials != null) {
       username = credentials.getUserName();
+      if (username != null) {
+        username = username.toUpperCase();
+      }
     }
     return username;
   }
