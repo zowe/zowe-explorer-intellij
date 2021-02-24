@@ -108,7 +108,7 @@
                 text="Dataset"/>
         <action id="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
                 class="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
-                text="File" icon="AllIcons.FileTypes.Any_type"/>
+                text="File" icon="AllIcons.FileTypes.Text"/>
 
         <action id="eu.ibagroup.formainframe.explorer.CreateUssDirectoryAction"
                 class="eu.ibagroup.formainframe.explorer.CreateUssDirectoryAction"
