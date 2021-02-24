@@ -1,7 +1,11 @@
 package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.application.ApplicationManager
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.UrlConnection
+import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
 
 interface ConfigSandbox {
 
@@ -18,6 +22,13 @@ interface ConfigSandbox {
 
   fun <T> isModified(clazz: Class<out T>): Boolean
 
+  @get:Contains(
+    entities = [
+      WorkingSetConfig::class,
+      ConnectionConfig::class,
+      UrlConnection::class
+    ]
+  )
   val crudable: Crudable
 
 }

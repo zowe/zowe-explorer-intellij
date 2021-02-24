@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.dataops.allocation.AllocationStatus
+import eu.ibagroup.formainframe.dataops.allocation.MemberAllocationParams
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -26,14 +27,14 @@ class AddMemberAction : AnAction() {
           .getAttributes(currentNode.virtualFile)
           ?.name
         if (parentName != null) {
-          val dialog = AddMemberDialog(e.project, AddMemberState(datasetName = parentName))
+          val dialog = AddMemberDialog(e.project, MemberAllocationParams(datasetName = parentName))
           if (dialog.showAndGet()) {
             val state = dialog.state
             dataOpsManager.getAllocator(
-              requestClass = AddMemberState::class.java,
+              requestClass = MemberAllocationParams::class.java,
               queryClass = RemoteQuery::class.java
             ).allocate(
-              query = RemoteQueryImpl<AddMemberState>(
+              query = RemoteQueryImpl<MemberAllocationParams>(
                 connectionConfig = connectionConfig,
                 urlConnection = connectionUrl,
                 request = state

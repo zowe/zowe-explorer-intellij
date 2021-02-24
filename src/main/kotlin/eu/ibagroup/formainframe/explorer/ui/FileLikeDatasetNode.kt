@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -12,19 +13,20 @@ import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-class FileLikeDatasetFileNode(
-  private val file: MFVirtualFile,
+class FileLikeDatasetNode(
+  file: MFVirtualFile,
+  project: Project,
   unit: ExplorerUnit,
   viewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(file, unit, viewSettings) {
+) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(file, project, unit, viewSettings) {
 
   override fun isAlwaysLeaf(): Boolean {
-    return !file.isDirectory
+    return !value.isDirectory
   }
 
   override fun update(presentation: PresentationData) {
-    presentation.setIcon(if (file.isDirectory) AllIcons.Nodes.Folder else AllIcons.FileTypes.Text)
-    presentation.addText(file.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else AllIcons.FileTypes.Text)
+    presentation.addText(value.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     val volser = dataOpsManager
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
       .getAttributes(value)?.volser
@@ -32,7 +34,8 @@ class FileLikeDatasetFileNode(
   }
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
-    return value.cachedChildren.map { FileLikeDatasetFileNode(file, unit, viewSettings) }.toMutableSmartList()
+    return value.cachedChildren
+      .map { FileLikeDatasetNode(value, notNullProject, unit, viewSettings) }.toMutableSmartList()
   }
 
   override fun getVirtualFile(): MFVirtualFile {

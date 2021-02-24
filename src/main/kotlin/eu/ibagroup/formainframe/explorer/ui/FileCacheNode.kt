@@ -1,11 +1,12 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tree.LeafState
 import com.intellij.util.containers.toMutableSmartList
-import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
+import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.dataops.fetchAdapter
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
@@ -15,9 +16,10 @@ import java.util.concurrent.locks.ReentrantLock
 
 abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualFile, U : ExplorerUnit>(
   value: Value,
+  project: Project,
   unit: U,
   explorerViewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<Value, U>(value, unit, explorerViewSettings) {
+) : ExplorerUnitTreeNodeBase<Value, U>(value, project, unit, explorerViewSettings) {
 
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
@@ -32,14 +34,18 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return lock(lock) {
-      val childrenNodes = cachedChildren?.toChildrenNodes() ?: listOf(LoadingNode(explorer, viewSettings)).also {
+      val childrenNodes = cachedChildren
+        ?.toChildrenNodes() ?: listOf(LoadingNode(notNullProject, explorer, viewSettings)).also {
         query?.let { q ->
           fileFetchProvider.forceReloadAsync(q, fetchAdapter {
-              onFinish {
-                needsToShowPlus = false
-                sendTopic(FileExplorerContent.NODE_UPDATE)(this@FileCacheNode, true)
-              }
-            }, unit.explorer.project)
+            onFinish {
+              needsToShowPlus = false
+              sendTopic(
+                topic = FileExplorerContent.NODE_UPDATE,
+                componentManager = explorer.componentManager
+              )(this@FileCacheNode, true)
+            }
+          }, project)
         }
       }
       childrenNodes.toMutableSmartList()

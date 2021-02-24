@@ -13,7 +13,7 @@ data class RemoteDatasetAttributes(
 
   override fun clone(): RemoteDatasetAttributes {
     return RemoteDatasetAttributes(datasetInfo.clone(), url, requesters.map {
-      MaskedRequester(it.user, it.queryMask)
+      MaskedRequester(it.connectionConfig, it.queryMask)
     }.toMutableList())
   }
 

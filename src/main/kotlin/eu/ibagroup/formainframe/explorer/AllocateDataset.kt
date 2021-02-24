@@ -9,6 +9,7 @@ import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.dataops.allocation.AllocationStatus
+import eu.ibagroup.formainframe.dataops.allocation.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
@@ -24,11 +25,11 @@ class AllocateDataset : AnAction() {
       val config = parentNode.unit.connectionConfig
       val urlConfig = parentNode.unit.urlConnection
       if (config != null && urlConfig != null) {
-        val dialog = AllocationDialog(e.project, AllocationDialogState())
+        val dialog = AllocationDialog(e.project, DatasetAllocationParams())
         if (dialog.showAndGet()) {
           val state = postProcessState(dialog.state)
           dataOpsManager.getAllocator(
-            requestClass = AllocationDialogState::class.java,
+            requestClass = DatasetAllocationParams::class.java,
             queryClass = RemoteQuery::class.java
           ).allocate(
             query = RemoteQueryImpl(
@@ -75,7 +76,7 @@ class AllocateDataset : AnAction() {
     e.presentation.isVisible = node is WorkingSetNode || node is DSMaskNode
   }
 
-  private fun postProcessState(state: AllocationDialogState): AllocationDialogState {
+  private fun postProcessState(state: DatasetAllocationParams): DatasetAllocationParams {
     if (state.allocationParameters.datasetOrganization != DatasetOrganization.PO) {
       state.allocationParameters.directoryBlocks = null
     } else if (state.allocationParameters.recordFormat != RecordFormat.FB || state.allocationParameters.recordFormat != RecordFormat.VB) {

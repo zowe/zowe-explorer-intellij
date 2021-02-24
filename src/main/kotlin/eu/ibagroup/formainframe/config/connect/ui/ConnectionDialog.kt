@@ -136,8 +136,3 @@ class ConnectionDialog(
   }
 
 }
-
-
-
-
-

@@ -9,7 +9,7 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.getAny
+import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.toMutableList
 import javax.swing.table.TableCellEditor
 
@@ -25,7 +25,7 @@ class WSConnectionNameColumn(private val crudable: Crudable) :
   }
 
   override fun setValue(item: WorkingSetConfig, value: String) {
-    crudable.find<ConnectionConfig> { it.name == value }.getAny()?.let {
+    crudable.find<ConnectionConfig> { it.name == value }.findAnyNullable()?.let {
       item.connectionConfigUuid = it.uuid
     }
   }

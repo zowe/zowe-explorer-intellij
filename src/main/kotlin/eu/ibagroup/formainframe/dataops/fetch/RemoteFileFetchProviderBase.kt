@@ -65,7 +65,9 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
       override fun run(indicator: ProgressIndicator) {
         callback.onStart()
         try {
+          indicator.checkCanceled()
           val fetched = fetchResponse(query)
+          indicator.checkCanceled()
           val counter = AtomicInteger(0)
           indicator.fraction = 0.0
           val totalCount = fetched.size
