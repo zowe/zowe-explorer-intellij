@@ -39,6 +39,8 @@
         <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.DatasetAllocator" />
 
         <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.MemberAllocator" />
+
+        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.UssAllocator" />
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -90,7 +92,11 @@
                 text="Dataset"/>
         <action id="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
                 class="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
-                text="File"/>
+                text="File" icon="AllIcons.FileTypes.Any_type"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.CreateUssDirectoryAction"
+                class="eu.ibagroup.formainframe.explorer.CreateUssDirectoryAction"
+                text="Directory" icon="AllIcons.Nodes.Folder"/>
 
         <action id="eu.ibagroup.formainframe.explorer.AddMemberAction"
                 class="eu.ibagroup.formainframe.explorer.AddMemberAction" text="Member"/>
@@ -112,6 +118,8 @@
             <reference id="eu.ibagroup.formainframe.explorer.AllocateDataset" />
             <reference id="eu.ibagroup.formainframe.explorer.CreateUssFileAction" />
             <reference id="eu.ibagroup.formainframe.explorer.AddMemberAction" />
+            <reference id="eu.ibagroup.formainframe.explorer.CreateUssFileAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.CreateUssDirectoryAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup" >
@@ -119,7 +127,6 @@
             <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
             <reference id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"/>
         </group>
-
 
     </actions>
 
