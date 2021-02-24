@@ -20,7 +20,7 @@ class AddMemberDialog(project: Project?, override var state: AddMemberState) : D
       row {
         label("Member name")
         textField(state::memberName).withValidationOnInput {
-          if (it.text.isNotEmpty() && it.text[0].toString().matches(firstLetterRegex)) {
+          if (it.text.isNotEmpty() && !it.text[0].toString().matches(firstLetterRegex)) {
             ValidationInfo("Member name should start with A-Z a-z or national characters", it)
           } else if (!it.text.matches(memberRegex)) {
             ValidationInfo("Member name should contain only A-Z a-z 0-9 or national characters", it)

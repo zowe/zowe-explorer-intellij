@@ -10,6 +10,7 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.dataops.allocation.AllocationStatus
 import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
@@ -39,7 +40,7 @@ class AllocateDataset : AnAction() {
               onSuccess {
                 if (it == AllocationStatus.SUCCESS) {
                   runInEdt {
-                    val workingSetConfig = configCrudable.getByUniqueKey<WorkingSetConfig>(workingSet.uuid)
+                    val workingSetConfig = configCrudable.getByUniqueKey<WorkingSetConfig>(workingSet.uuid)?.clone()
                     if (workingSetConfig != null) {
                       workingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
                       configCrudable.update(workingSetConfig)
