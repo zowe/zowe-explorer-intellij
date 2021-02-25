@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
 import java.io.File

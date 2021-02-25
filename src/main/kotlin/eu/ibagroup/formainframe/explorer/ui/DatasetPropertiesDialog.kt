@@ -1,9 +1,7 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.panel
@@ -11,9 +9,8 @@ import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.r2z.*
+import eu.ibagroup.r2z.HasMigrated
 import javax.swing.JComponent
-import javax.swing.ListCellRenderer
 
 class DatasetPropertiesDialog(val project: Project?, override var state: DatasetState) : DialogWrapper(project), StatefulComponent<DatasetState> {
   init {
