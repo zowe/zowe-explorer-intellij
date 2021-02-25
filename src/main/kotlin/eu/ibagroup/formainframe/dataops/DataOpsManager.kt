@@ -2,6 +2,7 @@ package eu.ibagroup.formainframe.dataops
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.allocation.Allocator
@@ -13,15 +14,9 @@ import eu.ibagroup.formainframe.dataops.content.SaveStrategy
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import java.io.IOException
 
-val dataOpsManager
-  get() = DataOpsManager.instance
-
 interface DataOpsManager : Disposable {
 
   companion object {
-    @JvmStatic
-    val ATTRIBUTES_CHANGED = Topic.create("attributesChanged", AttributesListener::class.java)
-
     @JvmStatic
     val instance: DataOpsManager
       get() = ApplicationManager.getApplication().getService(DataOpsManager::class.java)
@@ -62,6 +57,8 @@ interface DataOpsManager : Disposable {
   }
 
   fun removeContentSync(file: VirtualFile)
+
+  val componentManager: ComponentManager
 
 }
 

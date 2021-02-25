@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.dataops.allocation
 
 import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.api.enqueueSync
@@ -8,7 +9,13 @@ import eu.ibagroup.formainframe.explorer.ui.CreateFileState
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 
-class UssAllocator : RemoteAllocatorBase<CreateFileState>() {
+class UssAllocatorFactory : AllocatorFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): Allocator<*, *> {
+    return UssAllocator(dataOpsManager)
+  }
+}
+
+class UssAllocator(dataOpsManager: DataOpsManager) : RemoteAllocatorBase<CreateFileState>(dataOpsManager) {
 
   override val requestClass = CreateFileState::class.java
 

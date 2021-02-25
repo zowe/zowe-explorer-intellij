@@ -1,6 +1,9 @@
 package eu.ibagroup.formainframe.dataops
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.allocation.Allocator
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
@@ -13,9 +16,16 @@ import eu.ibagroup.formainframe.utils.findAnyNullable
 @Suppress("UNCHECKED_CAST")
 class DataOpsManagerImpl : DataOpsManager {
 
-  private val attributesServices = AttributesService.EP.extensionList
+  private fun <Component> List<DataOpsComponentFactory<Component>>.buildComponents() : MutableList<Component> {
+    return map { it.buildComponent(this@DataOpsManagerImpl) }.toMutableSmartList()
+  }
 
-  private val allocators = Allocator.EP.extensionList
+  override val componentManager: ComponentManager
+    get() = ApplicationManager.getApplication()
+
+  private val attributesServices = AttributesService.EP.extensionList.buildComponents()
+
+  private val allocators = Allocator.EP.extensionList.buildComponents()
 
   override fun <R : Any, Q : Query<R>> getAllocator(
     requestClass: Class<out R>,
@@ -42,13 +52,13 @@ class DataOpsManagerImpl : DataOpsManager {
 
   override fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes? {
     return attributesServices.stream()
-      .map { it.getAttributes(file) }
+      .map { (it as AttributesService<*, VirtualFile>).getAttributes(file) }
       .filter { it != null }
       .findAnyNullable()
   }
 
   private val fileFetchProviders by lazy {
-    FileFetchProvider.EP.extensionList
+    FileFetchProvider.EP.extensionList.buildComponents()
   }
 
   override fun <R : Any, Q : Query<R>, File : VirtualFile> getFileFetchProvider(
@@ -67,7 +77,7 @@ class DataOpsManagerImpl : DataOpsManager {
   }
 
   private val contentSynchronizers by lazy {
-    ContentSynchronizer.EP.extensionList
+    ContentSynchronizer.EP.extensionList.buildComponents()
   }
 
   private fun getAppropriateContentSynchronizer(file: VirtualFile): ContentSynchronizer {

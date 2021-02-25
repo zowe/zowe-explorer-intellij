@@ -3,17 +3,23 @@ package eu.ibagroup.formainframe.dataops.content
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.common.appLevelPluginDisposable
 import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import java.io.IOException
 
-class MemberContentSynchronizer : RemoteAttributesContentSynchronizerBase<RemoteMemberAttributes>(
-  ApplicationManager.getApplication().messageBus, appLevelPluginDisposable
-) {
+class MemberContentSynchronizerFactory : ContentSynchronizerFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
+    return MemberContentSynchronizer(dataOpsManager)
+  }
+}
+
+class MemberContentSynchronizer(
+  dataOpsManager: DataOpsManager
+) : RemoteAttributesContentSynchronizerBase<RemoteMemberAttributes>(dataOpsManager) {
 
   override val vFileClass = MFVirtualFile::class.java
 

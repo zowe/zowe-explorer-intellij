@@ -1,7 +1,9 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.util.io.FileAttributes
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
@@ -10,7 +12,15 @@ import eu.ibagroup.r2z.Dataset
 const val MIGRATED = "Migrated"
 const val DATASETS_SUBFOLDER_NAME = "Data Sets"
 
-class RemoteDatasetAttributesService : MFRemoteAttributesServiceBase<RemoteDatasetAttributes>() {
+class RemoteDatasetAttributesServiceFactory : AttributesServiceFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
+    return RemoteDatasetAttributesService(dataOpsManager)
+  }
+}
+
+class RemoteDatasetAttributesService(
+  dataOpsManager: DataOpsManager
+) : MFRemoteAttributesServiceBase<RemoteDatasetAttributes>(dataOpsManager) {
 
   override val attributesClass = RemoteDatasetAttributes::class.java
 
@@ -27,7 +37,10 @@ class RemoteDatasetAttributesService : MFRemoteAttributesServiceBase<RemoteDatas
     )
   }
 
-  override fun mergeAttributes(oldAttributes: RemoteDatasetAttributes, newAttributes: RemoteDatasetAttributes): RemoteDatasetAttributes {
+  override fun mergeAttributes(
+    oldAttributes: RemoteDatasetAttributes,
+    newAttributes: RemoteDatasetAttributes
+  ): RemoteDatasetAttributes {
     return RemoteDatasetAttributes(
       datasetInfo = newAttributes.datasetInfo,
       url = newAttributes.url,

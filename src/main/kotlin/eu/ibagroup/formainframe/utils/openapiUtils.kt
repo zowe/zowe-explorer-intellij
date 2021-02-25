@@ -87,3 +87,11 @@ inline fun runInEdtAndRead(crossinline block: () -> Unit) {
 }
 
 fun AlreadyDisposedException(clazz: Class<*>) = AlreadyDisposedException("${clazz.name} is already disposed")
+
+inline fun <reified S : Any> service(componentManager: ComponentManager): S {
+  return componentManager.getService(S::class.java)
+}
+
+inline fun <reified S : Any> appService(): S {
+  return service(ApplicationManager.getApplication())
+}

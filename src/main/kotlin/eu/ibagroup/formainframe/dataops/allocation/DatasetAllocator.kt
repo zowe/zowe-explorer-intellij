@@ -1,12 +1,21 @@
 package eu.ibagroup.formainframe.dataops.allocation
 
 import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.api.enqueueSync
 import eu.ibagroup.r2z.DataAPI
 
-class DatasetAllocator : RemoteAllocatorBase<DatasetAllocationParams>() {
+class DatasetAllocatorFactory : AllocatorFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): Allocator<*, *> {
+    return DatasetAllocator(dataOpsManager)
+  }
+}
+
+class DatasetAllocator(
+  dataOpsManager: DataOpsManager
+) : RemoteAllocatorBase<DatasetAllocationParams>(dataOpsManager) {
 
   override val title: String
     get() = "Allocate dataset"

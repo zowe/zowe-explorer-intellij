@@ -1,13 +1,16 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.lock
+import eu.ibagroup.formainframe.utils.sendTopic
 import java.io.IOException
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-abstract class FsStructuringAttributesServiceBase<Attributes : VFileInfoAttributes, VFile : VirtualFile> :
-  AttributesService<Attributes, VFile> {
+abstract class FsStructuringAttributesServiceBase<Attributes : VFileInfoAttributes, VFile : VirtualFile>(
+  private val dataOpsManager: DataOpsManager
+) : AttributesService<Attributes, VFile> {
 
   abstract val subFolderName: String
 
@@ -33,7 +36,7 @@ abstract class FsStructuringAttributesServiceBase<Attributes : VFileInfoAttribut
       val createdFile = findOrCreateFileInternal(attributes)
       fileToAttributesMap[createdFile] = attributes
       attributesToFileMap[buildUniqueAttributes(attributes)] = createdFile
-      sendAttributesTopic().onCreate(attributes, createdFile)
+      sendTopic(AttributesService.ATTRIBUTES_CHANGED).onCreate(attributes, createdFile)
 
       createdFile
     }
@@ -53,8 +56,8 @@ abstract class FsStructuringAttributesServiceBase<Attributes : VFileInfoAttribut
       reassignAttributesToFile(file, oldAttributes, newAttributes)
       fileToAttributesMap[file] = newAttributes
       attributesToFileMap[buildUniqueAttributes(newAttributes)] = file
-      //reassignAttributesToFile(file, oldAttributes, newAttributes)
-      sendAttributesTopic().onUpdate(oldAttributes, newAttributes, file)
+      sendTopic(AttributesService.ATTRIBUTES_CHANGED, dataOpsManager.componentManager)
+        .onUpdate(oldAttributes, newAttributes, file)
     }
   }
 
@@ -91,7 +94,7 @@ abstract class FsStructuringAttributesServiceBase<Attributes : VFileInfoAttribut
       getAttributes(file)?.let {
         attributesToFileMap.remove(it)
         fileToAttributesMap.remove(file)
-        sendAttributesTopic().onDelete(it, file)
+        sendTopic(AttributesService.ATTRIBUTES_CHANGED, dataOpsManager.componentManager).onDelete(it, file)
       }
     }
   }

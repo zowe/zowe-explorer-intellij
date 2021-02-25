@@ -2,11 +2,20 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.util.SmartList
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
 
-class RemoteUssAttributesService : MFRemoteAttributesServiceBase<RemoteUssAttributes>() {
+class RemoteUssAttributesServiceFactory : AttributesServiceFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
+    return RemoteUssAttributesService(dataOpsManager)
+  }
+}
+
+class RemoteUssAttributesService(
+  dataOpsManager: DataOpsManager
+) : MFRemoteAttributesServiceBase<RemoteUssAttributes>(dataOpsManager) {
 
   override val attributesClass = RemoteUssAttributes::class.java
 

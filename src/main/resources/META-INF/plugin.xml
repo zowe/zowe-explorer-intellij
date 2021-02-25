@@ -6,16 +6,16 @@
     <extensionPoints>
 
         <extensionPoint name="attributesService"
-                        interface="eu.ibagroup.formainframe.dataops.attributes.AttributesService"/>
+                        interface="eu.ibagroup.formainframe.dataops.attributes.AttributesServiceFactory"/>
 
         <extensionPoint name="fileDataProvider"
-                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider"/>
+                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
 
         <extensionPoint name="allocator"
-                        interface="eu.ibagroup.formainframe.dataops.allocation.Allocator"/>
+                        interface="eu.ibagroup.formainframe.dataops.allocation.AllocatorFactory"/>
 
         <extensionPoint name="contentSynchronizer"
-                        interface="eu.ibagroup.formainframe.dataops.content.ContentSynchronizer"/>
+                        interface="eu.ibagroup.formainframe.dataops.content.ContentSynchronizerFactory"/>
 
     </extensionPoints>
 
@@ -29,31 +29,37 @@
 
     <extensions defaultExtensionNs="eu.ibagroup.formainframe">
 
-        <attributesService implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesService"/>
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesServiceFactory"/>
 
-        <attributesService implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributesService"/>
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributesServiceFactory"/>
 
-        <attributesService implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributesService"/>
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributesServiceFactory"/>
 
         <fileDataProvider
-                implementation="eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProvider"/>
+                implementation="eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProviderFactory"/>
 
         <fileDataProvider
-                implementation="eu.ibagroup.formainframe.dataops.fetch.MemberFileFetchProvider"/>
+                implementation="eu.ibagroup.formainframe.dataops.fetch.MemberFileFetchProviderFactory"/>
 
-        <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProvider"/>
+        <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProviderFactory"/>
 
-        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.DatasetAllocator"/>
+        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.DatasetAllocatorFactory"/>
 
-        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.MemberAllocator"/>
+        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.MemberAllocatorFactory"/>
 
-        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.UssAllocator"/>
+        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.UssAllocatorFactory"/>
 
-        <contentSynchronizer implementation="eu.ibagroup.formainframe.dataops.content.MemberContentSynchronizer"/>
+        <contentSynchronizer
+                implementation="eu.ibagroup.formainframe.dataops.content.MemberContentSynchronizerFactory"/>
 
-        <contentSynchronizer implementation="eu.ibagroup.formainframe.dataops.content.SeqDatasetContentSynchronizer"/>
+        <contentSynchronizer
+                implementation="eu.ibagroup.formainframe.dataops.content.SeqDatasetContentSynchronizerFactory"/>
 
-        <contentSynchronizer implementation="eu.ibagroup.formainframe.dataops.content.UssFileContentSynchronizer"/>
+        <contentSynchronizer
+                implementation="eu.ibagroup.formainframe.dataops.content.UssFileContentSynchronizerFactory"/>
 
     </extensions>
 

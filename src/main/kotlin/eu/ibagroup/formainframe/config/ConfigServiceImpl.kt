@@ -40,6 +40,8 @@ class ConfigServiceImpl : ConfigService {
 
   override val eventHandler = ConfigEventHandler()
 
+  override val autoSaveDelayMillis = 3000L
+
   override val configsAreLoaded: Boolean
     get() = loaded.get()
 

@@ -39,6 +39,8 @@ interface ConfigService : PersistentStateComponent<ConfigState> {
 
   val eventHandler: EventHandler
 
+  val autoSaveDelayMillis: Long
+
 }
 
 class CredentialsNotFoundForConnection(val connectionConfig: ConnectionConfig) : Exception(

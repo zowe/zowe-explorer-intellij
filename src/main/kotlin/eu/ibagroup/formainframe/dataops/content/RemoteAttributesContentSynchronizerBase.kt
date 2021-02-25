@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.MessageBus
 import com.jetbrains.rd.util.ConcurrentHashMap
-import eu.ibagroup.formainframe.dataops.attributes.MFRemoteFileAttributes
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.utils.ContentStorage
 import eu.ibagroup.formainframe.utils.Execution
@@ -15,9 +15,8 @@ import java.io.IOException
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
 
 abstract class RemoteAttributesContentSynchronizerBase<Attributes : VFileInfoAttributes>(
-  messageBus: MessageBus,
-  parentDisposable: Disposable
-) : AbstractAttributedContentSynchronizer<Attributes>(messageBus, parentDisposable) {
+  dataOpsManager: DataOpsManager
+) : AbstractAttributedContentSynchronizer<Attributes>(dataOpsManager) {
 
   protected abstract val storageNamePostfix: String
 
@@ -68,7 +67,7 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : VFileInfoAtt
           }
         }
         val fileBytes = file.contentsToByteArray()
-        if (saveStrategy(successfulStatesStorage.getBytes(recordId), fileBytes, file)) {
+        if (saveStrategy.decide(file, successfulStatesStorage.getBytes(recordId), fileBytes)) {
           uploadNewContent(attributes, fileBytes)
         }
       }

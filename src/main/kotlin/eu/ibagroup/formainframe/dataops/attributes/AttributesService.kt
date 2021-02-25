@@ -2,18 +2,19 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.io.IOException
-
-fun sendAttributesTopic(): AttributesListener = sendTopic(DataOpsManager.ATTRIBUTES_CHANGED)
 
 interface AttributesService<Attributes : VFileInfoAttributes, VFile : VirtualFile> {
 
   companion object {
     @JvmStatic
-    val EP = ExtensionPointName
-      .create<AttributesService<VFileInfoAttributes, VirtualFile>>("eu.ibagroup.formainframe.attributesService")
+    val EP = ExtensionPointName.create<AttributesServiceFactory>("eu.ibagroup.formainframe.attributesService")
+
+    @JvmStatic
+    val ATTRIBUTES_CHANGED = Topic.create("attributesChanged", AttributesListener::class.java)
   }
 
   @Throws(IOException::class)

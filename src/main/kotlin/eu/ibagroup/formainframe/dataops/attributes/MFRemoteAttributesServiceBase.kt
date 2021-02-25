@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.util.io.FileAttributes
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.formainframe.vfs.createAttributes
@@ -12,8 +13,9 @@ private fun String.trimUrl(): String {
   } else this
 }
 
-abstract class MFRemoteAttributesServiceBase<Attributes : MFRemoteFileAttributes<*>> :
-  FsStructuringAttributesServiceBase<Attributes, MFVirtualFile>() {
+abstract class MFRemoteAttributesServiceBase<Attributes : MFRemoteFileAttributes<*>>(
+  dataOpsManager: DataOpsManager
+) : FsStructuringAttributesServiceBase<Attributes, MFVirtualFile>(dataOpsManager) {
 
   protected companion object {
     val fs = MFVirtualFileSystem.instance

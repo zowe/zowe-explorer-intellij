@@ -1,11 +1,9 @@
 package eu.ibagroup.formainframe.dataops.content
 
-import com.intellij.openapi.application.ApplicationManager
-import eu.ibagroup.formainframe.common.appLevelPluginDisposable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.api.api
-import eu.ibagroup.formainframe.dataops.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.mapNotNull
@@ -14,9 +12,15 @@ import eu.ibagroup.r2z.DataAPI
 import retrofit2.Call
 import java.io.IOException
 
-class SeqDatasetContentSynchronizer : RemoteAttributesContentSynchronizerBase<RemoteDatasetAttributes>(
-  ApplicationManager.getApplication().messageBus, appLevelPluginDisposable
-) {
+class SeqDatasetContentSynchronizerFactory : ContentSynchronizerFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
+    return SeqDatasetContentSynchronizer(dataOpsManager)
+  }
+}
+
+class SeqDatasetContentSynchronizer(
+  dataOpsManager: DataOpsManager
+) : RemoteAttributesContentSynchronizerBase<RemoteDatasetAttributes>(dataOpsManager) {
   override val vFileClass = MFVirtualFile::class.java
 
   override val attributesClass = RemoteDatasetAttributes::class.java
