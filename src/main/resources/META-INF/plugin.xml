@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>eu.ibagroup.formainframe</id>
 
-    <idea-version since-build="203.7148.72"/>
+    <idea-version since-build="203.7148.53"/>
 
     <extensionPoints>
 

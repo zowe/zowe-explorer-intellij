@@ -4,7 +4,7 @@ import com.intellij.util.io.storage.CapacityAllocationPolicy
 import com.intellij.util.io.storage.Storage
 
 class ContentStorage(name: String) : Storage(
-  forMainframePluginDir.toPath().resolve("$name.dat"),
+  cachesDir.absoluteFile.resolve("$name.dat").toPath(),
   CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH
 ) {
 

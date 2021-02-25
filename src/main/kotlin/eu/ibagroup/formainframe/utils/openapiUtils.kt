@@ -5,8 +5,10 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
+import java.io.File
 
 class Dummy private constructor()
 
@@ -21,8 +23,10 @@ val forMainframePluginDescriptor by lazy {
     ?: throw IllegalStateException("Dummy class wasn't loaded by For Mainframe plugin's class loader for some reason")
 }
 
-val forMainframePluginDir by lazy {
-  PluginPathManager.getPluginHome(forMainframePluginDescriptor.name)
+val cachesDir by lazy {
+  val cachesDirString = System.getProperty("caches_dir")
+  val cachesDir = File(cachesDirString ?: PathManager.getSystemPath() + "/caches/")
+  return@lazy cachesDir
 }
 
 fun <L> sendTopic(
