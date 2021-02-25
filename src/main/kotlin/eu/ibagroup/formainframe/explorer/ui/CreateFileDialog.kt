@@ -2,10 +2,10 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
-import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent

@@ -9,7 +9,6 @@ import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import org.jetbrains.uast.test.common.sourcesFromDirRecursive
 import javax.swing.JComponent
 
 class MemberPropertiesDialog(var project: Project?, override var state: MemberState) : DialogWrapper(project),

@@ -9,8 +9,6 @@ import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.fetchAdapter
 import eu.ibagroup.formainframe.utils.sendTopic
 
-fun sendCacheUpdatedTopic(): FileCacheListener = sendTopic(FileFetchProvider.CACHE_UPDATED)
-
 fun <File : VirtualFile> emptyCallback() = fetchAdapter<Collection<File>> {  }
 
 interface FileFetchProvider<R : Any, Q : Query<R>, File : VirtualFile> {
@@ -20,7 +18,7 @@ interface FileFetchProvider<R : Any, Q : Query<R>, File : VirtualFile> {
     val CACHE_UPDATED = Topic.create("cacheUpdated", FileCacheListener::class.java)
 
     @JvmStatic
-    val EP = ExtensionPointName.create<FileFetchProvider<*, *, *>>("eu.ibagroup.formainframe.fileDataProvider")
+    val EP = ExtensionPointName.create<FileFetchProviderFactory>("eu.ibagroup.formainframe.fileDataProvider")
   }
 
   fun getCached(query: Q): Collection<File>?

@@ -1,22 +1,20 @@
 package eu.ibagroup.formainframe.dataops.content
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.MessageBus
+import eu.ibagroup.formainframe.config.ConfigService
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
-import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.utils.ChannelExecutor
 import eu.ibagroup.formainframe.utils.Execution
 import eu.ibagroup.formainframe.utils.QueueExecutor
 import kotlinx.coroutines.channels.Channel
 import java.time.Duration
 
-private val CHANNEL_DELAY = Duration.ofSeconds(3)
+private val CHANNEL_DELAY = Duration.ofMillis(ConfigService.instance.autoSaveDelayMillis)
 
 abstract class AbstractAttributedContentSynchronizer<Attributes : VFileInfoAttributes>(
-  messageBus: MessageBus,
-  parentDisposable: Disposable
-) : AbstractQueuedContentSynchronizer(messageBus, parentDisposable) {
+  dataOpsManager: DataOpsManager
+) : AbstractQueuedContentSynchronizer(dataOpsManager) {
 
   protected val attributesService by lazy {
     dataOpsManager.getAttributesService(attributesClass, vFileClass)

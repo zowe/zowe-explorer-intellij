@@ -2,7 +2,7 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.application.runReadAction
 import com.jetbrains.rd.util.ConcurrentHashMap
-import eu.ibagroup.formainframe.dataops.dataOpsManager
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
@@ -10,7 +10,15 @@ import eu.ibagroup.formainframe.vfs.createAttributes
 import eu.ibagroup.r2z.Member
 import java.io.IOException
 
-class RemoteMemberAttributesService : AttributesService<RemoteMemberAttributes, MFVirtualFile> {
+class RemoteMemberAttributesServiceFactory : AttributesServiceFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
+    return RemoteMemberAttributesService(dataOpsManager)
+  }
+}
+
+class RemoteMemberAttributesService(
+  private val dataOpsManager: DataOpsManager
+) : AttributesService<RemoteMemberAttributes, MFVirtualFile> {
 
   companion object {
     private val fsModel = MFVirtualFileSystem.instance.model

@@ -6,14 +6,15 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.ws.UssPath
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 private fun withSlashIfNeeded(ussPath: UssPath): String {
@@ -43,7 +44,8 @@ class UssDirNode(
     }
 
   private val attributesService
-    get() = dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
+    get() = service<DataOpsManager>(explorer.componentManager)
+      .getAttributesService<RemoteUssAttributes, MFVirtualFile>()
 
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
     return find { attributesService.getAttributes(it)?.path == value.path }

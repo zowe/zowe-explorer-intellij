@@ -1,8 +1,11 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.config.connect.username
 import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.api.enqueueSync
@@ -15,9 +18,14 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.Dataset
 import java.io.IOException
 
+class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
+    return DatasetFileFetchProvider(dataOpsManager)
+  }
+}
 
-class DatasetFileFetchProvider :
-  RemoteAttributedFileFetchBase<DSMask, RemoteDatasetAttributes, MFVirtualFile>() {
+class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
+  RemoteAttributedFileFetchBase<DSMask, RemoteDatasetAttributes, MFVirtualFile>(dataOpsManager) {
 
   override val requestClass = DSMask::class.java
 

@@ -2,25 +2,17 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.containers.isEmpty
-import eu.ibagroup.formainframe.config.MainframeConfigurable
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.ui.AddAndTestConnection
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialog
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
 import eu.ibagroup.formainframe.config.connect.ui.initEmptyUuids
-import eu.ibagroup.formainframe.config.sandboxCrudable
-import eu.ibagroup.formainframe.config.ws.ui.WSConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
 import eu.ibagroup.formainframe.utils.crudable.getAll
-import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
 
 class AddWorkingSetAction : AnAction("Create Working Set") {
 

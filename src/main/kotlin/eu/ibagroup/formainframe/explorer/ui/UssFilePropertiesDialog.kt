@@ -1,20 +1,16 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.r2z.FileModeValue
-import javax.swing.JComboBox
 import javax.swing.JComponent
-import javax.swing.ListCellRenderer
 
 class UssFilePropertiesDialog(project: Project?, override var state: UssFileState) : DialogWrapper(project),
   StatefulComponent<UssFileState> {

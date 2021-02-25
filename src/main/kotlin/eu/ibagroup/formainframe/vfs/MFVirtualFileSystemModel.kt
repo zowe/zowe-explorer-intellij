@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.utils.*
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jgrapht.Graph

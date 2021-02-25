@@ -3,7 +3,6 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.explorer.Explorer

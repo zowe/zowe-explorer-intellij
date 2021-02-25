@@ -13,6 +13,7 @@ import eu.ibagroup.formainframe.dataops.allocation.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
 
@@ -28,7 +29,7 @@ class AllocateDataset : AnAction() {
         val dialog = AllocationDialog(e.project, DatasetAllocationParams())
         if (dialog.showAndGet()) {
           val state = postProcessState(dialog.state)
-          dataOpsManager.getAllocator(
+          service<DataOpsManager>(parentNode.unit.explorer.componentManager).getAllocator(
             requestClass = DatasetAllocationParams::class.java,
             queryClass = RemoteQuery::class.java
           ).allocate(

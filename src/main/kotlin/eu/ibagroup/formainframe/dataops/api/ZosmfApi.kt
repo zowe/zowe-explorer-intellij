@@ -2,7 +2,6 @@ package eu.ibagroup.formainframe.dataops.api
 
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 
 interface ZosmfApi {
 

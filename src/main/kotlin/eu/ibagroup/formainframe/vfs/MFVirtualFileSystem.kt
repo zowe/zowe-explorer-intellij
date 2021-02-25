@@ -3,7 +3,6 @@ package eu.ibagroup.formainframe.vfs
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManager
 import eu.ibagroup.formainframe.common.appLevelPluginDisposable
-import eu.ibagroup.formainframe.dataops.dataOpsManager
 
 class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtualFileSystemModel>(
   MFVirtualFile::class.java,

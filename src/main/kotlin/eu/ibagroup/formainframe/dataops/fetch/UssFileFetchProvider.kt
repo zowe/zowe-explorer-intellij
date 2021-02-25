@@ -2,6 +2,7 @@ package eu.ibagroup.formainframe.dataops.fetch
 
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.config.connect.username
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.api.enqueueSync
@@ -13,7 +14,15 @@ import java.io.IOException
 
 data class UssQuery(val path: String)
 
-class UssFileFetchProvider : RemoteAttributedFileFetchBase<UssQuery, RemoteUssAttributes, MFVirtualFile>() {
+class UssFileFetchProviderFactory : FileFetchProviderFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
+    return UssFileFetchProvider(dataOpsManager)
+  }
+}
+
+class UssFileFetchProvider(
+  dataOpsManager: DataOpsManager
+) : RemoteAttributedFileFetchBase<UssQuery, RemoteUssAttributes, MFVirtualFile>(dataOpsManager) {
 
   override val requestClass = UssQuery::class.java
 

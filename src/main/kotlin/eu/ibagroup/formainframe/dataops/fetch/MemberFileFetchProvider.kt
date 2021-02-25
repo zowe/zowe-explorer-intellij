@@ -2,12 +2,12 @@ package eu.ibagroup.formainframe.dataops.fetch
 
 import com.intellij.openapi.application.runReadAction
 import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
@@ -15,8 +15,14 @@ import java.io.IOException
 
 data class LibraryQuery(val library: MFVirtualFile)
 
-class MemberFileFetchProvider :
-  RemoteAttributedFileFetchBase<LibraryQuery, RemoteMemberAttributes, MFVirtualFile>() {
+class MemberFileFetchProviderFactory : FileFetchProviderFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
+    return MemberFileFetchProvider(dataOpsManager)
+  }
+}
+
+class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
+  RemoteAttributedFileFetchBase<LibraryQuery, RemoteMemberAttributes, MFVirtualFile>(dataOpsManager) {
 
   private val remoteDatasetAttributesService by lazy {
     dataOpsManager.getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()

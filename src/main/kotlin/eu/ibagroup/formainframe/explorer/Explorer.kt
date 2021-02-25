@@ -2,8 +2,6 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.project.Project
-import com.intellij.util.messages.MessageBus
 
 val globalExplorer
   get() = Explorer.appInstance

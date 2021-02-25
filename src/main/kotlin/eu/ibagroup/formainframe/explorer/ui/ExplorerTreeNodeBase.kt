@@ -5,10 +5,11 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.AcceptancePolicy
-import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
+import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 abstract class ExplorerTreeNodeBase<Value : Any>(
@@ -21,7 +22,7 @@ abstract class ExplorerTreeNodeBase<Value : Any>(
   protected open val openFileDescriptor: OpenFileDescriptor?
     get() = virtualFile?.let {
       if (!it.isDirectory) {
-        dataOpsManager.syncContentIfNeeded(
+        service<DataOpsManager>(explorer.componentManager).syncContentIfNeeded(
           file = it,
           acceptancePolicy = AcceptancePolicy.FORCE_REWRITE,
           saveStrategy = { _, _, _ -> true }

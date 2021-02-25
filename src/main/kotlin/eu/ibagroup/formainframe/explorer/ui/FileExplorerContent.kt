@@ -16,10 +16,11 @@ import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.common.ui.getPath
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
-import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.utils.crudable.eventAdaptor
+import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.utils.subscribe
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.Component
@@ -31,7 +32,10 @@ fun interface NodeListener : (Any, Boolean) -> Unit {
   override operator fun invoke(node: Any, structure: Boolean)
 }
 
-class FileExplorerContent(explorer: Explorer, parentDisposable: Disposable, project: Project) : JBScrollPane(),
+class FileExplorerContent(
+  private val explorer: Explorer,
+  parentDisposable: Disposable, project: Project
+) : JBScrollPane(),
   DataProvider,
   Disposable {
 
@@ -160,7 +164,7 @@ class FileExplorerContent(explorer: Explorer, parentDisposable: Disposable, proj
   private val currentlySelectedAttributes: VFileInfoAttributes?
     get() {
       return if (currentlySelectedFile != null) {
-        dataOpsManager.tryToGetAttributes(currentlySelectedFile!!)
+        service<DataOpsManager>(explorer.componentManager).tryToGetAttributes(currentlySelectedFile!!)
       } else {
         null
       }

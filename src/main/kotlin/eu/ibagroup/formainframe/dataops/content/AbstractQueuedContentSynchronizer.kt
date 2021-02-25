@@ -8,13 +8,14 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.messages.MessageBus
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.QueueExecutor
+import eu.ibagroup.formainframe.utils.subscribe
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class AbstractQueuedContentSynchronizer(
-  messageBus: MessageBus,
-  parentDisposable: Disposable
+  protected val dataOpsManager: DataOpsManager
 ) : ContentSynchronizer {
 
   private val fileToExecutorMap = ConcurrentHashMap<VirtualFile, QueueExecutor<Unit, Unit>>()
@@ -30,9 +31,11 @@ abstract class AbstractQueuedContentSynchronizer(
   }
 
   init {
-    Disposer.register(parentDisposable, disposableQueues)
-    messageBus.connect(parentDisposable)
-      .subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    Disposer.register(dataOpsManager, disposableQueues)
+    subscribe(
+      componentManager = dataOpsManager.componentManager,
+      topic = VirtualFileManager.VFS_CHANGES,
+      handler = object : BulkFileListener {
         override fun after(events: MutableList<out VFileEvent>) {
           events
             .filterIsInstance<VFileContentChangeEvent>()
@@ -44,7 +47,9 @@ abstract class AbstractQueuedContentSynchronizer(
             }
             .forEach { it.accept(Unit) }
         }
-      })
+      },
+      disposable = disposableQueues
+    )
   }
 
   override fun enforceSync(

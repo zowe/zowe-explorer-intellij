@@ -4,7 +4,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.WSConfigurable
-import javax.swing.JComponent
 
 class MainframeConfigurable : TabbedConfigurable() {
 

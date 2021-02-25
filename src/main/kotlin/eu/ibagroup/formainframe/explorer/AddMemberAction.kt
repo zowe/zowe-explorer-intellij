@@ -10,6 +10,7 @@ import eu.ibagroup.formainframe.dataops.allocation.MemberAllocationParams
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.sendTopic
+import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 class AddMemberAction : AnAction() {
@@ -21,6 +22,7 @@ class AddMemberAction : AnAction() {
     if (currentNode is ExplorerUnitTreeNodeBase<*,*> && currentNode.unit is WorkingSet && currentNode is FileCacheNode<*,*,*,*,*>) {
       val connectionConfig = currentNode.unit.connectionConfig
       val connectionUrl = currentNode.unit.urlConnection
+      val dataOpsManager = service<DataOpsManager>(currentNode.explorer.componentManager)
       if (currentNode is LibraryNode && connectionConfig != null && connectionUrl != null) {
         val parentName = dataOpsManager
           .getAttributesService<RemoteDatasetAttributes,MFVirtualFile>()

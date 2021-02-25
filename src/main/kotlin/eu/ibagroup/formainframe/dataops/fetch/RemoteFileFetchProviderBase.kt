@@ -6,16 +6,20 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.rd.util.AtomicInteger
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.FetchCallback
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.utils.lock
 import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
+import eu.ibagroup.formainframe.utils.sendTopic
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.streams.toList
 
 @Suppress("UnstableApiUsage")
-abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File : VirtualFile> :
+abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File : VirtualFile>(
+  private val dataOpsManager: DataOpsManager
+) :
   FileFetchProvider<Request, RemoteQuery<Request>, File> {
 
   private val lock = ReentrantLock()
@@ -90,7 +94,7 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
 
           cache[query] = files
           cacheState[query] = true
-          sendCacheUpdatedTopic().onCacheUpdated(query, files)
+          sendTopic(FileFetchProvider.CACHE_UPDATED, dataOpsManager.componentManager).onCacheUpdated(query, files)
           callback.onSuccess(files)
         } catch (t: Throwable) {
           callback.onThrowable(t)

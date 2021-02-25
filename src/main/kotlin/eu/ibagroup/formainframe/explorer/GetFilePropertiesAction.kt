@@ -2,11 +2,12 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.dataOpsManager
 import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.UssFile
 
 class GetFilePropertiesAction : AnAction() {
@@ -16,8 +17,8 @@ class GetFilePropertiesAction : AnAction() {
     if (node is ExplorerTreeNodeBase<*>) {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
-        val attributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone()
-        when (attributes) {
+        val dataOpsManager = service<DataOpsManager>(node.explorer.componentManager)
+        when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone()) {
           is RemoteDatasetAttributes -> {
             val dialog = DatasetPropertiesDialog(e.project, DatasetState(attributes))
             dialog.showAndGet()

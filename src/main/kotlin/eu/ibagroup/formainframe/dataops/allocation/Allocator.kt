@@ -9,10 +9,9 @@ import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 
 interface Allocator<R : Any, Q: Query<R>> {
 
-
   companion object {
     @JvmStatic
-    val EP = ExtensionPointName.create<Allocator<*, *>>("eu.ibagroup.formainframe.allocator")
+    val EP = ExtensionPointName.create<AllocatorFactory>("eu.ibagroup.formainframe.allocator")
   }
 
   fun allocate(query: Q, callback: FetchCallback<AllocationStatus>, project: Project? = null)

@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.dataops.content
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.common.appLevelPluginDisposable
 import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.api.api
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.utils.findAnyNullable
@@ -12,9 +13,15 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 
-class UssFileContentSynchronizer : RemoteAttributesContentSynchronizerBase<RemoteUssAttributes>(
-  ApplicationManager.getApplication().messageBus, appLevelPluginDisposable
-) {
+class UssFileContentSynchronizerFactory : ContentSynchronizerFactory {
+  override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
+    return UssFileContentSynchronizer(dataOpsManager)
+  }
+}
+
+class UssFileContentSynchronizer(
+  dataOpsManager: DataOpsManager
+) : RemoteAttributesContentSynchronizerBase<RemoteUssAttributes>(dataOpsManager) {
 
   override val vFileClass = MFVirtualFile::class.java
 
