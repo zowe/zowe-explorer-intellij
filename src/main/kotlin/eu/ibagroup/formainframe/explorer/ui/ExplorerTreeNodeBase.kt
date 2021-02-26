@@ -22,11 +22,13 @@ abstract class ExplorerTreeNodeBase<Value : Any>(
   protected open val openFileDescriptor: OpenFileDescriptor?
     get() = virtualFile?.let {
       if (!it.isDirectory) {
-        service<DataOpsManager>(explorer.componentManager).syncContentIfNeeded(
-          file = it,
-          acceptancePolicy = AcceptancePolicy.FORCE_REWRITE,
-          saveStrategy = { _, _, _ -> true }
-        )
+        service<DataOpsManager>(explorer.componentManager)
+          .getContentSynchronizer(it)
+          .enforceSyncIfNeeded(
+            file = it,
+            acceptancePolicy = AcceptancePolicy.FORCE_REWRITE,
+            saveStrategy = { _, _, _ -> true }
+          )
         OpenFileDescriptor(notNullProject, it)
       } else null
     }

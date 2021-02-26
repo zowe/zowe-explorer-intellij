@@ -57,6 +57,13 @@ class DataOpsManagerImpl : DataOpsManager {
       .findAnyNullable()
   }
 
+  override fun tryToGetFile(attributes: VFileInfoAttributes): VirtualFile? {
+    return attributesServices.stream()
+      .map { (it as AttributesService<VFileInfoAttributes, VirtualFile>).getVirtualFile(attributes) }
+      .filter { it != null }
+      .findAnyNullable()
+  }
+
   private val fileFetchProviders by lazy {
     FileFetchProvider.EP.extensionList.buildComponents()
   }
@@ -80,27 +87,11 @@ class DataOpsManagerImpl : DataOpsManager {
     ContentSynchronizer.EP.extensionList.buildComponents()
   }
 
-  private fun getAppropriateContentSynchronizer(file: VirtualFile): ContentSynchronizer {
+  override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
     return contentSynchronizers.stream()
       .filter { it.accepts(file) }
       .findAnyNullable()
       ?: throw IllegalArgumentException("Cannot find appropriate ContentSynchronizer for ${file.path}")
-  }
-
-  override fun enforceContentSync(
-    file: VirtualFile,
-    acceptancePolicy: AcceptancePolicy,
-    saveStrategy: SaveStrategy
-  ) {
-    getAppropriateContentSynchronizer(file).enforceSync(file, acceptancePolicy, saveStrategy)
-  }
-
-  override fun isContentSynced(file: VirtualFile): Boolean {
-    return getAppropriateContentSynchronizer(file).isAlreadySynced(file)
-  }
-
-  override fun removeContentSync(file: VirtualFile) {
-    getAppropriateContentSynchronizer(file).removeSync(file)
   }
 
   override fun dispose() {
