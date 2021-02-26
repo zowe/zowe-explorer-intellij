@@ -10,6 +10,7 @@ import eu.ibagroup.formainframe.dataops.attributes.AttributesListener
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.dataops.content.AcceptancePolicy
+import eu.ibagroup.formainframe.dataops.content.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.SaveStrategy
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import java.io.IOException
@@ -30,33 +31,15 @@ interface DataOpsManager : Disposable {
 
   fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes?
 
+  fun tryToGetFile(attributes: VFileInfoAttributes): VirtualFile?
+
   fun <R : Any, Q : Query<R>, File : VirtualFile> getFileFetchProvider(
     requestClass: Class<out R>,
     queryClass: Class<out Query<*>>,
     vFileClass: Class<out File>
   ): FileFetchProvider<R, Q, File>
 
-  @Throws(IOException::class)
-  fun enforceContentSync(
-    file: VirtualFile,
-    acceptancePolicy: AcceptancePolicy,
-    saveStrategy: SaveStrategy
-  )
-
-  fun isContentSynced(file: VirtualFile): Boolean
-
-  @Throws(IOException::class)
-  fun syncContentIfNeeded(
-    file: VirtualFile,
-    acceptancePolicy: AcceptancePolicy,
-    saveStrategy: SaveStrategy
-  ) {
-    if (!isContentSynced(file)) {
-      enforceContentSync(file, acceptancePolicy, saveStrategy)
-    }
-  }
-
-  fun removeContentSync(file: VirtualFile)
+  fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer
 
   val componentManager: ComponentManager
 

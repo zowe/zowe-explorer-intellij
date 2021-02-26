@@ -29,6 +29,17 @@ interface ContentSynchronizer {
   )
 
   @Throws(IOException::class)
+  fun enforceSyncIfNeeded(
+    file: VirtualFile,
+    acceptancePolicy: AcceptancePolicy,
+    saveStrategy: SaveStrategy
+  ) {
+    if (!isAlreadySynced(file)) {
+      enforceSync(file, acceptancePolicy, saveStrategy)
+    }
+  }
+
+  @Throws(IOException::class)
   fun removeSync(file: VirtualFile)
 
 }
