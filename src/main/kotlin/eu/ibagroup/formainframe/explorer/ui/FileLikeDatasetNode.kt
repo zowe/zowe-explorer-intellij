@@ -17,9 +17,10 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 class FileLikeDatasetNode(
   file: MFVirtualFile,
   project: Project,
+  parent: ExplorerTreeNodeBase<*>,
   unit: ExplorerUnit,
   viewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(file, project, unit, viewSettings) {
+) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(file, project, parent, unit, viewSettings) {
 
   override fun isAlwaysLeaf(): Boolean {
     return !value.isDirectory
@@ -36,7 +37,7 @@ class FileLikeDatasetNode(
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return value.cachedChildren
-      .map { FileLikeDatasetNode(value, notNullProject, unit, viewSettings) }.toMutableSmartList()
+      .map { FileLikeDatasetNode(value, notNullProject, this, unit, viewSettings) }.toMutableSmartList()
   }
 
   override fun getVirtualFile(): MFVirtualFile {

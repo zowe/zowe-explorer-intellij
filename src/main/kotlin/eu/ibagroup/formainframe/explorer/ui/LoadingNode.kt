@@ -11,8 +11,13 @@ import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 private val singletonList = mutableListOf<AbstractTreeNode<*>>()
 private val any = Any()
 
-class LoadingNode(project: Project, explorer: Explorer, viewSettings: ExplorerViewSettings) :
-  ExplorerTreeNodeBase<Any>(any, project, explorer, viewSettings) {
+class LoadingNode(
+  project: Project,
+  parent: ExplorerTreeNodeBase<*>,
+  explorer: Explorer,
+  viewSettings: ExplorerViewSettings
+) :
+  ExplorerTreeNodeBase<Any>(any, project, parent, explorer, viewSettings) {
 
   override fun isAlwaysLeaf(): Boolean {
     return true

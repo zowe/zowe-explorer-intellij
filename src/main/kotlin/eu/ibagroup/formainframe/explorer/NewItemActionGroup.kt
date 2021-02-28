@@ -8,8 +8,13 @@ class NewItemActionGroup : DefaultActionGroup() {
 
 
   override fun update(e: AnActionEvent) {
-    val node = e.getData(CURRENT_NODE)
-    e.presentation.isVisible = node is WorkingSetNode || node is DSMaskNode || node is UssDirNode || node is LibraryNode
+    val selected = e.getData(SELECTED_NODES)
+    val node = selected?.getOrNull(0)?.node
+    e.presentation.isVisible = selected?.size == 1
+      && (node is WorkingSetNode
+      || node is DSMaskNode
+      || node is UssDirNode
+      || node is LibraryNode)
   }
 
   override fun isDumbAware(): Boolean {

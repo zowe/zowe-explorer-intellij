@@ -9,9 +9,10 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 abstract class RemoteMFFileCacheNode<Value : Any, R : Any, U : ExplorerUnit>(
   value: Value,
   project: Project,
+  parent: ExplorerTreeNodeBase<*>,
   unit: U,
   explorerViewSettings: ExplorerViewSettings
-) : FileCacheNode<Value, R, RemoteQuery<R>, MFVirtualFile, U>(value, project, unit, explorerViewSettings){
+) : FileCacheNode<Value, R, RemoteQuery<R>, MFVirtualFile, U>(value, project, parent, unit, explorerViewSettings){
 
   override val queryClass = RemoteQuery::class.java
 

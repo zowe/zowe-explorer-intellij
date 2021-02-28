@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 abstract class ExplorerTreeNodeBase<Value : Any>(
   value: Value,
   project: Project,
+  val parent: ExplorerTreeNodeBase<*>?,
   val explorer: Explorer,
   protected val viewSettings: ExplorerViewSettings
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {

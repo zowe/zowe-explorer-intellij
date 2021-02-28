@@ -11,9 +11,10 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 class UssFileNode(
   file: MFVirtualFile,
   project: Project,
+  parent: ExplorerTreeNodeBase<*>,
   unit: ExplorerUnit,
   viewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(file, project, unit, viewSettings) {
+) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(file, project, parent, unit, viewSettings) {
 
   override fun update(presentation: PresentationData) {
     presentation.presentableText = value.presentableName

@@ -16,16 +16,18 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 class AddMemberAction : AnAction() {
 
 
-
   override fun actionPerformed(e: AnActionEvent) {
-    val currentNode  = e.getData(CURRENT_NODE)
-    if (currentNode is ExplorerUnitTreeNodeBase<*,*> && currentNode.unit is WorkingSet && currentNode is FileCacheNode<*,*,*,*,*>) {
+    val currentNode = e.getData(SELECTED_NODES)?.get(0)?.node
+    if (currentNode is ExplorerUnitTreeNodeBase<*, *>
+      && currentNode.unit is WorkingSet
+      && currentNode is FileCacheNode<*, *, *, *, *>
+    ) {
       val connectionConfig = currentNode.unit.connectionConfig
       val connectionUrl = currentNode.unit.urlConnection
       val dataOpsManager = service<DataOpsManager>(currentNode.explorer.componentManager)
       if (currentNode is LibraryNode && connectionConfig != null && connectionUrl != null) {
         val parentName = dataOpsManager
-          .getAttributesService<RemoteDatasetAttributes,MFVirtualFile>()
+          .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
           .getAttributes(currentNode.virtualFile)
           ?.name
         if (parentName != null) {
@@ -36,11 +38,11 @@ class AddMemberAction : AnAction() {
               requestClass = MemberAllocationParams::class.java,
               queryClass = RemoteQuery::class.java
             ).allocate(
-              query = RemoteQueryImpl<MemberAllocationParams>(
+              query = RemoteQueryImpl(
                 connectionConfig = connectionConfig,
                 urlConnection = connectionUrl,
                 request = state
-              ) ,
+              ),
               callback = fetchAdapter {
                 onSuccess {
                   if (it == AllocationStatus.SUCCESS) {
@@ -78,8 +80,8 @@ class AddMemberAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val node = e.getData(CURRENT_NODE)
-    e.presentation.isVisible = node is LibraryNode
+    val selected = e.getData(SELECTED_NODES)
+    e.presentation.isVisible = selected?.getOrNull(0)?.node is LibraryNode
   }
 
 }

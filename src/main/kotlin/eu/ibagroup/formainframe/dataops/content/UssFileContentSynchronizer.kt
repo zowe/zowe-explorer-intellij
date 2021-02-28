@@ -1,10 +1,8 @@
 package eu.ibagroup.formainframe.dataops.content
 
-import com.intellij.openapi.application.ApplicationManager
-import eu.ibagroup.formainframe.common.appLevelPluginDisposable
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.api.api
+import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.mapNotNull

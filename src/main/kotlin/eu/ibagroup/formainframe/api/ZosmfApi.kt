@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.api
+package eu.ibagroup.formainframe.api
 
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig

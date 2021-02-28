@@ -9,26 +9,31 @@ class RefreshNode : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
 
-    val node = e.getData(CURRENT_NODE)
+    val selected = e.getData(SELECTED_NODES) ?: return
 
-    if (node is FileCacheNode<*,*,*,*,*>) {
-      node.cleanCache()
-    } else if (node is WorkingSetNode) {
-      node.children.filterIsInstance<DSMaskNode>().forEach {
-        it.cleanCache()
+    for (data in selected) {
+      val node = data.node
+      var sendTopic = false
+      if (node is FileCacheNode<*, *, *, *, *>) {
+        node.cleanCache()
+        sendTopic = true
+      } else if (node is WorkingSetNode) {
+        node.children.filterIsInstance<DSMaskNode>().forEach {
+          it.cleanCache()
+        }
+        sendTopic = true
       }
+      if (sendTopic) sendTopic(FileExplorerContent.NODE_UPDATE)(node, true)
     }
-
-    if (node != null) {
-      sendTopic(FileExplorerContent.NODE_UPDATE)(node, true)
-    }
-
 
   }
 
   override fun update(e: AnActionEvent) {
-    val node = e.getData(CURRENT_NODE)
-    e.presentation.isVisible = node is WorkingSetNode || node is DSMaskNode || node is UssDirNode || node is LibraryNode
+    val selected = e.getData(SELECTED_NODES)
+    e.presentation.isVisible = selected?.any {
+      val node = it.node
+      node is WorkingSetNode || node is DSMaskNode || node is UssDirNode || node is LibraryNode
+    } == true
   }
 
   override fun isDumbAware(): Boolean {

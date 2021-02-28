@@ -8,12 +8,11 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.r2z.UssFile
 
 class GetFilePropertiesAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val node = e.getData(CURRENT_NODE)
+    val node = e.getData(SELECTED_NODES)?.getOrNull(0)?.node
     if (node is ExplorerTreeNodeBase<*>) {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
@@ -40,11 +39,14 @@ class GetFilePropertiesAction : AnAction() {
   override fun isDumbAware(): Boolean {
     return true
   }
+
   override fun update(e: AnActionEvent) {
-    val node = e.getData(CURRENT_NODE)
-    e.presentation.isVisible = node is UssFileNode
-        || node is FileLikeDatasetNode
-        || node is LibraryNode
-        || node is UssDirNode
+    val selected = e.getData(SELECTED_NODES)
+    val node = selected?.getOrNull(0)?.node
+    e.presentation.isVisible = selected?.size == 1
+      && (node is UssFileNode
+      || node is FileLikeDatasetNode
+      || node is LibraryNode
+      || node is UssDirNode)
   }
 }

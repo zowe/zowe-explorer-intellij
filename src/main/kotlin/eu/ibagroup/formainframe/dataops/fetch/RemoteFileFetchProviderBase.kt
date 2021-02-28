@@ -16,11 +16,9 @@ import eu.ibagroup.formainframe.utils.sendTopic
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.streams.toList
 
-@Suppress("UnstableApiUsage")
 abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File : VirtualFile>(
   private val dataOpsManager: DataOpsManager
-) :
-  FileFetchProvider<Request, RemoteQuery<Request>, File> {
+) : FileFetchProvider<Request, RemoteQuery<Request>, File> {
 
   private val lock = ReentrantLock()
 
@@ -91,7 +89,6 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
               forEach { cleanupUnusedFile(it, query) }
             }
           }
-
           cache[query] = files
           cacheState[query] = true
           sendTopic(FileFetchProvider.CACHE_UPDATED, dataOpsManager.componentManager).onCacheUpdated(query, files)

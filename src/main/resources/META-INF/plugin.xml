@@ -17,6 +17,9 @@
         <extensionPoint name="contentSynchronizer"
                         interface="eu.ibagroup.formainframe.dataops.content.ContentSynchronizerFactory"/>
 
+        <extensionPoint name="operationRunner"
+                        interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
+
     </extensionPoints>
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
@@ -61,6 +64,8 @@
         <contentSynchronizer
                 implementation="eu.ibagroup.formainframe.dataops.content.UssFileContentSynchronizerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -91,16 +96,14 @@
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager" preload="true"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"/>
 
-        <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.api.ZosmfApi"
-                            serviceImplementation="eu.ibagroup.formainframe.dataops.api.ZosmfApiImpl"/>
+        <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
+                            serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"/>
 
         <applicationService serviceImplementation="eu.ibagroup.formainframe.common.AppLevelPluginDisposable"/>
 
     </extensions>
 
     <actions>
-
-        <action id="eu.ibagroup.formainframe.explorer.EditMember" class="eu.ibagroup.formainframe.explorer.EditMember"/>
 
         <action id="eu.ibagroup.formainframe.explorer.RefreshNode" class="eu.ibagroup.formainframe.explorer.RefreshNode"
                 text="Refresh"
@@ -112,6 +115,7 @@
         <action id="eu.ibagroup.formainframe.explorer.AllocateDataset"
                 class="eu.ibagroup.formainframe.explorer.AllocateDataset"
                 text="Dataset"/>
+
         <action id="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
                 class="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
                 text="File" icon="AllIcons.FileTypes.Text"/>
@@ -131,6 +135,10 @@
                 id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"
                 text="Properties"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.DeleteAction"
+                class="eu.ibagroup.formainframe.explorer.DeleteAction" text="Delete"
+                use-shortcut-of="$Delete"/>
+
         <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
             <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.SettingAction"/>
@@ -148,8 +156,8 @@
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
             <reference id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.DeleteAction"/>
         </group>
-
 
     </actions>
 

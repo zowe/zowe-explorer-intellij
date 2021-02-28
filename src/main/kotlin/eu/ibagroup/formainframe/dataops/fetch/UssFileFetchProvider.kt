@@ -1,11 +1,10 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
 import eu.ibagroup.formainframe.config.connect.token
-import eu.ibagroup.formainframe.config.connect.username
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.api.api
-import eu.ibagroup.formainframe.dataops.api.enqueueSync
+import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI

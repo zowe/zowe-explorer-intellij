@@ -13,6 +13,7 @@ import eu.ibagroup.formainframe.dataops.allocation.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
@@ -20,7 +21,7 @@ import eu.ibagroup.r2z.RecordFormat
 class AllocateDataset : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val parentNode = e.getData(CURRENT_NODE)
+    val parentNode = e.getData(SELECTED_NODES)?.get(0)?.node
     if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is WorkingSet) {
       val workingSet = parentNode.unit
       val config = parentNode.unit.connectionConfig
@@ -47,6 +48,8 @@ class AllocateDataset : AnAction() {
                       workingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
                       configCrudable.update(workingSetConfig)
                     }
+                    parentNode.cleanCacheIfPossible()
+                    sendTopic(FileExplorerContent.NODE_UPDATE, parentNode.explorer.componentManager)(parentNode, true)
                   }
                 } else {
                   runInEdt {
@@ -73,8 +76,10 @@ class AllocateDataset : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val node = e.getData(CURRENT_NODE)
-    e.presentation.isVisible = node is WorkingSetNode || node is DSMaskNode
+    val selected = e.getData(SELECTED_NODES)
+    e.presentation.isVisible = selected != null
+      && selected.size == 1
+      && (selected[0].node is WorkingSetNode || selected[0].node is DSMaskNode)
   }
 
   private fun postProcessState(state: DatasetAllocationParams): DatasetAllocationParams {
