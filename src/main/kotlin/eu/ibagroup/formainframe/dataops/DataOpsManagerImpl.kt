@@ -2,28 +2,31 @@ package eu.ibagroup.formainframe.dataops
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.allocation.Allocator
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.dataops.content.ContentSynchronizer
-import eu.ibagroup.formainframe.dataops.content.AcceptancePolicy
-import eu.ibagroup.formainframe.dataops.content.SaveStrategy
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
+import eu.ibagroup.formainframe.dataops.operations.Operation
+import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.findAnyNullable
 
 @Suppress("UNCHECKED_CAST")
 class DataOpsManagerImpl : DataOpsManager {
 
-  private fun <Component> List<DataOpsComponentFactory<Component>>.buildComponents() : MutableList<Component> {
+  private fun <Component> List<DataOpsComponentFactory<Component>>.buildComponents(): MutableList<Component> {
     return map { it.buildComponent(this@DataOpsManagerImpl) }.toMutableSmartList()
   }
 
   override val componentManager: ComponentManager
     get() = ApplicationManager.getApplication()
 
-  private val attributesServices = AttributesService.EP.extensionList.buildComponents()
+  private val attributesServices by lazy {
+    AttributesService.EP.extensionList.buildComponents() as MutableList<AttributesService<VFileInfoAttributes, VirtualFile>>
+  }
 
   private val allocators = Allocator.EP.extensionList.buildComponents()
 
@@ -52,14 +55,14 @@ class DataOpsManagerImpl : DataOpsManager {
 
   override fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes? {
     return attributesServices.stream()
-      .map { (it as AttributesService<*, VirtualFile>).getAttributes(file) }
+      .map { it.getAttributes(file) }
       .filter { it != null }
       .findAnyNullable()
   }
 
   override fun tryToGetFile(attributes: VFileInfoAttributes): VirtualFile? {
     return attributesServices.stream()
-      .map { (it as AttributesService<VFileInfoAttributes, VirtualFile>).getVirtualFile(attributes) }
+      .map { it.getVirtualFile(attributes) }
       .filter { it != null }
       .findAnyNullable()
   }
@@ -75,11 +78,11 @@ class DataOpsManagerImpl : DataOpsManager {
   ): FileFetchProvider<R, Q, File> {
     return fileFetchProviders.find {
       it.requestClass.isAssignableFrom(requestClass)
-          && it.queryClass.isAssignableFrom(queryClass)
-          && it.vFileClass.isAssignableFrom(vFileClass)
+        && it.queryClass.isAssignableFrom(queryClass)
+        && it.vFileClass.isAssignableFrom(vFileClass)
     } as FileFetchProvider<R, Q, File>? ?: throw IllegalArgumentException(
       "Cannot find FileFetchProvider for " +
-          "requestClass=${requestClass.name}; queryClass=${queryClass.name}; vFileClass=${vFileClass.name}"
+        "requestClass=${requestClass.name}; queryClass=${queryClass.name}; vFileClass=${vFileClass.name}"
     )
   }
 
@@ -94,11 +97,25 @@ class DataOpsManagerImpl : DataOpsManager {
       ?: throw IllegalArgumentException("Cannot find appropriate ContentSynchronizer for ${file.path}")
   }
 
+  private val operationRunners by lazy {
+    OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation>>
+  }
+
+  override fun isOperationSupported(operation: Operation): Boolean {
+    return operationRunners.any { it.canRun(operation) }
+  }
+
+  override fun performOperation(operation: Operation, callback: FetchCallback<Unit>, project: Project?) {
+    operationRunners.stream()
+      .filter { it.canRun(operation) }
+      .findAnyNullable()?.run(operation, callback, project)
+      ?: throw IllegalArgumentException("Unsupported Operation $operation")
+  }
+
   override fun dispose() {
     attributesServices.clear()
     allocators.clear()
     fileFetchProviders.clear()
     contentSynchronizers.clear()
   }
-
 }

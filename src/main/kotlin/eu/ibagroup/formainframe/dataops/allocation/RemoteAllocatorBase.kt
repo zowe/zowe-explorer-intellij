@@ -8,8 +8,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.FetchCallback
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.api.api
-import eu.ibagroup.r2z.DataAPI
 
 abstract class RemoteAllocatorBase<R : Any>(private val dataOpsManager: DataOpsManager) : Allocator<R, RemoteQuery<R>> {
 

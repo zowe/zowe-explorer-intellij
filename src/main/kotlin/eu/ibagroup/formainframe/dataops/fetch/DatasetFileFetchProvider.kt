@@ -1,14 +1,11 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
-import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.connect.token
-import eu.ibagroup.formainframe.config.connect.username
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.api.api
-import eu.ibagroup.formainframe.dataops.api.enqueueSync
+import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.utils.asMutableList

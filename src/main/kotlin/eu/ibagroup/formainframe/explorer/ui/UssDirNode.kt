@@ -28,11 +28,12 @@ private fun withSlashIfNeeded(ussPath: UssPath): String {
 class UssDirNode(
   ussPath: UssPath,
   project: Project,
+  parent: ExplorerTreeNodeBase<*>,
   workingSet: WorkingSet,
   viewSettings: ExplorerViewSettings,
   private var vFile: MFVirtualFile? = null,
   private val isRootNode: Boolean = false
-) : RemoteMFFileCacheNode<UssPath, UssQuery, WorkingSet>(ussPath, project, workingSet, viewSettings) {
+) : RemoteMFFileCacheNode<UssPath, UssQuery, WorkingSet>(ussPath, project, parent, workingSet, viewSettings) {
 
   override val query: RemoteQuery<UssQuery>?
     get() {
@@ -53,9 +54,9 @@ class UssDirNode(
       ?.children
       ?.map {
         if (it.isDirectory) {
-          UssDirNode(UssPath(withSlashIfNeeded(value) + it.name), notNullProject, unit, viewSettings, it)
+          UssDirNode(UssPath(withSlashIfNeeded(value) + it.name), notNullProject, this@UssDirNode, unit, viewSettings, it)
         } else {
-          UssFileNode(it, notNullProject, unit, viewSettings)
+          UssFileNode(it, notNullProject, this@UssDirNode, unit, viewSettings)
         }
       } ?: listOf()
   }

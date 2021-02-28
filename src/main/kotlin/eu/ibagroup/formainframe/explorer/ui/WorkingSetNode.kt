@@ -10,8 +10,9 @@ import eu.ibagroup.formainframe.explorer.WorkingSet
 class WorkingSetNode(
   workingSet: WorkingSet,
   project: Project,
+  parent: ExplorerTreeNodeBase<*>,
   viewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<WorkingSet, WorkingSet>(workingSet, project, workingSet, viewSettings) {
+) : ExplorerUnitTreeNodeBase<WorkingSet, WorkingSet>(workingSet, project, parent, workingSet, viewSettings) {
 
   override fun isAlwaysExpand(): Boolean {
     return true
@@ -37,8 +38,8 @@ class WorkingSetNode(
   }
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
-    return value.dsMasks.map { DSMaskNode(it, notNullProject, value, viewSettings) }.plus(
-      value.ussPaths.map { UssDirNode(it, notNullProject, value, viewSettings, isRootNode = true) }
+    return value.dsMasks.map { DSMaskNode(it, notNullProject, this, value, viewSettings) }.plus(
+      value.ussPaths.map { UssDirNode(it, notNullProject, this, value, viewSettings, isRootNode = true) }
     ).toMutableList()
   }
 

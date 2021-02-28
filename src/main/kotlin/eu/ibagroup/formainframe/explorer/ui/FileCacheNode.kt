@@ -18,9 +18,10 @@ import java.util.concurrent.locks.ReentrantLock
 abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualFile, U : ExplorerUnit>(
   value: Value,
   project: Project,
+  parent: ExplorerTreeNodeBase<*>,
   unit: U,
   explorerViewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<Value, U>(value, project, unit, explorerViewSettings) {
+) : ExplorerUnitTreeNodeBase<Value, U>(value, project, parent, unit, explorerViewSettings) {
 
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
@@ -37,7 +38,7 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return lock(lock) {
       val childrenNodes = cachedChildren
-        ?.toChildrenNodes() ?: listOf(LoadingNode(notNullProject, explorer, viewSettings)).also {
+        ?.toChildrenNodes() ?: listOf(LoadingNode(notNullProject, this, explorer, viewSettings)).also {
         query?.let { q ->
           fileFetchProvider.forceReloadAsync(q, fetchAdapter {
             onFinish {
@@ -85,4 +86,10 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
 
   protected abstract val vFileClass: Class<out File>
 
+}
+
+fun ExplorerTreeNodeBase<*>.cleanCacheIfPossible() {
+  if (this is FileCacheNode<*, *, *, *, *>) {
+    cleanCache()
+  }
 }

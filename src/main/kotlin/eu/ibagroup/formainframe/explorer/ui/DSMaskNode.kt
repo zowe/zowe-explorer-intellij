@@ -16,9 +16,10 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 class DSMaskNode(
   dsMask: DSMask,
   project: Project,
+  parent: ExplorerTreeNodeBase<*>,
   workingSet: WorkingSet,
   viewSettings: ExplorerViewSettings
-) : RemoteMFFileCacheNode<DSMask, DSMask, WorkingSet>(dsMask, project, workingSet, viewSettings) {
+) : RemoteMFFileCacheNode<DSMask, DSMask, WorkingSet>(dsMask, project, parent, workingSet, viewSettings) {
 
   override fun update(presentation: PresentationData) {
     presentation.addText(value.mask, SimpleTextAttributes.REGULAR_ATTRIBUTES)
@@ -38,9 +39,9 @@ class DSMaskNode(
   override fun Collection<MFVirtualFile>.toChildrenNodes(): MutableList<AbstractTreeNode<*>> {
     return map {
       if (it.isDirectory) {
-        LibraryNode(it, notNullProject, unit, viewSettings)
+        LibraryNode(it, notNullProject, this@DSMaskNode, unit, viewSettings)
       } else {
-        FileLikeDatasetNode(it, notNullProject, unit, viewSettings)
+        FileLikeDatasetNode(it, notNullProject, this@DSMaskNode, unit, viewSettings)
       }
     }.toMutableSmartList()
   }

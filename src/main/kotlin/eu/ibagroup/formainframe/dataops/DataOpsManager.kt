@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.dataops
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.allocation.Allocator
@@ -13,6 +14,7 @@ import eu.ibagroup.formainframe.dataops.content.AcceptancePolicy
 import eu.ibagroup.formainframe.dataops.content.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.SaveStrategy
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
+import eu.ibagroup.formainframe.dataops.operations.Operation
 import java.io.IOException
 
 interface DataOpsManager : Disposable {
@@ -40,6 +42,10 @@ interface DataOpsManager : Disposable {
   ): FileFetchProvider<R, Q, File>
 
   fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer
+
+  fun isOperationSupported(operation: Operation): Boolean
+
+  fun performOperation(operation: Operation, callback: FetchCallback<Unit>, project: Project? = null)
 
   val componentManager: ComponentManager
 

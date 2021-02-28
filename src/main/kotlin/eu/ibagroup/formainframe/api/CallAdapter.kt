@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.api
+package eu.ibagroup.formainframe.api
 
 import eu.ibagroup.formainframe.utils.lock
 import retrofit2.Call

@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.api
+package eu.ibagroup.formainframe.api
 
 import com.google.gson.GsonBuilder
 import eu.ibagroup.formainframe.config.configCrudable

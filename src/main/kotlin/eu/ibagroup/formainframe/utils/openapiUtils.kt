@@ -5,6 +5,10 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
 import java.io.File

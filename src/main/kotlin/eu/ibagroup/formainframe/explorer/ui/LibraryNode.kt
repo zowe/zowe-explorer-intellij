@@ -20,9 +20,10 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 class LibraryNode(
   library: MFVirtualFile,
   project: Project,
+  parent: ExplorerTreeNodeBase<*>,
   workingSet: WorkingSet,
   explorerViewSettings: ExplorerViewSettings
-) : RemoteMFFileCacheNode<MFVirtualFile, LibraryQuery, WorkingSet>(library, project, workingSet, explorerViewSettings) {
+) : RemoteMFFileCacheNode<MFVirtualFile, LibraryQuery, WorkingSet>(library, project, parent, workingSet, explorerViewSettings) {
 
   override val query: RemoteQuery<LibraryQuery>?
     get() {
@@ -34,7 +35,7 @@ class LibraryNode(
     }
 
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
-    return map { FileLikeDatasetNode(it, notNullProject, unit, viewSettings) }
+    return map { FileLikeDatasetNode(it, notNullProject, this@LibraryNode, unit, viewSettings) }
   }
 
   override val requestClass = LibraryQuery::class.java

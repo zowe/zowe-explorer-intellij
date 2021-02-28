@@ -20,8 +20,9 @@ abstract class CreateUssEntityAction : AnAction() {
   abstract val ussFileType : String
 
   override fun actionPerformed(e: AnActionEvent) {
-    val file = e.getData(CURRENT_FILE)
-    val node = e.getData(CURRENT_NODE)
+    val selected = e.getData(SELECTED_NODES)?.get(0)
+    val node = selected?.node
+    val file = selected?.file
     if (file != null && node is ExplorerUnitTreeNodeBase<*, *>) {
       val connectionConfig = node.unit.connectionConfig
       val urlConnection = node.unit.urlConnection
@@ -71,7 +72,9 @@ abstract class CreateUssEntityAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val node = e.getData(CURRENT_NODE)
-    e.presentation.isVisible = node is UssDirNode
+    val selected = e.getData(SELECTED_NODES)
+    e.presentation.isVisible = selected != null
+      && selected.size == 1
+      && selected[0].node is UssDirNode
   }
 }

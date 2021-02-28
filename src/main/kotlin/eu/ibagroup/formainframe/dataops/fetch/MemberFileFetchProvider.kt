@@ -4,8 +4,8 @@ import com.intellij.openapi.application.runReadAction
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.api.api
-import eu.ibagroup.formainframe.dataops.api.enqueueSync
+import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.getAttributesService

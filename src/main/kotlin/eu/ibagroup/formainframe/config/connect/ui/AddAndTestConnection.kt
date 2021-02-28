@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import eu.ibagroup.formainframe.dataops.api.api
+import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.r2z.InfoAPI
 
