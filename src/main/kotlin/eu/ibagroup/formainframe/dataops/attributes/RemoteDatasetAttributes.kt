@@ -17,8 +17,10 @@ data class RemoteDatasetAttributes(
     }.toMutableList())
   }
 
-  val name
+  override val name
     get() = datasetInfo.name
+
+  override val length = 0L
 
   val isMigrated
     get() = datasetInfo.migrated == HasMigrated.YES

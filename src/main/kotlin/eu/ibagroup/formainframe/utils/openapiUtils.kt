@@ -11,7 +11,10 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
+import org.jetbrains.concurrency.*
 import java.io.File
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class Dummy private constructor()
 
@@ -104,4 +107,72 @@ inline fun <reified S : Any> service(componentManager: ComponentManager): S {
 
 inline fun <reified S : Any> appService(): S {
   return service(ApplicationManager.getApplication())
+}
+
+inline fun <T> runPromiseAsBackgroundTask(
+  title: String,
+  project: Project? = null,
+  canBeCancelled: Boolean = true,
+  needsToCancelPromise: Boolean = false,
+  crossinline promiseGetter: (ProgressIndicator) -> Promise<T>
+) {
+  ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, canBeCancelled) {
+    private var promise: Promise<T>? = null
+    override fun run(indicator: ProgressIndicator) {
+      val lock = ReentrantLock()
+      val condition = lock.newCondition()
+      promise = promiseGetter(indicator).also {
+        it.onProcessed {
+          lock.withLock { condition.signalAll() }
+        }
+      }
+      lock.withLock { condition.await() }
+    }
+
+    override fun onCancel() {
+      if (needsToCancelPromise) {
+        promise.castOrNull<CancellablePromise<*>>()?.cancel()
+      }
+    }
+  })
+}
+
+fun <T> Result<T>.asDonePromise(): Promise<T> {
+  val r = getOrNull()
+  return if (r != null) {
+    resolvedPromise(r)
+  } else {
+    rejectedPromise(exceptionOrNull())
+  }
+}
+
+fun <T> Promise<T>.get(): T? {
+  return if (this is AsyncPromise<T>) {
+    get()
+  } else {
+    val lock = ReentrantLock()
+    val condition = lock.newCondition()
+    var value: T? = null
+    var throwable: Throwable? = null
+    var isSuccess = false
+    onSuccess {
+      isSuccess = true
+      value = it
+      lock.withLock {
+        condition.signalAll()
+      }
+    }
+    onError {
+      throwable = it
+      lock.withLock {
+        condition.signalAll()
+      }
+    }
+    lock.withLock { condition.await() }
+    if (isSuccess) {
+      value
+    } else {
+      throw throwable ?: Throwable()
+    }
+  }
 }

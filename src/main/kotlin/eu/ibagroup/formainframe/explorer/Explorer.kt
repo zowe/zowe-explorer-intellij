@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.explorer
 
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
@@ -37,5 +36,9 @@ interface Explorer {
 
   val nullableProject: Project?
     get() = componentManager.castOrNull()
+
+  fun reportThrowable(t: Throwable, project: Project?)
+
+  fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?)
 
 }

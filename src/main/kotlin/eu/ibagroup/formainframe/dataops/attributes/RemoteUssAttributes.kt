@@ -27,7 +27,7 @@ data class RemoteUssAttributes(
   val fileMode: FileMode?,
   override val url: String,
   override val requesters: MutableList<UssRequester>,
-  val size: Int? = null,
+  override val length: Long = 0L,
   val uid: Int? = null,
   val owner: String? = null,
   val gid: Int? = null,
@@ -42,7 +42,7 @@ data class RemoteUssAttributes(
     fileMode = ussFile.fileMode,
     url = url,
     requesters = mutableListOf(UssRequester(connectionConfig)),
-    size = ussFile.size,
+    length = ussFile.size?.toLong() ?: 0L,
     uid = ussFile.uid,
     owner = ussFile.user,
     gid = ussFile.gid,
@@ -58,7 +58,7 @@ data class RemoteUssAttributes(
   val isSymlink
     get() = symlinkTarget != null
 
-  val name
+  override val name
     get() = path.split("/").last()
 
   val parentDirPath
@@ -73,9 +73,9 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.WRITE.mode
-          || mode == FileModeValue.WRITE_EXECUTE.mode
-          || mode == FileModeValue.READ_WRITE.mode
-          || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+        || mode == FileModeValue.WRITE_EXECUTE.mode
+        || mode == FileModeValue.READ_WRITE.mode
+        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
   val isReadable: Boolean
@@ -93,17 +93,17 @@ data class RemoteUssAttributes(
     }
 
   val isExecutable: Boolean
-  get() {
-    val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig) == owner }
-    val mode = if (hasFileOwnerInRequesters) {
-      fileMode?.owner
-    } else {
-      fileMode?.all
+    get() {
+      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig) == owner }
+      val mode = if (hasFileOwnerInRequesters) {
+        fileMode?.owner
+      } else {
+        fileMode?.all
+      }
+      return mode == FileModeValue.EXECUTE.mode
+        || mode == FileModeValue.READ_EXECUTE.mode
+        || mode == FileModeValue.WRITE_EXECUTE.mode
+        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
-    return mode == FileModeValue.EXECUTE.mode
-      || mode == FileModeValue.READ_EXECUTE.mode
-      || mode == FileModeValue.WRITE_EXECUTE.mode
-      || mode == FileModeValue.READ_WRITE_EXECUTE.mode
-  }
 
 }

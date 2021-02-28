@@ -7,13 +7,13 @@ import com.intellij.ui.tree.LeafState
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
-import eu.ibagroup.formainframe.dataops.fetchAdapter
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.utils.lock
+import eu.ibagroup.formainframe.utils.runPromiseAsBackgroundTask
 import eu.ibagroup.formainframe.utils.service
 import java.util.concurrent.locks.ReentrantLock
 
-abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualFile, U : ExplorerUnit>(
+abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit>(
   value: Value,
   project: Project,
   parent: ExplorerTreeNodeBase<*>,
@@ -28,13 +28,16 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
     get() = service<DataOpsManager>(explorer.componentManager)
       .getFileFetchProvider(requestClass, queryClass, vFileClass)
 
+  protected abstract fun makeFetchTaskTitle(query: Q): String
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return lock(lock) {
       val childrenNodes = cachedChildren
         ?.toChildrenNodes() ?: listOf(LoadingNode(notNullProject, this, explorer, treeStructure)).also {
         query?.let { q ->
-          fileFetchProvider.forceReloadAsync(q, fetchAdapter {}, project)
+          runPromiseAsBackgroundTask(makeFetchTaskTitle(q), project) {
+            fileFetchProvider.forceReload(q).onError { unit.onThrowable(it) }
+          }
         }
       }
       childrenNodes.toMutableSmartList()
@@ -68,7 +71,7 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
 
   protected abstract val requestClass: Class<out R>
 
-  protected abstract val queryClass: Class<out Query<*>>
+  protected abstract val queryClass: Class<out Query<*, *>>
 
   protected abstract val vFileClass: Class<out File>
 

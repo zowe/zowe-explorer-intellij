@@ -6,7 +6,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 
 private val singletonList = mutableListOf<AbstractTreeNode<*>>()
 private val any = Any()

@@ -11,6 +11,7 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.runIfTrue
+import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
 @State(
@@ -40,7 +41,7 @@ class ConfigServiceImpl : ConfigService {
 
   override val eventHandler = ConfigEventHandler()
 
-  override val autoSaveDelayMillis = 3000L
+  override val autoSaveDelay: Duration = Duration.ofSeconds(10)
 
   override val configsAreLoaded: Boolean
     get() = loaded.get()

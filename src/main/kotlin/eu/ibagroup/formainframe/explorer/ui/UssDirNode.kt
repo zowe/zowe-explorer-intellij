@@ -8,7 +8,7 @@ import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
@@ -36,12 +36,12 @@ class UssDirNode(
 
   val isConfigUssPath = vFile == null
 
-  override val query: RemoteQuery<UssQuery>?
+  override val query: RemoteQuery<UssQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
       val urlConnection = unit.urlConnection
       return if (connectionConfig != null && urlConnection != null) {
-        RemoteQueryImpl(UssQuery(value.path), connectionConfig, urlConnection)
+        UnitRemoteQueryImpl(UssQuery(value.path), connectionConfig, urlConnection)
       } else null
     }
 
@@ -73,6 +73,10 @@ class UssDirNode(
   }
 
   override val requestClass = UssQuery::class.java
+
+  override fun makeFetchTaskTitle(query: RemoteQuery<UssQuery, Unit>): String {
+    return "Fetching USS listings for ${query.request.path}"
+  }
 
   override fun update(presentation: PresentationData) {
     val icon = when {

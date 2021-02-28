@@ -1,10 +1,10 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
+import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
@@ -27,15 +27,7 @@ class UssFileFetchProvider(
 
   override val vFileClass = MFVirtualFile::class.java
 
-  override fun makeFetchTaskTitle(query: RemoteQuery<UssQuery>): String {
-    return "Fetching USS listings for ${query.request.path}"
-  }
-
-  override fun makeSecondaryTitle(query: RemoteQuery<UssQuery>): String {
-    return ""
-  }
-
-  override fun fetchResponse(query: RemoteQuery<UssQuery>): Collection<RemoteUssAttributes> {
+  override fun fetchResponse(query: RemoteQuery<UssQuery, Unit>): Collection<RemoteUssAttributes> {
     var attributes: Collection<RemoteUssAttributes>? = null
     var exception: Throwable = IOException("Cannot fetch ${query.request.path}")
     api<DataAPI>(query.connectionConfig).listUssPath(
@@ -65,7 +57,7 @@ class UssFileFetchProvider(
 
   override val responseClass = RemoteUssAttributes::class.java
 
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<UssQuery>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<UssQuery, Unit>) {
     attributesService.clearAttributes(file)
     file.delete(this)
   }

@@ -2,7 +2,9 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
@@ -10,11 +12,10 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.fetchAdapter
+import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.utils.validation.*
@@ -29,7 +30,7 @@ class RenameAction : AnAction() {
       if (node is WorkingSetNode) {
         initialState = (selectedNode.node.value as WorkingSet).name
         val dialog = RenameDialog(e.project, "Working Set", initialState).withValidationOnInput {
-          validateWorkingSetName(it,initialState, configCrudable)
+          validateWorkingSetName(it, initialState, configCrudable)
         }.withValidationForBlankOnApply()
         if (dialog.showAndGet()) {
           val nodeValue = node.value
@@ -53,7 +54,7 @@ class RenameAction : AnAction() {
           }
         }
       } else if (node is LibraryNode || node is FileLikeDatasetNode) {
-        val attributes = selectedNode.attributes
+        val attributes = selectedNode.attributes ?: return
         var type = ""
         if (attributes is RemoteDatasetAttributes) {
           initialState = attributes.datasetInfo.name
@@ -71,20 +72,7 @@ class RenameAction : AnAction() {
         }.withValidationForBlankOnApply()
         val file = node.virtualFile
         if (dialog.showAndGet() && file != null) {
-          service<DataOpsManager>(node.explorer.componentManager).performOperation(
-            operation = RenameOperation(
-              file = file,
-              newName = dialog.state
-            ),
-            callback = fetchAdapter {
-              onSuccess {
-                node.parent?.cleanCacheIfPossible()
-              }
-              onThrowable {
-                println(it)
-              }
-            }
-          )
+          runRenameOperation(e.project, file, attributes, dialog.state, node)
         }
       } else if (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath) {
         initialState = selectedNode.node.value.path
@@ -103,27 +91,46 @@ class RenameAction : AnAction() {
       } else if (selectedNode.node is UssDirNode || selectedNode.node is UssFileNode) {
         val attributes = selectedNode.attributes as RemoteUssAttributes
         val file = selectedNode.file
-        val dialog = RenameDialog(e.project, if (attributes.isDirectory) "Directory" else "File", attributes.name).withValidationOnInput {
+        val dialog = RenameDialog(
+          e.project,
+          if (attributes.isDirectory) "Directory" else "File",
+          attributes.name
+        ).withValidationOnInput {
           validateUssFileName(it)
         }.withValidationForBlankOnApply()
         if (dialog.showAndGet() && file != null) {
-          service<DataOpsManager>(node.explorer.componentManager).performOperation(
-            operation = RenameOperation(
-              file = selectedNode.file,
-              newName = dialog.state
-            ),
-            callback = fetchAdapter {
-              onSuccess {
-                node.parent?.cleanCacheIfPossible()
-              }
-              onThrowable {
-                println(it)
-              }
-            }
-          )
+          runRenameOperation(e.project, file, attributes, dialog.state, node)
         }
       }
+    }
+  }
 
+  private fun runRenameOperation(
+    project: Project?,
+    file: VirtualFile,
+    attributes: VFileInfoAttributes,
+    newName: String,
+    node: ExplorerTreeNodeBase<*>
+  ) {
+    runBackgroundableTask(
+      title = "Renaming file ${file.name} to $newName",
+      project = project,
+      cancellable = true
+    ) {
+      runCatching {
+        service<DataOpsManager>(node.explorer.componentManager).performOperation(
+          operation = RenameOperation(
+            file = file,
+            attributes = attributes,
+            newName = newName
+          ),
+          progressIndicator = it
+        )
+      }.onSuccess {
+        node.parent?.cleanCacheIfPossible()
+      }.onFailure {
+        node.explorer.reportThrowable(it, project)
+      }
     }
   }
 

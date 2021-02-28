@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.utils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 interface Execution<V, R> {
@@ -35,29 +36,33 @@ class ChannelExecutor<V, R>(
     }
   }
 
-  private suspend fun processChannel(scope: CoroutineScope) {
-    withContext(NonCancellable) {
-      val input = if (scope.isActive) {
-        channel.receive()
-      } else {
-        channel.poll()
-      }
-      if (input != null) {
-        val result = processInput(input)
-        execution.receive(result)
-      }
+  private suspend fun processChannel(afterCancelled: Boolean) {
+    val input = if (afterCancelled) {
+      channel.poll()
+    } else {
+      channel.receive()
+    }
+    if (input != null) {
+      val result = processInput(input)
+      execution.receive(result)
     }
   }
+
+  private val cancelled = AtomicBoolean(false)
 
   private val job = scope.launch {
     while (true) {
       try {
-        processChannel(scope)
+        ensureActive()
+        processChannel(false)
         delay(delayDurationInMilliseconds)
       } catch (ignored: CancellationException) {
+        cancelled.compareAndSet(false, true)
         break
       } finally {
-        processChannel(scope)
+        if (cancelled.compareAndSet(true, true)) {
+          processChannel(true)
+        }
       }
     }
   }

@@ -8,8 +8,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
-import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
+import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -27,12 +26,12 @@ class DSMaskNode(
     presentation.setIcon(AllIcons.Nodes.Module)
   }
 
-  override val query: RemoteQuery<DSMask>?
+  override val query: RemoteQuery<DSMask, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
       val urlConnection = unit.urlConnection
       return if (connectionConfig != null && urlConnection != null) {
-        RemoteQueryImpl(value, connectionConfig, urlConnection)
+        UnitRemoteQueryImpl(value, connectionConfig, urlConnection)
       } else null
     }
 
@@ -48,6 +47,9 @@ class DSMaskNode(
 
   override val requestClass = DSMask::class.java
 
+  override fun makeFetchTaskTitle(query: RemoteQuery<DSMask, Unit>): String {
+    return "Fetching listings for ${query.request.mask}"
+  }
 
 
 }

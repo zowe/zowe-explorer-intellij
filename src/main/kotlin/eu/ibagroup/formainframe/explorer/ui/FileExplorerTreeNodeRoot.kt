@@ -4,7 +4,6 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.explorer.WorkingSet
 
 class FileExplorerTreeNodeRoot(explorer: Explorer, project: Project, treeStructure: ExplorerTreeStructureBase) :

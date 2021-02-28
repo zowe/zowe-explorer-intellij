@@ -89,8 +89,8 @@ fun validateUssMask(text: String, component: JComponent): ValidationInfo? {
   }
 }
 
-private val forbiddenSymbol = "/"
-private val warningSymbols = "^[^>|:& ]*$"
+private const val forbiddenSymbol = "/"
+private const val warningSymbols = "^[^>|:& ]*$"
 
 fun validateUssFileName(component: JTextField): ValidationInfo? {
   return if (component.text.length > 255) {

@@ -1,11 +1,11 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
 import com.intellij.openapi.application.runReadAction
+import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.getAttributesService
@@ -32,17 +32,9 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
 
   override val vFileClass = MFVirtualFile::class.java
 
-  override fun makeFetchTaskTitle(query: RemoteQuery<LibraryQuery>): String {
-    return "Fetching members for ${query.request.library.name}"
-  }
-
   override val responseClass = RemoteMemberAttributes::class.java
 
-  override fun makeSecondaryTitle(query: RemoteQuery<LibraryQuery>): String {
-    return ""
-  }
-
-  override fun fetchResponse(query: RemoteQuery<LibraryQuery>): Collection<RemoteMemberAttributes> {
+  override fun fetchResponse(query: RemoteQuery<LibraryQuery, Unit>): Collection<RemoteMemberAttributes> {
     val libraryAttributes = runReadAction { remoteDatasetAttributesService.getAttributes(query.request.library) }
     return if (libraryAttributes != null) {
       var attributes: Collection<RemoteMemberAttributes>? = null
@@ -64,7 +56,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
     } else throw IllegalArgumentException("Virtual file is not a library")
   }
 
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<LibraryQuery>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<LibraryQuery, Unit>) {
     attributesService.clearAttributes(file)
     file.delete(this)
   }

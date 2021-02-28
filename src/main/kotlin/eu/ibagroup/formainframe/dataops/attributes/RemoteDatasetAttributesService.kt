@@ -1,7 +1,5 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
-import com.intellij.openapi.util.io.FileAttributes
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
@@ -48,10 +46,10 @@ class RemoteDatasetAttributesService(
     )
   }
 
-  override fun continuePathChain(attributes: RemoteDatasetAttributes): List<Pair<String, FileAttributes>> {
+  override fun continuePathChain(attributes: RemoteDatasetAttributes): List<PathElementSeed> {
     return listOf(
-      Pair(attributes.volser ?: MIGRATED, createAttributes(directory = true)),
-      Pair(attributes.name, createAttributes(directory = attributes.isDirectory))
+      PathElementSeed(attributes.volser ?: MIGRATED, createAttributes(directory = true)),
+      PathElementSeed(attributes.name, createAttributes(directory = attributes.isDirectory))
     )
   }
 

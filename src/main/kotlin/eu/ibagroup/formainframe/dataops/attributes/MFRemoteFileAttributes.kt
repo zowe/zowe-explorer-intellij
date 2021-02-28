@@ -20,16 +20,16 @@ interface Requester {
 inline fun <reified R : Requester> MFRemoteFileAttributes<R>.findCommonUrlConnections(other: MFRemoteFileAttributes<R>)
   : Collection<Pair<R, UrlConnection>> {
   val thisRequestersWithUrlConnection = requesters.mapNotNull {
-    val urlConnection: UrlConnection? = configCrudable.getByForeignKey(it)
+    val urlConnection: UrlConnection? = configCrudable.getByForeignKey(it.connectionConfig)
     if (urlConnection != null) {
       Pair(it, urlConnection)
     } else null
   }
-  val otherRequestersWithUrlConnection = requesters.mapNotNull<R, UrlConnection> {
-    configCrudable.getByForeignKey(it)
+  val otherUrlConnections = other.requesters.mapNotNull<R, UrlConnection> {
+    configCrudable.getByForeignKey(it.connectionConfig)
   }
   return thisRequestersWithUrlConnection.filter { pair ->
-    otherRequestersWithUrlConnection.any {
+    otherUrlConnections.any {
       pair.second.url == it.url && pair.second.isAllowSelfSigned == it.isAllowSelfSigned
     }
   }

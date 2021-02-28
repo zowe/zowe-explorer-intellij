@@ -1,3 +1,3 @@
 package eu.ibagroup.formainframe.dataops
 
-interface RemoteQuery<Request> : Query<Request>, RemoteInfo
+interface RemoteQuery<Request, Result> : Query<Request, Result>, RemoteInfo

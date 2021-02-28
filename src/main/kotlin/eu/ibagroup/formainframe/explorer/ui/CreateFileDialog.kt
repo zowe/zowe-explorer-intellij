@@ -2,14 +2,11 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
-import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.utils.clone
+import eu.ibagroup.formainframe.dataops.operations.UssAllocationParams
 import eu.ibagroup.formainframe.utils.validation.validateForBlank
 import eu.ibagroup.formainframe.utils.validation.validateUssFileName
 import eu.ibagroup.r2z.CreateUssFile
@@ -18,8 +15,8 @@ import eu.ibagroup.r2z.FileModeValue
 import eu.ibagroup.r2z.FileType
 import javax.swing.JComponent
 
-class CreateFileDialog(project: Project?, override var state: CreateFileState, filePath: String) :
-  DialogWrapper(project), StatefulComponent<CreateFileState> {
+class CreateFileDialog(project: Project?, override var state: CreateFileDialogState, filePath: String) :
+  DialogWrapper(project), StatefulComponent<CreateFileDialogState> {
 
   override fun createCenterPanel(): JComponent {
 
@@ -111,26 +108,28 @@ class CreateFileDialog(project: Project?, override var state: CreateFileState, f
 }
 
 
-class CreateFileState(override var mode: DialogMode = DialogMode.CREATE, val parameters: CreateUssFile) : DialogState {
-
-  var fileName: String = ""
-
-  var path: String = ""
-
-}
-
-val emptyFileState: CreateFileState
-  get() = CreateFileState(
+val emptyFileState: CreateFileDialogState
+  get() = CreateFileDialogState(
     parameters = CreateUssFile(
       type = FileType.FILE,
       mode = FileMode(6, 6, 6)
     )
   )
 
-val emptyDirState: CreateFileState
-  get() = CreateFileState(
+val emptyDirState: CreateFileDialogState
+  get() = CreateFileDialogState(
     parameters = CreateUssFile(
       type = FileType.DIR,
       mode = FileMode(7, 7, 7)
     )
   )
+
+data class CreateFileDialogState(
+  val parameters: CreateUssFile,
+  var fileName: String = "",
+  var path: String = "",
+)
+
+fun CreateFileDialogState.toAllocationParams(): UssAllocationParams {
+  return UssAllocationParams(parameters, fileName, path)
+}
