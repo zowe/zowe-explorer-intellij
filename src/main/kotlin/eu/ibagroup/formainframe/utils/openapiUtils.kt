@@ -69,16 +69,23 @@ fun <L : Any> subscribe(topic: Topic<L>, handler: L, disposable: Disposable) = A
   .subscribe(topic, handler)
 
 fun assertReadAllowed() = ApplicationManager.getApplication().assertReadAccessAllowed()
+
 fun assertWriteAllowed() = ApplicationManager.getApplication().assertWriteAccessAllowed()
+
 fun <T> submitOnWriteThread(block: () -> T): T {
   @Suppress("UnstableApiUsage")
   return AppUIExecutor.onWriteThread().submit(block).get()
 }
 
+@Suppress("UnstableApiUsage")
 inline fun <T> runWriteActionOnWriteThread(crossinline block: () -> T): T {
-  @Suppress("UnstableApiUsage")
-  return if (ApplicationManager.getApplication().isWriteThread) {
-    runWriteAction(block)
+  val app = ApplicationManager.getApplication()
+  return if (app.isWriteThread) {
+    if (app.isWriteAccessAllowed) {
+      block()
+    } else {
+      runWriteAction(block)
+    }
   } else
     submitOnWriteThread {
       runWriteAction(block)

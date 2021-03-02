@@ -7,12 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
-import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -30,10 +29,12 @@ class UssDirNode(
   project: Project,
   parent: ExplorerTreeNodeBase<*>,
   workingSet: WorkingSet,
-  viewSettings: ExplorerViewSettings,
+  treeStructure: ExplorerTreeStructureBase,
   private var vFile: MFVirtualFile? = null,
   private val isRootNode: Boolean = false
-) : RemoteMFFileCacheNode<UssPath, UssQuery, WorkingSet>(ussPath, project, parent, workingSet, viewSettings) {
+) : RemoteMFFileCacheNode<UssPath, UssQuery, WorkingSet>(ussPath, project, parent, workingSet, treeStructure) {
+
+  val isConfigUssPath = vFile == null
 
   override val query: RemoteQuery<UssQuery>?
     get() {
@@ -50,13 +51,23 @@ class UssDirNode(
 
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
     return find { attributesService.getAttributes(it)?.path == value.path }
-      ?.also { vFile = it }
+      ?.also {
+        vFile = it
+        treeStructure.registerNode(this@UssDirNode)
+      }
       ?.children
       ?.map {
         if (it.isDirectory) {
-          UssDirNode(UssPath(withSlashIfNeeded(value) + it.name), notNullProject, this@UssDirNode, unit, viewSettings, it)
+          UssDirNode(
+            UssPath(withSlashIfNeeded(value) + it.name),
+            notNullProject,
+            this@UssDirNode,
+            unit,
+            treeStructure,
+            it
+          )
         } else {
-          UssFileNode(it, notNullProject, this@UssDirNode, unit, viewSettings)
+          UssFileNode(it, notNullProject, this@UssDirNode, unit, treeStructure)
         }
       } ?: listOf()
   }

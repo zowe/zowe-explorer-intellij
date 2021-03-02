@@ -19,8 +19,8 @@ class FileLikeDatasetNode(
   project: Project,
   parent: ExplorerTreeNodeBase<*>,
   unit: ExplorerUnit,
-  viewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(file, project, parent, unit, viewSettings) {
+  treeStructure: ExplorerTreeStructureBase
+) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(file, project, parent, unit, treeStructure) {
 
   override fun isAlwaysLeaf(): Boolean {
     return !value.isDirectory
@@ -37,7 +37,7 @@ class FileLikeDatasetNode(
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return value.cachedChildren
-      .map { FileLikeDatasetNode(value, notNullProject, this, unit, viewSettings) }.toMutableSmartList()
+      .map { FileLikeDatasetNode(value, notNullProject, this, unit, treeStructure) }.toMutableSmartList()
   }
 
   override fun getVirtualFile(): MFVirtualFile {

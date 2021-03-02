@@ -9,5 +9,5 @@ abstract class ExplorerUnitTreeNodeBase<Value : Any, U : ExplorerUnit>(
   project: Project,
   parent: ExplorerTreeNodeBase<*>,
   val unit: U,
-  explorerViewSettings: ExplorerViewSettings
-) : ExplorerTreeNodeBase<Value>(value, project, parent, unit.explorer, explorerViewSettings)
+  treeStructure: ExplorerTreeStructureBase
+) : ExplorerTreeNodeBase<Value>(value, project, parent, unit.explorer, treeStructure)

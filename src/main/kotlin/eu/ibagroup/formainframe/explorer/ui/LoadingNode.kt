@@ -15,9 +15,9 @@ class LoadingNode(
   project: Project,
   parent: ExplorerTreeNodeBase<*>,
   explorer: Explorer,
-  viewSettings: ExplorerViewSettings
+  treeStructure: ExplorerTreeStructureBase
 ) :
-  ExplorerTreeNodeBase<Any>(any, project, parent, explorer, viewSettings) {
+  ExplorerTreeNodeBase<Any>(any, project, parent, explorer, treeStructure) {
 
   override fun isAlwaysLeaf(): Boolean {
     return true

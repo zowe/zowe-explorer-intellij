@@ -1,7 +1,8 @@
-package eu.ibagroup.formainframe.dataops.content
+package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.dataops.FetchCallback
 import java.io.IOException
 
 enum class AcceptancePolicy {
@@ -24,17 +25,19 @@ interface ContentSynchronizer {
   fun enforceSync(
     file: VirtualFile,
     acceptancePolicy: AcceptancePolicy,
-    saveStrategy: SaveStrategy
+    saveStrategy: SaveStrategy,
+    onSyncEstablished: FetchCallback<Unit>
   )
 
   @Throws(IOException::class)
   fun enforceSyncIfNeeded(
     file: VirtualFile,
     acceptancePolicy: AcceptancePolicy,
-    saveStrategy: SaveStrategy
+    saveStrategy: SaveStrategy,
+    onSyncEstablished: FetchCallback<Unit>
   ) {
     if (!isAlreadySynced(file)) {
-      enforceSync(file, acceptancePolicy, saveStrategy)
+      enforceSync(file, acceptancePolicy, saveStrategy, onSyncEstablished)
     }
   }
 

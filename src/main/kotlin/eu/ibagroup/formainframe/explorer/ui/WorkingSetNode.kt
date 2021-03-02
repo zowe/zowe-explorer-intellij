@@ -11,8 +11,8 @@ class WorkingSetNode(
   workingSet: WorkingSet,
   project: Project,
   parent: ExplorerTreeNodeBase<*>,
-  viewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<WorkingSet, WorkingSet>(workingSet, project, parent, workingSet, viewSettings) {
+  treeStructure: ExplorerTreeStructureBase
+) : ExplorerUnitTreeNodeBase<WorkingSet, WorkingSet>(workingSet, project, parent, workingSet, treeStructure) {
 
   override fun isAlwaysExpand(): Boolean {
     return true
@@ -20,11 +20,12 @@ class WorkingSetNode(
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(AllIcons.Nodes.Project)
-    presentation.presentableText = value.name
+    val wsName = value.name
+    presentation.presentableText = wsName
     when {
       value.connectionConfig == null || value.urlConnection == null -> connectionIsNotSet(presentation)
       value.dsMasks.isEmpty() && value.ussPaths.isEmpty() -> destinationsAreEmpty(presentation)
-      viewSettings.showWorkingSetInfo -> addInfo(presentation)
+      treeStructure.showWorkingSetInfo -> addInfo(presentation)
     }
   }
 
@@ -38,8 +39,8 @@ class WorkingSetNode(
   }
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
-    return value.dsMasks.map { DSMaskNode(it, notNullProject, this, value, viewSettings) }.plus(
-      value.ussPaths.map { UssDirNode(it, notNullProject, this, value, viewSettings, isRootNode = true) }
+    return value.dsMasks.map { DSMaskNode(it, notNullProject, this, value, treeStructure) }.plus(
+      value.ussPaths.map { UssDirNode(it, notNullProject, this, value, treeStructure, isRootNode = true) }
     ).toMutableList()
   }
 

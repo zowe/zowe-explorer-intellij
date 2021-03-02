@@ -26,6 +26,7 @@ abstract class FsStructuringAttributesServiceBase<Attributes : VFileInfoAttribut
   override fun getOrCreateVirtualFile(attributes: Attributes): VFile {
     return lock(writeLock) {
       getVirtualFile(attributes)?.let {
+        if (!it.isValid) return@let
         val oldAttributes = getAttributes(it)
         if (oldAttributes != null) {
           updateAttributesInternal(it, oldAttributes, mergeAttributes(oldAttributes, attributes))

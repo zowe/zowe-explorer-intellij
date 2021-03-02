@@ -5,17 +5,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.allocation.Allocator
-import eu.ibagroup.formainframe.dataops.attributes.AttributesListener
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
-import eu.ibagroup.formainframe.dataops.content.AcceptancePolicy
-import eu.ibagroup.formainframe.dataops.content.ContentSynchronizer
-import eu.ibagroup.formainframe.dataops.content.SaveStrategy
+import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.Operation
-import java.io.IOException
 
 interface DataOpsManager : Disposable {
 
@@ -41,7 +36,7 @@ interface DataOpsManager : Disposable {
     vFileClass: Class<out File>
   ): FileFetchProvider<R, Q, File>
 
-  fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer
+  fun getAppropriateContentSynchronizer(file: VirtualFile): ContentSynchronizer
 
   fun isOperationSupported(operation: Operation): Boolean
 

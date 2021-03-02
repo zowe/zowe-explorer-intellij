@@ -10,7 +10,7 @@ class NewItemActionGroup : DefaultActionGroup() {
   override fun update(e: AnActionEvent) {
     val selected = e.getData(SELECTED_NODES)
     val node = selected?.getOrNull(0)?.node
-    e.presentation.isVisible = selected?.size == 1
+    e.presentation.isEnabledAndVisible = selected?.size == 1
       && (node is WorkingSetNode
       || node is DSMaskNode
       || node is UssDirNode

@@ -125,13 +125,13 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   @Throws(IOException::class)
   override fun deleteFile(requestor: Any?, vFile: MFVirtualFile) {
     val event = listOf(VFileDeleteEvent(requestor, vFile, false))
-    sendVfsChangesTopic().before(event)
     vFile.validWriteLock {
       val parent = vFile.parent
       parent?.validWriteLock {
         if (vFile.children?.size != 0) {
           vFile.children?.forEach { deleteFile(requestor, it) }
         }
+        sendVfsChangesTopic().before(event)
         if (fsGraph.removeEdge(parent, vFile) != null && fsGraph.removeVertex(vFile)) {
           val storageId = fileIdToStorageIdMap[vFile.id]
           if (storageId != null) {
