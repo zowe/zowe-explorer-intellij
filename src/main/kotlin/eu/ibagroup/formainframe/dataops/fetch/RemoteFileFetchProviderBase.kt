@@ -105,6 +105,7 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
 
   override fun cleanCache(query: RemoteQuery<Request>) {
     cacheState.remove(query)
+    sendTopic(FileFetchProvider.CACHE_UPDATED, dataOpsManager.componentManager).onCacheUpdated(query, listOf())
   }
 
   abstract val responseClass: Class<out Response>

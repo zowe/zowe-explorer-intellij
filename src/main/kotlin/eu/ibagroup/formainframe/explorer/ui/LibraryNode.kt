@@ -3,7 +3,6 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -22,8 +21,8 @@ class LibraryNode(
   project: Project,
   parent: ExplorerTreeNodeBase<*>,
   workingSet: WorkingSet,
-  explorerViewSettings: ExplorerViewSettings
-) : RemoteMFFileCacheNode<MFVirtualFile, LibraryQuery, WorkingSet>(library, project, parent, workingSet, explorerViewSettings) {
+  treeStructure: ExplorerTreeStructureBase
+) : RemoteMFFileCacheNode<MFVirtualFile, LibraryQuery, WorkingSet>(library, project, parent, workingSet, treeStructure) {
 
   override val query: RemoteQuery<LibraryQuery>?
     get() {
@@ -35,7 +34,7 @@ class LibraryNode(
     }
 
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
-    return map { FileLikeDatasetNode(it, notNullProject, this@LibraryNode, unit, viewSettings) }
+    return map { FileLikeDatasetNode(it, notNullProject, this@LibraryNode, unit, treeStructure) }
   }
 
   override val requestClass = LibraryQuery::class.java

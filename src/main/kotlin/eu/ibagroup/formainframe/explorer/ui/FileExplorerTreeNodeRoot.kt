@@ -7,8 +7,8 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.explorer.WorkingSet
 
-class FileExplorerTreeNodeRoot(explorer: Explorer, project: Project, viewSettings: ExplorerViewSettings) :
-  ExplorerTreeNodeBase<Explorer>(explorer, project, null, explorer, viewSettings) {
+class FileExplorerTreeNodeRoot(explorer: Explorer, project: Project, treeStructure: ExplorerTreeStructureBase) :
+  ExplorerTreeNodeBase<Explorer>(explorer, project, null, explorer, treeStructure) {
 
   override fun isAlwaysExpand(): Boolean {
     return true
@@ -19,6 +19,6 @@ class FileExplorerTreeNodeRoot(explorer: Explorer, project: Project, viewSetting
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return explorer.units.filterIsInstance<WorkingSet>()
-      .map { WorkingSetNode(it, notNullProject, this, viewSettings) }.toMutableList()
+      .map { WorkingSetNode(it, notNullProject, this, treeStructure) }.toMutableList()
   }
 }

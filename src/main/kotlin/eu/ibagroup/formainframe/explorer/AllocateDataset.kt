@@ -4,16 +4,19 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkNoDialog
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.dataops.*
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.allocation.AllocationStatus
 import eu.ibagroup.formainframe.dataops.allocation.DatasetAllocationParams
+import eu.ibagroup.formainframe.dataops.fetchAdapter
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
@@ -42,14 +45,22 @@ class AllocateDataset : AnAction() {
             callback = fetchAdapter {
               onSuccess {
                 if (it == AllocationStatus.SUCCESS) {
+                  parentNode.cleanCacheIfPossible()
                   runInEdt {
-                    val workingSetConfig = configCrudable.getByUniqueKey<WorkingSetConfig>(workingSet.uuid)?.clone()
-                    if (workingSetConfig != null) {
-                      workingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
-                      configCrudable.update(workingSetConfig)
+                    if (showOkNoDialog(
+                        title = "Dataset ${state.datasetName} Has Been Created",
+                        message = "Would you like to add mask \"${state.datasetName}\" to ${parentNode.unit.name}",
+                        project = e.project,
+                        okText = "Yes",
+                        noText = "No"
+                      )
+                    ) {
+                      val workingSetConfig = configCrudable.getByUniqueKey<WorkingSetConfig>(workingSet.uuid)?.clone()
+                      if (workingSetConfig != null) {
+                        workingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
+                        configCrudable.update(workingSetConfig)
+                      }
                     }
-                    parentNode.cleanCacheIfPossible()
-                    sendTopic(FileExplorerContent.NODE_UPDATE, parentNode.explorer.componentManager)(parentNode, true)
                   }
                 } else {
                   runInEdt {
@@ -77,7 +88,7 @@ class AllocateDataset : AnAction() {
 
   override fun update(e: AnActionEvent) {
     val selected = e.getData(SELECTED_NODES)
-    e.presentation.isVisible = selected != null
+    e.presentation.isEnabledAndVisible = selected != null
       && selected.size == 1
       && (selected[0].node is WorkingSetNode || selected[0].node is DSMaskNode)
   }

@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.content
+package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.messages.MessageBus
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.FetchCallback
 import eu.ibagroup.formainframe.utils.QueueExecutor
 import eu.ibagroup.formainframe.utils.subscribe
 import java.io.IOException
@@ -18,15 +18,15 @@ abstract class AbstractQueuedContentSynchronizer(
   protected val dataOpsManager: DataOpsManager
 ) : ContentSynchronizer {
 
-  private val fileToExecutorMap = ConcurrentHashMap<VirtualFile, QueueExecutor<Unit, Unit>>()
+  private val fileToExecutorMap = ConcurrentHashMap<VirtualFile, Pair<QueueExecutor<FetchCallback<Unit>, Unit>, FetchCallback<Unit>>>()
 
   protected abstract fun buildExecutorForFile(
     file: VirtualFile,
     saveStrategy: SaveStrategy
-  ): QueueExecutor<Unit, Unit>
+  ): QueueExecutor<FetchCallback<Unit>, Unit>
 
   protected val disposableQueues = Disposable {
-    fileToExecutorMap.forEach { (_, u) -> u.shutdown() }
+    fileToExecutorMap.forEach { (_, u) -> u.first.shutdown() }
     fileToExecutorMap.clear()
   }
 
@@ -45,7 +45,7 @@ abstract class AbstractQueuedContentSynchronizer(
                 executor
               } else null
             }
-            .forEach { it.accept(Unit) }
+            .forEach { it.first.accept(it.second) }
         }
       },
       disposable = disposableQueues
@@ -55,7 +55,8 @@ abstract class AbstractQueuedContentSynchronizer(
   override fun enforceSync(
     file: VirtualFile,
     acceptancePolicy: AcceptancePolicy,
-    saveStrategy: SaveStrategy
+    saveStrategy: SaveStrategy,
+    onSyncEstablished: FetchCallback<Unit>
   ) {
     if (file.isDirectory) {
       throw IOException("Directories cannot be synced")
@@ -75,8 +76,8 @@ abstract class AbstractQueuedContentSynchronizer(
       throw IOException("Cannot sync non-empty file due provided acceptance policy $acceptancePolicy")
     }
     val executor = buildExecutorForFile(file, saveStrategy)
-    fileToExecutorMap[file] = executor
-    executor.accept(Unit)
+    fileToExecutorMap[file] = Pair(executor, onSyncEstablished)
+    executor.accept(onSyncEstablished)
   }
 
   override fun isAlreadySynced(file: VirtualFile): Boolean {
@@ -84,9 +85,11 @@ abstract class AbstractQueuedContentSynchronizer(
   }
 
   override fun removeSync(file: VirtualFile) {
-    val executor = fileToExecutorMap[file]
+    val pair = fileToExecutorMap[file]
       ?: throw IOException("Cannot remove sync for ${file.path} since it's not synchronized already")
-    executor.shutdown()
+    pair.first.shutdown()
+    fileToExecutorMap.remove(file)
+    pair.second.onFinish()
   }
 
 }

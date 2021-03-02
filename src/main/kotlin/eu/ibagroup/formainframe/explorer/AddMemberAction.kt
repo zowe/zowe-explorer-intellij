@@ -48,7 +48,6 @@ class AddMemberAction : AnAction() {
                   if (it == AllocationStatus.SUCCESS) {
                     runInEdt {
                       currentNode.cleanCache()
-                      sendTopic(FileExplorerContent.NODE_UPDATE)(currentNode, true)
                     }
                   } else {
                     runInEdt {
@@ -81,7 +80,7 @@ class AddMemberAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     val selected = e.getData(SELECTED_NODES)
-    e.presentation.isVisible = selected?.getOrNull(0)?.node is LibraryNode
+    e.presentation.isEnabledAndVisible = selected?.getOrNull(0)?.node is LibraryNode
   }
 
 }

@@ -11,8 +11,8 @@ abstract class RemoteMFFileCacheNode<Value : Any, R : Any, U : ExplorerUnit>(
   project: Project,
   parent: ExplorerTreeNodeBase<*>,
   unit: U,
-  explorerViewSettings: ExplorerViewSettings
-) : FileCacheNode<Value, R, RemoteQuery<R>, MFVirtualFile, U>(value, project, parent, unit, explorerViewSettings){
+  treeStructure: ExplorerTreeStructureBase
+) : FileCacheNode<Value, R, RemoteQuery<R>, MFVirtualFile, U>(value, project, parent, unit, treeStructure){
 
   override val queryClass = RemoteQuery::class.java
 

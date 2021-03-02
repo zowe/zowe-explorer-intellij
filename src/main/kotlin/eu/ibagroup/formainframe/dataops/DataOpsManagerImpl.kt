@@ -8,7 +8,7 @@ import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.allocation.Allocator
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
-import eu.ibagroup.formainframe.dataops.content.ContentSynchronizer
+import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.Operation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
@@ -90,7 +90,7 @@ class DataOpsManagerImpl : DataOpsManager {
     ContentSynchronizer.EP.extensionList.buildComponents()
   }
 
-  override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
+  override fun getAppropriateContentSynchronizer(file: VirtualFile): ContentSynchronizer {
     return contentSynchronizers.stream()
       .filter { it.accepts(file) }
       .findAnyNullable()

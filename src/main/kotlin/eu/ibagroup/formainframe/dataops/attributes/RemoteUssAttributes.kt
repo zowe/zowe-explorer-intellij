@@ -78,4 +78,32 @@ data class RemoteUssAttributes(
           || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
+  val isReadable: Boolean
+    get() {
+      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig) == owner }
+      val mode = if (hasFileOwnerInRequesters) {
+        fileMode?.owner
+      } else {
+        fileMode?.all
+      }
+      return mode == FileModeValue.READ.mode
+        || mode == FileModeValue.READ_WRITE.mode
+        || mode == FileModeValue.READ_EXECUTE.mode
+        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+    }
+
+  val isExecutable: Boolean
+  get() {
+    val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig) == owner }
+    val mode = if (hasFileOwnerInRequesters) {
+      fileMode?.owner
+    } else {
+      fileMode?.all
+    }
+    return mode == FileModeValue.EXECUTE.mode
+      || mode == FileModeValue.READ_EXECUTE.mode
+      || mode == FileModeValue.WRITE_EXECUTE.mode
+      || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+  }
+
 }

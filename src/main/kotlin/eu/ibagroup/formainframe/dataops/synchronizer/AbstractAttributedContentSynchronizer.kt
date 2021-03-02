@@ -1,8 +1,9 @@
-package eu.ibagroup.formainframe.dataops.content
+package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.FetchCallback
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.utils.ChannelExecutor
 import eu.ibagroup.formainframe.utils.Execution
@@ -23,10 +24,10 @@ abstract class AbstractAttributedContentSynchronizer<Attributes : VFileInfoAttri
   protected abstract fun buildExecution(
     file: VirtualFile,
     saveStrategy: SaveStrategy
-  ): Execution<Unit, Unit>
+  ): Execution<FetchCallback<Unit>, Unit>
 
   @Suppress("UNCHECKED_CAST")
-  override fun buildExecutorForFile(file: VirtualFile, saveStrategy: SaveStrategy): QueueExecutor<Unit, Unit> {
+  override fun buildExecutorForFile(file: VirtualFile, saveStrategy: SaveStrategy): QueueExecutor<FetchCallback<Unit>, Unit> {
     return ChannelExecutor(Channel(Channel.CONFLATED), CHANNEL_DELAY, buildExecution(file, saveStrategy))
   }
 

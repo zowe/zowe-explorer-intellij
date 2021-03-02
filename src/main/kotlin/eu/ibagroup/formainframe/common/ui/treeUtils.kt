@@ -117,3 +117,20 @@ fun AsyncTreeModel.getPath(node: Any): TreePath? {
   }
   return path
 }
+
+fun TreePath.findCommonParentPath(other: TreePath): TreePath? {
+  val minPathLength = pathCount.coerceAtMost(other.pathCount)
+  val common = ArrayList<Any>(minPathLength)
+  for (i in 0 until minPathLength) {
+    val component = getPathComponent(i)
+    val otherComponent = other.getPathComponent(i)
+    if (component == otherComponent) {
+      common.add(component)
+    } else {
+      break
+    }
+  }
+  return if (common.isNotEmpty()) {
+    TreePath(common.toTypedArray())
+  } else null
+}

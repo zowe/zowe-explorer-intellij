@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.content
+package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.vfs.VirtualFile
 

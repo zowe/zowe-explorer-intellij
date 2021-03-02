@@ -9,6 +9,7 @@ import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.CreateUssFile
 import eu.ibagroup.r2z.FileMode
 import eu.ibagroup.r2z.FileModeValue
@@ -25,20 +26,22 @@ class CreateFileDialog(project: Project?, override var state: CreateFileState, f
 
   override fun createCenterPanel(): JComponent {
 
-    val modelTemplate = CollectionComboBoxModel(
-      listOf(
-        FileModeValue.NONE,
-        FileModeValue.READ,
-        FileModeValue.WRITE,
-        FileModeValue.READ_WRITE,
-        FileModeValue.EXECUTE,
-        FileModeValue.READ_EXECUTE,
-        FileModeValue.READ_WRITE,
-        FileModeValue.READ_WRITE_EXECUTE
+    val modelTemplateFactory = {
+      CollectionComboBoxModel(
+        listOf(
+          FileModeValue.NONE,
+          FileModeValue.READ,
+          FileModeValue.WRITE,
+          FileModeValue.READ_WRITE,
+          FileModeValue.EXECUTE,
+          FileModeValue.READ_EXECUTE,
+          FileModeValue.READ_WRITE,
+          FileModeValue.READ_WRITE_EXECUTE
+        )
       )
-    )
+    }
 
-    fun Int.toFileModeValue() : FileModeValue {
+    fun Int.toFileModeValue(): FileModeValue {
       return when (this) {
         0 -> FileModeValue.NONE
         1 -> FileModeValue.EXECUTE
@@ -58,20 +61,16 @@ class CreateFileDialog(project: Project?, override var state: CreateFileState, f
         label("Name")
         textField(state::fileName).withValidationOnInput {
           val name = it.text
-          return@withValidationOnInput if (name.length > 255) {
-            ValidationInfo("File name exceed 255 symbols", it)
-          } else if (name.contains(forbiddenSymbols)) {
-            ValidationInfo("Forbidden character from $forbiddenSymbolsList was used", it)
-          }
-//          else if (!name.matches(Regex(warningSymbols))) {
-//            ValidationInfo("Special character from $warningSymbolsList was used",
-//              it).apply {
-//                asWarning()
-//                isOKActionEnabled = true
-//            }
-//          }
-          else {
-            null
+          return@withValidationOnInput when {
+            name.length > 255 -> {
+              ValidationInfo("File name exceed 255 symbols", it)
+            }
+            name.contains(forbiddenSymbols) -> {
+              ValidationInfo("Forbidden character from $forbiddenSymbolsList was used", it)
+            }
+            else -> {
+              null
+            }
           }
         }.withValidationOnApply {
           if (it.text.isBlank()) {
@@ -84,7 +83,7 @@ class CreateFileDialog(project: Project?, override var state: CreateFileState, f
       row {
         label("Owner")
         comboBox(
-          model = modelTemplate,
+          model = modelTemplateFactory(),
           modelBinding = PropertyBinding(
             get = { state.parameters.mode.owner.toFileModeValue() },
             set = {
@@ -96,7 +95,7 @@ class CreateFileDialog(project: Project?, override var state: CreateFileState, f
       row {
         label("Group")
         comboBox(
-          model = modelTemplate,
+          model = modelTemplateFactory(),
           modelBinding = PropertyBinding(
             get = { state.parameters.mode.group.toFileModeValue() },
             set = {
@@ -108,7 +107,7 @@ class CreateFileDialog(project: Project?, override var state: CreateFileState, f
       row {
         label("All")
         comboBox(
-          model = modelTemplate,
+          model = modelTemplateFactory(),
           modelBinding = PropertyBinding(
             get = { state.parameters.mode.all.toFileModeValue() },
             set = {

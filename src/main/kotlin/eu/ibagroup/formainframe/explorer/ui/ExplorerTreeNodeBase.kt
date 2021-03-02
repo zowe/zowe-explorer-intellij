@@ -6,31 +6,38 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.content.AcceptancePolicy
+import eu.ibagroup.formainframe.dataops.fetchAdapter
+import eu.ibagroup.formainframe.dataops.synchronizer.AcceptancePolicy
 import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import javax.swing.tree.TreePath
 
+@Suppress("LeakingThis")
 abstract class ExplorerTreeNodeBase<Value : Any>(
   value: Value,
   project: Project,
   val parent: ExplorerTreeNodeBase<*>?,
   val explorer: Explorer,
-  protected val viewSettings: ExplorerViewSettings
+  protected val treeStructure: ExplorerTreeStructureBase
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
 
+  init {
+    treeStructure.registerNode(this)
+  }
+
   protected open val openFileDescriptor: OpenFileDescriptor?
-    get() = virtualFile?.let {
-      if (!it.isDirectory) {
+    get() = virtualFile?.let { file ->
+      if (!file.isDirectory) {
         service<DataOpsManager>(explorer.componentManager)
-          .getContentSynchronizer(it)
+          .getAppropriateContentSynchronizer(file)
           .enforceSyncIfNeeded(
-            file = it,
+            file = file,
             acceptancePolicy = AcceptancePolicy.FORCE_REWRITE,
-            saveStrategy = { _, _, _ -> true }
+            saveStrategy = { _, _, _ -> true },
+            onSyncEstablished = fetchAdapter {}
           )
-        OpenFileDescriptor(notNullProject, it)
+        OpenFileDescriptor(notNullProject, file)
       } else null
     }
 
@@ -41,7 +48,7 @@ abstract class ExplorerTreeNodeBase<Value : Any>(
   val notNullProject = project
 
   override fun getSettings(): ViewSettings {
-    return viewSettings
+    return treeStructure
   }
 
   override fun navigate(requestFocus: Boolean) {
@@ -55,4 +62,15 @@ abstract class ExplorerTreeNodeBase<Value : Any>(
   override fun canNavigateToSource(): Boolean {
     return openFileDescriptor?.canNavigateToSource() ?: super.canNavigateToSource()
   }
+
+  private val pathList: List<ExplorerTreeNodeBase<*>>
+    get() = if (parent != null) {
+      parent.pathList + this
+    } else {
+      listOf(this)
+    }
+
+  val path: TreePath
+    get() = TreePath(pathList.toTypedArray())
+
 }

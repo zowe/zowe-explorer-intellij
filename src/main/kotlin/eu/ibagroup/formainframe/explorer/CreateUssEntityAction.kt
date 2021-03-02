@@ -38,12 +38,7 @@ abstract class CreateUssEntityAction : AnAction() {
             .allocate(RemoteQueryImpl(state, connectionConfig, urlConnection), fetchAdapter {
               onSuccess {
                 if (it == AllocationStatus.SUCCESS) {
-                  runInEdt {
-                    Messages.showInfoMessage(
-                      "$ussFileType ${state.fileName} has been created",
-                      "File/Directory Created"
-                    )
-                  }
+                  node.cleanCacheIfPossible()
                 } else {
                   runInEdt {
                     Messages.showErrorDialog(
@@ -73,7 +68,7 @@ abstract class CreateUssEntityAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     val selected = e.getData(SELECTED_NODES)
-    e.presentation.isVisible = selected != null
+    e.presentation.isEnabledAndVisible = selected != null
       && selected.size == 1
       && selected[0].node is UssDirNode
   }

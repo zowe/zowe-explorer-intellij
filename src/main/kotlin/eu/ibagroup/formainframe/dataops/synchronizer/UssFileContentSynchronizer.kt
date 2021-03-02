@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.content
+package eu.ibagroup.formainframe.dataops.synchronizer
 
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager

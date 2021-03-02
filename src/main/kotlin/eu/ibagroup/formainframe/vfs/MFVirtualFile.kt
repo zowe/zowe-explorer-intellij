@@ -161,7 +161,11 @@ class MFVirtualFile internal constructor(
   }
 
   override fun getExtension(): String {
-    return name.split(".").last()
+    return if (name.contains('.')) {
+      name.split(".").last()
+    } else {
+      name
+    }
   }
 
   override fun getNameWithoutExtension(): String {
@@ -173,8 +177,6 @@ class MFVirtualFile internal constructor(
     get() = fs.model.getChildrenList(this)
 
   fun iterInDbChildren() = cachedChildren
-
-  override fun isInLocalFileSystem() = true
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

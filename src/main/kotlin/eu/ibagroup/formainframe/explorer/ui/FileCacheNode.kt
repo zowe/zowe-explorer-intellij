@@ -9,9 +9,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.fetchAdapter
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.utils.lock
-import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 import java.util.concurrent.locks.ReentrantLock
 
@@ -20,8 +18,8 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
   project: Project,
   parent: ExplorerTreeNodeBase<*>,
   unit: U,
-  explorerViewSettings: ExplorerViewSettings
-) : ExplorerUnitTreeNodeBase<Value, U>(value, project, parent, unit, explorerViewSettings) {
+  treeStructure: ExplorerTreeStructureBase
+) : ExplorerUnitTreeNodeBase<Value, U>(value, project, parent, unit, treeStructure) {
 
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
@@ -30,25 +28,13 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
     get() = service<DataOpsManager>(explorer.componentManager)
       .getFileFetchProvider(requestClass, queryClass, vFileClass)
 
-  private fun sendInvalidationTopic() {
-    needsToShowPlus = false
-    sendTopic(FileExplorerContent.NODE_UPDATE)(this@FileCacheNode, true)
-  }
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return lock(lock) {
       val childrenNodes = cachedChildren
-        ?.toChildrenNodes() ?: listOf(LoadingNode(notNullProject, this, explorer, viewSettings)).also {
+        ?.toChildrenNodes() ?: listOf(LoadingNode(notNullProject, this, explorer, treeStructure)).also {
         query?.let { q ->
-          fileFetchProvider.forceReloadAsync(q, fetchAdapter {
-            onFinish {
-              needsToShowPlus = false
-              sendTopic(
-                topic = FileExplorerContent.NODE_UPDATE,
-                componentManager = explorer.componentManager
-              )(this@FileCacheNode, true)
-            }
-          }, project)
+          fileFetchProvider.forceReloadAsync(q, fetchAdapter {}, project)
         }
       }
       childrenNodes.toMutableSmartList()
@@ -63,7 +49,7 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R>, File : VirtualF
     }
   }
 
-  protected abstract val query: Q?
+  abstract val query: Q?
 
   @Volatile
   private var needsToShowPlus = true
