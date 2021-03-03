@@ -64,6 +64,8 @@
         <contentSynchronizer
                 implementation="eu.ibagroup.formainframe.dataops.synchronizer.UssFileContentSynchronizerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameRunnerFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
 
     </extensions>
@@ -139,6 +141,10 @@
                 class="eu.ibagroup.formainframe.explorer.DeleteAction" text="Delete"
                 use-shortcut-of="$Delete"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.RenameAction"
+                class="eu.ibagroup.formainframe.explorer.RenameAction" text="Rename"
+                use-shortcut-of="RenameElement"/>
+
         <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
             <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.SettingAction"/>
@@ -156,6 +162,7 @@
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
             <reference id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.RenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.DeleteAction"/>
         </group>
 

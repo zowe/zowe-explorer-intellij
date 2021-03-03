@@ -10,6 +10,8 @@ import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.utils.clone
+import eu.ibagroup.formainframe.utils.validation.validateForBlank
+import eu.ibagroup.formainframe.utils.validation.validateUssFileName
 import eu.ibagroup.r2z.CreateUssFile
 import eu.ibagroup.r2z.FileMode
 import eu.ibagroup.r2z.FileModeValue
@@ -18,11 +20,6 @@ import javax.swing.JComponent
 
 class CreateFileDialog(project: Project?, override var state: CreateFileState, filePath: String) :
   DialogWrapper(project), StatefulComponent<CreateFileState> {
-
-  private val forbiddenSymbols = "/"
-  private val warningSymbols = "^[^>|:& ]*$"
-  private val forbiddenSymbolsList = "/"
-  private val warningSymbolsList = ">, |, :, &"
 
   override fun createCenterPanel(): JComponent {
 
@@ -60,24 +57,9 @@ class CreateFileDialog(project: Project?, override var state: CreateFileState, f
       row {
         label("Name")
         textField(state::fileName).withValidationOnInput {
-          val name = it.text
-          return@withValidationOnInput when {
-            name.length > 255 -> {
-              ValidationInfo("File name exceed 255 symbols", it)
-            }
-            name.contains(forbiddenSymbols) -> {
-              ValidationInfo("Forbidden character from $forbiddenSymbolsList was used", it)
-            }
-            else -> {
-              null
-            }
-          }
+          validateUssFileName(it)
         }.withValidationOnApply {
-          if (it.text.isBlank()) {
-            ValidationInfo("Name cannot be blank", it)
-          } else {
-            null
-          }
+          validateForBlank(it)
         }
       }
       row {

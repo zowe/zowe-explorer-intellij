@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.r2z.InfoAPI
 
@@ -16,7 +17,7 @@ class AddAndTestConnection(val state: ConnectionDialogState, val crudable: Cruda
   fun showUntilTested() : ConnectionDialogState? {
 
     while (true) {
-      dialog = ConnectionDialog(state = state, crudable = crudable)
+      dialog = ConnectionDialog(crudable, state = state)
       if (dialog.showAndGet())
         if (performTestRequest(dialog.state.connectionUrl, dialog.state.isAllowSsl, project)) {
           return dialog.state

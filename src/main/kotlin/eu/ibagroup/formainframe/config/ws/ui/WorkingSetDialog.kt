@@ -9,14 +9,17 @@ import com.intellij.ui.layout.panel
 import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ComboBoxCellEditor
-import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.findAnyNullable
+import eu.ibagroup.formainframe.utils.validation.validateForBlank
+import eu.ibagroup.formainframe.utils.validation.validateDatasetMask
+import eu.ibagroup.formainframe.utils.validation.validateUssMask
+import eu.ibagroup.formainframe.utils.validation.validateWorkingSetName
 import java.awt.Dimension
 import java.util.*
 import javax.swing.JComponent
@@ -28,6 +31,8 @@ class WorkingSetDialog(
   crudable: Crudable,
   override var state: WorkingSetDialogState
 ) : DialogWrapper(false), StatefulComponent<WorkingSetDialogState> {
+
+  private val initialState = state.clone()
 
   private val connectionComboBoxModel = CollectionComboBoxModel(crudable.getAll<ConnectionConfig>().toList())
 
@@ -44,14 +49,17 @@ class WorkingSetDialog(
         label("Working Set name")
         textField(state::workingSetName)
           .withValidationOnInput {
-            if (it.text in crudable.getAll<WorkingSetConfig>().map { it.name }.toList()) {
-              this.error(message("configurable.ws.tables.ws.name.tooltip.error"))
-            } else null
+            validateWorkingSetName(
+              it, if (initialState.workingSetName.isNotBlank()) {
+                initialState.workingSetName
+              } else {
+                null
+              },
+              crudable
+            )
           }
           .withValidationOnApply {
-            if (it.text.isBlank()) {
-              this.error("Specify non-blank name")
-            } else null
+            validateForBlank(it)
           }
       }
       row {
@@ -139,22 +147,14 @@ class WorkingSetDialog(
       return null
     }
 
-    private val maskRegex = Regex("[A-Za-z\$@#" + "0-9\\-" + "\\.\\*%]{0,46}")
-    private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
-
 
     override fun validateEntered(item: WorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return if (item.mask.isBlank()) {
-        ValidationInfo("Mask cannot be blank")
-      } else if (item.type == "z/OS" && item.mask.length > 46) {
-        ValidationInfo("Dataset mask must be less than 46 characters")
-      } else if (item.type == "z/OS" && !item.mask.matches(maskRegex)) {
-        ValidationInfo("")
-      } else if (item.type == "USS" && !item.mask.matches(ussPathRegex)) {
-        ValidationInfo("Provide a valid USS path")
-      } else {
-        null
-      }
+      return validateForBlank(item.mask, component) ?: if (item.type == "z/OS") validateDatasetMask(
+        item.mask,
+        component
+      ) else validateUssMask(
+        item.mask, component
+      )
     }
 
   }
