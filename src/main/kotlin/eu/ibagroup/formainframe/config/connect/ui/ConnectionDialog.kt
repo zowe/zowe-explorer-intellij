@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.toBinding
 import com.intellij.ui.layout.withTextBinding
+import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -112,8 +113,13 @@ class ConnectionDialog(
   }
 
   init {
-    title = "Add Connection"
     init()
+    title = when (state.mode){
+      DialogMode.READ -> "Connection Properties"
+      DialogMode.DELETE -> "Delete Connection"
+      DialogMode.UPDATE -> "Edit Connection"
+      DialogMode.CREATE -> "Add Connection"
+    }
   }
 
 }

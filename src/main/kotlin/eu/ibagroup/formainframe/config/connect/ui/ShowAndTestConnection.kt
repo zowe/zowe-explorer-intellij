@@ -9,7 +9,7 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.r2z.InfoAPI
 
-class AddAndTestConnection(val state: ConnectionDialogState, val crudable: Crudable, val project: Project?) {
+class ShowAndTestConnection(val state: ConnectionDialogState, val crudable: Crudable, val project: Project?) {
 
   private lateinit var dialog: ConnectionDialog
 
@@ -22,12 +22,13 @@ class AddAndTestConnection(val state: ConnectionDialogState, val crudable: Cruda
           return dialog.state
         } else {
           Messages.showErrorDialog("Cannot establish connection with: ${dialog.state.connectionUrl}","Cannot Connect")
-      } else {
+        } else {
         break
       }
     }
     return null
   }
+
 
   private fun performTestRequest(url: String, isAllowSelfSigned: Boolean, project: Project?): Boolean {
     var isConnectionOk = false

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
+import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.common.ui.toolbarTable
 import eu.ibagroup.formainframe.config.*
@@ -21,14 +22,33 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
 
   private fun addConnection() {
 
-    val state = AddAndTestConnection(ConnectionDialogState(), sandboxCrudable, ProjectManager.getInstance().defaultProject).showUntilTested()
+    val state = ShowAndTestConnection(
+      ConnectionDialogState(),
+      sandboxCrudable,
+      ProjectManager.getInstance().defaultProject
+    ).showUntilTested()
     state?.let {
       connectionsTableModel?.addRow(it)
     }
 
   }
 
+  private fun editConnection(selected: ConnectionDialogState) {
+
+    val state = ShowAndTestConnection(
+      selected,
+      sandboxCrudable,
+      ProjectManager.getInstance().defaultProject
+    ).showUntilTested()
+
+    val idx = connectionsTable?.selectedRow
+    if (idx != null && state != null) {
+      connectionsTableModel?.set(idx, state)
+    }
+  }
+
   private var connectionsTableModel: ConnectionsTableModel? = null
+  private var connectionsTable: ValidatingTableView<ConnectionDialogState>? = null
 
   private var panel: DialogPanel? = null
 
@@ -38,6 +58,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val table = ValidatingTableView(tableModel, disposable!!).apply {
       rowHeight = DEFAULT_ROW_HEIGHT
     }
+    connectionsTable = table
 
     ApplicationManager.getApplication()
       .messageBus
@@ -64,12 +85,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
               }
               setEditAction {
                 table.selectedObject?.let { selected ->
-                  ConnectionDialog(sandboxCrudable, selected.clone()).apply {
-                    if (showAndGet()) {
-                      val idx = table.selectedRow
-                      tableModel[idx] = state
-                    }
-                  }
+                  editConnection(selected.clone().apply { mode = DialogMode.UPDATE });
                 }
               }
               setEditActionUpdater {
@@ -120,8 +136,6 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
   override fun cancel() {
     reset()
   }
-
-
 
 
 }
