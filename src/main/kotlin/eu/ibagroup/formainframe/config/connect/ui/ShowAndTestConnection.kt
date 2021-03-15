@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.r2z.InfoAPI
 
@@ -17,19 +16,18 @@ class ShowAndTestConnection(val state: ConnectionDialogState, val crudable: Crud
   fun showUntilTested() : ConnectionDialogState? {
 
     while (true) {
-      dialog = ConnectionDialog(crudable, state = state)
+      dialog = ConnectionDialog(state = state, crudable = crudable)
       if (dialog.showAndGet())
         if (performTestRequest(dialog.state.connectionUrl, dialog.state.isAllowSsl, project)) {
           return dialog.state
         } else {
           Messages.showErrorDialog("Cannot establish connection with: ${dialog.state.connectionUrl}","Cannot Connect")
-        } else {
+      } else {
         break
       }
     }
     return null
   }
-
 
   private fun performTestRequest(url: String, isAllowSelfSigned: Boolean, project: Project?): Boolean {
     var isConnectionOk = false

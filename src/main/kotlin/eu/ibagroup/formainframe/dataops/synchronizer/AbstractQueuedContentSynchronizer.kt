@@ -26,7 +26,7 @@ abstract class AbstractQueuedContentSynchronizer(
   ): QueueExecutor<FetchCallback<Unit>, Unit>
 
   protected val disposableQueues = Disposable {
-    fileToExecutorMap.forEach { (_, u) -> u.first.shutdown() }
+    fileToExecutorMap.values.parallelStream().forEach { it.first.shutdown() }
     fileToExecutorMap.clear()
   }
 

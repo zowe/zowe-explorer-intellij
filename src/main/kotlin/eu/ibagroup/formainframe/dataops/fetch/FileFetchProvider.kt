@@ -1,17 +1,12 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
-import eu.ibagroup.formainframe.dataops.FetchCallback
 import eu.ibagroup.formainframe.dataops.Query
-import eu.ibagroup.formainframe.dataops.fetchAdapter
-import eu.ibagroup.formainframe.utils.sendTopic
+import org.jetbrains.concurrency.Promise
 
-fun <File : VirtualFile> emptyCallback() = fetchAdapter<Collection<File>> {  }
-
-interface FileFetchProvider<R : Any, Q : Query<R>, File : VirtualFile> {
+interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
 
   companion object {
     @JvmStatic
@@ -23,21 +18,13 @@ interface FileFetchProvider<R : Any, Q : Query<R>, File : VirtualFile> {
 
   fun getCached(query: Q): Collection<File>?
 
-  fun forceReloadSynchronous(query: Q, project: Project?): Collection<File>
-
-  fun forceReloadSynchronous(query: Q): Collection<File> = forceReloadSynchronous(query, null)
-
   fun cleanCache(query: Q)
 
-  fun forceReloadAsync(query: Q, callback: FetchCallback<Collection<File>> = emptyCallback(), project: Project?)
-
-  fun forceReloadAsync(query: Q, callback: FetchCallback<Collection<File>> = emptyCallback()) {
-    forceReloadAsync(query, callback, null)
-  }
+  fun forceReload(query: Q): Promise<Collection<File>>
 
   val requestClass: Class<out R>
 
-  val queryClass: Class<out Query<*>>
+  val queryClass: Class<out Query<*, *>>
 
   val vFileClass: Class<out File>
 

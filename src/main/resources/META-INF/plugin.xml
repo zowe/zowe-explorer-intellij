@@ -11,9 +11,6 @@
         <extensionPoint name="fileDataProvider"
                         interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
 
-        <extensionPoint name="allocator"
-                        interface="eu.ibagroup.formainframe.dataops.allocation.AllocatorFactory"/>
-
         <extensionPoint name="contentSynchronizer"
                         interface="eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizerFactory"/>
 
@@ -49,12 +46,6 @@
 
         <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProviderFactory"/>
 
-        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.DatasetAllocatorFactory"/>
-
-        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.MemberAllocatorFactory"/>
-
-        <allocator implementation="eu.ibagroup.formainframe.dataops.allocation.UssAllocatorFactory"/>
-
         <contentSynchronizer
                 implementation="eu.ibagroup.formainframe.dataops.synchronizer.MemberContentSynchronizerFactory"/>
 
@@ -64,9 +55,17 @@
         <contentSynchronizer
                 implementation="eu.ibagroup.formainframe.dataops.synchronizer.UssFileContentSynchronizerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameRunnerFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DatasetAllocatorFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberAllocatorFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssAllocatorFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberToPdsFileMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
     </extensions>
 
@@ -79,15 +78,16 @@
         <toolWindow id="zOSMF" anchor="right"
                     factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"/>
 
+        <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
+                           implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
+                           key="mf"/>
+
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
                             serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"/>
 
-        <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
-                           implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
-                           key="mf"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>
@@ -100,6 +100,9 @@
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
                             serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.ui.ExplorerContent"
+                            serviceImplementation="eu.ibagroup.formainframe.explorer.ui.GlobalExplorerContent"/>
 
         <applicationService serviceImplementation="eu.ibagroup.formainframe.common.AppLevelPluginDisposable"/>
 
@@ -137,10 +140,6 @@
                 id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"
                 text="Properties"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.DeleteAction"
-                class="eu.ibagroup.formainframe.explorer.DeleteAction" text="Delete"
-                use-shortcut-of="$Delete"/>
-
         <action id="eu.ibagroup.formainframe.explorer.RenameAction"
                 class="eu.ibagroup.formainframe.explorer.RenameAction" text="Rename"
                 use-shortcut-of="RenameElement"/>
@@ -160,10 +159,18 @@
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
+            <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
-            <reference id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"/>
+            <separator/>
+            <reference id="$Cut"/>
+            <reference id="$Copy"/>
+            <reference id="$Paste"/>
+            <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.RenameAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.DeleteAction"/>
+            <separator/>
+            <reference id="$Delete"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"/>
         </group>
 
     </actions>

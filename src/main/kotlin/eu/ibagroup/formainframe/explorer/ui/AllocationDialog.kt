@@ -8,8 +8,11 @@ import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.dataops.allocation.DatasetAllocationParams
-import eu.ibagroup.formainframe.utils.validation.*
+import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
+import eu.ibagroup.formainframe.utils.validation.validateDatasetNameOnInput
+import eu.ibagroup.formainframe.utils.validation.validateForBlank
+import eu.ibagroup.formainframe.utils.validation.validateForPositiveInteger
+import eu.ibagroup.formainframe.utils.validation.validateVolser
 import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat

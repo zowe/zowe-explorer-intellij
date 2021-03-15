@@ -6,12 +6,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.getAttributesService
-import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -24,12 +23,12 @@ class LibraryNode(
   treeStructure: ExplorerTreeStructureBase
 ) : RemoteMFFileCacheNode<MFVirtualFile, LibraryQuery, WorkingSet>(library, project, parent, workingSet, treeStructure) {
 
-  override val query: RemoteQuery<LibraryQuery>?
+  override val query: RemoteQuery<LibraryQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
       val urlConnection = unit.urlConnection
       return if (connectionConfig != null && urlConnection != null) {
-        RemoteQueryImpl(LibraryQuery(value), connectionConfig, urlConnection)
+        UnitRemoteQueryImpl(LibraryQuery(value), connectionConfig, urlConnection)
       } else null
     }
 
@@ -50,5 +49,9 @@ class LibraryNode(
 
   override fun getVirtualFile(): MFVirtualFile {
     return value
+  }
+
+  override fun makeFetchTaskTitle(query: RemoteQuery<LibraryQuery, Unit>): String {
+    return "Fetching members for ${query.request.library.name}"
   }
 }

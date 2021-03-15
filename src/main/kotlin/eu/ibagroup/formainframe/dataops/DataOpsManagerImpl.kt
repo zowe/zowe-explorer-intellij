@@ -2,23 +2,20 @@ package eu.ibagroup.formainframe.dataops
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.toMutableSmartList
-import eu.ibagroup.formainframe.dataops.allocation.Allocator
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
-import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
-import eu.ibagroup.formainframe.dataops.operations.Operation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
+import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.utils.findAnyNullable
 
 @Suppress("UNCHECKED_CAST")
 class DataOpsManagerImpl : DataOpsManager {
 
   private fun <Component> List<DataOpsComponentFactory<Component>>.buildComponents(): MutableList<Component> {
-    return map { it.buildComponent(this@DataOpsManagerImpl) }.toMutableSmartList()
+    return buildComponents(this@DataOpsManagerImpl)
   }
 
   override val componentManager: ComponentManager
@@ -26,20 +23,6 @@ class DataOpsManagerImpl : DataOpsManager {
 
   private val attributesServices by lazy {
     AttributesService.EP.extensionList.buildComponents() as MutableList<AttributesService<VFileInfoAttributes, VirtualFile>>
-  }
-
-  private val allocators = Allocator.EP.extensionList.buildComponents()
-
-  override fun <R : Any, Q : Query<R>> getAllocator(
-    requestClass: Class<out R>,
-    queryClass: Class<out Query<*>>
-  ): Allocator<R, Q> {
-    return allocators.find {
-      it.requestClass.isAssignableFrom(requestClass) && it.queryClass.isAssignableFrom(queryClass)
-    } as Allocator<R, Q>?
-      ?: throw IllegalArgumentException(
-        "Cannot find Allocator for queryClass=${queryClass.name} and requestClass=${requestClass.name}"
-      )
   }
 
   override fun <A : VFileInfoAttributes, F : VirtualFile> getAttributesService(
@@ -71,9 +54,9 @@ class DataOpsManagerImpl : DataOpsManager {
     FileFetchProvider.EP.extensionList.buildComponents()
   }
 
-  override fun <R : Any, Q : Query<R>, File : VirtualFile> getFileFetchProvider(
+  override fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> getFileFetchProvider(
     requestClass: Class<out R>,
-    queryClass: Class<out Query<*>>,
+    queryClass: Class<out Query<*, *>>,
     vFileClass: Class<out File>
   ): FileFetchProvider<R, Q, File> {
     return fileFetchProviders.find {
@@ -90,7 +73,7 @@ class DataOpsManagerImpl : DataOpsManager {
     ContentSynchronizer.EP.extensionList.buildComponents()
   }
 
-  override fun getAppropriateContentSynchronizer(file: VirtualFile): ContentSynchronizer {
+  override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
     return contentSynchronizers.stream()
       .filter { it.accepts(file) }
       .findAnyNullable()
@@ -98,25 +81,38 @@ class DataOpsManagerImpl : DataOpsManager {
   }
 
   private val operationRunners by lazy {
-    OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation>>
+    OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
   }
 
-  override fun isOperationSupported(operation: Operation): Boolean {
+  override fun isOperationSupported(operation: Operation<*>): Boolean {
     return operationRunners.any {
-      it.operationClass.isAssignableFrom(operation::class.java) && it.canRun(operation)
+      if (it.operationClass.isAssignableFrom(operation::class.java) && it.resultClass.isAssignableFrom(operation.resultClass)) {
+        it.canRun(operation)
+      } else {
+        false
+      }
     }
   }
 
-  override fun performOperation(operation: Operation, callback: FetchCallback<Unit>, project: Project?) {
-    operationRunners.stream()
-      .filter { it.operationClass.isAssignableFrom(operation::class.java) && it.canRun(operation) }
-      .findAnyNullable()?.run(operation, callback, project)
+  override fun <R : Any> performOperation(
+    operation: Operation<R>,
+    progressIndicator: ProgressIndicator?
+  ): R {
+    return (operationRunners.stream()
+      .filter {
+        if (it.operationClass.isAssignableFrom(operation::class.java) && it.resultClass.isAssignableFrom(operation.resultClass)) {
+          (it as OperationRunner<Operation<R>, R>).canRun(operation)
+        } else {
+          false
+        }
+      }
+      .findAnyNullable() as OperationRunner<Operation<R>, R>?)
+      ?.run(operation, progressIndicator)
       ?: throw IllegalArgumentException("Unsupported Operation $operation")
   }
 
   override fun dispose() {
     attributesServices.clear()
-    allocators.clear()
     fileFetchProviders.clear()
     contentSynchronizers.clear()
   }

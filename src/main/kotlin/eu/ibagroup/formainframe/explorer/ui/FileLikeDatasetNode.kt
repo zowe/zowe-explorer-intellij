@@ -10,7 +10,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -28,7 +27,12 @@ class FileLikeDatasetNode(
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else AllIcons.FileTypes.Text)
-    presentation.addText(value.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    val textAttributes = if (service<ExplorerContent>(explorer.componentManager).isFileInCutBuffer(value)) {
+      SimpleTextAttributes.GRAYED_ATTRIBUTES
+    } else {
+      SimpleTextAttributes.REGULAR_ATTRIBUTES
+    }
+    presentation.addText(value.presentableName, textAttributes)
     val volser = service<DataOpsManager>(explorer.componentManager)
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
       .getAttributes(value)?.volser

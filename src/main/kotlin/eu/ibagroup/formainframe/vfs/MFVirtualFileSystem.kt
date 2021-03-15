@@ -2,7 +2,8 @@ package eu.ibagroup.formainframe.vfs
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManager
-import eu.ibagroup.formainframe.common.appLevelPluginDisposable
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.utils.appService
 
 class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtualFileSystemModel>(
   MFVirtualFile::class.java,
@@ -25,7 +26,7 @@ class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtu
   }
 
   init {
-    Disposer.register(appLevelPluginDisposable, this)
+    Disposer.register(appService<DataOpsManager>(), this)
   }
 
   val root = model.root

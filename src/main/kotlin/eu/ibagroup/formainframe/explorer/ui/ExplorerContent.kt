@@ -5,18 +5,31 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.messages.Topic
 import javax.swing.JComponent
 
-abstract class ExplorerContentFactoryBase(
+fun interface CutBufferListener {
+  fun onUpdate(previousBufferState: List<VirtualFile>, currentBufferState: List<VirtualFile>)
+}
+
+abstract class ExplorerContent(
   actionGroup: ActionGroup,
   place: String
-) : ExplorerContentFactory {
+) {
+
+  companion object {
+    @JvmStatic
+    val CUT_BUFFER_CHANGES = Topic.create("cutBufferChanges", CutBufferListener::class.java)
+  }
 
   private val actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true)
 
+  abstract fun isFileInCutBuffer(virtualFile: VirtualFile): Boolean
+
   protected abstract fun buildContent(parentDisposable: Disposable, project: Project): JComponent
 
-  override fun buildComponent(parentDisposable: Disposable, project: Project): JComponent {
+  fun buildComponent(parentDisposable: Disposable, project: Project): JComponent {
     return object : SimpleToolWindowPanel(true, true), Disposable {
 
       private var builtContent: JComponent? = null
@@ -38,4 +51,9 @@ abstract class ExplorerContentFactoryBase(
     }
   }
 
+  abstract val displayName: String
+
+  abstract val isLockable: Boolean
+
 }
+

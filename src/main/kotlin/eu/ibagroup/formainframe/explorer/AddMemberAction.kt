@@ -3,13 +3,14 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
-import eu.ibagroup.formainframe.dataops.*
-import eu.ibagroup.formainframe.dataops.allocation.AllocationStatus
-import eu.ibagroup.formainframe.dataops.allocation.MemberAllocationParams
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.getAttributesService
+import eu.ibagroup.formainframe.dataops.operations.MemberAllocationOperation
+import eu.ibagroup.formainframe.dataops.operations.MemberAllocationParams
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -34,31 +35,22 @@ class AddMemberAction : AnAction() {
           val dialog = AddMemberDialog(e.project, MemberAllocationParams(datasetName = parentName))
           if (dialog.showAndGet()) {
             val state = dialog.state
-            dataOpsManager.getAllocator(
-              requestClass = MemberAllocationParams::class.java,
-              queryClass = RemoteQuery::class.java
-            ).allocate(
-              query = RemoteQueryImpl(
-                connectionConfig = connectionConfig,
-                urlConnection = connectionUrl,
-                request = state
-              ),
-              callback = fetchAdapter {
-                onSuccess {
-                  if (it == AllocationStatus.SUCCESS) {
-                    runInEdt {
-                      currentNode.cleanCache()
-                    }
-                  } else {
-                    runInEdt {
-                      Messages.showErrorDialog(
-                        "Cannot create member ${state.memberName} ${state.datasetName} on ${connectionConfig.name}",
-                        "Cannot Allocate Dataset"
-                      )
-                    }
-                  }
-                }
-                onThrowable {
+            runBackgroundableTask(
+              title = "Allocating member ${state.memberName}",
+              project = e.project,
+              cancellable = true
+            ) {
+              runCatching {
+                dataOpsManager.performOperation(
+                  operation = MemberAllocationOperation(
+                    connectionConfig = connectionConfig,
+                    urlConnection = connectionUrl,
+                    request = state
+                  ),
+                  progressIndicator = it
+                )
+              }.onSuccess { currentNode.cleanCache() }
+                .onFailure {
                   runInEdt {
                     Messages.showErrorDialog(
                       "Cannot create member ${state.memberName} ${state.datasetName} on ${connectionConfig.name}",
@@ -66,8 +58,7 @@ class AddMemberAction : AnAction() {
                     )
                   }
                 }
-              }
-            )
+            }
           }
         }
       }

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 class UssFileNode(

@@ -8,10 +8,10 @@ import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.utils.ChannelExecutor
 import eu.ibagroup.formainframe.utils.Execution
 import eu.ibagroup.formainframe.utils.QueueExecutor
+import eu.ibagroup.formainframe.utils.appService
 import kotlinx.coroutines.channels.Channel
-import java.time.Duration
 
-private val CHANNEL_DELAY = Duration.ofMillis(ConfigService.instance.autoSaveDelayMillis)
+private val CHANNEL_DELAY = appService<ConfigService>().autoSaveDelay
 
 abstract class AbstractAttributedContentSynchronizer<Attributes : VFileInfoAttributes>(
   dataOpsManager: DataOpsManager
@@ -27,7 +27,10 @@ abstract class AbstractAttributedContentSynchronizer<Attributes : VFileInfoAttri
   ): Execution<FetchCallback<Unit>, Unit>
 
   @Suppress("UNCHECKED_CAST")
-  override fun buildExecutorForFile(file: VirtualFile, saveStrategy: SaveStrategy): QueueExecutor<FetchCallback<Unit>, Unit> {
+  override fun buildExecutorForFile(
+    file: VirtualFile,
+    saveStrategy: SaveStrategy
+  ): QueueExecutor<FetchCallback<Unit>, Unit> {
     return ChannelExecutor(Channel(Channel.CONFLATED), CHANNEL_DELAY, buildExecution(file, saveStrategy))
   }
 

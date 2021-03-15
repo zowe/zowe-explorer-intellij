@@ -77,6 +77,13 @@ class MFVirtualFile internal constructor(
     validWriteLock({}) { isWritableInternal = writable }
   }
 
+  @Volatile
+  private var isReadableFlag = true
+
+  var isReadable
+    get() = validReadLock(false) { isReadableFlag }
+    set(value) = validReadLock({}) { isReadableFlag = value }
+
   override fun isDirectory() = initialAttributes.isDirectory
 
   override fun getCanonicalFile(): VirtualFile? {

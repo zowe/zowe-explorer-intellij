@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
+import eu.ibagroup.formainframe.utils.appService
 
 class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
 
@@ -14,7 +15,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val contentFactory = ContentFactory.SERVICE.getInstance()
-    val factory = FileExplorerContentFactory()
+    val factory = appService<ExplorerContent>()
     val content = contentFactory
       .createContent(factory.buildComponent(toolWindow.disposable, project), factory.displayName, factory.isLockable)
     toolWindow.contentManager.addContent(content)

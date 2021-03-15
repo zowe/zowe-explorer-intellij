@@ -6,8 +6,8 @@ import com.intellij.util.containers.isEmpty
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.config.connect.ui.ShowAndTestConnection
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
+import eu.ibagroup.formainframe.config.connect.ui.ShowAndTestConnection
 import eu.ibagroup.formainframe.config.connect.ui.initEmptyUuids
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState

@@ -3,17 +3,15 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.RemoteQueryImpl
-import eu.ibagroup.formainframe.dataops.allocation.AllocationStatus
-import eu.ibagroup.formainframe.dataops.allocation.DatasetAllocationParams
-import eu.ibagroup.formainframe.dataops.fetchAdapter
+import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
+import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
@@ -33,54 +31,48 @@ class AllocateDataset : AnAction() {
         val dialog = AllocationDialog(e.project, DatasetAllocationParams())
         if (dialog.showAndGet()) {
           val state = postProcessState(dialog.state)
-          service<DataOpsManager>(parentNode.unit.explorer.componentManager).getAllocator(
-            requestClass = DatasetAllocationParams::class.java,
-            queryClass = RemoteQuery::class.java
-          ).allocate(
-            query = RemoteQueryImpl(
-              connectionConfig = config,
-              urlConnection = urlConfig,
-              request = state
-            ),
-            callback = fetchAdapter {
-              onSuccess {
-                if (it == AllocationStatus.SUCCESS) {
-                  parentNode.cleanCacheIfPossible()
-                  runInEdt {
-                    if (showOkNoDialog(
-                        title = "Dataset ${state.datasetName} Has Been Created",
-                        message = "Would you like to add mask \"${state.datasetName}\" to ${parentNode.unit.name}",
-                        project = e.project,
-                        okText = "Yes",
-                        noText = "No"
-                      )
-                    ) {
-                      val workingSetConfig = configCrudable.getByUniqueKey<WorkingSetConfig>(workingSet.uuid)?.clone()
-                      if (workingSetConfig != null) {
-                        workingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
-                        configCrudable.update(workingSetConfig)
-                      }
-                    }
-                  }
-                } else {
-                  runInEdt {
-                    Messages.showErrorDialog(
-                      "Cannot allocate dataset ${state.datasetName} on ${config.name}",
-                      "Cannot Allocate Dataset"
-                    )
+          runBackgroundableTask(
+            title = "Allocating Data Set ${state.datasetName}",
+            project = e.project,
+            cancellable = true
+          ) {
+            runCatching {
+              service<DataOpsManager>(parentNode.unit.explorer.componentManager)
+                .performOperation(
+                  operation = DatasetAllocationOperation(
+                    request = state,
+                    connectionConfig = config,
+                    urlConnection = urlConfig
+                  ),
+                  it
+                )
+            }.onSuccess {
+              parentNode.cleanCacheIfPossible()
+              runInEdt {
+                if (showOkNoDialog(
+                    title = "Dataset ${state.datasetName} Has Been Created",
+                    message = "Would you like to add mask \"${state.datasetName}\" to ${parentNode.unit.name}",
+                    project = e.project,
+                    okText = "Yes",
+                    noText = "No"
+                  )
+                ) {
+                  val workingSetConfig = configCrudable.getByUniqueKey<WorkingSetConfig>(workingSet.uuid)?.clone()
+                  if (workingSetConfig != null) {
+                    workingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
+                    configCrudable.update(workingSetConfig)
                   }
                 }
               }
-              onThrowable {
-                runInEdt {
-                  Messages.showErrorDialog(
-                    "Cannot allocate dataset ${state.datasetName} on ${config.name}",
-                    "Cannot Allocate Dataset"
-                  )
-                }
+            }.onFailure {
+              runInEdt {
+                Messages.showErrorDialog(
+                  "Cannot allocate dataset ${state.datasetName} on ${config.name}",
+                  "Cannot Allocate Dataset"
+                )
               }
             }
-          )
+          }
         }
       }
     }

@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
-import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.util.SmartList
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
@@ -28,7 +27,7 @@ class RemoteUssAttributesService(
       fileMode = null,
       url = attributes.url,
       requesters = SmartList(),
-      size = null,
+      length = 0L,
       uid = attributes.uid,
       owner = attributes.owner,
       gid = attributes.gid,
@@ -47,7 +46,7 @@ class RemoteUssAttributesService(
       fileMode = newAttributes.fileMode,
       url = newAttributes.url,
       requesters = oldAttributes.requesters.mergeWith(newAttributes.requesters),
-      size = newAttributes.size,
+      length = newAttributes.length,
       uid = newAttributes.uid,
       owner = newAttributes.owner,
       gid = newAttributes.gid,
@@ -64,6 +63,7 @@ class RemoteUssAttributesService(
     newAttributes: RemoteUssAttributes
   ) {
     fsModel.setWritable(file, newAttributes.isWritable)
+    file.isReadable = newAttributes.isReadable
     if (oldAttributes.name != newAttributes.name) {
       fsModel.renameFile(this, file, newAttributes.name)
     }
@@ -76,14 +76,17 @@ class RemoteUssAttributesService(
     }
   }
 
-  override fun continuePathChain(attributes: RemoteUssAttributes): List<Pair<String, FileAttributes>> {
+  override fun continuePathChain(attributes: RemoteUssAttributes): List<PathElementSeed> {
     return if (attributes.path != "/") {
       val pathTokens = attributes.path.substring(1).split("/")
-      pathTokens.dropLast(1).map { Pair(it, createAttributes(directory = true)) }.plus(
+      pathTokens.dropLast(1).map { PathElementSeed(it, createAttributes(directory = true)) }.plus(
         listOf(
-          Pair(
-            pathTokens.last(),
-            createAttributes(directory = attributes.isDirectory, writable = attributes.isWritable)
+          PathElementSeed(
+            name = pathTokens.last(),
+            fileAttributes = createAttributes(directory = attributes.isDirectory, writable = attributes.isWritable),
+            postCreateAction = {
+              isReadable = attributes.isReadable
+            }
           )
         )
       )

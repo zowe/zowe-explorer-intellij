@@ -9,6 +9,7 @@ import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.utils.ContentStorage
 import eu.ibagroup.formainframe.utils.Execution
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.io.IOException
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
@@ -56,23 +57,32 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : VFileInfoAtt
         if (neverFetchedBefore) {
           input.onStart()
         }
-        val remoteContentBytes = fetchRemoteContentBytes(attributes)
-        if (neverFetchedBefore) {
-          runWriteActionOnWriteThread {
-            file.getOutputStream(this@RemoteAttributesContentSynchronizerBase).use {
-              it.write(remoteContentBytes)
+        try {
+          val remoteContentBytes = fetchRemoteContentBytes(attributes)
+          if (neverFetchedBefore) {
+            if (file is MFVirtualFile) {
+              file.fileSystem.model.putInitialContentIfPossible(file, remoteContentBytes)
+            } else {
+              runWriteActionOnWriteThread {
+                file.getOutputStream(this@RemoteAttributesContentSynchronizerBase).use {
+                  it.write(remoteContentBytes)
+                }
+              }
             }
             successfulStatesStorage.writeStream(recordId).use {
               it.write(remoteContentBytes)
             }
+            neverFetchedBefore = false
+            input.onSuccess(Unit)
+          } else {
+            val fileBytes = file.contentsToByteArray()
+            val storageBytes = successfulStatesStorage.getBytes(recordId)
+            if (!(fileBytes contentEquals storageBytes) && saveStrategy.decide(file, storageBytes, fileBytes)) {
+              uploadNewContent(attributes, fileBytes)
+            }
           }
-          input.onSuccess(Unit)
-          neverFetchedBefore = false
-        } else {
-          val fileBytes = file.contentsToByteArray()
-          if (saveStrategy.decide(file, successfulStatesStorage.getBytes(recordId), fileBytes)) {
-            uploadNewContent(attributes, fileBytes)
-          }
+        } catch (t: Throwable) {
+          input.onThrowable(t)
         }
       }
 

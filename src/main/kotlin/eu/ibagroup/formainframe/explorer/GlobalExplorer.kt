@@ -3,6 +3,8 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.configCrudable
@@ -47,6 +49,14 @@ class GlobalExplorer : Explorer {
 
   override val componentManager: Application
     get() = ApplicationManager.getApplication()
+
+  override fun reportThrowable(t: Throwable, project: Project?) {
+    Messages.showErrorDialog(project, t.message ?: t.toString(), "Error")
+  }
+
+  override fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?) {
+    reportThrowable(t, project)
+  }
 
   init {
     subscribe(ConfigService.CONFIGS_CHANGED, eventAdaptor<WorkingSetConfig> {

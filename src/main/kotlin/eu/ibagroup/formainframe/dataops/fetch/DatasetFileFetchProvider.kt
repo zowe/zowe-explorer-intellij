@@ -1,11 +1,11 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
+import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.utils.asMutableList
@@ -28,11 +28,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val vFileClass = MFVirtualFile::class.java
 
-  override fun makeFetchTaskTitle(query: RemoteQuery<DSMask>): String {
-    return "Fetching listings for ${query.request.mask}"
-  }
-
-  override fun fetchResponse(query: RemoteQuery<DSMask>): Collection<RemoteDatasetAttributes> {
+  override fun fetchResponse(query: RemoteQuery<DSMask, Unit>): Collection<RemoteDatasetAttributes> {
     var attributes: Collection<RemoteDatasetAttributes>? = null
     var exception: Throwable = IOException("Cannot fetch ${query.request.mask}")
     api<DataAPI>(query.connectionConfig).listDataSets(
@@ -54,7 +50,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
     return attributes ?: throw exception
   }
 
-  private fun buildAttributes(query: RemoteQuery<DSMask>, dataset: Dataset): RemoteDatasetAttributes {
+  private fun buildAttributes(query: RemoteQuery<DSMask, Unit>, dataset: Dataset): RemoteDatasetAttributes {
     return RemoteDatasetAttributes(
       dataset,
       query.urlConnection.url,
@@ -67,14 +63,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val responseClass = RemoteDatasetAttributes::class.java
 
-  override fun makeSecondaryTitle(query: RemoteQuery<DSMask>): String {
-    val firstPart = "Origin ${query.urlConnection.url}"
-    val volser = query.request.volser
-    val secondPart = if (volser.isNotBlank()) " volser $volser" else ""
-    return firstPart + secondPart
-  }
-
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<DSMask>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<DSMask, Unit>) {
     val deletingFileAttributes = attributesService.getAttributes(file)
     if (deletingFileAttributes != null) {
       val needsDeletionFromFs = deletingFileAttributes.requesters.all {

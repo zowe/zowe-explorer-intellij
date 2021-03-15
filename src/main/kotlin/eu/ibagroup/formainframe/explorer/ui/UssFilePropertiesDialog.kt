@@ -32,11 +32,11 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
 
       row {
         label("$fileTypeName name: ")
-        JBTextField(state.ussAttributes.name ?: "").apply { isEditable = false }()
+        JBTextField(state.ussAttributes.name).apply { isEditable = false }()
       }
       row {
         label("Location: ")
-        JBTextField(state.ussAttributes.parentDirPath ?: "").apply { isEditable = false }()
+        JBTextField(state.ussAttributes.parentDirPath).apply { isEditable = false }()
       }
       row {
         label("Path: ")
@@ -44,7 +44,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
       }
       row {
         label("$fileTypeName size: ")
-        JBTextField("${state.ussAttributes.size ?: "???"} bytes").apply { isEditable = false }()
+        JBTextField("${state.ussAttributes.length} bytes").apply { isEditable = false }()
 
       }
       row {

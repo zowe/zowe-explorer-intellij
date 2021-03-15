@@ -144,3 +144,9 @@ fun TreePath.toIterable(): Iterable<Any> {
     }
   }
 }
+
+fun Throwable?.doThrow() {
+  throw this ?: Throwable("Unknown error")
+}
+
+val UNIT_CLASS = Unit::class.java

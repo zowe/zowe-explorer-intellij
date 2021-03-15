@@ -3,8 +3,6 @@ package eu.ibagroup.formainframe.dataops.attributes
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.utils.sendTopic
 import java.io.IOException
 
 interface AttributesService<Attributes : VFileInfoAttributes, VFile : VirtualFile> {
@@ -21,11 +19,6 @@ interface AttributesService<Attributes : VFileInfoAttributes, VFile : VirtualFil
   fun getOrCreateVirtualFile(attributes: Attributes): VFile
 
   fun getVirtualFile(attributes: Attributes): VFile?
-
-//  @Throws(IOException::class)
-//  fun getOrCreateVirtualFile(attributes: Attributes): VFile {
-//    return getVirtualFile(attributes) ?: this.getOrCreateVirtualFile(attributes)
-//  }
 
   fun getAttributes(file: VFile): Attributes?
 

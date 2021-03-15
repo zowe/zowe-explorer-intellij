@@ -1,11 +1,11 @@
 package eu.ibagroup.formainframe.explorer
 
-import eu.ibagroup.formainframe.explorer.ui.CreateFileState
+import eu.ibagroup.formainframe.explorer.ui.CreateFileDialogState
 import eu.ibagroup.formainframe.explorer.ui.emptyFileState
 
 class CreateUssFileAction : CreateUssEntityAction() {
 
-  override val fileType: CreateFileState
+  override val fileType: CreateFileDialogState
     get() = emptyFileState
 
   override val ussFileType: String

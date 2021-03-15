@@ -1,11 +1,10 @@
 package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
-import eu.ibagroup.formainframe.dataops.FetchCallback
-import java.io.IOException
+import com.intellij.openapi.progress.ProgressIndicator
+import eu.ibagroup.formainframe.dataops.Operation
 
-interface OperationRunner<O : Operation> {
+interface OperationRunner<O : Operation<R>, R : Any> {
 
   companion object {
     @JvmStatic
@@ -14,8 +13,13 @@ interface OperationRunner<O : Operation> {
 
   val operationClass: Class<out O>
 
+  val resultClass: Class<out R>
+
   fun canRun(operation: O): Boolean
 
-  fun run(operation: O, callback: FetchCallback<Unit>, project: Project? = null)
+  fun run(
+    operation: O,
+    progressIndicator: ProgressIndicator?
+  ): R
 
 }

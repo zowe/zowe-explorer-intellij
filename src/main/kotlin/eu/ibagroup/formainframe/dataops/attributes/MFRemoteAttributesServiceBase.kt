@@ -25,10 +25,10 @@ abstract class MFRemoteAttributesServiceBase<Attributes : MFRemoteFileAttributes
 
   override val vFileClass = MFVirtualFile::class.java
 
-  protected fun createPathChain(attributes: Attributes): List<Pair<String, FileAttributes>> {
+  protected fun createPathChain(attributes: Attributes): List<PathElementSeed> {
     return listOf(
-      Pair(attributes.url.trimUrl(), createAttributes(true)),
-      Pair(subFolderName, createAttributes(directory = true))
+      PathElementSeed(name = attributes.url.trimUrl(), fileAttributes = createAttributes(true)),
+      PathElementSeed(name = subFolderName, fileAttributes = createAttributes(true))
     ).plus(continuePathChain(attributes))
   }
 
@@ -49,23 +49,34 @@ abstract class MFRemoteAttributesServiceBase<Attributes : MFRemoteFileAttributes
     oldAttributes: Attributes,
     newAttributes: Attributes
   ): MFVirtualFile {
-    return findOrCreate(fsRoot, Pair(newAttributes.url.trimUrl(), createAttributes(directory = true)))
+    return findOrCreate(
+      fsRoot, PathElementSeed(
+        name = newAttributes.url.trimUrl(),
+        fileAttributes = createAttributes(directory = true)
+      )
+    )
   }
 
   protected lateinit var subDirectory: MFVirtualFile
 
-  protected abstract fun continuePathChain(attributes: Attributes): List<Pair<String, FileAttributes>>
+  protected abstract fun continuePathChain(attributes: Attributes): List<PathElementSeed>
 
   override fun findOrCreateFileInternal(attributes: Attributes): MFVirtualFile {
     var current = fsRoot
-    createPathChain(attributes).map { nameWithFileAttr ->
-      findOrCreate(current, nameWithFileAttr).also { current = it }
+    createPathChain(attributes).map { seed ->
+      findOrCreate(current, seed).also { current = it }
     }[1].also { if (!this::subDirectory.isInitialized) subDirectory = it }
     return current
   }
 
-  protected fun findOrCreate(current: MFVirtualFile, nameWithFileAttr: Pair<String, FileAttributes>): MFVirtualFile {
-    return fsModel.findOrCreate(this, current, nameWithFileAttr.first, nameWithFileAttr.second)
+  protected fun findOrCreate(current: MFVirtualFile, seed: PathElementSeed): MFVirtualFile {
+    return fsModel.findOrCreate(this, current, seed.name, seed.fileAttributes).apply(seed.postCreateAction)
   }
 
 }
+
+data class PathElementSeed(
+  val name: String,
+  val fileAttributes: FileAttributes,
+  val postCreateAction: MFVirtualFile.() -> Unit = {}
+)

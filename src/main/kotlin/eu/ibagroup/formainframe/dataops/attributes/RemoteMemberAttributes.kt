@@ -10,8 +10,10 @@ data class RemoteMemberAttributes(
   val libraryFile: MFVirtualFile
 ) : VFileInfoAttributes {
 
-  val name
+  override val name
     get() = memberInfo.name
+
+  override val length = 0L
 
   override fun clone(): VFileInfoAttributes {
     return RemoteMemberAttributes(memberInfo.clone(), libraryFile)
