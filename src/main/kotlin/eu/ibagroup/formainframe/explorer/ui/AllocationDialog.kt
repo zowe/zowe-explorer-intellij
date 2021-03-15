@@ -9,6 +9,7 @@ import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.allocation.DatasetAllocationParams
+import eu.ibagroup.formainframe.utils.validation.*
 import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
@@ -24,48 +25,15 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   private lateinit var datasetOrganizationBox: JComboBox<DatasetOrganization>
   private lateinit var primaryAllocationField: JTextField
 
-  private val firstSymbol = "A-Za-z\$@#"
-  private val remainingSymbol = firstSymbol + "0-9\\-"
-  private val firstGroup = "([${firstSymbol}][${remainingSymbol}]{0,7})"
-  private val remainingGroup = "[${remainingSymbol}]{1,8}"
-  private val smallErrorMessage = "First segment must be alphabetic (A to Z) or national (# @ \$)"
-  private val errorMessageForFullText =
-    "Each name segment (qualifier) is 1 to 8 characters,\nthe first of which must be alphabetic (A to Z) or national (# @ \$).\nThe remaining seven characters are either alphabetic,\nnumeric (0 - 9), national, a hyphen (-).\nName segments are separated by a period (.)";
-
-
-  private val volserRegex = Regex("[A-Za-z0-9]{1,6}")
-
-  private val datasetNameRegex = Regex("${firstGroup}(\\.${remainingGroup})*")
 
   private val mainPanel by lazy {
     panel {
       row {
         label("Dataset name")
         textField(state::datasetName).withValidationOnInput {
-          val text = it.text.trim()
-          val length = text.length
-          val firstPart = text.substringBefore('.')
-          return@withValidationOnInput if (text.isBlank()) {
-            null
-          } else if (length > 44) {
-            ValidationInfo("Dataset name cannot exceed 44 characters", it)
-          } else if (!firstPart.matches(Regex(firstGroup))) {
-            ValidationInfo(smallErrorMessage, it)
-          } else if (!text.endsWith('.') && !text.matches(datasetNameRegex)) {
-            ValidationInfo(
-              errorMessageForFullText, it
-            )
-          } else {
-            null
-          }
+          validateDatasetNameOnInput(it)
         }.withValidationOnApply {
-          if (it.text.isBlank()) {
-            ValidationInfo("Cannot be blank", it)
-          } else if (!it.text.trim().matches(datasetNameRegex)) {
-            ValidationInfo(errorMessageForFullText, it)
-          } else {
-            null
-          }
+          validateForBlank(it)
         }
       }
       row {
@@ -97,21 +65,13 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           get = { state.allocationParameters.primaryAllocation },
           set = { state.allocationParameters.primaryAllocation = it }
         )).withValidationOnInput {
-          if (it.text.toIntOrNull() ?: 0 < 0) {
-            ValidationInfo("Enter a positive number", it)
-          } else {
-            null
-          }
+          validateForPositiveInteger(it)
         }.also { primaryAllocationField = it.component }
       }
       row {
         label("Secondary allocation")
         intTextField(state.allocationParameters::secondaryAllocation).withValidationOnInput {
-          if (it.text.toIntOrNull() ?: 0 < 0) {
-            ValidationInfo("Enter a positive number", it)
-          } else {
-            null
-          }
+          validateForPositiveInteger(it)
         }
       }
       row {
@@ -122,19 +82,14 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
             set = { state.allocationParameters.directoryBlocks = it }
           )
         ).withValidationOnInput {
-          if (it.text.toIntOrNull() ?: 0 > primaryAllocationField.text.toIntOrNull() ?: 0) {
-            ValidationInfo("Directory cannot exceed primary allocation", it)
-          } else if (it.text.toIntOrNull() ?: 0 < 0) {
-            ValidationInfo("Enter a positive number", it)
-          } else {
-            null
-          }
+          validateForPositiveInteger(it)
+            ?: if (it.text.toIntOrNull() ?: 0 > primaryAllocationField.text.toIntOrNull() ?: 0) {
+              ValidationInfo("Directory cannot exceed primary allocation", it)
+            } else {
+              null
+            }
         }.withValidationOnApply {
-          if (it.text.isBlank()) {
-            ValidationInfo("Cannot be blank", it)
-          } else {
-            null
-          }
+          validateForBlank(it)
         }.enableIf(datasetOrganizationBox.selectedValueMatches { it == DatasetOrganization.PO })
       }
       row {
@@ -163,11 +118,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
             set = { state.allocationParameters.recordLength = it }
           )
         ).withValidationOnInput {
-          if (it.text.toIntOrNull() ?: 0 < 0) {
-            ValidationInfo("Enter a positive number", it)
-          } else {
-            null
-          }
+          validateForPositiveInteger(it)
         }
       }
       row {
@@ -177,52 +128,44 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
             get = { state.allocationParameters.blockSize ?: 0 },
             set = { state.allocationParameters.blockSize = it }
           )).withValidationOnInput {
-          if (it.text.toIntOrNull() ?: 0 < 0) {
-            ValidationInfo("Enter a positive number", it)
-          } else {
-            null
-          }
+          validateForPositiveInteger(it)
         }
       }
       row {
         label("Volume")
         textField(PropertyBinding(
-          get = {state.allocationParameters.volumeSerial ?: ""},
-          set = {state.allocationParameters.volumeSerial = it}
+          get = { state.allocationParameters.volumeSerial ?: "" },
+          set = { state.allocationParameters.volumeSerial = it }
         )).withValidationOnInput {
-          if (it.text.isNotBlank() && !it.text.matches(volserRegex)) {
-            ValidationInfo("Enter a valid volume serial", it)
-          } else {
-            null
-          }
+          validateVolser(it)
         }
       }
       row {
         label("Device Type")
         textField(PropertyBinding(
-          get = {state.allocationParameters.deviceType ?: ""},
-          set = {state.allocationParameters.deviceType = it}
+          get = { state.allocationParameters.deviceType ?: "" },
+          set = { state.allocationParameters.deviceType = it }
         ))
       }
       row {
         label("Storage class")
         textField(PropertyBinding(
-          get = {state.allocationParameters.storageClass ?: ""},
-          set = {state.allocationParameters.storageClass = it}
+          get = { state.allocationParameters.storageClass ?: "" },
+          set = { state.allocationParameters.storageClass = it }
         ))
       }
       row {
         label("Management class")
         textField(PropertyBinding(
-          get = {state.allocationParameters.managementClass ?: ""},
-          set = {state.allocationParameters.managementClass = it}
+          get = { state.allocationParameters.managementClass ?: "" },
+          set = { state.allocationParameters.managementClass = it }
         ))
       }
       row {
         label("Data class")
         textField(PropertyBinding(
-          get = {state.allocationParameters.dataClass ?: ""},
-          set = {state.allocationParameters.dataClass = it }
+          get = { state.allocationParameters.dataClass ?: "" },
+          set = { state.allocationParameters.dataClass = it }
         ))
       }
     }.apply {
@@ -253,7 +196,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
     init()
   }
 
-  private fun Int?.toNullIfZero() : Int? {
+  private fun Int?.toNullIfZero(): Int? {
     return if (this == 0) null else this
   }
 

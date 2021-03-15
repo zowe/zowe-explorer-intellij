@@ -49,8 +49,10 @@ class RemoteMemberAttributesService(
     val lib = getLibrary(attributes.libraryFile)
     return if (lib != null && lib.isDirectory) {
       fsModel.findOrCreate(this, lib, attributes.name, createAttributes(directory = false)).also {
-        fileToMemberInfoMap.putIfAbsent(it, attributes.memberInfo)
+        //fileToMemberInfoMap.putIfAbsent(it, attributes.memberInfo)
+        fileToMemberInfoMap[it] = attributes.memberInfo
       }
+
     } else throw IOException("Cannot find member")
   }
 

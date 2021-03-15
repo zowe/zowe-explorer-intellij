@@ -102,12 +102,14 @@ class DataOpsManagerImpl : DataOpsManager {
   }
 
   override fun isOperationSupported(operation: Operation): Boolean {
-    return operationRunners.any { it.canRun(operation) }
+    return operationRunners.any {
+      it.operationClass.isAssignableFrom(operation::class.java) && it.canRun(operation)
+    }
   }
 
   override fun performOperation(operation: Operation, callback: FetchCallback<Unit>, project: Project?) {
     operationRunners.stream()
-      .filter { it.canRun(operation) }
+      .filter { it.operationClass.isAssignableFrom(operation::class.java) && it.canRun(operation) }
       .findAnyNullable()?.run(operation, callback, project)
       ?: throw IllegalArgumentException("Unsupported Operation $operation")
   }

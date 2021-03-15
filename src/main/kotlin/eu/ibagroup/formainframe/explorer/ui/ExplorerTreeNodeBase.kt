@@ -35,7 +35,8 @@ abstract class ExplorerTreeNodeBase<Value : Any>(
             file = file,
             acceptancePolicy = AcceptancePolicy.FORCE_REWRITE,
             saveStrategy = { _, _, _ -> true },
-            onSyncEstablished = fetchAdapter {}
+            onSyncEstablished = fetchAdapter {
+            }
           )
         OpenFileDescriptor(notNullProject, file)
       } else null
