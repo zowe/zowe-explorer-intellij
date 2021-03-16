@@ -76,29 +76,3 @@ class BackgroundTaskPromiseInvoker<R>(
   }
 }
 
-class ModalTaskPromiseInvoker<R>(
-  private val title: String,
-  private val project: Project? = null,
-  private val canBeCancelled: Boolean = true,
-  private val cancelPromise: Boolean = false
-) : TaskPromiseInvoker<R>() {
-
-  override fun invoke(computation: Computation<R>): Promise<R> {
-    return ProgressManager.getInstance()
-      .run(object : Task.WithResult<Promise<R>, ExecutionException>(project, title, canBeCancelled) {
-        private var promise: Promise<R>? = null
-        override fun compute(indicator: ProgressIndicator): Promise<R> {
-          this@ModalTaskPromiseInvoker.indicator = indicator
-          return runCatching {
-            computation(indicator)
-          }.asDonePromise()
-        }
-
-        override fun onCancel() {
-          if (cancelPromise) {
-            promise.castOrNull<CancellablePromise<*>>()?.cancel()
-          }
-        }
-      })
-  }
-}

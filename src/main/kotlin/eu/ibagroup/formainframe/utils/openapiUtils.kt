@@ -137,14 +137,7 @@ inline fun <T> runPromiseAsBackgroundTask(
   })
 }
 
-fun <T> Result<T>.asDonePromise(): Promise<T> {
-  val r = getOrNull()
-  return if (r != null) {
-    resolvedPromise(r)
-  } else {
-    rejectedPromise(exceptionOrNull())
-  }
-}
+
 
 fun <T> Promise<T>.get(): T? {
   return if (this is AsyncPromise<T>) {
