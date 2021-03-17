@@ -45,6 +45,7 @@ class ConfigSandboxImpl : ConfigSandbox {
             configCrudable.replaceGracefully(clazz, list.stream())
           }
         }
+        initialState = state.clone()
       }
     }
   }
