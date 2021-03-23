@@ -1,6 +1,8 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.config.connect.token
@@ -47,12 +49,20 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
           if (response.isSuccessful) {
             attributes = response.body()?.items?.map { RemoteMemberAttributes(it, query.request.library) }
           } else {
-            exception = IOException("${response.code()} " + (response.errorBody()?.string() ?: ""))
+            run{
+              exception = IOException("${response.code()} " + (response.errorBody()?.string() ?: ""))
+              if (response.code() == 401) {
+                ApplicationManager.getApplication().invokeLater{
+                  Messages.showWarningDialog("Cannot fetch because of wrong credentials of the user",
+                          response.code().toString() + " - " + response.message())
+                }
+              }
+            }
           }
         }
         onException { _, t -> exception = t }
       }
-      attributes ?: throw exception
+      attributes ?: emptyList()
     } else throw IllegalArgumentException("Virtual file is not a library")
   }
 

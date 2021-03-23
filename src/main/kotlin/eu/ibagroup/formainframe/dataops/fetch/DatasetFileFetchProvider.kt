@@ -1,5 +1,7 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.config.connect.token
@@ -40,14 +42,22 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
         if (response.isSuccessful) {
           attributes = response.body()?.items?.map { buildAttributes(query, it) }
         } else {
-          exception = IOException("${response.code()} " + (response.errorBody()?.string() ?: ""))
+          run{
+            exception = IOException("${response.code()} " + (response.errorBody()?.string() ?: ""))
+            if (response.code() == 401) {
+              ApplicationManager.getApplication().invokeLater{
+                Messages.showWarningDialog("Cannot fetch because of wrong credentials of the user",
+                        response.code().toString() + " - " + response.message())
+              }
+            }
+          }
         }
       }
       onException { _, t ->
         exception = t
       }
     }
-    return attributes ?: throw exception
+    return attributes ?: emptyList()
   }
 
   private fun buildAttributes(query: RemoteQuery<DSMask, Unit>, dataset: Dataset): RemoteDatasetAttributes {
