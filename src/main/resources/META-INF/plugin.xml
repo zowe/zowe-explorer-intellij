@@ -164,6 +164,11 @@ To start using the plugin:<br/>
                 class="eu.ibagroup.formainframe.explorer.RenameAction" text="Rename"
                 use-shortcut-of="RenameElement"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.AddMaskAction"
+                class="eu.ibagroup.formainframe.explorer.AddMaskAction"
+                text="Mask"/>
+
+
         <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
             <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.SettingAction"/>
@@ -171,6 +176,7 @@ To start using the plugin:<br/>
 
         <group id="eu.ibagroup.formainframe.actions.NewItemGroup" text="New" popup="true"
                class="eu.ibagroup.formainframe.explorer.NewItemActionGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.AddMaskAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.AllocateDataset"/>
             <reference id="eu.ibagroup.formainframe.explorer.AddMemberAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.CreateUssFileAction"/>
