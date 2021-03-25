@@ -21,9 +21,29 @@
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
-    <vendor email="formainframe@ibagroup.eu" url="http://www.ibagroup.eu">IBA Group</vendor>
+    <vendor email="formainframe@ibagroup.eu" url="https://ibagroupit.com">IBA Group a.s.</vendor>
 
-    <description>The best plugin for Mainframe on the market.</description>
+    <description><![CDATA[
+<h1>For Mainframe</h1>
+"For Mainframe" brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
+Using our plugin you will be able to:<br/>
+<ul>
+   <li>Start working with z/OS easily with no complex configurations.</li>
+   <li>Organize datasets on z/OS, files on USS into Working Sets.</li>
+   <li>Allocate datasets, create members, files and directories with different permissions.</li>
+   <li>Perform renaming, copying and moving data in a modern way.</li>
+   <li>Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.</li>
+   <li>Create multiple connections to different z/OS systems.</li>
+   <li>All Intellij supported languages will be automatically highlighted and recognized once opened from the mainframe.</li>
+</ul><br/>
+To start using the plugin:<br/>
+<ul>
+    <li>Install the plugin in your Intellij based IDE.</li>
+    <li>Contact your RACF administrator so that your user is in the <a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua300/V2R4/zosmf/izua300/izulite_SecurityStructuresForZosmf.htm">IZUUSER  RACF group</a></li>
+    <li>You are ready to go! Start working with z/OS from the IDE.</li>
+</ul></br>
+<b>Note: z/OS 2.1 or higher is required</b>
+]]></description>
 
     <depends>com.intellij.modules.platform</depends>
 

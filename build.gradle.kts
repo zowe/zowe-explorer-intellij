@@ -12,7 +12,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.0"
+version = "0.1"
 
 repositories {
   mavenCentral()
@@ -63,7 +63,11 @@ intellij {
 tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   changeNotes(
     """
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>"""
+      In version 0.1 we added:<br/>
+      <ul>
+        <li>Working Sets</li>
+        <li>CRUD operations with datasets, members, files and directories</li>
+        <li>Editing data on z/OS and USS. Smart auto-save</li>
+      </ul>"""
   )
 }
