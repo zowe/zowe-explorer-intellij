@@ -45,22 +45,23 @@ class ConnectionDialog(
             )
           }
           .withValidationOnApply {
+            it.text = it.text.trim()
             validateForBlank(it)
           }
       }
       row {
         label("Connection URL")
-        textField(state::connectionUrl)
-          .withValidationOnApply {
-            validateForBlank(it) ?: validateZosmfUrl(it)
-          }
-          .also { urlTextField = it.component }
+        textField(state::connectionUrl).withValidationOnApply {
+          it.text = it.text.trim()
+          validateForBlank(it) ?: validateZosmfUrl(it)
+        }.also { urlTextField = it.component }
       }
       row {
         label("Username")
         textField(state::username).withValidationOnInput {
           validateUsername(it)
         }.withValidationOnApply {
+          it.text = it.text.trim()
           validateForBlank(it)
         }
       }
@@ -81,7 +82,7 @@ class ConnectionDialog(
 
   init {
     init()
-    title = when (state.mode){
+    title = when (state.mode) {
       DialogMode.READ -> "Connection Properties"
       DialogMode.DELETE -> "Delete Connection"
       DialogMode.UPDATE -> "Edit Connection"

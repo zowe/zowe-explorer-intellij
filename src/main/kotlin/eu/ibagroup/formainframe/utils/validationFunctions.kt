@@ -22,7 +22,7 @@ fun validateForBlank(component: JTextField): ValidationInfo? {
 
 fun validateConnectionName(component: JTextField, ignoreValue: String? = null, crudable: Crudable): ValidationInfo? {
   val configAlreadyExists = crudable.find<ConnectionConfig> {
-    ignoreValue != it.name && it.name == component.text
+    ignoreValue != it.name && it.name == component.text.trim()
   }.count() > 0
   return if (configAlreadyExists) {
     ValidationInfo("You must provide unique connection name. Connection ${component.text} already exists.", component)
@@ -52,7 +52,7 @@ fun validateZosmfUrl(component: JTextField): ValidationInfo? {
 }
 
 fun validateFieldWithLengthRestriction(component: JTextField, length: Int, fieldName: String): ValidationInfo? {
-  return if (component.text.length > length) {
+  return if (component.text.trim().length > length) {
     ValidationInfo("$fieldName length must be not exceed $length characters.")
   } else {
     null
