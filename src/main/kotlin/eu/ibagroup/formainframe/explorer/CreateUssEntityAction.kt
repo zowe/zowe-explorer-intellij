@@ -7,6 +7,8 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.ErrorBodyAllocationException
+import eu.ibagroup.formainframe.dataops.exceptions.getFullAllocationErrorString
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationOperation
 import eu.ibagroup.formainframe.explorer.ui.*
@@ -58,8 +60,8 @@ abstract class CreateUssEntityAction : AnAction() {
             }.onFailure {
               runInEdt {
                 Messages.showErrorDialog(
-                  "Cannot create $ussFileType ${allocationParams.fileName}",
-                  "Cannot Create $fileType"
+                  getFullAllocationErrorString(it as ErrorBodyAllocationException),
+                  "Cannot Allocate $fileType"
                 )
               }
             }
