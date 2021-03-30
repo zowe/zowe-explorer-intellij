@@ -1,11 +1,13 @@
 package eu.ibagroup.formainframe.dataops.operations
 
+import com.google.gson.Gson
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.exceptions.ErrorBodyAllocationException
 import eu.ibagroup.r2z.*
 
 class DatasetAllocatorFactory : OperationRunnerFactory {
@@ -35,7 +37,9 @@ class DatasetAllocator(
       body = query.request.allocationParameters
     ).execute()
     if (!response.isSuccessful) {
-      throw Throwable(response.code().toString())
+      val gson = Gson()
+      val errorParams= gson.fromJson(response.errorBody()?.charStream(),Map::class.java)
+      throw ErrorBodyAllocationException("Cannot allocate dataset ${query.request.datasetName} on ${query.connectionConfig.name}", errorParams)
     }
   }
 

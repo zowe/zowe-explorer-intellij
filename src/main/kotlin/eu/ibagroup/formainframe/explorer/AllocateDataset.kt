@@ -10,6 +10,7 @@ import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.exceptions.ErrorBodyAllocationException
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.ui.*
@@ -66,8 +67,14 @@ class AllocateDataset : AnAction() {
               }
             }.onFailure {
               runInEdt {
+                val errorBodyAllocationException = it as ErrorBodyAllocationException
                 Messages.showErrorDialog(
-                  "Cannot allocate dataset ${state.datasetName} on ${config.name}",
+                  "${errorBodyAllocationException.message}\n\n" +
+                          "CATEGORY: ${errorBodyAllocationException.errorParams["category"]}\n" +
+                          "MESSAGE: ${errorBodyAllocationException.errorParams["message"]}\n" +
+                          "RETURN CODE: ${errorBodyAllocationException.errorParams["rc"]}\n" +
+                          "REASON: ${errorBodyAllocationException.errorParams["reason"]}\n" +
+                          "STACK:\n${errorBodyAllocationException.errorParams["stack"]}",
                   "Cannot Allocate Dataset"
                 )
               }
