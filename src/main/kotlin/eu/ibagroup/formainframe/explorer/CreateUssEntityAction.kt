@@ -58,8 +58,8 @@ abstract class CreateUssEntityAction : AnAction() {
             }.onFailure {
               runInEdt {
                 Messages.showErrorDialog(
-                  "Cannot create $ussFileType ${allocationParams.fileName}",
-                  "Cannot Create $fileType"
+                  it.toString(),
+                  "Cannot Allocate $fileType"
                 )
               }
             }
