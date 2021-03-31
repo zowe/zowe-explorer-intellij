@@ -95,7 +95,7 @@ To start using the plugin:<br/>
                                  displayName="For Mainframe"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
 
-        <toolWindow id="zOSMF" anchor="right"
+        <toolWindow id="For Mainframe" anchor="right"
                     factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
