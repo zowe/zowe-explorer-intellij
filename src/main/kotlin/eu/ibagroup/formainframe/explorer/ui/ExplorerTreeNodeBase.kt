@@ -4,14 +4,20 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
+import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.fetchAdapter
 import eu.ibagroup.formainframe.dataops.synchronizer.AcceptancePolicy
 import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.util.concurrent.locks.ReentrantLock
@@ -71,19 +77,21 @@ abstract class ExplorerTreeNodeBase<Value : Any>(
               val fsModel = file.fileSystem.model
               fsModel.blockIOStreams(file)
               contentSynchronizer.enforceSyncIfNeeded(
-                  file = file,
-                  acceptancePolicy = AcceptancePolicy.FORCE_REWRITE,
-                  saveStrategy = { _, _, _ -> true },
-                  onSyncEstablished = fetchAdapter {
-                    onStart { lock.lock() }
-                    onResult { r ->
-                      fsModel.unblockIOStreams(file)
-                      successful = r.isSuccess
-                      condition.signalAll()
-                      lock.unlock()
-                    }
+                file = file,
+                acceptancePolicy = AcceptancePolicy.FORCE_REWRITE,
+                saveStrategy = { f, lastSuccessfulState, remoteBytes ->
+                  (lastSuccessfulState contentEquals remoteBytes)
+                },
+                onSyncEstablished = fetchAdapter {
+                  onStart { lock.lock() }
+                  onResult { r ->
+                    fsModel.unblockIOStreams(file)
+                    successful = r.isSuccess
+                    condition.signalAll()
+                    lock.unlock()
                   }
-                )
+                }
+              )
               lock.withLock { condition.await() }
             }
             if (successful) {

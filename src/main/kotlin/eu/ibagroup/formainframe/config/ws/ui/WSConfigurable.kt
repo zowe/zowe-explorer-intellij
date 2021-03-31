@@ -44,18 +44,7 @@ class WSConfigurable(
     }
   }
 
-  private inner class ActionLinkPredicate(private val disposable: Disposable): ComponentPredicate() {
-    override fun addListener(listener: (Boolean) -> Unit) {
-      ApplicationManager.getApplication()
-        .messageBus
-        .connect(disposable)
-        .subscribe(SandboxListener.TOPIC, ConnectionSandboxListener(this, listener))
-    }
 
-    override fun invoke(): Boolean {
-      return noConnectionsInSandbox()
-    }
-  }
 
   override fun createPanel(): DialogPanel {
     val wsTableModel = WSTableModel(sandboxCrudable)

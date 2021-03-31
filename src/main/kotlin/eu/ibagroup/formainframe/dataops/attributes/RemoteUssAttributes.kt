@@ -6,6 +6,7 @@ import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.FileMode
 import eu.ibagroup.r2z.FileModeValue
 import eu.ibagroup.r2z.UssFile
+import eu.ibagroup.r2z.XIBMDataType
 
 private fun constructPath(rootPath: String, ussFile: UssFile): String {
   return when {
@@ -105,5 +106,6 @@ data class RemoteUssAttributes(
         || mode == FileModeValue.WRITE_EXECUTE.mode
         || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
+  override var contentMode: XIBMDataType= XIBMDataType.BINARY
 
 }

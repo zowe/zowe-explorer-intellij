@@ -51,12 +51,14 @@ class SeqDatasetContentSynchronizer(
       api<DataAPI>(connectionConfig).retrieveDatasetContent(
         authorizationToken = connectionConfig.token,
         datasetName = attributes.name,
-        volser = volser
+        volser = volser,
+        xIBMDataType = attributes.contentMode
       )
     } else {
       api<DataAPI>(connectionConfig).retrieveDatasetContent(
         authorizationToken = connectionConfig.token,
-        datasetName = attributes.name
+        datasetName = attributes.name,
+        xIBMDataType = attributes.contentMode
       )
     }
   }
@@ -72,13 +74,15 @@ class SeqDatasetContentSynchronizer(
         authorizationToken = connectionConfig.token,
         datasetName = attributes.name,
         volser = volser,
-        content = String(content)
+        content = String(content),
+        xIBMDataType = attributes.contentMode
       )
     } else {
       api<DataAPI>(connectionConfig).writeToDataset(
         authorizationToken = connectionConfig.token,
         datasetName = attributes.name,
-        content = String(content)
+        content = String(content),
+        xIBMDataType = attributes.contentMode
       )
     }
   }

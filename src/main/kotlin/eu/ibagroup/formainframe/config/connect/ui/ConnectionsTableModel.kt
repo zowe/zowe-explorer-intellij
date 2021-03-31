@@ -45,7 +45,13 @@ class ConnectionsTableModel(
     with(crudable) {
       delete(value.credentials)
       delete(value.connectionConfig)
-      delete(value.urlConnection)
+      if (!this.getAll<ConnectionConfig>().anyMatch {
+          //Check if UrlConnectionConfig is not in use by any other ConnectionConfigs - hotfix
+          //TODO
+          it.uuid != value.connectionUuid && it.urlConnectionUuid == value.urlConnection.uuid
+      }) {
+        delete(value.urlConnection)
+      }
     }
   }
 

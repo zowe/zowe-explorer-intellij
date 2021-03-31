@@ -14,6 +14,8 @@ interface ConfigSandbox {
     val instance: ConfigSandbox = ApplicationManager.getApplication().getService(ConfigSandbox::class.java)
   }
 
+  fun updateState()
+
   fun <T : Any> apply(clazz: Class<out T>)
 
   fun fetch()
