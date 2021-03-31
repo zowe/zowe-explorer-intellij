@@ -4,6 +4,7 @@ import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.Dataset
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.HasMigrated
+import eu.ibagroup.r2z.XIBMDataType
 
 data class RemoteDatasetAttributes(
   val datasetInfo: Dataset,
@@ -31,5 +32,6 @@ data class RemoteDatasetAttributes(
 
   val volser
     get() = datasetInfo.volumeSerial
+  override var contentMode: XIBMDataType = XIBMDataType.TEXT
 
 }

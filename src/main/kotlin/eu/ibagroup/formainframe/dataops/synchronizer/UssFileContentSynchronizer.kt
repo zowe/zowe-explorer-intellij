@@ -35,7 +35,7 @@ class UssFileContentSynchronizer(
         val response = api<DataAPI>(it.connectionConfig).retrieveUssFileContent(
           authorizationToken = it.connectionConfig.token,
           filePath = attributes.path.substring(1),
-          xIBMDataType = XIBMDataType.BINARY
+          xIBMDataType = attributes.contentMode
         ).execute()
         if (response.isSuccessful) {
           content = response.body()?.toByteArray()
@@ -58,7 +58,7 @@ class UssFileContentSynchronizer(
           authorizationToken = requester.connectionConfig.token,
           filePath = attributes.path.substring(1),
           body = String(newContentBytes),
-          xIBMDataType = XIBMDataType.BINARY
+          xIBMDataType = attributes.contentMode
         ).execute()
         if (response.isSuccessful) {
           uploaded = true

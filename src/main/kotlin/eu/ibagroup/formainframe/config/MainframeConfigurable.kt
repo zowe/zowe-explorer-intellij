@@ -23,6 +23,11 @@ class MainframeConfigurable : TabbedConfigurable() {
     )
   }
 
+  override fun apply() {
+    super.apply()
+    ConfigSandbox.instance.updateState()
+  }
+
   override fun reset() {
     ConfigSandbox.instance.fetch()
     super.reset()

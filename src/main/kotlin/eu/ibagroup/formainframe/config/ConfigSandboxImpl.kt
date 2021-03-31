@@ -27,6 +27,10 @@ class ConfigSandboxImpl : ConfigSandbox {
 
   private val stateLock = Any()
 
+  override fun updateState() {
+    initialState = state.clone()
+  }
+
   override fun <T : Any> apply(clazz: Class<out T>) {
     synchronized(stateLock) {
       if (isModified(clazz)) {
@@ -45,7 +49,6 @@ class ConfigSandboxImpl : ConfigSandbox {
             configCrudable.replaceGracefully(clazz, list.stream())
           }
         }
-        initialState = state.clone()
       }
     }
   }

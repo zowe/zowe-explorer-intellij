@@ -39,7 +39,8 @@ class MemberContentSynchronizer(
         val response = api<DataAPI>(requester.connectionConfig).retrieveMemberContent(
           authorizationToken = requester.connectionConfig.token,
           datasetName = libAttributes.name,
-          memberName = attributes.name
+          memberName = attributes.name,
+          xIBMDataType = attributes.contentMode
         ).execute()
         if (response.isSuccessful) {
           content = response.body()?.toByteArray()
@@ -65,7 +66,8 @@ class MemberContentSynchronizer(
           authorizationToken = requester.connectionConfig.token,
           datasetName = libAttributes.name,
           memberName = attributes.name,
-          content = String(newContentBytes)
+          content = String(newContentBytes),
+          xIBMDataType = attributes.contentMode
         ).execute()
         if (response.isSuccessful) {
           throwable = null

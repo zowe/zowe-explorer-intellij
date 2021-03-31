@@ -167,6 +167,10 @@ To start using the plugin:<br/>
         <action id="eu.ibagroup.formainframe.explorer.AddMaskAction"
                 class="eu.ibagroup.formainframe.explorer.AddMaskAction"
                 text="Mask"/>
+        <action id="eu.ibagroup.formainframe.explorer.ChangeContentModeAction"
+                class="eu.ibagroup.formainframe.explorer.ChangeContentModeAction"
+                text="Change Content Mode"/>
+
 
 
         <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
@@ -193,6 +197,8 @@ To start using the plugin:<br/>
             <reference id="$Paste"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.RenameAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.ChangeContentModeAction"/>
             <separator/>
             <reference id="$Delete"/>
             <separator/>

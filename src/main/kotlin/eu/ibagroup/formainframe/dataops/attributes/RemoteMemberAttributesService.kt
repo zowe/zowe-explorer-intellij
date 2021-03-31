@@ -8,6 +8,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.formainframe.vfs.createAttributes
 import eu.ibagroup.r2z.Member
+import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 
 class RemoteMemberAttributesServiceFactory : AttributesServiceFactory {
@@ -29,6 +30,7 @@ class RemoteMemberAttributesService(
   }
 
   private var fileToMemberInfoMap = ConcurrentHashMap<MFVirtualFile, Member>()
+  private var fileToContentTypeMap = ConcurrentHashMap<MFVirtualFile, XIBMDataType>()
 
   private fun getLibrary(libraryFile: MFVirtualFile): MFVirtualFile? {
     val libAttributes = runReadAction { remoteDatasetAttributesService.getAttributes(libraryFile) }
@@ -51,6 +53,7 @@ class RemoteMemberAttributesService(
       fsModel.findOrCreate(this, lib, attributes.name, createAttributes(directory = false)).also {
         //fileToMemberInfoMap.putIfAbsent(it, attributes.memberInfo)
         fileToMemberInfoMap[it] = attributes.memberInfo
+        fileToContentTypeMap[it] = attributes.contentMode
       }
 
     } else throw IOException("Cannot find member")
@@ -65,7 +68,7 @@ class RemoteMemberAttributesService(
     val lib = file.parent?.let { getLibrary(it) }
     val memberInfo = fileToMemberInfoMap[file]
     return if (lib != null && memberInfo != null) {
-      RemoteMemberAttributes(memberInfo, lib)
+      RemoteMemberAttributes(memberInfo, lib, fileToContentTypeMap[file] ?: XIBMDataType.TEXT)
     } else null
   }
 
@@ -78,11 +81,15 @@ class RemoteMemberAttributesService(
       if (oldAttributes.memberInfo != newAttributes.memberInfo) {
         fileToMemberInfoMap[file] = newAttributes.memberInfo
       }
+      if (oldAttributes.contentMode != newAttributes.contentMode) {
+        fileToContentTypeMap[file] = newAttributes.contentMode
+      }
     }
   }
 
   override fun clearAttributes(file: MFVirtualFile) {
     fileToMemberInfoMap.remove(file)
+    fileToContentTypeMap.remove(file)
   }
 
   override val attributesClass = RemoteMemberAttributes::class.java
