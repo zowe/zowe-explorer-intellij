@@ -10,8 +10,6 @@ import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.exceptions.ErrorBodyAllocationException
-import eu.ibagroup.formainframe.dataops.exceptions.getFullAllocationErrorString
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.ui.*
@@ -69,7 +67,7 @@ class AllocateDataset : AnAction() {
             }.onFailure {
               runInEdt {
                 Messages.showErrorDialog(
-                  getFullAllocationErrorString(it as ErrorBodyAllocationException),
+                  it.toString(),
                   "Cannot Allocate Dataset"
                 )
               }
