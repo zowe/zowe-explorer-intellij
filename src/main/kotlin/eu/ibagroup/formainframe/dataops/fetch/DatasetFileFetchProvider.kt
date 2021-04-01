@@ -1,7 +1,5 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.config.connect.token
@@ -10,6 +8,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.asMutableList
 import eu.ibagroup.formainframe.utils.nullIfBlank
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -32,31 +31,24 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override fun fetchResponse(query: RemoteQuery<DSMask, Unit>): Collection<RemoteDatasetAttributes> {
     var attributes: Collection<RemoteDatasetAttributes>? = null
-    var exception: Throwable = IOException("Cannot fetch ${query.request.mask}")
-    api<DataAPI>(query.connectionConfig).listDataSets(
+    var exception: Throwable? = null
+
+    val response = api<DataAPI>(query.connectionConfig).listDataSets(
       authorizationToken = query.connectionConfig.token,
       dsLevel = query.request.mask,
       volser = query.request.volser.nullIfBlank()
-    ).enqueueSync {
-      onResponse { _, response ->
-        if (response.isSuccessful) {
-          attributes = response.body()?.items?.map { buildAttributes(query, it) }
-        } else {
-          run{
-            exception = IOException("${response.code()} " + (response.errorBody()?.string() ?: ""))
-            if (response.code() == 401) {
-              ApplicationManager.getApplication().invokeLater{
-                Messages.showWarningDialog("Cannot fetch because of wrong credentials of the user",
-                        response.code().toString() + " - " + response.message())
-              }
-            }
-          }
-        }
-      }
-      onException { _, t ->
-        exception = t
-      }
+    ).execute()
+
+    if (response.isSuccessful) {
+      attributes = response.body()?.items?.map { buildAttributes(query, it) }
+    } else {
+      exception = CallException(response, "Cannot retrieve dataset list")
     }
+
+    if (exception != null) {
+      throw exception
+    }
+
     return attributes ?: emptyList()
   }
 

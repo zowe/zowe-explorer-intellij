@@ -45,7 +45,7 @@ fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, c
 
 fun validateZosmfUrl(component: JTextField): ValidationInfo? {
   return if (!component.text.matches(urlRegex)) {
-    ValidationInfo("Please provide a valid URL to zOSMF. Example: https://myhost.com:10443", component)
+    ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
   } else {
     null
   }

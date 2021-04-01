@@ -1,8 +1,6 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.config.connect.token
@@ -10,10 +8,10 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
-import java.io.IOException
 
 data class LibraryQuery(val library: MFVirtualFile)
 
@@ -40,28 +38,23 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
     val libraryAttributes = runReadAction { remoteDatasetAttributesService.getAttributes(query.request.library) }
     return if (libraryAttributes != null) {
       var attributes: Collection<RemoteMemberAttributes>? = null
-      var exception: Throwable = IOException("Cannot fetch members for ${libraryAttributes.name}")
-      api<DataAPI>(query.connectionConfig).listDatasetMembers(
+      var exception: Throwable? = null
+
+      val response = api<DataAPI>(query.connectionConfig).listDatasetMembers(
         authorizationToken = query.connectionConfig.token,
         datasetName = libraryAttributes.name
-      ).enqueueSync {
-        onResponse { _, response ->
-          if (response.isSuccessful) {
-            attributes = response.body()?.items?.map { RemoteMemberAttributes(it, query.request.library) }
-          } else {
-            run{
-              exception = IOException("${response.code()} " + (response.errorBody()?.string() ?: ""))
-              if (response.code() == 401) {
-                ApplicationManager.getApplication().invokeLater{
-                  Messages.showWarningDialog("Cannot fetch because of wrong credentials of the user",
-                          response.code().toString() + " - " + response.message())
-                }
-              }
-            }
-          }
-        }
-        onException { _, t -> exception = t }
+      ).execute()
+
+      if (response.isSuccessful) {
+        attributes = response.body()?.items?.map { RemoteMemberAttributes(it, query.request.library) }
+      } else {
+        exception = CallException(response, "Cannot retrieve member list")
       }
+
+      if (exception != null) {
+        throw exception
+      }
+
       attributes ?: emptyList()
     } else throw IllegalArgumentException("Virtual file is not a library")
   }

@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.Query
@@ -18,9 +19,11 @@ interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
 
   fun getCached(query: Q): Collection<File>?
 
+  fun isCacheValid(query: Q): Boolean
+
   fun cleanCache(query: Q)
 
-  fun forceReload(query: Q): Promise<Collection<File>>
+  fun reload(query: Q, progressIndicator: ProgressIndicator? = null)
 
   val requestClass: Class<out R>
 

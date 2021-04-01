@@ -17,8 +17,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class GlobalWorkingSet(
+  override val uuid: String,
   globalExplorer: GlobalExplorer,
-  private val workingSetConfigProvider: () -> WorkingSetConfig?,
+  private val workingSetConfigProvider: (String) -> WorkingSetConfig?,
   parentDisposable: Disposable
 ) : WorkingSet, Disposable {
 
@@ -30,7 +31,7 @@ class GlobalWorkingSet(
 
   private val workingSetConfig: WorkingSetConfig?
     get() = lock(lock.readLock()) {
-      (isDisposed.compareAndSet(false, false)).runIfTrue { workingSetConfigProvider() }
+      (isDisposed.compareAndSet(false, false)).runIfTrue { workingSetConfigProvider(uuid) }
     }
 
   init {
@@ -39,9 +40,6 @@ class GlobalWorkingSet(
 
   override val name
     get() = workingSetConfig?.name ?: ""
-
-  override val uuid
-    get() = workingSetConfig?.uuid ?: ""
 
   override val connectionConfig: ConnectionConfig?
     get() = lock(lock.readLock()) { workingSetConfig?.let { configCrudable.getByForeignKey(it) } }
@@ -81,10 +79,6 @@ class GlobalWorkingSet(
     if (newWsConfig.ussPaths.remove(ussPath)) {
       configCrudable.update(newWsConfig)
     }
-  }
-
-  override fun onThrowable(t: Throwable) {
-    println(t.message)
   }
 
   override fun dispose() {

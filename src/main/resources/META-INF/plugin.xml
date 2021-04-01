@@ -21,7 +21,7 @@
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
-    <vendor email="formainframe@ibagroup.eu" url="https://ibagroupit.com">IBA Group a.s.</vendor>
+    <vendor email="formainframe@ibagroup.eu" url="https://ibagroupit.com">IBA Group</vendor>
 
     <description><![CDATA[
 <h1>For Mainframe</h1>
