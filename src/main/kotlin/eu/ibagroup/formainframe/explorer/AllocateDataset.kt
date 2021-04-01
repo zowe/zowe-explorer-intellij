@@ -67,7 +67,7 @@ class AllocateDataset : AnAction() {
             }.onFailure {
               runInEdt {
                 Messages.showErrorDialog(
-                  "Cannot allocate dataset ${state.datasetName} on ${config.name}",
+                  it.toString(),
                   "Cannot Allocate Dataset"
                 )
               }
