@@ -10,6 +10,7 @@ import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.validation.validateDatasetMask
 import eu.ibagroup.formainframe.utils.validation.validateForBlank
 import eu.ibagroup.formainframe.utils.validation.validateUssMask
+import eu.ibagroup.formainframe.utils.validation.validateWorkingSetMaskName
 import javax.swing.JComponent
 
 class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWrapper(project),
@@ -36,11 +37,14 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
       row {
         label("Mask: ")
 
-        textField(state::mask).withValidationOnApply {
+        textField(state::mask).withValidationOnInput {
+          validateWorkingSetMaskName(it, state.ws)
+        }.withValidationOnApply {
           validateForBlank(it.text, it) ?: if (state.type == MaskState.ZOS)
             validateDatasetMask(it.text, component)
           else
             validateUssMask(it.text, it)
+
         }
 
       }

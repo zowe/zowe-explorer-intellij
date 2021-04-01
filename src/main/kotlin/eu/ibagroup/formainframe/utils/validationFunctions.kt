@@ -3,6 +3,8 @@ package eu.ibagroup.formainframe.utils.validation
 import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import javax.swing.JComponent
@@ -37,6 +39,19 @@ fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, c
   }.count() > 0
   return if (configAlreadyExists) {
     return ValidationInfo("You must provide unique working set name. Working Set ${component.text} already exists.", component)
+  } else {
+    null
+  }
+
+}
+
+fun validateWorkingSetMaskName(component: JTextField, ws: WorkingSet): ValidationInfo? {
+  val maskAlreadyExists = ws.dsMasks.map {it.mask}.contains(component.text)
+          || ws.ussPaths.map {it.path}.contains(component.text)
+
+  return if (maskAlreadyExists) {
+    return ValidationInfo("You must provide unique mask in working set. Working Set " +
+            "\"${ws.name}\" already has mask - ${component.text}", component)
   } else {
     null
   }

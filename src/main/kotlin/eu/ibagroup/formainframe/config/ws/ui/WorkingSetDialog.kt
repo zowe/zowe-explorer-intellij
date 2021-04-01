@@ -102,6 +102,9 @@ class WorkingSetDialog(
             dsMasksTable.listTableModel.rowCount == 0 -> {
               this.warning("You are going to create a Working Set that doesn't fetch anything")
             }
+            hasDuplicatesInTable(dsMasksTable.items) -> {
+              ValidationInfo("You cannot add several identical masks to table")
+            }
             else -> null
           }
         }.onApply {
@@ -111,6 +114,11 @@ class WorkingSetDialog(
     }.apply {
       minimumSize = Dimension(450, 500)
     }
+  }
+
+  private fun hasDuplicatesInTable(tableElements: List<WorkingSetDialogState.TableRow>): Boolean {
+    
+    return tableElements.size != tableElements.map {it.mask}.distinct().size
   }
 
   init {
