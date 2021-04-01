@@ -15,6 +15,4 @@ interface ExplorerUnit {
 
   val explorer: Explorer
 
-  fun onThrowable(t: Throwable)
-
 }

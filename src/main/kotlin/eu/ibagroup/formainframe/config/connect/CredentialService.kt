@@ -1,8 +1,16 @@
 package eu.ibagroup.formainframe.config.connect
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.CredentialsNotFoundForConnection
 import okhttp3.Credentials
+
+fun interface CredentialsListener {
+  fun onChanged(connectionConfigUuid: String)
+}
+
+@JvmField
+val CREDENTIALS_CHANGED = Topic.create("credentialChanges", CredentialsListener::class.java)
 
 interface CredentialService {
 
@@ -22,11 +30,15 @@ interface CredentialService {
 fun getInstance(): CredentialService = ApplicationManager.getApplication().getService(CredentialService::class.java)
 
 fun username(connectionConfig: ConnectionConfig): String {
-  return CredentialService.instance.getUsernameByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(connectionConfig)
+  return CredentialService.instance.getUsernameByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
+    connectionConfig
+  )
 }
 
 fun password(connectionConfig: ConnectionConfig): String {
-  return CredentialService.instance.getPasswordByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(connectionConfig)
+  return CredentialService.instance.getPasswordByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
+    connectionConfig
+  )
 }
 
 val ConnectionConfig.token: String

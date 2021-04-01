@@ -12,7 +12,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.1"
+version = "0.2"
 
 repositories {
   mavenCentral()
@@ -63,11 +63,12 @@ intellij {
 tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   changeNotes(
     """
-      In version 0.1 we added:<br/>
+      In version 0.2 we added:<br/>
       <ul>
-        <li>Working Sets</li>
-        <li>CRUD operations with datasets, members, files and directories</li>
-        <li>Editing data on z/OS and USS. Smart auto-save</li>
+        <li>Binary and text modes added for USS files and data sets</li>
+        <li>Error messages are improved a bit</li>
+        <li>Possibility to add a DS Mask right from File Explorer's context menu</li>
+        <li>Small UI fixes</li>
       </ul>"""
   )
 }
