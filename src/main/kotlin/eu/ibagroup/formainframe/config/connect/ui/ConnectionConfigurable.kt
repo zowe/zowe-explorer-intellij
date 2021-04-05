@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.toMutableList
 import java.lang.StringBuilder
+import javax.swing.ListSelectionModel
 
 class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {
 
@@ -94,10 +95,13 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
 
   override fun createPanel(): DialogPanel {
     val tableModel = ConnectionsTableModel(sandboxCrudable)
+
     connectionsTableModel = tableModel
     val table = ValidatingTableView(tableModel, disposable!!).apply {
       rowHeight = DEFAULT_ROW_HEIGHT
     }
+    table.selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
+
     connectionsTable = table
 
     ApplicationManager.getApplication()
