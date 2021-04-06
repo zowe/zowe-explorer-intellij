@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.toMutableList
 import java.lang.StringBuilder
-import javax.swing.ListSelectionModel
 
 class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {
 
@@ -53,28 +52,30 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     }
   }
 
-  private fun removeSelectedConnection() {
-    val idx = connectionsTable?.selectedRow
-    if (idx != null) {
-      connectionsTableModel?.removeRow(idx)
+  private fun removeSelectedConnections() {
+    val indices = connectionsTable?.selectedRows
+    indices?.forEachIndexed { i, idx ->
+      connectionsTableModel?.removeRow(idx - i)
     }
   }
 
-  private fun removeConnectionWithWarning(selected: ConnectionDialogState) {
+  private fun removeConnectionsWithWarning(selectedConfigs: List<ConnectionDialogState>) {
     val workingSets = sandboxCrudable.getAll<WorkingSetConfig>().toMutableList()
-    val wsUsages = workingSets.filter { wsConfig -> wsConfig.connectionConfigUuid == selected.connectionConfig.uuid }
+    val wsUsages = workingSets.filter { wsConfig ->
+      selectedConfigs.any { state -> wsConfig.connectionConfigUuid == state.connectionConfig.uuid }
+    }
 
-    if (wsUsages.isEmpty()){
-      removeSelectedConnection()
+    if (wsUsages.isEmpty()) {
+      removeSelectedConnections()
       return
     }
 
-    val warningMessageBuilder = StringBuilder("The following working sets use this connection: ")
-    wsUsages.forEach {
-        wsConfig -> warningMessageBuilder.append(wsConfig.name).append(", ")
+    val warningMessageBuilder = StringBuilder("The following working sets use selected connections:\n    ")
+    wsUsages.forEach { wsConfig ->
+      warningMessageBuilder.append(wsConfig.name).append(", ")
     }
-    warningMessageBuilder.setLength(warningMessageBuilder.length-2)
-    warningMessageBuilder.append("\nDo you really want to remove it?")
+    warningMessageBuilder.setLength(warningMessageBuilder.length - 2)
+    warningMessageBuilder.append(".\n\nDo you really want to remove them?")
 
     val ret = Messages.showOkCancelDialog(
       warningMessageBuilder.toString(),
@@ -84,8 +85,8 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
       Messages.getWarningIcon()
     )
 
-    if(ret == Messages.OK)
-      removeSelectedConnection()
+    if (ret == Messages.OK)
+      removeSelectedConnections()
   }
 
   private var connectionsTableModel: ConnectionsTableModel? = null
@@ -100,7 +101,6 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val table = ValidatingTableView(tableModel, disposable!!).apply {
       rowHeight = DEFAULT_ROW_HEIGHT
     }
-    table.selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
 
     connectionsTable = table
 
@@ -136,9 +136,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
                 table.selectedRowCount == 1
               }
               setRemoveAction {
-                table.selectedObject?.let { selected ->
-                  removeConnectionWithWarning(selected.clone())
-                }
+                removeConnectionsWithWarning(table.selectedObjects)
               }
             }
           }
