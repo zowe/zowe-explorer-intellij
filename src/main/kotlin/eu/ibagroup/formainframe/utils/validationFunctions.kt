@@ -156,7 +156,7 @@ fun validateVolser(component: JTextField): ValidationInfo? {
 }
 
 fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
-  return if (component.text.toIntOrNull() ?: 0 < 0) {
+  return if (component.text.toIntOrNull() ?: -1 < 0) {
     ValidationInfo("Enter a positive number", component)
   } else {
     null
