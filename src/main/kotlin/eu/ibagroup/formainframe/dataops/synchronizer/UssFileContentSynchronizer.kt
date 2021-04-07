@@ -8,7 +8,6 @@ import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.mapNotNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 
 class UssFileContentSynchronizerFactory : ContentSynchronizerFactory {

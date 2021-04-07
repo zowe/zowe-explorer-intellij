@@ -2,13 +2,10 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.castOrNull
 
 class AddMaskAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {

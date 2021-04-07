@@ -5,8 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import okhttp3.Request
-import okio.Timeout
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

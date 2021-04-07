@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.config.ws.ui
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.BoundSearchableConfigurable

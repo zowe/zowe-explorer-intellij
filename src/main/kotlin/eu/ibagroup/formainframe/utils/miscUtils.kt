@@ -7,10 +7,8 @@ import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
-import kotlin.concurrent.withLock
 import kotlin.streams.toList
 
 fun <E> Stream<E>.toMutableList(): MutableList<E> {

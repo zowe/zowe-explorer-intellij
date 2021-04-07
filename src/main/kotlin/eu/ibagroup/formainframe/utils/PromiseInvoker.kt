@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.Invoker
 import kotlinx.coroutines.*
 import org.jetbrains.concurrency.*
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 

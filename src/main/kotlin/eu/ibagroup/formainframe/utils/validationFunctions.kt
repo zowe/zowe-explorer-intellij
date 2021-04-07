@@ -3,7 +3,6 @@ package eu.ibagroup.formainframe.utils.validation
 import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
@@ -123,7 +122,7 @@ private val firstGroup = "([${firstSymbol}][${remainingSymbol}]{0,7})"
 private val remainingGroup = "[${remainingSymbol}]{1,8}"
 private val smallErrorMessage = "First segment must be alphabetic (A to Z) or national (# @ \$)"
 private val errorMessageForFullText =
-  "Each name segment (qualifier) is 1 to 8 characters,\nthe first of which must be alphabetic (A to Z) or national (# @ \$).\nThe remaining seven characters are either alphabetic,\nnumeric (0 - 9), national, a hyphen (-).\nName segments are separated by a period (.)";
+  "Each name segment (qualifier) is 1 to 8 characters,\nthe first of which must be alphabetic (A to Z) or national (# @ \$).\nThe remaining seven characters are either alphabetic,\nnumeric (0 - 9), national, a hyphen (-).\nName segments are separated by a period (.)"
 
 private val datasetNameRegex = Regex("${firstGroup}(\\.${remainingGroup})*")
 

@@ -13,7 +13,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
-import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
