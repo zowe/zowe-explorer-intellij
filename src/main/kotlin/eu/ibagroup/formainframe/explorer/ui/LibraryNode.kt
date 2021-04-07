@@ -18,10 +18,12 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 class LibraryNode(
   library: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNodeBase<*>,
+  parent: ExplorerTreeNode<*>,
   workingSet: WorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileCacheNode<MFVirtualFile, LibraryQuery, WorkingSet>(library, project, parent, workingSet, treeStructure) {
+) : RemoteMFFileFetchNode<MFVirtualFile, LibraryQuery, WorkingSet>(
+  library, project, parent, workingSet, treeStructure
+), MFNode, RefreshableNode {
 
   override val query: RemoteQuery<LibraryQuery, Unit>?
     get() {

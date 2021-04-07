@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.explorer
+package eu.ibagroup.formainframe.explorer.actions
 
 import eu.ibagroup.formainframe.explorer.ui.CreateFileDialogState
 import eu.ibagroup.formainframe.explorer.ui.emptyFileState

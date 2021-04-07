@@ -27,12 +27,14 @@ private fun withSlashIfNeeded(ussPath: UssPath): String {
 class UssDirNode(
   ussPath: UssPath,
   project: Project,
-  parent: ExplorerTreeNodeBase<*>,
+  parent: ExplorerTreeNode<*>,
   workingSet: WorkingSet,
   treeStructure: ExplorerTreeStructureBase,
   private var vFile: MFVirtualFile? = null,
   private val isRootNode: Boolean = false
-) : RemoteMFFileCacheNode<UssPath, UssQuery, WorkingSet>(ussPath, project, parent, workingSet, treeStructure) {
+) : RemoteMFFileFetchNode<UssPath, UssQuery, WorkingSet>(
+  ussPath, project, parent, workingSet, treeStructure
+), UssNode, RefreshableNode {
 
   val isConfigUssPath = vFile == null
 

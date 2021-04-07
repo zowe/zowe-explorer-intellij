@@ -3,12 +3,10 @@ package eu.ibagroup.formainframe.config.connect.ui
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.options.BoundSearchableConfigurable
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
-import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.common.ui.toolbarTable
 import eu.ibagroup.formainframe.config.*
@@ -21,30 +19,25 @@ import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.toMutableList
 import java.lang.StringBuilder
 
+@Suppress("DialogTitleCapitalization")
 class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {
 
   var openAddDialog = false
 
-  private fun addConnection() {
-
-    val state = ShowAndTestConnection(
-      ConnectionDialogState(),
-      sandboxCrudable,
-      ProjectManager.getInstance().defaultProject
-    ).showUntilTested()
-    state?.let {
-      connectionsTableModel?.addRow(it)
-    }
-
+  private fun showAndTestConnection(): ConnectionDialogState? {
+    return ConnectionDialog.showAndTestConnection(
+      crudable = sandboxCrudable,
+      parentComponent = panel?.components?.getOrNull(0),
+      initialState = ConnectionDialogState()
+    )
   }
 
-  private fun editConnection(selected: ConnectionDialogState) {
+  private fun addConnection() {
+    showAndTestConnection()?.let { connectionsTableModel?.addRow(it) }
+  }
 
-    val state = ShowAndTestConnection(
-      selected,
-      sandboxCrudable,
-      ProjectManager.getInstance().defaultProject
-    ).showUntilTested()
+  private fun editConnection() {
+    val state = showAndTestConnection()
 
     val idx = connectionsTable?.selectedRow
     if (idx != null && state != null) {
@@ -128,8 +121,8 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
                 addConnection()
               }
               setEditAction {
-                table.selectedObject?.let { selected ->
-                  editConnection(selected.clone().apply { mode = DialogMode.UPDATE });
+                table.selectedObject?.let {
+                  editConnection()
                 }
               }
               setEditActionUpdater {

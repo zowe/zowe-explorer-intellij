@@ -7,7 +7,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 
 class ErrorNode(
   project: Project,
-  parent: ExplorerTreeNodeBase<*>,
+  parent: ExplorerTreeNode<*>,
   explorer: Explorer,
   treeStructure: ExplorerTreeStructureBase
 ) : InfoNodeBase(project, parent, explorer, treeStructure) {

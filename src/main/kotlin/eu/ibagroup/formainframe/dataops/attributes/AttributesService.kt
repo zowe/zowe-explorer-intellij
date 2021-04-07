@@ -8,10 +8,10 @@ import java.io.IOException
 interface AttributesService<Attributes : VFileInfoAttributes, VFile : VirtualFile> {
 
   companion object {
-    @JvmStatic
+    @JvmField
     val EP = ExtensionPointName.create<AttributesServiceFactory>("eu.ibagroup.formainframe.attributesService")
 
-    @JvmStatic
+    @JvmField
     val ATTRIBUTES_CHANGED = Topic.create("attributesChanged", AttributesListener::class.java)
   }
 

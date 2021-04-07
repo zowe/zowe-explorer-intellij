@@ -7,6 +7,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.r2z.DataAPI
@@ -20,7 +21,7 @@ class RenameOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
-class RenameOperationRunner(private val dataOpsManager: DataOpsManager): OperationRunner<RenameOperation, Unit> {
+class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : OperationRunner<RenameOperation, Unit> {
 
   override val operationClass = RenameOperation::class.java
 
@@ -32,12 +33,15 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager): Operati
     }
   }
 
-  override fun run(operation: RenameOperation, progressIndicator: ProgressIndicator?) {
+  override fun run(
+    operation: RenameOperation,
+    progressIndicator: ProgressIndicator
+  ) {
     when (val attributes = operation.attributes) {
       is RemoteDatasetAttributes -> {
         attributes.requesters.stream().map {
           try {
-            progressIndicator?.checkCanceled()
+            progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).renameDataset(
               authorizationToken = it.connectionConfig.token,
               body = RenameData(
@@ -46,7 +50,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager): Operati
                 )
               ),
               toDatasetName = operation.newName
-            ).execute()
+            ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
               runWriteActionOnWriteThread {
                 operation.file.rename(this@RenameOperationRunner, operation.newName)
@@ -64,7 +68,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager): Operati
         val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.libraryFile) as RemoteDatasetAttributes
         parentAttributes.requesters.stream().map {
           try {
-            progressIndicator?.checkCanceled()
+            progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).renameDatasetMember(
               authorizationToken = it.connectionConfig.token,
               body = RenameData(
@@ -75,7 +79,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager): Operati
               ),
               toDatasetName = parentAttributes.datasetInfo.name,
               memberName = operation.newName
-            ).execute()
+            ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
               runWriteActionOnWriteThread {
                 operation.file.rename(this@RenameOperationRunner, operation.newName)
@@ -93,14 +97,14 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager): Operati
         val parentDirPath = attributes.parentDirPath
         attributes.requesters.stream().map {
           try {
-            progressIndicator?.checkCanceled()
+            progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).moveUssFile(
               authorizationToken = it.connectionConfig.token,
               body = MoveUssFile(
                 from = attributes.path
               ),
               filePath = FilePath("$parentDirPath/${operation.newName}")
-            ).execute()
+            ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
               runWriteActionOnWriteThread {
                 operation.file.rename(this@RenameOperationRunner, operation.newName)

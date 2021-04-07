@@ -87,6 +87,8 @@ To start using the plugin:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -124,85 +126,96 @@ To start using the plugin:<br/>
         <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.ui.ExplorerContent"
                             serviceImplementation="eu.ibagroup.formainframe.explorer.ui.GlobalExplorerContent"/>
 
-        <applicationService serviceImplementation="eu.ibagroup.formainframe.common.AppLevelPluginDisposable"/>
-
     </extensions>
 
     <actions>
 
-        <action id="eu.ibagroup.formainframe.explorer.RefreshNode" class="eu.ibagroup.formainframe.explorer.RefreshNode"
+        <action id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction" class="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
                 text="Refresh"
                 icon="AllIcons.Actions.Refresh"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.AddWorkingSetAction"
-                class="eu.ibagroup.formainframe.explorer.AddWorkingSetAction" icon="AllIcons.General.Add"/>
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"
+                text="Working Set"
+                icon="AllIcons.Nodes.Project"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.AllocateDataset"
-                class="eu.ibagroup.formainframe.explorer.AllocateDataset"
+        <action id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
                 text="Dataset"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
-                class="eu.ibagroup.formainframe.explorer.CreateUssFileAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"
+                class="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"
                 text="File" icon="AllIcons.FileTypes.Text"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.CreateUssDirectoryAction"
-                class="eu.ibagroup.formainframe.explorer.CreateUssDirectoryAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"
+                class="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"
                 text="Directory" icon="AllIcons.Nodes.Folder"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.AddMemberAction"
-                class="eu.ibagroup.formainframe.explorer.AddMemberAction" text="Member"/>
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddMemberAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddMemberAction" text="Member"
+                icon="AllIcons.FileTypes.Text"
+        />
 
-        <action class="eu.ibagroup.formainframe.explorer.SettingAction"
-                id="eu.ibagroup.formainframe.explorer.SettingAction"
+        <action class="eu.ibagroup.formainframe.explorer.actions.SettingAction"
+                id="eu.ibagroup.formainframe.explorer.actions.SettingAction"
                 icon="AllIcons.General.Settings"/>
 
-        <action class="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"
-                id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"
+        <action class="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
+                id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
                 text="Properties"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.RenameAction"
-                class="eu.ibagroup.formainframe.explorer.RenameAction" text="Rename"
+        <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
+                class="eu.ibagroup.formainframe.explorer.actions.RenameAction" text="Rename"
                 use-shortcut-of="RenameElement"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.AddMaskAction"
-                class="eu.ibagroup.formainframe.explorer.AddMaskAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
+                icon="AllIcons.Nodes.Module"
                 text="Mask"/>
-        <action id="eu.ibagroup.formainframe.explorer.ChangeContentModeAction"
-                class="eu.ibagroup.formainframe.explorer.ChangeContentModeAction"
-                text="Change Content Mode"/>
+        <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
+                class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
+                text="Use Binary Mode"/>
 
-
-
-        <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
-            <reference id="eu.ibagroup.formainframe.explorer.AddWorkingSetAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.SettingAction"/>
+        <group id="eu.ibagroup.formainframe.actions">
+            <action id="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo"
+                    class="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo" text="Show Working Set Info"/>
         </group>
 
-        <group id="eu.ibagroup.formainframe.actions.NewItemGroup" text="New" popup="true"
-               class="eu.ibagroup.formainframe.explorer.NewItemActionGroup">
-            <reference id="eu.ibagroup.formainframe.explorer.AddMaskAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.AllocateDataset"/>
-            <reference id="eu.ibagroup.formainframe.explorer.AddMemberAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.CreateUssFileAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.CreateUssDirectoryAction"/>
+        <group id="eu.ibagroup.formainframe.actions.NewItemGroup"
+               description="Create new item"
+               text="New"
+               popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddMemberAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
             <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.RefreshNode"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"/>
             <separator/>
             <reference id="$Cut"/>
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.RenameAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.ChangeContentModeAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
             <separator/>
             <reference id="$Delete"/>
             <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.GetFilePropertiesAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"/>
         </group>
 
     </actions>

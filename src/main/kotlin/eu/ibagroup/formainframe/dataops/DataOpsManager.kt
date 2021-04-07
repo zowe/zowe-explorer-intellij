@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.dataops
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.toMutableSmartList
@@ -40,7 +41,7 @@ interface DataOpsManager : Disposable {
   @Throws(Throwable::class)
   fun <R : Any> performOperation(
     operation: Operation<R>,
-    progressIndicator: ProgressIndicator? = null
+    progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE
   ): R
 
   val componentManager: ComponentManager

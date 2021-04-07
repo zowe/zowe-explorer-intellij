@@ -4,10 +4,10 @@ import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 
 class FileExplorerTreeStructureProvider : ExplorerTreeStructureProvider() {
   override fun modifyOurs(
-    parent: ExplorerTreeNodeBase<*>,
-    children: Collection<ExplorerTreeNodeBase<*>>,
+    parent: ExplorerTreeNode<*>,
+    children: Collection<ExplorerTreeNode<*>>,
     settings: ExplorerViewSettings
-  ): MutableCollection<ExplorerTreeNodeBase<*>> {
+  ): MutableCollection<ExplorerTreeNode<*>> {
     return children.toMutableList()
   }
 }

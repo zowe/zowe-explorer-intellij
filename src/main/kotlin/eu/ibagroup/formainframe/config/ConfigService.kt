@@ -12,19 +12,20 @@ import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.time.Duration
 
-fun sendConfigServiceTopic(): EventHandler = sendTopic(ConfigService.CONFIGS_CHANGED)
+fun sendConfigServiceTopic(): EventHandler = sendTopic(CONFIGS_CHANGED)
+
+@JvmField
+val CONFIGS_CHANGED = Topic.create("configsChanged", EventHandler::class.java)
+
+@JvmField
+val CONFIGS_LOADED = Topic.create("configsLoaded", Runnable::class.java)
 
 interface ConfigService : PersistentStateComponent<ConfigState> {
 
   companion object {
     @JvmStatic
-    val instance: ConfigService = ApplicationManager.getApplication().getService(ConfigService::class.java)
-
-    @JvmStatic
-    val CONFIGS_CHANGED = Topic.create("configsChanged", EventHandler::class.java)
-
-    @JvmStatic
-    val CONFIGS_LOADED = Topic.create("configsLoaded", Runnable::class.java)
+    val instance: ConfigService
+      get() = ApplicationManager.getApplication().getService(ConfigService::class.java)
   }
 
   val configsAreLoaded: Boolean

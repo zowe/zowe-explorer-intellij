@@ -1,13 +1,16 @@
 package eu.ibagroup.formainframe.utils
 
 import com.google.gson.Gson
+import com.intellij.openapi.progress.*
+import com.intellij.openapi.project.Project
 import com.intellij.util.containers.toArray
-import com.intellij.util.containers.toMutableSmartList
+import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
-import javax.swing.tree.TreePath
+import kotlin.concurrent.withLock
 import kotlin.streams.toList
 
 fun <E> Stream<E>.toMutableList(): MutableList<E> {
@@ -121,32 +124,25 @@ fun <T> Iterator<T>.stream(): Stream<T> {
 
 inline fun <reified T> Collection<T>.asArray() = toArray(arrayOf())
 
-fun <T> (T.() -> Unit).toFactory(receiver: T): () -> T {
-  return {
-    receiver.apply(this)
-  }
-}
-
 fun String.nullIfBlank() = (isNotBlank()).runIfTrue { this }
 
 fun <E : Any> E.asMutableList() = mutableListOf(this)
-
-fun <E> List<E>?.toMutableSmartList() = (this ?: listOf()).toMutableSmartList()
 
 fun <R> List<R>.mergeWith(another: List<R>): MutableList<R> {
   return this.plus(another).toSet().toMutableList()
 }
 
-fun TreePath.toIterable(): Iterable<Any> {
-  return object : Iterable<Any> {
-    override fun iterator(): Iterator<Any> {
-      return TreePathIterator(this@toIterable)
-    }
-  }
-}
-
-fun Throwable?.doThrow() {
-  throw this ?: Throwable("Unknown error")
-}
-
 val UNIT_CLASS = Unit::class.java
+
+inline fun <reified T> runTask(
+  @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
+  project: Project? = null,
+  cancellable: Boolean = true,
+  crossinline task: (ProgressIndicator) -> T
+): T {
+  return ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, cancellable) {
+    override fun compute(indicator: ProgressIndicator): T {
+      return task(indicator)
+    }
+  })
+}

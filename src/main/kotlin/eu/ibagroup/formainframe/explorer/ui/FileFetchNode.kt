@@ -10,13 +10,15 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.utils.lock
+import eu.ibagroup.formainframe.utils.locked
 import eu.ibagroup.formainframe.utils.service
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 
-abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit>(
+abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit>(
   value: Value,
   project: Project,
-  parent: ExplorerTreeNodeBase<*>,
+  parent: ExplorerTreeNode<*>,
   unit: U,
   treeStructure: ExplorerTreeStructureBase
 ) : ExplorerUnitTreeNodeBase<Value, U>(value, project, parent, unit, treeStructure) {
@@ -32,23 +34,30 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   private val loadingNode by lazy { listOf(LoadingNode(notNullProject, this, explorer, treeStructure)) }
   private val errorNode by lazy { listOf(ErrorNode(notNullProject, this, explorer, treeStructure)) }
+  private val hasError = AtomicBoolean(false)
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return lock(lock) {
-      val childrenNodes = cachedChildren?.toChildrenNodes()
-      return@lock if (childrenNodes == null) {
+      val childrenNodes = cachedChildren
+      if (childrenNodes == null) {
         val q = query
         if (q != null && fileFetchProvider.isCacheValid(q)) {
-          runBackgroundableTask(
-            title = makeFetchTaskTitle(q),
-            project = project,
-            cancellable = true
-          ) {
-            fileFetchProvider.reload(q, it)
+          val fetched = fileFetchProvider.getCached(q)
+          if (fetched != null) {
+            fetched.toChildrenNodes().also { cachedChildren = it }
+          } else {
+            runBackgroundableTask(
+              title = makeFetchTaskTitle(q),
+              project = project,
+              cancellable = true
+            ) {
+              fileFetchProvider.reload(q, it)
+            }
+            loadingNode
           }
-          loadingNode
         } else {
-          errorNode
+          hasError.set(true)
+          errorNode.also { cachedChildren = it }
         }
       } else {
         childrenNodes
@@ -69,13 +78,22 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
   @Volatile
   private var needsToShowPlus = true
 
-  private val cachedChildren: Collection<File>?
-    get() = query?.let { fileFetchProvider.getCached(it) }
+  private var cachedChildren: List<AbstractTreeNode<*>>? by locked(null, lock)
 
-
-  fun cleanCache() {
+  fun cleanCache(recursively: Boolean = true) {
+    val children = cachedChildren
+    if (!hasError.compareAndSet(true, false)) {
+      cachedChildren = null
+    }
     query?.let {
       fileFetchProvider.cleanCache(it)
+    }
+    if (recursively) {
+      children?.forEach {
+        if (it is FileFetchNode<*, *, *, *, *>) {
+          it.cleanCache()
+        }
+      }
     }
   }
 
@@ -89,8 +107,8 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
 }
 
-fun ExplorerTreeNodeBase<*>.cleanCacheIfPossible() {
-  if (this is FileCacheNode<*, *, *, *, *>) {
+fun ExplorerTreeNode<*>.cleanCacheIfPossible() {
+  if (this is FileFetchNode<*, *, *, *, *>) {
     cleanCache()
   }
 }

@@ -7,7 +7,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.WorkingSet
 
 class FileExplorerTreeNodeRoot(explorer: Explorer, project: Project, treeStructure: ExplorerTreeStructureBase) :
-  ExplorerTreeNodeBase<Explorer>(explorer, project, null, explorer, treeStructure) {
+  ExplorerTreeNode<Explorer>(explorer, project, null, explorer, treeStructure) {
 
   override fun isAlwaysExpand(): Boolean {
     return true

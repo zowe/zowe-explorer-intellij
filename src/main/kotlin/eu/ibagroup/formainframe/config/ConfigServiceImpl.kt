@@ -87,7 +87,11 @@ private class FilterSwitcher(
   }
 
   override fun onZOSMFUrlConnection(): Long {
-    return crudable.getByColumnLambda(row as UrlConnection) { it.url }.count()
+    return if (row is UrlConnection) {
+      crudable.find<UrlConnection> { it.url == row.url && it.isAllowSelfSigned == row.isAllowSelfSigned }.count()
+    } else {
+      Long.MAX_VALUE
+    }
   }
 
   override fun onWorkingSetConfig(): Long {

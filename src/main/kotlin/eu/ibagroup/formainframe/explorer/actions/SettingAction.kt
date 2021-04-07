@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.explorer
+package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -13,5 +13,4 @@ class SettingAction : AnAction() {
   override fun isDumbAware(): Boolean {
     return true
   }
-
 }

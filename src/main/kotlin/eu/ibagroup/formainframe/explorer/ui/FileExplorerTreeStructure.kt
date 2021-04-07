@@ -12,28 +12,28 @@ private val PROVIDERS = SmartList(FileExplorerTreeStructureProvider())
 class FileExplorerTreeStructure(explorer: Explorer, project: Project) : ExplorerTreeStructureBase(explorer, project) {
 
   private val valueToNodeMap = Collections.synchronizedMap(
-    WeakHashMap<Any, ConcurrentLinkedQueue<ExplorerTreeNodeBase<*>>>()
+    WeakHashMap<Any, ConcurrentLinkedQueue<ExplorerTreeNode<*>>>()
   )
   private val fileToNodeMap = Collections.synchronizedMap(
-    WeakHashMap<VirtualFile, ConcurrentLinkedQueue<ExplorerTreeNodeBase<*>>>()
+    WeakHashMap<VirtualFile, ConcurrentLinkedQueue<ExplorerTreeNode<*>>>()
   )
 
-  override fun registerNode(node: ExplorerTreeNodeBase<*>) {
+  override fun registerNode(node: ExplorerTreeNode<*>) {
     valueToNodeMap.getOrPut(node.value) { ConcurrentLinkedQueue() }.add(node)
     val file = node.virtualFile ?: return
     fileToNodeMap.getOrPut(file) { ConcurrentLinkedQueue() }.add(node)
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <V : Any> findByValue(value: V): Collection<ExplorerTreeNodeBase<V>> {
-    return valueToNodeMap[value] as Collection<ExplorerTreeNodeBase<V>>? ?: emptySet()
+  override fun <V : Any> findByValue(value: V): Collection<ExplorerTreeNode<V>> {
+    return valueToNodeMap[value] as Collection<ExplorerTreeNode<V>>? ?: emptySet()
   }
 
-  override fun findByPredicate(predicate: (ExplorerTreeNodeBase<*>) -> Boolean): Collection<ExplorerTreeNodeBase<*>> {
+  override fun findByPredicate(predicate: (ExplorerTreeNode<*>) -> Boolean): Collection<ExplorerTreeNode<*>> {
     return valueToNodeMap.values.flatten().filter(predicate)
   }
 
-  override fun findByVirtualFile(file: VirtualFile): Collection<ExplorerTreeNodeBase<*>> {
+  override fun findByVirtualFile(file: VirtualFile): Collection<ExplorerTreeNode<*>> {
     return fileToNodeMap[file] ?: emptySet()
   }
 
@@ -54,6 +54,6 @@ class FileExplorerTreeStructure(explorer: Explorer, project: Project) : Explorer
 
   override val showMasksAndPathAsSeparateDirs = true
 
-  override val showWorkingSetInfo = true
+  override var showWorkingSetInfo = true
 
 }

@@ -1,48 +1,84 @@
-package eu.ibagroup.formainframe.config.connect.ui
-
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.utils.crudable.Crudable
-import eu.ibagroup.r2z.InfoAPI
-
-class ShowAndTestConnection(val state: ConnectionDialogState, val crudable: Crudable, val project: Project?) {
-
-  private lateinit var dialog: ConnectionDialog
-
-  fun showUntilTested() : ConnectionDialogState? {
-
-    while (true) {
-      dialog = ConnectionDialog(state = state, crudable = crudable)
-      if (dialog.showAndGet())
-        if (performTestRequest(dialog.state.connectionUrl, dialog.state.isAllowSsl, project)) {
-          return dialog.state
-        } else {
-          Messages.showErrorDialog("Cannot establish connection with: ${dialog.state.connectionUrl}","Cannot Connect")
-      } else {
-        break
-      }
-    }
-    return null
-  }
-
-  private fun performTestRequest(url: String, isAllowSelfSigned: Boolean, project: Project?): Boolean {
-    var isConnectionOk = false
-
-    ProgressManager.getInstance().run(object : Task.Modal(project, "Testing Connection to $url", false) {
-      override fun run(indicator: ProgressIndicator) {
-        try {
-          isConnectionOk = api<InfoAPI>(url, isAllowSelfSigned).getSystemInfo().execute().isSuccessful
-        } catch (t: Throwable) {
-
-        }
-
-      }
-    })
-    return isConnectionOk
-  }
-
-}
+//package eu.ibagroup.formainframe.config.connect.ui
+//
+//import com.intellij.icons.AllIcons
+//import com.intellij.openapi.project.Project
+//import com.intellij.openapi.ui.MessageDialogBuilder
+//import eu.ibagroup.formainframe.api.api
+//import eu.ibagroup.formainframe.dataops.exceptions.CallException
+//import eu.ibagroup.formainframe.utils.cancelByIndicator
+//import eu.ibagroup.formainframe.utils.crudable.Crudable
+//import eu.ibagroup.formainframe.utils.runTask
+//import eu.ibagroup.r2z.InfoAPI
+//import java.awt.Component
+//
+//class ShowAndTestConnection(
+//  private val state: ConnectionDialogState,
+//  private val crudable: Crudable,
+//  private val project: Project? = null,
+//  private val parentComponent: Component? = null
+//) {
+//
+//  private lateinit var dialog: ConnectionDialog
+//
+//  fun showUntilTested(): ConnectionDialogState? {
+//
+//    while (true) {
+//      dialog = ConnectionDialog(state = state, crudable = crudable)
+//      if (dialog.showAndGet()) {
+//        val state = dialog.state
+//        try {
+//          performTestRequest(state.connectionUrl, state.isAllowSsl, project)
+//          return state
+//        } catch (t: Throwable) {
+//          val confirmMessage = "Do you want to add it anyway?"
+//          val tMessage = t.message
+//          val message = if (tMessage != null) {
+//            "$tMessage\n\n$confirmMessage"
+//          } else {
+//            confirmMessage
+//          }
+//          val addAnyway = MessageDialogBuilder
+//            .yesNo(
+//              title = "Error Creating Connection",
+//              message = message
+//            ).icon(AllIcons.General.ErrorDialog)
+//            .run {
+//              if (parentComponent != null) {
+//                ask(parentComponent)
+//              } else {
+//                ask(project)
+//              }
+//            }
+//          if (addAnyway) {
+//            return state
+//          }
+//        }
+//      } else {
+//        break
+//      }
+//    }
+//    return null
+//  }
+//
+//  private fun performTestRequest(url: String, isAllowSelfSigned: Boolean, project: Project?) {
+//    runTask(
+//      title = "Testing Connection to $url",
+//      project = project
+//    ) {
+//      return@runTask try {
+//        val response = api<InfoAPI>(url, isAllowSelfSigned)
+//          .getSystemInfo()
+//          .cancelByIndicator(it)
+//          .execute()
+//        if (response.isSuccessful) {
+//          null
+//        } else {
+//          CallException(response, "Cannot connect to z/OSMF Server")
+//        }
+//      } catch (t: Throwable) {
+//        it.cancel()
+//        t
+//      }
+//    }?.also { throw it }
+//  }
+//}

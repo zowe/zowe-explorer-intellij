@@ -13,7 +13,7 @@ enum class AcceptancePolicy {
 interface ContentSynchronizer {
 
   companion object {
-    @JvmStatic
+    @JvmField
     val EP = ExtensionPointName.create<ContentSynchronizerFactory>("eu.ibagroup.formainframe.contentSynchronizer")
   }
 

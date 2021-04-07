@@ -15,10 +15,12 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 class DSMaskNode(
   dsMask: DSMask,
   project: Project,
-  parent: ExplorerTreeNodeBase<*>,
+  parent: ExplorerTreeNode<*>,
   workingSet: WorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileCacheNode<DSMask, DSMask, WorkingSet>(dsMask, project, parent, workingSet, treeStructure) {
+) : RemoteMFFileFetchNode<DSMask, DSMask, WorkingSet>(
+  dsMask, project, parent, workingSet, treeStructure
+), MFNode, RefreshableNode {
 
   override fun update(presentation: PresentationData) {
     presentation.addText(value.mask, SimpleTextAttributes.REGULAR_ATTRIBUTES)

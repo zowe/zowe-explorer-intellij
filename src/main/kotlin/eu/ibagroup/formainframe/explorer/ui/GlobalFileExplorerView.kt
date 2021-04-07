@@ -22,8 +22,9 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
-import eu.ibagroup.formainframe.common.ui.findCommonParentPath
+import eu.ibagroup.formainframe.common.ui.promisePath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -31,55 +32,117 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
-import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
-import eu.ibagroup.formainframe.dataops.operations.MoveCopyOperation
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.ExplorerListener
-import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.formainframe.utils.subscribe
+import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.explorer.*
+import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.validation.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.Component
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
+import javax.swing.event.TreeExpansionEvent
+import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 import kotlin.concurrent.withLock
 
-class GlobalFileExplorerContentPane(
-  private val explorer: Explorer,
+val FILE_EXPLORER_VIEW = DataKey.create<GlobalFileExplorerView>("fileExplorerView")
+
+class GlobalFileExplorerView(
+  internal val explorer: Explorer,
   project: Project,
   parentDisposable: Disposable,
   private val cutProviderUpdater: (List<VirtualFile>) -> Unit
 ) : JBScrollPane(), DataProvider, Disposable {
 
+  internal var mySelectedNodesData: List<NodeData> by rwLocked(listOf())
+  internal val myFsTreeStructure: FileExplorerTreeStructure
+  internal val myStructure: StructureTreeModel<FileExplorerTreeStructure>
+  internal val myTree: Tree
+  internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
+
   private val dataOpsManager = service<DataOpsManager>(explorer.componentManager)
 
   private val ignoreVFileDeleteEvents = AtomicBoolean(false)
 
+  internal fun getNodesByQueryAndInvalidate(
+    query: Query<*, *>, collapse: Boolean = false, invalidate: Boolean = true
+  ): Collection<ExplorerTreeNode<*>> {
+    return myFsTreeStructure.findByPredicate {
+      if (it is FetchNode) {
+        it.query == query
+      } else false
+    }.distinct().onEach { foundNode ->
+      fun invalidate() = myStructure.invalidate(foundNode, true)
+
+      fun collapseIfNeeded(tp: TreePath) {
+        if (collapse) {
+          treeModel.onValidThread {
+            myTree.collapsePath(tp)
+            synchronized(myNodesToInvalidateOnExpand) {
+              val node = tp.lastPathComponent
+              myNodesToInvalidateOnExpand.add(node)
+            }
+          }
+        }
+      }
+      myStructure.promisePath(foundNode, myTree).onSuccess { nodePath ->
+        if (myTree.isVisible(nodePath) && myTree.isCollapsed(nodePath) && mySelectedNodesData.any { it.node == nodePath }) {
+          myTree.expandPath(nodePath)
+        }
+        if (invalidate) {
+          invalidate().onSuccess { tp ->
+            collapseIfNeeded(tp)
+          }
+        } else {
+          collapseIfNeeded(nodePath)
+        }
+      }
+    }
+  }
+
   init {
     Disposer.register(parentDisposable, this)
+    myStructure = StructureTreeModel(
+      FileExplorerTreeStructure(explorer, project).also { myFsTreeStructure = it },
+      { o1, o2 ->
+        if (o1 is WorkingSetNode && o2 is WorkingSetNode) {
+          o1.unit.name.compareTo(o2.unit.name)
+        } else {
+          0
+        }
+      },
+      this
+    ).also { stm ->
+      treeModel = AsyncTreeModel(stm, false, this).also {
+        myTree = DnDAwareTree(it).apply { isRootVisible = false }.also { t ->
+          setViewportView(t)
+          registerTreeListeners(t)
+        }
+      }
+    }
     subscribe(
       componentManager = explorer.componentManager,
-      topic = Explorer.UNITS_CHANGED,
+      topic = UNITS_CHANGED,
       handler = object : ExplorerListener {
         override fun onAdded(explorer: Explorer, unit: ExplorerUnit) {
           onAddDelete(explorer)
         }
 
         private fun onAddDelete(explorer: Explorer) {
-          if (explorer == this@GlobalFileExplorerContentPane.explorer) {
-            fsTreeStructure?.findByValue(explorer)?.forEach {
-              structure?.invalidate(it, true)
+          if (explorer == explorer) {
+            myFsTreeStructure.findByValue(explorer).forEach {
+              myStructure.invalidate(it, true)
             }
           }
         }
 
         override fun onChanged(explorer: Explorer, unit: ExplorerUnit) {
-          if (explorer == this@GlobalFileExplorerContentPane.explorer) {
-            fsTreeStructure?.findByValue(unit)?.forEach {
-              structure?.invalidate(it, true)
+          if (explorer == explorer) {
+            myFsTreeStructure.findByValue(unit).forEach {
+              myStructure.invalidate(it, true)
             }
           }
         }
@@ -96,24 +159,24 @@ class GlobalFileExplorerContentPane(
       handler = object : BulkFileListener {
         override fun after(events: MutableList<out VFileEvent>) {
           events.mapNotNull {
-            val nodes = fsTreeStructure?.findByVirtualFile(it.file ?: return@mapNotNull null)
+            val nodes = myFsTreeStructure.findByVirtualFile(it.file ?: return@mapNotNull null)
             when {
               it is VFileContentChangeEvent || it is VFilePropertyChangeEvent -> {
                 nodes
               }
               it is VFileDeleteEvent
-                && this@GlobalFileExplorerContentPane
+                && this@GlobalFileExplorerView
                 .ignoreVFileDeleteEvents
                 .compareAndSet(true, true) -> {
                 null
               }
               else -> {
-                nodes?.mapNotNull { n -> n.parent }
+                nodes.mapNotNull { n -> n.parent }
               }
             }
           }.flatten().forEach { fileNode ->
             fileNode.cleanCacheIfPossible()
-            structure?.invalidate(fileNode, true)
+            myStructure.invalidate(fileNode, true)
           }
         }
       },
@@ -121,29 +184,22 @@ class GlobalFileExplorerContentPane(
     )
     subscribe(
       componentManager = explorer.componentManager,
-      topic = FileFetchProvider.CACHE_UPDATED,
+      topic = FileFetchProvider.CACHE_CHANGES,
       handler = object : FileCacheListener {
-        private fun <R : Any, Q : Query<R, Unit>> getNodesAndInvalidate(
-          query: Q
-        ) : Collection<ExplorerTreeNodeBase<*>>? {
-          return fsTreeStructure?.findByPredicate {
-            if (it is FileCacheNode<*, *, *, *, *>) {
-              it.query == query
-            } else false
-          }?.onEach {
-            structure?.invalidate(it, true)
-          }
-        }
 
         override fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> onCacheUpdated(
           query: Q,
           files: Collection<File>
         ) {
-          getNodesAndInvalidate(query)
+          getNodesByQueryAndInvalidate(query)
+        }
+
+        override fun <R : Any, Q : Query<R, Unit>> onFetchCancelled(query: Q) {
+          getNodesByQueryAndInvalidate(query, collapse = true, invalidate = false)
         }
 
         override fun <R : Any, Q : Query<R, Unit>> onFetchFailure(query: Q, throwable: Throwable) {
-          getNodesAndInvalidate(query)
+          getNodesByQueryAndInvalidate(query)
           explorer.reportThrowable(throwable, project)
         }
       },
@@ -153,72 +209,66 @@ class GlobalFileExplorerContentPane(
       componentManager = explorer.componentManager,
       topic = ExplorerContent.CUT_BUFFER_CHANGES,
       handler = CutBufferListener { previousBufferState, currentBufferState ->
-        (previousBufferState + currentBufferState).toSet().mapNotNull {
-          fsTreeStructure?.findByVirtualFile(it)
+        (previousBufferState + currentBufferState).toSet().map {
+          myFsTreeStructure.findByVirtualFile(it)
         }.flatten().toSet().forEach {
-          structure?.invalidate(it, true)
+          myStructure.invalidate(it, true)
         }
       }
     )
   }
 
-  private var tree: DnDAwareTree? = null
-
-  private var treeModel: AsyncTreeModel? = null
-
-  private var selectedNodesData: List<NodeData>? = null
-
-  private var fsTreeStructure: FileExplorerTreeStructure? = null
-
-  private var structure: StructureTreeModel<FileExplorerTreeStructure>? =
-    StructureTreeModel(
-      FileExplorerTreeStructure(explorer, project).also { fsTreeStructure = it },
-      this
-    ).also { stm ->
-      treeModel = AsyncTreeModel(stm, false, this).also {
-        tree = DnDAwareTree(it).apply { isRootVisible = false }.also { t ->
-          setViewportView(t)
-          registerTreeListeners(t)
-        }
-      }
-    }
+  private var treeModel: AsyncTreeModel
 
   private fun registerTreeListeners(tree: DnDAwareTree) {
     tree.addMouseListener(object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
-        if (tree.getRowForLocation(x, y) == -1) {
-          return
-        }
+//        if (tree.getRowForLocation(x, y) == -1) {
+//          return
+//        }
         val popupActionGroup = DefaultActionGroup()
         popupActionGroup.add(
           ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.ContextMenuGroup")
         )
-        val popupMenu = ActionManager.getInstance().createActionPopupMenu(FILE_EXPLORER_PLACE, popupActionGroup)
+        val popupMenu = ActionManager.getInstance().createActionPopupMenu(FILE_EXPLORER_CONTEXT_MENU, popupActionGroup)
         popupMenu.component.show(comp, x, y)
       }
     })
 
     tree.selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
     tree.addTreeSelectionListener {
-      selectedNodesData = tree.selectionPaths?.map {
-        val descriptor = (it.lastPathComponent as DefaultMutableTreeNode).userObject as ExplorerTreeNodeBase<*>
+      mySelectedNodesData = tree.selectionPaths?.map {
+        val descriptor = (it.lastPathComponent as DefaultMutableTreeNode).userObject as ExplorerTreeNode<*>
         val file = descriptor.virtualFile
         val attributes = if (file != null) {
           service<DataOpsManager>(explorer.componentManager).tryToGetAttributes(file)
         } else null
         NodeData(descriptor, file, attributes)
-      }
+      } ?: listOf()
     }
+
+    tree.addTreeWillExpandListener(object : TreeWillExpandListener {
+      override fun treeWillExpand(event: TreeExpansionEvent) {
+        val node = event.path.lastPathComponent
+        if (myNodesToInvalidateOnExpand.contains(node)) {
+          synchronized(myNodesToInvalidateOnExpand) {
+            if (myNodesToInvalidateOnExpand.contains(node)) {
+              myNodesToInvalidateOnExpand.remove(node)
+              myStructure.invalidate(event.path, true)
+            }
+          }
+        }
+      }
+
+      override fun treeWillCollapse(event: TreeExpansionEvent) {
+      }
+    })
 
     EditSourceOnDoubleClickHandler.TreeMouseListener(tree).installOn(tree)
 
   }
 
   override fun dispose() {
-    tree = null
-    structure = null
-    treeModel = null
-    fsTreeStructure = null
   }
 
   private val copyPasteSupport = object : CopyPasteSupport {
@@ -230,7 +280,7 @@ class GlobalFileExplorerContentPane(
     private val isCut = AtomicBoolean(true)
 
     private fun isCopyCutEnabledAndVisible(): Boolean {
-      val nodes = selectedNodesData ?: return false
+      val nodes = mySelectedNodesData
       return nodes.any(cutCopyPredicate)
     }
 
@@ -240,7 +290,7 @@ class GlobalFileExplorerContentPane(
     }
 
     private fun performCopyCut(isCut: Boolean) {
-      val nodes = selectedNodesData ?: return
+      val nodes = mySelectedNodesData
       this.isCut.set(isCut)
       bufferLock.withLock {
         copyPasteBuffer = nodes.filter(cutCopyPredicate).apply {
@@ -288,7 +338,7 @@ class GlobalFileExplorerContentPane(
     }
 
     private fun isPastePossibleAndEnabled(): Boolean {
-      val nodes = selectedNodesData ?: return false
+      val nodes = mySelectedNodesData
       return bufferLock.withLock {
         getDestinationSourceFilePairs(
           sourceFiles = copyPasteBuffer.mapNotNull { it.file },
@@ -324,8 +374,8 @@ class GlobalFileExplorerContentPane(
     override fun getPasteProvider(): PasteProvider {
       return object : PasteProvider {
         override fun performPaste(dataContext: DataContext) {
-          val pasteDestinationsNodes = selectedNodesData
-            ?.filter(pastePredicate) ?: return
+          val pasteDestinationsNodes = mySelectedNodesData
+            .filter(pastePredicate)
 
           bufferLock.withLock {
             val sourceFilesRaw = copyPasteBuffer.mapNotNull { it.file }
@@ -437,7 +487,7 @@ class GlobalFileExplorerContentPane(
               }
               nodesToRefresh.forEach {
                 it.node.cleanCacheIfPossible()
-                structure?.invalidate(it.node, true)
+                myStructure.invalidate(it.node, true)
               }
             }
           }
@@ -457,7 +507,7 @@ class GlobalFileExplorerContentPane(
 
   private val deleteProvider = object : DeleteProvider {
     override fun deleteElement(dataContext: DataContext) {
-      val selected = selectedNodesData ?: return
+      val selected = mySelectedNodesData
       selected.map { it.node }.filterIsInstance<WorkingSetNode>()
         .forEach {
           if (showYesNoDialog(
@@ -543,11 +593,11 @@ class GlobalFileExplorerContentPane(
                 }.onFailure { explorer.reportThrowable(it, project) }
                 it.fraction = it.fraction + 1.0 / files.size
               }
-            files.asSequence().mapNotNull { it.parent }.toSet().mapNotNull {
-              fsTreeStructure?.findByVirtualFile(it)
+            files.asSequence().mapNotNull { it.parent }.toSet().map {
+              myFsTreeStructure.findByVirtualFile(it)
             }.flatten().toSet().forEach {
               it.cleanCacheIfPossible()
-              structure?.invalidate(it, true)
+              myStructure.invalidate(it, true)
             }
           }
         }
@@ -555,7 +605,7 @@ class GlobalFileExplorerContentPane(
     }
 
     override fun canDeleteElement(dataContext: DataContext): Boolean {
-      val selected = selectedNodesData ?: return false
+      val selected = mySelectedNodesData
       val deleteOperations = selected.mapNotNull {
         DeleteOperation(it.file ?: return@mapNotNull null, it.attributes ?: return@mapNotNull null)
       }
@@ -570,33 +620,25 @@ class GlobalFileExplorerContentPane(
 
   override fun getData(dataId: String): Any? {
     return when {
-      SELECTED_NODES.`is`(dataId) -> selectedNodesData
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedNodesData?.map { it.node }?.toTypedArray()
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.map { it.node }.toTypedArray()
       PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> copyPasteSupport.copyProvider
       PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> copyPasteSupport.cutProvider
       PlatformDataKeys.PASTE_PROVIDER.`is`(dataId) -> copyPasteSupport.pasteProvider
       PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> deleteProvider
+      FILE_EXPLORER_VIEW.`is`(dataId) -> this
       else -> null
     }
   }
 
 }
 
-fun Collection<NodeData>.filterNodesBeneath(): Collection<NodeData> {
-  val withPathLength = map { Pair(it, it.node.path.pathCount) }
-  return withPathLength.filter { pair ->
-    withPathLength
-      .filter { pair.second > it.second }
-      .none { it.first.node.path.findCommonParentPath(pair.first.node.path) != pair.first.node.path }
-  }.map { it.first }
-}
-
-val SELECTED_NODES: DataKey<List<NodeData>> = DataKey.create("currentNode")
-
-val FILE_EXPLORER_PLACE = "File Explorer"
+const val FILE_EXPLORER_CONTEXT_MENU = "File Explorer"
 
 data class NodeData(
-  val node: ExplorerTreeNodeBase<*>,
+  val node: ExplorerTreeNode<*>,
   val file: MFVirtualFile?,
   val attributes: VFileInfoAttributes?
 )
+
+typealias FetchNode = FileFetchNode<*, *, *, *, *>
+

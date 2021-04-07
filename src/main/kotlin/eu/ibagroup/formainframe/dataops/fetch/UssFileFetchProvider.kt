@@ -1,19 +1,16 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.utils.doThrow
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.SymlinkMode
-import java.io.IOException
 
 data class UssQuery(val path: String)
 
@@ -31,7 +28,10 @@ class UssFileFetchProvider(
 
   override val vFileClass = MFVirtualFile::class.java
 
-  override fun fetchResponse(query: RemoteQuery<UssQuery, Unit>): Collection<RemoteUssAttributes> {
+  override fun fetchResponse(
+    query: RemoteQuery<UssQuery, Unit>,
+    progressIndicator: ProgressIndicator
+  ): Collection<RemoteUssAttributes> {
     var attributes: Collection<RemoteUssAttributes>? = null
     var exception: Throwable? = null
 
@@ -40,7 +40,7 @@ class UssFileFetchProvider(
       path = query.request.path,
       depth = 1,
       followSymlinks = SymlinkMode.REPORT
-    ).execute()
+    ).cancelByIndicator(progressIndicator).execute()
 
     if (response.isSuccessful) {
       attributes = response.body()?.items?.map {

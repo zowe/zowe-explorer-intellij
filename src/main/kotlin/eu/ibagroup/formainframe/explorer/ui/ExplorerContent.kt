@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import javax.swing.JComponent
@@ -19,7 +20,7 @@ abstract class ExplorerContent(
 ) {
 
   companion object {
-    @JvmStatic
+    @JvmField
     val CUT_BUFFER_CHANGES = Topic.create("cutBufferChanges", CutBufferListener::class.java)
   }
 
@@ -35,6 +36,7 @@ abstract class ExplorerContent(
       private var builtContent: JComponent? = null
 
       init {
+        Disposer.register(parentDisposable, this)
         actionToolbar.let {
           it.setTargetComponent(this)
           toolbar = it.component

@@ -1,17 +1,20 @@
-package eu.ibagroup.formainframe.explorer
+package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
+import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
+import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
@@ -19,10 +22,11 @@ import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
 
-class AllocateDataset : AnAction() {
+class AllocateDatasetAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val parentNode = e.getData(SELECTED_NODES)?.get(0)?.node
+    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val parentNode = view.mySelectedNodesData[0].node
     if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is WorkingSet) {
       val workingSet = parentNode.unit
       val config = parentNode.unit.connectionConfig
@@ -79,10 +83,13 @@ class AllocateDataset : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val selected = e.getData(SELECTED_NODES)
-    e.presentation.isEnabledAndVisible = selected != null
-      && selected.size == 1
-      && (selected[0].node is WorkingSetNode || selected[0].node is DSMaskNode)
+    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val selected = view.mySelectedNodesData
+    e.presentation.isEnabledAndVisible = selected.getOrNull(0)?.node is MFNode
+    e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 
   private fun postProcessState(state: DatasetAllocationParams): DatasetAllocationParams {

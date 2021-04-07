@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.explorer
+package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,8 +12,9 @@ import eu.ibagroup.formainframe.utils.service
 class GetFilePropertiesAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val node = e.getData(SELECTED_NODES)?.getOrNull(0)?.node
-    if (node is ExplorerTreeNodeBase<*>) {
+    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val node = view.mySelectedNodesData.getOrNull(0)?.node
+    if (node is ExplorerTreeNode<*>) {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
         val dataOpsManager = service<DataOpsManager>(node.explorer.componentManager)
@@ -41,9 +42,13 @@ class GetFilePropertiesAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val selected = e.getData(SELECTED_NODES)
-    val node = selected?.getOrNull(0)?.node
-    e.presentation.isVisible = selected?.size == 1
+    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val selected = view.mySelectedNodesData
+    val node = selected.getOrNull(0)?.node
+    e.presentation.isVisible = selected.size == 1
       && (node is UssFileNode
       || node is FileLikeDatasetNode
       || node is LibraryNode

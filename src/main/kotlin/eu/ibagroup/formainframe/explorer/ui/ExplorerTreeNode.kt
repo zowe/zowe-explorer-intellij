@@ -4,20 +4,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
-import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.fetchAdapter
 import eu.ibagroup.formainframe.dataops.synchronizer.AcceptancePolicy
 import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.util.concurrent.locks.ReentrantLock
@@ -25,10 +19,10 @@ import javax.swing.tree.TreePath
 import kotlin.concurrent.withLock
 
 @Suppress("LeakingThis")
-abstract class ExplorerTreeNodeBase<Value : Any>(
+abstract class ExplorerTreeNode<Value : Any>(
   value: Value,
   project: Project,
-  val parent: ExplorerTreeNodeBase<*>?,
+  val parent: ExplorerTreeNode<*>?,
   val explorer: Explorer,
   protected val treeStructure: ExplorerTreeStructureBase
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
@@ -69,7 +63,7 @@ abstract class ExplorerTreeNodeBase<Value : Any>(
             var successful = false
             runModalTask(
               title = "Fetching Content for ${file.name}",
-              cancellable = false,
+              cancellable = true,
               project = project,
             ) {
               val lock = ReentrantLock()
@@ -79,7 +73,7 @@ abstract class ExplorerTreeNodeBase<Value : Any>(
               contentSynchronizer.enforceSyncIfNeeded(
                 file = file,
                 acceptancePolicy = AcceptancePolicy.FORCE_REWRITE,
-                saveStrategy = { f, lastSuccessfulState, remoteBytes ->
+                saveStrategy = { _, lastSuccessfulState, remoteBytes ->
                   (lastSuccessfulState contentEquals remoteBytes)
                 },
                 onSyncEstablished = fetchAdapter {
@@ -115,7 +109,7 @@ abstract class ExplorerTreeNodeBase<Value : Any>(
     return descriptor?.canNavigateToSource() ?: super.canNavigateToSource()
   }
 
-  private val pathList: List<ExplorerTreeNodeBase<*>>
+  private val pathList: List<ExplorerTreeNode<*>>
     get() = if (parent != null) {
       parent.pathList + this
     } else {

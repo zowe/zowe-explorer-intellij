@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.explorer.ui
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
@@ -12,11 +11,11 @@ private val any = Any()
 
 abstract class InfoNodeBase(
   project: Project,
-  parent: ExplorerTreeNodeBase<*>,
+  parent: ExplorerTreeNode<*>,
   explorer: Explorer,
   treeStructure: ExplorerTreeStructureBase
 ) :
-  ExplorerTreeNodeBase<Any>(any, project, parent, explorer, treeStructure) {
+  ExplorerTreeNode<Any>(any, project, parent, explorer, treeStructure) {
 
   override fun isAlwaysLeaf(): Boolean {
     return true

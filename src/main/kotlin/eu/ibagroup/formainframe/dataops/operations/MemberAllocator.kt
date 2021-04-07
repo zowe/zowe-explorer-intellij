@@ -6,11 +6,12 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 
 class MemberAllocatorFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): Allocator<*> {
-    return MemberAllocator(dataOpsManager)
+    return MemberAllocator()
   }
 }
 
@@ -20,20 +21,21 @@ data class MemberAllocationOperation(
   override val urlConnection: UrlConnection
 ) : RemoteAllocationOperation<MemberAllocationParams>
 
-class MemberAllocator(
-  dataOpsManager: DataOpsManager
-) : RemoteAllocatorBase<MemberAllocationOperation>(dataOpsManager) {
+class MemberAllocator : Allocator<MemberAllocationOperation> {
 
   override val operationClass = MemberAllocationOperation::class.java
 
-  override fun performAllocationRequest(query: MemberAllocationOperation, progressIndicator: ProgressIndicator?) {
-    progressIndicator?.checkCanceled()
-    val request = api<DataAPI>(query.connectionConfig).writeToDatasetMember(
-      authorizationToken = query.connectionConfig.token,
-      datasetName = query.request.datasetName,
-      memberName = query.request.memberName,
+  override fun run(
+    operation: MemberAllocationOperation,
+    progressIndicator: ProgressIndicator
+  ) {
+    progressIndicator.checkCanceled()
+    val request = api<DataAPI>(operation.connectionConfig).writeToDatasetMember(
+      authorizationToken = operation.connectionConfig.token,
+      datasetName = operation.request.datasetName,
+      memberName = operation.request.memberName,
       content = ""
-    ).execute()
+    ).cancelByIndicator(progressIndicator).execute()
     if (!request.isSuccessful) {
       throw Throwable(request.code().toString())
     }

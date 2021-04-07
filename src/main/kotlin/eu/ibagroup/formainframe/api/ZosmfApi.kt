@@ -7,7 +7,8 @@ interface ZosmfApi {
 
   companion object {
     @JvmStatic
-    val instance: ZosmfApi = ApplicationManager.getApplication().getService(ZosmfApi::class.java)
+    val instance: ZosmfApi
+      get() = ApplicationManager.getApplication().getService(ZosmfApi::class.java)
   }
 
   fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api
