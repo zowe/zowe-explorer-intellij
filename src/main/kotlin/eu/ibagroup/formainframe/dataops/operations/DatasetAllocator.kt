@@ -7,7 +7,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.exceptions.ErrorBodyAllocationException
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.r2z.*
 
 class DatasetAllocatorFactory : OperationRunnerFactory {
@@ -37,9 +37,7 @@ class DatasetAllocator(
       body = query.request.allocationParameters
     ).execute()
     if (!response.isSuccessful) {
-      val gson = Gson()
-      val errorParams= gson.fromJson(response.errorBody()?.charStream(),Map::class.java)
-      throw ErrorBodyAllocationException("Cannot allocate dataset ${query.request.datasetName} on ${query.connectionConfig.name}", errorParams)
+      throw CallException(response, "Cannot allocate dataset ${query.request.datasetName} on ${query.connectionConfig.name}")
     }
   }
 

@@ -60,7 +60,7 @@ fun validateWorkingSetMaskName(component: JTextField, ws: WorkingSet): Validatio
 
 fun validateZosmfUrl(component: JTextField): ValidationInfo? {
   return if (!component.text.matches(urlRegex)) {
-    ValidationInfo("Please provide a valid URL to zOSMF. Example: https://myhost.com:10443", component)
+    ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
   } else {
     null
   }
@@ -156,7 +156,7 @@ fun validateVolser(component: JTextField): ValidationInfo? {
 }
 
 fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
-  return if (component.text.toIntOrNull() ?: 0 < 0) {
+  return if (component.text.toIntOrNull() ?: -1 < 0) {
     ValidationInfo("Enter a positive number", component)
   } else {
     null

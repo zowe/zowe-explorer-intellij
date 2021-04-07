@@ -4,6 +4,7 @@ import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,10 @@ public class CredentialServiceImpl implements CredentialService {
     final CredentialAttributes credentialAttributes = createCredentialAttributes(connectionConfigUuid);
     final Credentials credentials = new Credentials(username, password);
     PasswordSafe.getInstance().set(credentialAttributes, credentials);
+    ApplicationManager.getApplication()
+        .getMessageBus()
+        .syncPublisher(CredentialServiceKt.CREDENTIALS_CHANGED)
+        .onChanged(connectionConfigUuid);
   }
 
   private static @NotNull CredentialAttributes createCredentialAttributes(String key) {

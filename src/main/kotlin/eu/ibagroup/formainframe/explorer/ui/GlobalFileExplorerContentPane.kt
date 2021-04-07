@@ -123,17 +123,28 @@ class GlobalFileExplorerContentPane(
       componentManager = explorer.componentManager,
       topic = FileFetchProvider.CACHE_UPDATED,
       handler = object : FileCacheListener {
+        private fun <R : Any, Q : Query<R, Unit>> getNodesAndInvalidate(
+          query: Q
+        ) : Collection<ExplorerTreeNodeBase<*>>? {
+          return fsTreeStructure?.findByPredicate {
+            if (it is FileCacheNode<*, *, *, *, *>) {
+              it.query == query
+            } else false
+          }?.onEach {
+            structure?.invalidate(it, true)
+          }
+        }
+
         override fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> onCacheUpdated(
           query: Q,
           files: Collection<File>
         ) {
-          fsTreeStructure?.findByPredicate {
-            if (it is FileCacheNode<*, *, *, *, *>) {
-              it.query == query
-            } else false
-          }?.forEach {
-            structure?.invalidate(it, true)
-          }
+          getNodesAndInvalidate(query)
+        }
+
+        override fun <R : Any, Q : Query<R, Unit>> onFetchFailure(query: Q, throwable: Throwable) {
+          getNodesAndInvalidate(query)
+          explorer.reportThrowable(throwable, project)
         }
       },
       disposable = this
@@ -330,6 +341,18 @@ class GlobalFileExplorerContentPane(
             val pasteDestinations = destinationSourceFilePairs.map { it.first }.toSet().toList()
             val sourceFiles = destinationSourceFilePairs.map { it.second }.toSet().toList()
 
+            if (isCut.get()) {
+              showYesNoDialog(
+                title = "Moving of ${sourceFiles.size} file(s)",
+                message = "Do you want to move these files?",
+                project = project
+              ).let {
+                if (!it) {
+                  return@withLock
+                }
+              }
+            }
+
             val conflicts = pasteDestinations
               .mapNotNull { destFile ->
                 destFile.children
@@ -388,7 +411,7 @@ class GlobalFileExplorerContentPane(
               project = project,
               cancellable = true
             ) {
-              operations.parallelStream().forEach { op ->
+              operations.forEach { op ->
                 it.text = "${op.source.name} to ${op.destination.name}"
                 runCatching {
                   dataOpsManager.performOperation(
@@ -513,7 +536,6 @@ class GlobalFileExplorerContentPane(
           ) {
             ignoreVFileDeleteEvents.compareAndSet(false, true)
             files.map { DeleteOperation(it, dataOpsManager) }
-              .parallelStream()
               .forEach { op ->
                 it.text = "Deleting file ${op.file.name}"
                 runCatching {

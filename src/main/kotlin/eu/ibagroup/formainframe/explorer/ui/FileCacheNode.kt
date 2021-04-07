@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tree.LeafState
@@ -9,7 +10,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.utils.lock
-import eu.ibagroup.formainframe.utils.runPromiseAsBackgroundTask
 import eu.ibagroup.formainframe.utils.service
 import java.util.concurrent.locks.ReentrantLock
 
@@ -30,18 +30,30 @@ abstract class FileCacheNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   protected abstract fun makeFetchTaskTitle(query: Q): String
 
+  private val loadingNode by lazy { listOf(LoadingNode(notNullProject, this, explorer, treeStructure)) }
+  private val errorNode by lazy { listOf(ErrorNode(notNullProject, this, explorer, treeStructure)) }
+
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return lock(lock) {
-      val childrenNodes = cachedChildren
-        ?.toChildrenNodes() ?: listOf(LoadingNode(notNullProject, this, explorer, treeStructure)).also {
-        query?.let { q ->
-          runPromiseAsBackgroundTask(makeFetchTaskTitle(q), project) {
-            fileFetchProvider.forceReload(q).onError { unit.onThrowable(it) }
+      val childrenNodes = cachedChildren?.toChildrenNodes()
+      return@lock if (childrenNodes == null) {
+        val q = query
+        if (q != null && fileFetchProvider.isCacheValid(q)) {
+          runBackgroundableTask(
+            title = makeFetchTaskTitle(q),
+            project = project,
+            cancellable = true
+          ) {
+            fileFetchProvider.reload(q, it)
           }
+          loadingNode
+        } else {
+          errorNode
         }
+      } else {
+        childrenNodes
       }
-      childrenNodes.toMutableSmartList()
-    }
+    }.toMutableSmartList()
   }
 
   override fun getLeafState(): LeafState {

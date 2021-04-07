@@ -8,6 +8,8 @@ import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.utils.doThrow
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.SymlinkMode
@@ -31,37 +33,32 @@ class UssFileFetchProvider(
 
   override fun fetchResponse(query: RemoteQuery<UssQuery, Unit>): Collection<RemoteUssAttributes> {
     var attributes: Collection<RemoteUssAttributes>? = null
-    var exception: Throwable = IOException("Cannot fetch ${query.request.path}")
-    api<DataAPI>(query.connectionConfig).listUssPath(
+    var exception: Throwable? = null
+
+    val response = api<DataAPI>(query.connectionConfig).listUssPath(
       authorizationToken = query.connectionConfig.token,
       path = query.request.path,
       depth = 1,
       followSymlinks = SymlinkMode.REPORT
-    ).enqueueSync {
-      onResponse { _, response ->
-        if (response.isSuccessful) {
-          attributes = response.body()?.items?.map {
-            RemoteUssAttributes(
-              rootPath = query.request.path,
-              ussFile = it,
-              url = query.urlConnection.url,
-              connectionConfig = query.connectionConfig
-            )
-          }
-        } else {
-          run{
-            exception = IOException("${response.code()} " + (response.errorBody()?.string() ?: ""))
-            if (response.code() == 401) {
-              ApplicationManager.getApplication().invokeLater{
-                Messages.showWarningDialog("Cannot fetch because of wrong credentials of the user",
-                        response.code().toString() + " - " + response.message())
-              }
-            }
-          }
-        }
+    ).execute()
+
+    if (response.isSuccessful) {
+      attributes = response.body()?.items?.map {
+        RemoteUssAttributes(
+          rootPath = query.request.path,
+          ussFile = it,
+          url = query.urlConnection.url,
+          connectionConfig = query.connectionConfig
+        )
       }
-      onException { _, t -> exception = t }
+    } else {
+      exception = CallException(response, "Cannot retrieve USS files list")
     }
+
+    if (exception != null) {
+      throw exception
+    }
+
     return attributes ?: emptyList()
   }
 

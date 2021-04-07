@@ -45,8 +45,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           model = CollectionComboBoxModel(
             listOf(
               DatasetOrganization.PS,
-              DatasetOrganization.PO,
-              DatasetOrganization.POE
+              DatasetOrganization.PO
             )
           ),
           prop = state.allocationParameters::datasetOrganization
@@ -93,6 +92,11 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
             }
         }.withValidationOnApply {
           validateForBlank(it)
+            ?: if (it.text == "0" && it.isEnabled) {
+              ValidationInfo("Directory cannot be equal to zero", it)
+            } else {
+              null
+            }
         }.enableIf(datasetOrganizationBox.selectedValueMatches { it == DatasetOrganization.PO })
       }
       row {

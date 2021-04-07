@@ -2,7 +2,8 @@ package eu.ibagroup.formainframe.config.connect.ui
 
 import com.intellij.util.ui.ColumnInfo
 
-class ConnectionUrlColumn : ColumnInfo<ConnectionDialogState, String>("zOSMF URL") {
+@Suppress("DialogTitleCapitalization")
+class ConnectionUrlColumn : ColumnInfo<ConnectionDialogState, String>("z/OSMF URL") {
 
   override fun valueOf(item: ConnectionDialogState): String {
     return item.connectionUrl
