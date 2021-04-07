@@ -4,7 +4,6 @@ import com.intellij.util.ui.ColumnInfo
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.MergedCollections
-import org.jetbrains.annotations.NotNull
 import javax.swing.SortOrder
 import javax.swing.event.TableModelEvent
 
@@ -29,7 +28,7 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
   constructor(
     columnNames: Array<out ColumnInfo<Item, *>>?,
     selectedColumn: Int,
-    order: @NotNull SortOrder,
+    order: SortOrder,
     crudable: Crudable
   ) : super(columnNames, mutableListOf(), selectedColumn, order) {
     this.crudable = crudable

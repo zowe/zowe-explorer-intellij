@@ -20,8 +20,8 @@ interface CredentialService {
   fun clearCredentials(connectionConfigUuid: String)
 
   companion object {
+    @JvmStatic
     val instance: CredentialService
-      @JvmStatic
       get() = ApplicationManager.getApplication().getService(CredentialService::class.java)
   }
 

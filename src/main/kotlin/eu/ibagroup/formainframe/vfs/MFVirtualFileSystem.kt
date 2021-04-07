@@ -18,11 +18,12 @@ class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtu
     const val INVALID_FILE_PATH = "INVALID_FILE"
 
     @JvmStatic
-    val instance
+    val instance: MFVirtualFileSystem
       get() = VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as MFVirtualFileSystem
 
     @JvmStatic
-    val model = instance.model
+    val model
+      get() = instance.model
   }
 
   init {

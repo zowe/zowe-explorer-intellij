@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.dataops.operations
 
-import com.google.gson.Gson
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -8,11 +7,12 @@ import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.*
 
 class DatasetAllocatorFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): Allocator<*> {
-    return DatasetAllocator(dataOpsManager)
+    return DatasetAllocator()
   }
 }
 
@@ -22,22 +22,20 @@ data class DatasetAllocationOperation(
   override val urlConnection: UrlConnection
 ) : RemoteAllocationOperation<DatasetAllocationParams>
 
-class DatasetAllocator(
-  dataOpsManager: DataOpsManager
-) : RemoteAllocatorBase<DatasetAllocationOperation>(dataOpsManager) {
+class DatasetAllocator : Allocator<DatasetAllocationOperation> {
 
-  override fun performAllocationRequest(
-    query: DatasetAllocationOperation,
-    progressIndicator: ProgressIndicator?
+  override fun run(
+    operation: DatasetAllocationOperation,
+    progressIndicator: ProgressIndicator
   ) {
-    progressIndicator?.checkCanceled()
-    val response = api<DataAPI>(query.connectionConfig).createDataset(
-      authorizationToken = query.connectionConfig.token,
-      datasetName = query.request.datasetName,
-      body = query.request.allocationParameters
-    ).execute()
+    progressIndicator.checkCanceled()
+    val response = api<DataAPI>(operation.connectionConfig).createDataset(
+      authorizationToken = operation.connectionConfig.token,
+      datasetName = operation.request.datasetName,
+      body = operation.request.allocationParameters
+    ).cancelByIndicator(progressIndicator).execute()
     if (!response.isSuccessful) {
-      throw CallException(response, "Cannot allocate dataset ${query.request.datasetName} on ${query.connectionConfig.name}")
+      throw CallException(response, "Cannot allocate dataset ${operation.request.datasetName} on ${operation.connectionConfig.name}")
     }
   }
 

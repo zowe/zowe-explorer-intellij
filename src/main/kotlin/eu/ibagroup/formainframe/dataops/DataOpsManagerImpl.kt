@@ -96,7 +96,7 @@ class DataOpsManagerImpl : DataOpsManager {
 
   override fun <R : Any> performOperation(
     operation: Operation<R>,
-    progressIndicator: ProgressIndicator?
+    progressIndicator: ProgressIndicator
   ): R {
     return (operationRunners.stream()
       .filter {

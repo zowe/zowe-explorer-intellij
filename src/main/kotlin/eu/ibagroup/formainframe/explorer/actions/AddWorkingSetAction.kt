@@ -1,24 +1,30 @@
-package eu.ibagroup.formainframe.explorer
+package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.util.containers.isEmpty
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
+import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialog
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
-import eu.ibagroup.formainframe.config.connect.ui.ShowAndTestConnection
 import eu.ibagroup.formainframe.config.connect.ui.initEmptyUuids
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
+import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.utils.crudable.getAll
 
-class AddWorkingSetAction : AnAction("Create Working Set") {
+class AddWorkingSetAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     if (configCrudable.getAll<ConnectionConfig>().isEmpty()) {
-      val state = ShowAndTestConnection(ConnectionDialogState().initEmptyUuids(configCrudable), configCrudable, e.project).showUntilTested()
+      val state = ConnectionDialog.showAndTestConnection(
+        crudable = configCrudable,
+        project = e.project,
+        initialState = ConnectionDialogState().initEmptyUuids(configCrudable)
+      )
       if (state != null) {
         val urlConnection = state.urlConnection
         val connectionConfig = state.connectionConfig
@@ -40,4 +46,15 @@ class AddWorkingSetAction : AnAction("Create Working Set") {
   override fun isDumbAware(): Boolean {
     return true
   }
+
+  override fun update(e: AnActionEvent) {
+    if (e.getData(FILE_EXPLORER_VIEW) != null) {
+      e.presentation.text = "Working Set"
+      e.presentation.icon = AllIcons.Nodes.Project
+    } else {
+      e.presentation.text = "Create Working Set"
+      e.presentation.icon = AllIcons.General.Add
+    }
+  }
+
 }

@@ -7,6 +7,6 @@ interface ConfigInitializationListener {
   fun onConfigLoaded()
 
   companion object {
-    @JvmStatic val CONFIGS_LOADED = Topic.create("configsLoaded", ConfigInitializationListener::class.java)
+    @JvmField val CONFIGS_LOADED = Topic.create("configsLoaded", ConfigInitializationListener::class.java)
   }
 }

@@ -11,7 +11,8 @@ interface ConfigSandbox {
 
   companion object {
     @JvmStatic
-    val instance: ConfigSandbox = ApplicationManager.getApplication().getService(ConfigSandbox::class.java)
+    val instance: ConfigSandbox
+      get() = ApplicationManager.getApplication().getService(ConfigSandbox::class.java)
   }
 
   fun updateState()

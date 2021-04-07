@@ -66,7 +66,7 @@ fun <L : Any> subscribe(topic: Topic<L>, handler: L) = ApplicationManager.getApp
   .connect()
   .subscribe(topic, handler)
 
-fun <L : Any> subscribe(topic: Topic<L>, handler: L, disposable: Disposable) = ApplicationManager.getApplication()
+fun <L : Any> subscribe(topic: Topic<L>, disposable: Disposable, handler: L) = ApplicationManager.getApplication()
   .messageBus
   .connect(disposable)
   .subscribe(topic, handler)

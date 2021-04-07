@@ -6,6 +6,7 @@ import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.r2z.CopyDataZOS
 import eu.ibagroup.r2z.DataAPI
@@ -63,12 +64,15 @@ class MemberToPdsFileMover(
       && operation.commonUrls(dataOpsManager).isNotEmpty()
   }
 
-  override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator?) {
+  override fun run(
+    operation: MoveCopyOperation,
+    progressIndicator: ProgressIndicator
+  ) {
     var throwable: Throwable? = null
     operation.commonUrls(dataOpsManager).stream().map {
-      progressIndicator?.checkCanceled()
+      progressIndicator.checkCanceled()
       runCatching {
-        buildCall(operation, it).execute()
+        buildCall(operation, it).cancelByIndicator(progressIndicator).execute()
       }.mapCatching {
         if (!it.isSuccessful) {
           throw IOException(it.code().toString())

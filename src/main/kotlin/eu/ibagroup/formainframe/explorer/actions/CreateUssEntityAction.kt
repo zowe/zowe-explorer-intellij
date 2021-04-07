@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.explorer
+package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -20,9 +20,10 @@ abstract class CreateUssEntityAction : AnAction() {
   abstract val ussFileType: String
 
   override fun actionPerformed(e: AnActionEvent) {
-    val selected = e.getData(SELECTED_NODES)?.get(0)
-    val node = selected?.node
-    val file = selected?.file
+    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val selected = view.mySelectedNodesData[0]
+    val node = selected.node
+    val file = selected.file
     if (file != null && node is ExplorerUnitTreeNodeBase<*, *>) {
       val connectionConfig = node.unit.connectionConfig
       val urlConnection = node.unit.urlConnection
@@ -74,9 +75,11 @@ abstract class CreateUssEntityAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val selected = e.getData(SELECTED_NODES)
-    e.presentation.isEnabledAndVisible = selected != null
-      && selected.size == 1
-      && selected[0].node is UssDirNode
+    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val selected = view.mySelectedNodesData
+    e.presentation.isEnabledAndVisible = selected.size == 1 && selected[0].node is UssDirNode
   }
 }

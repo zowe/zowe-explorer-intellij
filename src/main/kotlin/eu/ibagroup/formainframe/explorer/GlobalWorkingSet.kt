@@ -42,7 +42,12 @@ class GlobalWorkingSet(
     get() = workingSetConfig?.name ?: ""
 
   override val connectionConfig: ConnectionConfig?
-    get() = lock(lock.readLock()) { workingSetConfig?.let { configCrudable.getByForeignKey(it) } }
+    get() = lock(lock.readLock()) {
+      workingSetConfig
+        ?.let {
+          return@lock configCrudable.getByForeignKey(it)
+        }
+    }
 
   override val urlConnection: UrlConnection?
     get() = lock(lock.readLock()) { workingSetConfig?.let { configCrudable.getByForeignKeyDeeply(it) } }

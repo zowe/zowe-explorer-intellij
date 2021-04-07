@@ -4,7 +4,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import eu.ibagroup.formainframe.utils.SparseMatrix
-import org.jetbrains.annotations.NotNull
 import javax.swing.SortOrder
 
 open class ValidatingListTableModel<Item> : ListTableModel<Item> {
@@ -13,20 +12,20 @@ open class ValidatingListTableModel<Item> : ListTableModel<Item> {
 
   constructor(
     columnNames: Array<out ColumnInfo<Item, *>>?,
-    items: @NotNull MutableList<Item>,
+    items: MutableList<Item>,
     selectedColumn: Int
   ) : super(columnNames, items, selectedColumn)
 
-  constructor(columnNames: Array<out ColumnInfo<Item, *>>?, items: @NotNull MutableList<Item>) : super(
+  constructor(columnNames: Array<out ColumnInfo<Item, *>>?, items: MutableList<Item>) : super(
     columnNames,
     items
   )
 
   constructor(
     columnNames: Array<out ColumnInfo<Item, *>>?,
-    items: @NotNull MutableList<Item>,
+    items: MutableList<Item>,
     selectedColumn: Int,
-    order: @NotNull SortOrder
+    order: SortOrder
   ) : super(columnNames, items, selectedColumn, order)
 
   val validationInfos = SparseMatrix<ValidationInfo>()
@@ -51,11 +50,10 @@ open class ValidatingListTableModel<Item> : ListTableModel<Item> {
     }
     fireTableRowsUpdated(row, row)
   }
-//
+
 //  override fun fireTableChanged(e: TableModelEvent?) {
 //    listenerList.listenerList
 //      .filterIsInstance<TableModelListener>()
-//      .reversed()
 //      .forEach { it.tableChanged(e) }
 //  }
 

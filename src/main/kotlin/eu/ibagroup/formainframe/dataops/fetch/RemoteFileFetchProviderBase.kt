@@ -1,8 +1,8 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.AppExecutorUtil
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.utils.lock
@@ -10,12 +10,6 @@ import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.collections.Collection
-import kotlin.collections.forEach
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mutableMapOf
-import kotlin.collections.none
 import kotlin.collections.set
 import kotlin.concurrent.withLock
 import kotlin.streams.toList
@@ -41,7 +35,10 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     return lock.withLock { cacheState[query] != CacheState.ERROR }
   }
 
-  protected abstract fun fetchResponse(query: RemoteQuery<Request, Unit>): Collection<Response>
+  protected abstract fun fetchResponse(
+    query: RemoteQuery<Request, Unit>,
+    progressIndicator: ProgressIndicator
+  ): Collection<Response>
 
   protected abstract fun convertResponseToFile(response: Response): File
 
@@ -51,12 +48,12 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     return oldFile.path == newFile.path
   }
 
-  override fun reload(query: RemoteQuery<Request, Unit>, progressIndicator: ProgressIndicator?) {
+  override fun reload(
+    query: RemoteQuery<Request, Unit>,
+    progressIndicator: ProgressIndicator
+  ) {
     runCatching {
-      val fetched = fetchResponse(query)
-      if (progressIndicator?.isCanceled == true) {
-        return@runCatching getCached(query) ?: listOf()
-      }
+      val fetched = fetchResponse(query, progressIndicator)
       val files = runWriteActionOnWriteThread {
         fetched.map {
           convertResponseToFile(it)
@@ -74,18 +71,29 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
       cacheState[query] = CacheState.FETCHED
       files
     }.onSuccess {
-      sendTopic(FileFetchProvider.CACHE_UPDATED, dataOpsManager.componentManager).onCacheUpdated(query, it)
+      sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onCacheUpdated(query, it)
     }.onFailure {
-      cache[query] = listOf()
-      cacheState[query] = CacheState.ERROR
-      sendTopic(FileFetchProvider.CACHE_UPDATED, dataOpsManager.componentManager).onFetchFailure(query, it)
+      if (it is ProcessCanceledException) {
+        cleanCacheInternal(query, false)
+        sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchCancelled(query)
+      } else {
+        cache[query] = listOf()
+        cacheState[query] = CacheState.ERROR
+        sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchFailure(query, it)
+      }
     }
   }
 
   override fun cleanCache(query: RemoteQuery<Request, Unit>) {
+   cleanCacheInternal(query, true)
+  }
+
+  private fun cleanCacheInternal(query: RemoteQuery<Request, Unit>, sendTopic: Boolean) {
     cache.remove(query)
     cacheState.remove(query)
-    sendTopic(FileFetchProvider.CACHE_UPDATED, dataOpsManager.componentManager).onCacheUpdated(query, listOf())
+    if (sendTopic) {
+      sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onCacheCleaned(query)
+    }
   }
 
   abstract val responseClass: Class<out Response>

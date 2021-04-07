@@ -1,7 +1,7 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.api.enqueueSync
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -10,11 +10,11 @@ import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.asMutableList
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.nullIfBlank
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.Dataset
-import java.io.IOException
 
 class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
@@ -29,16 +29,17 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val vFileClass = MFVirtualFile::class.java
 
-  override fun fetchResponse(query: RemoteQuery<DSMask, Unit>): Collection<RemoteDatasetAttributes> {
+  override fun fetchResponse(
+    query: RemoteQuery<DSMask, Unit>,
+    progressIndicator: ProgressIndicator
+  ): Collection<RemoteDatasetAttributes> {
     var attributes: Collection<RemoteDatasetAttributes>? = null
     var exception: Throwable? = null
-
     val response = api<DataAPI>(query.connectionConfig).listDataSets(
       authorizationToken = query.connectionConfig.token,
       dsLevel = query.request.mask,
       volser = query.request.volser.nullIfBlank()
-    ).execute()
-
+    ).cancelByIndicator(progressIndicator).execute()
     if (response.isSuccessful) {
       attributes = response.body()?.items?.map { buildAttributes(query, it) }
     } else {

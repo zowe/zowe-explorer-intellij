@@ -16,10 +16,12 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 class FileLikeDatasetNode(
   file: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNodeBase<*>,
+  parent: ExplorerTreeNode<*>,
   unit: ExplorerUnit,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(file, project, parent, unit, treeStructure) {
+) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(
+  file, project, parent, unit, treeStructure
+), MFNode {
 
   override fun isAlwaysLeaf(): Boolean {
     return !value.isDirectory

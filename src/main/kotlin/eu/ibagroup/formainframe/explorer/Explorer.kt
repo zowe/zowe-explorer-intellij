@@ -7,7 +7,7 @@ import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.utils.castOrNull
 
 val globalExplorer
-  get() = Explorer.appInstance
+  get() = Explorer.instance
 
 interface ExplorerListener {
   fun onChanged(explorer: Explorer, unit: ExplorerUnit) {}
@@ -15,15 +15,15 @@ interface ExplorerListener {
   fun onDeleted(explorer: Explorer, unit: ExplorerUnit) {}
 }
 
+@JvmField
+val UNITS_CHANGED = Topic.create("unitsChanged", ExplorerListener::class.java)
+
 interface Explorer {
 
   companion object {
     @JvmStatic
-    val appInstance: Explorer
+    val instance: Explorer
       get() = ApplicationManager.getApplication().getService(Explorer::class.java)
-
-    @JvmStatic
-    val UNITS_CHANGED = Topic.create("unitsChanged", ExplorerListener::class.java)
   }
 
   val units: Collection<ExplorerUnit>

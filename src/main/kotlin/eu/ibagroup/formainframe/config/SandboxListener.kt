@@ -5,7 +5,7 @@ import com.intellij.util.messages.Topic
 interface SandboxListener {
 
   companion object {
-    @JvmStatic
+    @JvmField
     val TOPIC = Topic.create("sandboxListener", SandboxListener::class.java)
   }
 

@@ -14,6 +14,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    toolWindow
     val contentFactory = ContentFactory.SERVICE.getInstance()
     val factory = appService<ExplorerContent>()
     val content = contentFactory

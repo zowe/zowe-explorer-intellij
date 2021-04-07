@@ -21,7 +21,7 @@ class GlobalExplorerContent : ExplorerContent(
   }
 
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
-    return GlobalFileExplorerContentPane(globalExplorer, project, parentDisposable) {
+    return GlobalFileExplorerView(globalExplorer, project, parentDisposable) {
       lock.withLock {
         val previousState = filesToCut.toList()
         filesToCut = it

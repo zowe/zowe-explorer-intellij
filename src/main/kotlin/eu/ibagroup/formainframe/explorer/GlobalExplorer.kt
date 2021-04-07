@@ -3,11 +3,12 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
-import eu.ibagroup.formainframe.config.ConfigService
+import eu.ibagroup.formainframe.config.CONFIGS_CHANGED
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.CREDENTIALS_CHANGED
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -61,7 +62,9 @@ class GlobalExplorer : Explorer {
     if (t is ProcessCanceledException) {
       return
     }
-    Messages.showErrorDialog(project, t.message ?: t.toString(), "Error")
+    runInEdt {
+      Messages.showErrorDialog(project, t.message ?: t.toString(), "Error")
+    }
   }
 
   override fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?) {
@@ -69,47 +72,49 @@ class GlobalExplorer : Explorer {
   }
 
   init {
-    subscribe(ConfigService.CONFIGS_CHANGED, eventAdaptor<WorkingSetConfig> {
+    subscribe(CONFIGS_CHANGED, disposable, eventAdaptor<WorkingSetConfig> {
       onDelete { ws ->
         lock(lock.writeLock()) {
           val found = units.find { it.uuid == ws.uuid } ?: return@onDelete
           Disposer.dispose(found)
           units.remove(found)
-          sendTopic(Explorer.UNITS_CHANGED).onDeleted(this@GlobalExplorer, found)
+          sendTopic(UNITS_CHANGED).onDeleted(this@GlobalExplorer, found)
         }
       }
       onAdd { ws ->
         lock(lock.writeLock()) {
           val added = ws.toGlobalWs(disposable)
           units.add(added)
-          sendTopic(Explorer.UNITS_CHANGED).onAdded(this@GlobalExplorer, added)
+          sendTopic(UNITS_CHANGED).onAdded(this@GlobalExplorer, added)
         }
       }
       onUpdate { _, workingSetConfig ->
         lock.read {
           val found = units.find { it.uuid == workingSetConfig.uuid }
-          sendTopic(Explorer.UNITS_CHANGED).onChanged(this@GlobalExplorer, found ?: return@onUpdate)
+          sendTopic(UNITS_CHANGED).onChanged(this@GlobalExplorer, found ?: return@onUpdate)
         }
       }
-    }, disposable)
-    subscribe(ConfigService.CONFIGS_CHANGED, anyEventAdaptor<ConnectionConfig> { connectionConfig ->
+    })
+    subscribe(CONFIGS_CHANGED, disposable, anyEventAdaptor<ConnectionConfig> {
       lock.read {
-        val found = units.find { it.connectionConfig?.uuid == connectionConfig.uuid }
-        sendTopic(Explorer.UNITS_CHANGED).onChanged(this@GlobalExplorer, found ?: return@anyEventAdaptor)
+        units.forEach {
+          sendTopic(UNITS_CHANGED).onChanged(this@GlobalExplorer, it)
+        }
       }
-    }, disposable)
-    subscribe(ConfigService.CONFIGS_CHANGED, anyEventAdaptor<UrlConnection> { urlConnection ->
+    })
+    subscribe(CONFIGS_CHANGED, disposable, anyEventAdaptor<UrlConnection> {
       lock.read {
-        val found = units.find { it.connectionConfig?.urlConnectionUuid == urlConnection.uuid }
-        sendTopic(Explorer.UNITS_CHANGED).onChanged(this@GlobalExplorer, found ?: return@anyEventAdaptor)
+        units.forEach {
+          sendTopic(UNITS_CHANGED).onChanged(this@GlobalExplorer, it)
+        }
       }
-    }, disposable)
-    subscribe(CREDENTIALS_CHANGED, CredentialsListener { uuid ->
+    })
+    subscribe(CREDENTIALS_CHANGED, disposable, CredentialsListener { uuid ->
       lock.read {
         val found = units.find { it.connectionConfig?.uuid == uuid }
-        sendTopic(Explorer.UNITS_CHANGED).onChanged(this@GlobalExplorer, found ?: return@CredentialsListener)
+        sendTopic(UNITS_CHANGED).onChanged(this@GlobalExplorer, found ?: return@CredentialsListener)
       }
-    }, disposable)
+    })
   }
 
 }

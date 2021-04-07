@@ -9,16 +9,16 @@ const val BUNDLE = "messages.CommonBundle"
 class MainframeCommonBundle private constructor() : DynamicBundle(BUNDLE) {
   companion object {
     @JvmStatic
-    val INSTANCE = MainframeCommonBundle()
+    val instance by lazy { MainframeCommonBundle() }
   }
 }
 
 fun message(@PropertyKey(resourceBundle = BUNDLE) key: String,
             vararg params: Any): String {
-  return MainframeCommonBundle.INSTANCE.getMessage(key, params)
+  return MainframeCommonBundle.instance.getMessage(key, params)
 }
 
 fun lazyMessage(@PropertyKey(resourceBundle = BUNDLE) key: String,
                 vararg params: Any): Supplier<String> {
-  return MainframeCommonBundle.INSTANCE.getLazyMessage(key, params)
+  return MainframeCommonBundle.instance.getLazyMessage(key, params)
 }

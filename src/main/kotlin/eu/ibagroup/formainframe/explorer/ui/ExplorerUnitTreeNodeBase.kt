@@ -6,7 +6,7 @@ import eu.ibagroup.formainframe.explorer.ExplorerUnit
 abstract class ExplorerUnitTreeNodeBase<Value : Any, U : ExplorerUnit>(
   value: Value,
   project: Project,
-  parent: ExplorerTreeNodeBase<*>,
+  parent: ExplorerTreeNode<*>,
   val unit: U,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerTreeNodeBase<Value>(value, project, parent, unit.explorer, treeStructure)
+) : ExplorerTreeNode<Value>(value, project, parent, unit.explorer, treeStructure)

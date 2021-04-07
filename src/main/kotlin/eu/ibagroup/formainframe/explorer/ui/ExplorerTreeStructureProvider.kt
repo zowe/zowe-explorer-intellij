@@ -12,8 +12,8 @@ abstract class ExplorerTreeStructureProvider : TreeStructureProvider {
     children: MutableCollection<AbstractTreeNode<*>>,
     settings: ViewSettings?
   ): MutableCollection<AbstractTreeNode<*>> {
-    if (parent is ExplorerTreeNodeBase && settings is ExplorerViewSettings) {
-      val castedChildren = children.filterIsInstance<ExplorerTreeNodeBase<*>>()
+    if (parent is ExplorerTreeNode && settings is ExplorerViewSettings) {
+      val castedChildren = children.filterIsInstance<ExplorerTreeNode<*>>()
       if (castedChildren.size == children.size) {
         @Suppress("UNCHECKED_CAST")
         return modifyOurs(parent, castedChildren, settings) as MutableCollection<AbstractTreeNode<*>>
@@ -23,9 +23,9 @@ abstract class ExplorerTreeStructureProvider : TreeStructureProvider {
   }
 
   protected abstract fun modifyOurs(
-    parent: ExplorerTreeNodeBase<*>,
-    children: Collection<ExplorerTreeNodeBase<*>>,
+    parent: ExplorerTreeNode<*>,
+    children: Collection<ExplorerTreeNode<*>>,
     settings: ExplorerViewSettings
-  ): MutableCollection<ExplorerTreeNodeBase<*>>
+  ): MutableCollection<ExplorerTreeNode<*>>
 
 }
