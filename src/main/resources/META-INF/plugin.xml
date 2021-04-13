@@ -24,8 +24,7 @@
     <vendor email="formainframe@ibagroup.eu" url="https://ibagroupit.com">IBA Group</vendor>
 
     <description><![CDATA[
-<h1>For Mainframe</h1>
-"For Mainframe" brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
+For Mainframe brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
 Using our plugin you will be able to:<br/>
 <ul>
    <li>Start working with z/OS easily with no complex configurations.</li>
@@ -97,12 +96,23 @@ To start using the plugin:<br/>
                                  displayName="For Mainframe"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
 
+        <editorFloatingToolbarProvider
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SyncToolbarProvider"/>
+
+        <notificationGroup displayType="STICKY_BALLOON"
+                           id="eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"/>
+
         <toolWindow id="For Mainframe" anchor="right"
                     factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            key="mf"/>
+
+        <vfs.asyncListener implementation="eu.ibagroup.formainframe.dataops.synchronizer.AfterSaveVfsListener"/>
+
+        <fileType name="Unknown Data Set"
+                  implementationClass="eu.ibagroup.formainframe.filetypes.UnknownDataSetFileType"/>
 
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
@@ -130,7 +140,8 @@ To start using the plugin:<br/>
 
     <actions>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction" class="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
+                class="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
                 text="Refresh"
                 icon="AllIcons.Actions.Refresh"/>
 
@@ -218,6 +229,14 @@ To start using the plugin:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"/>
         </group>
 
+        <action id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"
+                class="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"
+                icon="AllIcons.Actions.BuildLoadChanges"
+                text="Sync Data"/>
+
+        <group id="eu.ibagroup.formainframe.dataops.synchronizer.SyncActionGroup" popup="true">
+            <reference id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"/>
+        </group>
     </actions>
 
 </idea-plugin>

@@ -34,7 +34,9 @@ interface DataOpsManager : Disposable {
     vFileClass: Class<out File>
   ): FileFetchProvider<R, Q, File>
 
-  fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer
+  fun isSyncSupported(file: VirtualFile): Boolean
+
+  fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer?
 
   fun isOperationSupported(operation: Operation<*>): Boolean
 

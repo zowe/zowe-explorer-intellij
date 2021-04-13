@@ -27,7 +27,7 @@ class AddMemberAction : AnAction() {
     ) {
       val connectionConfig = currentNode.unit.connectionConfig
       val connectionUrl = currentNode.unit.urlConnection
-      val dataOpsManager = service<DataOpsManager>(currentNode.explorer.componentManager)
+      val dataOpsManager = currentNode.explorer.componentManager.service<DataOpsManager>()
       if (currentNode is LibraryNode && connectionConfig != null && connectionUrl != null) {
         val parentName = dataOpsManager
           .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()

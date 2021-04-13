@@ -11,18 +11,18 @@ open class ValidatingListTableModel<Item> : ListTableModel<Item> {
   constructor(vararg columnInfos: ColumnInfo<Item, *>?) : super(*columnInfos)
 
   constructor(
-    columnNames: Array<out ColumnInfo<Item, *>>?,
+    columnNames: Array<out ColumnInfo<Item, *>>,
     items: MutableList<Item>,
     selectedColumn: Int
   ) : super(columnNames, items, selectedColumn)
 
-  constructor(columnNames: Array<out ColumnInfo<Item, *>>?, items: MutableList<Item>) : super(
+  constructor(columnNames: Array<out ColumnInfo<Item, *>>, items: MutableList<Item>) : super(
     columnNames,
     items
   )
 
   constructor(
-    columnNames: Array<out ColumnInfo<Item, *>>?,
+    columnNames: Array<out ColumnInfo<Item, *>>,
     items: MutableList<Item>,
     selectedColumn: Int,
     order: SortOrder

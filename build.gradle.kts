@@ -16,20 +16,20 @@ version = "0.2"
 
 repositories {
   mavenCentral()
-//  maven {
-//    url = URI("http://10.221.23.186:8082/repository/internal/")
-//    credentials {
-//      username = "admin"
-//      password = "password123"
-//    }
-//    metadataSources {
-//      mavenPom()
-//      artifact()
-//    }
-//  }
-  flatDir {
-    dir("libs")
+  maven {
+    url = URI("http://10.221.23.186:8082/repository/internal/")
+    credentials {
+      username = "admin"
+      password = "password123"
+    }
+    metadataSources {
+      mavenPom()
+      artifact()
+    }
   }
+//  flatDir {
+//    dir("libs")
+//  }
 
 }
 

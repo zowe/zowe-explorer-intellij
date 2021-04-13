@@ -12,7 +12,7 @@ abstract class RemoteAttributedFileFetchBase<Request : Any, Response : VFileInfo
   protected val attributesService: AttributesService<Response, File>
       by lazy { dataOpsManager.getAttributesService(responseClass, vFileClass) }
 
-  override fun convertResponseToFile(response: Response): File {
+  override fun convertResponseToFile(response: Response): File? {
     return attributesService.getOrCreateVirtualFile(response)
   }
 

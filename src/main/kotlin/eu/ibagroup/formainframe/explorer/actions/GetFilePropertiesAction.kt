@@ -17,7 +17,7 @@ class GetFilePropertiesAction : AnAction() {
     if (node is ExplorerTreeNode<*>) {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
-        val dataOpsManager = service<DataOpsManager>(node.explorer.componentManager)
+        val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone()) {
           is RemoteDatasetAttributes -> {
             val dialog = DatasetPropertiesDialog(e.project, DatasetState(attributes))

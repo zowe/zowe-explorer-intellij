@@ -1,9 +1,9 @@
 package eu.ibagroup.formainframe.vfs
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManager
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.utils.appService
 
 class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtualFileSystemModel>(
   MFVirtualFile::class.java,
@@ -15,7 +15,6 @@ class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtu
     const val PROTOCOL = "mf"
     const val ROOT_NAME = "For Mainframe"
     const val ROOT_ID = 0
-    const val INVALID_FILE_PATH = "INVALID_FILE"
 
     @JvmStatic
     val instance: MFVirtualFileSystem
@@ -27,7 +26,7 @@ class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtu
   }
 
   init {
-    Disposer.register(appService<DataOpsManager>(), this)
+    Disposer.register(service<DataOpsManager>(), this)
   }
 
   val root = model.root

@@ -1,32 +1,45 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.psi.PsiDocumentListener
+import com.intellij.util.concurrency.AppExecutorUtil
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.FetchCallback
+import eu.ibagroup.formainframe.dataops.attributes.AttributesService
+import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.attributesListener
 import eu.ibagroup.formainframe.utils.QueueExecutor
+import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.subscribe
-import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 abstract class AbstractQueuedContentSynchronizer(
   protected val dataOpsManager: DataOpsManager
 ) : ContentSynchronizer {
 
-  private val fileToExecutorMap = ConcurrentHashMap<VirtualFile, Pair<QueueExecutor<FetchCallback<Unit>, Unit>, FetchCallback<Unit>>>()
+  private val fileToExecutorMap = ConcurrentHashMap<VirtualFile, QueueExecutor<Unit>>()
+  private val fileToDocumentListenerMap = ConcurrentHashMap<VirtualFile, DocumentListener>()
 
   protected abstract fun buildExecutorForFile(
-    file: VirtualFile,
-    saveStrategy: SaveStrategy
-  ): QueueExecutor<FetchCallback<Unit>, Unit>
+    providerFactory: (QueueExecutor<Unit>) -> SyncProvider
+  ): Pair<QueueExecutor<Unit>, SyncProvider>
 
   protected val disposableQueues = Disposable {
-    fileToExecutorMap.values.parallelStream().forEach { it.first.shutdown() }
+    fileToExecutorMap.values.parallelStream().forEach { it.shutdown() }
     fileToExecutorMap.clear()
   }
 
@@ -45,51 +58,129 @@ abstract class AbstractQueuedContentSynchronizer(
                 executor
               } else null
             }
-            .forEach { it.first.accept(it.second) }
+            .forEach {
+              it.accept(Unit)
+            }
         }
       },
       disposable = disposableQueues
     )
+    subscribe(
+      componentManager = dataOpsManager.componentManager,
+      topic = AttributesService.ATTRIBUTES_CHANGED,
+      handler = attributesListener<VFileInfoAttributes, VirtualFile> {
+        onUpdate { _, _, file ->
+          if (isAlreadySynced(file)) {
+            triggerSync(file)
+          }
+        }
+        onDelete { _, file ->
+          removeSync(file)
+        }
+      }
+    )
   }
 
-  override fun enforceSync(
+  override fun startSync(
     file: VirtualFile,
+    project: Project,
     acceptancePolicy: AcceptancePolicy,
     saveStrategy: SaveStrategy,
-    onSyncEstablished: FetchCallback<Unit>
+    removeSyncOnThrowable: (file: VirtualFile, t: Throwable) -> Boolean,
+    progressIndicator: ProgressIndicator
   ) {
     if (file.isDirectory) {
-      throw IOException("Directories cannot be synced")
+      throw IllegalArgumentException("Directories cannot be synced")
     }
     if (!file.isValid || !file.exists()) {
-      throw IOException("Non-valid or non-existing files cannot be synced")
+      throw IllegalArgumentException("Non-valid or non-existing files cannot be synced")
     }
     if (!accepts(file)) {
       throw IllegalArgumentException("${this::class.java} cannot accept file ${file.path} for syncing")
     }
     val existingExecutor = fileToExecutorMap[file]
     if (existingExecutor != null) {
-      throw IOException("File ${file.path} is already synced")
+      throw IllegalArgumentException("File ${file.path} is already synced")
     }
     val length = file.length
     if (length != 0L && acceptancePolicy == AcceptancePolicy.IF_EMPTY_ONLY) {
-      throw IOException("Cannot sync non-empty file due provided acceptance policy $acceptancePolicy")
+      throw IllegalArgumentException("Cannot sync non-empty file due provided acceptance policy $acceptancePolicy")
     }
-    val executor = buildExecutorForFile(file, saveStrategy)
-    fileToExecutorMap[file] = Pair(executor, onSyncEstablished)
-    executor.accept(onSyncEstablished)
+    TrailingSpacesStripper.setEnabled(file, false)
+    val configFactory = { executor: QueueExecutor<Unit> ->
+      QueueSyncProvider(
+        file = file,
+        progressIndicator = progressIndicator,
+        saveStrategy = saveStrategy,
+        queueExecutor = executor,
+        synchronizer = this,
+        removeSyncOnThrowable = { f, t ->
+          if (f.isValid) {
+            removeSyncOnThrowable(f, t)
+          } else {
+            true
+          }
+        }
+      )
+    }
+    val (executor, syncConfig) = buildExecutorForFile(configFactory)
+    val documentListener = object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        executor.accept(Unit)
+      }
+    }
+    fileToExecutorMap[file] = executor
+    executor.accept(Unit)
+    syncConfig.waitForSyncStarted()
+    AppExecutorUtil.getAppExecutorService().submit {
+      val lock = ReentrantLock()
+      val condition = lock.newCondition()
+      var document = runReadActionInEdtAndWait { FileDocumentManager.getInstance().getDocument(file) }
+      if (document == null) {
+        lock.withLock {
+          document = runReadActionInEdtAndWait { FileDocumentManager.getInstance().getDocument(file) }
+          if (document != null) {
+            condition.signalAll()
+          }
+        }
+      }
+      subscribe(
+        componentManager = project,
+        topic = PsiDocumentListener.TOPIC,
+        handler = PsiDocumentListener { doc, _, _ ->
+          val docFile = FileDocumentManager.getInstance().getFile(doc)
+          if (docFile == file) {
+            lock.withLock {
+              document = doc
+              condition.signalAll()
+            }
+          }
+        }
+      )
+      while (document == null) {
+        lock.withLock {
+          condition.await()
+        }
+      }
+      document?.addDocumentListener(documentListener)
+      fileToDocumentListenerMap[file] = documentListener
+    }
   }
 
   override fun isAlreadySynced(file: VirtualFile): Boolean {
     return fileToExecutorMap[file] != null
   }
 
+  override fun triggerSync(file: VirtualFile) {
+    val executor = fileToExecutorMap[file] ?: throw IllegalArgumentException("File ${file.path} is not synced")
+    executor.accept(Unit)
+  }
+
   override fun removeSync(file: VirtualFile) {
-    val pair = fileToExecutorMap[file]
-      ?: throw IOException("Cannot remove sync for ${file.path} since it's not synchronized already")
-    pair.first.shutdown()
+    val executor = fileToExecutorMap[file] ?: return
+    executor.shutdown()
     fileToExecutorMap.remove(file)
-    pair.second.onFinish()
+    fileToDocumentListenerMap.remove(file)
   }
 
 }

@@ -28,10 +28,10 @@ class PropertyWithRWLock<V>(
 ) : ReadWriteProperty<Any?, V> {
 
   override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) {
-    lock.writeLock().withLock { this.value = value }
+    lock.write { this.value = value }
   }
 
-  override fun getValue(thisRef: Any?, property: KProperty<*>) = lock.readLock().withLock {
+  override fun getValue(thisRef: Any?, property: KProperty<*>) = lock.read {
     this.value
   }
 }

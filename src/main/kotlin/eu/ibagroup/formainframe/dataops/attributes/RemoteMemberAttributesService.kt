@@ -4,6 +4,7 @@ import com.intellij.openapi.application.runReadAction
 import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.getAttributesService
+import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.formainframe.vfs.createAttributes
@@ -54,6 +55,10 @@ class RemoteMemberAttributesService(
         //fileToMemberInfoMap.putIfAbsent(it, attributes.memberInfo)
         fileToMemberInfoMap[it] = attributes.memberInfo
         fileToContentTypeMap[it] = attributes.contentMode
+        sendTopic(
+          topic = AttributesService.ATTRIBUTES_CHANGED,
+          componentManager = dataOpsManager.componentManager
+        ).onCreate(attributes, it)
       }
 
     } else throw IOException("Cannot find member")
@@ -75,21 +80,36 @@ class RemoteMemberAttributesService(
   override fun updateAttributes(file: MFVirtualFile, newAttributes: RemoteMemberAttributes) {
     val oldAttributes = getAttributes(file)
     if (oldAttributes != null) {
+      var changed = false
       if (oldAttributes.libraryFile != newAttributes.libraryFile) {
+        changed = true
         fsModel.moveFileAndReplace(this, oldAttributes.libraryFile, newAttributes.libraryFile)
       }
       if (oldAttributes.memberInfo != newAttributes.memberInfo) {
+        changed = true
         fileToMemberInfoMap[file] = newAttributes.memberInfo
       }
       if (oldAttributes.contentMode != newAttributes.contentMode) {
+        changed = true
         fileToContentTypeMap[file] = newAttributes.contentMode
+      }
+      if (changed) {
+        sendTopic(
+          topic = AttributesService.ATTRIBUTES_CHANGED,
+          componentManager = dataOpsManager.componentManager
+        ).onUpdate(oldAttributes, newAttributes, file)
       }
     }
   }
 
   override fun clearAttributes(file: MFVirtualFile) {
+    val attributes = getAttributes(file) ?: return
     fileToMemberInfoMap.remove(file)
     fileToContentTypeMap.remove(file)
+    sendTopic(
+      topic = AttributesService.ATTRIBUTES_CHANGED,
+      componentManager = dataOpsManager.componentManager
+    ).onDelete(attributes, file)
   }
 
   override val attributesClass = RemoteMemberAttributes::class.java

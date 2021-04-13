@@ -17,7 +17,7 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
   }
 
   constructor(
-    columnNames: Array<out ColumnInfo<Item, *>>?,
+    columnNames: Array<out ColumnInfo<Item, *>>,
     selectedColumn: Int,
     crudable: Crudable
   ) : super(columnNames, mutableListOf(), selectedColumn) {
@@ -26,7 +26,7 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
   }
 
   constructor(
-    columnNames: Array<out ColumnInfo<Item, *>>?,
+    columnNames: Array<out ColumnInfo<Item, *>>,
     selectedColumn: Int,
     order: SortOrder,
     crudable: Crudable

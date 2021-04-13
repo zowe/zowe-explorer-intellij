@@ -1,9 +1,13 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
+import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.utils.applyIfNotNull
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.mapNotNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -26,7 +30,10 @@ class UssFileContentSynchronizer(
 
   override val storageNamePostfix = "uss"
 
-  override fun fetchRemoteContentBytes(attributes: RemoteUssAttributes): ByteArray {
+  override fun fetchRemoteContentBytes(
+    attributes: RemoteUssAttributes,
+    progressIndicator: ProgressIndicator?
+  ): ByteArray {
     var throwable: Throwable = IOException("Unknown error")
     return attributes.requesters.stream().mapNotNull {
       var content: ByteArray? = null
@@ -35,11 +42,13 @@ class UssFileContentSynchronizer(
           authorizationToken = it.connectionConfig.token,
           filePath = attributes.path.substring(1),
           xIBMDataType = attributes.contentMode
-        ).execute()
+        ).applyIfNotNull(progressIndicator) { indicator ->
+          cancelByIndicator(indicator)
+        }.execute()
         if (response.isSuccessful) {
-          content = response.body()?.toByteArray()
+          content = response.body()?.removeLastNewLine()?.toByteArray()
         } else {
-          throwable = IOException(response.code().toString())
+          throwable = CallException(response, "Cannot fetch data from ${attributes.path}")
         }
       } catch (t: Throwable) {
         throwable = t
@@ -56,13 +65,13 @@ class UssFileContentSynchronizer(
         val response = api<DataAPI>(requester.connectionConfig).writeToUssFile(
           authorizationToken = requester.connectionConfig.token,
           filePath = attributes.path.substring(1),
-          body = String(newContentBytes),
+          body = String(newContentBytes).addNewLine(),
           xIBMDataType = attributes.contentMode
         ).execute()
         if (response.isSuccessful) {
           uploaded = true
         } else {
-          throwable = IOException(response.code().toString())
+          throwable = CallException(response, "Cannot upload data to ${attributes.path}")
         }
         if (uploaded) {
           break

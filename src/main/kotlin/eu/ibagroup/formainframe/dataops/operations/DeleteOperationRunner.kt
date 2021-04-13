@@ -7,8 +7,10 @@ import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
+import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMOption
@@ -40,10 +42,10 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
               datasetName = attr.name
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              runWriteActionOnWriteThread { operation.file.delete(this@DeleteOperationRunner) }
+              runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
               true
             } else {
-              throwable = IOException(response.code().toString())
+              throwable =  CallException(response, "Cannot delete data set")
               false
             }
           } catch (t: Throwable) {
@@ -65,10 +67,10 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
                 memberName = attr.name
               ).cancelByIndicator(progressIndicator).execute()
               if (response.isSuccessful) {
-                runWriteActionOnWriteThread { operation.file.delete(this@DeleteOperationRunner) }
+                runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
                 true
               } else {
-                throwable = IOException(response.code().toString())
+                throwable =  CallException(response, "Cannot delete data set member")
                 false
               }
             } catch (t: Throwable) {
@@ -89,10 +91,10 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
               xIBMOption = XIBMOption.RECURSIVE
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              runWriteActionOnWriteThread { operation.file.delete(this@DeleteOperationRunner) }
+              runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
               true
             } else {
-              throwable = IOException(response.code().toString())
+              throwable = CallException(response, "Cannot delete USS File/Directory")
               false
             }
           } catch (t: Throwable) {

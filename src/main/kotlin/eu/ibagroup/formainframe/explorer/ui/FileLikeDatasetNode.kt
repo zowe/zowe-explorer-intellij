@@ -29,13 +29,13 @@ class FileLikeDatasetNode(
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else AllIcons.FileTypes.Text)
-    val textAttributes = if (service<ExplorerContent>(explorer.componentManager).isFileInCutBuffer(value)) {
+    val textAttributes = if (explorer.componentManager.service<ExplorerContent>().isFileInCutBuffer(value)) {
       SimpleTextAttributes.GRAYED_ATTRIBUTES
     } else {
       SimpleTextAttributes.REGULAR_ATTRIBUTES
     }
     presentation.addText(value.presentableName, textAttributes)
-    val volser = service<DataOpsManager>(explorer.componentManager)
+    val volser = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
       .getAttributes(value)?.volser
     volser?.let { presentation.addText(" $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }

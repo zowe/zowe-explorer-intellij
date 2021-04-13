@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.*
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
@@ -77,7 +78,7 @@ fun assertWriteAllowed() = ApplicationManager.getApplication().assertWriteAccess
 
 fun <T> submitOnWriteThread(block: () -> T): T {
   @Suppress("UnstableApiUsage")
-  return AppUIExecutor.onWriteThread().submit(block).get()
+  return AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).submit(block).get()
 }
 
 @Suppress("UnstableApiUsage")
@@ -95,18 +96,18 @@ inline fun <T> runWriteActionOnWriteThread(crossinline block: () -> T): T {
     }
 }
 
-inline fun runInEdtAndRead(crossinline block: () -> Unit) {
-  return runInEdt { runReadAction { block() } }
+inline fun <T> runReadActionInEdtAndWait(crossinline block: () -> T): T {
+  return invokeAndWaitIfNeeded { runReadAction(block)}
 }
 
 fun AlreadyDisposedException(clazz: Class<*>) = AlreadyDisposedException("${clazz.name} is already disposed")
 
-inline fun <reified S : Any> service(componentManager: ComponentManager): S {
-  return componentManager.getService(S::class.java)
+inline fun <reified S : Any> ComponentManager.service(): S {
+  return getService(S::class.java)
 }
 
-inline fun <reified S : Any> appService(): S {
-  return service(ApplicationManager.getApplication())
+inline fun <reified S : Any> ComponentManager.component(): S {
+  return getComponent(S::class.java)
 }
 
 inline fun <T> runPromiseAsBackgroundTask(
@@ -167,5 +168,28 @@ fun <T> Promise<T>.get(): T? {
     } else {
       throw throwable ?: Throwable()
     }
+  }
+}
+
+inline fun <reified T> runTask(
+  @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
+  project: Project? = null,
+  cancellable: Boolean = true,
+  crossinline task: (ProgressIndicator) -> T
+): T {
+  return ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, cancellable) {
+    override fun compute(indicator: ProgressIndicator): T {
+      return task(indicator)
+    }
+  })
+}
+
+inline fun <reified S : Any> ComponentManager.hasService(): Boolean {
+  return picoContainer.getComponentInstance(S::class.java.name) != null
+}
+
+inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
+  runInEdt {
+    runWriteAction(block)
   }
 }

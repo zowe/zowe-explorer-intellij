@@ -24,6 +24,7 @@ import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
+import eu.ibagroup.formainframe.common.ui.DoubleClickTreeMouseListener
 import eu.ibagroup.formainframe.common.ui.promisePath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
@@ -63,7 +64,7 @@ class GlobalFileExplorerView(
   internal val myTree: Tree
   internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
 
-  private val dataOpsManager = service<DataOpsManager>(explorer.componentManager)
+  private val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
 
   private val ignoreVFileDeleteEvents = AtomicBoolean(false)
 
@@ -194,6 +195,10 @@ class GlobalFileExplorerView(
           getNodesByQueryAndInvalidate(query)
         }
 
+        override fun <R : Any, Q : Query<R, Unit>> onCacheCleaned(query: Q) {
+          getNodesByQueryAndInvalidate(query)
+        }
+
         override fun <R : Any, Q : Query<R, Unit>> onFetchCancelled(query: Q) {
           getNodesByQueryAndInvalidate(query, collapse = true, invalidate = false)
         }
@@ -241,7 +246,7 @@ class GlobalFileExplorerView(
         val descriptor = (it.lastPathComponent as DefaultMutableTreeNode).userObject as ExplorerTreeNode<*>
         val file = descriptor.virtualFile
         val attributes = if (file != null) {
-          service<DataOpsManager>(explorer.componentManager).tryToGetAttributes(file)
+          explorer.componentManager.service<DataOpsManager>().tryToGetAttributes(file)
         } else null
         NodeData(descriptor, file, attributes)
       } ?: listOf()
@@ -264,7 +269,13 @@ class GlobalFileExplorerView(
       }
     })
 
-    EditSourceOnDoubleClickHandler.TreeMouseListener(tree).installOn(tree)
+    DoubleClickTreeMouseListener(tree) {
+      if (isExpanded(it)) {
+        collapsePath(it)
+      } else {
+        expandPath(it)
+      }
+    }.installOn(tree)
 
   }
 
@@ -566,7 +577,7 @@ class GlobalFileExplorerView(
       }
       val nodeAndFilePairs = nodeDataAndPathFiltered.map { it.first }.filter {
         val file = it.file ?: return@filter false
-        service<DataOpsManager>(explorer.componentManager).isOperationSupported(
+        explorer.componentManager.service<DataOpsManager>().isOperationSupported(
           DeleteOperation(file, dataOpsManager)
         )
       }.mapNotNull { Pair(it, it.file ?: return@mapNotNull null) }
@@ -593,12 +604,15 @@ class GlobalFileExplorerView(
                 }.onFailure { explorer.reportThrowable(it, project) }
                 it.fraction = it.fraction + 1.0 / files.size
               }
-            files.asSequence().mapNotNull { it.parent }.toSet().map {
-              myFsTreeStructure.findByVirtualFile(it)
-            }.flatten().toSet().forEach {
-              it.cleanCacheIfPossible()
-              myStructure.invalidate(it, true)
-            }
+            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
+              .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
+              .forEach { it.cleanCache(false) }
+//            files.asSequence().mapNotNull { it.parent }.toSet().map {
+//              myFsTreeStructure.findByVirtualFile(it)
+//            }.flatten().toSet().forEach {
+//              it.cleanCacheIfPossible()
+//              myStructure.invalidate(it, true)
+//            }
           }
         }
       }

@@ -9,11 +9,11 @@ import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.utils.lock
 import eu.ibagroup.formainframe.utils.locked
 import eu.ibagroup.formainframe.utils.service
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit>(
   value: Value,
@@ -27,7 +27,7 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
   private val condition = lock.newCondition()
 
   private val fileFetchProvider
-    get() = service<DataOpsManager>(explorer.componentManager)
+    get() = explorer.componentManager.service<DataOpsManager>()
       .getFileFetchProvider(requestClass, queryClass, vFileClass)
 
   protected abstract fun makeFetchTaskTitle(query: Q): String
@@ -37,7 +37,7 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
   private val hasError = AtomicBoolean(false)
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
-    return lock(lock) {
+    return lock.withLock {
       val childrenNodes = cachedChildren
       if (childrenNodes == null) {
         val q = query

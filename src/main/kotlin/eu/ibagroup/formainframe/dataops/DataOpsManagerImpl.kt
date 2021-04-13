@@ -38,6 +38,7 @@ class DataOpsManagerImpl : DataOpsManager {
 
   override fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes? {
     return attributesServices.stream()
+      .filter { it.vFileClass.isAssignableFrom(file::class.java) }
       .map { it.getAttributes(file) }
       .filter { it != null }
       .findAnyNullable()
@@ -73,11 +74,16 @@ class DataOpsManagerImpl : DataOpsManager {
     ContentSynchronizer.EP.extensionList.buildComponents()
   }
 
-  override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
+  override fun isSyncSupported(file: VirtualFile): Boolean {
+    return contentSynchronizers.stream()
+      .filter { it.accepts(file) }
+      .findAnyNullable() != null
+  }
+
+  override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
     return contentSynchronizers.stream()
       .filter { it.accepts(file) }
       .findAnyNullable()
-      ?: throw IllegalArgumentException("Cannot find appropriate ContentSynchronizer for ${file.path}")
   }
 
   private val operationRunners by lazy {

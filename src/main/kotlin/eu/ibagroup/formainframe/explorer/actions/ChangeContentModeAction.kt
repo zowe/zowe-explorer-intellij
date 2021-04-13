@@ -7,7 +7,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.GlobalFileExplorerView
-import eu.ibagroup.formainframe.utils.appService
+import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.XIBMDataType
 
 class ChangeContentModeAction : ToggleAction() {
@@ -16,7 +16,7 @@ class ChangeContentModeAction : ToggleAction() {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return false
     return getMappedNodes(view)
       .mapNotNull {
-        appService<DataOpsManager>()
+        view.explorer.componentManager.service<DataOpsManager>()
           .getAttributesService(it.first::class.java, it.second::class.java)
           .getAttributes(it.second)
       }
@@ -37,7 +37,7 @@ class ChangeContentModeAction : ToggleAction() {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     getMappedNodes(view)
       .forEach {
-        appService<DataOpsManager>()
+        view.explorer.componentManager.service<DataOpsManager>()
           .getAttributesService(it.first::class.java, it.second::class.java)
           .updateAttributes(it.first) {
             contentMode = if (state) {

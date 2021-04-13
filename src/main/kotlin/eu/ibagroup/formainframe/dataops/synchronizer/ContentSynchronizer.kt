@@ -1,9 +1,10 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.DumbProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.dataops.FetchCallback
-import java.io.IOException
 
 enum class AcceptancePolicy {
   IF_EMPTY_ONLY,
@@ -21,27 +22,30 @@ interface ContentSynchronizer {
 
   fun isAlreadySynced(file: VirtualFile): Boolean
 
-  @Throws(IOException::class)
-  fun enforceSync(
+  fun startSync(
     file: VirtualFile,
+    project: Project,
     acceptancePolicy: AcceptancePolicy,
     saveStrategy: SaveStrategy,
-    onSyncEstablished: FetchCallback<Unit>
+    removeSyncOnThrowable: (file: VirtualFile, t: Throwable) -> Boolean,
+    progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE
   )
 
-  @Throws(IOException::class)
-  fun enforceSyncIfNeeded(
+  fun triggerSync(file: VirtualFile)
+
+  fun startSyncIfNeeded(
     file: VirtualFile,
+    project: Project,
     acceptancePolicy: AcceptancePolicy,
     saveStrategy: SaveStrategy,
-    onSyncEstablished: FetchCallback<Unit>
+    removeSyncOnThrowable: (file: VirtualFile, t: Throwable) -> Boolean,
+    progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE
   ) {
     if (!isAlreadySynced(file)) {
-      enforceSync(file, acceptancePolicy, saveStrategy, onSyncEstablished)
+      startSync(file, project, acceptancePolicy, saveStrategy, removeSyncOnThrowable, progressIndicator)
     }
   }
 
-  @Throws(IOException::class)
   fun removeSync(file: VirtualFile)
 
 }

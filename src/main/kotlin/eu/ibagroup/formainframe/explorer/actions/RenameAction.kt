@@ -118,7 +118,7 @@ class RenameAction : AnAction() {
       cancellable = true
     ) {
       runCatching {
-        service<DataOpsManager>(node.explorer.componentManager).performOperation(
+        node.explorer.componentManager.service<DataOpsManager>().performOperation(
           operation = RenameOperation(
             file = file,
             attributes = attributes,

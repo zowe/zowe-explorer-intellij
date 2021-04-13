@@ -1,17 +1,16 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.FetchCallback
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.utils.ChannelExecutor
-import eu.ibagroup.formainframe.utils.Execution
 import eu.ibagroup.formainframe.utils.QueueExecutor
-import eu.ibagroup.formainframe.utils.appService
 import kotlinx.coroutines.channels.Channel
 
-private val CHANNEL_DELAY = appService<ConfigService>().autoSaveDelay
+private val CHANNEL_DELAY = service<ConfigService>().autoSaveDelay
 
 abstract class AbstractAttributedContentSynchronizer<Attributes : VFileInfoAttributes>(
   dataOpsManager: DataOpsManager
@@ -21,17 +20,19 @@ abstract class AbstractAttributedContentSynchronizer<Attributes : VFileInfoAttri
     dataOpsManager.getAttributesService(attributesClass, vFileClass)
   }
 
-  protected abstract fun buildExecution(
-    file: VirtualFile,
-    saveStrategy: SaveStrategy
-  ): Execution<FetchCallback<Unit>, Unit>
+  protected val fileToConfigMap = ConcurrentHashMap<VirtualFile, SyncProvider>()
+
+  protected abstract fun execute(syncProvider: SyncProvider)
 
   @Suppress("UNCHECKED_CAST")
   override fun buildExecutorForFile(
-    file: VirtualFile,
-    saveStrategy: SaveStrategy
-  ): QueueExecutor<FetchCallback<Unit>, Unit> {
-    return ChannelExecutor(Channel(Channel.CONFLATED), CHANNEL_DELAY, buildExecution(file, saveStrategy))
+    providerFactory: (QueueExecutor<Unit>) -> SyncProvider
+  ): Pair<QueueExecutor<Unit>, SyncProvider> {
+    val executor = ChannelExecutor<Unit>(Channel(Channel.CONFLATED), CHANNEL_DELAY)
+    val syncProvider = providerFactory(executor)
+    fileToConfigMap[syncProvider.file] = syncProvider
+    executor.launch { execute(syncProvider) }
+    return Pair(executor, syncProvider)
   }
 
   override fun accepts(file: VirtualFile): Boolean {
@@ -41,5 +42,10 @@ abstract class AbstractAttributedContentSynchronizer<Attributes : VFileInfoAttri
   protected abstract val vFileClass: Class<out VirtualFile>
 
   protected abstract val attributesClass: Class<out Attributes>
+
+  override fun removeSync(file: VirtualFile) {
+    super.removeSync(file)
+    fileToConfigMap.remove(file)
+  }
 
 }

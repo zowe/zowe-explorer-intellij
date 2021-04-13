@@ -48,7 +48,7 @@ class UssDirNode(
     }
 
   private val attributesService
-    get() = service<DataOpsManager>(explorer.componentManager)
+    get() = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteUssAttributes, MFVirtualFile>()
 
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
