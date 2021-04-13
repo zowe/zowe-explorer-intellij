@@ -43,7 +43,7 @@ class LibraryNode(
   override fun update(presentation: PresentationData) {
     presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else AllIcons.FileTypes.Any_type)
     presentation.addText(value.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-    val volser = service<DataOpsManager>(explorer.componentManager)
+    val volser = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
       .getAttributes(value)?.volser
     volser?.let { presentation.addText(" $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }

@@ -4,19 +4,20 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.fetchAdapter
 import eu.ibagroup.formainframe.dataops.synchronizer.AcceptancePolicy
 import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.utils.component
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import java.util.concurrent.locks.ReentrantLock
 import javax.swing.tree.TreePath
-import kotlin.concurrent.withLock
 
 @Suppress("LeakingThis")
 abstract class ExplorerTreeNode<Value : Any>(
@@ -50,7 +51,7 @@ abstract class ExplorerTreeNode<Value : Any>(
     val file = virtualFile ?: return
     descriptor?.let {
       if (!file.isDirectory) {
-        val contentSynchronizer = service<DataOpsManager>(explorer.componentManager)
+        val contentSynchronizer = explorer.componentManager.service<DataOpsManager>()
           .getContentSynchronizer(file)
         if (!contentSynchronizer.isAlreadySynced(file)) {
           val doSync = file.isReadable || showYesNoDialog(
@@ -60,43 +61,46 @@ abstract class ExplorerTreeNode<Value : Any>(
             icon = AllIcons.General.WarningDialog
           )
           if (doSync) {
-            var successful = false
             runModalTask(
               title = "Fetching Content for ${file.name}",
               cancellable = true,
               project = project,
-            ) {
-              val lock = ReentrantLock()
-              val condition = lock.newCondition()
-              val fsModel = file.fileSystem.model
-              fsModel.blockIOStreams(file)
-              contentSynchronizer.enforceSyncIfNeeded(
+            ) { indicator ->
+              contentSynchronizer.startSyncIfNeeded(
                 file = file,
+                project = notNullProject,
                 acceptancePolicy = AcceptancePolicy.FORCE_REWRITE,
-                saveStrategy = { _, lastSuccessfulState, remoteBytes ->
-                  (lastSuccessfulState contentEquals remoteBytes)
-                },
-                onSyncEstablished = fetchAdapter {
-                  onStart { lock.lock() }
-                  onResult { r ->
-                    fsModel.unblockIOStreams(file)
-                    successful = r.isSuccess
-                    condition.signalAll()
-                    lock.unlock()
+                saveStrategy = { f, lastSuccessfulState, remoteBytes ->
+                  (lastSuccessfulState contentEquals remoteBytes).let decision@{ result ->
+                    return@decision if (!result) {
+                      invokeAndWaitIfNeeded {
+                        showYesNoDialog(
+                          title = "Remote Conflict in File ${f.name}",
+                          message = "The file you are currently editing was changed on remote. Do you want to accept remote changes and discard local ones, or overwrite content on the mainframe by local version?",
+                          noText = "Accept Remote",
+                          yesText = "Overwrite Content on the Mainframe",
+                          project = project,
+                          icon = AllIcons.General.WarningDialog
+                        )
+                      }
+                    } else {
+                      true
+                    }
                   }
-                }
+                },
+                removeSyncOnThrowable = { f, t ->
+                  invokeLater {
+                    notNullProject.component<FileEditorManager>().closeFile(f)
+                    explorer.reportThrowable(t, project)
+                  }
+                  true
+                },
+                progressIndicator = indicator
               )
-              lock.withLock { condition.await() }
-            }
-            if (successful) {
-              it.navigate(requestFocus)
-            } else {
-              contentSynchronizer.removeSync(file)
             }
           }
-        } else {
-          it.navigate(requestFocus)
         }
+        it.navigate(requestFocus)
       }
     }
   }

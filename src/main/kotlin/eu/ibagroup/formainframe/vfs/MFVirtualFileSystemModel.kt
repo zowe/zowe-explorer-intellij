@@ -289,7 +289,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   override fun exists(file: MFVirtualFile): Boolean {
-    return lock(file.readLock()) { fsGraph.containsVertex(file) }.also {
+    return file.read { fsGraph.containsVertex(file) }.also {
       if (!it) file.isValidInternal = false
     }
   }
@@ -504,7 +504,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     return if (isDisposed) {
       false
     } else {
-      lock(file.readLock()) {
+      file.read {
         if (!file.isValidInternal) {
           if (fsGraph.containsVertex(file)) {
             addToCleanerQueue(file)
@@ -523,7 +523,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     synchronized(cleanerLock) {
       runBlocking {
         launch {
-          lock(file.writeLock()) {
+          file.write {
             fsGraph.removeVertex(file)
           }
         }
@@ -580,7 +580,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
 
   override fun getRank() = 1
 
-  override fun getAttributes(file: MFVirtualFile) = lock(file.writeLock()) {
+  override fun getAttributes(file: MFVirtualFile) = file.write {
     file.isValidInternal.runIfTrue { file.attributes }
   }
 

@@ -31,20 +31,11 @@ class ConfigServiceImpl : ConfigService {
 
   override fun loadState(state: ConfigState) {
     XmlSerializerUtil.copyBean(state, myState)
-    if (loaded.compareAndSet(false, true)) {
-//      ApplicationManager.getApplication()
-//        .messageBus
-//        .syncPublisher(ConfigInitializationListener.CONFIGS_LOADED)
-//        .onConfigLoaded()
-    }
   }
 
   override val eventHandler = ConfigEventHandler()
 
-  override val autoSaveDelay: Duration = Duration.ofSeconds(10)
-
-  override val configsAreLoaded: Boolean
-    get() = loaded.get()
+  override val autoSaveDelay: Duration = Duration.ofSeconds(5)
 
   override val crudable = makeCrudableWithoutListeners(false) { myState }
     .configureCrudable {

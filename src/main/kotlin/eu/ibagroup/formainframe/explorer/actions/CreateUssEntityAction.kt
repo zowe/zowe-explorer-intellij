@@ -3,7 +3,6 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.common.ui.showUntilDone
@@ -30,7 +29,7 @@ abstract class CreateUssEntityAction : AnAction() {
       val connectionConfig = node.unit.connectionConfig
       val urlConnection = node.unit.urlConnection
       if (connectionConfig == null || urlConnection == null) return
-      val dataOpsManager = service<DataOpsManager>(node.unit.explorer.componentManager)
+      val dataOpsManager = node.unit.explorer.componentManager.service<DataOpsManager>()
       val filePath = if (file != null) {
         dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
           .getAttributes(file)?.path
@@ -77,7 +76,6 @@ abstract class CreateUssEntityAction : AnAction() {
           }
           res
         }
-
       }
     }
   }

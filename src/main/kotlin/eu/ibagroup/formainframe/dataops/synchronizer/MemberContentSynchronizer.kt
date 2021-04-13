@@ -1,10 +1,14 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
+import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.utils.applyIfNotNull
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import java.io.IOException
@@ -28,7 +32,10 @@ class MemberContentSynchronizer(
 
   override val storageNamePostfix = "members"
 
-  override fun fetchRemoteContentBytes(attributes: RemoteMemberAttributes): ByteArray {
+  override fun fetchRemoteContentBytes(
+    attributes: RemoteMemberAttributes,
+    progressIndicator: ProgressIndicator?
+  ): ByteArray {
     val parentLib = attributes.libraryFile
     val libAttributes = datasetAttributesService.getAttributes(parentLib)
       ?: throw IOException("Cannot find parent library attributes for library ${parentLib.path}")
@@ -41,12 +48,14 @@ class MemberContentSynchronizer(
           datasetName = libAttributes.name,
           memberName = attributes.name,
           xIBMDataType = attributes.contentMode
-        ).execute()
+        ).applyIfNotNull(progressIndicator) { indicator ->
+          cancelByIndicator(indicator)
+        }.execute()
         if (response.isSuccessful) {
-          content = response.body()?.toByteArray()
+          content = response.body()?.removeLastNewLine()?.toByteArray()
           break
         } else {
-          throwable = Throwable("Todo ${response.code()}")
+          throwable = CallException(response, "Cannot fetch data from ${libAttributes.name}(${attributes.name})")
         }
       } catch (t: Throwable) {
         throwable = t
@@ -66,14 +75,14 @@ class MemberContentSynchronizer(
           authorizationToken = requester.connectionConfig.token,
           datasetName = libAttributes.name,
           memberName = attributes.name,
-          content = String(newContentBytes),
+          content = String(newContentBytes).addNewLine(),
           xIBMDataType = attributes.contentMode
         ).execute()
         if (response.isSuccessful) {
           throwable = null
           break
         } else {
-          throwable = Throwable("Todo ${response.code()}")
+          throwable = CallException(response, "Cannot upload data to ${libAttributes.name}(${attributes.name})")
         }
       } catch (t: Throwable) {
         throwable = t

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.openapi.vfs.newvfs.FileSystemInterface
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -17,7 +18,7 @@ open class VirtualFileSystemModelWrapper<File : VirtualFile, Model : VirtualFile
       "${it.path} is not supported by this FS. Only instances of ${vFileClass.name} are allowed"
     )
   }
-) : VirtualFileSystem(), Disposable by model {
+) : VirtualFileSystem(), FileSystemInterface, Disposable by model {
 
   private inline fun <R> VirtualFile.ifOurInstance(
     onOurBlock: (File) -> R
@@ -84,57 +85,57 @@ open class VirtualFileSystemModelWrapper<File : VirtualFile, Model : VirtualFile
     }
   }
 
-  fun exists(file: VirtualFile): Boolean {
+  override fun exists(file: VirtualFile): Boolean {
     return file.ifOurInstance {
       model.exists(it)
     }
   }
 
-  fun list(file: VirtualFile): Array<String> {
+  override fun list(file: VirtualFile): Array<String> {
     return file.ifOurInstance {
       model.list(it)
     }
   }
 
-  fun isDirectory(file: VirtualFile): Boolean {
+  override fun isDirectory(file: VirtualFile): Boolean {
     return file.ifOurInstance {
       model.isDirectory(it)
     }
   }
 
-  fun getTimeStamp(file: VirtualFile): Long {
+  override fun getTimeStamp(file: VirtualFile): Long {
     return file.ifOurInstance {
       model.getTimeStamp(it)
     }
   }
 
   @Throws(IOException::class)
-  fun setTimeStamp(file: VirtualFile, timeStamp: Long) {
+  override fun setTimeStamp(file: VirtualFile, timeStamp: Long) {
     return file.ifOurInstance {
       model.setTimeStamp(it, timeStamp)
     }
   }
 
-  fun isWritable(file: VirtualFile): Boolean {
+  override fun isWritable(file: VirtualFile): Boolean {
     return file.ifOurInstance {
       model.isWritable(it)
     }
   }
 
   @Throws(IOException::class)
-  fun setWritable(file: VirtualFile, writableFlag: Boolean) {
+  override fun setWritable(file: VirtualFile, writableFlag: Boolean) {
     return file.ifOurInstance {
       model.setWritable(it, writableFlag)
     }
   }
 
-  fun isSymLink(file: VirtualFile): Boolean {
+  override fun isSymLink(file: VirtualFile): Boolean {
     return file.ifOurInstance {
       model.isSymLink(it)
     }
   }
 
-  fun resolveSymLink(file: VirtualFile): String? {
+  override fun resolveSymLink(file: VirtualFile): String? {
     return file.ifOurInstance {
       model.resolveSymLink(it)
     }
@@ -162,27 +163,27 @@ open class VirtualFileSystemModelWrapper<File : VirtualFile, Model : VirtualFile
   }
 
   @Throws(IOException::class)
-  fun contentsToByteArray(file: VirtualFile): ByteArray {
+  override fun contentsToByteArray(file: VirtualFile): ByteArray {
     return file.ifOurInstance {
       model.contentsToByteArray(it)
     }
   }
 
   @Throws(IOException::class)
-  fun getInputStream(file: VirtualFile): InputStream {
+  override fun getInputStream(file: VirtualFile): InputStream {
     return file.ifOurInstance {
       model.getInputStream(it)
     }
   }
 
   @Throws(IOException::class)
-  fun getOutputStream(file: VirtualFile, requestor: Any?, modStamp: Long, timeStamp: Long): OutputStream {
+  override fun getOutputStream(file: VirtualFile, requestor: Any?, modStamp: Long, timeStamp: Long): OutputStream {
     return file.ifOurInstance {
       model.getOutputStream(it, requestor, modStamp, timeStamp)
     }
   }
 
-  fun getLength(file: VirtualFile): Long {
+  override fun getLength(file: VirtualFile): Long {
     return file.ifOurInstance {
       model.getLength(it)
     }

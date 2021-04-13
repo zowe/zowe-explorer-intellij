@@ -2,37 +2,40 @@ package eu.ibagroup.formainframe.utils
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
-
-interface Execution<V, R> {
-
-  @Throws(Throwable::class)
-  fun execute(input: V): R
-
-  fun receive(result: R)
-
-  fun onThrowable(input: V, throwable: Throwable)
-
-}
-
-class ChannelExecutor<V, R>(
+class ChannelExecutor<V>(
   private val channel: Channel<V>,
-  delayDuration: Duration,
-  private val execution: Execution<V, R>
-) : QueueExecutor<V, R> {
-
-  private val delayDurationInMilliseconds = delayDuration.toMillis()
+  delayDuration: Duration
+) : QueueExecutor<V> {
 
   private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-  private suspend fun processInput(input: V): R = coroutineScope {
-    val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-      execution.onThrowable(input, throwable)
+  private val initChannel = Channel<Unit>(Channel.RENDEZVOUS)
+
+  private lateinit var execution: (V) -> Unit
+
+  @Synchronized
+  override fun launch(execution: (V) -> Unit) {
+    val needToNotifyInitialized = !this::execution.isInitialized
+    this.execution = execution
+    if (needToNotifyInitialized) {
+      scope.launch { initChannel.send(Unit) }
     }
-    withContext(NonCancellable + exceptionHandler) {
-      execution.execute(input)
+  }
+
+  private val delayDurationInMilliseconds = delayDuration.toMillis()
+
+  private val executionMutex = Mutex()
+
+  private suspend fun processInput(input: V) = coroutineScope {
+    withContext(NonCancellable) {
+      executionMutex.withLock {
+        execution(input)
+      }
     }
   }
 
@@ -42,10 +45,7 @@ class ChannelExecutor<V, R>(
     } else {
       channel.receive()
     }
-    if (input != null) {
-      val result = processInput(input)
-      execution.receive(result)
-    }
+    input?.let { processInput(it) }
   }
 
   private val cancelled = AtomicBoolean(false)
@@ -54,6 +54,12 @@ class ChannelExecutor<V, R>(
     while (true) {
       try {
         ensureActive()
+        if (!this@ChannelExecutor::execution.isInitialized) {
+          initChannel.receive()
+        }
+        if (isOnPause.get()) {
+          pauseChannel.receive()
+        }
         processChannel(false)
         delay(delayDurationInMilliseconds)
       } catch (ignored: CancellationException) {
@@ -76,6 +82,21 @@ class ChannelExecutor<V, R>(
   override fun shutdown() {
     runBlocking {
       job.cancelAndJoin()
+    }
+  }
+
+  private val isOnPause = AtomicBoolean(false)
+  private val pauseChannel = Channel<Unit>(Channel.RENDEZVOUS)
+
+  override fun pause() {
+    isOnPause.set(true)
+  }
+
+  override fun resume() {
+    if (isOnPause.compareAndSet(true, false)) {
+      scope.launch {
+        pauseChannel.send(Unit)
+      }
     }
   }
 

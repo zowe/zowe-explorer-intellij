@@ -1,14 +1,13 @@
 package eu.ibagroup.formainframe.utils
 
 import com.google.gson.Gson
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.project.Project
 import com.intellij.util.containers.toArray
-import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReadWriteLock
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
+import kotlin.concurrent.withLock
 import kotlin.streams.toList
 
 fun <E> Stream<E>.toMutableList(): MutableList<E> {
@@ -52,12 +51,19 @@ inline fun <T> lock(vararg locks: Lock?, block: () -> T): T {
   }
 }
 
-inline fun <T> lock(lock: Lock?, block: () -> T): T {
-  lock?.lock()
-  return try {
+inline fun <T> ReadWriteLock.read(block: () -> T): T {
+  return readLock().withLock(block)
+}
+
+inline fun <T> ReadWriteLock.write(block: () -> T): T {
+  return writeLock().withLock(block)
+}
+
+inline fun <T> Lock?.optionalLock(block: () -> T) : T {
+  return if (this != null) {
+    withLock(block)
+  } else {
     block()
-  } finally {
-    lock?.unlock()
   }
 }
 
@@ -132,15 +138,8 @@ fun <R> List<R>.mergeWith(another: List<R>): MutableList<R> {
 
 val UNIT_CLASS = Unit::class.java
 
-inline fun <reified T> runTask(
-  @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
-  project: Project? = null,
-  cancellable: Boolean = true,
-  crossinline task: (ProgressIndicator) -> T
-): T {
-  return ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, cancellable) {
-    override fun compute(indicator: ProgressIndicator): T {
-      return task(indicator)
-    }
-  })
+inline fun <reified T, reified V> T.applyIfNotNull(v: V?, block: T.(V) -> T): T {
+  return run {
+    v?.let { block(this, it) } ?: this
+  }
 }

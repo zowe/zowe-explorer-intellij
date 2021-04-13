@@ -11,10 +11,12 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
 import eu.ibagroup.formainframe.utils.crudable.getByForeignKeyDeeply
-import eu.ibagroup.formainframe.utils.lock
 import eu.ibagroup.formainframe.utils.runIfTrue
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.withLock
 
 class GlobalWorkingSet(
   override val uuid: String,
@@ -25,12 +27,12 @@ class GlobalWorkingSet(
 
   override val explorer = globalExplorer
 
-  private val lock = ReentrantReadWriteLock()
+  private val lock = ReentrantLock()
 
   private val isDisposed = AtomicBoolean(false)
 
   private val workingSetConfig: WorkingSetConfig?
-    get() = lock(lock.readLock()) {
+    get() = lock.withLock {
       (isDisposed.compareAndSet(false, false)).runIfTrue { workingSetConfigProvider(uuid) }
     }
 
@@ -42,18 +44,18 @@ class GlobalWorkingSet(
     get() = workingSetConfig?.name ?: ""
 
   override val connectionConfig: ConnectionConfig?
-    get() = lock(lock.readLock()) {
+    get() = lock.withLock {
       workingSetConfig
         ?.let {
-          return@lock configCrudable.getByForeignKey(it)
+          return@withLock configCrudable.getByForeignKey(it)
         }
     }
 
   override val urlConnection: UrlConnection?
-    get() = lock(lock.readLock()) { workingSetConfig?.let { configCrudable.getByForeignKeyDeeply(it) } }
+    get() = lock.withLock { workingSetConfig?.let { configCrudable.getByForeignKeyDeeply(it) } }
 
   override val dsMasks: Collection<DSMask>
-    get() = lock(lock.readLock()) { workingSetConfig?.dsMasks ?: listOf() }
+    get() = lock.withLock { workingSetConfig?.dsMasks ?: listOf() }
 
   override fun addMask(dsMask: DSMask) {
     val newWsConfig = workingSetConfig?.clone() ?: return
@@ -70,7 +72,7 @@ class GlobalWorkingSet(
   }
 
   override val ussPaths: Collection<UssPath>
-    get() = lock(lock.readLock()) { workingSetConfig?.ussPaths ?: listOf() }
+    get() = lock.withLock { workingSetConfig?.ussPaths ?: listOf() }
 
   override fun addUssPath(ussPath: UssPath) {
     val newWsConfig = workingSetConfig?.clone() ?: return

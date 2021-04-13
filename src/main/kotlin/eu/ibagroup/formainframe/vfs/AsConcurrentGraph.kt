@@ -1,6 +1,8 @@
 package eu.ibagroup.formainframe.vfs
 
 import eu.ibagroup.formainframe.utils.lock
+import eu.ibagroup.formainframe.utils.read
+import eu.ibagroup.formainframe.utils.write
 import org.jgrapht.Graph
 import org.jgrapht.graph.GraphDelegator
 import java.util.concurrent.locks.ReadWriteLock
@@ -28,7 +30,7 @@ class AsConcurrentGraph<Vertex : ReadWriteLock, Edge>(
   }
 
   override fun addVertex(v: Vertex): Boolean {
-    return lock(v.writeLock()) { super.addVertex(v) }
+    return v.write { super.addVertex(v) }
   }
 
   override fun containsEdge(e: Edge): Boolean {
@@ -44,31 +46,31 @@ class AsConcurrentGraph<Vertex : ReadWriteLock, Edge>(
   }
 
   override fun containsVertex(v: Vertex): Boolean {
-    return lock(v.readLock()) { super.containsVertex(v) }
+    return v.read { super.containsVertex(v) }
   }
 
   override fun degreeOf(vertex: Vertex): Int {
-    return lock(vertex.readLock()) { super.degreeOf(vertex) }
+    return vertex.read { super.degreeOf(vertex) }
   }
 
   override fun edgesOf(vertex: Vertex): MutableSet<Edge> {
-    return lock(vertex.readLock()) { super.edgesOf(vertex) }
+    return vertex.read { super.edgesOf(vertex) }
   }
 
   override fun inDegreeOf(vertex: Vertex): Int {
-    return lock(vertex.readLock()) { super.inDegreeOf(vertex) }
+    return vertex.read { super.inDegreeOf(vertex) }
   }
 
   override fun incomingEdgesOf(vertex: Vertex): MutableSet<Edge> {
-    return lock(vertex.readLock()) { super.incomingEdgesOf(vertex) }
+    return vertex.read { super.incomingEdgesOf(vertex) }
   }
 
   override fun outDegreeOf(vertex: Vertex): Int {
-    return lock(vertex.readLock()) { super.outDegreeOf(vertex) }
+    return vertex.read { super.outDegreeOf(vertex) }
   }
 
   override fun outgoingEdgesOf(vertex: Vertex): MutableSet<Edge> {
-    return lock(vertex.readLock()) { super.outgoingEdgesOf(vertex) }
+    return vertex.read { super.outgoingEdgesOf(vertex) }
   }
 
   override fun removeEdge(e: Edge): Boolean {
@@ -84,11 +86,11 @@ class AsConcurrentGraph<Vertex : ReadWriteLock, Edge>(
   }
 
   override fun removeVertex(v: Vertex): Boolean {
-    return lock(v.writeLock()) { super.removeVertex(v) }
+    return v.write { super.removeVertex(v) }
   }
 
   override fun assertVertexExist(v: Vertex): Boolean {
-    return lock(v.readLock()) { super.assertVertexExist(v) }
+    return v.read { super.assertVertexExist(v) }
   }
 
   override fun toStringFromSets(

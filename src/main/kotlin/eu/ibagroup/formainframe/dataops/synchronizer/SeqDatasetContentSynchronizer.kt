@@ -1,10 +1,14 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
+import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.utils.applyIfNotNull
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.mapNotNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -27,16 +31,23 @@ class SeqDatasetContentSynchronizer(
 
   override val storageNamePostfix = "seq_datasets"
 
-  override fun fetchRemoteContentBytes(attributes: RemoteDatasetAttributes): ByteArray {
+  override fun fetchRemoteContentBytes(
+    attributes: RemoteDatasetAttributes,
+    progressIndicator: ProgressIndicator?
+  ): ByteArray {
     var throwable: Throwable = IOException("Unknown error")
     return attributes.requesters.stream().mapNotNull {
       var content: ByteArray? = null
       try {
-        val response = makeFetchCall(it.connectionConfig, attributes).execute()
+        val response = makeFetchCall(it.connectionConfig, attributes).apply {
+          progressIndicator?.let { pi -> cancelByIndicator(pi) }
+        }.applyIfNotNull(progressIndicator) { indicator ->
+          cancelByIndicator(indicator)
+        }.execute()
         if (response.isSuccessful) {
-          content = response.body()?.toByteArray()
+          content = response.body()?.removeLastNewLine()?.toByteArray()
         } else {
-          throwable = IOException(response.code().toString())
+          throwable = CallException(response, "Cannot fetch data from ${attributes.name}")
         }
       } catch (t: Throwable) {
         throwable = t
@@ -74,7 +85,7 @@ class SeqDatasetContentSynchronizer(
         authorizationToken = connectionConfig.token,
         datasetName = attributes.name,
         volser = volser,
-        content = String(content),
+        content = String(content).addNewLine(),
         xIBMDataType = attributes.contentMode
       )
     } else {
@@ -96,7 +107,7 @@ class SeqDatasetContentSynchronizer(
         if (response.isSuccessful) {
           uploaded = true
         } else {
-          throwable = IOException(response.code().toString())
+          throwable = CallException(response, "Cannot upload data to ${attributes.name}")
         }
       } catch (t: Throwable) {
         throwable = t

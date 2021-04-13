@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.utils.lock
 import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -28,7 +27,7 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
   private val cacheState = mutableMapOf<RemoteQuery<Request, Unit>, CacheState>()
 
   override fun getCached(query: RemoteQuery<Request, Unit>): Collection<File>? {
-    return lock(lock) { (cacheState[query] == CacheState.FETCHED).runIfTrue { cache[query] } }
+    return lock.withLock { (cacheState[query] == CacheState.FETCHED).runIfTrue { cache[query] } }
   }
 
   override fun isCacheValid(query: RemoteQuery<Request, Unit>): Boolean {

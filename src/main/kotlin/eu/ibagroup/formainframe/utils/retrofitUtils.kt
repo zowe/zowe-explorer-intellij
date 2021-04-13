@@ -25,7 +25,7 @@ internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by
   override fun execute(): Response<T> {
     return try {
       call.execute()
-    } catch (e : IOException) {
+    } catch (e : Throwable) {
       throw buildException(e)
     }
   }
@@ -45,6 +45,7 @@ internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by
 
 inline fun <reified T : Any> Call<T>.cancelByIndicator(progressIndicator: ProgressIndicator): Call<T> {
   return if (progressIndicator is ProgressIndicatorEx) {
+    val wrapped = WrappedCancellableCall(this)
     val delegate = object : AbstractProgressIndicatorBase(), ProgressIndicatorEx {
       override fun cancel() {
         super.cancel()
@@ -66,7 +67,7 @@ inline fun <reified T : Any> Call<T>.cancelByIndicator(progressIndicator: Progre
       }
     }
     progressIndicator.addStateDelegate(delegate)
-    WrappedCancellableCall(this)
+    wrapped
   } else {
     this
   }

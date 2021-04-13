@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("deprecation")
 class Utils {
 
   private static @NotNull Predicate<? super Field> getFieldFilterPredicate(@Nullable String columnName,

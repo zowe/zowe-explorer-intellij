@@ -28,8 +28,6 @@ interface ConfigService : PersistentStateComponent<ConfigState> {
       get() = ApplicationManager.getApplication().getService(ConfigService::class.java)
   }
 
-  val configsAreLoaded: Boolean
-
   @get:Contains(
     entities = [
       WorkingSetConfig::class,

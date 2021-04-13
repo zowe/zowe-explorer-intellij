@@ -45,7 +45,7 @@ class AllocateDatasetAction : AnAction() {
             cancellable = true
           ) {
             runCatching {
-              service<DataOpsManager>(parentNode.unit.explorer.componentManager)
+              parentNode.unit.explorer.componentManager.service<DataOpsManager>()
                 .performOperation(
                   operation = DatasetAllocationOperation(
                     request = state,

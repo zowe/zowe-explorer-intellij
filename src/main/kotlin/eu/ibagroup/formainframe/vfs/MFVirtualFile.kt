@@ -1,5 +1,6 @@
 package eu.ibagroup.formainframe.vfs
 
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VirtualFile
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.withLock
 
 class MFVirtualFile internal constructor(
   private val fileId: Int,
@@ -318,7 +320,7 @@ internal inline fun <T> MFVirtualFile.genericLockOr(
   lock: Lock, default: () -> T, block: () -> T
 ): T {
   return if (isValid) {
-    lock(lock) {
+    lock.withLock {
       if (isValid) {
         block()
       } else {
