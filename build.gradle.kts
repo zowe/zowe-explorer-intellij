@@ -16,16 +16,19 @@ version = "0.2"
 
 repositories {
   mavenCentral()
-  maven {
-    url = URI("http://10.221.23.186:8082/repository/internal/")
-    credentials {
-      username = "admin"
-      password = "password123"
-    }
-    metadataSources {
-      mavenPom()
-      artifact()
-    }
+//  maven {
+//    url = URI("http://10.221.23.186:8082/repository/internal/")
+//    credentials {
+//      username = "admin"
+//      password = "password123"
+//    }
+//    metadataSources {
+//      mavenPom()
+//      artifact()
+//    }
+//  }
+  flatDir {
+    dir("libs")
   }
 
 }
@@ -50,7 +53,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.30")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
   implementation("org.jgrapht:jgrapht-core:1.5.0")
-  implementation("eu.ibagroup:r2z:0.1.2")
+  implementation("eu.ibagroup:r2z:1.0.3")
   testImplementation("junit", "junit", "4.12")
 }
 

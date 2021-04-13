@@ -6,6 +6,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
+import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationParams
 import eu.ibagroup.formainframe.utils.validation.validateForBlank
 import eu.ibagroup.formainframe.utils.validation.validateUssFileName
@@ -15,8 +16,13 @@ import eu.ibagroup.r2z.FileModeValue
 import eu.ibagroup.r2z.FileType
 import javax.swing.JComponent
 
-class CreateFileDialog(project: Project?, override var state: CreateFileDialogState, filePath: String) :
-  DialogWrapper(project), StatefulComponent<CreateFileDialogState> {
+val dummyState: CreateFileDialogState
+get() = CreateFileDialogState(
+  parameters = CreateUssFile(FileType.FILE, FileMode(7,7,7))
+)
+
+class CreateFileDialog(project: Project?, override var state: CreateFileDialogState = dummyState, filePath: String) :
+  StatefulDialog<CreateFileDialogState>(project = project) {
 
   override fun createCenterPanel(): JComponent {
 

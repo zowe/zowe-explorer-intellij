@@ -23,11 +23,11 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
 
   var openAddDialog = false
 
-  private fun showAndTestConnection(): ConnectionDialogState? {
+  private fun showAndTestConnection(initialState: ConnectionDialogState = ConnectionDialogState()): ConnectionDialogState? {
     return ConnectionDialog.showAndTestConnection(
       crudable = sandboxCrudable,
       parentComponent = panel?.components?.getOrNull(0),
-      initialState = ConnectionDialogState()
+      initialState = initialState
     )
   }
 
@@ -36,11 +36,12 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
   }
 
   private fun editConnection() {
-    val state = showAndTestConnection()
-
     val idx = connectionsTable?.selectedRow
-    if (idx != null && state != null) {
-      connectionsTableModel?.set(idx, state)
+    if (idx != null && connectionsTableModel != null) {
+      val state = showAndTestConnection(connectionsTableModel!![idx])
+      if (state != null) {
+        connectionsTableModel?.set(idx, state)
+      }
     }
   }
 

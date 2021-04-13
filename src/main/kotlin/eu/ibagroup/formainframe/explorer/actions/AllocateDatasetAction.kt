@@ -5,9 +5,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.util.IconUtil
+import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
@@ -32,10 +34,12 @@ class AllocateDatasetAction : AnAction() {
       val config = parentNode.unit.connectionConfig
       val urlConfig = parentNode.unit.urlConnection
       if (config != null && urlConfig != null) {
-        val dialog = AllocationDialog(e.project, DatasetAllocationParams())
-        if (dialog.showAndGet()) {
-          val state = postProcessState(dialog.state)
-          runBackgroundableTask(
+        showUntilDone(DatasetAllocationParams(), { initState ->
+          AllocationDialog(project = e.project, initState)
+        }) {
+          val state = postProcessState(it)
+          var res = false
+          runModalTask(
             title = "Allocating Data Set ${state.datasetName}",
             project = e.project,
             cancellable = true
@@ -51,6 +55,7 @@ class AllocateDatasetAction : AnAction() {
                   it
                 )
             }.onSuccess {
+              res = true
               parentNode.cleanCacheIfPossible()
               runInEdt {
                 if (showOkNoDialog(
@@ -77,7 +82,9 @@ class AllocateDatasetAction : AnAction() {
               }
             }
           }
+          res
         }
+
       }
     }
   }
@@ -98,7 +105,7 @@ class AllocateDatasetAction : AnAction() {
     } else if (state.allocationParameters.recordFormat != RecordFormat.FB || state.allocationParameters.recordFormat != RecordFormat.VB) {
       state.allocationParameters.blockSize = null
     }
-    return state
+    return state.clone()
   }
 
   override fun isDumbAware(): Boolean {

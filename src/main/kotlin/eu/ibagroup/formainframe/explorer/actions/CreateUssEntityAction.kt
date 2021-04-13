@@ -4,7 +4,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.Messages
+import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.getAttributesService
@@ -24,23 +26,30 @@ abstract class CreateUssEntityAction : AnAction() {
     val selected = view.mySelectedNodesData[0]
     val node = selected.node
     val file = selected.file
-    if (file != null && node is ExplorerUnitTreeNodeBase<*, *>) {
+    if (node is ExplorerUnitTreeNodeBase<*, *>) {
       val connectionConfig = node.unit.connectionConfig
       val urlConnection = node.unit.urlConnection
       if (connectionConfig == null || urlConnection == null) return
       val dataOpsManager = service<DataOpsManager>(node.unit.explorer.componentManager)
-      val filePath = dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
-        .getAttributes(file)?.path
+      val filePath = if (file != null) {
+        dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
+          .getAttributes(file)?.path
+      } else {
+        (node as UssDirNode).value.path
+      }
       if (filePath != null) {
-        val dialog = CreateFileDialog(e.project, fileType.apply { path = filePath }, filePath)
-        if (dialog.showAndGet()) {
-          val allocationParams = dialog.state.toAllocationParams()
+        showUntilDone(
+          initialState = fileType.apply { path = filePath },
+          { initState -> CreateFileDialog(e.project, state = initState, filePath = filePath) }
+        ) {
+          var res = false
+          val allocationParams = it.toAllocationParams()
           val fileType = if (allocationParams.parameters.type == FileType.FILE) {
             "File"
           } else {
             "Directory"
           }
-          runBackgroundableTask(
+          runModalTask(
             title = "Creating $fileType ${allocationParams.fileName}",
             project = e.project,
             cancellable = true
@@ -56,6 +65,7 @@ abstract class CreateUssEntityAction : AnAction() {
               )
             }.onSuccess {
               node.cleanCacheIfPossible()
+              res = true
             }.onFailure {
               runInEdt {
                 Messages.showErrorDialog(
@@ -65,7 +75,9 @@ abstract class CreateUssEntityAction : AnAction() {
               }
             }
           }
+          res
         }
+
       }
     }
   }
