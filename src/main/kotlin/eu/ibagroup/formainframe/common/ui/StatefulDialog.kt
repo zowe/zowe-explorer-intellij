@@ -20,13 +20,13 @@ abstract class StatefulDialog<T : Any>(
 
 fun <T : Any> showUntilDone(
   initialState: T,
-  factory: () -> StatefulDialog<T>,
+  factory: (state: T) -> StatefulDialog<T>,
   test: (T) -> Boolean
 ): T? {
   var dialog: StatefulDialog<T>
   var stateToInitializeDialog = initialState
   while (true) {
-    dialog = factory().apply { state = stateToInitializeDialog }
+    dialog = factory(stateToInitializeDialog)
     if (dialog.showAndGet()) {
       stateToInitializeDialog = dialog.state
       if (test(stateToInitializeDialog)) {

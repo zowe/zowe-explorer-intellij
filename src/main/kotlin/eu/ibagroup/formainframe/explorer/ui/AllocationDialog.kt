@@ -8,6 +8,7 @@ import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
+import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.utils.validation.validateDatasetNameOnInput
 import eu.ibagroup.formainframe.utils.validation.validateForBlank
@@ -22,7 +23,7 @@ import javax.swing.JComponent
 import javax.swing.JTextField
 
 class AllocationDialog(project: Project?, override var state: DatasetAllocationParams) :
-  DialogWrapper(project), StatefulComponent<DatasetAllocationParams> {
+  StatefulDialog<DatasetAllocationParams>(project = project) {
 
   private lateinit var recordFormatBox: JComboBox<RecordFormat>
   private lateinit var datasetOrganizationBox: JComboBox<DatasetOrganization>
