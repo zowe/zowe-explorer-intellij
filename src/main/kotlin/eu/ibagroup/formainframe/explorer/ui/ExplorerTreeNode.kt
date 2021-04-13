@@ -52,7 +52,7 @@ abstract class ExplorerTreeNode<Value : Any>(
     descriptor?.let {
       if (!file.isDirectory) {
         val contentSynchronizer = explorer.componentManager.service<DataOpsManager>()
-          .getContentSynchronizer(file)
+          .getContentSynchronizer(file) ?: return
         if (!contentSynchronizer.isAlreadySynced(file)) {
           val doSync = file.isReadable || showYesNoDialog(
             title = "File ${file.name} is not readable",

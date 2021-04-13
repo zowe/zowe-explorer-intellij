@@ -4,10 +4,15 @@ import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.CONFIGS_CHANGED
 import eu.ibagroup.formainframe.config.configCrudable
@@ -16,13 +21,12 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
 import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.anyEventAdaptor
 import eu.ibagroup.formainframe.utils.crudable.eventAdaptor
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.rwLocked
-import eu.ibagroup.formainframe.utils.sendTopic
-import eu.ibagroup.formainframe.utils.subscribe
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.stream.Collectors
 import kotlin.concurrent.read
@@ -67,12 +71,22 @@ class GlobalExplorer : Explorer {
     if (t is ProcessCanceledException) {
       return
     }
+    val details = t.castOrNull<CallException>()?.details
     NotificationBuilder(
       EXPLORER_NOTIFICATION_GROUP_ID,
       "Error in plugin For Mainframe",
       t.message ?: t.toString(),
       NotificationType.ERROR
-    ).build().let {
+    ).applyIfNotNull(details) {
+      setDropDownText(it)
+//      setContextHelpAction(object : DumbAwareAction("Show Info") {
+//        override fun actionPerformed(e: AnActionEvent) {
+//          runInEdt {
+//            Messages.showInfoMessage(it, t.message ?: t.toString())
+//          }
+//        }
+//      })
+    }.build().let {
       Notifications.Bus.notify(it, project)
     }
   }

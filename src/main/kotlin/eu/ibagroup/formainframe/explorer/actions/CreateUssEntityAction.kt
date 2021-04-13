@@ -11,6 +11,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationOperation
 import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.FileType
@@ -23,8 +24,13 @@ abstract class CreateUssEntityAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val selected = view.mySelectedNodesData[0]
-    val node = selected.node
-    val file = selected.file
+    val selectedNode = selected.node
+    val node = if (selectedNode is UssFileNode) {
+      selectedNode.parent?.takeIf { it is UssDirNode }
+    } else {
+      selectedNode.takeIf { it is UssDirNode }
+    } ?: return
+    val file = node.virtualFile
     if (node is ExplorerUnitTreeNodeBase<*, *>) {
       val connectionConfig = node.unit.connectionConfig
       val urlConnection = node.unit.urlConnection
@@ -63,15 +69,10 @@ abstract class CreateUssEntityAction : AnAction() {
                 progressIndicator = it
               )
             }.onSuccess {
-              node.cleanCacheIfPossible()
+              node.castOrNull<UssDirNode>()?.cleanCache(false)
               res = true
-            }.onFailure {
-              runInEdt {
-                Messages.showErrorDialog(
-                  it.toString(),
-                  "Cannot Allocate $fileType"
-                )
-              }
+            }.onFailure { t ->
+              view.explorer.reportThrowable(t, e.project)
             }
           }
           res
@@ -90,6 +91,6 @@ abstract class CreateUssEntityAction : AnAction() {
       return
     }
     val selected = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = selected.size == 1 && selected[0].node is UssDirNode
+    e.presentation.isEnabledAndVisible = selected.size == 1 && (selected[0].node is UssDirNode || selected[0].node is UssFileNode)
   }
 }

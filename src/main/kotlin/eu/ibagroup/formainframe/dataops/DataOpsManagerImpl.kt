@@ -80,11 +80,10 @@ class DataOpsManagerImpl : DataOpsManager {
       .findAnyNullable() != null
   }
 
-  override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
+  override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
     return contentSynchronizers.stream()
       .filter { it.accepts(file) }
       .findAnyNullable()
-      ?: throw IllegalArgumentException("Cannot find appropriate ContentSynchronizer for ${file.path}")
   }
 
   private val operationRunners by lazy {

@@ -1,8 +1,6 @@
 package eu.ibagroup.formainframe.vfs
 
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.io.FileAttributes
-import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import eu.ibagroup.formainframe.utils.lock
@@ -76,7 +74,7 @@ class MFVirtualFile internal constructor(
   override fun isWritable() = fs.isWritable(this)
 
   override fun setWritable(writable: Boolean) {
-    validWriteLock({}) { isWritableInternal = writable }
+    validWriteLock { isWritableInternal = writable }
   }
 
   @Volatile
@@ -119,7 +117,7 @@ class MFVirtualFile internal constructor(
   }
 
   fun setModificationStamp(modStamp: Long) {
-    validWriteLock({}) { this.modStamp = modStamp; modCount.incrementAndGet() }
+    validWriteLock { this.modStamp = modStamp; modCount.incrementAndGet() }
   }
 
   private val modCount = AtomicLong(0L)
@@ -227,7 +225,7 @@ inline fun <T> MFVirtualFile.validReadLock(default: () -> T, block: () -> T): T 
 }
 
 inline fun <T> MFVirtualFile.validReadLock(
-  exception: Exception = InvalidVirtualFileAccessException(this), block: () -> T
+  exception: Exception = InvalidFileException(this), block: () -> T
 ): T {
   return this.genericLockOr(this.readLock(), { throw exception }, block)
 }
@@ -240,10 +238,11 @@ inline fun <T> MFVirtualFile.validWriteLock(default: () -> T, block: () -> T): T
   return this.genericLockOr(this.writeLock(), default, block)
 }
 
+@JvmName("validWriteLockOrThrow")
 inline fun <T> MFVirtualFile.validWriteLock(
-  exception: Exception = InvalidVirtualFileAccessException(this), block: () -> T
+  exception: () -> Throwable = { InvalidFileException(this) }, block: () -> T
 ): T {
-  return this.genericLockOr(this.writeLock(), { throw exception }, block)
+  return this.genericLockOr(this.writeLock(), { throw exception() }, block)
 }
 
 inline fun <T> validReadLock(vararg files: MFVirtualFile, default: T, block: () -> T): T {
@@ -252,7 +251,7 @@ inline fun <T> validReadLock(vararg files: MFVirtualFile, default: T, block: () 
 
 inline fun <T> validReadLock(
   vararg files: MFVirtualFile,
-  exception: (MFVirtualFile) -> Exception = { InvalidVirtualFileAccessException(it) },
+  exception: (MFVirtualFile) -> Exception = { InvalidFileException(it) },
   block: () -> T
 ): T {
   return genericVarargLockOr(
@@ -275,7 +274,7 @@ inline fun <reified T> validWriteLock(vararg files: MFVirtualFile, default: T, b
 
 inline fun <T> validWriteLock(
   vararg files: MFVirtualFile,
-  exception: (MFVirtualFile) -> Exception = { InvalidVirtualFileAccessException(it) },
+  exception: (MFVirtualFile) -> Exception = { InvalidFileException(it) },
   block: () -> T
 ): T {
   return genericVarargLockOr(

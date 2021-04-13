@@ -24,8 +24,7 @@
     <vendor email="formainframe@ibagroup.eu" url="https://ibagroupit.com">IBA Group</vendor>
 
     <description><![CDATA[
-<h1>For Mainframe</h1>
-"For Mainframe" brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
+For Mainframe brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
 Using our plugin you will be able to:<br/>
 <ul>
    <li>Start working with z/OS easily with no complex configurations.</li>
@@ -100,7 +99,7 @@ To start using the plugin:<br/>
         <editorFloatingToolbarProvider
                 implementation="eu.ibagroup.formainframe.dataops.synchronizer.SyncToolbarProvider"/>
 
-        <notificationGroup displayType="BALLOON"
+        <notificationGroup displayType="STICKY_BALLOON"
                            id="eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"/>
 
         <toolWindow id="For Mainframe" anchor="right"

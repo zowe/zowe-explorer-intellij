@@ -114,7 +114,13 @@ abstract class AbstractQueuedContentSynchronizer(
         saveStrategy = saveStrategy,
         queueExecutor = executor,
         synchronizer = this,
-        removeSyncOnThrowable = removeSyncOnThrowable
+        removeSyncOnThrowable = { f, t ->
+          if (f.isValid) {
+            removeSyncOnThrowable(f, t)
+          } else {
+            true
+          }
+        }
       )
     }
     val (executor, syncConfig) = buildExecutorForFile(configFactory)

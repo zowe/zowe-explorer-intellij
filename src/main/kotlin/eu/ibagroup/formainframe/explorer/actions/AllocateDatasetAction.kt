@@ -56,7 +56,11 @@ class AllocateDatasetAction : AnAction() {
                 )
             }.onSuccess {
               res = true
-              parentNode.cleanCacheIfPossible()
+              var p: ExplorerTreeNode<*>? = parentNode
+              while (p !is DSMaskNode) {
+                p = p?.parent ?: break
+              }
+              p?.cleanCacheIfPossible()
               runInEdt {
                 if (showOkNoDialog(
                     title = "Dataset ${state.datasetName} Has Been Created",
@@ -73,13 +77,8 @@ class AllocateDatasetAction : AnAction() {
                   }
                 }
               }
-            }.onFailure {
-              runInEdt {
-                Messages.showErrorDialog(
-                  it.toString(),
-                  "Cannot Allocate Dataset"
-                )
-              }
+            }.onFailure { t ->
+              parentNode.explorer.reportThrowable(t, e.project)
             }
           }
           res

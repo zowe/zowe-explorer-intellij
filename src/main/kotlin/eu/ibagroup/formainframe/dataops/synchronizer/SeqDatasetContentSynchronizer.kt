@@ -1,18 +1,17 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.findAnyNullable
-import eu.ibagroup.formainframe.utils.mapNotNull
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.DatasetOrganization
 import retrofit2.Call
 import java.io.IOException
 
@@ -120,4 +119,12 @@ class SeqDatasetContentSynchronizer(
       throw throwable
     }
   }
+
+  override fun accepts(file: VirtualFile): Boolean {
+    return super.accepts(file) &&
+      dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {
+        !it.isMigrated && it.datasetInfo.datasetOrganization != DatasetOrganization.VS
+      } == true
+  }
+
 }

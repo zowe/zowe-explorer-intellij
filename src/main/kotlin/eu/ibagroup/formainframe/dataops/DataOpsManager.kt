@@ -36,7 +36,7 @@ interface DataOpsManager : Disposable {
 
   fun isSyncSupported(file: VirtualFile): Boolean
 
-  fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer
+  fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer?
 
   fun isOperationSupported(operation: Operation<*>): Boolean
 

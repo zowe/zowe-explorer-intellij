@@ -195,6 +195,10 @@ class GlobalFileExplorerView(
           getNodesByQueryAndInvalidate(query)
         }
 
+        override fun <R : Any, Q : Query<R, Unit>> onCacheCleaned(query: Q) {
+          getNodesByQueryAndInvalidate(query)
+        }
+
         override fun <R : Any, Q : Query<R, Unit>> onFetchCancelled(query: Q) {
           getNodesByQueryAndInvalidate(query, collapse = true, invalidate = false)
         }
@@ -600,12 +604,15 @@ class GlobalFileExplorerView(
                 }.onFailure { explorer.reportThrowable(it, project) }
                 it.fraction = it.fraction + 1.0 / files.size
               }
-            files.asSequence().mapNotNull { it.parent }.toSet().map {
-              myFsTreeStructure.findByVirtualFile(it)
-            }.flatten().toSet().forEach {
-              it.cleanCacheIfPossible()
-              myStructure.invalidate(it, true)
-            }
+            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
+              .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
+              .forEach { it.cleanCache(false) }
+//            files.asSequence().mapNotNull { it.parent }.toSet().map {
+//              myFsTreeStructure.findByVirtualFile(it)
+//            }.flatten().toSet().forEach {
+//              it.cleanCacheIfPossible()
+//              myStructure.invalidate(it, true)
+//            }
           }
         }
       }

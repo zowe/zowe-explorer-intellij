@@ -39,7 +39,7 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     progressIndicator: ProgressIndicator
   ): Collection<Response>
 
-  protected abstract fun convertResponseToFile(response: Response): File
+  protected abstract fun convertResponseToFile(response: Response): File?
 
   protected abstract fun cleanupUnusedFile(file: File, query: RemoteQuery<Request, Unit>)
 
@@ -54,7 +54,7 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     runCatching {
       val fetched = fetchResponse(query, progressIndicator)
       val files = runWriteActionOnWriteThread {
-        fetched.map {
+        fetched.mapNotNull {
           convertResponseToFile(it)
         }
       }

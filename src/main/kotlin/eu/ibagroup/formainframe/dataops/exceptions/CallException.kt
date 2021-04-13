@@ -3,24 +3,27 @@ package eu.ibagroup.formainframe.dataops.exceptions
 import eu.ibagroup.formainframe.utils.gson
 import retrofit2.Response
 
+private fun formatMessage(code: Int, message: String, errorParams: Map<*, *>?): String {
+  val result = "Code: $code"
+  return if (errorParams != null) {
+    result + "\nCATEGORY: ${errorParams["category"]}\n" +
+      "MESSAGE: ${errorParams["message"]}\n" +
+      "RETURN CODE: ${errorParams["rc"]}\n" +
+      "REASON: ${errorParams["reason"]}\n" +
+      "STACK:\n${errorParams["stack"]}"
+  } else {
+    result
+  }
+}
+
 class CallException(
   val code: Int,
   override val message: String,
   private val errorParams: Map<*, *>? = null,
   override val cause: Throwable? = null
 ) : Exception(message) {
-  override fun toString(): String {
-    val message = "Code: $code"
-    return if (errorParams != null) {
-      message + "\nCATEGORY: ${errorParams["category"]}\n" +
-        "MESSAGE: ${errorParams["message"]}\n" +
-        "RETURN CODE: ${errorParams["rc"]}\n" +
-        "REASON: ${errorParams["reason"]}\n" +
-        "STACK:\n${errorParams["stack"]}"
-    } else {
-      message
-    }
-  }
+  val details: String
+    get() = formatMessage(code, message, errorParams)
 }
 
 fun CallException(response: Response<*>, message: String): CallException {
@@ -30,7 +33,7 @@ fun CallException(response: Response<*>, message: String): CallException {
       message = message,
       errorParams = gson.fromJson(response.errorBody()?.charStream(), Map::class.java)
     )
-  } catch (t : Throwable) {
+  } catch (t: Throwable) {
     CallException(
       code = response.code(),
       message = message,
