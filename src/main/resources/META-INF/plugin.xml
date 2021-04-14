@@ -1,8 +1,6 @@
 <idea-plugin>
     <id>eu.ibagroup.formainframe</id>
 
-    <idea-version since-build="203.7148.53"/>
-
     <extensionPoints>
 
         <extensionPoint name="attributesService"
@@ -21,7 +19,7 @@
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
-    <vendor email="formainframe@ibagroup.eu" url="https://ibagroupit.com">IBA Group</vendor>
+    <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
 
     <description><![CDATA[
 For Mainframe brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
