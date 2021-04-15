@@ -16,21 +16,6 @@ version = "0.2"
 
 repositories {
   mavenCentral()
-  maven {
-    url = URI("http://10.221.23.186:8082/repository/internal/")
-    credentials {
-      username = "admin"
-      password = "password123"
-    }
-    metadataSources {
-      mavenPom()
-      artifact()
-    }
-  }
-//  flatDir {
-//    dir("libs")
-//  }
-
 }
 
 java {
@@ -53,7 +38,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.30")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
   implementation("org.jgrapht:jgrapht-core:1.5.0")
-  implementation("eu.ibagroup:r2z:1.0.3")
+  implementation("eu.ibagroup:r2z:1.0.2")
   testImplementation("junit", "junit", "4.12")
 }
 
@@ -64,6 +49,8 @@ intellij {
 
 
 tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
+  sinceBuild("203.5981")
+  untilBuild("211.*")
   changeNotes(
     """
       In version 0.2 we added:<br/>
