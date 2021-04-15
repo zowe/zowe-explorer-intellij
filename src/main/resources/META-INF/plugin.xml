@@ -1,0 +1,240 @@
+<idea-plugin>
+    <id>eu.ibagroup.formainframe</id>
+
+    <extensionPoints>
+
+        <extensionPoint name="attributesService"
+                        interface="eu.ibagroup.formainframe.dataops.attributes.AttributesServiceFactory"/>
+
+        <extensionPoint name="fileDataProvider"
+                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
+
+        <extensionPoint name="contentSynchronizer"
+                        interface="eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizerFactory"/>
+
+        <extensionPoint name="operationRunner"
+                        interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
+
+    </extensionPoints>
+
+    <resource-bundle>messages.CommonBundle</resource-bundle>
+    <name>For Mainframe</name>
+    <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
+
+    <description><![CDATA[
+For Mainframe brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
+Using our plugin you will be able to:<br/>
+<ul>
+   <li>Start working with z/OS easily with no complex configurations.</li>
+   <li>Organize datasets on z/OS, files on USS into Working Sets.</li>
+   <li>Allocate datasets, create members, files and directories with different permissions.</li>
+   <li>Perform renaming, copying and moving data in a modern way.</li>
+   <li>Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.</li>
+   <li>Create multiple connections to different z/OS systems.</li>
+   <li>All Intellij supported languages will be automatically highlighted and recognized once opened from the mainframe.</li>
+</ul><br/>
+To start using the plugin:<br/>
+<ul>
+    <li>Install the plugin in your Intellij based IDE.</li>
+    <li>Contact your RACF administrator so that your user is in the <a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua300/V2R4/zosmf/izua300/izulite_SecurityStructuresForZosmf.htm">IZUUSER  RACF group</a></li>
+    <li>You are ready to go! Start working with z/OS from the IDE.</li>
+</ul></br>
+<b>Note: z/OS 2.1 or higher is required</b>
+]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="eu.ibagroup.formainframe">
+
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesServiceFactory"/>
+
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributesServiceFactory"/>
+
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributesServiceFactory"/>
+
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProviderFactory"/>
+
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.MemberFileFetchProviderFactory"/>
+
+        <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProviderFactory"/>
+
+        <contentSynchronizer
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.MemberContentSynchronizerFactory"/>
+
+        <contentSynchronizer
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SeqDatasetContentSynchronizerFactory"/>
+
+        <contentSynchronizer
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.UssFileContentSynchronizerFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DatasetAllocatorFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberAllocatorFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssAllocatorFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberToPdsFileMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
+
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+
+        <applicationConfigurable id="configurable.mainframe.explorer"
+                                 displayName="For Mainframe"
+                                 provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
+
+        <editorFloatingToolbarProvider
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SyncToolbarProvider"/>
+
+        <notificationGroup displayType="STICKY_BALLOON"
+                           id="eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"/>
+
+        <toolWindow id="For Mainframe" anchor="right"
+                    factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"/>
+
+        <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
+                           implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
+                           key="mf"/>
+
+        <vfs.asyncListener implementation="eu.ibagroup.formainframe.dataops.synchronizer.AfterSaveVfsListener"/>
+
+        <fileType name="Unknown Data Set"
+                  implementationClass="eu.ibagroup.formainframe.filetypes.UnknownDataSetFileType"/>
+
+        <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
+                            serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
+                            serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"/>
+
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
+                            serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.Explorer"
+                            serviceImplementation="eu.ibagroup.formainframe.explorer.GlobalExplorer"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager" preload="true"
+                            serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
+                            serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.ui.ExplorerContent"
+                            serviceImplementation="eu.ibagroup.formainframe.explorer.ui.GlobalExplorerContent"/>
+
+    </extensions>
+
+    <actions>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
+                class="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
+                text="Refresh"
+                icon="AllIcons.Actions.Refresh"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"
+                text="Working Set"
+                icon="AllIcons.Nodes.Project"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
+                text="Dataset"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"
+                class="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"
+                text="File" icon="AllIcons.FileTypes.Text"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"
+                class="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"
+                text="Directory" icon="AllIcons.Nodes.Folder"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddMemberAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddMemberAction" text="Member"
+                icon="AllIcons.FileTypes.Text"
+        />
+
+        <action class="eu.ibagroup.formainframe.explorer.actions.SettingAction"
+                id="eu.ibagroup.formainframe.explorer.actions.SettingAction"
+                icon="AllIcons.General.Settings"/>
+
+        <action class="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
+                id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
+                text="Properties"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
+                class="eu.ibagroup.formainframe.explorer.actions.RenameAction" text="Rename"
+                use-shortcut-of="RenameElement"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
+                icon="AllIcons.Nodes.Module"
+                text="Mask"/>
+        <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
+                class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
+                text="Use Binary Mode"/>
+
+        <group id="eu.ibagroup.formainframe.actions">
+            <action id="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo"
+                    class="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo" text="Show Working Set Info"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.NewItemGroup"
+               description="Create new item"
+               text="New"
+               popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddMemberAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
+            <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"/>
+            <separator/>
+            <reference id="$Cut"/>
+            <reference id="$Copy"/>
+            <reference id="$Paste"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
+            <separator/>
+            <reference id="$Delete"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"/>
+        </group>
+
+        <action id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"
+                class="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"
+                icon="AllIcons.Actions.BuildLoadChanges"
+                text="Sync Data"/>
+
+        <group id="eu.ibagroup.formainframe.dataops.synchronizer.SyncActionGroup" popup="true">
+            <reference id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"/>
+        </group>
+    </actions>
+
+</idea-plugin>
