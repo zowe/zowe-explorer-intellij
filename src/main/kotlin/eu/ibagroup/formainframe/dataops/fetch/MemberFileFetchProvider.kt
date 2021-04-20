@@ -1,7 +1,7 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
+import com.jetbrains.rd.util.getLogger
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.token
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -11,6 +11,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 
@@ -21,6 +22,8 @@ class MemberFileFetchProviderFactory : FileFetchProviderFactory {
     return MemberFileFetchProvider(dataOpsManager)
   }
 }
+
+private val log = log<MemberFileFetchProvider>()
 
 class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
   RemoteAttributedFileFetchBase<LibraryQuery, RemoteMemberAttributes, MFVirtualFile>(dataOpsManager) {
@@ -39,7 +42,8 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
     query: RemoteQuery<LibraryQuery, Unit>,
     progressIndicator: ProgressIndicator
   ): Collection<RemoteMemberAttributes> {
-    val libraryAttributes = runReadAction { remoteDatasetAttributesService.getAttributes(query.request.library) }
+    val libraryAttributes = remoteDatasetAttributesService.getAttributes(query.request.library)
+    log.info("Fetching Members for $query\nlibraryAttributes=$libraryAttributes")
     return if (libraryAttributes != null) {
       var attributes: Collection<RemoteMemberAttributes>? = null
       var exception: Throwable? = null
@@ -51,6 +55,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
 
       if (response.isSuccessful) {
         attributes = response.body()?.items?.map { RemoteMemberAttributes(it, query.request.library) }
+        log.info("${query.request} returned ${attributes?.size ?: 0} entities")
       } else {
         exception = CallException(response, "Cannot retrieve member list")
       }
@@ -64,6 +69,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
   }
 
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<LibraryQuery, Unit>) {
+    log.info("About to clean-up file=$file, query=$query")
     attributesService.clearAttributes(file)
     file.delete(this)
   }

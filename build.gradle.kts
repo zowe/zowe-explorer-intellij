@@ -1,10 +1,9 @@
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.net.URI
 
 plugins {
   id("org.jetbrains.intellij") version "0.6.5"
-  kotlin("jvm") version "1.4.30"
+  kotlin("jvm") version "1.4.32"
   java
 }
 
@@ -12,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.2"
+version = "0.2.1"
 
 repositories {
   mavenCentral()
@@ -46,19 +45,15 @@ intellij {
   version = "2020.3"
 }
 
-
-
 tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   sinceBuild("203.5981")
   untilBuild("211.*")
   changeNotes(
     """
-      In version 0.2 we added:<br/>
+      In version 0.2.1 we added:<br/>
       <ul>
-        <li>Binary and text modes added for USS files and data sets</li>
-        <li>Error messages are improved a bit</li>
-        <li>Possibility to add a DS Mask right from File Explorer's context menu</li>
-        <li>Small UI fixes</li>
+        <li>Very basic logging, so if you encounter a problem, you can go to Help -> Show Log and share it with us</li>
+        <li>X-CSRF-ZOSMF-HEADER added to fully support z/OS 2.4</li>
       </ul>"""
   )
 }
