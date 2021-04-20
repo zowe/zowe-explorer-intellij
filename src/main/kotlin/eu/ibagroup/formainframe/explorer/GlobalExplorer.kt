@@ -71,22 +71,12 @@ class GlobalExplorer : Explorer {
     if (t is ProcessCanceledException) {
       return
     }
-    val details = t.castOrNull<CallException>()?.details
     NotificationBuilder(
       EXPLORER_NOTIFICATION_GROUP_ID,
       "Error in plugin For Mainframe",
       t.message ?: t.toString(),
       NotificationType.ERROR
-    ).applyIfNotNull(details) {
-      setDropDownText(it)
-//      setContextHelpAction(object : DumbAwareAction("Show Info") {
-//        override fun actionPerformed(e: AnActionEvent) {
-//          runInEdt {
-//            Messages.showInfoMessage(it, t.message ?: t.toString())
-//          }
-//        }
-//      })
-    }.build().let {
+    ).build().let {
       Notifications.Bus.notify(it, project)
     }
   }

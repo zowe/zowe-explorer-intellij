@@ -72,10 +72,19 @@ private fun OkHttpClient.Builder.addThreadPool(): OkHttpClient.Builder {
 }
 
 val unsafeOkHttpClient by lazy { buildUnsafeClient() }
-val safeOkHttpClient by lazy {
+val safeOkHttpClient: OkHttpClient by lazy {
   OkHttpClient.Builder()
-    .addThreadPool()
+    .setupClient()
     .build()
+}
+
+private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
+  return addThreadPool()
+    .addInterceptor {
+      it.request().newBuilder().addHeader("X-CSRF-ZOSMF-HEADER", "").build().let { request ->
+        it.proceed(request)
+      }
+    }
 }
 
 private fun getOkHttpClient(isAllowSelfSigned: Boolean): OkHttpClient {
@@ -115,7 +124,7 @@ private fun buildUnsafeClient(): OkHttpClient {
     val builder = OkHttpClient.Builder()
     builder.sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
     builder.hostnameVerifier { _, _ -> true }
-    builder.addThreadPool()
+    builder.setupClient()
     builder.build()
   } catch (e: Exception) {
     throw RuntimeException(e)

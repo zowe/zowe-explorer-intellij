@@ -5,12 +5,15 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
+import org.apache.log4j.Level
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.*
 import java.io.File
@@ -192,4 +195,8 @@ inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
   runInEdt {
     runWriteAction(block)
   }
+}
+
+inline fun <reified T : Any> log(level: Level = Level.INFO): Logger {
+  return logger<T>().apply { setLevel(level) }
 }
