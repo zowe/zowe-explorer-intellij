@@ -8,9 +8,11 @@ import eu.ibagroup.r2z.FileModeValue
 import eu.ibagroup.r2z.UssFile
 import eu.ibagroup.r2z.XIBMDataType
 
+private const val CURRENT_DIR_NAME = "."
+
 private fun constructPath(rootPath: String, ussFile: UssFile): String {
   return when {
-    ussFile.name.isEmpty() -> {
+    ussFile.name.isEmpty() || ussFile.name == CURRENT_DIR_NAME -> {
       rootPath
     }
     rootPath == "/" -> {
