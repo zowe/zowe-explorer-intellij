@@ -11,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.2.1"
+version = "0.2.2"
 
 repositories {
   mavenCentral()
@@ -50,10 +50,9 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   untilBuild("211.*")
   changeNotes(
     """
-      In version 0.2.1 we added:<br/>
+      In version 0.2.2 we added:<br/>
       <ul>
-        <li>Very basic logging, so if you encounter a problem, you can go to Help -> Show Log and share it with us</li>
-        <li>X-CSRF-ZOSMF-HEADER added to fully support z/OS 2.4</li>
+        <li>Better support of z/OS 2.4. Uss file explorer should be working</li>
       </ul>"""
   )
 }

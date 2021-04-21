@@ -9,12 +9,15 @@ import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.SymlinkMode
 
 data class UssQuery(val path: String)
+
+private const val UPPER_DIR_NAME = ".."
 
 class UssFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
@@ -48,7 +51,9 @@ class UssFileFetchProvider(
     ).cancelByIndicator(progressIndicator).execute()
 
     if (response.isSuccessful) {
-      attributes = response.body()?.items?.map {
+      attributes = response.body()?.items?.filter {
+        it.name != UPPER_DIR_NAME
+      }?.map {
         RemoteUssAttributes(
           rootPath = query.request.path,
           ussFile = it,
