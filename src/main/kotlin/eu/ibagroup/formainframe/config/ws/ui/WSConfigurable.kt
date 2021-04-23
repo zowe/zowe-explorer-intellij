@@ -16,10 +16,6 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
-import javax.swing.DefaultRowSorter
-import javax.swing.RowSorter
-import javax.swing.SortOrder
-import javax.swing.table.TableRowSorter
 
 fun noConnectionsInSandbox() = sandboxCrudable.getAll<ConnectionConfig>().count() == 0L
 
