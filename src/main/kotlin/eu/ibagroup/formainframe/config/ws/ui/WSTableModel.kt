@@ -21,7 +21,7 @@ class WSTableModel(
   }
 
   override fun fetch(crudable: Crudable): MutableList<WorkingSetConfig> {
-    return crudable.getAll<WorkingSetConfig>().toMutableList()
+    return crudable.getAll<WorkingSetConfig>().toMutableList().sortedBy { it.name }.toMutableList()
   }
 
   override fun onUpdate(crudable: Crudable, value: WorkingSetConfig): Boolean {

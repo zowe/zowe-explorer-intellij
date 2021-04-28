@@ -47,6 +47,7 @@ class WSConfigurable(
 
   override fun createPanel(): DialogPanel {
     val wsTableModel = WSTableModel(sandboxCrudable)
+
     val wsTable = ValidatingTableView(wsTableModel, disposable!!).apply {
       rowHeight = DEFAULT_ROW_HEIGHT
     }
@@ -81,6 +82,7 @@ class WSConfigurable(
                     .apply {
                       if (showAndGet()) {
                         wsTableModel.addRow(state.workingSetConfig)
+                        wsTableModel.reinitialize()
                       }
                     }
                 }
@@ -91,6 +93,7 @@ class WSConfigurable(
                     if (showAndGet()) {
                       val idx = wsTable.selectedRow
                       wsTableModel[idx] = state.workingSetConfig
+                      wsTableModel.reinitialize()
                     }
                   }
                 }
