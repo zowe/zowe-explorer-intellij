@@ -15,6 +15,19 @@ version = "0.2.2"
 
 repositories {
   mavenCentral()
+  maven {
+    url = uri("http://10.221.23.186:8082/repository/internal/")
+    isAllowInsecureProtocol = true
+    credentials {
+      username = "admin"
+      password = "password123"
+    }
+    metadataSources {
+      mavenPom()
+      artifact()
+      ignoreGradleMetadataRedirection()
+    }
+  }
 }
 
 java {
@@ -37,7 +50,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.30")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
   implementation("org.jgrapht:jgrapht-core:1.5.0")
-  implementation("eu.ibagroup:r2z:1.0.2")
+  implementation("eu.ibagroup:r2z:1.0.11")
   testImplementation("junit", "junit", "4.12")
 }
 

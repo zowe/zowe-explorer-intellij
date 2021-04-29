@@ -31,9 +31,9 @@ data class RemoteUssAttributes(
   override val url: String,
   override val requesters: MutableList<UssRequester>,
   override val length: Long = 0L,
-  val uid: Int? = null,
+  val uid: Long? = null,
   val owner: String? = null,
-  val gid: Int? = null,
+  val gid: Long? = null,
   val groupId: String? = null,
   val modificationTime: String? = null,
   val symlinkTarget: String? = null
