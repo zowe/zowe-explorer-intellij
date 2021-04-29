@@ -1,5 +1,6 @@
 package eu.ibagroup.formainframe.explorer
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -76,9 +77,18 @@ class GlobalExplorer : Explorer {
       "Error in plugin For Mainframe",
       t.message ?: t.toString(),
       NotificationType.ERROR
-    ).build().let {
+    ).addAction(reportInSlackAction).build().let {
       Notifications.Bus.notify(it, project)
     }
+  }
+
+  private val reportInSlackAction = object : DumbAwareAction("Report In Slack") {
+
+    override fun actionPerformed(e: AnActionEvent) {
+      BrowserUtil.browse("https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg")
+    }
+
+
   }
 
   override fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?) {

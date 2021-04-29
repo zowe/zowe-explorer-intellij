@@ -11,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.2.2"
+version = "0.2.3"
 
 repositories {
   mavenCentral()
@@ -50,9 +50,10 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   untilBuild("211.*")
   changeNotes(
     """
-      In version 0.2.2 we added:<br/>
+      In version 0.2.3 we added:<br/>
       <ul>
-        <li>Better support of z/OS 2.4. Uss file explorer should be working</li>
+        <li>Updated description with contact information: Slack.</li>
+        <li>Added information on how to set up z/OSMF to work with our plugin.</li>
       </ul>"""
   )
 }
