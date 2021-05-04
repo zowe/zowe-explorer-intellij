@@ -88,6 +88,9 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationFactory"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -139,6 +142,14 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
     </extensions>
 
     <actions>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.RecallAction"
+                class="eu.ibagroup.formainframe.explorer.actions.RecallAction" text="Recall"
+                description="Recalls a migrated dataset"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"
+                class="eu.ibagroup.formainframe.explorer.actions.MigrateAction" text="Migrate"
+                description="Migrates a dataset"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
                 class="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
@@ -220,6 +231,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
@@ -237,6 +250,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <group id="eu.ibagroup.formainframe.dataops.synchronizer.SyncActionGroup" popup="true">
             <reference id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"/>
         </group>
+
     </actions>
 
 </idea-plugin>

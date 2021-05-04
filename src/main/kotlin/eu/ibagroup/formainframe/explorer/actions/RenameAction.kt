@@ -2,6 +2,7 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -140,7 +141,17 @@ class RenameAction : AnAction() {
       return
     }
     val selectedNodes = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = selectedNodes.size == 1
+    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1) {
+      val file = selectedNodes[0].file
+      var isMigrated = false
+      if (file != null) {
+        val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
+        isMigrated = attributes?.isMigrated ?: false
+      }
+      !isMigrated
+    } else {
+      false
+    }
     if (e.presentation.isEnabledAndVisible) {
       val selectedNode = selectedNodes[0]
       if (selectedNode.node is DSMaskNode || (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath)) {
