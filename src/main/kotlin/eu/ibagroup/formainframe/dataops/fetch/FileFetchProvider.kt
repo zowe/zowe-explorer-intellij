@@ -21,6 +21,8 @@ interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
 
   fun isCacheValid(query: Q): Boolean
 
+  fun getFetchedErrorMessage(query: Q): String? = "Error"
+
   fun cleanCache(query: Q)
 
   fun reload(query: Q, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE)

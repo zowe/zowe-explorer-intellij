@@ -9,10 +9,10 @@ class ErrorNode(
   project: Project,
   parent: ExplorerTreeNode<*>,
   explorer: Explorer,
-  treeStructure: ExplorerTreeStructureBase
+  treeStructure: ExplorerTreeStructureBase,
+  override var text: String = message("title.error")
 ) : InfoNodeBase(project, parent, explorer, treeStructure) {
 
-  override val text: String = message("title.error")
 
   override val textAttributes: SimpleTextAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES
 
