@@ -11,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.2.3"
+version = "0.3"
 
 repositories {
   mavenCentral()
@@ -63,10 +63,10 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   untilBuild("211.*")
   changeNotes(
     """
-      In version 0.2.3 we added:<br/>
+      In version 0.3 we added:<br/>
       <ul>
-        <li>Updated description with contact information: Slack.</li>
-        <li>Added information on how to set up z/OSMF to work with our plugin.</li>
+        <li>Migrate/Recall actions were added.</li>
+        <li>Minor UX/UI changes, improvements and fixes.</li>
       </ul>"""
   )
 }
