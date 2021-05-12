@@ -6,6 +6,8 @@ import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -166,7 +168,7 @@ class GlobalFileExplorerView(
                 nodes
               }
               it is VFileDeleteEvent
-                && this@GlobalFileExplorerView
+                  && this@GlobalFileExplorerView
                 .ignoreVFileDeleteEvents
                 .compareAndSet(true, true) -> {
                 null
@@ -292,12 +294,21 @@ class GlobalFileExplorerView(
 
     private fun isCopyCutEnabledAndVisible(): Boolean {
       val nodes = mySelectedNodesData
-      return nodes.any(cutCopyPredicate)
+      return nodes.all(cutCopyPredicate)
     }
 
     private val cutCopyPredicate: (NodeData) -> Boolean = {
-      (it.attributes is RemoteDatasetAttributes && it.file?.isDirectory == false)
-        || it.attributes is RemoteMemberAttributes
+      when (val attributes = it.attributes) {
+        is RemoteDatasetAttributes -> {
+          !attributes.isDirectory && !attributes.isMigrated
+        }
+        is RemoteMemberAttributes -> {
+          true
+        }
+        else -> {
+          false
+        }
+      }
     }
 
     private fun performCopyCut(isCut: Boolean) {
@@ -625,16 +636,24 @@ class GlobalFileExplorerView(
       }
       return selected.any {
         it.node is WorkingSetNode
-          || it.node is DSMaskNode
-          || (it.node is UssDirNode && it.node.isConfigUssPath)
-          || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
+            || it.node is DSMaskNode
+            || (it.node is UssDirNode && it.node.isConfigUssPath)
+            || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
       }
     }
   }
 
   override fun getData(dataId: String): Any? {
     return when {
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.map { it.node }.toTypedArray()
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.filter {
+        val file = it.file
+        if (file != null) {
+          val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
+          val isMigrated = attributes?.isMigrated ?: false
+          !isMigrated
+        }
+        true
+      }.map { it.node }.toTypedArray()
       PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> copyPasteSupport.copyProvider
       PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> copyPasteSupport.cutProvider
       PlatformDataKeys.PASTE_PROVIDER.`is`(dataId) -> copyPasteSupport.pasteProvider

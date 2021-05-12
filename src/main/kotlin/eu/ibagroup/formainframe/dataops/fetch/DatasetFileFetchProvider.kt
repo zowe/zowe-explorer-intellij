@@ -96,12 +96,4 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
     }
   }
 
-  override fun convertResponseToFile(response: RemoteDatasetAttributes): MFVirtualFile? {
-    return if (!response.isMigrated) {
-      super.convertResponseToFile(response)
-    } else {
-      null
-    }
-  }
-
 }
