@@ -47,7 +47,7 @@ class UssAllocator : Allocator<UssAllocationOperation> {
     if (!response.isSuccessful) {
       throw CallException(
         response,
-        "Cannot allocate dataset ${operation.request.fileName} on ${operation.connectionConfig.name}"
+        "Cannot allocate file ${operation.request.fileName} on ${operation.connectionConfig.name}"
       )
     }
   }
