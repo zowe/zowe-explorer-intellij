@@ -16,6 +16,10 @@ fun <E> Stream<E>.toMutableList(): MutableList<E> {
 
 inline fun <reified T> Any?.castOrNull(): T? = (this is T).runIfTrue { this as T }
 
+@Suppress("UNCHECKED_CAST")
+fun <T> Any?.castOrNull(clazz: Class<T>): T? =
+  if (this != null && clazz.isAssignableFrom(this::class.java)) this as T else null
+
 val <E> Optional<out E>.nullable: E?
   inline get() = this.orElse(null)
 
@@ -59,7 +63,7 @@ inline fun <T> ReadWriteLock.write(block: () -> T): T {
   return writeLock().withLock(block)
 }
 
-inline fun <T> Lock?.optionalLock(block: () -> T) : T {
+inline fun <T> Lock?.optionalLock(block: () -> T): T {
   return if (this != null) {
     withLock(block)
   } else {

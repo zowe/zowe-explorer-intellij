@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import java.io.IOException
 
-interface AttributesService<Attributes : VFileInfoAttributes, VFile : VirtualFile> {
+interface AttributesService<Attributes : FileAttributes, VFile : VirtualFile> {
 
   companion object {
     @JvmField
@@ -56,7 +56,7 @@ interface AttributesService<Attributes : VFileInfoAttributes, VFile : VirtualFil
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <Attributes : VFileInfoAttributes> (Attributes.() -> Unit).cloneAndApply(attributes: Attributes): Attributes {
+fun <Attributes : FileAttributes> (Attributes.() -> Unit).cloneAndApply(attributes: Attributes): Attributes {
   val cloned = attributes.clone() as Attributes
   invoke(cloned)
   return cloned

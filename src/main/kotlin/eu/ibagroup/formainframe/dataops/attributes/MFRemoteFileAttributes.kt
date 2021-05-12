@@ -5,7 +5,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
 
-interface MFRemoteFileAttributes<R : Requester> : VFileInfoAttributes {
+interface MFRemoteFileAttributes<R : Requester> : FileAttributes {
 
   val url: String
 

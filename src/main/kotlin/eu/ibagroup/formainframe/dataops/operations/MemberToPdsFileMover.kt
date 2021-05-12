@@ -32,8 +32,8 @@ class MemberToPdsFileMover(
     var memberName: String
     val datasetName = (operation.sourceAttributes as RemoteMemberAttributes).run {
       memberName = name
-      dataOpsManager.tryToGetAttributes(libraryFile)?.name
-        ?: throw FileNotFoundException("Cannot find attributes for ${libraryFile.path}")
+      dataOpsManager.tryToGetAttributes(parentFile)?.name
+        ?: throw FileNotFoundException("Cannot find attributes for ${parentFile.path}")
     }
     return api<DataAPI>(
       url = requesterWithUrl.second.url,

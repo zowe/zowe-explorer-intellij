@@ -12,7 +12,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
@@ -61,7 +61,7 @@ class RenameAction : AnAction() {
         initialState = attributes.datasetInfo.name
         type = "Dataset"
       } else if (attributes is RemoteMemberAttributes) {
-        initialState = attributes.memberInfo.name
+        initialState = attributes.info.name
         type = "Member"
       }
       val dialog = RenameDialog(e.project, type, initialState).withValidationOnInput {
@@ -108,7 +108,7 @@ class RenameAction : AnAction() {
   private fun runRenameOperation(
     project: Project?,
     file: VirtualFile,
-    attributes: VFileInfoAttributes,
+    attributes: FileAttributes,
     newName: String,
     node: ExplorerTreeNode<*>
   ) {

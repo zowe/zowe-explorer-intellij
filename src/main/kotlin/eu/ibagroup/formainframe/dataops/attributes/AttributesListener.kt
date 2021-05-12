@@ -4,18 +4,18 @@ import com.intellij.openapi.vfs.VirtualFile
 
 interface AttributesListener {
 
-  fun onCreate(attributes: VFileInfoAttributes, file: VirtualFile)
+  fun onCreate(attributes: FileAttributes, file: VirtualFile)
 
-  fun onUpdate(oldAttributes: VFileInfoAttributes, newAttributes: VFileInfoAttributes, file: VirtualFile)
+  fun onUpdate(oldAttributes: FileAttributes, newAttributes: FileAttributes, file: VirtualFile)
 
-  fun onDelete(attributes: VFileInfoAttributes, file: VirtualFile)
+  fun onDelete(attributes: FileAttributes, file: VirtualFile)
 
 }
 
 typealias AttributesCallback<A, F> = (attributes: A, file: F) -> Unit
 typealias UpdateAttributesCallback<A, F> = (oldAttributes: A, newAttributes: A, file: F) -> Unit
 
-class AttributesAdapter<Attributes : VFileInfoAttributes, VFile : VirtualFile> @PublishedApi internal constructor(
+class AttributesAdapter<Attributes : FileAttributes, VFile : VirtualFile> @PublishedApi internal constructor(
   private val attributesClass: Class<out Attributes>,
   private val fileClass: Class<out VFile>
 ) {
@@ -37,7 +37,7 @@ class AttributesAdapter<Attributes : VFileInfoAttributes, VFile : VirtualFile> @
   }
 
   private fun performIfOurInstances(
-    attributes: VFileInfoAttributes,
+    attributes: FileAttributes,
     file: VirtualFile,
     callback: AttributesCallback<Attributes, VFile>
   ) {
@@ -52,7 +52,7 @@ class AttributesAdapter<Attributes : VFileInfoAttributes, VFile : VirtualFile> @
   @PublishedApi
   internal val listener
     get() = object : AttributesListener {
-      override fun onCreate(attributes: VFileInfoAttributes, file: VirtualFile) {
+      override fun onCreate(attributes: FileAttributes, file: VirtualFile) {
         if (attributesClass.isAssignableFrom(attributes::class.java) && fileClass.isAssignableFrom(file::class.java)) {
           val ourAttributes = attributesClass.cast(attributes)
           val ourFile = fileClass.cast(file)
@@ -60,7 +60,7 @@ class AttributesAdapter<Attributes : VFileInfoAttributes, VFile : VirtualFile> @
         }
       }
 
-      override fun onUpdate(oldAttributes: VFileInfoAttributes, newAttributes: VFileInfoAttributes, file: VirtualFile) {
+      override fun onUpdate(oldAttributes: FileAttributes, newAttributes: FileAttributes, file: VirtualFile) {
         if (attributesClass.isAssignableFrom(oldAttributes::class.java)
           && attributesClass.isAssignableFrom(newAttributes::class.java)
           && fileClass.isAssignableFrom(file::class.java)
@@ -72,7 +72,7 @@ class AttributesAdapter<Attributes : VFileInfoAttributes, VFile : VirtualFile> @
         }
       }
 
-      override fun onDelete(attributes: VFileInfoAttributes, file: VirtualFile) {
+      override fun onDelete(attributes: FileAttributes, file: VirtualFile) {
         if (attributesClass.isAssignableFrom(attributes::class.java) && fileClass.isAssignableFrom(file::class.java)) {
           val ourAttributes = attributesClass.cast(attributes)
           val ourFile = fileClass.cast(file)
@@ -82,7 +82,7 @@ class AttributesAdapter<Attributes : VFileInfoAttributes, VFile : VirtualFile> @
     }
 }
 
-inline fun <reified Attributes : VFileInfoAttributes, reified VFile : VirtualFile> attributesListener(
+inline fun <reified Attributes : FileAttributes, reified VFile : VirtualFile> attributesListener(
   init: AttributesAdapter<Attributes, VFile>.() -> Unit
 ): AttributesListener {
   return AttributesAdapter(Attributes::class.java, VFile::class.java).apply(init).listener

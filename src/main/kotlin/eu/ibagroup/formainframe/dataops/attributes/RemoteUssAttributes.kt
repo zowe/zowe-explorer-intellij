@@ -54,7 +54,7 @@ data class RemoteUssAttributes(
     symlinkTarget = ussFile.target
   )
 
-  override fun clone(): VFileInfoAttributes {
+  override fun clone(): FileAttributes {
     return this.clone(RemoteUssAttributes::class.java)
   }
 

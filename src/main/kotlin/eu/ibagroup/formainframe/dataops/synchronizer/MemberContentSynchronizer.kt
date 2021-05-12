@@ -40,7 +40,7 @@ class MemberContentSynchronizer(
     progressIndicator: ProgressIndicator?
   ): ByteArray {
     log.info("Fetch remote content for $attributes")
-    val parentLib = attributes.libraryFile
+    val parentLib = attributes.parentFile
     val libAttributes = datasetAttributesService.getAttributes(parentLib)
       ?: throw IOException("Cannot find parent library attributes for library ${parentLib.path}")
     log.info("Lib attributes are $libAttributes")
@@ -73,7 +73,7 @@ class MemberContentSynchronizer(
 
   override fun uploadNewContent(attributes: RemoteMemberAttributes, newContentBytes: ByteArray) {
     log.info("Upload remote content for $attributes")
-    val parentLib = attributes.libraryFile
+    val parentLib = attributes.parentFile
     val libAttributes = datasetAttributesService.getAttributes(parentLib)
       ?: throw IOException("Cannot find parent library attributes for library ${parentLib.path}")
     log.info("Lib attributes are $libAttributes")

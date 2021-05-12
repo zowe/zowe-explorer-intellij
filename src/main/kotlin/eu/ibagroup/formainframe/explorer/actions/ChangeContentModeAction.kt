@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.GlobalFileExplorerView
 import eu.ibagroup.formainframe.utils.service
@@ -23,7 +23,7 @@ class ChangeContentModeAction : ToggleAction() {
       .all { it.contentMode == XIBMDataType.BINARY }
   }
 
-  private fun getMappedNodes(view: GlobalFileExplorerView): List<Pair<VFileInfoAttributes, VirtualFile>> {
+  private fun getMappedNodes(view: GlobalFileExplorerView): List<Pair<FileAttributes, VirtualFile>> {
     return view.mySelectedNodesData
       .mapNotNull {
         if (it.file?.isDirectory == true) {

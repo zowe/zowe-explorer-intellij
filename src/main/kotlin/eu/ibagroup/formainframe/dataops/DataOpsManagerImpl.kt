@@ -5,7 +5,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
@@ -22,10 +22,10 @@ class DataOpsManagerImpl : DataOpsManager {
     get() = ApplicationManager.getApplication()
 
   private val attributesServices by lazy {
-    AttributesService.EP.extensionList.buildComponents() as MutableList<AttributesService<VFileInfoAttributes, VirtualFile>>
+    AttributesService.EP.extensionList.buildComponents() as MutableList<AttributesService<FileAttributes, VirtualFile>>
   }
 
-  override fun <A : VFileInfoAttributes, F : VirtualFile> getAttributesService(
+  override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
     attributesClass: Class<out A>,
     vFileClass: Class<out F>
   ): AttributesService<A, F> {
@@ -36,7 +36,7 @@ class DataOpsManagerImpl : DataOpsManager {
     )
   }
 
-  override fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes? {
+  override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
     return attributesServices.stream()
       .filter { it.vFileClass.isAssignableFrom(file::class.java) }
       .map { it.getAttributes(file) }
@@ -44,7 +44,7 @@ class DataOpsManagerImpl : DataOpsManager {
       .findAnyNullable()
   }
 
-  override fun tryToGetFile(attributes: VFileInfoAttributes): VirtualFile? {
+  override fun tryToGetFile(attributes: FileAttributes): VirtualFile? {
     return attributesServices.stream()
       .map { it.getVirtualFile(attributes) }
       .filter { it != null }
