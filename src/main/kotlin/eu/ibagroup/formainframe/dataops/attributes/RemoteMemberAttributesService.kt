@@ -28,7 +28,7 @@ class RemoteMemberAttributesService(
   override fun buildAttributes(
     info: Member, file: MFVirtualFile, contentMode: XIBMDataType?
   ): RemoteMemberAttributes {
-    return RemoteMemberAttributes(info, file, contentMode ?: XIBMDataType.TEXT)
+    return RemoteMemberAttributes(info, file, contentMode ?: XIBMDataType(XIBMDataType.Type.TEXT))
   }
 
 

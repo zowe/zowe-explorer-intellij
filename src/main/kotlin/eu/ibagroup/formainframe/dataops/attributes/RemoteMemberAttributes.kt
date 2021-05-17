@@ -9,7 +9,7 @@ import eu.ibagroup.r2z.XIBMDataType
 data class RemoteMemberAttributes(
   override val info: Member,
   override val parentFile: MFVirtualFile,
-  override var contentMode: XIBMDataType = XIBMDataType.TEXT,
+  override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT),
 ) : DependentFileAttributes<Member, MFVirtualFile> {
 
   override val name

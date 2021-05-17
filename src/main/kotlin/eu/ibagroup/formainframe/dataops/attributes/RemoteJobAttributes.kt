@@ -15,7 +15,7 @@ class RemoteJobAttributes(
   override val length: Long
     get() = 0L
 
-  override var contentMode: XIBMDataType = XIBMDataType.TEXT
+  override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT)
 
   override fun clone(): FileAttributes {
     return RemoteJobAttributes(

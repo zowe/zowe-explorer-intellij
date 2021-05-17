@@ -22,7 +22,7 @@ class ChangeContentModeAction : ToggleAction() {
           .getAttributesService(it.first::class.java, it.second::class.java)
           .getAttributes(it.second)
       }
-      .all { it.contentMode == XIBMDataType.BINARY }
+      .all { it.contentMode == XIBMDataType(XIBMDataType.Type.BINARY) }
   }
 
   private fun getMappedNodes(view: GlobalFileExplorerView): List<Pair<FileAttributes, VirtualFile>> {
@@ -51,9 +51,9 @@ class ChangeContentModeAction : ToggleAction() {
           .getAttributesService(it.first::class.java, it.second::class.java)
           .updateAttributes(it.first) {
             contentMode = if (state) {
-              XIBMDataType.BINARY
+              XIBMDataType(XIBMDataType.Type.BINARY)
             } else {
-              XIBMDataType.TEXT
+              XIBMDataType(XIBMDataType.Type.TEXT)
             }
           }
       }

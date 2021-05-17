@@ -108,6 +108,6 @@ data class RemoteUssAttributes(
         || mode == FileModeValue.WRITE_EXECUTE.mode
         || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
-  override var contentMode: XIBMDataType= XIBMDataType.TEXT
+  override var contentMode: XIBMDataType= XIBMDataType(XIBMDataType.Type.TEXT)
 
 }

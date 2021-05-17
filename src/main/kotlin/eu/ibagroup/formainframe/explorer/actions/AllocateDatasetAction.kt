@@ -21,6 +21,7 @@ import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
 
@@ -104,7 +105,27 @@ class AllocateDatasetAction : AnAction() {
     } else if (state.allocationParameters.recordFormat != RecordFormat.FB || state.allocationParameters.recordFormat != RecordFormat.VB) {
       state.allocationParameters.blockSize = null
     }
+    if (state.allocationParameters.allocationUnit == AllocationUnit.BLK) {
+      state.allocationParameters.allocationUnit = null
+    }
+    state.allocationParameters.directoryBlocks = state.allocationParameters.directoryBlocks.toNullIfZero()
+    state.allocationParameters.blockSize = state.allocationParameters.blockSize.toNullIfZero()
+    state.allocationParameters.averageBlockLength = state.allocationParameters.averageBlockLength.toNullIfZero()
+    state.allocationParameters.recordLength = state.allocationParameters.recordLength.toNullIfZero()
+    state.allocationParameters.managementClass = state.allocationParameters.managementClass?.toNullIfEmpty()
+    state.allocationParameters.storageClass = state.allocationParameters.storageClass?.toNullIfEmpty()
+    state.allocationParameters.deviceType = state.allocationParameters.deviceType?.toNullIfEmpty()
+    state.allocationParameters.dataClass = state.allocationParameters.dataClass?.toNullIfEmpty()
+    state.allocationParameters.volumeSerial = state.allocationParameters.volumeSerial?.toNullIfEmpty()
     return state.clone()
+  }
+
+  private fun Int?.toNullIfZero(): Int? {
+    return if (this == 0) null else this
+  }
+
+  private fun String.toNullIfEmpty(): String? {
+    return if (this.isBlank()) null else this
   }
 
   override fun isDumbAware(): Boolean {

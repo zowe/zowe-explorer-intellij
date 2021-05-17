@@ -8,7 +8,7 @@ import eu.ibagroup.r2z.XIBMDataType
 class RemoteSpoolFileAttributes(
   override val info: SpoolFile,
   override val parentFile: MFVirtualFile,
-  override var contentMode: XIBMDataType = XIBMDataType.TEXT
+  override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT)
 ) : DependentFileAttributes<SpoolFile, MFVirtualFile> {
   override val name: String
     get() = info.ddName
