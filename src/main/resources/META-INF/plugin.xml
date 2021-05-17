@@ -57,6 +57,12 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <attributesService
                 implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributesServiceFactory"/>
 
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributesServiceFactory"/>
+
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributesServiceFactory"/>
+
         <fileDataProvider
                 implementation="eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProviderFactory"/>
 

@@ -2,7 +2,7 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.r2z.XIBMDataType
 
-interface VFileInfoAttributes : Cloneable {
+interface FileAttributes : Cloneable {
 
   val name: String
 
@@ -10,6 +10,6 @@ interface VFileInfoAttributes : Cloneable {
 
   var contentMode: XIBMDataType
 
-  public override fun clone(): VFileInfoAttributes
+  public override fun clone(): FileAttributes
 
 }

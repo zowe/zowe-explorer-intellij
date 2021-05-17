@@ -66,7 +66,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
         }.filter { it }.findAnyNullable() ?: throw UnknownError("")
       }
       is RemoteMemberAttributes -> {
-        val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.libraryFile) as RemoteDatasetAttributes
+        val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
         parentAttributes.requesters.stream().map {
           try {
             progressIndicator.checkCanceled()
@@ -75,7 +75,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               body = RenameData(
                 fromDataset = RenameData.FromDataset(
                   oldDatasetName = parentAttributes.datasetInfo.name,
-                  oldMemberName = attributes.memberInfo.name
+                  oldMemberName = attributes.info.name
                 )
               ),
               toDatasetName = parentAttributes.datasetInfo.name,

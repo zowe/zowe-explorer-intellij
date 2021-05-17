@@ -38,12 +38,8 @@ class DSMask {
   }
 
   override fun toString(): String {
-    return "DSMask{" +
-        "mask='" + mask + '\'' +
-        ", excludes=" + excludes +
-        ", volser='" + volser + '\'' +
-        ", isSingle=" + isSingle +
-        '}'
+    return "DSMask(mask='$mask', excludes=$excludes, volser='$volser', isSingle=$isSingle)"
   }
+
 
 }

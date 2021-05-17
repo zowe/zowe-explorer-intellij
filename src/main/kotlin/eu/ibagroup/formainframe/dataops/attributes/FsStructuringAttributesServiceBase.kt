@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-abstract class FsStructuringAttributesServiceBase<Attributes : VFileInfoAttributes, VFile : VirtualFile>(
+abstract class FsStructuringAttributesServiceBase<Attributes : FileAttributes, VFile : VirtualFile>(
   private val dataOpsManager: DataOpsManager
 ) : AttributesService<Attributes, VFile> {
 

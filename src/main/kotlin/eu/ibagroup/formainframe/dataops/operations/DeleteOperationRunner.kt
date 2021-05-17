@@ -11,10 +11,8 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.runWriteActionInEdt
-import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMOption
-import java.io.IOException
 
 
 class DeleteRunnerFactory : OperationRunnerFactory {
@@ -116,7 +114,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
 
 data class DeleteOperation(
   val file: VirtualFile,
-  val attributes: VFileInfoAttributes
+  val attributes: FileAttributes
 ) : UnitOperation {
   constructor(file: VirtualFile, dataOpsManager: DataOpsManager) : this(
     file = file,

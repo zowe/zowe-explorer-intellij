@@ -3,9 +3,9 @@ package eu.ibagroup.formainframe.dataops.fetch
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 
-abstract class RemoteAttributedFileFetchBase<Request : Any, Response : VFileInfoAttributes, File : VirtualFile>(
+abstract class RemoteAttributedFileFetchBase<Request : Any, Response : FileAttributes, File : VirtualFile>(
   dataOpsManager: DataOpsManager
 ) : RemoteFileFetchProviderBase<Request, Response, File>(dataOpsManager) {
 

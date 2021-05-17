@@ -25,14 +25,13 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.EditSourceOnDoubleClickHandler
 import eu.ibagroup.formainframe.common.ui.DoubleClickTreeMouseListener
 import eu.ibagroup.formainframe.common.ui.promisePath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.*
@@ -670,7 +669,7 @@ const val FILE_EXPLORER_CONTEXT_MENU = "File Explorer"
 data class NodeData(
   val node: ExplorerTreeNode<*>,
   val file: MFVirtualFile?,
-  val attributes: VFileInfoAttributes?
+  val attributes: FileAttributes?
 )
 
 typealias FetchNode = FileFetchNode<*, *, *, *, *>
