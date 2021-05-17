@@ -51,6 +51,11 @@ open class ValidatingListTableModel<Item> : ListTableModel<Item> {
     fireTableRowsUpdated(row, row)
   }
 
+  override fun removeRow(idx: Int) {
+    validationInfos.removeByRow(idx)
+    super.removeRow(idx)
+  }
+
 //  override fun fireTableChanged(e: TableModelEvent?) {
 //    listenerList.listenerList
 //      .filterIsInstance<TableModelListener>()

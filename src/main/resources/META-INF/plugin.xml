@@ -39,7 +39,9 @@ To start using the plugin:<br/>
     <li>Contact your RACF administrator so that your user is in the <a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua300/V2R4/zosmf/izua300/izulite_SecurityStructuresForZosmf.htm">IZUUSER  RACF group</a></li>
     <li>You are ready to go! Start working with z/OS from the IDE.</li>
 </ul></br>
-<b>Note: z/OS 2.1 or higher is required</b>
+<b>Note: z/OS 2.1 or higher is required with <a href="https://docs.zowe.org/stable/user-guide/systemrequirements-zosmf.html">configured z/OSMF</a>. Plugin is in active development state. Feel free to recommend or report everything on our <a href="https://github.com/for-mainframe/For-Mainframe/issues">Github</a></b><br/>
+Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg">Slack</a><br/>
+
 ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -86,6 +88,9 @@ To start using the plugin:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationFactory"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -137,6 +142,14 @@ To start using the plugin:<br/>
     </extensions>
 
     <actions>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.RecallAction"
+                class="eu.ibagroup.formainframe.explorer.actions.RecallAction" text="Recall"
+                description="Recalls a migrated dataset"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"
+                class="eu.ibagroup.formainframe.explorer.actions.MigrateAction" text="Migrate"
+                description="Migrates a dataset"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
                 class="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
@@ -218,6 +231,8 @@ To start using the plugin:<br/>
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
@@ -235,6 +250,7 @@ To start using the plugin:<br/>
         <group id="eu.ibagroup.formainframe.dataops.synchronizer.SyncActionGroup" popup="true">
             <reference id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"/>
         </group>
+
     </actions>
 
 </idea-plugin>

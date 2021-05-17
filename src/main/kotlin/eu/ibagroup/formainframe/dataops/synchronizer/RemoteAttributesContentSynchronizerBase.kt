@@ -1,5 +1,6 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -7,11 +8,14 @@ import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
 import eu.ibagroup.formainframe.utils.ContentStorage
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import java.io.IOException
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
+
+private val log = log<RemoteAttributesContentSynchronizerBase<*>>()
 
 abstract class RemoteAttributesContentSynchronizerBase<Attributes : VFileInfoAttributes>(
   dataOpsManager: DataOpsManager
@@ -57,6 +61,7 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : VFileInfoAtt
       } else {
         null
       }
+      log.info("first fetch: $neverFetchedBefore; recordId: $recordId; attributes: $attributes")
       val fetchedRemoteContentBytes = fetchRemoteContentBytes(attributes, indicator)
       if (neverFetchedBefore) {
         runWriteActionInEdt {
@@ -67,12 +72,14 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : VFileInfoAtt
         }
         fetchedAtLeastOnce.add(syncProvider)
         syncProvider.notifySyncStarted()
+        log.info("Initial content set")
       } else {
         val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
         if (fileContent contentEquals fetchedRemoteContentBytes) {
           successfulStatesStorage.writeStream(recordId).use {
             it.write(fileContent)
           }
+          log.info("fileContent is the same as fetched remote bytes")
           return
         }
         val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
@@ -80,6 +87,7 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : VFileInfoAtt
         val doUploadContent = syncProvider.saveStrategy
           .decide(syncProvider.file, oldStorageBytes, fetchedRemoteContentBytes)
         syncProvider.afterSaveDecision()
+        log.info("doUploadContent: $doUploadContent")
         if (doUploadContent) {
           uploadNewContent(attributes, fileContent)
           successfulStatesStorage.writeStream(recordId).use {
@@ -92,9 +100,11 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : VFileInfoAtt
           runWriteActionInEdt {
             syncProvider.loadNewContent(fetchedRemoteContentBytes)
           }
+          log.info("set local content from remote")
         }
       }
     }.onFailure {
+      log.info(it)
       onThrowable(it, syncProvider, neverFetchedBefore)
     }
   }

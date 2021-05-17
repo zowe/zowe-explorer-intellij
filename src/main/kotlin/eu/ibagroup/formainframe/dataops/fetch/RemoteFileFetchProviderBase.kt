@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -25,6 +26,7 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
 
   private val cache = mutableMapOf<RemoteQuery<Request, Unit>, Collection<File>>()
   private val cacheState = mutableMapOf<RemoteQuery<Request, Unit>, CacheState>()
+  protected var errorMessages = mutableMapOf<RemoteQuery<Request, Unit>, String>()
 
   override fun getCached(query: RemoteQuery<Request, Unit>): Collection<File>? {
     return lock.withLock { (cacheState[query] == CacheState.FETCHED).runIfTrue { cache[query] } }
@@ -32,6 +34,10 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
 
   override fun isCacheValid(query: RemoteQuery<Request, Unit>): Boolean {
     return lock.withLock { cacheState[query] != CacheState.ERROR }
+  }
+
+  override fun getFetchedErrorMessage(query: RemoteQuery<Request, Unit>): String? {
+    return lock.withLock { cacheState[query] == CacheState.ERROR }.runIfTrue { errorMessages[query] }
   }
 
   protected abstract fun fetchResponse(
@@ -76,6 +82,9 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
         cleanCacheInternal(query, false)
         sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchCancelled(query)
       } else {
+        if (it is CallException) {
+          errorMessages[query] = (it.errorParams?.get("details") as List<*>)[0] as String
+        }
         cache[query] = listOf()
         cacheState[query] = CacheState.ERROR
         sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchFailure(query, it)
@@ -84,7 +93,7 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
   }
 
   override fun cleanCache(query: RemoteQuery<Request, Unit>) {
-   cleanCacheInternal(query, true)
+    cleanCacheInternal(query, true)
   }
 
   private fun cleanCacheInternal(query: RemoteQuery<Request, Unit>, sendTopic: Boolean) {

@@ -19,7 +19,7 @@ class CredentialServiceImpl : CredentialService {
 
   override fun getUsernameByKey(connectionConfigUuid: String): String? {
     val credentials = getCredentials(connectionConfigUuid)
-    return credentials?.userName?.toUpperCase()
+    return credentials?.userName
   }
 
   override fun getPasswordByKey(connectionConfigUuid: String): String? {

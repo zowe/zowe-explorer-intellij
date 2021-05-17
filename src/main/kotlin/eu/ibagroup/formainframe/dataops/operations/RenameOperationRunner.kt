@@ -7,6 +7,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
@@ -57,7 +58,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               }
               true
             } else {
-              false
+              throw CallException(response, "Unable to rename file")
             }
           } catch (e: Throwable) {
             false
@@ -86,7 +87,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               }
               true
             } else {
-              false
+              throw CallException(response, "Unable to rename file")
             }
           } catch (e: Throwable) {
             false
@@ -111,7 +112,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               }
               true
             } else {
-              false
+              throw CallException(response, "Unable to rename file")
             }
           } catch (e: Throwable) {
             false

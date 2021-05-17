@@ -21,6 +21,8 @@ class SeqDatasetContentSynchronizerFactory : ContentSynchronizerFactory {
   }
 }
 
+private val log = log<SeqDatasetContentSynchronizer>()
+
 class SeqDatasetContentSynchronizer(
   dataOpsManager: DataOpsManager
 ) : RemoteAttributesContentSynchronizerBase<RemoteDatasetAttributes>(dataOpsManager) {
@@ -34,16 +36,19 @@ class SeqDatasetContentSynchronizer(
     attributes: RemoteDatasetAttributes,
     progressIndicator: ProgressIndicator?
   ): ByteArray {
+    log.info("Fetch remote content for $attributes")
     var throwable: Throwable = IOException("Unknown error")
     return attributes.requesters.stream().mapNotNull {
       var content: ByteArray? = null
       try {
+        log.info("Trying to execute a call using $it")
         val response = makeFetchCall(it.connectionConfig, attributes).apply {
           progressIndicator?.let { pi -> cancelByIndicator(pi) }
         }.applyIfNotNull(progressIndicator) { indicator ->
           cancelByIndicator(indicator)
         }.execute()
         if (response.isSuccessful) {
+          log.info("Content has been fetched successfully")
           content = response.body()?.removeLastNewLine()?.toByteArray()
         } else {
           throwable = CallException(response, "Cannot fetch data from ${attributes.name}")
@@ -98,10 +103,12 @@ class SeqDatasetContentSynchronizer(
   }
 
   override fun uploadNewContent(attributes: RemoteDatasetAttributes, newContentBytes: ByteArray) {
+    log.info("Upload remote content for $attributes")
     var throwable: Throwable = IOException("Unknown error")
     var uploaded = false
     for (requester in attributes.requesters) {
       try {
+        log.info("Trying to execute a call using $requester")
         val response = makeUploadCall(requester.connectionConfig, attributes, newContentBytes).execute()
         if (response.isSuccessful) {
           uploaded = true

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tree.LeafState
 import com.intellij.util.containers.toMutableSmartList
+import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
@@ -33,8 +34,14 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
   protected abstract fun makeFetchTaskTitle(query: Q): String
 
   private val loadingNode by lazy { listOf(LoadingNode(notNullProject, this, explorer, treeStructure)) }
-  private val errorNode by lazy { listOf(ErrorNode(notNullProject, this, explorer, treeStructure)) }
+
+  //  private val errorNode by lazy { listOf(ErrorNode(notNullProject, this, explorer, treeStructure, text = fileFetchProvider.getFetchedErrorMessage())) }
+  private fun errorNode(text: String): List<ErrorNode> {
+    return listOf(ErrorNode(notNullProject, this, explorer, treeStructure, text = text))
+  }
+
   private val hasError = AtomicBoolean(false)
+
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return lock.withLock {
@@ -57,7 +64,9 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
           }
         } else {
           hasError.set(true)
-          errorNode.also { cachedChildren = it }
+          errorNode(q?.let { it1 -> fileFetchProvider.getFetchedErrorMessage(it1) } ?: message("title.error")).also {
+            cachedChildren = it
+          }
         }
       } else {
         childrenNodes

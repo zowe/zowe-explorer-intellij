@@ -28,7 +28,7 @@ data class UssAllocationOperation(
   override val request: UssAllocationParams,
   override val connectionConfig: ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteAllocationOperation<UssAllocationParams>
+) : RemoteOperation<UssAllocationParams>
 
 class UssAllocator : Allocator<UssAllocationOperation> {
 
@@ -47,7 +47,7 @@ class UssAllocator : Allocator<UssAllocationOperation> {
     if (!response.isSuccessful) {
       throw CallException(
         response,
-        "Cannot allocate dataset ${operation.request.fileName} on ${operation.connectionConfig.name}"
+        "Cannot allocate file ${operation.request.fileName} on ${operation.connectionConfig.name}"
       )
     }
   }
