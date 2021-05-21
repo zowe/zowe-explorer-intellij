@@ -1,19 +1,18 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
-import eu.ibagroup.formainframe.utils.validation.validateDatasetNameOnInput
-import eu.ibagroup.formainframe.utils.validation.validateForBlank
-import eu.ibagroup.formainframe.utils.validation.validateForPositiveInteger
-import eu.ibagroup.formainframe.utils.validation.validateVolser
+import eu.ibagroup.formainframe.utils.validation.*
 import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
@@ -26,9 +25,9 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   StatefulDialog<DatasetAllocationParams>(project = project) {
 
   private lateinit var recordFormatBox: JComboBox<RecordFormat>
+  private lateinit var spaceUnitBox: ComboBox<AllocationUnit?>
   private lateinit var datasetOrganizationBox: JComboBox<DatasetOrganization>
   private lateinit var primaryAllocationField: JTextField
-
 
   private val mainPanel by lazy {
     panel {
@@ -59,8 +58,11 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         label("Allocation unit")
         comboBox(
           model = CollectionComboBoxModel(listOf(AllocationUnit.TRK, AllocationUnit.BLK, AllocationUnit.CYL)),
-          prop = state.allocationParameters::allocationUnit
-        )
+          modelBinding = PropertyBinding(
+            get = { state.allocationParameters.allocationUnit },
+            set = { state.allocationParameters.allocationUnit = it }
+          )
+        ).also { spaceUnitBox = it.component }
       }
       row {
         label("Primary allocation")
@@ -140,41 +142,55 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         }
       }
       row {
-        label("Volume")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.volumeSerial ?: "" },
-          set = { state.allocationParameters.volumeSerial = it }
-        )).withValidationOnInput {
-          validateVolser(it)
+        label("Average Block Length")
+        intTextField(
+          PropertyBinding(
+            get = { state.allocationParameters.averageBlockLength ?: 0 },
+            set = { state.allocationParameters.averageBlockLength = it }
+          )
+        ).withValidationOnInput {
+          validateForPositiveInteger(it)
+        }.enableIf(spaceUnitBox.selectedValueMatches { it == AllocationUnit.BLK })
+
+      }
+      hideableRow("Advanced Parameters") {
+        row {
+          label("Volume")
+          textField(PropertyBinding(
+            get = { state.allocationParameters.volumeSerial ?: "" },
+            set = { state.allocationParameters.volumeSerial = it }
+          )).withValidationOnInput {
+            validateVolser(it)
+          }
         }
-      }
-      row {
-        label("Device Type")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.deviceType ?: "" },
-          set = { state.allocationParameters.deviceType = it }
-        ))
-      }
-      row {
-        label("Storage class")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.storageClass ?: "" },
-          set = { state.allocationParameters.storageClass = it }
-        ))
-      }
-      row {
-        label("Management class")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.managementClass ?: "" },
-          set = { state.allocationParameters.managementClass = it }
-        ))
-      }
-      row {
-        label("Data class")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.dataClass ?: "" },
-          set = { state.allocationParameters.dataClass = it }
-        ))
+        row {
+          label("Device Type")
+          textField(PropertyBinding(
+            get = { state.allocationParameters.deviceType ?: "" },
+            set = { state.allocationParameters.deviceType = it }
+          ))
+        }
+        row {
+          label("Storage class")
+          textField(PropertyBinding(
+            get = { state.allocationParameters.storageClass ?: "" },
+            set = { state.allocationParameters.storageClass = it }
+          ))
+        }
+        row {
+          label("Management class")
+          textField(PropertyBinding(
+            get = { state.allocationParameters.managementClass ?: "" },
+            set = { state.allocationParameters.managementClass = it }
+          ))
+        }
+        row {
+          label("Data class")
+          textField(PropertyBinding(
+            get = { state.allocationParameters.dataClass ?: "" },
+            set = { state.allocationParameters.dataClass = it }
+          ))
+        }
       }
     }.apply {
       minimumSize = Dimension(450, 300)
@@ -186,31 +202,13 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
     return mainPanel
   }
 
-  override fun doOKAction() {
-    state.allocationParameters.directoryBlocks = state.allocationParameters.directoryBlocks.toNullIfZero()
-    state.allocationParameters.blockSize = state.allocationParameters.blockSize.toNullIfZero()
-    state.allocationParameters.recordLength = state.allocationParameters.recordLength.toNullIfZero()
-    state.allocationParameters.managementClass = state.allocationParameters.managementClass?.toNullIfEmpty()
-    state.allocationParameters.storageClass = state.allocationParameters.storageClass?.toNullIfEmpty()
-    state.allocationParameters.deviceType = state.allocationParameters.deviceType?.toNullIfEmpty()
-    state.allocationParameters.dataClass = state.allocationParameters.dataClass?.toNullIfEmpty()
-    state.allocationParameters.volumeSerial = state.allocationParameters.volumeSerial?.toNullIfEmpty()
-    super.doOKAction()
-  }
-
 
   init {
     title = "Allocate Dataset"
     init()
   }
 
-  private fun Int?.toNullIfZero(): Int? {
-    return if (this == 0) null else this
-  }
 
-  private fun String.toNullIfEmpty(): String? {
-    return if (this.isBlank()) null else this
-  }
 }
 
 

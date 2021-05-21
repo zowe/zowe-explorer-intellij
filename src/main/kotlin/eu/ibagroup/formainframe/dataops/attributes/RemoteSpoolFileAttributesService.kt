@@ -29,7 +29,7 @@ class RemoteSpoolFileAttributesService(
     file: MFVirtualFile,
     contentMode: XIBMDataType?
   ): RemoteSpoolFileAttributes {
-    return RemoteSpoolFileAttributes(info, file, contentMode ?: XIBMDataType.TEXT)
+    return RemoteSpoolFileAttributes(info, file, contentMode ?: XIBMDataType(XIBMDataType.Type.TEXT))
   }
 
   override val findOrCreateFileInVFSModel = fsModel::findOrCreate
