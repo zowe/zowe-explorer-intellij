@@ -97,6 +97,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperationFactory"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -204,6 +206,11 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
                 text="Use Binary Mode"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
+                class="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
+                text="Submit Job"
+                icon="AllIcons.Actions.Execute"/>
+
         <group id="eu.ibagroup.formainframe.actions">
             <action id="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo"
                     class="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo" text="Show Working Set Info"/>
@@ -237,8 +244,10 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
+            <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>

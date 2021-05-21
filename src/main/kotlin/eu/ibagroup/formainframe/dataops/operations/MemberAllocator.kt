@@ -19,7 +19,7 @@ data class MemberAllocationOperation(
   override val request: MemberAllocationParams,
   override val connectionConfig: ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteOperation<MemberAllocationParams>
+) : RemoteUnitOperation<MemberAllocationParams>
 
 class MemberAllocator : Allocator<MemberAllocationOperation> {
 

@@ -11,11 +11,10 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.dataops.operations.RemoteOperation
+import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HMigrate
-import eu.ibagroup.r2z.HRecall
 
 data class MigrateOperationParams(val file: VirtualFile)
 
@@ -59,4 +58,4 @@ data class MigrateOperation(
   override val request: MigrateOperationParams,
   override val connectionConfig: ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteOperation<MigrateOperationParams>
+) : RemoteUnitOperation<MigrateOperationParams>

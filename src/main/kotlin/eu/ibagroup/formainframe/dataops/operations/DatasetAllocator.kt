@@ -20,7 +20,7 @@ data class DatasetAllocationOperation(
   override val request: DatasetAllocationParams,
   override val connectionConfig: ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteOperation<DatasetAllocationParams>
+) : RemoteUnitOperation<DatasetAllocationParams>
 
 class DatasetAllocator : Allocator<DatasetAllocationOperation> {
 
