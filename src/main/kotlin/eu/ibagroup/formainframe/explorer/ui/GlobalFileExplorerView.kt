@@ -24,6 +24,9 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
+import eu.ibagroup.formainframe.analytics.AnalyticsService
+import eu.ibagroup.formainframe.analytics.events.FileAction
+import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.DoubleClickTreeMouseListener
 import eu.ibagroup.formainframe.common.ui.promisePath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -317,6 +320,13 @@ class GlobalFileExplorerView(
           } else {
             cutProviderUpdater(emptyList())
           }
+          forEach {
+            it.file?.let { file ->
+              service<DataOpsManager>().tryToGetAttributes(file)?.let { attrs ->
+                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attrs, FileAction.COPY))
+              }
+            }
+          }
         }.let { LinkedList(it) }
       }
     }
@@ -325,6 +335,7 @@ class GlobalFileExplorerView(
       return object : CutProvider {
         override fun performCut(dataContext: DataContext) {
           performCopyCut(true)
+          //TODO("add analytics")
         }
 
         override fun isCutEnabled(dataContext: DataContext): Boolean {
@@ -341,6 +352,7 @@ class GlobalFileExplorerView(
       return object : CopyProvider {
         override fun performCopy(dataContext: DataContext) {
           performCopyCut(false)
+          //TODO("add analytics")
         }
 
         override fun isCopyEnabled(dataContext: DataContext): Boolean {
@@ -487,6 +499,14 @@ class GlobalFileExplorerView(
               cancellable = true
             ) {
               operations.forEach { op ->
+                op.sourceAttributes?.let { attr ->
+                  service<AnalyticsService>().trackAnalyticsEvent(
+                    FileEvent(
+                      attr,
+                      if (op.isMove) FileAction.MOVE else FileAction.COPY
+                    )
+                  )
+                }
                 it.text = "${op.source.name} to ${op.destination.name}"
                 runCatching {
                   dataOpsManager.performOperation(
@@ -499,6 +519,7 @@ class GlobalFileExplorerView(
                       copyPasteBuffer.removeIf { it.file == op.source }
                       cutProviderUpdater(copyPasteBuffer.mapNotNull { it.file })
                     }
+
                   }
                 }.onFailure {
                   explorer.reportThrowable(it, project)
@@ -543,6 +564,7 @@ class GlobalFileExplorerView(
               }
             }
           }
+
         }
 
         override fun isPastePossible(dataContext: DataContext): Boolean {

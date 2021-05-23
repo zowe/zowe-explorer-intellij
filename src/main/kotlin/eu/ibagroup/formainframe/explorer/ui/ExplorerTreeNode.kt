@@ -7,12 +7,16 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.ui.SimpleTextAttributes
+import eu.ibagroup.formainframe.analytics.AnalyticsService
+import eu.ibagroup.formainframe.analytics.events.FileAction
+import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.synchronizer.AcceptancePolicy
 import eu.ibagroup.formainframe.explorer.Explorer
@@ -63,8 +67,8 @@ abstract class ExplorerTreeNode<Value : Any>(
     val file = virtualFile ?: return
     descriptor?.let {
       if (!file.isDirectory) {
-        val contentSynchronizer = explorer.componentManager.service<DataOpsManager>()
-          .getContentSynchronizer(file) ?: return
+        val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+        val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
         if (!contentSynchronizer.isAlreadySynced(file)) {
           val doSync = file.isReadable || showYesNoDialog(
             title = "File ${file.name} is not readable",
@@ -111,6 +115,9 @@ abstract class ExplorerTreeNode<Value : Any>(
               )
             }
           }
+        }
+        dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
+          service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
         }
         it.navigate(requestFocus)
       }

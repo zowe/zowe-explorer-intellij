@@ -28,12 +28,6 @@ repositories {
       ignoreGradleMetadataRedirection()
     }
   }
-  flatDir {
-    dir("libs")
-  }
-//  flatDir {
-//    dir("libs")
-//  }
 }
 
 java {
@@ -57,6 +51,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
   implementation("org.jgrapht:jgrapht-core:1.5.0")
   implementation("eu.ibagroup:r2z:1.0.13")
+  implementation("com.segment.analytics.java:analytics:+")
   testImplementation("junit", "junit", "4.12")
 }
 
