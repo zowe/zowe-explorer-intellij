@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -89,6 +90,17 @@ class GlobalExplorer : Explorer {
     }
 
 
+  }
+
+  override fun showNotification(title: String, content: String, type: NotificationType, project: Project?) {
+    NotificationBuilder(
+      EXPLORER_NOTIFICATION_GROUP_ID,
+      title,
+      content,
+      type
+    ).build().let {
+      Notifications.Bus.notify(it, project)
+    }
   }
 
   override fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?) {

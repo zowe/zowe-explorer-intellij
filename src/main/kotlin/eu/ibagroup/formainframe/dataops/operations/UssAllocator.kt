@@ -28,7 +28,7 @@ data class UssAllocationOperation(
   override val request: UssAllocationParams,
   override val connectionConfig: ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteOperation<UssAllocationParams>
+) : RemoteUnitOperation<UssAllocationParams>
 
 class UssAllocator : Allocator<UssAllocationOperation> {
 

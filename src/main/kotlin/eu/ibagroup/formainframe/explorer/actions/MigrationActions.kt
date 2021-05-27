@@ -20,7 +20,7 @@ import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
 
 
-private fun getRequestDataForNode(node: ExplorerTreeNode<*>): Triple<VirtualFile, ConnectionConfig, UrlConnection>? {
+fun getRequestDataForNode(node: ExplorerTreeNode<*>): Triple<VirtualFile, ConnectionConfig, UrlConnection>? {
   return if (node is ExplorerUnitTreeNodeBase<*, *> && node.unit is WorkingSet) {
     val file = node.virtualFile
     val config = node.unit.connectionConfig

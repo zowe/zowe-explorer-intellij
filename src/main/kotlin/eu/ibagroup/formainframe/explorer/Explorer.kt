@@ -1,5 +1,7 @@
 package eu.ibagroup.formainframe.explorer
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
@@ -38,6 +40,13 @@ interface Explorer {
     get() = componentManager.castOrNull()
 
   fun reportThrowable(t: Throwable, project: Project?)
+
+  fun showNotification(
+    title: String,
+    content: String,
+    type: NotificationType = NotificationType.INFORMATION,
+    project: Project?
+  )
 
   fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?)
 

@@ -10,7 +10,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.dataops.operations.RemoteOperation
+import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HRecall
@@ -60,4 +60,4 @@ data class RecallOperation(
   override val request: RecallOperationParams,
   override val connectionConfig: eu.ibagroup.formainframe.config.connect.ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteOperation<RecallOperationParams>
+) : RemoteUnitOperation<RecallOperationParams>
