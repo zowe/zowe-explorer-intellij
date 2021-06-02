@@ -29,20 +29,7 @@ class RenameAction : AnAction() {
     val selectedNode = view.mySelectedNodesData[0]
     val node = selectedNode.node
     var initialState = ""
-    if (node is WorkingSetNode) {
-      initialState = (selectedNode.node.value as WorkingSet).name
-      val dialog = RenameDialog(e.project, "Working Set", initialState).withValidationOnInput {
-        validateWorkingSetName(it, initialState, configCrudable)
-      }.withValidationForBlankOnApply()
-      if (dialog.showAndGet()) {
-        val nodeValue = node.value
-        val wsToUpdate = configCrudable.getByUniqueKey<WorkingSetConfig>(nodeValue.uuid)?.clone()
-        if (wsToUpdate != null) {
-          wsToUpdate.name = dialog.state
-          configCrudable.update(wsToUpdate)
-        }
-      }
-    } else if (node is DSMaskNode) {
+    if (node is DSMaskNode) {
       initialState = (selectedNode.node.value as DSMask).mask
       val dialog = RenameDialog(e.project, "Dataset Mask", initialState).withValidationOnInput {
         validateDatasetMask(it.text, it)
@@ -141,7 +128,7 @@ class RenameAction : AnAction() {
       return
     }
     val selectedNodes = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1) {
+    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1 && selectedNodes[0].node !is WorkingSetNode) {
       val file = selectedNodes[0].file
       var isMigrated = false
       if (file != null) {

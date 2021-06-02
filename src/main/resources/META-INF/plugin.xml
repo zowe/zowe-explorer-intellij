@@ -202,6 +202,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 icon="AllIcons.Nodes.Module"
                 text="Mask"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
                 class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
                 text="Use Binary Mode"/>
@@ -210,6 +211,11 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 class="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
                 text="Submit Job"
                 icon="AllIcons.Actions.Execute"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
+                text="Edit"
+                use-shortcut-of="RenameElement"/>
 
         <group id="eu.ibagroup.formainframe.actions">
             <action id="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo"
@@ -248,6 +254,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
             <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
