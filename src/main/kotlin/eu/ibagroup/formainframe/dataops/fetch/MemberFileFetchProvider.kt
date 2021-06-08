@@ -3,7 +3,7 @@ package eu.ibagroup.formainframe.dataops.fetch
 import com.intellij.openapi.progress.ProgressIndicator
 import com.jetbrains.rd.util.getLogger
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -49,7 +49,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
       var exception: Throwable? = null
 
       val response = api<DataAPI>(query.connectionConfig).listDatasetMembers(
-        authorizationToken = query.connectionConfig.token,
+        authorizationToken = query.connectionConfig.authToken,
         datasetName = libraryAttributes.name
       ).cancelByIndicator(progressIndicator).execute()
 

@@ -9,9 +9,9 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
+import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
 
-@Suppress("UNCHECKED_CAST")
 class DataOpsManagerImpl : DataOpsManager {
 
   private fun <Component> List<DataOpsComponentFactory<Component>>.buildComponents(): MutableList<Component> {
@@ -22,6 +22,7 @@ class DataOpsManagerImpl : DataOpsManager {
     get() = ApplicationManager.getApplication()
 
   private val attributesServices by lazy {
+    @Suppress("UNCHECKED_CAST")
     AttributesService.EP.extensionList.buildComponents() as MutableList<AttributesService<FileAttributes, VirtualFile>>
   }
 
@@ -29,6 +30,7 @@ class DataOpsManagerImpl : DataOpsManager {
     attributesClass: Class<out A>,
     vFileClass: Class<out F>
   ): AttributesService<A, F> {
+    @Suppress("UNCHECKED_CAST")
     return attributesServices.find {
       it.attributesClass.isAssignableFrom(attributesClass) && it.vFileClass.isAssignableFrom(vFileClass)
     } as AttributesService<A, F>? ?: throw IllegalArgumentException(
@@ -60,6 +62,7 @@ class DataOpsManagerImpl : DataOpsManager {
     queryClass: Class<out Query<*, *>>,
     vFileClass: Class<out File>
   ): FileFetchProvider<R, Q, File> {
+    @Suppress("UNCHECKED_CAST")
     return fileFetchProviders.find {
       it.requestClass.isAssignableFrom(requestClass)
         && it.queryClass.isAssignableFrom(queryClass)
@@ -87,34 +90,25 @@ class DataOpsManagerImpl : DataOpsManager {
   }
 
   private val operationRunners by lazy {
-    OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
+    @Suppress("UNCHECKED_CAST")
+    val operationRunnersList = OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
+    operationRunnersList.associateListedBy { it.operationClass }
   }
 
   override fun isOperationSupported(operation: Operation<*>): Boolean {
-    return operationRunners.any {
-      if (it.operationClass.isAssignableFrom(operation::class.java) && it.resultClass.isAssignableFrom(operation.resultClass)) {
-        it.canRun(operation)
-      } else {
-        false
-      }
-    }
+    return operationRunners[operation::class.java]?.any { it.canRun(operation) } == true
   }
 
   override fun <R : Any> performOperation(
     operation: Operation<R>,
     progressIndicator: ProgressIndicator
   ): R {
-    return (operationRunners.stream()
-      .filter {
-        if (it.operationClass.isAssignableFrom(operation::class.java) && it.resultClass.isAssignableFrom(operation.resultClass)) {
-          (it as OperationRunner<Operation<R>, R>).canRun(operation)
-        } else {
-          false
-        }
-      }
-      .findAnyNullable() as OperationRunner<Operation<R>, R>?)
+    val result = operationRunners[operation::class.java]
+      ?.find { it.canRun(operation) }
       ?.run(operation, progressIndicator)
       ?: throw IllegalArgumentException("Unsupported Operation $operation")
+    @Suppress("UNCHECKED_CAST")
+    return result as R
   }
 
   override fun dispose() {

@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
@@ -32,7 +32,7 @@ class RecallOperationRunner : MigrationRunner<RecallOperation> {
   override fun run(operation: RecallOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
     val response = api<DataAPI>(operation.connectionConfig).recallMigratedDataset(
-      authorizationToken = operation.connectionConfig.token,
+      authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.file.name,
       body = HRecall(wait = true)
     ).cancelByIndicator(progressIndicator).execute()

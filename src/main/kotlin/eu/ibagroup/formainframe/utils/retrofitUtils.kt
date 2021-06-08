@@ -8,7 +8,6 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.io.IOException
 
 @PublishedApi
 internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by call {
@@ -44,12 +43,13 @@ internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by
 }
 
 inline fun <reified T : Any> Call<T>.cancelByIndicator(progressIndicator: ProgressIndicator): Call<T> {
+  val call = this
   return if (progressIndicator is ProgressIndicatorEx) {
     val wrapped = WrappedCancellableCall(this)
     val delegate = object : AbstractProgressIndicatorBase(), ProgressIndicatorEx {
       override fun cancel() {
+        call.cancel()
         super.cancel()
-        this@cancelByIndicator.cancel()
       }
 
       override fun addStateDelegate(delegate: ProgressIndicatorEx) {

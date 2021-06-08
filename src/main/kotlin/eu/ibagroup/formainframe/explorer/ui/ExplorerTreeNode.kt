@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
@@ -11,6 +12,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
+import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.synchronizer.AcceptancePolicy
 import eu.ibagroup.formainframe.explorer.Explorer
@@ -19,7 +21,6 @@ import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
-@Suppress("LeakingThis")
 abstract class ExplorerTreeNode<Value : Any>(
   value: Value,
   project: Project,
@@ -29,6 +30,7 @@ abstract class ExplorerTreeNode<Value : Any>(
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
 
   init {
+    @Suppress("LeakingThis")
     treeStructure.registerNode(this)
   }
 
@@ -45,6 +47,16 @@ abstract class ExplorerTreeNode<Value : Any>(
 
   override fun getSettings(): ViewSettings {
     return treeStructure
+  }
+
+  protected fun updateMainTitleUsingCutBuffer(text: String, presentationData: PresentationData) {
+    val file = virtualFile ?: return
+    val textAttributes = if (explorer.componentManager.service<ExplorerContent>().isFileInCutBuffer(file)) {
+      SimpleTextAttributes.GRAYED_ATTRIBUTES
+    } else {
+      SimpleTextAttributes.REGULAR_ATTRIBUTES
+    }
+    presentationData.addText(text, textAttributes)
   }
 
   override fun navigate(requestFocus: Boolean) {

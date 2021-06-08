@@ -31,6 +31,9 @@ repositories {
   flatDir {
     dir("libs")
   }
+//  flatDir {
+//    dir("libs")
+//  }
 }
 
 java {

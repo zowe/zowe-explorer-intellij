@@ -3,7 +3,7 @@ package eu.ibagroup.formainframe.dataops.operations
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.*
@@ -36,7 +36,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).deleteDataset(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               datasetName = attr.name
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
@@ -60,7 +60,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
             try {
               progressIndicator.checkCanceled()
               val response = api<DataAPI>(it.connectionConfig).deleteDatasetMember(
-                authorizationToken = it.connectionConfig.token,
+                authorizationToken = it.connectionConfig.authToken,
                 datasetName = libraryAttributes.name,
                 memberName = attr.name
               ).cancelByIndicator(progressIndicator).execute()
@@ -84,7 +84,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).deleteUssFile(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               filePath = attr.path.substring(1),
               xIBMOption = XIBMOption.RECURSIVE
             ).cancelByIndicator(progressIndicator).execute()

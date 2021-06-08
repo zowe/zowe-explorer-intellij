@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
@@ -35,7 +35,7 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
   override fun run(operation: MigrateOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
     val response = api<DataAPI>(operation.connectionConfig).migrateDataset(
-      authorizationToken = operation.connectionConfig.token,
+      authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.file.name,
       body = HMigrate(wait = true)
     ).cancelByIndicator(progressIndicator).execute()

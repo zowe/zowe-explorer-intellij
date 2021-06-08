@@ -22,6 +22,9 @@ data class RemoteMemberAttributes(
     return RemoteMemberAttributes(info.clone(), parentFile)
   }
 
+  override val isCopyPossible
+    get() = true
+
 }
 
 fun RemoteMemberAttributes.getLibraryAttributes(dataOpsManager: DataOpsManager): RemoteDatasetAttributes? {

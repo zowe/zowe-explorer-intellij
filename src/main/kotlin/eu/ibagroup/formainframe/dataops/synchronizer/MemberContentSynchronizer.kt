@@ -2,7 +2,7 @@ package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
@@ -50,7 +50,7 @@ class MemberContentSynchronizer(
       try {
         log.info("Trying to execute a call using $requester")
         val response = api<DataAPI>(requester.connectionConfig).retrieveMemberContent(
-          authorizationToken = requester.connectionConfig.token,
+          authorizationToken = requester.connectionConfig.authToken,
           datasetName = libAttributes.name,
           memberName = attributes.name,
           xIBMDataType = attributes.contentMode
@@ -82,7 +82,7 @@ class MemberContentSynchronizer(
       try {
         log.info("Trying to execute a call using $requester")
         val response = api<DataAPI>(requester.connectionConfig).writeToDatasetMember(
-          authorizationToken = requester.connectionConfig.token,
+          authorizationToken = requester.connectionConfig.authToken,
           datasetName = libAttributes.name,
           memberName = attributes.name,
           content = String(newContentBytes).addNewLine(),
