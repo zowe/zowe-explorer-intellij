@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.utils.validation
+package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -123,13 +123,13 @@ fun validateUssFileName(component: JTextField): ValidationInfo? {
 
 private val firstSymbol = "A-Za-z\$@#"
 private val remainingSymbol = firstSymbol + "0-9\\-"
-private val firstGroup = "([${firstSymbol}][${remainingSymbol}]{0,7})"
-private val remainingGroup = "[${remainingSymbol}]{1,8}"
+private val firstGroup = "([$firstSymbol][$remainingSymbol]{0,7})"
+private val remainingGroup = "[$remainingSymbol]{1,8}"
 private val smallErrorMessage = "First segment must be alphabetic (A to Z) or national (# @ \$)"
 private val errorMessageForFullText =
   "Each name segment (qualifier) is 1 to 8 characters,\nthe first of which must be alphabetic (A to Z) or national (# @ \$).\nThe remaining seven characters are either alphabetic,\nnumeric (0 - 9), national, a hyphen (-).\nName segments are separated by a period (.)"
 
-private val datasetNameRegex = Regex("${firstGroup}(\\.${remainingGroup})*")
+private val datasetNameRegex = Regex("$firstGroup(\\.$remainingGroup)*")
 
 fun validateDatasetNameOnInput(component: JTextField): ValidationInfo? {
   val text = component.text.trim()

@@ -5,7 +5,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.utils.validation.validateForBlank
+import eu.ibagroup.formainframe.utils.validateForBlank
 import javax.swing.JComponent
 import javax.swing.JTextField
 

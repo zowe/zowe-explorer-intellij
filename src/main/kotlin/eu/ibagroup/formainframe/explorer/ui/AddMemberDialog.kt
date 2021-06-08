@@ -5,8 +5,8 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.operations.MemberAllocationParams
-import eu.ibagroup.formainframe.utils.validation.validateForBlank
-import eu.ibagroup.formainframe.utils.validation.validateMemberName
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateMemberName
 import javax.swing.JComponent
 
 class AddMemberDialog(project: Project?, override var state: MemberAllocationParams) : DialogWrapper(project),

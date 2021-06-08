@@ -22,6 +22,8 @@
   <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
 
   <description><![CDATA[
+<h1>Celebrating Pride 2021 with the 0.4 release!</h1>
+
 For Mainframe brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
 Using our plugin you will be able to:<br/>
 <ul>
