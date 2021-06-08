@@ -2,7 +2,7 @@ package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
@@ -44,7 +44,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).renameDataset(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               body = RenameData(
                 fromDataset = RenameData.FromDataset(
                   oldDatasetName = attributes.name
@@ -71,7 +71,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).renameDatasetMember(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               body = RenameData(
                 fromDataset = RenameData.FromDataset(
                   oldDatasetName = parentAttributes.datasetInfo.name,
@@ -100,7 +100,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).moveUssFile(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               body = MoveUssFile(
                 from = attributes.path
               ),

@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -29,15 +28,17 @@ import eu.ibagroup.formainframe.common.ui.DoubleClickTreeMouseListener
 import eu.ibagroup.formainframe.common.ui.promisePath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
-import eu.ibagroup.formainframe.dataops.operations.*
-import eu.ibagroup.formainframe.explorer.*
+import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
+import eu.ibagroup.formainframe.dataops.operations.MoveCopyOperation
+import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.explorer.ExplorerListener
+import eu.ibagroup.formainframe.explorer.ExplorerUnit
+import eu.ibagroup.formainframe.explorer.UNITS_CHANGED
 import eu.ibagroup.formainframe.utils.*
-import eu.ibagroup.formainframe.utils.validation.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.Component
 import java.util.*
@@ -167,7 +168,7 @@ class GlobalFileExplorerView(
                 nodes
               }
               it is VFileDeleteEvent
-                  && this@GlobalFileExplorerView
+                && this@GlobalFileExplorerView
                 .ignoreVFileDeleteEvents
                 .compareAndSet(true, true) -> {
                 null
@@ -215,11 +216,20 @@ class GlobalFileExplorerView(
       componentManager = explorer.componentManager,
       topic = ExplorerContent.CUT_BUFFER_CHANGES,
       handler = CutBufferListener { previousBufferState, currentBufferState ->
-        (previousBufferState + currentBufferState).toSet().map {
-          myFsTreeStructure.findByVirtualFile(it)
-        }.flatten().toSet().forEach {
-          myStructure.invalidate(it, true)
-        }
+        previousBufferState
+          .asSequence()
+          .plus(currentBufferState)
+          .distinct()
+          .map { it.getAncestorNodes() }
+          .flatten()
+          .distinct()
+          .map {
+            myFsTreeStructure.findByVirtualFile(it)
+          }.flatten()
+          .distinct()
+          .forEach {
+            myStructure.invalidate(it, true)
+          }
       }
     )
   }
@@ -229,9 +239,6 @@ class GlobalFileExplorerView(
   private fun registerTreeListeners(tree: DnDAwareTree) {
     tree.addMouseListener(object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
-//        if (tree.getRowForLocation(x, y) == -1) {
-//          return
-//        }
         val popupActionGroup = DefaultActionGroup()
         popupActionGroup.add(
           ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.ContextMenuGroup")
@@ -297,17 +304,7 @@ class GlobalFileExplorerView(
     }
 
     private val cutCopyPredicate: (NodeData) -> Boolean = {
-      when (val attributes = it.attributes) {
-        is RemoteDatasetAttributes -> {
-          !attributes.isDirectory && !attributes.isMigrated
-        }
-        is RemoteMemberAttributes -> {
-          true
-        }
-        else -> {
-          false
-        }
-      }
+      it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isConfigUssPath)
     }
 
     private fun performCopyCut(isCut: Boolean) {
@@ -317,6 +314,8 @@ class GlobalFileExplorerView(
         copyPasteBuffer = nodes.filter(cutCopyPredicate).apply {
           if (isCut) {
             mapNotNull { it.file }.also(cutProviderUpdater)
+          } else {
+            cutProviderUpdater(emptyList())
           }
         }.let { LinkedList(it) }
       }
@@ -355,7 +354,7 @@ class GlobalFileExplorerView(
     }
 
     private val pastePredicate: (NodeData) -> Boolean = {
-      it.attributes is RemoteDatasetAttributes && it.file?.isDirectory == true
+      it.attributes?.isPastePossible == true
     }
 
     private fun isPastePossibleAndEnabled(): Boolean {
@@ -374,11 +373,17 @@ class GlobalFileExplorerView(
       destinationFiles: List<VirtualFile>,
       isCut: Boolean
     ): List<Pair<VirtualFile, VirtualFile>> {
+
+      val filteredSourceFiles = if (isCut) {
+        sourceFiles.getMinimalCommonParents()
+      } else {
+        sourceFiles
+      }
+
       return destinationFiles
         .map { destFile ->
-          sourceFiles.map { Pair(destFile, it) }
-        }.flatten()
-        .filter {
+          filteredSourceFiles.map { Pair(destFile, it) }
+        }.flatten().filter {
           dataOpsManager.isOperationSupported(
             operation = MoveCopyOperation(
               source = it.second,
@@ -395,7 +400,7 @@ class GlobalFileExplorerView(
     override fun getPasteProvider(): PasteProvider {
       return object : PasteProvider {
         override fun performPaste(dataContext: DataContext) {
-          val pasteDestinationsNodes = mySelectedNodesData
+          val pasteDestinationsNodesData = mySelectedNodesData
             .filter(pastePredicate)
 
           bufferLock.withLock {
@@ -405,7 +410,7 @@ class GlobalFileExplorerView(
 
             val destinationSourceFilePairs = getDestinationSourceFilePairs(
               sourceFiles = sourceFilesRaw,
-              destinationFiles = pasteDestinationsNodes.mapNotNull { it.file },
+              destinationFiles = pasteDestinationsNodesData.mapNotNull { it.file },
               isCut = isCut.get()
             )
 
@@ -430,8 +435,7 @@ class GlobalFileExplorerView(
                   ?.mapNotNull conflicts@{ destChild ->
                     Pair(destFile, sourceFiles.find { it.name == destChild.name } ?: return@conflicts null)
                   }
-              }
-              .flatten()
+              }.flatten()
 
             if (conflicts.isNotEmpty()) {
               val choice = Messages.showDialog(
@@ -501,14 +505,41 @@ class GlobalFileExplorerView(
                 }
                 it.fraction = it.fraction + 1.0 / filesToMoveTotal
               }
-              val nodesToRefresh = if (isCut.get()) {
-                copyPasteBuffer + pasteDestinationsNodes
-              } else {
-                pasteDestinationsNodes
+              fun List<MoveCopyOperation>.collectByFile(
+                takeParent: Boolean = false,
+                fileChooser: (MoveCopyOperation) -> VirtualFile
+              ): List<VirtualFile> {
+                return map(fileChooser)
+                  .distinct()
+                  .getMinimalCommonParents()
+                  .mapNotNull {
+                    if (takeParent) {
+                      it.parent
+                    } else {
+                      it
+                    }
+                  }.distinct()
               }
+
+              val destinationFilesToRefresh = operations.collectByFile { it.destination }
+              val sourceFilesToRefresh = if (isCut.get()) {
+                operations.collectByFile(true) { it.source }
+              } else {
+                emptyList()
+              }
+              val nodesToRefresh = destinationFilesToRefresh
+                .run {
+                  if (isCut.get()) {
+                    plus(sourceFilesToRefresh).distinct().getMinimalCommonParents()
+                  } else {
+                    this
+                  }
+                }.map { myFsTreeStructure.findByVirtualFile(it) }
+                .flatten()
+                .distinct()
               nodesToRefresh.forEach {
-                it.node.cleanCacheIfPossible()
-                myStructure.invalidate(it.node, true)
+                it.cleanCacheIfPossible()
+                myStructure.invalidate(it, true)
               }
             }
           }
@@ -572,17 +603,11 @@ class GlobalFileExplorerView(
         .filterNot {
           it.node is WorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isConfigUssPath)
         }.mapNotNull {
-          val file = it.file ?: return@mapNotNull null
-          val pathFiles = mutableListOf<MFVirtualFile>()
-          var current: MFVirtualFile? = file
-          while (current != null) {
-            pathFiles.add(current)
-            current = current.parent
-          }
-          Pair(it, pathFiles)
+          Pair(it, it.file?.getParentsChain() ?: return@mapNotNull null)
         }
       val nodeDataAndPathFiltered = nodeDataAndPaths.filter { orig ->
-        nodeDataAndPaths.filter { orig.second.size > it.second.size }
+        nodeDataAndPaths
+          .filter { orig.second.size > it.second.size }
           .none { orig.second.containsAll(it.second) }
       }
       val nodeAndFilePairs = nodeDataAndPathFiltered.map { it.first }.filter {
@@ -635,9 +660,9 @@ class GlobalFileExplorerView(
       }
       return selected.any {
         it.node is WorkingSetNode
-            || it.node is DSMaskNode
-            || (it.node is UssDirNode && it.node.isConfigUssPath)
-            || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
+          || it.node is DSMaskNode
+          || (it.node is UssDirNode && it.node.isConfigUssPath)
+          || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
       }
     }
   }

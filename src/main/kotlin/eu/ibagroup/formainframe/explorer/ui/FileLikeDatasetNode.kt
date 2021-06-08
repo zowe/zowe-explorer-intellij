@@ -41,12 +41,7 @@ class FileLikeDatasetNode(
     val attributes = service<DataOpsManager>().tryToGetAttributes(value) as? RemoteDatasetAttributes
     val isMigrated = attributes?.isMigrated ?: false
     presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else if (isMigrated) migratedIcon else AllIcons.FileTypes.Text)
-    val textAttributes = if (explorer.componentManager.service<ExplorerContent>().isFileInCutBuffer(value)) {
-      SimpleTextAttributes.GRAYED_ATTRIBUTES
-    } else {
-      SimpleTextAttributes.REGULAR_ATTRIBUTES
-    }
-    presentation.addText(value.presentableName, textAttributes)
+    updateMainTitleUsingCutBuffer(value.presentableName, presentation)
     val volser = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
       .getAttributes(value)?.volser

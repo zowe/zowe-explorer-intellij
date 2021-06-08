@@ -3,7 +3,7 @@ package eu.ibagroup.formainframe.dataops.fetch
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -42,12 +42,14 @@ class UssFileFetchProvider(
     var attributes: Collection<RemoteUssAttributes>? = null
     var exception: Throwable? = null
 
-    val response = api<DataAPI>(query.connectionConfig).listUssPath(
-      authorizationToken = query.connectionConfig.token,
-      path = query.request.path,
-      depth = 1,
-      followSymlinks = SymlinkMode.REPORT
-    ).cancelByIndicator(progressIndicator).execute()
+    val response = api<DataAPI>(query.connectionConfig)
+      .listUssPath(
+        authorizationToken = query.connectionConfig.authToken,
+        path = query.request.path,
+        depth = 1,
+        followSymlinks = SymlinkMode.REPORT
+      ).cancelByIndicator(progressIndicator)
+      .execute()
 
     if (response.isSuccessful) {
       attributes = response.body()?.items?.filter {

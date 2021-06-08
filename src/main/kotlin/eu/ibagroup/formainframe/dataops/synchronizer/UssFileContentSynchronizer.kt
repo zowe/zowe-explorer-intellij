@@ -2,7 +2,7 @@ package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
@@ -39,7 +39,7 @@ class UssFileContentSynchronizer(
       var content: ByteArray? = null
       try {
         val response = api<DataAPI>(it.connectionConfig).retrieveUssFileContent(
-          authorizationToken = it.connectionConfig.token,
+          authorizationToken = it.connectionConfig.authToken,
           filePath = attributes.path.substring(1),
           xIBMDataType = attributes.contentMode
         ).applyIfNotNull(progressIndicator) { indicator ->
@@ -63,7 +63,7 @@ class UssFileContentSynchronizer(
     for (requester in attributes.requesters) {
       try {
         val response = api<DataAPI>(requester.connectionConfig).writeToUssFile(
-          authorizationToken = requester.connectionConfig.token,
+          authorizationToken = requester.connectionConfig.authToken,
           filePath = attributes.path.substring(1),
           body = String(newContentBytes).addNewLine(),
           xIBMDataType = attributes.contentMode
