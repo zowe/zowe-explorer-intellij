@@ -1,0 +1,22 @@
+Privacy Policy
+
+The collection, storage and use of User’s information related to the use of IntelliJ plug-in by IBA Group is described in this Privacy Policy.  
+
+1. Information IBA Group Collects
+
+IBA Group collects statistical information, which includes: 1) country of User’s origin; 2) anonymous usage data: the User’s actions with the IntelliJ plug-in, including, but not limited to, opening, editing, creating, etc. Information is provided by User anonymously and is used for statistical analysis purposes and for the purposes of improving the IntelliJ plug-in and the user’s experience with it. After processing and analysis the data is removed from the system, but IBA Group may further use the reports that are based on the collected statistical data for marketing purposes.
+
+2. Security
+
+Unfortunately, the transmission of information via the internet is not completely secure. Although IBA Group will do its best to protect User’s Information, it cannot guarantee the security of the data provided by User; any provision of information by User is therefore voluntary and at User’s own risk. 
+
+3. Use of Third Party Products
+
+The data may be collected through third party products, including open source products and libraries, for which IBA Group bears no liability. Such products are the property of their respective owners and are licensed under their respective licenses specified below: 
+
+analytics-java – a Java client for Segment, licensed under the MIT License: https://github.com/segmentio/analytics-java. 
+
+
+4. Modifications
+
+IBA Group may change this Privacy Policy from time to time by updating this page. User should check this page from time to time to ensure that User agrees with modifications.

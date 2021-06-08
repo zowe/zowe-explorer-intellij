@@ -6,6 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.analytics.AnalyticsService
+import eu.ibagroup.formainframe.analytics.events.FileAction
+import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
@@ -62,6 +65,7 @@ class RenameAction : AnAction() {
       val file = node.virtualFile
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
+        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
       }
     } else if (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath) {
       initialState = selectedNode.node.value.path
@@ -89,6 +93,7 @@ class RenameAction : AnAction() {
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
+        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
       }
     }
   }
