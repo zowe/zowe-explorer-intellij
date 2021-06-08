@@ -175,6 +175,10 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 class="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
                 text="Dataset"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"
+                                              class="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"
+                                              text="Allocate Like"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"
                 class="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"
                 text="File" icon="AllIcons.FileTypes.Text"/>
@@ -239,6 +243,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"/>
             <separator/>

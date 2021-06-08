@@ -45,7 +45,8 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           model = CollectionComboBoxModel(
             listOf(
               DatasetOrganization.PS,
-              DatasetOrganization.PO
+              DatasetOrganization.PO,
+              DatasetOrganization.POE
             )
           ),
           prop = state.allocationParameters::datasetOrganization
