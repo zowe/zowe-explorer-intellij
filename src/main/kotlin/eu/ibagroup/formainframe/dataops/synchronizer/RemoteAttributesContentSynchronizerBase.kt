@@ -1,12 +1,11 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.utils.ContentStorage
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
@@ -17,7 +16,7 @@ private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
 
 private val log = log<RemoteAttributesContentSynchronizerBase<*>>()
 
-abstract class RemoteAttributesContentSynchronizerBase<Attributes : VFileInfoAttributes>(
+abstract class RemoteAttributesContentSynchronizerBase<Attributes : FileAttributes>(
   dataOpsManager: DataOpsManager
 ) : AbstractAttributedContentSynchronizer<Attributes>(dataOpsManager) {
 

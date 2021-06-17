@@ -6,16 +6,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.dataops.operations.RemoteOperation
+import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HMigrate
-import eu.ibagroup.r2z.HRecall
 
 data class MigrateOperationParams(val file: VirtualFile)
 
@@ -36,7 +35,7 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
   override fun run(operation: MigrateOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
     val response = api<DataAPI>(operation.connectionConfig).migrateDataset(
-      authorizationToken = operation.connectionConfig.token,
+      authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.file.name,
       body = HMigrate(wait = true)
     ).cancelByIndicator(progressIndicator).execute()
@@ -59,4 +58,4 @@ data class MigrateOperation(
   override val request: MigrateOperationParams,
   override val connectionConfig: ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteOperation<MigrateOperationParams>
+) : RemoteUnitOperation<MigrateOperationParams>

@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
 
@@ -20,13 +20,13 @@ interface DataOpsManager : Disposable {
       get() = ApplicationManager.getApplication().getService(DataOpsManager::class.java)
   }
 
-  fun <A : VFileInfoAttributes, F : VirtualFile> getAttributesService(
+  fun <A : FileAttributes, F : VirtualFile> getAttributesService(
     attributesClass: Class<out A>, vFileClass: Class<out F>
   ): AttributesService<A, F>
 
-  fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes?
+  fun tryToGetAttributes(file: VirtualFile): FileAttributes?
 
-  fun tryToGetFile(attributes: VFileInfoAttributes): VirtualFile?
+  fun tryToGetFile(attributes: FileAttributes): VirtualFile?
 
   fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> getFileFetchProvider(
     requestClass: Class<out R>,
@@ -50,7 +50,7 @@ interface DataOpsManager : Disposable {
 
 }
 
-inline fun <reified A : VFileInfoAttributes, reified F : VirtualFile> DataOpsManager.getAttributesService(): AttributesService<A, F> {
+inline fun <reified A : FileAttributes, reified F : VirtualFile> DataOpsManager.getAttributesService(): AttributesService<A, F> {
   return getAttributesService(A::class.java, F::class.java)
 }
 

@@ -4,7 +4,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
@@ -64,14 +64,14 @@ class SeqDatasetContentSynchronizer(
     val volser = attributes.volser
     return if (volser != null) {
       api<DataAPI>(connectionConfig).retrieveDatasetContent(
-        authorizationToken = connectionConfig.token,
+        authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
         volser = volser,
         xIBMDataType = attributes.contentMode
       )
     } else {
       api<DataAPI>(connectionConfig).retrieveDatasetContent(
-        authorizationToken = connectionConfig.token,
+        authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
         xIBMDataType = attributes.contentMode
       )
@@ -86,7 +86,7 @@ class SeqDatasetContentSynchronizer(
     val volser = attributes.volser
     return if (volser != null) {
       api<DataAPI>(connectionConfig).writeToDataset(
-        authorizationToken = connectionConfig.token,
+        authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
         volser = volser,
         content = String(content).addNewLine(),
@@ -94,7 +94,7 @@ class SeqDatasetContentSynchronizer(
       )
     } else {
       api<DataAPI>(connectionConfig).writeToDataset(
-        authorizationToken = connectionConfig.token,
+        authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
         content = String(content),
         xIBMDataType = attributes.contentMode

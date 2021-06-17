@@ -7,24 +7,27 @@ import eu.ibagroup.r2z.Member
 import eu.ibagroup.r2z.XIBMDataType
 
 data class RemoteMemberAttributes(
-  val memberInfo: Member,
-  val libraryFile: MFVirtualFile,
-  override var contentMode: XIBMDataType = XIBMDataType.TEXT
-) : VFileInfoAttributes {
+  override val info: Member,
+  override val parentFile: MFVirtualFile,
+  override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT),
+) : DependentFileAttributes<Member, MFVirtualFile> {
 
   override val name
-    get() = memberInfo.name
+    get() = info.name
 
   override val length = 0L
 
 
-  override fun clone(): VFileInfoAttributes {
-    return RemoteMemberAttributes(memberInfo.clone(), libraryFile)
+  override fun clone(): FileAttributes {
+    return RemoteMemberAttributes(info.clone(), parentFile)
   }
+
+  override val isCopyPossible
+    get() = true
 
 }
 
 fun RemoteMemberAttributes.getLibraryAttributes(dataOpsManager: DataOpsManager): RemoteDatasetAttributes? {
-  return dataOpsManager.getAttributesService(RemoteDatasetAttributes::class.java, libraryFile::class.java)
-    .getAttributes(libraryFile)
+  return dataOpsManager.getAttributesService(RemoteDatasetAttributes::class.java, parentFile::class.java)
+    .getAttributes(parentFile)
 }

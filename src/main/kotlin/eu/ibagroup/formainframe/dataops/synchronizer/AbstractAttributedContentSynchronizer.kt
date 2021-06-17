@@ -5,14 +5,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.utils.ChannelExecutor
 import eu.ibagroup.formainframe.utils.QueueExecutor
 import kotlinx.coroutines.channels.Channel
 
 private val CHANNEL_DELAY = service<ConfigService>().autoSaveDelay
 
-abstract class AbstractAttributedContentSynchronizer<Attributes : VFileInfoAttributes>(
+abstract class AbstractAttributedContentSynchronizer<Attributes : FileAttributes>(
   dataOpsManager: DataOpsManager
 ) : AbstractQueuedContentSynchronizer(dataOpsManager) {
 

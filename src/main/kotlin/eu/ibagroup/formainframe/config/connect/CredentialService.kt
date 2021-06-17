@@ -41,5 +41,5 @@ fun password(connectionConfig: ConnectionConfig): String {
   )
 }
 
-val ConnectionConfig.token: String
+val ConnectionConfig.authToken: String
   get() = Credentials.basic(username(this), password(this))

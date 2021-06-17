@@ -8,9 +8,9 @@ import eu.ibagroup.formainframe.dataops.attributes.*
 
 class MoveCopyOperation(
   val source: VirtualFile,
-  val sourceAttributes: VFileInfoAttributes?,
+  val sourceAttributes: FileAttributes?,
   val destination: VirtualFile,
-  val destinationAttributes: VFileInfoAttributes?,
+  val destinationAttributes: FileAttributes?,
   val isMove: Boolean,
   val forceOverwriting: Boolean,
   val newName: String?

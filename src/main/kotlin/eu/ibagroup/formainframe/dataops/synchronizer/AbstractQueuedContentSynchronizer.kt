@@ -1,7 +1,6 @@
 package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
@@ -18,7 +17,7 @@ import com.intellij.psi.PsiDocumentListener
 import com.intellij.util.concurrency.AppExecutorUtil
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.attributesListener
 import eu.ibagroup.formainframe.utils.QueueExecutor
 import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
@@ -68,7 +67,7 @@ abstract class AbstractQueuedContentSynchronizer(
     subscribe(
       componentManager = dataOpsManager.componentManager,
       topic = AttributesService.ATTRIBUTES_CHANGED,
-      handler = attributesListener<VFileInfoAttributes, VirtualFile> {
+      handler = attributesListener<FileAttributes, VirtualFile> {
         onUpdate { _, _, file ->
           if (isAlreadySynced(file)) {
             triggerSync(file)

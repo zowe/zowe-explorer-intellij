@@ -7,10 +7,10 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.explorer.WorkingSet
-import eu.ibagroup.formainframe.utils.validation.validateDatasetMask
-import eu.ibagroup.formainframe.utils.validation.validateForBlank
-import eu.ibagroup.formainframe.utils.validation.validateUssMask
-import eu.ibagroup.formainframe.utils.validation.validateWorkingSetMaskName
+import eu.ibagroup.formainframe.utils.validateDatasetMask
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateUssMask
+import eu.ibagroup.formainframe.utils.validateWorkingSetMaskName
 import javax.swing.JComponent
 
 class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWrapper(project),

@@ -20,7 +20,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
   }
 
   override fun createCenterPanel(): JComponent {
-    val member = state.memberAttributes.memberInfo
+    val member = state.memberAttributes.info
     val tabbedPanel = JBTabbedPane()
 
     tabbedPanel.add("General", panel {

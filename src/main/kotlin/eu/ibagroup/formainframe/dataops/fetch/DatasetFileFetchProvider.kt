@@ -3,7 +3,7 @@ package eu.ibagroup.formainframe.dataops.fetch
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -41,7 +41,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
     var attributes: Collection<RemoteDatasetAttributes>? = null
     var exception: Throwable? = null
     val response = api<DataAPI>(query.connectionConfig).listDataSets(
-      authorizationToken = query.connectionConfig.token,
+      authorizationToken = query.connectionConfig.authToken,
       dsLevel = query.request.mask,
       volser = query.request.volser.nullIfBlank()
     ).cancelByIndicator(progressIndicator).execute()

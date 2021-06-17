@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -104,7 +105,11 @@ class UssDirNode(
       }
     }
     presentation.setIcon(icon)
-    presentation.presentableText = text
+    if (vFile != null) {
+      updateMainTitleUsingCutBuffer(text, presentation)
+    } else {
+      presentation.presentableText = text
+    }
   }
 
   override fun getVirtualFile(): MFVirtualFile? {

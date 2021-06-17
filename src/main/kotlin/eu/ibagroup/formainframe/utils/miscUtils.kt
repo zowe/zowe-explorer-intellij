@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.utils
 
 import com.google.gson.Gson
+import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
 import java.util.*
 import java.util.concurrent.locks.Lock
@@ -15,6 +16,10 @@ fun <E> Stream<E>.toMutableList(): MutableList<E> {
 }
 
 inline fun <reified T> Any?.castOrNull(): T? = (this is T).runIfTrue { this as T }
+
+@Suppress("UNCHECKED_CAST")
+fun <T> Any?.castOrNull(clazz: Class<T>): T? =
+  if (this != null && clazz.isAssignableFrom(this::class.java)) this as T else null
 
 val <E> Optional<out E>.nullable: E?
   inline get() = this.orElse(null)
@@ -59,7 +64,7 @@ inline fun <T> ReadWriteLock.write(block: () -> T): T {
   return writeLock().withLock(block)
 }
 
-inline fun <T> Lock?.optionalLock(block: () -> T) : T {
+inline fun <T> Lock?.optionalLock(block: () -> T): T {
   return if (this != null) {
     withLock(block)
   } else {
@@ -141,5 +146,59 @@ val UNIT_CLASS = Unit::class.java
 inline fun <reified T, reified V> T.applyIfNotNull(v: V?, block: T.(V) -> T): T {
   return run {
     v?.let { block(this, it) } ?: this
+  }
+}
+
+inline fun <K, V> Iterable<V>.associateListedBy(selector: (V) -> K): Map<K, List<V>> {
+  val map = mutableMapOf<K, MutableList<V>>()
+  for (v in this) {
+    map.computeIfAbsent(selector(v)) { mutableListOf() }.add(v)
+  }
+  return map
+}
+
+fun <T> T.getParentsChain(parentGetter: T.() -> T?): List<T> {
+  val chain = mutableListOf<T>()
+  var current: T? = this
+  while (current != null) {
+    chain.add(current)
+    current = current.parentGetter()
+  }
+  return chain
+}
+
+fun <T> T.getAncestorNodes(childrenGetter: T.() -> Iterable<T>): List<T> {
+  val result = mutableListOf(this)
+  val stack = mutableListOf(this)
+  while (stack.isNotEmpty()) {
+    val current = stack.removeLast()
+    val children = current.childrenGetter()
+    result.addAll(children)
+    stack.addAll(children)
+  }
+  return result
+}
+
+fun <T> Iterable<T>.getMinimalCommonParents(parentGetter: T.() -> T?): Collection<T> {
+  val parentsCache = mutableMapOf<T, List<T>>()
+  val comparisonCache = mutableMapOf<Pair<List<T>, List<T>>, Boolean>()
+  return if (this is List<T>) {
+    this
+  } else {
+    toList()
+  }.minimalElements { o1, o2 ->
+    val firstParents = parentsCache.computeIfAbsent(o1) { o1.getParentsChain(parentGetter) }
+    val secondParents = parentsCache.computeIfAbsent(o2) { o2.getParentsChain(parentGetter) }
+    val firstContainsSecond = comparisonCache.computeIfAbsent(Pair(firstParents, secondParents)) {
+      firstParents.containsAll(secondParents)
+    }
+    val secondContainsFirst = comparisonCache.computeIfAbsent(Pair(secondParents, firstParents)) {
+      secondParents.containsAll(firstParents)
+    }
+    when {
+      firstContainsSecond && !secondContainsFirst -> 1
+      secondContainsFirst && !firstContainsSecond -> -1
+      else -> 0
+    }
   }
 }

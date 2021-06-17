@@ -1,9 +1,13 @@
 package eu.ibagroup.formainframe.dataops.operations
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.analytics.AnalyticsService
+import eu.ibagroup.formainframe.analytics.events.FileAction
+import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.*
@@ -11,10 +15,8 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.runWriteActionInEdt
-import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMOption
-import java.io.IOException
 
 
 class DeleteRunnerFactory : OperationRunnerFactory {
@@ -33,12 +35,14 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   ) {
     when (val attr = operation.attributes) {
       is RemoteDatasetAttributes -> {
+        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
+
         var throwable: Throwable? = null
         attr.requesters.stream().map {
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).deleteDataset(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               datasetName = attr.name
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
@@ -55,6 +59,8 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
       }
       is RemoteMemberAttributes -> {
+        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
+
         val libraryAttributes = attr.getLibraryAttributes(dataOpsManager)
         if (libraryAttributes != null) {
           var throwable: Throwable? = null
@@ -62,7 +68,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
             try {
               progressIndicator.checkCanceled()
               val response = api<DataAPI>(it.connectionConfig).deleteDatasetMember(
-                authorizationToken = it.connectionConfig.token,
+                authorizationToken = it.connectionConfig.authToken,
                 datasetName = libraryAttributes.name,
                 memberName = attr.name
               ).cancelByIndicator(progressIndicator).execute()
@@ -81,12 +87,14 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         }
       }
       is RemoteUssAttributes -> {
+        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
+
         var throwable: Throwable? = null
         attr.requesters.stream().map {
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).deleteUssFile(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               filePath = attr.path.substring(1),
               xIBMOption = XIBMOption.RECURSIVE
             ).cancelByIndicator(progressIndicator).execute()
@@ -116,7 +124,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
 
 data class DeleteOperation(
   val file: VirtualFile,
-  val attributes: VFileInfoAttributes
+  val attributes: FileAttributes
 ) : UnitOperation {
   constructor(file: VirtualFile, dataOpsManager: DataOpsManager) : this(
     file = file,

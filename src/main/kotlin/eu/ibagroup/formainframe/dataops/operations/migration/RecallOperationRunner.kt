@@ -5,12 +5,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.dataops.operations.RemoteOperation
+import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HRecall
@@ -32,7 +32,7 @@ class RecallOperationRunner : MigrationRunner<RecallOperation> {
   override fun run(operation: RecallOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
     val response = api<DataAPI>(operation.connectionConfig).recallMigratedDataset(
-      authorizationToken = operation.connectionConfig.token,
+      authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.file.name,
       body = HRecall(wait = true)
     ).cancelByIndicator(progressIndicator).execute()
@@ -60,4 +60,4 @@ data class RecallOperation(
   override val request: RecallOperationParams,
   override val connectionConfig: eu.ibagroup.formainframe.config.connect.ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteOperation<RecallOperationParams>
+) : RemoteUnitOperation<RecallOperationParams>

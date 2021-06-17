@@ -7,6 +7,7 @@ import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
 import eu.ibagroup.r2z.buildApi
 import okhttp3.ConnectionPool
+import okhttp3.ConnectionSpec
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import retrofit2.converter.gson.GsonConverterFactory
@@ -84,7 +85,7 @@ private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
       it.request().newBuilder().addHeader("X-CSRF-ZOSMF-HEADER", "").build().let { request ->
         it.proceed(request)
       }
-    }
+    }.connectionSpecs(mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
 }
 
 private fun getOkHttpClient(isAllowSelfSigned: Boolean): OkHttpClient {

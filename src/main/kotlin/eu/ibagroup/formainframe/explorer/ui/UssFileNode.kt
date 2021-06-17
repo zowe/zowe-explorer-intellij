@@ -19,7 +19,7 @@ class UssFileNode(
 ), UssNode {
 
   override fun update(presentation: PresentationData) {
-    presentation.presentableText = value.presentableName
+    updateMainTitleUsingCutBuffer(value.presentableName, presentation)
     val icon = IconUtil.computeFileIcon(value, Iconable.ICON_FLAG_READ_STATUS, explorer.nullableProject)
     presentation.setIcon(icon)
   }
