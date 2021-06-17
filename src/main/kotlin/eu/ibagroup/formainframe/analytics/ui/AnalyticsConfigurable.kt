@@ -38,9 +38,6 @@ class AnalyticsConfigurable : BoundSearchableConfigurable("Analytics", "mainfram
 
   override fun apply() {
     analyticsService.isAnalyticsEnabled = analyticsEnabled
-    ProjectManager.getInstance().openProjects.forEach { project ->
-      ToolWindowManager.getInstance(project).getToolWindow("For Mainframe")?.isAvailable = analyticsEnabled
-    }
   }
 
   override fun isModified(): Boolean {

@@ -20,10 +20,8 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.clone
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.formainframe.utils.validation.*
 
 class RenameAction : AnAction() {
 

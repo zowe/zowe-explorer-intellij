@@ -2,17 +2,18 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.selectedValueMatches
-import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
-import eu.ibagroup.formainframe.utils.validation.*
+import eu.ibagroup.formainframe.utils.validateDatasetNameOnInput
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateForPositiveInteger
+import eu.ibagroup.formainframe.utils.validateVolser
 import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
@@ -20,6 +21,7 @@ import java.awt.Dimension
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JTextField
+import javax.swing.border.EmptyBorder
 
 class AllocationDialog(project: Project?, override var state: DatasetAllocationParams) :
   StatefulDialog<DatasetAllocationParams>(project = project) {
@@ -200,7 +202,9 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   }
 
   override fun createCenterPanel(): JComponent {
-    return mainPanel
+    return JBScrollPane(mainPanel).apply {
+      border = EmptyBorder(0,0,0,0)
+    }
   }
 
 

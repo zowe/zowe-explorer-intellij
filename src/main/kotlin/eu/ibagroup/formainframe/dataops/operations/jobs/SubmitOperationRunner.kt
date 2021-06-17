@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -42,7 +42,7 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
     }
 
     val response = api<JESApi>(operation.connectionConfig).submitJobRequest(
-      basicCredentials = operation.connectionConfig.token,
+      basicCredentials = operation.connectionConfig.authToken,
       body = SubmitFileNameBody(fileName)
     ).cancelByIndicator(progressIndicator).execute()
     val body = response.body()

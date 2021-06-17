@@ -16,10 +16,10 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.findAnyNullable
-import eu.ibagroup.formainframe.utils.validation.validateDatasetMask
-import eu.ibagroup.formainframe.utils.validation.validateForBlank
-import eu.ibagroup.formainframe.utils.validation.validateUssMask
-import eu.ibagroup.formainframe.utils.validation.validateWorkingSetName
+import eu.ibagroup.formainframe.utils.validateDatasetMask
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateUssMask
+import eu.ibagroup.formainframe.utils.validateWorkingSetName
 import java.awt.Dimension
 import java.util.*
 import javax.swing.JComponent
