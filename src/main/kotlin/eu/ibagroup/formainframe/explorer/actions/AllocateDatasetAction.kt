@@ -126,8 +126,6 @@ private fun String.toNullIfEmpty(): String? {
 private fun postProcessState(state: DatasetAllocationParams): DatasetAllocationParams {
   if (state.allocationParameters.datasetOrganization != DatasetOrganization.PO) {
     state.allocationParameters.directoryBlocks = null
-  } else if (state.allocationParameters.recordFormat != RecordFormat.FB || state.allocationParameters.recordFormat != RecordFormat.VB) {
-    state.allocationParameters.blockSize = null
   }
   if (state.allocationParameters.datasetOrganization == DatasetOrganization.POE) {
     state.allocationParameters.datasetOrganization = DatasetOrganization.PO
