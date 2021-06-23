@@ -17,7 +17,6 @@ import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.utils.validateConnectionName
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateZosmfUrl
-import eu.ibagroup.formainframe.utils.validation.*
 import java.awt.Component
 import javax.swing.JCheckBox
 import javax.swing.JComponent

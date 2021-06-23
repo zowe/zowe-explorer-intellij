@@ -1,11 +1,13 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService
 import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -83,7 +85,8 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
         sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchCancelled(query)
       } else {
         if (it is CallException) {
-          errorMessages[query] = (it.errorParams?.get("details") as List<*>)[0] as String
+          val errorMessage = (it.errorParams?.get("details") as List<*>)[0] as String
+          errorMessages[query] = service<ErrorSeparatorService>().separateErrorMessage(errorMessage)["error.description"] as String
         }
         cache[query] = listOf()
         cacheState[query] = CacheState.ERROR
