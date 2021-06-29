@@ -202,9 +202,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   }
 
   override fun createCenterPanel(): JComponent {
-    return JBScrollPane(mainPanel).apply {
-      border = EmptyBorder(0,0,0,0)
-    }
+    return mainPanel
   }
 
 
