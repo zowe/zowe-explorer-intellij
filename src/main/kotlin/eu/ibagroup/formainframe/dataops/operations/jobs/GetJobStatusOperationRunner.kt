@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -30,14 +30,14 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, JobSt
     val response : Response<JobStatus> = when (operation.request) {
       is GetJobStatusOperationParams.BasicStatusParams -> {
         api<JESApi>(operation.connectionConfig).getJobStatus(
-          basicCredentials = operation.connectionConfig.token,
+          basicCredentials = operation.connectionConfig.authToken,
           jobName = operation.request.jobName,
           jobId = operation.request.jobId
         ).cancelByIndicator(progressIndicator).execute()
       }
       is GetJobStatusOperationParams.CorrelatorStatusParams -> {
         api<JESApi>(operation.connectionConfig).getJobStatus(
-          basicCredentials = operation.connectionConfig.token,
+          basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator
         ).cancelByIndicator(progressIndicator).execute()
       }
