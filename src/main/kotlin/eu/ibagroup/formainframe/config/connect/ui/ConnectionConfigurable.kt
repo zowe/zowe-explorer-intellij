@@ -7,12 +7,12 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
+import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.common.ui.toolbarTable
 import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
@@ -38,7 +38,9 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
   private fun editConnection() {
     val idx = connectionsTable?.selectedRow
     if (idx != null && connectionsTableModel != null) {
-      val state = showAndTestConnection(connectionsTableModel!![idx])
+      val state = showAndTestConnection(connectionsTableModel!![idx].apply {
+        mode = DialogMode.UPDATE
+      })
       if (state != null) {
         connectionsTableModel?.set(idx, state)
       }
@@ -151,7 +153,6 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val wasModified = isModified
     applySandbox<Credentials>()
     applySandbox<ConnectionConfig>()
-    applySandbox<UrlConnection>()
     if (wasModified) {
       panel?.updateUI()
     }
@@ -161,7 +162,6 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val wasModified = isModified
     rollbackSandbox<Credentials>()
     rollbackSandbox<ConnectionConfig>()
-    rollbackSandbox<UrlConnection>()
     if (wasModified) {
       panel?.updateUI()
     }
@@ -170,7 +170,6 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
   override fun isModified(): Boolean {
     return isSandboxModified<Credentials>()
         || isSandboxModified<ConnectionConfig>()
-        || isSandboxModified<UrlConnection>()
   }
 
   override fun cancel() {

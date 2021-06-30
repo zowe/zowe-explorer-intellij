@@ -4,7 +4,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
@@ -14,8 +13,6 @@ import eu.ibagroup.formainframe.utils.crudable.getByForeignKeyDeeply
 import eu.ibagroup.formainframe.utils.runIfTrue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
 import kotlin.concurrent.withLock
 
 class GlobalWorkingSet(
@@ -51,8 +48,6 @@ class GlobalWorkingSet(
         }
     }
 
-  override val urlConnection: UrlConnection?
-    get() = lock.withLock { workingSetConfig?.let { configCrudable.getByForeignKeyDeeply(it) } }
 
   override val dsMasks: Collection<DSMask>
     get() = lock.withLock { workingSetConfig?.dsMasks ?: listOf() }

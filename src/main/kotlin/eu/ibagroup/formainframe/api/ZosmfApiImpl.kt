@@ -3,7 +3,6 @@ package eu.ibagroup.formainframe.api
 import com.google.gson.GsonBuilder
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
 import eu.ibagroup.r2z.buildApi
 import okhttp3.ConnectionPool
@@ -27,10 +26,7 @@ class ZosmfApiImpl : ZosmfApi {
   private val apis = hashMapOf<Class<out Any>, MutableMap<ZosmfUrl, Any>>()
 
   override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
-    val urlConnection = configCrudable
-      .getByForeignKey<ConnectionConfig, UrlConnection>(connectionConfig)
-      ?: throw RuntimeException("Cannot find url for connection ${connectionConfig.name}")
-    return getApi(apiClass, urlConnection.url, urlConnection.isAllowSelfSigned)
+    return getApi(apiClass, connectionConfig.url, connectionConfig.isAllowSelfSigned)
   }
 
   @Suppress("UNCHECKED_CAST")

@@ -57,8 +57,7 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
   if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is WorkingSet) {
     val workingSet = parentNode.unit
     val config = parentNode.unit.connectionConfig
-    val urlConfig = parentNode.unit.urlConnection
-    if (config != null && urlConfig != null) {
+    if (config != null) {
       showUntilDone(initialState, { initState ->
         AllocationDialog(project = e.project, initState)
       }) {
@@ -75,8 +74,7 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
               .performOperation(
                 operation = DatasetAllocationOperation(
                   request = state,
-                  connectionConfig = config,
-                  urlConnection = urlConfig
+                  connectionConfig = config
                 ),
                 it
               )

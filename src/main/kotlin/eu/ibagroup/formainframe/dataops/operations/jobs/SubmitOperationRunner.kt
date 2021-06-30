@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -75,7 +74,6 @@ data class SubmitOperationParams(
 data class SubmitJobOperation(
   override val request: SubmitOperationParams,
   override val connectionConfig: ConnectionConfig,
-  override val urlConnection: UrlConnection
 ) : RemoteQuery<SubmitOperationParams, SubmitJobRequest> {
   override val resultClass = SubmitJobRequest::class.java
 }

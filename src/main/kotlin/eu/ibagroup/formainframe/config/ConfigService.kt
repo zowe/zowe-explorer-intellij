@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
+import eu.ibagroup.formainframe.config.jobs.JobsFilter
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.EventHandler
@@ -32,7 +32,7 @@ interface ConfigService : PersistentStateComponent<ConfigState> {
     entities = [
       WorkingSetConfig::class,
       ConnectionConfig::class,
-      UrlConnection::class
+      JobsFilter::class
     ]
   )
   val crudable: Crudable

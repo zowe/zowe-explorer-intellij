@@ -31,9 +31,8 @@ class DSMaskNode(
   override val query: RemoteQuery<DSMask, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
-      val urlConnection = unit.urlConnection
-      return if (connectionConfig != null && urlConnection != null) {
-        UnitRemoteQueryImpl(value, connectionConfig, urlConnection)
+      return if (connectionConfig != null) {
+        UnitRemoteQueryImpl(value, connectionConfig)
       } else null
     }
 
