@@ -1,15 +1,13 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.panel
-import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationParams
-import eu.ibagroup.formainframe.utils.validation.validateForBlank
-import eu.ibagroup.formainframe.utils.validation.validateUssFileName
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateUssFileName
 import eu.ibagroup.r2z.CreateUssFile
 import eu.ibagroup.r2z.FileMode
 import eu.ibagroup.r2z.FileModeValue

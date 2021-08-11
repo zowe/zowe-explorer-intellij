@@ -1,5 +1,7 @@
 package eu.ibagroup.formainframe.explorer
 
+import com.intellij.ide.BrowserUtil
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -71,22 +73,32 @@ class GlobalExplorer : Explorer {
     if (t is ProcessCanceledException) {
       return
     }
-    val details = t.castOrNull<CallException>()?.details
     NotificationBuilder(
       EXPLORER_NOTIFICATION_GROUP_ID,
       "Error in plugin For Mainframe",
       t.message ?: t.toString(),
       NotificationType.ERROR
-    ).applyIfNotNull(details) {
-      setDropDownText(it)
-//      setContextHelpAction(object : DumbAwareAction("Show Info") {
-//        override fun actionPerformed(e: AnActionEvent) {
-//          runInEdt {
-//            Messages.showInfoMessage(it, t.message ?: t.toString())
-//          }
-//        }
-//      })
-    }.build().let {
+    ).addAction(reportInSlackAction).build().let {
+      Notifications.Bus.notify(it, project)
+    }
+  }
+
+  private val reportInSlackAction = object : DumbAwareAction("Report In Slack") {
+
+    override fun actionPerformed(e: AnActionEvent) {
+      BrowserUtil.browse("https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg")
+    }
+
+
+  }
+
+  override fun showNotification(title: String, content: String, type: NotificationType, project: Project?) {
+    NotificationBuilder(
+      EXPLORER_NOTIFICATION_GROUP_ID,
+      title,
+      content,
+      type
+    ).build().let {
       Notifications.Bus.notify(it, project)
     }
   }

@@ -19,9 +19,12 @@
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
-    <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
+    <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y
+    </vendor>
 
     <description><![CDATA[
+<h1>Celebrating Pride 2021 with the 0.4 release!</h1>
+
 For Mainframe brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
 Using our plugin you will be able to:<br/>
 <ul>
@@ -39,7 +42,9 @@ To start using the plugin:<br/>
     <li>Contact your RACF administrator so that your user is in the <a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua300/V2R4/zosmf/izua300/izulite_SecurityStructuresForZosmf.htm">IZUUSER  RACF group</a></li>
     <li>You are ready to go! Start working with z/OS from the IDE.</li>
 </ul></br>
-<b>Note: z/OS 2.1 or higher is required</b>
+<b>Note: z/OS 2.1 or higher is required with <a href="https://docs.zowe.org/stable/user-guide/systemrequirements-zosmf.html">configured z/OSMF</a>. Plugin is in active development state. Feel free to recommend or report everything on our <a href="https://github.com/for-mainframe/For-Mainframe/issues">Github</a></b><br/>
+Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg">Slack</a><br/>
+
 ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -54,6 +59,12 @@ To start using the plugin:<br/>
 
         <attributesService
                 implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributesServiceFactory"/>
+
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributesServiceFactory"/>
+
+        <attributesService
+                implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributesServiceFactory"/>
 
         <fileDataProvider
                 implementation="eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProviderFactory"/>
@@ -82,13 +93,22 @@ To start using the plugin:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberToPdsFileMoverFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssToUssFileMoverFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationFactory"/>
+
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperationFactory"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
 
         <applicationConfigurable id="configurable.mainframe.explorer"
                                  displayName="For Mainframe"
@@ -101,7 +121,8 @@ To start using the plugin:<br/>
                            id="eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"/>
 
         <toolWindow id="For Mainframe" anchor="right"
-                    factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"/>
+                    factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"
+                    doNotActivateOnStart="true"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
@@ -114,6 +135,9 @@ To start using the plugin:<br/>
 
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
+
+        <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
+                            serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
                             serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"/>
@@ -134,9 +158,22 @@ To start using the plugin:<br/>
         <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.ui.ExplorerContent"
                             serviceImplementation="eu.ibagroup.formainframe.explorer.ui.GlobalExplorerContent"/>
 
+        <applicationService serviceInterface="eu.ibagroup.formainframe.analytics.PolicyProvider"
+                            serviceImplementation="eu.ibagroup.formainframe.analytics.PolicyProviderImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService"
+                            serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>
     </extensions>
 
     <actions>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.RecallAction"
+                class="eu.ibagroup.formainframe.explorer.actions.RecallAction" text="Recall"
+                description="Recalls a migrated dataset"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"
+                class="eu.ibagroup.formainframe.explorer.actions.MigrateAction" text="Migrate"
+                description="Migrates a dataset"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
                 class="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"
@@ -151,6 +188,10 @@ To start using the plugin:<br/>
         <action id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
                 text="Dataset"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"
+                text="Allocate Like"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"
                 class="eu.ibagroup.formainframe.explorer.actions.CreateUssFileAction"
@@ -181,9 +222,20 @@ To start using the plugin:<br/>
                 class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 icon="AllIcons.Nodes.Module"
                 text="Mask"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
                 class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
                 text="Use Binary Mode"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
+                class="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
+                text="Submit Job"
+                icon="AllIcons.Actions.Execute"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
+                text="Edit"
+                use-shortcut-of="RenameElement"/>
 
         <group id="eu.ibagroup.formainframe.actions">
             <action id="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo"
@@ -212,12 +264,19 @@ To start using the plugin:<br/>
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
             <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"/>
+            <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"/>
             <separator/>
             <reference id="$Cut"/>
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
@@ -235,6 +294,7 @@ To start using the plugin:<br/>
         <group id="eu.ibagroup.formainframe.dataops.synchronizer.SyncActionGroup" popup="true">
             <reference id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"/>
         </group>
+
     </actions>
 
 </idea-plugin>

@@ -2,25 +2,30 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.username
+import eu.ibagroup.formainframe.utils.Copyable
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.FileMode
 import eu.ibagroup.r2z.FileModeValue
 import eu.ibagroup.r2z.UssFile
 import eu.ibagroup.r2z.XIBMDataType
 
+private const val CURRENT_DIR_NAME = "."
+
 private fun constructPath(rootPath: String, ussFile: UssFile): String {
   return when {
-    ussFile.name.isEmpty() -> {
+    ussFile.name.isEmpty() || ussFile.name == CURRENT_DIR_NAME -> {
       rootPath
     }
-    rootPath == "/" -> {
+    rootPath == USS_DELIMITER -> {
       rootPath + ussFile.name
     }
     else -> {
-      rootPath + "/" + ussFile.name
+      rootPath + USS_DELIMITER + ussFile.name
     }
   }
 }
+
+const val USS_DELIMITER = "/"
 
 data class RemoteUssAttributes(
   val path: String,
@@ -29,13 +34,13 @@ data class RemoteUssAttributes(
   override val url: String,
   override val requesters: MutableList<UssRequester>,
   override val length: Long = 0L,
-  val uid: Int? = null,
+  val uid: Long? = null,
   val owner: String? = null,
-  val gid: Int? = null,
+  val gid: Long? = null,
   val groupId: String? = null,
   val modificationTime: String? = null,
   val symlinkTarget: String? = null
-) : MFRemoteFileAttributes<UssRequester> {
+) : MFRemoteFileAttributes<UssRequester>, Copyable {
 
   constructor(rootPath: String, ussFile: UssFile, url: String, connectionConfig: ConnectionConfig) : this(
     path = constructPath(rootPath, ussFile),
@@ -43,7 +48,7 @@ data class RemoteUssAttributes(
     fileMode = ussFile.fileMode,
     url = url,
     requesters = mutableListOf(UssRequester(connectionConfig)),
-    length = ussFile.size?.toLong() ?: 0L,
+    length = ussFile.size ?: 0L,
     uid = ussFile.uid,
     owner = ussFile.user,
     gid = ussFile.gid,
@@ -52,7 +57,7 @@ data class RemoteUssAttributes(
     symlinkTarget = ussFile.target
   )
 
-  override fun clone(): VFileInfoAttributes {
+  override fun clone(): FileAttributes {
     return this.clone(RemoteUssAttributes::class.java)
   }
 
@@ -60,14 +65,14 @@ data class RemoteUssAttributes(
     get() = symlinkTarget != null
 
   override val name
-    get() = path.split("/").last()
+    get() = path.split(USS_DELIMITER).last()
 
   val parentDirPath
-    get() = path.substring(1).split("/").dropLast(1).joinToString(separator = "/")
+    get() = path.substring(1).split(USS_DELIMITER).dropLast(1).joinToString(separator = USS_DELIMITER)
 
   val isWritable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig) == owner }
+      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig).equals(owner, ignoreCase = true) }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
       } else {
@@ -81,7 +86,7 @@ data class RemoteUssAttributes(
 
   val isReadable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig) == owner }
+      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig).equals(owner, ignoreCase = true) }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
       } else {
@@ -95,7 +100,7 @@ data class RemoteUssAttributes(
 
   val isExecutable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig) == owner }
+      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig).equals(owner, ignoreCase = true) }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
       } else {
@@ -106,6 +111,13 @@ data class RemoteUssAttributes(
         || mode == FileModeValue.WRITE_EXECUTE.mode
         || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
-  override var contentMode: XIBMDataType= XIBMDataType.BINARY
+
+  override var contentMode: XIBMDataType= XIBMDataType(XIBMDataType.Type.TEXT)
+
+  override val isCopyPossible: Boolean
+    get() = true
+
+  override val isPastePossible: Boolean
+    get() = isDirectory && isWritable
 
 }

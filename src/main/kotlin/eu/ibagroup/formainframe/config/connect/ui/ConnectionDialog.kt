@@ -14,7 +14,9 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.InfoOperation
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.runTask
-import eu.ibagroup.formainframe.utils.validation.*
+import eu.ibagroup.formainframe.utils.validateConnectionName
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateZosmfUrl
 import java.awt.Component
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -113,18 +115,14 @@ class ConnectionDialog(
       }
       row {
         label("Username")
-        textField(state::username).withValidationOnInput {
-          validateUsername(it)
-        }.withValidationOnApply {
+        textField(state::username).withValidationOnApply {
           it.text = it.text.trim()
           validateForBlank(it)
         }
       }
       row {
         label("Password")
-        JPasswordField(state.password)().withTextBinding(state::password.toBinding()).withValidationOnInput {
-          validatePassword(it)
-        }.withValidationOnApply {
+        JPasswordField(state.password)().withTextBinding(state::password.toBinding()).withValidationOnApply {
           validateForBlank(it)
         }
       }

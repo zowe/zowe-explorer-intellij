@@ -4,7 +4,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
@@ -20,7 +20,7 @@ data class DatasetAllocationOperation(
   override val request: DatasetAllocationParams,
   override val connectionConfig: ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteAllocationOperation<DatasetAllocationParams>
+) : RemoteUnitOperation<DatasetAllocationParams>
 
 class DatasetAllocator : Allocator<DatasetAllocationOperation> {
 
@@ -30,7 +30,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
   ) {
     progressIndicator.checkCanceled()
     val response = api<DataAPI>(operation.connectionConfig).createDataset(
-      authorizationToken = operation.connectionConfig.token,
+      authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.datasetName,
       body = operation.request.allocationParameters
     ).cancelByIndicator(progressIndicator).execute()

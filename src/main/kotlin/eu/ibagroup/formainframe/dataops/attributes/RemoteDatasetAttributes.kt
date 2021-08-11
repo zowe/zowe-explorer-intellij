@@ -32,6 +32,13 @@ data class RemoteDatasetAttributes(
 
   val volser
     get() = datasetInfo.volumeSerial
-  override var contentMode: XIBMDataType = XIBMDataType.TEXT
+
+  override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT)
+
+  override val isCopyPossible: Boolean
+    get() = !isDirectory && !isMigrated
+
+  override val isPastePossible: Boolean
+    get() = isDirectory && !isMigrated
 
 }

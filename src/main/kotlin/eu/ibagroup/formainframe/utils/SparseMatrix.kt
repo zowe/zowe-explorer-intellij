@@ -14,6 +14,10 @@ class SparseMatrix<T>(
     map[Pair(i, j)] = value
   }
 
+  fun removeByRow(i: Int) {
+    map.filter { it.key.first == i }.forEach{ map.remove(it.key) }
+  }
+
   @Suppress("UNCHECKED_CAST")
   val asMap: Map<Pair<Int, Int>, T>
     get() = map.filter { it.value != null } as Map<Pair<Int, Int>, T>

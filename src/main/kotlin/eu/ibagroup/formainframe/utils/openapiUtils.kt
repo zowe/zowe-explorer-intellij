@@ -5,14 +5,20 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
+import org.apache.log4j.Level
 import org.jetbrains.annotations.Nls
-import org.jetbrains.concurrency.*
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.CancellablePromise
+import org.jetbrains.concurrency.Promise
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -191,5 +197,44 @@ inline fun <reified S : Any> ComponentManager.hasService(): Boolean {
 inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
   runInEdt {
     runWriteAction(block)
+  }
+}
+
+inline fun <reified T : Any> log(level: Level = Level.INFO): Logger {
+  return logger<T>().apply { setLevel(level) }
+}
+
+fun VirtualFile.getParentsChain(): List<VirtualFile> {
+  return getParentsChain { parent }
+}
+
+fun VirtualFile.getAncestorNodes(): List<VirtualFile> {
+  return getAncestorNodes { children?.asIterable() ?: emptyList() }
+}
+
+//fun Iterable<VirtualFile>.getMinimalCommonParents() : Collection<VirtualFile> {
+//  val parentsChains = map { it.getParentsChain() }
+//  return parentsChains.filter { candidateChain ->
+//    parentsChains.filter {
+//      candidateChain.size > it.size
+//    }.none {
+//      candidateChain.containsAll(it)
+//    }
+//  }.mapNotNull {
+//    it.firstOrNull()
+//  }
+//}
+
+fun Iterable<VirtualFile>.getMinimalCommonParents() : Collection<VirtualFile> {
+  return getMinimalCommonParents { parent }
+}
+
+val minimalParentComparator: Comparator<VirtualFile> = Comparator { o1, o2 ->
+  val firstParentChain = o1.getParentsChain()
+  val secondParentsChain = o2.getParentsChain()
+  return@Comparator when {
+    firstParentChain.containsAll(secondParentsChain) -> 1
+    secondParentsChain.containsAll(firstParentChain) -> -1
+    else -> 0
   }
 }

@@ -2,13 +2,14 @@ package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.applyIfNotNull
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import java.io.IOException
@@ -18,6 +19,8 @@ class MemberContentSynchronizerFactory : ContentSynchronizerFactory {
     return MemberContentSynchronizer(dataOpsManager)
   }
 }
+
+private val log = log<MemberContentSynchronizer>()
 
 class MemberContentSynchronizer(
   dataOpsManager: DataOpsManager
@@ -36,15 +39,18 @@ class MemberContentSynchronizer(
     attributes: RemoteMemberAttributes,
     progressIndicator: ProgressIndicator?
   ): ByteArray {
-    val parentLib = attributes.libraryFile
+    log.info("Fetch remote content for $attributes")
+    val parentLib = attributes.parentFile
     val libAttributes = datasetAttributesService.getAttributes(parentLib)
       ?: throw IOException("Cannot find parent library attributes for library ${parentLib.path}")
+    log.info("Lib attributes are $libAttributes")
     var throwable = Throwable("Unknown")
     var content: ByteArray? = null
     for (requester in libAttributes.requesters) {
       try {
+        log.info("Trying to execute a call using $requester")
         val response = api<DataAPI>(requester.connectionConfig).retrieveMemberContent(
-          authorizationToken = requester.connectionConfig.token,
+          authorizationToken = requester.connectionConfig.authToken,
           datasetName = libAttributes.name,
           memberName = attributes.name,
           xIBMDataType = attributes.contentMode
@@ -52,6 +58,7 @@ class MemberContentSynchronizer(
           cancelByIndicator(indicator)
         }.execute()
         if (response.isSuccessful) {
+          log.info("Content has been fetched successfully")
           content = response.body()?.removeLastNewLine()?.toByteArray()
           break
         } else {
@@ -65,20 +72,24 @@ class MemberContentSynchronizer(
   }
 
   override fun uploadNewContent(attributes: RemoteMemberAttributes, newContentBytes: ByteArray) {
-    val parentLib = attributes.libraryFile
+    log.info("Upload remote content for $attributes")
+    val parentLib = attributes.parentFile
     val libAttributes = datasetAttributesService.getAttributes(parentLib)
       ?: throw IOException("Cannot find parent library attributes for library ${parentLib.path}")
+    log.info("Lib attributes are $libAttributes")
     var throwable: Throwable? = null
     for (requester in libAttributes.requesters) {
       try {
+        log.info("Trying to execute a call using $requester")
         val response = api<DataAPI>(requester.connectionConfig).writeToDatasetMember(
-          authorizationToken = requester.connectionConfig.token,
+          authorizationToken = requester.connectionConfig.authToken,
           datasetName = libAttributes.name,
           memberName = attributes.name,
           content = String(newContentBytes).addNewLine(),
           xIBMDataType = attributes.contentMode
         ).execute()
         if (response.isSuccessful) {
+          log.info("Content has been uploaded successfully")
           throwable = null
           break
         } else {

@@ -4,7 +4,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
@@ -28,7 +28,7 @@ data class UssAllocationOperation(
   override val request: UssAllocationParams,
   override val connectionConfig: ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteAllocationOperation<UssAllocationParams>
+) : RemoteUnitOperation<UssAllocationParams>
 
 class UssAllocator : Allocator<UssAllocationOperation> {
 
@@ -40,14 +40,14 @@ class UssAllocator : Allocator<UssAllocationOperation> {
   ) {
     progressIndicator.checkCanceled()
     val response = api<DataAPI>(operation.connectionConfig).createUssFile(
-      authorizationToken = operation.connectionConfig.token,
+      authorizationToken = operation.connectionConfig.authToken,
       filePath = FilePath(operation.request.path + "/" + operation.request.fileName),
       body = operation.request.parameters
     ).cancelByIndicator(progressIndicator).execute()
     if (!response.isSuccessful) {
       throw CallException(
         response,
-        "Cannot allocate dataset ${operation.request.fileName} on ${operation.connectionConfig.name}"
+        "Cannot allocate file ${operation.request.fileName} on ${operation.connectionConfig.name}"
       )
     }
   }

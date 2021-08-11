@@ -2,9 +2,13 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.analytics.AnalyticsService
+import eu.ibagroup.formainframe.analytics.events.FileAction
+import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
@@ -12,14 +16,12 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.clone
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.formainframe.utils.validation.*
 
 class RenameAction : AnAction() {
 
@@ -28,20 +30,7 @@ class RenameAction : AnAction() {
     val selectedNode = view.mySelectedNodesData[0]
     val node = selectedNode.node
     var initialState = ""
-    if (node is WorkingSetNode) {
-      initialState = (selectedNode.node.value as WorkingSet).name
-      val dialog = RenameDialog(e.project, "Working Set", initialState).withValidationOnInput {
-        validateWorkingSetName(it, initialState, configCrudable)
-      }.withValidationForBlankOnApply()
-      if (dialog.showAndGet()) {
-        val nodeValue = node.value
-        val wsToUpdate = configCrudable.getByUniqueKey<WorkingSetConfig>(nodeValue.uuid)?.clone()
-        if (wsToUpdate != null) {
-          wsToUpdate.name = dialog.state
-          configCrudable.update(wsToUpdate)
-        }
-      }
-    } else if (node is DSMaskNode) {
+    if (node is DSMaskNode) {
       initialState = (selectedNode.node.value as DSMask).mask
       val dialog = RenameDialog(e.project, "Dataset Mask", initialState).withValidationOnInput {
         validateDatasetMask(it.text, it)
@@ -61,7 +50,7 @@ class RenameAction : AnAction() {
         initialState = attributes.datasetInfo.name
         type = "Dataset"
       } else if (attributes is RemoteMemberAttributes) {
-        initialState = attributes.memberInfo.name
+        initialState = attributes.info.name
         type = "Member"
       }
       val dialog = RenameDialog(e.project, type, initialState).withValidationOnInput {
@@ -74,6 +63,7 @@ class RenameAction : AnAction() {
       val file = node.virtualFile
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
+        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
       }
     } else if (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath) {
       initialState = selectedNode.node.value.path
@@ -101,6 +91,7 @@ class RenameAction : AnAction() {
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
+        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
       }
     }
   }
@@ -108,7 +99,7 @@ class RenameAction : AnAction() {
   private fun runRenameOperation(
     project: Project?,
     file: VirtualFile,
-    attributes: VFileInfoAttributes,
+    attributes: FileAttributes,
     newName: String,
     node: ExplorerTreeNode<*>
   ) {
@@ -140,7 +131,17 @@ class RenameAction : AnAction() {
       return
     }
     val selectedNodes = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = selectedNodes.size == 1
+    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1 && selectedNodes[0].node !is WorkingSetNode) {
+      val file = selectedNodes[0].file
+      var isMigrated = false
+      if (file != null) {
+        val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
+        isMigrated = attributes?.isMigrated ?: false
+      }
+      !isMigrated
+    } else {
+      false
+    }
     if (e.presentation.isEnabledAndVisible) {
       val selectedNode = selectedNodes[0]
       if (selectedNode.node is DSMaskNode || (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath)) {

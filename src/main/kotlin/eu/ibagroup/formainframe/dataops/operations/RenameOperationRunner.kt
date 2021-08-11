@@ -2,11 +2,12 @@ package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
@@ -43,7 +44,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).renameDataset(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               body = RenameData(
                 fromDataset = RenameData.FromDataset(
                   oldDatasetName = attributes.name
@@ -57,7 +58,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               }
               true
             } else {
-              false
+              throw CallException(response, "Unable to rename file")
             }
           } catch (e: Throwable) {
             false
@@ -65,16 +66,16 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
         }.filter { it }.findAnyNullable() ?: throw UnknownError("")
       }
       is RemoteMemberAttributes -> {
-        val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.libraryFile) as RemoteDatasetAttributes
+        val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
         parentAttributes.requesters.stream().map {
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).renameDatasetMember(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               body = RenameData(
                 fromDataset = RenameData.FromDataset(
                   oldDatasetName = parentAttributes.datasetInfo.name,
-                  oldMemberName = attributes.memberInfo.name
+                  oldMemberName = attributes.info.name
                 )
               ),
               toDatasetName = parentAttributes.datasetInfo.name,
@@ -86,7 +87,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               }
               true
             } else {
-              false
+              throw CallException(response, "Unable to rename file")
             }
           } catch (e: Throwable) {
             false
@@ -99,7 +100,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).moveUssFile(
-              authorizationToken = it.connectionConfig.token,
+              authorizationToken = it.connectionConfig.authToken,
               body = MoveUssFile(
                 from = attributes.path
               ),
@@ -111,7 +112,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               }
               true
             } else {
-              false
+              throw CallException(response, "Unable to rename file")
             }
           } catch (e: Throwable) {
             false

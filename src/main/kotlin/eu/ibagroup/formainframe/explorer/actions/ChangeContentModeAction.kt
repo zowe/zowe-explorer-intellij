@@ -2,9 +2,11 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.GlobalFileExplorerView
 import eu.ibagroup.formainframe.utils.service
@@ -20,16 +22,24 @@ class ChangeContentModeAction : ToggleAction() {
           .getAttributesService(it.first::class.java, it.second::class.java)
           .getAttributes(it.second)
       }
-      .all { it.contentMode == XIBMDataType.BINARY }
+      .all { it.contentMode == XIBMDataType(XIBMDataType.Type.BINARY) }
   }
 
-  private fun getMappedNodes(view: GlobalFileExplorerView): List<Pair<VFileInfoAttributes, VirtualFile>> {
+  private fun getMappedNodes(view: GlobalFileExplorerView): List<Pair<FileAttributes, VirtualFile>> {
     return view.mySelectedNodesData
       .mapNotNull {
-        if (it.file?.isDirectory == true) {
+        val file = it.file
+        if (file != null) {
+          val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
+          val isMigrated = attributes?.isMigrated ?: false
+          if (isMigrated) {
+            return@mapNotNull null
+          }
+        }
+        if (file?.isDirectory == true) {
           return@mapNotNull null
         }
-        Pair(it.attributes ?: return@mapNotNull null, it.file ?: return@mapNotNull null)
+        Pair(it.attributes ?: return@mapNotNull null, file ?: return@mapNotNull null)
       }
   }
 
@@ -41,9 +51,9 @@ class ChangeContentModeAction : ToggleAction() {
           .getAttributesService(it.first::class.java, it.second::class.java)
           .updateAttributes(it.first) {
             contentMode = if (state) {
-              XIBMDataType.BINARY
+              XIBMDataType(XIBMDataType.Type.BINARY)
             } else {
-              XIBMDataType.TEXT
+              XIBMDataType(XIBMDataType.Type.TEXT)
             }
           }
       }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.explorer.globalExplorer
+import eu.ibagroup.formainframe.utils.getAncestorNodes
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
@@ -17,7 +18,9 @@ class GlobalExplorerContent : ExplorerContent(
 ) {
 
   override fun isFileInCutBuffer(virtualFile: VirtualFile): Boolean {
-    return lock.withLock { filesToCut.contains(virtualFile) }
+    return lock.withLock {
+      filesToCut.map { it.getAncestorNodes() }.flatten().distinct().contains(virtualFile)
+    }
   }
 
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {

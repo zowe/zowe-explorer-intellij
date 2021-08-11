@@ -4,9 +4,6 @@
 
 Plugin in Marketplace: [link](https://plugins.jetbrains.com/plugin/16353-for-mainframe)
 
-Join us in Slack: <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg"> link</a>
-
-
 Using our plugin you will be able to:
 * Start working with z/OS easily with no complex configurations.
 * Organise datasets on z/OS, files on USS into Working Sets.

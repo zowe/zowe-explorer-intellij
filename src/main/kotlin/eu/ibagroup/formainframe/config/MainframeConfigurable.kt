@@ -2,6 +2,7 @@ package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
+import eu.ibagroup.formainframe.analytics.ui.AnalyticsConfigurable
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.WSConfigurable
 
@@ -15,11 +16,13 @@ class MainframeConfigurable : TabbedConfigurable() {
 
   private lateinit var connectionConfigurable: ConnectionConfigurable
   private lateinit var wsConfigurable: WSConfigurable
+  private lateinit var analyticsConfigurable: AnalyticsConfigurable
 
   override fun createConfigurables(): MutableList<Configurable> {
     return mutableListOf(
       WSConfigurable().also { wsConfigurable = it },
-      ConnectionConfigurable().also { connectionConfigurable = it }
+      ConnectionConfigurable().also { connectionConfigurable = it },
+      AnalyticsConfigurable().also { analyticsConfigurable = it }
     )
   }
 
@@ -38,7 +41,13 @@ class MainframeConfigurable : TabbedConfigurable() {
   }
 
   override fun createConfigurableTabs() {
-    super.createConfigurableTabs().also { myTabbedPane.selectedIndex = if (preferredConfigurableClass == WSConfigurable::class.java) 1 else 0 }
+    super.createConfigurableTabs().also {
+      myTabbedPane.selectedIndex = when (preferredConfigurableClass) {
+        WSConfigurable::class.java -> 2
+        ConnectionConfigurable::class.java -> 1
+        else -> 0
+      }
+    }
   }
 
 }

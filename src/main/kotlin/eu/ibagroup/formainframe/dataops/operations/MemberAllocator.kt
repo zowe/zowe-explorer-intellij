@@ -4,7 +4,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.connect.token
+import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
@@ -19,7 +19,7 @@ data class MemberAllocationOperation(
   override val request: MemberAllocationParams,
   override val connectionConfig: ConnectionConfig,
   override val urlConnection: UrlConnection
-) : RemoteAllocationOperation<MemberAllocationParams>
+) : RemoteUnitOperation<MemberAllocationParams>
 
 class MemberAllocator : Allocator<MemberAllocationOperation> {
 
@@ -31,7 +31,7 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
   ) {
     progressIndicator.checkCanceled()
     val request = api<DataAPI>(operation.connectionConfig).writeToDatasetMember(
-      authorizationToken = operation.connectionConfig.token,
+      authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.datasetName,
       memberName = operation.request.memberName,
       content = ""

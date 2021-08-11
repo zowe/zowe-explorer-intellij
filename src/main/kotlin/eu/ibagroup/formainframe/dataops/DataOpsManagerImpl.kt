@@ -5,13 +5,13 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
-import eu.ibagroup.formainframe.dataops.attributes.VFileInfoAttributes
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
+import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
 
-@Suppress("UNCHECKED_CAST")
 class DataOpsManagerImpl : DataOpsManager {
 
   private fun <Component> List<DataOpsComponentFactory<Component>>.buildComponents(): MutableList<Component> {
@@ -22,13 +22,15 @@ class DataOpsManagerImpl : DataOpsManager {
     get() = ApplicationManager.getApplication()
 
   private val attributesServices by lazy {
-    AttributesService.EP.extensionList.buildComponents() as MutableList<AttributesService<VFileInfoAttributes, VirtualFile>>
+    @Suppress("UNCHECKED_CAST")
+    AttributesService.EP.extensionList.buildComponents() as MutableList<AttributesService<FileAttributes, VirtualFile>>
   }
 
-  override fun <A : VFileInfoAttributes, F : VirtualFile> getAttributesService(
+  override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
     attributesClass: Class<out A>,
     vFileClass: Class<out F>
   ): AttributesService<A, F> {
+    @Suppress("UNCHECKED_CAST")
     return attributesServices.find {
       it.attributesClass.isAssignableFrom(attributesClass) && it.vFileClass.isAssignableFrom(vFileClass)
     } as AttributesService<A, F>? ?: throw IllegalArgumentException(
@@ -36,7 +38,7 @@ class DataOpsManagerImpl : DataOpsManager {
     )
   }
 
-  override fun tryToGetAttributes(file: VirtualFile): VFileInfoAttributes? {
+  override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
     return attributesServices.stream()
       .filter { it.vFileClass.isAssignableFrom(file::class.java) }
       .map { it.getAttributes(file) }
@@ -44,7 +46,7 @@ class DataOpsManagerImpl : DataOpsManager {
       .findAnyNullable()
   }
 
-  override fun tryToGetFile(attributes: VFileInfoAttributes): VirtualFile? {
+  override fun tryToGetFile(attributes: FileAttributes): VirtualFile? {
     return attributesServices.stream()
       .map { it.getVirtualFile(attributes) }
       .filter { it != null }
@@ -60,6 +62,7 @@ class DataOpsManagerImpl : DataOpsManager {
     queryClass: Class<out Query<*, *>>,
     vFileClass: Class<out File>
   ): FileFetchProvider<R, Q, File> {
+    @Suppress("UNCHECKED_CAST")
     return fileFetchProviders.find {
       it.requestClass.isAssignableFrom(requestClass)
         && it.queryClass.isAssignableFrom(queryClass)
@@ -87,34 +90,25 @@ class DataOpsManagerImpl : DataOpsManager {
   }
 
   private val operationRunners by lazy {
-    OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
+    @Suppress("UNCHECKED_CAST")
+    val operationRunnersList = OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
+    operationRunnersList.associateListedBy { it.operationClass }
   }
 
   override fun isOperationSupported(operation: Operation<*>): Boolean {
-    return operationRunners.any {
-      if (it.operationClass.isAssignableFrom(operation::class.java) && it.resultClass.isAssignableFrom(operation.resultClass)) {
-        it.canRun(operation)
-      } else {
-        false
-      }
-    }
+    return operationRunners[operation::class.java]?.any { it.canRun(operation) } == true
   }
 
   override fun <R : Any> performOperation(
     operation: Operation<R>,
     progressIndicator: ProgressIndicator
   ): R {
-    return (operationRunners.stream()
-      .filter {
-        if (it.operationClass.isAssignableFrom(operation::class.java) && it.resultClass.isAssignableFrom(operation.resultClass)) {
-          (it as OperationRunner<Operation<R>, R>).canRun(operation)
-        } else {
-          false
-        }
-      }
-      .findAnyNullable() as OperationRunner<Operation<R>, R>?)
+    val result = operationRunners[operation::class.java]
+      ?.find { it.canRun(operation) }
       ?.run(operation, progressIndicator)
       ?: throw IllegalArgumentException("Unsupported Operation $operation")
+    @Suppress("UNCHECKED_CAST")
+    return result as R
   }
 
   override fun dispose() {

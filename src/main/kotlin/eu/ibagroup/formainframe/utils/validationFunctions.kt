@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.utils.validation
+package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -37,7 +37,10 @@ fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, c
     ignoreValue != it.name && it.name == component.text
   }.count() > 0
   return if (configAlreadyExists) {
-    return ValidationInfo("You must provide unique working set name. Working Set ${component.text} already exists.", component)
+    return ValidationInfo(
+      "You must provide unique working set name. Working Set ${component.text} already exists.",
+      component
+    )
   } else {
     null
   }
@@ -45,12 +48,14 @@ fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, c
 }
 
 fun validateWorkingSetMaskName(component: JTextField, ws: WorkingSet): ValidationInfo? {
-  val maskAlreadyExists = ws.dsMasks.map {it.mask}.contains(component.text)
-          || ws.ussPaths.map {it.path}.contains(component.text)
+  val maskAlreadyExists = ws.dsMasks.map { it.mask }.contains(component.text)
+      || ws.ussPaths.map { it.path }.contains(component.text)
 
   return if (maskAlreadyExists) {
-    return ValidationInfo("You must provide unique mask in working set. Working Set " +
-            "\"${ws.name}\" already has mask - ${component.text}", component)
+    return ValidationInfo(
+      "You must provide unique mask in working set. Working Set " +
+          "\"${ws.name}\" already has mask - ${component.text}", component
+    )
   } else {
     null
   }
@@ -118,13 +123,13 @@ fun validateUssFileName(component: JTextField): ValidationInfo? {
 
 private val firstSymbol = "A-Za-z\$@#"
 private val remainingSymbol = firstSymbol + "0-9\\-"
-private val firstGroup = "([${firstSymbol}][${remainingSymbol}]{0,7})"
-private val remainingGroup = "[${remainingSymbol}]{1,8}"
+private val firstGroup = "([$firstSymbol][$remainingSymbol]{0,7})"
+private val remainingGroup = "[$remainingSymbol]{1,8}"
 private val smallErrorMessage = "First segment must be alphabetic (A to Z) or national (# @ \$)"
 private val errorMessageForFullText =
   "Each name segment (qualifier) is 1 to 8 characters,\nthe first of which must be alphabetic (A to Z) or national (# @ \$).\nThe remaining seven characters are either alphabetic,\nnumeric (0 - 9), national, a hyphen (-).\nName segments are separated by a period (.)"
 
-private val datasetNameRegex = Regex("${firstGroup}(\\.${remainingGroup})*")
+private val datasetNameRegex = Regex("$firstGroup(\\.$remainingGroup)*")
 
 fun validateDatasetNameOnInput(component: JTextField): ValidationInfo? {
   val text = component.text.trim()
@@ -155,8 +160,12 @@ fun validateVolser(component: JTextField): ValidationInfo? {
 }
 
 fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
-  return if (component.text.toIntOrNull() ?: -1 < 0) {
-    ValidationInfo("Enter a positive number", component)
+  return validateForGreaterValue(component, 0)
+}
+
+fun validateForGreaterValue(component: JTextField, value: Int): ValidationInfo? {
+  return if (component.text.toIntOrNull() ?: -1 < value) {
+    ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number grater than $value", component)
   } else {
     null
   }
@@ -172,7 +181,7 @@ fun validateMemberName(component: JTextField): ValidationInfo? {
     ValidationInfo("Member name should start with A-Z a-z or national characters", component)
   } else if (component.text.isNotBlank() && !component.text.matches(memberRegex)) {
     ValidationInfo("Member name should contain only A-Z a-z 0-9 or national characters", component)
-  }  else {
+  } else {
     null
   }
 }

@@ -1,10 +1,9 @@
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.net.URI
 
 plugins {
   id("org.jetbrains.intellij") version "0.6.5"
-  kotlin("jvm") version "1.4.30"
+  kotlin("jvm") version "1.4.32"
   java
 }
 
@@ -12,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.2"
+version = "0.4.1"
 
 repositories {
   mavenCentral()
@@ -38,7 +37,8 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.30")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
   implementation("org.jgrapht:jgrapht-core:1.5.0")
-  implementation("eu.ibagroup:r2z:1.0.2")
+  implementation("eu.ibagroup:r2z:1.0.3")
+  implementation("com.segment.analytics.java:analytics:+")
   testImplementation("junit", "junit", "4.12")
 }
 
@@ -46,19 +46,19 @@ intellij {
   version = "2020.3"
 }
 
-
-
 tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   sinceBuild("203.5981")
   untilBuild("211.*")
   changeNotes(
     """
-      In version 0.2 we added:<br/>
+      In version 0.4.1 we added:<br/>
       <ul>
-        <li>Binary and text modes added for USS files and data sets</li>
-        <li>Error messages are improved a bit</li>
-        <li>Possibility to add a DS Mask right from File Explorer's context menu</li>
-        <li>Small UI fixes</li>
+        <li>Pride logo to support LGBTQIA+ community. Peace, love, pride</li>
+        <li>Job submission by the right click on files in the File Explorer</li>
+        <li>Move and Copy operations are available for USS files and directories</li>
+        <li>Editing Working Sets is now accessible by the right click on the Working Set in the File Explorer</li>
+        <li>Tracking analytics events is now enabled with corresponding Privacy Policy</li>
+        <li>Small UI fixes.</li>
       </ul>"""
   )
 }

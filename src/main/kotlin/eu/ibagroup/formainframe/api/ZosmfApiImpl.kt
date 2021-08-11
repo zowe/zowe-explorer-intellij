@@ -7,6 +7,7 @@ import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
 import eu.ibagroup.r2z.buildApi
 import okhttp3.ConnectionPool
+import okhttp3.ConnectionSpec
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import retrofit2.converter.gson.GsonConverterFactory
@@ -72,10 +73,19 @@ private fun OkHttpClient.Builder.addThreadPool(): OkHttpClient.Builder {
 }
 
 val unsafeOkHttpClient by lazy { buildUnsafeClient() }
-val safeOkHttpClient by lazy {
+val safeOkHttpClient: OkHttpClient by lazy {
   OkHttpClient.Builder()
-    .addThreadPool()
+    .setupClient()
     .build()
+}
+
+private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
+  return addThreadPool()
+    .addInterceptor {
+      it.request().newBuilder().addHeader("X-CSRF-ZOSMF-HEADER", "").build().let { request ->
+        it.proceed(request)
+      }
+    }.connectionSpecs(mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
 }
 
 private fun getOkHttpClient(isAllowSelfSigned: Boolean): OkHttpClient {
@@ -115,7 +125,7 @@ private fun buildUnsafeClient(): OkHttpClient {
     val builder = OkHttpClient.Builder()
     builder.sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
     builder.hostnameVerifier { _, _ -> true }
-    builder.addThreadPool()
+    builder.setupClient()
     builder.build()
   } catch (e: Exception) {
     throw RuntimeException(e)

@@ -3,8 +3,13 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
+import eu.ibagroup.formainframe.analytics.AnalyticsService
+import eu.ibagroup.formainframe.analytics.events.FileAction
+import eu.ibagroup.formainframe.analytics.events.FileEvent
+import eu.ibagroup.formainframe.analytics.events.FileType
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
@@ -43,6 +48,7 @@ class AddMemberAction : AnAction() {
               cancellable = true
             ) {
               runCatching {
+                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(FileType.MEMBER, FileAction.CREATE))
                 dataOpsManager.performOperation(
                   operation = MemberAllocationOperation(
                     connectionConfig = connectionConfig,
