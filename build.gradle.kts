@@ -56,12 +56,12 @@ dependencies {
 }
 
 intellij {
-  version = "2020.3"
+  version = "2021.2"
 }
 
 tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   sinceBuild("203.5981")
-  untilBuild("211.*")
+  untilBuild("212.*")
   changeNotes(
     """
       In version 0.4.1 we added:<br/>
