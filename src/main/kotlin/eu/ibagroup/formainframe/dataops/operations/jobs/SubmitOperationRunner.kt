@@ -18,7 +18,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SubmitFileNameBody
-import ibagroup.eu.r2z.SubmitJobRequest
+import eu.ibagroup.r2z.SubmitJobRequest
 
 class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobRequest> {
 
