@@ -50,7 +50,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.30")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
   implementation("org.jgrapht:jgrapht-core:1.5.0")
-  implementation("eu.ibagroup:r2z:1.0.13")
+  implementation("eu.ibagroup:r2z:1.0.14")
   implementation("com.segment.analytics.java:analytics:+")
   testImplementation("junit", "junit", "4.12")
 }

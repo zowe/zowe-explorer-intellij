@@ -15,85 +15,110 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.nullIfBlank
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.Dataset
+import eu.ibagroup.r2z.*
+import retrofit2.Response
 
 class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
-  override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
-    return DatasetFileFetchProvider(dataOpsManager)
-  }
+    override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
+        return DatasetFileFetchProvider(dataOpsManager)
+    }
 }
 
 private val log = log<DatasetFileFetchProvider>()
 
 class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
-  RemoteAttributedFileFetchBase<DSMask, RemoteDatasetAttributes, MFVirtualFile>(dataOpsManager) {
+    RemoteAttributedFileFetchBase<DSMask, RemoteDatasetAttributes, MFVirtualFile>(dataOpsManager) {
 
-  override val requestClass = DSMask::class.java
+    override val requestClass = DSMask::class.java
 
-  override val vFileClass = MFVirtualFile::class.java
+    override val vFileClass = MFVirtualFile::class.java
 
-  override fun fetchResponse(
-    query: RemoteQuery<DSMask, Unit>,
-    progressIndicator: ProgressIndicator
-  ): Collection<RemoteDatasetAttributes> {
-    log.info("Fetching DS Lists for $query")
-    var attributes: Collection<RemoteDatasetAttributes>? = null
-    var exception: Throwable? = null
-    val response = api<DataAPI>(query.connectionConfig).listDataSets(
-      authorizationToken = query.connectionConfig.authToken,
-      dsLevel = query.request.mask,
-      volser = query.request.volser.nullIfBlank()
-    ).cancelByIndicator(progressIndicator).execute()
-    if (response.isSuccessful) {
-      attributes = response.body()?.items?.map { buildAttributes(query, it) }
-      log.info("${query.request} returned ${attributes?.size ?: 0} entities")
-      log.debug {
-        attributes?.joinToString("\n") ?: ""
-      }
-    } else {
-      exception = CallException(response, "Cannot retrieve dataset list")
-    }
+    override fun fetchResponse(
+        query: RemoteQuery<DSMask, Unit>,
+        progressIndicator: ProgressIndicator
+    ): Collection<RemoteDatasetAttributes> {
+        log.info("Fetching DS Lists for $query")
+        var attributes: Collection<RemoteDatasetAttributes>? = null
+        var fetchedItems: List<Dataset>? = null
+        var totalRows: Int? = null
+        var start: String? = null
+        var fetchNeeded = true
+        var failedResponse: Response<DataSetsList>? = null
 
-    if (exception != null) {
-      throw exception
-    }
+        while (fetchNeeded) {
+            val response = api<DataAPI>(query.connectionConfig).listDataSets(
+                authorizationToken = query.connectionConfig.authToken,
+                dsLevel = query.request.mask,
+                volser = query.request.volser.nullIfBlank(),
+                xIBMAttr = XIBMAttr(isTotal = true),
+                xIBMMaxItems = BATCH_SIZE,
+                start = start
+            ).cancelByIndicator(progressIndicator).execute()
 
-    return attributes ?: emptyList()
-  }
+            var newBatchSize: Int?
+            if (response.isSuccessful) {
+                val newBatch = response.body()?.items?.toMutableList()
+                totalRows = response.body()?.totalRows
+                if (fetchedItems != null) {
+                    newBatch?.removeFirst()
+                }
 
-  private fun buildAttributes(query: RemoteQuery<DSMask, Unit>, dataset: Dataset): RemoteDatasetAttributes {
-    return RemoteDatasetAttributes(
-      dataset,
-      query.urlConnection.url,
-      MaskedRequester(
-        query.connectionConfig,
-        query.request
-      ).asMutableList()
-    )
-  }
+                fetchedItems = newBatch?.let {
+                    fetchedItems?.toMutableList()?.apply { addAll(newBatch) }
+                } ?: newBatch
 
-  override val responseClass = RemoteDatasetAttributes::class.java
+                start = fetchedItems?.last()?.name
+                newBatchSize = newBatch?.size
 
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<DSMask, Unit>) {
-    val deletingFileAttributes = attributesService.getAttributes(file)
-    log.info("Cleaning-up file attributes $deletingFileAttributes")
-    if (deletingFileAttributes != null) {
-      val needsDeletionFromFs = deletingFileAttributes.requesters.all {
-        it.connectionConfig == query.connectionConfig && it.queryVolser == query.request.volser
-      }
-      log.info("needsDeletionFromFs=$needsDeletionFromFs; $deletingFileAttributes")
-      if (needsDeletionFromFs) {
-        attributesService.clearAttributes(file)
-        file.delete(this)
-      } else {
-        attributesService.updateAttributes(file) {
-          requesters.removeAll {
-            it.connectionConfig == query.connectionConfig && it.queryVolser == query.request.volser
-          }
+                log.info("${query.request} returned ${attributes?.size ?: 0} entities")
+            } else {
+                failedResponse = response
+                break
+            }
+            fetchNeeded = totalRows?.let { newBatchSize?.equals(totalRows - 1) } == false
         }
-      }
+
+        attributes = fetchedItems?.map { buildAttributes(query, it) }
+
+        if (failedResponse != null) {
+            throw CallException(failedResponse, "Cannot retrieve dataset list")
+        }
+
+        return attributes ?: emptyList()
     }
-  }
+
+    private fun buildAttributes(query: RemoteQuery<DSMask, Unit>, dataset: Dataset): RemoteDatasetAttributes {
+        return RemoteDatasetAttributes(
+            dataset,
+            query.urlConnection.url,
+            MaskedRequester(
+                query.connectionConfig,
+                query.request
+            ).asMutableList()
+        )
+    }
+
+    override val responseClass = RemoteDatasetAttributes::class.java
+
+    override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<DSMask, Unit>) {
+        val deletingFileAttributes = attributesService.getAttributes(file)
+        log.info("Cleaning-up file attributes $deletingFileAttributes")
+        if (deletingFileAttributes != null) {
+            val needsDeletionFromFs = deletingFileAttributes.requesters.all {
+                it.connectionConfig == query.connectionConfig && it.queryVolser == query.request.volser
+            }
+            log.info("needsDeletionFromFs=$needsDeletionFromFs; $deletingFileAttributes")
+            if (needsDeletionFromFs) {
+                attributesService.clearAttributes(file)
+                file.delete(this)
+            } else {
+                attributesService.updateAttributes(file) {
+                    requesters.removeAll {
+                        it.connectionConfig == query.connectionConfig && it.queryVolser == query.request.volser
+                    }
+                }
+            }
+        }
+    }
 
 }
