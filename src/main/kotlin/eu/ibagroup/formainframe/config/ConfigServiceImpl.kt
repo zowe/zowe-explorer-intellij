@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @State(
   name = "by.iba.connector.services.ConfigService",
-  storages = [Storage(value = "iba_connector_config.xml", exportable = true)]
+  storages = [Storage(value = "iba_connector_config_v2.xml", exportable = true)]
 )
 class ConfigServiceImpl : ConfigService {
 
