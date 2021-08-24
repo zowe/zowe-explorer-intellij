@@ -67,7 +67,6 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
       In version 0.4.2 we added:<br/>
       <ul>
         <li>Now you can work with large masks and datasets which contain 1000+ members.</li>
-        <li>Note! New config file will be used with this version. <br/> You will have to recreate all your connections and working sets.</li>
       </ul>"""
   )
 }

@@ -71,7 +71,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
                     newBatchSize = newBatch?.size
 
                     totalRows = response.body()?.totalRows
-                    if (fetchedItems != null) {
+                    if (fetchedItems != null && newBatch?.size != 0) {
                         newBatch?.removeFirst()
                     }
 
@@ -80,7 +80,9 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
                             addAll(newBatch)
                         }
                     } ?: newBatch
-                    start = fetchedItems?.last()?.name
+                    if (fetchedItems?.size != 0) {
+                        start = fetchedItems?.last()?.name
+                    }
 
                     log.info("${query.request} returned ${attributes?.size ?: 0} entities")
                 } else {

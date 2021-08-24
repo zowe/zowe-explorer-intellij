@@ -59,7 +59,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
             if (response.isSuccessful) {
                 val newBatch = response.body()?.items?.toMutableList()
                 totalRows = response.body()?.totalRows
-                if (fetchedItems != null) {
+                if (fetchedItems != null && newBatch?.size != 0) {
                     newBatch?.removeFirst()
                 }
 
@@ -67,7 +67,9 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
                     fetchedItems?.toMutableList()?.apply { addAll(newBatch) }
                 } ?: newBatch
 
-                start = fetchedItems?.last()?.name
+                if (fetchedItems?.size != 0) {
+                    start = fetchedItems?.last()?.name
+                }
                 newBatchSize = newBatch?.size
 
                 log.info("${query.request} returned ${attributes?.size ?: 0} entities")
