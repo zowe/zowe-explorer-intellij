@@ -11,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.4.1"
+version = "0.4.2"
 
 repositories {
   mavenCentral()
@@ -64,14 +64,9 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   untilBuild("212.*")
   changeNotes(
     """
-      In version 0.4.1 we added:<br/>
+      In version 0.4.2 we added:<br/>
       <ul>
-        <li>Pride logo to support LGBTQIA+ community. Peace, love, pride</li>
-        <li>Job submission by the right click on files in the File Explorer</li>
-        <li>Move and Copy operations are available for USS files and directories</li>
-        <li>Editing Working Sets is now accessible by the right click on the Working Set in the File Explorer</li>
-        <li>Tracking analytics events is now enabled with corresponding Privacy Policy</li>
-        <li>Small UI fixes.</li>
+        <li>Now you can work with large masks and datasets which contain 1000+ members.</li>
       </ul>"""
   )
 }
