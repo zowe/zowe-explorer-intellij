@@ -1,112 +1,83 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.jetbrains.rd.util.getLogger
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.Member
-import eu.ibagroup.r2z.MembersList
-import eu.ibagroup.r2z.XIBMAttr
+import eu.ibagroup.r2z.*
 import retrofit2.Response
 
 data class LibraryQuery(val library: MFVirtualFile)
 
 class MemberFileFetchProviderFactory : FileFetchProviderFactory {
-    override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
-        return MemberFileFetchProvider(dataOpsManager)
-    }
+  override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
+    return MemberFileFetchProvider(dataOpsManager)
+  }
 }
 
-private val log = log<MemberFileFetchProvider>()
+private val logger = log<MemberFileFetchProvider>()
 
 class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
-    RemoteAttributedFileFetchBase<LibraryQuery, RemoteMemberAttributes, MFVirtualFile>(dataOpsManager) {
+  RemoteBatchedFileFetchProviderBase<MembersList, Member, LibraryQuery, RemoteMemberAttributes, MFVirtualFile>(dataOpsManager) {
 
-    private val remoteDatasetAttributesService by lazy {
-        dataOpsManager.getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
-    }
+  private val remoteDatasetAttributesService by lazy {
+    dataOpsManager.getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
+  }
 
-    override val requestClass = LibraryQuery::class.java
+  override val requestClass = LibraryQuery::class.java
 
-    override val vFileClass = MFVirtualFile::class.java
+  override val vFileClass = MFVirtualFile::class.java
 
-    override val responseClass = RemoteMemberAttributes::class.java
+  override val responseClass = RemoteMemberAttributes::class.java
 
-    override fun fetchResponse(
-        query: RemoteQuery<LibraryQuery, Unit>,
-        progressIndicator: ProgressIndicator
-    ): Collection<RemoteMemberAttributes> {
-        val libraryAttributes = remoteDatasetAttributesService.getAttributes(query.request.library)
-        log.info("Fetching Members for $query\nlibraryAttributes=$libraryAttributes")
-        return if (libraryAttributes != null) {
-            var attributes: Collection<RemoteMemberAttributes>? = null
-            var fetchedItems: List<Member>? = null
-            var totalRows: Int? = null
-            var start: String? = null
-            var fetchNeeded = true
-            var failedResponse: Response<MembersList>? = null
+  override val log = logger
 
-            while (fetchNeeded) {
-                val response = api<DataAPI>(query.connectionConfig).listDatasetMembers(
-                    authorizationToken = query.connectionConfig.authToken,
-                    datasetName = libraryAttributes.name,
-                    xIBMAttr = XIBMAttr(isTotal = true),
-                    xIBMMaxItems = BATCH_SIZE,
-                    start = start
-                ).cancelByIndicator(progressIndicator).execute()
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<LibraryQuery, Unit>) {
+    log.info("About to clean-up file=$file, query=$query")
+    attributesService.clearAttributes(file)
+    file.delete(this)
+  }
 
-                var newBatchSize: Int?
-                if (response.isSuccessful) {
-                    val newBatch = response.body()?.items?.toMutableList()
-                    newBatchSize = newBatch?.size
+  override fun fetchResponse(
+    query: RemoteQuery<LibraryQuery, Unit>,
+    progressIndicator: ProgressIndicator
+  ): Collection<RemoteMemberAttributes> {
+    log.info("Fetching DS Lists for $query")
+    return super.fetchResponse(query, progressIndicator)
+  }
 
-                    totalRows = response.body()?.totalRows
-                    if (fetchedItems != null) {
-                        newBatch?.removeFirst()
-                    }
+  override fun fetchBatch(
+    query: RemoteQuery<LibraryQuery, Unit>,
+    progressIndicator: ProgressIndicator,
+    start: String?
+  ): Response<MembersList> {
+    val libraryAttributes = remoteDatasetAttributesService.getAttributes(query.request.library)
+    return if (libraryAttributes !== null)
+      api<DataAPI>(query.connectionConfig).listDatasetMembers(
+        authorizationToken = query.connectionConfig.authToken,
+        datasetName = libraryAttributes.name,
+        xIBMAttr = XIBMAttr(isTotal = true),
+        xIBMMaxItems = BATCH_SIZE,
+        start = start
+      ).cancelByIndicator(progressIndicator).execute()
+    else throw IllegalArgumentException("Virtual file is not a library")
+  }
 
-                    fetchedItems = newBatch?.let {
-                        fetchedItems?.toMutableList()?.apply {
-                            addAll(newBatch)
-                        }
-                    } ?: newBatch
-                    start = fetchedItems?.last()?.name
+  override fun convertResponseToBody(responseList: MembersList?): BatchedBody<Member> {
+    return BatchedBody(responseList?.items?.map { BatchedItem(it.name, it) }, responseList?.totalRows)
+  }
 
-                    log.info("${query.request} returned ${attributes?.size ?: 0} entities")
-                } else {
-                    failedResponse = response
-                    break
-                }
-                fetchNeeded = if (totalRows != null && newBatchSize != null) {
-                    newBatchSize != totalRows
-                } else {
-                    false
-                }
-            }
-
-            attributes = fetchedItems?.map { RemoteMemberAttributes(it, query.request.library) }
-
-            if (failedResponse != null) {
-                throw CallException(failedResponse, "Cannot retrieve member list")
-            }
-
-            return attributes ?: emptyList()
-        } else throw IllegalArgumentException("Virtual file is not a library")
-    }
-
-    override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<LibraryQuery, Unit>) {
-        log.info("About to clean-up file=$file, query=$query")
-        attributesService.clearAttributes(file)
-        file.delete(this)
-    }
+  override fun buildAttributes(
+    query: RemoteQuery<LibraryQuery, Unit>,
+    batchedItem: BatchedItem<Member>
+  ): RemoteMemberAttributes {
+    return RemoteMemberAttributes(batchedItem.original, query.request.library)
+  }
 }

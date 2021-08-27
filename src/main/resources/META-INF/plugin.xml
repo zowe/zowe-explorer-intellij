@@ -72,7 +72,14 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <fileDataProvider
                 implementation="eu.ibagroup.formainframe.dataops.fetch.MemberFileFetchProviderFactory"/>
 
-        <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProviderFactory"/>
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProviderFactory"/>
+
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.JobFileFetchProviderFactory"/>
+
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.SpoolFileFetchProviderFactory"/>
 
         <contentSynchronizer
                 implementation="eu.ibagroup.formainframe.dataops.synchronizer.MemberContentSynchronizerFactory"/>
