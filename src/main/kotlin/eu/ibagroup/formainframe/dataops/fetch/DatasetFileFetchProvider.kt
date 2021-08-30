@@ -91,7 +91,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
   ): RemoteDatasetAttributes {
     return RemoteDatasetAttributes(
       batchedItem.original,
-      query.urlConnection.url,
+      query.connectionConfig.url,
       MaskedRequester(
         query.connectionConfig,
         query.request

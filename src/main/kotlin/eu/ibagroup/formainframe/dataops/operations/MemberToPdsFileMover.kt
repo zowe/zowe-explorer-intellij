@@ -2,7 +2,7 @@ package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.UrlConnection
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.*
@@ -25,7 +25,7 @@ class MemberToPdsFileMover(private val dataOpsManager: DataOpsManager) : Abstrac
 
   private fun buildCall(
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, UrlConnection>
+    requesterWithUrl: Pair<Requester, ConnectionConfig>
   ): Call<Void> {
     val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
     var memberName: String

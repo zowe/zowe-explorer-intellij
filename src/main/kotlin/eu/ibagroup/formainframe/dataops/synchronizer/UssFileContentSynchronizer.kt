@@ -12,6 +12,8 @@ import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.mapNotNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.XIBMDataType
+import eu.ibagroup.r2z.annotations.ZVersion
 import java.io.IOException
 
 class UssFileContentSynchronizerFactory : ContentSynchronizerFactory {
@@ -38,10 +40,12 @@ class UssFileContentSynchronizer(
     return attributes.requesters.stream().mapNotNull {
       var content: ByteArray? = null
       try {
-        val response = api<DataAPI>(it.connectionConfig).retrieveUssFileContent(
-          authorizationToken = it.connectionConfig.authToken,
+        val connectionConfig = it.connectionConfig
+        val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+        val response = api<DataAPI>(connectionConfig).retrieveUssFileContent(
+          authorizationToken = connectionConfig.authToken,
           filePath = attributes.path.substring(1),
-          xIBMDataType = attributes.contentMode
+          xIBMDataType = xIBMDataType
         ).applyIfNotNull(progressIndicator) { indicator ->
           cancelByIndicator(indicator)
         }.execute()
@@ -62,11 +66,13 @@ class UssFileContentSynchronizer(
     var uploaded = false
     for (requester in attributes.requesters) {
       try {
-        val response = api<DataAPI>(requester.connectionConfig).writeToUssFile(
-          authorizationToken = requester.connectionConfig.authToken,
+        val connectionConfig = requester.connectionConfig
+        val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+        val response = api<DataAPI>(connectionConfig).writeToUssFile(
+          authorizationToken = connectionConfig.authToken,
           filePath = attributes.path.substring(1),
           body = String(newContentBytes).addNewLine(),
-          xIBMDataType = attributes.contentMode
+          xIBMDataType = xIBMDataType
         ).execute()
         if (response.isSuccessful) {
           uploaded = true

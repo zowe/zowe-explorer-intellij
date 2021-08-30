@@ -9,7 +9,6 @@ import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.MigrateActionType
 import eu.ibagroup.formainframe.analytics.events.MigrateEvent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperation
@@ -23,13 +22,12 @@ import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
 
 
-fun getRequestDataForNode(node: ExplorerTreeNode<*>): Triple<VirtualFile, ConnectionConfig, UrlConnection>? {
+fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, ConnectionConfig>? {
   return if (node is ExplorerUnitTreeNodeBase<*, *> && node.unit is WorkingSet) {
     val file = node.virtualFile
     val config = node.unit.connectionConfig
-    val urlConfig = node.unit.urlConnection
-    if (file != null && config != null && urlConfig != null) {
-      return Triple(file, config, urlConfig)
+    if (file != null && config != null) {
+      return Pair(file, config)
     }
     null
   } else {
@@ -51,8 +49,7 @@ class RecallAction : DumbAwareAction() {
       val operations: List<RecallOperation> = triples.map {
         RecallOperation(
           request = RecallOperationParams(it.first),
-          connectionConfig = it.second,
-          urlConnection = it.third
+          connectionConfig = it.second
         )
       }
       runModalTask("Recalling Datasets") { progressIndicator ->
@@ -99,8 +96,7 @@ class MigrateAction : DumbAwareAction() {
       val operations: List<MigrateOperation> = triples.map {
         MigrateOperation(
           request = MigrateOperationParams(it.first),
-          connectionConfig = it.second,
-          urlConnection = it.third
+          connectionConfig = it.second
         )
       }
       runModalTask("Migrating Datasets") { progressIndicator ->

@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.connect.UrlConnection
+import eu.ibagroup.formainframe.config.jobs.JobsFilter
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -57,7 +57,7 @@ class ConfigSandboxImpl : ConfigSandbox {
     synchronized(stateLock) {
       rollbackSandbox<ConnectionConfig>()
       rollbackSandbox<WorkingSetConfig>()
-      rollbackSandbox<UrlConnection>()
+      rollbackSandbox<JobsFilter>()
       rollbackSandbox<Credentials>()
     }
   }

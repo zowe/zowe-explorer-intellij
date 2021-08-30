@@ -58,7 +58,7 @@ class UssFileFetchProvider(
         RemoteUssAttributes(
           rootPath = query.request.path,
           ussFile = it,
-          url = query.urlConnection.url,
+          url = query.connectionConfig.url,
           connectionConfig = query.connectionConfig
         )
       }

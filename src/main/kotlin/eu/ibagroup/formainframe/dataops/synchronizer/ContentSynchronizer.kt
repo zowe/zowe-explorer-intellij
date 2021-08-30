@@ -5,6 +5,10 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.r2z.CodePage
+import eu.ibagroup.r2z.XIBMDataType
+import eu.ibagroup.r2z.annotations.ZVersion
 
 enum class AcceptancePolicy {
   IF_EMPTY_ONLY,
@@ -48,4 +52,12 @@ interface ContentSynchronizer {
 
   fun removeSync(file: VirtualFile)
 
+}
+
+fun updateDataTypeWithEncoding(connectionConfig: ConnectionConfig, oldDataType: XIBMDataType) : XIBMDataType {
+  return if (connectionConfig.zVersion == ZVersion.ZOS_2_4 && oldDataType.encoding != null && oldDataType.encoding != CodePage.IBM_1047 && oldDataType.type == XIBMDataType.Type.TEXT) {
+    XIBMDataType(oldDataType.type, connectionConfig.codePage)
+  } else {
+    oldDataType
+  }
 }

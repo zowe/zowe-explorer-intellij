@@ -1,29 +1,23 @@
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.CONFIGS_CHANGED
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.CREDENTIALS_CHANGED
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.anyEventAdaptor
 import eu.ibagroup.formainframe.utils.crudable.eventAdaptor
@@ -132,13 +126,6 @@ class GlobalExplorer : Explorer {
       }
     })
     subscribe(CONFIGS_CHANGED, disposable, anyEventAdaptor<ConnectionConfig> {
-      lock.read {
-        units.forEach {
-          sendTopic(UNITS_CHANGED).onChanged(this@GlobalExplorer, it)
-        }
-      }
-    })
-    subscribe(CONFIGS_CHANGED, disposable, anyEventAdaptor<UrlConnection> {
       lock.read {
         units.forEach {
           sendTopic(UNITS_CHANGED).onChanged(this@GlobalExplorer, it)

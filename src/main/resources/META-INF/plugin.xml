@@ -90,6 +90,9 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <contentSynchronizer
                 implementation="eu.ibagroup.formainframe.dataops.synchronizer.UssFileContentSynchronizerFactory"/>
 
+        <contentSynchronizer
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SpoolFileContentSynchronizerFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DatasetAllocatorFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberAllocatorFactory"/>
