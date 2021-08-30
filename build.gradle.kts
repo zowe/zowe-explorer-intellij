@@ -15,18 +15,8 @@ version = "0.4.2"
 
 repositories {
   mavenCentral()
-  maven {
-    url = uri("http://10.221.23.186:8082/repository/internal/")
-    isAllowInsecureProtocol = true
-    credentials {
-      username = "admin"
-      password = "password123"
-    }
-    metadataSources {
-      mavenPom()
-      artifact()
-      ignoreGradleMetadataRedirection()
-    }
+  flatDir {
+    dir("libs")
   }
 }
 

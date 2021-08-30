@@ -28,9 +28,9 @@ class LibraryNode(
   override val query: RemoteQuery<LibraryQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
-      val urlConnection = unit.urlConnection
-      return if (connectionConfig != null && urlConnection != null) {
-        UnitRemoteQueryImpl(LibraryQuery(value), connectionConfig, urlConnection)
+
+      return if (connectionConfig != null) {
+        UnitRemoteQueryImpl(LibraryQuery(value), connectionConfig)
       } else null
     }
 

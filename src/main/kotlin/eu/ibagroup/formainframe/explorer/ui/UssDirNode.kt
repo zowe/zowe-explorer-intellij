@@ -42,9 +42,8 @@ class UssDirNode(
   override val query: RemoteQuery<UssQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
-      val urlConnection = unit.urlConnection
-      return if (connectionConfig != null && urlConnection != null) {
-        UnitRemoteQueryImpl(UssQuery(value.path), connectionConfig, urlConnection)
+      return if (connectionConfig != null) {
+        UnitRemoteQueryImpl(UssQuery(value.path), connectionConfig)
       } else null
     }
 

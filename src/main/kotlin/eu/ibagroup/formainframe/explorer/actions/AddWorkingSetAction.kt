@@ -26,10 +26,8 @@ class AddWorkingSetAction : AnAction() {
         initialState = ConnectionDialogState().initEmptyUuids(configCrudable)
       )
       if (state != null) {
-        val urlConnection = state.urlConnection
         val connectionConfig = state.connectionConfig
         CredentialService.instance.setCredentials(connectionConfig.uuid, state.username, state.password)
-        configCrudable.add(urlConnection)
         configCrudable.add(connectionConfig)
       } else {
         return

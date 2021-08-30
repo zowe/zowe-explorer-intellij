@@ -31,9 +31,8 @@ class AddMemberAction : AnAction() {
       && currentNode is FetchNode
     ) {
       val connectionConfig = currentNode.unit.connectionConfig
-      val connectionUrl = currentNode.unit.urlConnection
       val dataOpsManager = currentNode.explorer.componentManager.service<DataOpsManager>()
-      if (currentNode is LibraryNode && connectionConfig != null && connectionUrl != null) {
+      if (currentNode is LibraryNode && connectionConfig != null) {
         val parentName = dataOpsManager
           .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
           .getAttributes(currentNode.virtualFile)
@@ -52,7 +51,6 @@ class AddMemberAction : AnAction() {
                 dataOpsManager.performOperation(
                   operation = MemberAllocationOperation(
                     connectionConfig = connectionConfig,
-                    urlConnection = connectionUrl,
                     request = state
                   ),
                   progressIndicator = it

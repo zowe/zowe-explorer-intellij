@@ -15,6 +15,8 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.JESApi
+import eu.ibagroup.r2z.JobStatus
+import retrofit2.Response
 
 class JobFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
@@ -41,21 +43,26 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
     var attributes: Collection<RemoteJobAttributes>? = null
     var exception: Throwable? = null
 
-    val response = api<JESApi>(query.connectionConfig).getFilteredJobs(
-      basicCredentials = query.connectionConfig.authToken,
-      owner = query.request.owner,
-      prefix = query.request.prefix,
-      jobId = query.request.jobId,
-      userCorrelator = query.request.userCorrelator,
-      execData = query.request.execData,
-      status = query.request.status
-    ).cancelByIndicator(progressIndicator).execute()
+    val response = if (query.request.jobId.isNotEmpty()) {
+      api<JESApi>(query.connectionConfig).getFilteredJobs(
+        basicCredentials = query.connectionConfig.authToken,
+        jobId = query.request.jobId,
+        userCorrelator = query.request.userCorrelatorFilter
+      ).cancelByIndicator(progressIndicator).execute()
+    } else {
+      api<JESApi>(query.connectionConfig).getFilteredJobs(
+        basicCredentials = query.connectionConfig.authToken,
+        owner = query.request.owner,
+        prefix = query.request.prefix,
+        userCorrelator = query.request.userCorrelatorFilter
+      ).cancelByIndicator(progressIndicator).execute()
+    }
 
     if (response.isSuccessful) {
       attributes = response.body()?.map {
         RemoteJobAttributes(
           it,
-          query.urlConnection.url,
+          query.connectionConfig.url,
           JobsRequester(query.connectionConfig, query.request).asMutableList()
         )
       }

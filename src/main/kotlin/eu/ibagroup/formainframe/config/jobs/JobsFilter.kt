@@ -1,35 +1,77 @@
 package eu.ibagroup.formainframe.config.jobs
 
-import eu.ibagroup.r2z.ActiveStatus
-import eu.ibagroup.r2z.ExecData
-import java.util.*
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
+import eu.ibagroup.formainframe.utils.crudable.annotations.Column
+import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
+import org.jetbrains.annotations.NotNull
 
-class JobsFilter(
-  var owner: String = "",
-  var prefix: String = "",
-  var jobId: String = "",
-  var userCorrelator: String = "",
-  var execData: ExecData = ExecData.NO,
-  var status: ActiveStatus = ActiveStatus.ACTIVE
-) {
+
+class JobsFilter : EntityWithUuid {
+  @Column
+  @ForeignKey(foreignClass = ConnectionConfig::class)
+  var connectionConfigUuid: String = ""
+
+  @Column
+  var owner: String = ""
+
+  @Column
+  var prefix: String = ""
+
+  @Column
+  var jobId: String = ""
+
+  @Column
+  var userCorrelatorFilter: String = ""
+
+  constructor()
+
+  constructor(
+    uuid: @NotNull String,
+    connectionConfigUuid: String,
+    owner: String,
+    prefix: String,
+    jobId: String,
+    userCorrelatorFilter: String
+  ) : super(uuid) {
+    this.connectionConfigUuid = connectionConfigUuid
+    this.owner = owner
+    this.prefix = prefix
+    this.jobId = jobId
+    this.userCorrelatorFilter = userCorrelatorFilter
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other == null || javaClass != other.javaClass) return false
-    val jobsFilter = other as JobsFilter
-    return owner == jobsFilter.owner &&
-        prefix == jobsFilter.prefix &&
-        jobId == jobsFilter.jobId &&
-        userCorrelator == jobsFilter.userCorrelator &&
-        execData == jobsFilter.execData &&
-        status == jobsFilter.status
+    if (javaClass != other?.javaClass) return false
+    if (!super.equals(other)) return false
+
+    other as JobsFilter
+
+    if (connectionConfigUuid != other.connectionConfigUuid) return false
+    if (owner != other.owner) return false
+    if (prefix != other.prefix) return false
+    if (jobId != other.jobId) return false
+    if (userCorrelatorFilter != other.userCorrelatorFilter) return false
+
+    return true
   }
 
   override fun hashCode(): Int {
-    return Objects.hash(owner, prefix, jobId, userCorrelator, execData, status)
+    var result = super.hashCode()
+    result = 31 * result + connectionConfigUuid.hashCode()
+    result = 31 * result + owner.hashCode()
+    result = 31 * result + prefix.hashCode()
+    result = 31 * result + jobId.hashCode()
+    result = 31 * result + userCorrelatorFilter.hashCode()
+    return result
   }
 
-  override fun toString(): String {
-    return "JobsFilter(owner=$owner, prefix=$prefix, jobId=$jobId, userCorrelator=$userCorrelator, execData=$execData, status=$status)"
+  override fun toString(): String = if (jobId.isEmpty()) {
+    "Owner = $owner, Prefix = $prefix"
+  } else {
+    "JobID = $jobId"
   }
+
 
 }

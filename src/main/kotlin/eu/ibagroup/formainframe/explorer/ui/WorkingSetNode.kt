@@ -31,7 +31,7 @@ class WorkingSetNode(
   override fun update(presentation: PresentationData) {
     presentation.addText(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     when {
-      value.connectionConfig == null || value.urlConnection == null -> connectionIsNotSet(presentation)
+      value.connectionConfig == null -> connectionIsNotSet(presentation)
       value.dsMasks.isEmpty() && value.ussPaths.isEmpty() -> destinationsAreEmpty(presentation)
       else -> regular(presentation)
     }
@@ -59,7 +59,7 @@ class WorkingSetNode(
 
   private fun addInfo(presentation: PresentationData) {
     val connectionConfig = value.connectionConfig ?: return
-    val url = value.urlConnection?.url ?: return
+    val url = value.connectionConfig?.url ?: return
     val username = username(connectionConfig)
     presentation.addText(" $username on ${connectionConfig.name} [${url}]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }

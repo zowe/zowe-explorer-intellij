@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.dataops.synchronizer
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.messages.Topic
 import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
@@ -18,7 +19,7 @@ private val log = log<RemoteAttributesContentSynchronizerBase<*>>()
 
 abstract class RemoteAttributesContentSynchronizerBase<Attributes : FileAttributes>(
   dataOpsManager: DataOpsManager
-) : AbstractAttributedContentSynchronizer<Attributes>(dataOpsManager) {
+) : AbstractAttributedContentSynchronizer<Attributes>(dataOpsManager), FileAttributesChangeListener {
 
   protected abstract val storageNamePostfix: String
 
@@ -108,11 +109,25 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : FileAttribut
     }
   }
 
+  override fun onFileAttributesChange(file: VirtualFile) {
+    triggerSync(file)
+  }
+
   private fun onThrowable(t: Throwable, syncProvider: SyncProvider, neverFetchedBefore: Boolean) {
     if (neverFetchedBefore) {
       syncProvider.notifySyncStarted()
     }
     syncProvider.onThrowable(t)
   }
+
+}
+
+interface FileAttributesChangeListener {
+
+  companion object {
+    val TOPIC = Topic.create("fileAttributesChangeListener", FileAttributesChangeListener::class.java)
+  }
+
+  fun onFileAttributesChange(file: VirtualFile)
 
 }

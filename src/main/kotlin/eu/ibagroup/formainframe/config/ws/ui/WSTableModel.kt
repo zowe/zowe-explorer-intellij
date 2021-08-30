@@ -1,8 +1,8 @@
 package eu.ibagroup.formainframe.config.ws.ui
 
 import eu.ibagroup.formainframe.common.ui.CrudableTableModel
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.toMutableList
@@ -16,7 +16,7 @@ class WSTableModel(
       WSNameColumn { this.items },
       WSConnectionNameColumn(crudable),
       WSUsernameColumn { crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username },
-      UrlColumn { crudable.getByForeignKeyDeeply<WorkingSetConfig, UrlConnection>(it)?.url }
+      UrlColumn { crudable.getByUniqueKey<ConnectionConfig>(it.connectionConfigUuid)?.url}
     )
   }
 

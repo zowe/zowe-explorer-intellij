@@ -6,6 +6,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.InfoAPI
+import eu.ibagroup.r2z.InfoResponse
 
 class InfoOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
@@ -13,13 +14,13 @@ class InfoOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
-class InfoOperationRunner : OperationRunner<InfoOperation, Unit> {
+class InfoOperationRunner : OperationRunner<InfoOperation, InfoResponse> {
   override val operationClass = InfoOperation::class.java
-  override val resultClass = Unit::class.java
+  override val resultClass = InfoResponse::class.java
 
   override fun canRun(operation: InfoOperation) = true
 
-  override fun run(operation: InfoOperation, progressIndicator: ProgressIndicator) {
+  override fun run(operation: InfoOperation, progressIndicator: ProgressIndicator): InfoResponse {
     val response = api<InfoAPI>(url = operation.url, isAllowSelfSigned = operation.isAllowSelfSigned)
       .getSystemInfo()
       .cancelByIndicator(progressIndicator)
@@ -27,5 +28,6 @@ class InfoOperationRunner : OperationRunner<InfoOperation, Unit> {
     if (!response.isSuccessful) {
       throw CallException(response, "Cannot connect to z/OSMF Server")
     }
+    return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
   }
 }

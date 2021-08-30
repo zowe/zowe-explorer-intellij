@@ -24,27 +24,6 @@ class WSConfigurable(
 
   private var panel: DialogPanel? = null
 
-  private inner class ConnectionSandboxListener(
-    private val predicate: ComponentPredicate,
-    private val listener: (Boolean) -> Unit
-  ): SandboxListener {
-    private fun onEvent() {
-      listener(predicate())
-    }
-
-    override fun <E : Any> update(clazz: Class<out E>) {
-      if (clazz.isThe<ConnectionConfig>()) {
-        onEvent()
-      }
-    }
-
-    override fun <E : Any> reload(clazz: Class<out E>) {
-      update(clazz)
-    }
-  }
-
-
-
   override fun createPanel(): DialogPanel {
     val wsTableModel = WSTableModel(sandboxCrudable)
 
