@@ -1,5 +1,7 @@
 package eu.ibagroup.formainframe.vfs
 
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -177,6 +179,14 @@ class MFVirtualFile internal constructor(
 
   override fun getNameWithoutExtension(): String {
     return name.split(".").dropLast(1).joinToString(separator = ".")
+  }
+
+  override fun getFileType(): FileType {
+    return if (this.name == this.extension) {
+      PlainTextFileType.INSTANCE
+    } else {
+      super.getFileType()
+    }
   }
 
   @Suppress("UNCHECKED_CAST")
