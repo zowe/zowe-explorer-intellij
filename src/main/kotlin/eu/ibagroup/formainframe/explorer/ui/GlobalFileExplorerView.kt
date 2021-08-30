@@ -37,10 +37,7 @@ import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.MoveCopyOperation
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.ExplorerListener
-import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.explorer.UNITS_CHANGED
+import eu.ibagroup.formainframe.explorer.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.Component
@@ -56,22 +53,28 @@ import kotlin.concurrent.withLock
 
 val FILE_EXPLORER_VIEW = DataKey.create<GlobalFileExplorerView>("fileExplorerView")
 
-class GlobalFileExplorerView(
-  internal val explorer: Explorer,
+abstract class ExplorerTreeView
+  (
+  val explorer: Explorer,
   project: Project,
   parentDisposable: Disposable,
-  private val cutProviderUpdater: (List<VirtualFile>) -> Unit
+  private val contextMenu: ActionGroup,
+  rootNodeProvider: (explorer: Explorer, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
+  protected val cutProviderUpdater: (List<VirtualFile>) -> Unit
 ) : JBScrollPane(), DataProvider, Disposable {
 
+
   internal var mySelectedNodesData: List<NodeData> by rwLocked(listOf())
-  internal val myFsTreeStructure: FileExplorerTreeStructure
-  internal val myStructure: StructureTreeModel<FileExplorerTreeStructure>
+  internal val myFsTreeStructure: CommonExplorerTreeStructure
+  internal val myStructure: StructureTreeModel<CommonExplorerTreeStructure>
   internal val myTree: Tree
   internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
 
-  private val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+  protected val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+  protected val ignoreVFileDeleteEvents = AtomicBoolean(false)
 
-  private val ignoreVFileDeleteEvents = AtomicBoolean(false)
+  private var treeModel: AsyncTreeModel
+
 
   internal fun getNodesByQueryAndInvalidate(
     query: Query<*, *>, collapse: Boolean = false, invalidate: Boolean = true
@@ -112,7 +115,7 @@ class GlobalFileExplorerView(
   init {
     Disposer.register(parentDisposable, this)
     myStructure = StructureTreeModel(
-      FileExplorerTreeStructure(explorer, project).also { myFsTreeStructure = it },
+      CommonExplorerTreeStructure(explorer, project, rootNodeProvider).also { myFsTreeStructure = it },
       { o1, o2 ->
         if (o1 is WorkingSetNode && o2 is WorkingSetNode) {
           o1.unit.name.compareTo(o2.unit.name)
@@ -171,7 +174,7 @@ class GlobalFileExplorerView(
                 nodes
               }
               it is VFileDeleteEvent
-                && this@GlobalFileExplorerView
+                  && this@ExplorerTreeView
                 .ignoreVFileDeleteEvents
                 .compareAndSet(true, true) -> {
                 null
@@ -187,6 +190,26 @@ class GlobalFileExplorerView(
         }
       },
       disposable = this
+    )
+    subscribe(
+      componentManager = explorer.componentManager,
+      topic = CutBufferListener.CUT_BUFFER_CHANGES,
+      handler = CutBufferListener { previousBufferState, currentBufferState ->
+        previousBufferState
+          .asSequence()
+          .plus(currentBufferState)
+          .distinct()
+          .map { it.getAncestorNodes() }
+          .flatten()
+          .distinct()
+          .map {
+            myFsTreeStructure.findByVirtualFile(it)
+          }.flatten()
+          .distinct()
+          .forEach {
+            myStructure.invalidate(it, true)
+          }
+      }
     )
     subscribe(
       componentManager = explorer.componentManager,
@@ -215,36 +238,14 @@ class GlobalFileExplorerView(
       },
       disposable = this
     )
-    subscribe(
-      componentManager = explorer.componentManager,
-      topic = ExplorerContent.CUT_BUFFER_CHANGES,
-      handler = CutBufferListener { previousBufferState, currentBufferState ->
-        previousBufferState
-          .asSequence()
-          .plus(currentBufferState)
-          .distinct()
-          .map { it.getAncestorNodes() }
-          .flatten()
-          .distinct()
-          .map {
-            myFsTreeStructure.findByVirtualFile(it)
-          }.flatten()
-          .distinct()
-          .forEach {
-            myStructure.invalidate(it, true)
-          }
-      }
-    )
   }
-
-  private var treeModel: AsyncTreeModel
 
   private fun registerTreeListeners(tree: DnDAwareTree) {
     tree.addMouseListener(object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
         val popupActionGroup = DefaultActionGroup()
         popupActionGroup.add(
-          ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.ContextMenuGroup")
+          contextMenu
         )
         val popupMenu = ActionManager.getInstance().createActionPopupMenu(FILE_EXPLORER_CONTEXT_MENU, popupActionGroup)
         popupMenu.component.show(comp, x, y)
@@ -289,6 +290,25 @@ class GlobalFileExplorerView(
     }.installOn(tree)
 
   }
+
+
+}
+
+class GlobalFileExplorerView(
+  explorer: Explorer,
+  project: Project,
+  parentDisposable: Disposable,
+  contextMenu: ActionGroup,
+  rootNodeProvider: (explorer: Explorer, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
+  cutProviderUpdater: (List<VirtualFile>) -> Unit
+
+) : ExplorerTreeView(explorer, project, parentDisposable, contextMenu, rootNodeProvider, cutProviderUpdater) {
+
+
+  init {
+
+  }
+
 
   override fun dispose() {
   }
@@ -682,24 +702,15 @@ class GlobalFileExplorerView(
       }
       return selected.any {
         it.node is WorkingSetNode
-          || it.node is DSMaskNode
-          || (it.node is UssDirNode && it.node.isConfigUssPath)
-          || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
+            || it.node is DSMaskNode
+            || (it.node is UssDirNode && it.node.isConfigUssPath)
+            || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
       }
     }
   }
 
   override fun getData(dataId: String): Any? {
     return when {
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.filter {
-        val file = it.file
-        if (file != null) {
-          val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
-          val isMigrated = attributes?.isMigrated ?: false
-          !isMigrated
-        }
-        true
-      }.map { it.node }.toTypedArray()
       PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> copyPasteSupport.copyProvider
       PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> copyPasteSupport.cutProvider
       PlatformDataKeys.PASTE_PROVIDER.`is`(dataId) -> copyPasteSupport.pasteProvider

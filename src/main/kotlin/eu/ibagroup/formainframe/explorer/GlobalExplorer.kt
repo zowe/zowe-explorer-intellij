@@ -30,6 +30,10 @@ import kotlin.concurrent.write
 
 const val EXPLORER_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"
 
+class GlobalExplorerFactory : ExplorerFactory<GlobalExplorer> {
+  override fun buildComponent(): GlobalExplorer = GlobalExplorer()
+}
+
 class GlobalExplorer : Explorer {
 
   private fun WorkingSetConfig.toGlobalWs(parentDisposable: Disposable): GlobalWorkingSet {

@@ -14,6 +14,10 @@
 
         <extensionPoint name="operationRunner"
                         interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
+        <extensionPoint name="explorerContentProvider"
+                        interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
+        <extensionPoint name="explorer"
+                        interface="eu.ibagroup.formainframe.explorer.ExplorerFactory"/>
 
     </extensionPoints>
 
@@ -112,6 +116,12 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 implementation="eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperationFactory"/>
+
+        <explorer implementation="eu.ibagroup.formainframe.explorer.GlobalExplorerFactory" />
+        <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory" />
+
+        <explorerContentProvider index="0" implementation="eu.ibagroup.formainframe.explorer.FileExplorerContentProviderFactory" />
+        <explorerContentProvider index="1" implementation="eu.ibagroup.formainframe.explorer.JesExplorerContentProviderFactory"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -153,20 +163,17 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>
 
-        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.Explorer"
-                            serviceImplementation="eu.ibagroup.formainframe.explorer.GlobalExplorer"/>
-
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager" preload="true"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
                             serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"/>
 
-        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.ui.ExplorerContent"
-                            serviceImplementation="eu.ibagroup.formainframe.explorer.ui.GlobalExplorerContent"/>
-
         <applicationService serviceInterface="eu.ibagroup.formainframe.analytics.PolicyProvider"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.PolicyProviderImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.UIComponentManager"
+                            serviceImplementation="eu.ibagroup.formainframe.explorer.UIComponentManagerImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>

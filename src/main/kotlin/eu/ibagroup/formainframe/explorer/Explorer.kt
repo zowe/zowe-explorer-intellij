@@ -4,12 +4,12 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.utils.castOrNull
 
-val globalExplorer
-  get() = Explorer.instance
+
 
 interface ExplorerListener {
   fun onChanged(explorer: Explorer, unit: ExplorerUnit) {}
@@ -20,12 +20,15 @@ interface ExplorerListener {
 @JvmField
 val UNITS_CHANGED = Topic.create("unitsChanged", ExplorerListener::class.java)
 
+interface ExplorerFactory<E : Explorer>  {
+  fun buildComponent() : E
+}
+
 interface Explorer {
 
   companion object {
-    @JvmStatic
-    val instance: Explorer
-      get() = ApplicationManager.getApplication().getService(Explorer::class.java)
+    @JvmField
+    val EP = ExtensionPointName.create<ExplorerFactory<*>>("eu.ibagroup.formainframe.explorer")
   }
 
   val units: Collection<ExplorerUnit>
