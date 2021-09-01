@@ -11,6 +11,7 @@ import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -19,9 +20,9 @@ class LibraryNode(
   library: MFVirtualFile,
   project: Project,
   parent: ExplorerTreeNode<*>,
-  workingSet: WorkingSet,
+  workingSet: FilesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<MFVirtualFile, LibraryQuery, WorkingSet>(
+) : RemoteMFFileFetchNode<MFVirtualFile, LibraryQuery, FilesWorkingSet>(
   library, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
 

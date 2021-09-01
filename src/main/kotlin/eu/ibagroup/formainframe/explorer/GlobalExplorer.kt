@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.CONFIGS_CHANGED
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.CREDENTIALS_CHANGED
@@ -30,13 +31,14 @@ import kotlin.concurrent.write
 
 const val EXPLORER_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"
 
-class GlobalExplorerFactory : ExplorerFactory<GlobalExplorer> {
+class GlobalExplorerFactory : ExplorerFactory<FilesWorkingSet, GlobalExplorer> {
   override fun buildComponent(): GlobalExplorer = GlobalExplorer()
 }
 
-class GlobalExplorer : Explorer {
+class GlobalExplorer : AbstractExplorerBase<FilesWorkingSet, WorkingSetConfig>() {
 
-  private fun WorkingSetConfig.toGlobalWs(parentDisposable: Disposable): GlobalWorkingSet {
+
+  override fun WorkingSetConfig.toUnit(parentDisposable: Disposable): GlobalWorkingSet {
     return GlobalWorkingSet(
       uuid = uuid,
       globalExplorer = this@GlobalExplorer,
@@ -45,103 +47,11 @@ class GlobalExplorer : Explorer {
     )
   }
 
-  val disposable = Disposer.newDisposable()
-
-  val lock = ReentrantReadWriteLock()
-
-  override val units: MutableSet<GlobalWorkingSet> by rwLocked(
-    value = configCrudable.getAll<WorkingSetConfig>().map { it.toGlobalWs(disposable) }.collect(Collectors.toSet()),
-    lock = lock
-  )
-
-  override fun disposeUnit(unit: ExplorerUnit) {
-    configCrudable.getByUniqueKey<WorkingSetConfig>(unit.uuid)?.let {
-      configCrudable.delete(it)
-    }
-  }
-
-  override fun isUnitPresented(unit: ExplorerUnit): Boolean {
-    return unit is GlobalWorkingSet && units.contains(unit)
-  }
-
-  override val componentManager: Application
-    get() = ApplicationManager.getApplication()
-
-  override fun reportThrowable(t: Throwable, project: Project?) {
-    if (t is ProcessCanceledException) {
-      return
-    }
-    NotificationBuilder(
-      EXPLORER_NOTIFICATION_GROUP_ID,
-      "Error in plugin For Mainframe",
-      t.message ?: t.toString(),
-      NotificationType.ERROR
-    ).addAction(reportInSlackAction).build().let {
-      Notifications.Bus.notify(it, project)
-    }
-  }
-
-  private val reportInSlackAction = object : DumbAwareAction("Report In Slack") {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      BrowserUtil.browse("https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg")
-    }
-
-
-  }
-
-  override fun showNotification(title: String, content: String, type: NotificationType, project: Project?) {
-    NotificationBuilder(
-      EXPLORER_NOTIFICATION_GROUP_ID,
-      title,
-      content,
-      type
-    ).build().let {
-      Notifications.Bus.notify(it, project)
-    }
-  }
-
-  override fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?) {
-    reportThrowable(t, project)
-  }
+  override val unitClass = FilesWorkingSet::class.java
+  override val unitConfigClass = WorkingSetConfig::class.java
 
   init {
-    subscribe(CONFIGS_CHANGED, disposable, eventAdaptor<WorkingSetConfig> {
-      onDelete { ws ->
-        lock.write {
-          val found = units.find { it.uuid == ws.uuid } ?: return@onDelete
-          Disposer.dispose(found)
-          units.remove(found)
-          sendTopic(UNITS_CHANGED).onDeleted(this@GlobalExplorer, found)
-        }
-      }
-      onAdd { ws ->
-        lock.write {
-          val added = ws.toGlobalWs(disposable)
-          units.add(added)
-          sendTopic(UNITS_CHANGED).onAdded(this@GlobalExplorer, added)
-        }
-      }
-      onUpdate { _, workingSetConfig ->
-        lock.read {
-          val found = units.find { it.uuid == workingSetConfig.uuid }
-          sendTopic(UNITS_CHANGED).onChanged(this@GlobalExplorer, found ?: return@onUpdate)
-        }
-      }
-    })
-    subscribe(CONFIGS_CHANGED, disposable, anyEventAdaptor<ConnectionConfig> {
-      lock.read {
-        units.forEach {
-          sendTopic(UNITS_CHANGED).onChanged(this@GlobalExplorer, it)
-        }
-      }
-    })
-    subscribe(CREDENTIALS_CHANGED, disposable, CredentialsListener { uuid ->
-      lock.read {
-        val found = units.find { it.connectionConfig?.uuid == uuid }
-        sendTopic(UNITS_CHANGED).onChanged(this@GlobalExplorer, found ?: return@CredentialsListener)
-      }
-    })
+    doInit()
   }
 
 }

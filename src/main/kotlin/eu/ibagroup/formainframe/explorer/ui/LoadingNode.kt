@@ -8,7 +8,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 class LoadingNode(
   project: Project,
   parent: ExplorerTreeNode<*>,
-  explorer: Explorer,
+  explorer: Explorer<*>,
   treeStructure: ExplorerTreeStructureBase
 ) : InfoNodeBase(project, parent, explorer, treeStructure) {
 

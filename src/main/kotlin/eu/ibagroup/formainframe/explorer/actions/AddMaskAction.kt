@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.UssPath
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 
@@ -35,9 +36,9 @@ class AddMaskAction : AnAction() {
     e.presentation.isEnabledAndVisible = getUnits(view).size == 1
   }
 
-  private fun getUnits(view: GlobalFileExplorerView): List<WorkingSet> {
+  private fun getUnits(view: GlobalFileExplorerView): List<FilesWorkingSet> {
     return view.mySelectedNodesData.map { it.node }
-      .filterIsInstance<ExplorerUnitTreeNodeBase<*, WorkingSet>>()
+      .filterIsInstance<ExplorerUnitTreeNodeBase<*, FilesWorkingSet>>()
       .map { it.unit }
       .distinct()
   }

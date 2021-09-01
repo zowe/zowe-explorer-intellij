@@ -29,7 +29,7 @@ class FileExplorerContentProvider : ExplorerContentProviderBase<GlobalExplorer>(
   override val place: String = "File Explorer"
 
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
-    return GlobalFileExplorerView(explorer, project, parentDisposable, contextMenu, { e, p, t ->
+    return GlobalFileExplorerView(explorer as Explorer<FilesWorkingSet>, project, parentDisposable, contextMenu, { e, p, t ->
       FileExplorerTreeNodeRoot(e, p, t)
     }) {
       lock.withLock {

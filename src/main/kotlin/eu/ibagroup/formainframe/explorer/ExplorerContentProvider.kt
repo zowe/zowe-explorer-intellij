@@ -11,14 +11,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.xmlb.annotations.Attribute
 import javax.swing.JComponent
 
-abstract class ExplorerContentProviderFactory<E : Explorer> {
+abstract class ExplorerContentProviderFactory<E : Explorer<*>> {
   abstract fun buildComponent(): ExplorerContentProvider<E>
 
   @Attribute
   open var index: Int = 0
 }
 
-interface ExplorerContentProvider<E : Explorer> {
+interface ExplorerContentProvider<E : Explorer<*>> {
 
   companion object {
     @JvmField

@@ -9,10 +9,10 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 private val PROVIDERS = SmartList(FileExplorerTreeStructureProvider())
 
-class CommonExplorerTreeStructure(
-  explorer: Explorer,
+class CommonExplorerTreeStructure <Expl: Explorer<*>> (
+  explorer: Expl,
   project: Project,
-  private val rootNodeProvider: (explorer: Explorer, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>
+  private val rootNodeProvider: (explorer: Expl, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>
 ) : ExplorerTreeStructureBase(explorer, project) {
 
   private val valueToNodeMap = Collections.synchronizedMap(

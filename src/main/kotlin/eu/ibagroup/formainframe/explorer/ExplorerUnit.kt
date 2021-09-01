@@ -10,6 +10,6 @@ interface ExplorerUnit {
 
   val connectionConfig: ConnectionConfig?
 
-  val explorer: Explorer
+  val explorer: Explorer<*>
 
 }

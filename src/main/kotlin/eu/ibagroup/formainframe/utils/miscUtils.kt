@@ -21,6 +21,10 @@ inline fun <reified T> Any?.castOrNull(): T? = (this is T).runIfTrue { this as T
 fun <T> Any?.castOrNull(clazz: Class<T>): T? =
   if (this != null && clazz.isAssignableFrom(this::class.java)) this as T else null
 
+inline fun <reified T> Any?.`is`(): Boolean = this.`is`(T::class.java)
+
+fun <T> Any?.`is`(clazz: Class<T>): Boolean = this != null && clazz.isAssignableFrom(this::class.java)
+
 val <E> Optional<out E>.nullable: E?
   inline get() = this.orElse(null)
 

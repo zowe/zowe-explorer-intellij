@@ -13,10 +13,10 @@ interface UIComponentManager: Disposable {
     val INSTANCE = ApplicationManager.getApplication().getService(UIComponentManager::class.java)
   }
 
-  fun <E : Explorer> getExplorerContentProviders() : List<ExplorerContentProvider<E>>
+  fun <E : Explorer<*>> getExplorerContentProviders() : List<ExplorerContentProvider<E>>
 
-  fun <E : Explorer> getExplorerContentProvider(clazz: Class<out E>) : ExplorerContentProvider<E>
+  fun <E : Explorer<*>> getExplorerContentProvider(clazz: Class<out E>) : ExplorerContentProvider<E>
 
-  fun <E : Explorer> getExplorer(clazz: Class<out E>) : E
+  fun <E : Explorer<*>> getExplorer(clazz: Class<out E>) : E
 
 }

@@ -16,7 +16,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.JesFilterUnit
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-class JesFilterNode(value: JesFilterUnit, project: Project, parent: ExplorerTreeNode<*>, explorer: Explorer,
+class JesFilterNode(value: JesFilterUnit, project: Project, parent: ExplorerTreeNode<*>, explorer: Explorer<*>,
                     treeStructure: ExplorerTreeStructureBase
 ) : RemoteMFFileFetchNode<JesFilterUnit, JesFilterUnit, JesFilterUnit>(value, project, parent, value, treeStructure )
 {

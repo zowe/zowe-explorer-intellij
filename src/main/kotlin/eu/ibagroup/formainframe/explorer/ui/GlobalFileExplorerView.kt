@@ -29,6 +29,7 @@ import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.DoubleClickTreeMouseListener
 import eu.ibagroup.formainframe.common.ui.promisePath
+import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
@@ -39,6 +40,7 @@ import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.*
 import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.Component
 import java.util.*
@@ -53,20 +55,20 @@ import kotlin.concurrent.withLock
 
 val FILE_EXPLORER_VIEW = DataKey.create<GlobalFileExplorerView>("fileExplorerView")
 
-abstract class ExplorerTreeView
+abstract class ExplorerTreeView<U: WorkingSet<*>, UnitConfig: EntityWithUuid>
   (
-  val explorer: Explorer,
+  val explorer: Explorer<U>,
   project: Project,
   parentDisposable: Disposable,
   private val contextMenu: ActionGroup,
-  rootNodeProvider: (explorer: Explorer, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
+  rootNodeProvider: (explorer: Explorer<U>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
   protected val cutProviderUpdater: (List<VirtualFile>) -> Unit
 ) : JBScrollPane(), DataProvider, Disposable {
 
 
   internal var mySelectedNodesData: List<NodeData> by rwLocked(listOf())
-  internal val myFsTreeStructure: CommonExplorerTreeStructure
-  internal val myStructure: StructureTreeModel<CommonExplorerTreeStructure>
+  internal val myFsTreeStructure: CommonExplorerTreeStructure<Explorer<U>>
+  internal val myStructure: StructureTreeModel<CommonExplorerTreeStructure<Explorer<U>>>
   internal val myTree: Tree
   internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
 
@@ -136,11 +138,9 @@ abstract class ExplorerTreeView
       componentManager = explorer.componentManager,
       topic = UNITS_CHANGED,
       handler = object : ExplorerListener {
-        override fun onAdded(explorer: Explorer, unit: ExplorerUnit) {
-          onAddDelete(explorer)
-        }
 
-        private fun onAddDelete(explorer: Explorer) {
+
+        private fun onAddDelete(explorer: Explorer<*>) {
           if (explorer == explorer) {
             myFsTreeStructure.findByValue(explorer).forEach {
               myStructure.invalidate(it, true)
@@ -148,7 +148,13 @@ abstract class ExplorerTreeView
           }
         }
 
-        override fun onChanged(explorer: Explorer, unit: ExplorerUnit) {
+
+
+        override fun onAdded(explorer: Explorer<*>, unit: ExplorerUnit) {
+          onAddDelete(explorer)
+        }
+
+        override fun onChanged(explorer: Explorer<*>, unit: ExplorerUnit) {
           if (explorer == explorer) {
             myFsTreeStructure.findByValue(unit).forEach {
               myStructure.invalidate(it, true)
@@ -156,7 +162,7 @@ abstract class ExplorerTreeView
           }
         }
 
-        override fun onDeleted(explorer: Explorer, unit: ExplorerUnit) {
+        override fun onDeleted(explorer: Explorer<*>, unit: ExplorerUnit) {
           onAddDelete(explorer)
         }
       },
@@ -295,14 +301,14 @@ abstract class ExplorerTreeView
 }
 
 class GlobalFileExplorerView(
-  explorer: Explorer,
+  explorer: Explorer<FilesWorkingSet>,
   project: Project,
   parentDisposable: Disposable,
   contextMenu: ActionGroup,
-  rootNodeProvider: (explorer: Explorer, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
+  rootNodeProvider: (explorer: Explorer<FilesWorkingSet>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
   cutProviderUpdater: (List<VirtualFile>) -> Unit
 
-) : ExplorerTreeView(explorer, project, parentDisposable, contextMenu, rootNodeProvider, cutProviderUpdater) {
+) : ExplorerTreeView<FilesWorkingSet, WorkingSetConfig>(explorer, project, parentDisposable, contextMenu, rootNodeProvider, cutProviderUpdater) {
 
 
   init {

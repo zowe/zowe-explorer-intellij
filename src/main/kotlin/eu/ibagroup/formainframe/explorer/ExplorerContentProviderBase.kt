@@ -27,7 +27,7 @@ fun interface CutBufferListener {
   fun onUpdate(previousBufferState: List<VirtualFile>, currentBufferState: List<VirtualFile>)
 }
 
-abstract class ExplorerContentProviderBase<E : Explorer> : ExplorerContentProvider<E>  {
+abstract class ExplorerContentProviderBase<E : Explorer<*>> : ExplorerContentProvider<E>  {
 
   abstract val actionGroup: ActionGroup
   abstract val place: String

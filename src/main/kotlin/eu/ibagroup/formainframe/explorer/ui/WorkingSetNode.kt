@@ -8,6 +8,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.connect.username
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.WorkingSet
 
 private val regularIcon = AllIcons.Nodes.Project
@@ -16,11 +17,11 @@ private val grayscaleIcon = IconUtil.desaturate(regularIcon)
 private val errorIcon = LayeredIcon(grayscaleIcon, errorIconElement)
 
 class WorkingSetNode(
-  workingSet: WorkingSet,
+  workingSet: FilesWorkingSet,
   project: Project,
   parent: ExplorerTreeNode<*>,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<WorkingSet, WorkingSet>(
+) : ExplorerUnitTreeNodeBase<FilesWorkingSet, FilesWorkingSet>(
   workingSet, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
 
@@ -32,7 +33,7 @@ class WorkingSetNode(
     presentation.addText(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     when {
       value.connectionConfig == null -> connectionIsNotSet(presentation)
-      value.dsMasks.isEmpty() && value.ussPaths.isEmpty() -> destinationsAreEmpty(presentation)
+      value.masks.isEmpty() && value.ussPaths.isEmpty() -> destinationsAreEmpty(presentation)
       else -> regular(presentation)
     }
     if (treeStructure.showWorkingSetInfo) {
@@ -70,7 +71,7 @@ class WorkingSetNode(
     get() = cachedChildrenInternal ?: mutableListOf()
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
-    return value.dsMasks.map { DSMaskNode(it, notNullProject, this, value, treeStructure) }.plus(
+    return value.masks.map { DSMaskNode(it, notNullProject, this, value, treeStructure) }.plus(
       value.ussPaths.map { UssDirNode(it, notNullProject, this, value, treeStructure, isRootNode = true) }
     ).toMutableList().also { cachedChildrenInternal = it }
   }

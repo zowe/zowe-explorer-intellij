@@ -20,7 +20,7 @@ class GlobalWorkingSet(
   globalExplorer: GlobalExplorer,
   private val workingSetConfigProvider: (String) -> WorkingSetConfig?,
   parentDisposable: Disposable
-) : WorkingSet, Disposable {
+) : FilesWorkingSet {
 
   override val explorer = globalExplorer
 
@@ -49,7 +49,7 @@ class GlobalWorkingSet(
     }
 
 
-  override val dsMasks: Collection<DSMask>
+  override val masks: Collection<DSMask>
     get() = lock.withLock { workingSetConfig?.dsMasks ?: listOf() }
 
   override fun addMask(dsMask: DSMask) {

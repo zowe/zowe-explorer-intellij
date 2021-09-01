@@ -30,7 +30,7 @@ abstract class ExplorerTreeNode<Value : Any>(
   value: Value,
   project: Project,
   val parent: ExplorerTreeNode<*>?,
-  val explorer: Explorer,
+  val explorer: Explorer<*>,
   protected val treeStructure: ExplorerTreeStructureBase
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
 

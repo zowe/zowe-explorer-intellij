@@ -22,6 +22,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
@@ -54,7 +55,7 @@ class AllocateDatasetAction : AnAction() {
 private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationParams = DatasetAllocationParams()) {
   val view = e.getData(FILE_EXPLORER_VIEW) ?: return
   val parentNode = view.mySelectedNodesData[0].node
-  if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is WorkingSet) {
+  if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is FilesWorkingSet) {
     val workingSet = parentNode.unit
     val config = parentNode.unit.connectionConfig
     if (config != null) {

@@ -30,7 +30,7 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>() {
   override val place: String = "JES Explorer"
 
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
-    return JesExplorerView(explorer, project, parentDisposable, contextMenu, { e, p, t ->
+    return JesExplorerView(explorer as Explorer<JesWorkingSet>, project, parentDisposable, contextMenu, { e, p, t ->
       JesExplorerRootNode(e, p, t)
     }) {
       lock.withLock {

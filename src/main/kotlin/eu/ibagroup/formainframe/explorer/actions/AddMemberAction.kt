@@ -16,7 +16,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.MemberAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.MemberAllocationParams
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -27,7 +27,7 @@ class AddMemberAction : AnAction() {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val currentNode = view.mySelectedNodesData[0].node
     if (currentNode is ExplorerUnitTreeNodeBase<*, *>
-      && currentNode.unit is WorkingSet
+      && currentNode.unit is FilesWorkingSet
       && currentNode is FetchNode
     ) {
       val connectionConfig = currentNode.unit.connectionConfig

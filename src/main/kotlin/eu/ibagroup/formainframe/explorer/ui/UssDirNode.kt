@@ -13,6 +13,7 @@ import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -29,11 +30,11 @@ class UssDirNode(
   ussPath: UssPath,
   project: Project,
   parent: ExplorerTreeNode<*>,
-  workingSet: WorkingSet,
+  workingSet: FilesWorkingSet,
   treeStructure: ExplorerTreeStructureBase,
   private var vFile: MFVirtualFile? = null,
   private val isRootNode: Boolean = false
-) : RemoteMFFileFetchNode<UssPath, UssQuery, WorkingSet>(
+) : RemoteMFFileFetchNode<UssPath, UssQuery, FilesWorkingSet>(
   ussPath, project, parent, workingSet, treeStructure
 ), UssNode, RefreshableNode {
 

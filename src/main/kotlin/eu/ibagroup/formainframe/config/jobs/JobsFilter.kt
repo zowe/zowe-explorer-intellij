@@ -8,33 +8,26 @@ import org.jetbrains.annotations.NotNull
 
 
 class JobsFilter : EntityWithUuid {
-  @Column
-  @ForeignKey(foreignClass = ConnectionConfig::class)
-  var connectionConfigUuid: String = ""
 
-  @Column
   var owner: String = ""
 
-  @Column
   var prefix: String = ""
 
-  @Column
   var jobId: String = ""
 
-  @Column
   var userCorrelatorFilter: String = ""
+
+  var connectionConfigUuid = ""
 
   constructor()
 
   constructor(
     uuid: @NotNull String,
-    connectionConfigUuid: String,
     owner: String,
     prefix: String,
     jobId: String,
     userCorrelatorFilter: String
   ) : super(uuid) {
-    this.connectionConfigUuid = connectionConfigUuid
     this.owner = owner
     this.prefix = prefix
     this.jobId = jobId
@@ -48,7 +41,6 @@ class JobsFilter : EntityWithUuid {
 
     other as JobsFilter
 
-    if (connectionConfigUuid != other.connectionConfigUuid) return false
     if (owner != other.owner) return false
     if (prefix != other.prefix) return false
     if (jobId != other.jobId) return false
@@ -59,7 +51,6 @@ class JobsFilter : EntityWithUuid {
 
   override fun hashCode(): Int {
     var result = super.hashCode()
-    result = 31 * result + connectionConfigUuid.hashCode()
     result = 31 * result + owner.hashCode()
     result = 31 * result + prefix.hashCode()
     result = 31 * result + jobId.hashCode()

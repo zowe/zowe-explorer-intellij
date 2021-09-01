@@ -12,9 +12,9 @@ import eu.ibagroup.formainframe.explorer.JesFilterUnit
 import java.util.stream.Collectors
 
 class JesExplorerRootNode(
-  value: Explorer, project: Project,
+  value: Explorer<*>, project: Project,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerTreeNode<Explorer>(
+) : ExplorerTreeNode<Explorer<*>>(
   value, project,
   null,
   value, treeStructure

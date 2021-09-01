@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.*
@@ -36,7 +37,7 @@ class RenameAction : AnAction() {
         validateDatasetMask(it.text, it)
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet()) {
-        val parentValue = selectedNode.node.parent?.value as WorkingSet
+        val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
         val wsToUpdate = configCrudable.getByUniqueKey<WorkingSetConfig>(parentValue.uuid)?.clone()
         if (wsToUpdate != null) {
           wsToUpdate.dsMasks.filter { it.mask == initialState }[0].mask = dialog.state
@@ -71,7 +72,7 @@ class RenameAction : AnAction() {
         validateUssMask(it.text, it)
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet()) {
-        val parentValue = selectedNode.node.parent?.value as WorkingSet
+        val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
         val wsToUpdate = configCrudable.getByUniqueKey<WorkingSetConfig>(parentValue.uuid)?.clone()
         if (wsToUpdate != null) {
           wsToUpdate.ussPaths.filter { it.path == initialState }[0].path = dialog.state
