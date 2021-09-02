@@ -61,6 +61,9 @@ class WorkingSetDialog(
           .withValidationOnApply {
             validateForBlank(it)
           }
+          .apply {
+            focused()
+          }
       }
       row {
         label("Specify connection")

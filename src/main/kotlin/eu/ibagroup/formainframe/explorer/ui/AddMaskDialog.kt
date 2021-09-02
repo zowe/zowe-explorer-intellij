@@ -44,7 +44,8 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
             validateDatasetMask(it.text, component)
           else
             validateUssMask(it.text, it)
-
+        }.apply {
+          focused()
         }
 
       }

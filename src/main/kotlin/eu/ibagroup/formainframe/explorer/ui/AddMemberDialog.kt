@@ -20,6 +20,8 @@ class AddMemberDialog(project: Project?, override var state: MemberAllocationPar
           validateMemberName(it)
         }.withValidationOnApply {
           validateForBlank(it)
+        }.apply {
+          focused()
         }
       }
     }
