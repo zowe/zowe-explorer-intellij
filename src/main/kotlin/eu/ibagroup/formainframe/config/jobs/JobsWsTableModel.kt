@@ -4,6 +4,7 @@ import com.intellij.util.ui.ColumnInfo
 import eu.ibagroup.formainframe.common.ui.CrudableTableModel
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.UrlColumn
 import eu.ibagroup.formainframe.config.ws.ui.WSConnectionNameColumn
 import eu.ibagroup.formainframe.config.ws.ui.WSNameColumn
@@ -23,17 +24,25 @@ class JobsWsTableModel(crudable: Crudable): CrudableTableModel<JobsWorkingSetCon
     )
   }
 
-  override fun fetch(crudable: Crudable): MutableList<JobsWorkingSetConfig> = crudable.getAll<JobsWorkingSetConfig>().toMutableList()
+  override fun fetch(crudable: Crudable): MutableList<JobsWorkingSetConfig> {
+    return crudable.getAll<JobsWorkingSetConfig>().toMutableList().sortedBy { it.name }.toMutableList()
+  }
 
-  override fun onAdd(crudable: Crudable, value: JobsWorkingSetConfig): Boolean = crudable.add(value).isPresent
-
-  override fun onUpdate(crudable: Crudable, value: JobsWorkingSetConfig): Boolean = crudable.update(value).isPresent
+  override fun onUpdate(crudable: Crudable, value: JobsWorkingSetConfig): Boolean {
+    return crudable.update(value).isPresent
+  }
 
   override fun onDelete(crudable: Crudable, value: JobsWorkingSetConfig) {
     crudable.delete(value)
   }
 
-  override fun onApplyingMergedCollection(crudable: Crudable, merged: MergedCollections<JobsWorkingSetConfig>) = crudable.applyMergedCollections(merged)
+  override fun onAdd(crudable: Crudable, value: JobsWorkingSetConfig): Boolean {
+    return crudable.add(value).isPresent
+  }
+
+  override fun onApplyingMergedCollection(crudable: Crudable, merged: MergedCollections<JobsWorkingSetConfig>) {
+    crudable.applyMergedCollections(merged)
+  }
 
   override val clazz = JobsWorkingSetConfig::class.java
 

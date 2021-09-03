@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.config.jobs
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
@@ -29,17 +30,9 @@ class JobsFilter {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-    if (!super.equals(other)) return false
-
-    other as JobsFilter
-
-    if (owner != other.owner) return false
-    if (prefix != other.prefix) return false
-    if (jobId != other.jobId) return false
-    if (userCorrelatorFilter != other.userCorrelatorFilter) return false
-
-    return true
+    if (other == null || javaClass != other.javaClass) return false
+    val filter = other as JobsFilter
+    return owner == filter.owner && prefix == filter.prefix && jobId == filter.jobId && userCorrelatorFilter == filter.userCorrelatorFilter
   }
 
   override fun hashCode(): Int {
