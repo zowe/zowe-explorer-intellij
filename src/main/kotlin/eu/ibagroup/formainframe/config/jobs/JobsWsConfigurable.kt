@@ -64,7 +64,8 @@ class JobsWsConfigurable: BoundSearchableConfigurable("Job Working Sets", "mainf
                   JobsWsDialog(sandboxCrudable, selected.toDialogState().apply { mode = DialogMode.UPDATE }).apply {
                     if (showAndGet()) {
                       val idx = jobsWsTable.selectedRow
-                      jobsWsTableModel[idx] = state.jobsWorkingSetConfig
+                      val res = state.jobsWorkingSetConfig
+                      jobsWsTableModel[idx] = res
                       jobsWsTableModel.reinitialize()
                     }
                   }

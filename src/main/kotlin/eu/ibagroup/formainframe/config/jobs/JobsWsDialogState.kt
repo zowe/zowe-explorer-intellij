@@ -24,9 +24,9 @@ class JobsWsDialogState(
     )
 
   class TableRow(
-    var prefix: String = "*",
-    var owner: String = "*",
-    var jobId: String = "*"
+    var prefix: String = "",
+    var owner: String = "",
+    var jobId: String = ""
   ) {
     companion object {
       const val ZOS = "z/OS"

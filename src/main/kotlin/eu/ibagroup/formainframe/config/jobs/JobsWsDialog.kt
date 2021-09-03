@@ -11,6 +11,8 @@ import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.ColumnInfo
 import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.sandboxCrudable
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
 import eu.ibagroup.formainframe.utils.clone
@@ -112,13 +114,16 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      // TODO: "implement"
-      return null
+      return if ((oldItem.owner.isNotEmpty() || newValue.isNotEmpty()) && oldItem.jobId.isNotEmpty()) {
+        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+      } else null
     }
 
     override fun validateEntered(item: JobsWsDialogState.TableRow, component: JComponent): ValidationInfo? {
-      // TODO: "implement"
-      return null
+      return if ((item.owner.isNotEmpty() || item.prefix.isNotEmpty()) && item.jobId.isNotEmpty()) {
+        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+      } else null
+//      return null
     }
 
     override fun isCellEditable(item: JobsWsDialogState.TableRow?): Boolean = true
@@ -129,19 +134,22 @@ class JobsWsDialog(
   }
 
   object OwnerColumn : ValidatingColumnInfo<JobsWsDialogState.TableRow>("Owner") {
-    override fun valueOf(item: JobsWsDialogState.TableRow?): String? = item?.prefix
+    override fun valueOf(item: JobsWsDialogState.TableRow?): String? = item?.owner
     override fun validateOnInput(
       oldItem: JobsWsDialogState.TableRow,
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      // TODO: "implement"
-      return null
+      return if ((oldItem.prefix.isNotEmpty() || newValue.isNotEmpty()) && oldItem.jobId.isNotEmpty()) {
+        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+      } else null
     }
 
     override fun validateEntered(item: JobsWsDialogState.TableRow, component: JComponent): ValidationInfo? {
-      // TODO: "implement"
-      return null
+      return if ((item.prefix.isNotEmpty() || item.owner.isNotEmpty()) && item.jobId.isNotEmpty()) {
+        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+      } else null
+//      return null
     }
 
     override fun isCellEditable(item: JobsWsDialogState.TableRow?): Boolean = true
@@ -152,19 +160,22 @@ class JobsWsDialog(
   }
 
   object JobIdColumn : ValidatingColumnInfo<JobsWsDialogState.TableRow>("Job ID") {
-    override fun valueOf(item: JobsWsDialogState.TableRow?): String? = item?.prefix
+    override fun valueOf(item: JobsWsDialogState.TableRow?): String? = item?.jobId
     override fun validateOnInput(
       oldItem: JobsWsDialogState.TableRow,
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      // TODO: "implement"
-      return null
+      return if ((oldItem.prefix.isNotEmpty() || oldItem.owner.isNotEmpty()) && newValue.isNotEmpty()) {
+        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+      } else null
     }
 
     override fun validateEntered(item: JobsWsDialogState.TableRow, component: JComponent): ValidationInfo? {
-      // TODO: "implement"
-      return null
+      return if ((item.prefix.isNotEmpty() || item.owner.isNotEmpty()) && item.jobId.isNotEmpty()) {
+        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+      } else null
+//      return null
     }
 
     override fun isCellEditable(item: JobsWsDialogState.TableRow?): Boolean = true
@@ -174,4 +185,15 @@ class JobsWsDialog(
     }
   }
 
+//  private fun fixEmptyFieldsInState(jobState: JobsFilter) : JobsFilter {
+//    if (jobState.jobId.isEmpty()) {
+//      if (jobState.owner.isEmpty()) {
+//        jobState.owner = crudable.getByUniqueKey<Credentials>(state.connectionUuid)?.username ?: ""
+//      }
+//      if (jobState.prefix.isEmpty()) {
+//        jobState.prefix = "*"
+//      }
+//    }
+//    return jobState
+//  }
 }
