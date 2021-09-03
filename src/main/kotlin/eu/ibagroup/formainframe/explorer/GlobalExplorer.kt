@@ -30,7 +30,7 @@ import kotlin.concurrent.write
 
 const val EXPLORER_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"
 
-class GlobalExplorer : Explorer {
+class GlobalExplorer : Explorer, Disposable {
 
   private fun WorkingSetConfig.toGlobalWs(parentDisposable: Disposable): GlobalWorkingSet {
     return GlobalWorkingSet(
@@ -102,6 +102,7 @@ class GlobalExplorer : Explorer {
   }
 
   init {
+    Disposer.register(this, disposable)
     subscribe(CONFIGS_CHANGED, disposable, eventAdaptor<WorkingSetConfig> {
       onDelete { ws ->
         lock.write {
@@ -140,4 +141,7 @@ class GlobalExplorer : Explorer {
     })
   }
 
+  override fun dispose () {
+    Disposer.dispose(disposable)
+  }
 }
