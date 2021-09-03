@@ -1,6 +1,8 @@
 package eu.ibagroup.formainframe.config.jobs
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
@@ -18,7 +20,19 @@ class JobsWorkingSetConfig: EntityWithUuid {
   @Column
   var jobsFilters: MutableCollection<JobsFilter> = mutableListOf()
 
+  constructor()
+
   constructor(name: String, connectionConfigUuid: String, jobsFilters: MutableCollection<JobsFilter>) {
+    this.name = name
+    this.connectionConfigUuid = connectionConfigUuid
+    this.jobsFilters = jobsFilters
+  }
+  constructor(
+    uuid: String,
+    name: String,
+    connectionConfigUuid: String,
+    jobsFilters: MutableCollection<JobsFilter>
+  ) : super(uuid) {
     this.name = name
     this.connectionConfigUuid = connectionConfigUuid
     this.jobsFilters = jobsFilters

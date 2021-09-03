@@ -35,7 +35,7 @@ class JobsFilterTableModel(crudable: Crudable) : CrudableTableModel<JobsFilter>(
 
   override val clazz = JobsFilter::class.java
 
-  object FilterColumn: ColumnInfo<JobsFilter, String>("Filter") {
+  object FilterColumn: ColumnInfo<JobsFilter, String>("Name") {
 
     override fun valueOf(item: JobsFilter): String = item.toString()
 
@@ -43,13 +43,13 @@ class JobsFilterTableModel(crudable: Crudable) : CrudableTableModel<JobsFilter>(
 
   class UrlColumn(private val crudable: Crudable) : ColumnInfo<JobsFilter, String>("z/OSMF URL") {
 
-    override fun valueOf(item: JobsFilter): String = crudable.getByUniqueKey<ConnectionConfig>(item.connectionConfigUuid)?.url ?: ""
+    override fun valueOf(item: JobsFilter): String = crudable.getByUniqueKey<ConnectionConfig>(""/*item.connectionConfigUuid*/)?.url ?: ""
 
   }
 
   class ConnectionNameColumn(private val crudable: Crudable) : ColumnInfo<JobsFilter, String>("Connection Name") {
 
-    override fun valueOf(item: JobsFilter): String = crudable.getByUniqueKey<ConnectionConfig>(item.connectionConfigUuid)?.name ?: ""
+    override fun valueOf(item: JobsFilter): String = crudable.getByUniqueKey<ConnectionConfig>(""/*item.connectionConfigUuid*/)?.name ?: ""
 
   }
 }

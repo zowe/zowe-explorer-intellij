@@ -5,6 +5,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.jobs.JobsFilter
+import eu.ibagroup.formainframe.config.jobs.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -57,7 +58,7 @@ class ConfigSandboxImpl : ConfigSandbox {
     synchronized(stateLock) {
       rollbackSandbox<ConnectionConfig>()
       rollbackSandbox<WorkingSetConfig>()
-      rollbackSandbox<JobsFilter>()
+      rollbackSandbox<JobsWorkingSetConfig>()
       rollbackSandbox<Credentials>()
     }
   }
@@ -86,7 +87,8 @@ class ConfigSandboxImpl : ConfigSandbox {
     return synchronized(stateLock) {
       val initial = classToList(clazz, initialState) ?: listOf()
       val current = classToList(clazz, state) ?: listOf()
-      !(initial isTheSameAs current)
+      val res = !(initial isTheSameAs current)
+      res
     }
   }
 

@@ -27,7 +27,7 @@ import kotlin.streams.toList
 class JobsFilterDialog(
   private val crudable: Crudable,
   project: Project? = null,
-  override var state: JobsFilter = JobsFilter()
+  override var state: JobsFilter = JobsFilter("", "", "")
 ) : DialogWrapper(project), StatefulComponent<JobsFilter> {
 
   private lateinit var ownerField: JTextField
@@ -39,31 +39,31 @@ class JobsFilterDialog(
   override fun createCenterPanel(): JComponent = panel {
     row {
       label("Specify connection")
-      comboBox(
-        model = connectionComboBoxModel,
-        modelBinding = PropertyBinding(
-          get = {
-            val connectionConfig = crudable.getByUniqueKey<ConnectionConfig>(state.connectionConfigUuid)
-            return@PropertyBinding if (connectionConfig != null) {
-              connectionConfig
-            } else if (!crudable.getAll<ConnectionConfig>().isEmpty()) {
-              crudable.getAll<ConnectionConfig>().findAnyNullable()?.also {
-                state.connectionConfigUuid = it.uuid
-              }
-            } else {
-              null
-            }
-          },
-          set = { config -> state.connectionConfigUuid = config?.uuid ?: "" }
-        ),
-        renderer = SimpleListCellRenderer.create("") { it?.name }
-      ).withValidationOnApply {
-        if (it.selectedItem == null) {
-          ValidationInfo("You must provide a connection", it)
-        } else {
-          null
-        }
-      }
+//      comboBox(
+//        model = connectionComboBoxModel,
+//        modelBinding = PropertyBinding(
+//          get = {
+//            val connectionConfig = crudable.getByUniqueKey<ConnectionConfig>(""/*state.connectionConfigUuid*/)
+//            return@PropertyBinding if (connectionConfig != null) {
+//              connectionConfig
+//            } else if (!crudable.getAll<ConnectionConfig>().isEmpty()) {
+//              crudable.getAll<ConnectionConfig>().findAnyNullable()?.also {
+//                state.connectionConfigUuid = it.uuid
+//              }
+//            } else {
+//              null
+//            }
+//          },
+//          set = { config -> state.connectionConfigUuid = config?.uuid ?: "" }
+//        ),
+//        renderer = SimpleListCellRenderer.create("") { it?.name }
+//      ).withValidationOnApply {
+//        if (it.selectedItem == null) {
+//          ValidationInfo("You must provide a connection", it)
+//        } else {
+//          null
+//        }
+//      }
     }
     row {
       label("Owner")

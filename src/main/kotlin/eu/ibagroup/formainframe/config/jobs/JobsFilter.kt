@@ -5,9 +5,10 @@ import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
 import org.jetbrains.annotations.NotNull
+import java.util.*
 
 
-class JobsFilter : EntityWithUuid {
+class JobsFilter {
 
   var owner: String = ""
 
@@ -17,22 +18,14 @@ class JobsFilter : EntityWithUuid {
 
   var userCorrelatorFilter: String = ""
 
-  var connectionConfigUuid = ""
-
   constructor()
 
-  constructor(
-    uuid: @NotNull String,
-    owner: String,
-    prefix: String,
-    jobId: String,
-    userCorrelatorFilter: String
-  ) : super(uuid) {
+  constructor(owner: String, prefix: String, jobId: String) {
     this.owner = owner
     this.prefix = prefix
     this.jobId = jobId
-    this.userCorrelatorFilter = userCorrelatorFilter
   }
+
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -50,12 +43,7 @@ class JobsFilter : EntityWithUuid {
   }
 
   override fun hashCode(): Int {
-    var result = super.hashCode()
-    result = 31 * result + owner.hashCode()
-    result = 31 * result + prefix.hashCode()
-    result = 31 * result + jobId.hashCode()
-    result = 31 * result + userCorrelatorFilter.hashCode()
-    return result
+    return Objects.hash(owner, prefix, jobId, userCorrelatorFilter)
   }
 
   override fun toString(): String = if (jobId.isEmpty()) {

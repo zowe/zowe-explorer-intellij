@@ -50,14 +50,14 @@ class JobsConfigurable : BoundSearchableConfigurable("Job Filters", "mainframe")
       row {
         cell(isVerticalFlow = true, isFullWidth = false) {
           toolbarTable(message("configurable.ws.tables.jf.title"), validatingTableView) {
-            addNewItemProducer { JobsFilter() }
+            addNewItemProducer { JobsFilter("", "", "") }
             configureDecorator {
               disableUpDownActions()
               setAddAction {
                 val dialog = JobsFilterDialog(sandboxCrudable)
                 if (dialog.showAndGet()) {
                   val state = fixEmptyFieldsInState(dialog.state)
-                  state.uuid = sandboxCrudable.nextUniqueValue<JobsFilter, String>()
+//                  state.uuid = sandboxCrudable.nextUniqueValue<JobsFilter, String>()
                   jobsFilterTable.addRow(state)
                   jobsFilterTable.reinitialize()
                 }
@@ -85,7 +85,7 @@ class JobsConfigurable : BoundSearchableConfigurable("Job Filters", "mainframe")
   private fun fixEmptyFieldsInState(state: JobsFilter) : JobsFilter {
     if (state.jobId.isEmpty()) {
       if (state.owner.isEmpty()) {
-          state.owner = sandboxCrudable.getByUniqueKey<Credentials>(state.connectionConfigUuid)?.username ?: ""
+          state.owner = sandboxCrudable.getByUniqueKey<Credentials>(""/*state.connectionConfigUuid*/)?.username ?: ""
       }
       if (state.prefix.isEmpty()) {
         state.prefix = "*"

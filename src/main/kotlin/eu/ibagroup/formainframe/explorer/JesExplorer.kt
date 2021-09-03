@@ -48,12 +48,20 @@ class JesExplorer : AbstractExplorerBase<JesWorkingSet, JobsWorkingSetConfig>() 
 
 }
 
+class JobsWorkingSetUnit(
+  override val explorer: Explorer<*>,
+  val jobsWorkingSetConfig: JobsWorkingSetConfig
+) : ExplorerUnit {
+  override val name = jobsWorkingSetConfig.name
+  override val uuid = jobsWorkingSetConfig.uuid
+  override val connectionConfig: ConnectionConfig? = configCrudable.getByUniqueKey(jobsWorkingSetConfig.connectionConfigUuid)
+}
+
 class JesFilterUnit(
   override val explorer: Explorer<*>,
   val jobsFilter: JobsFilter
 ) : ExplorerUnit {
   override val name: String = jobsFilter.toString()
-  override val uuid: String = jobsFilter.uuid
-  override val connectionConfig: ConnectionConfig? = configCrudable.getByUniqueKey(jobsFilter.connectionConfigUuid)
-
+  override val uuid: String = ""
+  override val connectionConfig: ConnectionConfig? = configCrudable.getByUniqueKey(""/*jobsFilter.connectionConfigUuid*/)
 }

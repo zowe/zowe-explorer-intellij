@@ -118,6 +118,7 @@ fun <T, R> Stream<T>.mapNotNull(mapper: (T) -> R): Stream<R> {
 }
 
 infix fun <T> Collection<T>.isTheSameAs(other: Collection<T>): Boolean {
+  val contAll = this.containsAll(other)
   return this.size == other.size && (this.isEmpty() || this.containsAll(other))
 }
 
