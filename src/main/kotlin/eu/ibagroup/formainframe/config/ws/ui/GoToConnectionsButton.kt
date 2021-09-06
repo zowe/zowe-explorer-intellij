@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.config.ws.ui
+package eu.ibagroup.formainframe.config.ws.ui.files
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent

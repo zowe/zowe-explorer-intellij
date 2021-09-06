@@ -7,6 +7,7 @@ package eu.ibagroup.formainframe.config.jobs
 import com.intellij.util.ui.ColumnInfo
 import eu.ibagroup.formainframe.common.ui.CrudableTableModel
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.toMutableList
 

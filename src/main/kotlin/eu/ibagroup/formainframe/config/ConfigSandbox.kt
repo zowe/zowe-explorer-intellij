@@ -2,8 +2,7 @@ package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.jobs.JobsFilter
-import eu.ibagroup.formainframe.config.jobs.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
@@ -39,6 +38,10 @@ interface ConfigSandbox {
 
 val sandboxCrudable get() = ConfigSandbox.instance.crudable
 
+fun <T: Any> applySandbox(clazz: Class<out T>) {
+  ConfigSandbox.instance.apply(clazz)
+}
+
 inline fun <reified T : Any> applySandbox() {
-  ConfigSandbox.instance.apply(T::class.java)
+  applySandbox(T::class.java)
 }

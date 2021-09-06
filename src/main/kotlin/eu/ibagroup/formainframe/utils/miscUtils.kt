@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.utils
 import com.google.gson.Gson
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
+import org.apache.xerces.impl.dv.xs.BooleanDV
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
@@ -101,8 +102,12 @@ fun <T> Collection<T>?.streamOrEmpty(): Stream<T> {
   return this?.stream() ?: Stream.empty()
 }
 
+fun <T> Class<*>.isThe(clazz: Class<out T>): Boolean {
+  return this == clazz
+}
+
 inline fun <reified T> Class<*>.isThe(): Boolean {
-  return this == T::class.java
+  return this.isThe(T::class.java)
 }
 
 inline fun <reified T> Stream<T>.findAnyNullable(): T? {

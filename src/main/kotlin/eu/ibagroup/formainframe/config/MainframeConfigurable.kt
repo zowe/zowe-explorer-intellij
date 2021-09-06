@@ -4,9 +4,8 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
 import eu.ibagroup.formainframe.analytics.ui.AnalyticsConfigurable
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionConfigurable
-import eu.ibagroup.formainframe.config.jobs.JobsConfigurable
-import eu.ibagroup.formainframe.config.jobs.JobsWsConfigurable
-import eu.ibagroup.formainframe.config.ws.ui.WSConfigurable
+import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsConfigurable
+import eu.ibagroup.formainframe.config.ws.ui.files.WSConfigurable
 
 class MainframeConfigurable : TabbedConfigurable() {
 

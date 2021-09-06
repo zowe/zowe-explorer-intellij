@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.config.jobs.JobsFilter
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
@@ -15,8 +15,6 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.JobStatus
-import retrofit2.Response
 
 class JobFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {

@@ -6,8 +6,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.rd.util.UUID
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.jobs.JobsFilter
-import eu.ibagroup.formainframe.config.jobs.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.*

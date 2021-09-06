@@ -1,7 +1,7 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.jobs.JobsFilter
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 
 class JobsRequester(
   override val connectionConfig: ConnectionConfig,

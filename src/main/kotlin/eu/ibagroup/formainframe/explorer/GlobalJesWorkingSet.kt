@@ -4,8 +4,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.jobs.JobsFilter
-import eu.ibagroup.formainframe.config.jobs.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsFilter
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
 import eu.ibagroup.formainframe.utils.runIfTrue

@@ -7,20 +7,12 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
-import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.common.ui.toolbarTable
 import eu.ibagroup.formainframe.config.*
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialog
-import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
-import eu.ibagroup.formainframe.config.ws.ui.toDialogState
-import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
 import eu.ibagroup.formainframe.utils.isThe
 import javax.swing.JPanel
 

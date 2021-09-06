@@ -4,8 +4,7 @@ import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.jobs.JobsFilter
-import eu.ibagroup.formainframe.config.jobs.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -117,12 +116,20 @@ class ConfigSandboxImpl : ConfigSandbox {
 
 }
 
+fun <T> rollbackSandbox(clazz: Class<out T>) {
+  ConfigSandbox.instance.rollback(clazz)
+}
+
 inline fun <reified T> rollbackSandbox() {
-  ConfigSandbox.instance.rollback(T::class.java)
+  rollbackSandbox(T::class.java)
+}
+
+fun <T> isSandboxModified(clazz: Class<out T>): Boolean {
+  return ConfigSandbox.instance.isModified(clazz)
 }
 
 inline fun <reified T> isSandboxModified(): Boolean {
-  return ConfigSandbox.instance.isModified(T::class.java)
+  return isSandboxModified(T::class.java)
 }
 
 @Suppress("UNCHECKED_CAST")

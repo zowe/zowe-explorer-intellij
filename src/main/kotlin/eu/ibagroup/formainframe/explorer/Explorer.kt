@@ -1,7 +1,6 @@
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -21,11 +20,8 @@ import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.CREDENTIALS_CHANGED
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
-import eu.ibagroup.formainframe.config.jobs.JobsFilter
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.*
-import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.stream.Collectors
 import kotlin.concurrent.read
