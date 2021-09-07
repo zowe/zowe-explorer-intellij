@@ -6,10 +6,9 @@ import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
-import eu.ibagroup.formainframe.utils.crudable.getByForeignKeyDeeply
 import eu.ibagroup.formainframe.utils.runIfTrue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
@@ -18,7 +17,7 @@ import kotlin.concurrent.withLock
 class GlobalWorkingSet(
   override val uuid: String,
   globalExplorer: GlobalExplorer,
-  private val workingSetConfigProvider: (String) -> WorkingSetConfig?,
+  private val workingSetConfigProvider: (String) -> FilesWorkingSetConfig?,
   parentDisposable: Disposable
 ) : FilesWorkingSet {
 
@@ -28,7 +27,7 @@ class GlobalWorkingSet(
 
   private val isDisposed = AtomicBoolean(false)
 
-  private val workingSetConfig: WorkingSetConfig?
+  private val workingSetConfig: FilesWorkingSetConfig?
     get() = lock.withLock {
       (isDisposed.compareAndSet(false, false)).runIfTrue { workingSetConfigProvider(uuid) }
     }

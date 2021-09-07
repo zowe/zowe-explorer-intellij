@@ -5,9 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.analytics.AnalyticsService
@@ -17,13 +15,12 @@ import eu.ibagroup.formainframe.analytics.events.FileType
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
@@ -95,10 +92,10 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
                   noText = "No"
                 )
               ) {
-                val workingSetConfig = configCrudable.getByUniqueKey<WorkingSetConfig>(workingSet.uuid)?.clone()
-                if (workingSetConfig != null) {
-                  workingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
-                  configCrudable.update(workingSetConfig)
+                val filesWorkingSetConfig = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
+                if (filesWorkingSetConfig != null) {
+                  filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
+                  configCrudable.update(filesWorkingSetConfig)
                 }
               }
             }

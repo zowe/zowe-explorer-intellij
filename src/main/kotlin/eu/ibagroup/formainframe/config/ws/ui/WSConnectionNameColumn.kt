@@ -4,6 +4,8 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ComboBoxCellEditor
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
@@ -13,8 +15,8 @@ import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.toMutableList
 import javax.swing.table.TableCellEditor
 
-class WSConnectionNameColumn(private val crudable: Crudable) :
-  ColumnInfo<WorkingSetConfig, String>(message("configurable.ws.tables.ws.connection.name")) {
+class WSConnectionNameColumn<WSConfig: WorkingSetConfig>(private val crudable: Crudable) :
+  ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.connection.name")) {
 
   inner class ConnectionTableCellEditor : ComboBoxCellEditor() {
     override fun getComboBoxItems(): MutableList<String> {
@@ -24,21 +26,21 @@ class WSConnectionNameColumn(private val crudable: Crudable) :
     }
   }
 
-  override fun setValue(item: WorkingSetConfig, value: String) {
+  override fun setValue(item: WSConfig, value: String) {
     crudable.find<ConnectionConfig> { it.name == value }.findAnyNullable()?.let {
       item.connectionConfigUuid = it.uuid
     }
   }
 
-  override fun valueOf(item: WorkingSetConfig): String {
+  override fun valueOf(item: WSConfig): String {
     return crudable.getByUniqueKey<ConnectionConfig>(item.connectionConfigUuid)?.name ?: ""
   }
 
-  override fun isCellEditable(item: WorkingSetConfig): Boolean {
+  override fun isCellEditable(item: WSConfig): Boolean {
     return false
   }
 
-  override fun getEditor(item: WorkingSetConfig): TableCellEditor {
+  override fun getEditor(item: WSConfig): TableCellEditor {
     return ConnectionTableCellEditor()
   }
 

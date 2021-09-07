@@ -29,11 +29,10 @@ import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.DoubleClickTreeMouseListener
 import eu.ibagroup.formainframe.common.ui.promisePath
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
@@ -308,7 +307,7 @@ class GlobalFileExplorerView(
   rootNodeProvider: (explorer: Explorer<FilesWorkingSet>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
   cutProviderUpdater: (List<VirtualFile>) -> Unit
 
-) : ExplorerTreeView<FilesWorkingSet, WorkingSetConfig>(explorer, project, parentDisposable, contextMenu, rootNodeProvider, cutProviderUpdater) {
+) : ExplorerTreeView<FilesWorkingSet, FilesWorkingSetConfig>(explorer, project, parentDisposable, contextMenu, rootNodeProvider, cutProviderUpdater) {
 
 
   init {

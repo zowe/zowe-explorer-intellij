@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.utils.crudable;
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column;
 import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey;
 import kotlin.Pair;
+import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("deprecation")
 class Utils {
@@ -52,8 +54,8 @@ class Utils {
 
   @SuppressWarnings("unchecked")
   public static <E, F> @NotNull Optional<F> getByForeignKeyInternal(@NotNull Crudable crudable, @NotNull E row, @Nullable String columnName, @NotNull Class<? extends F> foreignRowClass) {
-    return Arrays.stream(row.getClass().getDeclaredFields())
-        .filter(field -> {
+    return Stream.concat(Arrays.stream(row.getClass().getDeclaredFields()), Arrays.stream(row.getClass().getSuperclass().getDeclaredFields()))
+    .filter(field -> {
           field.setAccessible(true);
           return field.isAnnotationPresent(ForeignKey.class)
               && field.isAnnotationPresent(Column.class)

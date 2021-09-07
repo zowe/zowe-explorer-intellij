@@ -1,28 +1,16 @@
 package eu.ibagroup.formainframe.config.ws
 
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
-import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
 import eu.ibagroup.formainframe.utils.isTheSameAs
 
-class JobsWorkingSetConfig: EntityWithUuid {
-
-  @Column
-  var name = ""
-
-  @Column
-  @ForeignKey(foreignClass = ConnectionConfig::class)
-  var connectionConfigUuid = ""
+class JobsWorkingSetConfig: WorkingSetConfig {
 
   @Column
   var jobsFilters: MutableCollection<JobsFilter> = mutableListOf()
 
-  constructor()
+  constructor() : super()
 
-  constructor(name: String, connectionConfigUuid: String, jobsFilters: MutableCollection<JobsFilter>) {
-    this.name = name
-    this.connectionConfigUuid = connectionConfigUuid
+  constructor(name: String, connectionConfigUuid: String, jobsFilters: MutableCollection<JobsFilter>) : super(name, connectionConfigUuid) {
     this.jobsFilters = jobsFilters
   }
   constructor(
@@ -30,9 +18,7 @@ class JobsWorkingSetConfig: EntityWithUuid {
     name: String,
     connectionConfigUuid: String,
     jobsFilters: MutableCollection<JobsFilter>
-  ) : super(uuid) {
-    this.name = name
-    this.connectionConfigUuid = connectionConfigUuid
+  ) : super(name, connectionConfigUuid, uuid) {
     this.jobsFilters = jobsFilters
   }
 

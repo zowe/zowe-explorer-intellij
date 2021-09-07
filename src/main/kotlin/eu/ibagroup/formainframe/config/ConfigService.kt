@@ -5,7 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.EventHandler
 import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
@@ -30,7 +30,7 @@ interface ConfigService : PersistentStateComponent<ConfigState> {
 
   @get:Contains(
     entities = [
-      WorkingSetConfig::class,
+      FilesWorkingSetConfig::class,
       ConnectionConfig::class,
       JobsWorkingSetConfig::class
     ]

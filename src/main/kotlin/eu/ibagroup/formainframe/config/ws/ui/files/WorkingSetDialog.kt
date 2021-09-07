@@ -8,7 +8,7 @@ import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
 import eu.ibagroup.formainframe.common.ui.ValidatingColumnInfo
 import eu.ibagroup.formainframe.common.ui.ValidatingListTableModel
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -22,7 +22,7 @@ import javax.swing.table.TableCellEditor
 class WorkingSetDialog(
   crudable: Crudable,
   state: WorkingSetDialogState
-): AbstractWsDialog<WorkingSetConfig, WorkingSetDialogState.TableRow, WorkingSetDialogState>(crudable, WorkingSetDialogState::class.java, state) {
+): AbstractWsDialog<FilesWorkingSetConfig, WorkingSetDialogState.TableRow, WorkingSetDialogState>(crudable, WorkingSetDialogState::class.java, state) {
 
   override val masksTable = ValidatingTableView(
     ValidatingListTableModel(MaskColumn, TypeColumn).apply {

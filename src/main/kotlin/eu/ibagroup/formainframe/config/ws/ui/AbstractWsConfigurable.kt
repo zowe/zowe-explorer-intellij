@@ -7,23 +7,23 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.*
+import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.isThe
 
 
-abstract class AbstractWsConfigurable<WSConfig, WSModel: CrudableTableModel<WSConfig>, DState: AbstractWsDialogState<WSConfig, *>>(
+abstract class AbstractWsConfigurable<WSConfig: WorkingSetConfig, WSModel : CrudableTableModel<WSConfig>, DState : AbstractWsDialogState<WSConfig, *>>(
   displayName: String
-): BoundSearchableConfigurable(displayName, "mainframe") {
+) : BoundSearchableConfigurable(displayName, "mainframe") {
 
   abstract val wsConfigClass: Class<out WSConfig>
 
   abstract val wsTableModel: WSModel
 
-  val wsTable by lazy {
-    ValidatingTableView(wsTableModel, disposable!!).apply {
-      rowHeight = DEFAULT_ROW_HEIGHT
-    }
-  }
+//  val wsTable = ValidatingTableView(wsTableModel, disposable!!).apply {
+//    rowHeight = DEFAULT_ROW_HEIGHT
+//  }
+  lateinit var wsTable: ValidatingTableView<WSConfig>
 
   private var panel: DialogPanel? = null
 
@@ -44,7 +44,7 @@ abstract class AbstractWsConfigurable<WSConfig, WSModel: CrudableTableModel<WSCo
   override fun createPanel(): DialogPanel {
 //    val wsTableModel = WSTableModel(sandboxCrudable)
 
-    val wsTable = ValidatingTableView(wsTableModel, disposable!!).apply {
+    wsTable = ValidatingTableView(wsTableModel, disposable!!).apply {
       rowHeight = DEFAULT_ROW_HEIGHT
     }
 
@@ -54,6 +54,7 @@ abstract class AbstractWsConfigurable<WSConfig, WSModel: CrudableTableModel<WSCo
       .subscribe(SandboxListener.TOPIC, object : SandboxListener {
         override fun <E : Any> update(clazz: Class<out E>) {
         }
+
         override fun <E : Any> reload(clazz: Class<out E>) {
           if (clazz.isThe(wsConfigClass)) {
             wsTableModel.reinitialize()
@@ -69,26 +70,12 @@ abstract class AbstractWsConfigurable<WSConfig, WSModel: CrudableTableModel<WSCo
               disableUpDownActions()
               setAddAction {
                 emptyConfig().toDialogStateAbstract().initEmptyUuids(sandboxCrudable).let { s ->
-//                  WorkingSetDialog(sandboxCrudable, s)
-//                    .apply {
-//                      if (showAndGet()) {
-//                        wsTableModel.addRow(state.workingSetConfig)
-//                        wsTableModel.reinitialize()
-//                      }
-//                    }
                   createAddDialog(sandboxCrudable, s)
                 }
               }
               setEditAction {
                 wsTable.selectedObject?.let { selected ->
                   createEditDialog(selected.toDialogStateAbstract())
-//                  WorkingSetDialog(sandboxCrudable, selected.toDialogState().apply { mode = DialogMode.UPDATE }).apply {
-//                    if (showAndGet()) {
-//                      val idx = wsTable.selectedRow
-//                      wsTableModel[idx] = state.workingSetConfig
-//                      wsTableModel.reinitialize()
-//                    }
-//                  }
                 }
               }
               setToolbarPosition(ActionToolbarPosition.BOTTOM)

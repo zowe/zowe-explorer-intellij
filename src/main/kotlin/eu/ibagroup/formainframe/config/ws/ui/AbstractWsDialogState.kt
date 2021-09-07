@@ -7,7 +7,7 @@ import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 abstract class AbstractWsDialogState<WSConfig, TableRow>(
@@ -35,7 +35,7 @@ class WorkingSetDialogState(
   workingSetName: String = "",
   maskRow: MutableList<TableRow> = mutableListOf(),
   mode: DialogMode = DialogMode.CREATE
-): AbstractWsDialogState<WorkingSetConfig, WorkingSetDialogState.TableRow>(uuid, connectionUuid, workingSetName, maskRow, mode) {
+): AbstractWsDialogState<FilesWorkingSetConfig, WorkingSetDialogState.TableRow>(uuid, connectionUuid, workingSetName, maskRow, mode) {
   class TableRow(
     var mask: String = "",
     var type: String = "z/OS",
@@ -47,9 +47,9 @@ class WorkingSetDialogState(
     }
   }
 
-  override fun workingSetConfigClass() = WorkingSetConfig::class.java
-  override val workingSetConfig: WorkingSetConfig
-    get() = WorkingSetConfig(
+  override fun workingSetConfigClass() = FilesWorkingSetConfig::class.java
+  override val workingSetConfig: FilesWorkingSetConfig
+    get() = FilesWorkingSetConfig(
       this.uuid,
       this.workingSetName,
       this.connectionUuid,

@@ -7,7 +7,7 @@ import com.jetbrains.rd.util.UUID
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.runIfTrue
@@ -60,7 +60,7 @@ internal abstract class ClassCaseSwitcher<R> {
   operator fun invoke(clazz: Class<*>): R {
     return when (clazz) {
       ConnectionConfig::class.java -> onConnectionConfig()
-      WorkingSetConfig::class.java -> onWorkingSetConfig()
+      FilesWorkingSetConfig::class.java -> onWorkingSetConfig()
       JobsWorkingSetConfig::class.java -> onJobsWorkingSetConfig()
       Credentials::class.java -> onCredentials()
       else -> onElse()
@@ -79,7 +79,7 @@ private class FilterSwitcher(
 
 
   override fun onWorkingSetConfig(): Long {
-    return crudable.getByColumnLambda(row as WorkingSetConfig) { it.name }.count()
+    return crudable.getByColumnLambda(row as FilesWorkingSetConfig) { it.name }.count()
   }
 
   override fun onJobsWorkingSetConfig(): Long {
@@ -109,7 +109,7 @@ private class UpdateFilterSwitcher(
 
 
   override fun onWorkingSetConfig(): Boolean {
-    return if (currentRow is WorkingSetConfig && updatingRow is WorkingSetConfig) {
+    return if (currentRow is FilesWorkingSetConfig && updatingRow is FilesWorkingSetConfig) {
       filterSwitcher.onWorkingSetConfig() == 0L || updatingRow.name == currentRow.name
     } else false
   }

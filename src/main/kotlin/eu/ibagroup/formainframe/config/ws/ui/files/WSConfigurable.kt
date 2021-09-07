@@ -3,18 +3,18 @@ package eu.ibagroup.formainframe.config.ws.ui.files
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.config.sandboxCrudable
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
-class WSConfigurable: AbstractWsConfigurable<WorkingSetConfig, WSTableModel, WorkingSetDialogState>("Working Sets") {
-  override val wsConfigClass = WorkingSetConfig::class.java
+class WSConfigurable: AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel, WorkingSetDialogState>("Working Sets") {
+  override val wsConfigClass = FilesWorkingSetConfig::class.java
   override val wsTableModel = WSTableModel(sandboxCrudable)
 
-  override fun emptyConfig() = WorkingSetConfig()
+  override fun emptyConfig() = FilesWorkingSetConfig()
 
-  override fun WorkingSetConfig.toDialogStateAbstract() = this.toDialogState()
+  override fun FilesWorkingSetConfig.toDialogStateAbstract() = this.toDialogState()
 
   override fun createAddDialog(crudable: Crudable, state: WorkingSetDialogState) {
     WorkingSetDialog(sandboxCrudable, state)
@@ -38,7 +38,7 @@ class WSConfigurable: AbstractWsConfigurable<WorkingSetConfig, WSTableModel, Wor
 
 }
 
-fun WorkingSetConfig.toDialogState(): WorkingSetDialogState {
+fun FilesWorkingSetConfig.toDialogState(): WorkingSetDialogState {
   return WorkingSetDialogState(
     uuid = this.uuid,
     connectionUuid = this.connectionConfigUuid,

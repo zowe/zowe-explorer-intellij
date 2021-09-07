@@ -8,15 +8,15 @@ import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
 @Suppress("DialogTitleCapitalization")
-class UrlColumn(
-  private val getUrl: (WorkingSetConfig) -> String?
-) : ColumnInfo<WorkingSetConfig, String>(message("configurable.ws.tables.ws.url.name")) {
+class UrlColumn<WSConfig: WorkingSetConfig>(
+  private val getUrl: (WSConfig) -> String?
+) : ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.url.name")) {
 
-  override fun valueOf(item: WorkingSetConfig): String {
+  override fun valueOf(item: WSConfig): String {
     return getUrl(item) ?: message("configurable.ws.tables.ws.url.error.empty")
   }
 
-  override fun isCellEditable(item: WorkingSetConfig): Boolean {
+  override fun isCellEditable(item: WSConfig): Boolean {
     return false
   }
 
@@ -24,7 +24,7 @@ class UrlColumn(
     return 270
   }
 
-  override fun getRenderer(item: WorkingSetConfig): TableCellRenderer {
+  override fun getRenderer(item: WSConfig): TableCellRenderer {
     return ErrorableTableCellRenderer(
       errorMessage = message("configurable.ws.tables.ws.url.error.empty.tooltip")
     ) {

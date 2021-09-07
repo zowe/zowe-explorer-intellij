@@ -5,7 +5,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.ReloadableEventHandler
@@ -56,7 +56,7 @@ class ConfigSandboxImpl : ConfigSandbox {
   override fun fetch() {
     synchronized(stateLock) {
       rollbackSandbox<ConnectionConfig>()
-      rollbackSandbox<WorkingSetConfig>()
+      rollbackSandbox<FilesWorkingSetConfig>()
       rollbackSandbox<JobsWorkingSetConfig>()
       rollbackSandbox<Credentials>()
     }

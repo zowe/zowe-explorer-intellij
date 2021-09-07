@@ -4,18 +4,24 @@ import com.intellij.util.ui.ColumnInfo
 import eu.ibagroup.formainframe.common.ui.CrudableTableModel
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.ui.UrlColumn
+import eu.ibagroup.formainframe.config.ws.ui.WSConnectionNameColumn
+import eu.ibagroup.formainframe.config.ws.ui.WSNameColumn
+import eu.ibagroup.formainframe.config.ws.ui.WSUsernameColumn
 import eu.ibagroup.formainframe.utils.crudable.*
+import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.toMutableList
 
 class JobsWsTableModel(crudable: Crudable): CrudableTableModel<JobsWorkingSetConfig>(crudable) {
 
   init {
     columnInfos = arrayOf(
-      JesWsNameColumn,
-      ConnectionNameColumn(crudable),
-      UserNameColumn(crudable),
-      UrlColumn(crudable)
+      WSNameColumn { this.items },
+      WSConnectionNameColumn<JobsWorkingSetConfig>(crudable),
+      WSUsernameColumn { crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username },
+      UrlColumn { crudable.getByUniqueKey<ConnectionConfig>(it.connectionConfigUuid)?.url}
     )
   }
 
@@ -43,10 +49,18 @@ class JobsWsTableModel(crudable: Crudable): CrudableTableModel<JobsWorkingSetCon
 
   object JesWsNameColumn: ColumnInfo<JobsWorkingSetConfig, String>("Name") {
     override fun valueOf(item: JobsWorkingSetConfig): String = item.name
+
+    override fun setValue(item: JobsWorkingSetConfig, value: String) {
+      item.name = value
+    }
   }
 
   class UserNameColumn(private val crudable: Crudable) : ColumnInfo<JobsWorkingSetConfig, String>("Username") {
     override fun valueOf(item: JobsWorkingSetConfig): String = crudable.getByUniqueKey<Credentials>(item.connectionConfigUuid)?.username ?: ""
+
+    override fun setValue(item: JobsWorkingSetConfig, value: String) {
+      item.name = value
+    }
   }
 
   class UrlColumn(private val crudable: Crudable) : ColumnInfo<JobsWorkingSetConfig, String>("z/OSMF URL") {
@@ -55,5 +69,11 @@ class JobsWsTableModel(crudable: Crudable): CrudableTableModel<JobsWorkingSetCon
 
   class ConnectionNameColumn(private val crudable: Crudable) : ColumnInfo<JobsWorkingSetConfig, String>("Connection Name") {
     override fun valueOf(item: JobsWorkingSetConfig): String = crudable.getByUniqueKey<ConnectionConfig>(item.connectionConfigUuid)?.name ?: ""
+
+    override fun setValue(item: JobsWorkingSetConfig, value: String) {
+      crudable.find<ConnectionConfig> { it.name == value }.findAnyNullable()?.let {
+        item.connectionConfigUuid = it.uuid
+      }
+    }
   }
 }

@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.config.configCrudable
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.files.WorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.files.toDialogState
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
@@ -21,7 +21,7 @@ class EditWorkingSetAction : AnAction() {
     }
     val node = view.mySelectedNodesData[0].node
     if (node is WorkingSetNode) {
-      var selected = configCrudable.getByUniqueKey<WorkingSetConfig>(node.value.uuid)?.clone() as WorkingSetConfig
+      var selected = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(node.value.uuid)?.clone() as FilesWorkingSetConfig
       WorkingSetDialog(configCrudable, selected.toDialogState().apply { mode = DialogMode.UPDATE }).apply {
         if (showAndGet()) {
           selected = state.workingSetConfig
