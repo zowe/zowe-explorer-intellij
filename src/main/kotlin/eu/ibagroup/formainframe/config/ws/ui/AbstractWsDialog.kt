@@ -36,6 +36,8 @@ abstract class AbstractWsDialog<WSConfig, TableRow, WSDState : AbstractWsDialogS
 
   abstract fun validateOnApply(validationBuilder: ValidationInfoBuilder, component: JComponent): ValidationInfo?
 
+  open fun onWSApplyed(state: WSDState): WSDState = state
+
   private val panel by lazy {
     panel {
       row {
@@ -86,6 +88,7 @@ abstract class AbstractWsDialog<WSConfig, TableRow, WSDState : AbstractWsDialogS
         }.withValidationOnApply {
           validateOnApply(this, it)
         }.onApply {
+          state = onWSApplyed(state)
           state.maskRow = masksTable.items
         }
       }

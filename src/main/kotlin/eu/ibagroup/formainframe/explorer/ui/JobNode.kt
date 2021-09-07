@@ -4,9 +4,50 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
+import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.project.Project
+import com.intellij.ui.SimpleTextAttributes
+import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.fetch.JobQuery
+import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.JesFilterUnit
+import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-class JobNode  {
 
+class JobNode(
+  library: MFVirtualFile,
+  project: Project,
+  parent: ExplorerTreeNode<*>,
+  workingSet: JesWorkingSet,
+  treeStructure: ExplorerTreeStructureBase
+) : RemoteMFFileFetchNode<MFVirtualFile, JobQuery, JesWorkingSet>(
+  library, project, parent, workingSet, treeStructure
+), MFNode, RefreshableNode {
+  override fun makeFetchTaskTitle(query: RemoteQuery<JobQuery, Unit>): String {
+    val req = query.request
+    return "Fetching members for ${query.request.library.name}"
+  }
+
+  override val query: RemoteQuery<JobQuery, Unit>?
+    get() {
+      val connectionConfig = unit.connectionConfig
+
+      return if (connectionConfig != null) {
+        UnitRemoteQueryImpl(JobQuery(value), connectionConfig)
+      } else null
+    }
+
+  override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
+    return map { SpoolFileNode(it, notNullProject, this@JobNode, unit, treeStructure) }
+  }
+
+  override val requestClass = JobQuery::class.java
+
+  override fun update(presentation: PresentationData) {
+    presentation.addText(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+  }
 }

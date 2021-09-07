@@ -3,10 +3,14 @@ package eu.ibagroup.formainframe.config.ws.ui.jobs
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import eu.ibagroup.formainframe.common.ui.*
+import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.sandboxCrudable
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import javax.swing.JComponent
 
 class JobsWsDialog(
@@ -27,6 +31,23 @@ class JobsWsDialog(
 
   init {
     init()
+  }
+
+  private fun fixEmptyFieldsInState(state: JobsWorkingSetDialogState.TableRow, connectionUuid: String) : JobsWorkingSetDialogState.TableRow {
+    if (state.jobId.isEmpty()) {
+      if (state.owner.isEmpty()) {
+        state.owner = sandboxCrudable.getByUniqueKey<Credentials>(connectionUuid)?.username ?: ""
+      }
+      if (state.prefix.isEmpty()) {
+        state.prefix = "*"
+      }
+    }
+    return state
+  }
+
+  override fun onWSApplyed(state: JobsWorkingSetDialogState): JobsWorkingSetDialogState {
+    state.maskRow.map { fixEmptyFieldsInState(it, state.connectionUuid) }
+    return super.onWSApplyed(state)
   }
 
   override fun emptyTableRow(): JobsWorkingSetDialogState.TableRow = JobsWorkingSetDialogState.TableRow()

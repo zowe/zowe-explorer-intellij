@@ -65,9 +65,9 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
         )
       }
       log.info("${query.request} returned ${attributes?.size ?: 0} entities")
-      log.debug {
-        attributes?.joinToString("\n") ?: ""
-      }
+//      log.debug {
+//        attributes?.joinToString("\n") ?: ""
+//      }
     } else {
       exception = CallException(response, "Cannot retrieve Job files list")
     }

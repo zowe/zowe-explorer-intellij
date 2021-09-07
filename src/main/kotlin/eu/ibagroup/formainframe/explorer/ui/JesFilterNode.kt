@@ -35,8 +35,12 @@ class JesFilterNode(
     }
 
   override fun Collection<MFVirtualFile>.toChildrenNodes(): MutableList<AbstractTreeNode<*>> {
+//    return map {
+//      TODO()
+//
+//    }.toMutableSmartList()
     return map {
-      TODO()
+      JobNode(it, notNullProject, this@JesFilterNode, unit, treeStructure)
     }.toMutableSmartList()
   }
 
