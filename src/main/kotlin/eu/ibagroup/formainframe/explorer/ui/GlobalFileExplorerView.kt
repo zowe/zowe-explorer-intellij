@@ -140,10 +140,8 @@ abstract class ExplorerTreeView<U: WorkingSet<*>, UnitConfig: EntityWithUuid>
 
 
         private fun onAddDelete(explorer: Explorer<*>) {
-          if (explorer == explorer) {
-            myFsTreeStructure.findByValue(explorer).forEach {
-              myStructure.invalidate(it, true)
-            }
+          myFsTreeStructure.findByValue(explorer).forEach {
+            myStructure.invalidate(it, true)
           }
         }
 
