@@ -84,12 +84,6 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
   override val componentManager: Application
     get() = ApplicationManager.getApplication()
 
-  override var units: MutableSet<U> by lazyRwLocked(
-    { configCrudable.getAll(unitConfigClass).map { it.toUnit(disposable) }.collect(Collectors.toSet()) },
-    lock
-  )
-
-
   override fun disposeUnit(unit: U) {
     configCrudable.getByUniqueKey(unitConfigClass, unit.uuid).let {
       configCrudable.delete(it)

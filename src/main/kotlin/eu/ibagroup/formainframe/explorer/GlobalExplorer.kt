@@ -5,14 +5,15 @@ import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import java.util.stream.Collectors
 
 const val EXPLORER_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"
 
-class GlobalExplorerFactory : ExplorerFactory<FilesWorkingSet, GlobalExplorer> {
+class GlobalExplorerFactory : ExplorerFactory<GlobalWorkingSet, GlobalExplorer> {
   override fun buildComponent(): GlobalExplorer = GlobalExplorer()
 }
 
-class GlobalExplorer : AbstractExplorerBase<FilesWorkingSet, FilesWorkingSetConfig>() {
+class GlobalExplorer : AbstractExplorerBase<GlobalWorkingSet, FilesWorkingSetConfig>() {
 
 
   override fun FilesWorkingSetConfig.toUnit(parentDisposable: Disposable): GlobalWorkingSet {
@@ -24,11 +25,18 @@ class GlobalExplorer : AbstractExplorerBase<FilesWorkingSet, FilesWorkingSetConf
     )
   }
 
-  override val unitClass = FilesWorkingSet::class.java
+  override val unitClass = GlobalWorkingSet::class.java
   override val unitConfigClass = FilesWorkingSetConfig::class.java
+
+  override val units by rwLocked(
+    configCrudable.getAll(unitConfigClass).map { it.toUnit(disposable) }.collect(Collectors.toSet()).toMutableSet(),
+    lock
+  )
 
   init {
     doInit()
   }
+
+
 
 }

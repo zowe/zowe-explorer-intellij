@@ -54,7 +54,7 @@ import kotlin.concurrent.withLock
 
 val FILE_EXPLORER_VIEW = DataKey.create<GlobalFileExplorerView>("fileExplorerView")
 
-abstract class ExplorerTreeView<U: WorkingSet<*>, UnitConfig: EntityWithUuid>
+abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
   (
   val explorer: Explorer<U>,
   project: Project,
@@ -140,11 +140,12 @@ abstract class ExplorerTreeView<U: WorkingSet<*>, UnitConfig: EntityWithUuid>
 
 
         private fun onAddDelete(explorer: Explorer<*>) {
-          myFsTreeStructure.findByValue(explorer).forEach {
-            myStructure.invalidate(it, true)
+          if (explorer == this@ExplorerTreeView.explorer) {
+            myFsTreeStructure.findByValue(explorer).forEach {
+              myStructure.invalidate(it, true)
+            }
           }
         }
-
 
 
         override fun onAdded(explorer: Explorer<*>, unit: ExplorerUnit) {
@@ -152,7 +153,7 @@ abstract class ExplorerTreeView<U: WorkingSet<*>, UnitConfig: EntityWithUuid>
         }
 
         override fun onChanged(explorer: Explorer<*>, unit: ExplorerUnit) {
-          if (explorer == explorer) {
+          if (explorer == this@ExplorerTreeView.explorer) {
             myFsTreeStructure.findByValue(unit).forEach {
               myStructure.invalidate(it, true)
             }
@@ -305,7 +306,14 @@ class GlobalFileExplorerView(
   rootNodeProvider: (explorer: Explorer<FilesWorkingSet>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
   cutProviderUpdater: (List<VirtualFile>) -> Unit
 
-) : ExplorerTreeView<FilesWorkingSet, FilesWorkingSetConfig>(explorer, project, parentDisposable, contextMenu, rootNodeProvider, cutProviderUpdater) {
+) : ExplorerTreeView<FilesWorkingSet, FilesWorkingSetConfig>(
+  explorer,
+  project,
+  parentDisposable,
+  contextMenu,
+  rootNodeProvider,
+  cutProviderUpdater
+) {
 
 
   init {
