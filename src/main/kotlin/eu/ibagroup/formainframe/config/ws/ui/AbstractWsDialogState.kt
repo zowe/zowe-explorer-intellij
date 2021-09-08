@@ -23,7 +23,7 @@ abstract class AbstractWsDialogState<WSConfig, TableRow>(
   abstract val workingSetConfig: WSConfig
 }
 
-fun <WSConfig, T: AbstractWsDialogState<WSConfig, *>> T.initEmptyUuids(crudable: Crudable): T {
+fun <WSConfig, T : AbstractWsDialogState<WSConfig, *>> T.initEmptyUuids(crudable: Crudable): T {
   return this.apply {
     uuid = crudable.nextUniqueValue<WSConfig, String>(workingSetConfigClass())
   }
@@ -35,7 +35,13 @@ class WorkingSetDialogState(
   workingSetName: String = "",
   maskRow: MutableList<TableRow> = mutableListOf(),
   mode: DialogMode = DialogMode.CREATE
-): AbstractWsDialogState<FilesWorkingSetConfig, WorkingSetDialogState.TableRow>(uuid, connectionUuid, workingSetName, maskRow, mode) {
+) : AbstractWsDialogState<FilesWorkingSetConfig, WorkingSetDialogState.TableRow>(
+  uuid,
+  connectionUuid,
+  workingSetName,
+  maskRow,
+  mode
+) {
   class TableRow(
     var mask: String = "",
     var type: String = "z/OS",
@@ -65,7 +71,13 @@ class JobsWorkingSetDialogState(
   workingSetName: String = "",
   maskRow: MutableList<TableRow> = mutableListOf(),
   mode: DialogMode = DialogMode.CREATE
-): AbstractWsDialogState<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow>(uuid, connectionUuid, workingSetName, maskRow, mode) {
+) : AbstractWsDialogState<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow>(
+  uuid,
+  connectionUuid,
+  workingSetName,
+  maskRow,
+  mode
+) {
 
   class TableRow(
     var prefix: String = "",

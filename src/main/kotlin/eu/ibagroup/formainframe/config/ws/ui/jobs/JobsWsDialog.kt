@@ -5,7 +5,6 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.sandboxCrudable
-import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
@@ -16,11 +15,7 @@ import javax.swing.JComponent
 class JobsWsDialog(
   crudable: Crudable,
   state: JobsWorkingSetDialogState
-) : AbstractWsDialog<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow, JobsWorkingSetDialogState>(
-  crudable,
-  JobsWorkingSetDialogState::class.java,
-  state
-) {
+) : AbstractWsDialog<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow, JobsWorkingSetDialogState>(crudable, JobsWorkingSetDialogState::class.java, state) {
 
   override val masksTable = ValidatingTableView(
     ValidatingListTableModel(PrefixColumn, OwnerColumn, JobIdColumn).apply {
