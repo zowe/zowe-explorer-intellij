@@ -47,6 +47,11 @@ class JobsWsTableModel(crudable: Crudable): CrudableTableModel<JobsWorkingSetCon
 
   override val clazz = JobsWorkingSetConfig::class.java
 
+  override fun set(row: Int, item: JobsWorkingSetConfig) {
+    get(row).jobsFilters = item.jobsFilters
+    super.set(row, item)
+  }
+
   object JesWsNameColumn: ColumnInfo<JobsWorkingSetConfig, String>("Name") {
     override fun valueOf(item: JobsWorkingSetConfig): String = item.name
 

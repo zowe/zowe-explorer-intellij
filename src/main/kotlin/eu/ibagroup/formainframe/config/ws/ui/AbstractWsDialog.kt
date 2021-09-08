@@ -88,8 +88,8 @@ abstract class AbstractWsDialog<WSConfig, TableRow, WSDState : AbstractWsDialogS
         }.withValidationOnApply {
           validateOnApply(this, it)
         }.onApply {
-          state = onWSApplyed(state)
           state.maskRow = masksTable.items
+          state = onWSApplyed(state)
         }
       }
     }.apply {

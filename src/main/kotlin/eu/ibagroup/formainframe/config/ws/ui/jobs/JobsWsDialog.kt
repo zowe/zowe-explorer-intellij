@@ -16,16 +16,18 @@ import javax.swing.JComponent
 class JobsWsDialog(
   crudable: Crudable,
   state: JobsWorkingSetDialogState
-): AbstractWsDialog<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow, JobsWorkingSetDialogState>(crudable, JobsWorkingSetDialogState::class.java, state) {
+) : AbstractWsDialog<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow, JobsWorkingSetDialogState>(
+  crudable,
+  JobsWorkingSetDialogState::class.java,
+  state
+) {
 
-  override val masksTable by lazy {
-    ValidatingTableView(
-      ValidatingListTableModel(PrefixColumn, OwnerColumn, JobIdColumn).apply {
-        items = state.maskRow
-      },
-      disposable
-    ).apply { rowHeight = DEFAULT_ROW_HEIGHT }
-  }
+  override val masksTable = ValidatingTableView(
+    ValidatingListTableModel(PrefixColumn, OwnerColumn, JobIdColumn).apply {
+      items = state.maskRow
+    },
+    disposable
+  ).apply { rowHeight = DEFAULT_ROW_HEIGHT }
 
   override val tableTitle = "Job Filters included in Working Set"
 
@@ -33,7 +35,10 @@ class JobsWsDialog(
     init()
   }
 
-  private fun fixEmptyFieldsInState(state: JobsWorkingSetDialogState.TableRow, connectionUuid: String) : JobsWorkingSetDialogState.TableRow {
+  private fun fixEmptyFieldsInState(
+    state: JobsWorkingSetDialogState.TableRow,
+    connectionUuid: String
+  ): JobsWorkingSetDialogState.TableRow {
     if (state.jobId.isEmpty()) {
       if (state.owner.isEmpty()) {
         state.owner = sandboxCrudable.getByUniqueKey<Credentials>(connectionUuid)?.username ?: ""

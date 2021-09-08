@@ -35,6 +35,9 @@ class JesExplorer : AbstractExplorerBase<JesWorkingSet, JobsWorkingSetConfig>() 
       parentDisposable = parentDisposable
     )
   }
+  init {
+    doInit()
+  }
 
 }
 

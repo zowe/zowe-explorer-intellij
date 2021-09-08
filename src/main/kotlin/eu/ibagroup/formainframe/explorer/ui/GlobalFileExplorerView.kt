@@ -33,6 +33,7 @@ import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
@@ -314,12 +315,6 @@ class GlobalFileExplorerView(
   rootNodeProvider,
   cutProviderUpdater
 ) {
-
-
-  init {
-
-  }
-
 
   override fun dispose() {
   }
@@ -722,6 +717,15 @@ class GlobalFileExplorerView(
 
   override fun getData(dataId: String): Any? {
     return when {
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.filter {
+        val file = it.file
+        if (file != null) {
+          val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
+          val isMigrated = attributes?.isMigrated ?: false
+          !isMigrated
+        }
+        true
+      }.map { it.node }.toTypedArray()
       PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> copyPasteSupport.copyProvider
       PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> copyPasteSupport.cutProvider
       PlatformDataKeys.PASTE_PROVIDER.`is`(dataId) -> copyPasteSupport.pasteProvider

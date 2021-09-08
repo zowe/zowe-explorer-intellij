@@ -13,7 +13,7 @@ import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 
-val JES_EXPLORER_VIEW = DataKey.create<JesExplorerView>("fileExplorerView")
+val JES_EXPLORER_VIEW = DataKey.create<JesExplorerView>("jesExplorerView")
 
 class JesExplorerView(explorer: Explorer<JesWorkingSet>, project: Project, parentDisposable: Disposable, contextMenu: ActionGroup,
                       rootNodeProvider: (Explorer<*>, Project, ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
