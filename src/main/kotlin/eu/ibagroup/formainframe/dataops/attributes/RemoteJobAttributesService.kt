@@ -60,6 +60,7 @@ class RemoteJobAttributesService(
   ) {
     if (oldAttributes.name != newAttributes.name) {
       fsModel.renameFile(this, file, newAttributes.name);
+      fsModel.setWritable(file, false)
     }
   }
 
