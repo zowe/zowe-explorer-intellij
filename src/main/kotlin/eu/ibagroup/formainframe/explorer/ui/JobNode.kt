@@ -4,19 +4,25 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.fetch.JobQuery
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.JesFilterUnit
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import icons.ForMainframeIcons
 
+private val jobIcon = AllIcons.Nodes.Folder
 
 class JobNode(
   library: MFVirtualFile,
@@ -48,6 +54,11 @@ class JobNode(
   override val requestClass = JobQuery::class.java
 
   override fun update(presentation: PresentationData) {
-    presentation.addText(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    val attributes = service<DataOpsManager>().tryToGetAttributes(value) as? RemoteJobAttributes
+    val job = attributes?.jobInfo
+    val jobIdText = if (job == null) "" else "(${job.jobId})"
+    presentation.addText("${job?.jobName ?: ""} ${jobIdText} ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    presentation.addText(job?.status?.value ?: "", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    presentation.setIcon(jobIcon)
   }
 }
