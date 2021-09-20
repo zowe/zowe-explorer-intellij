@@ -34,9 +34,9 @@ class JobsFilter {
   }
 
   override fun toString(): String = if (jobId.isEmpty()) {
-    "Owner = $owner, Prefix = $prefix"
+    "PREFIX=$prefix OWNER=$owner"
   } else {
-    "JobID = $jobId"
+    "JobID=$jobId"
   }
 
 

@@ -60,13 +60,15 @@ class RemoteJobAttributesService(
   ) {
     if (oldAttributes.name != newAttributes.name) {
       fsModel.renameFile(this, file, newAttributes.name);
+      fsModel.setWritable(file, false)
     }
   }
 
   override fun continuePathChain(attributes: RemoteJobAttributes): List<PathElementSeed> {
     return listOf(
       PathElementSeed(attributes.jobInfo.subSystem ?: "NOSYS", createAttributes(directory = true)),
-      PathElementSeed(attributes.name, createAttributes(directory = true))
+      PathElementSeed(attributes.name, createAttributes(directory = true)),
+      PathElementSeed(attributes.jobInfo.jobId, createAttributes(directory = true))
     )
   }
 }

@@ -61,6 +61,8 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
           validateUssFileName(it)
         }.withValidationOnApply {
           validateForBlank(it)
+        }.apply {
+          focused()
         }
       }
       row {

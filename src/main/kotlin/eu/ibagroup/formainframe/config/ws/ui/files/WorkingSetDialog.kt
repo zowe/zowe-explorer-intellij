@@ -22,7 +22,7 @@ import javax.swing.table.TableCellEditor
 class WorkingSetDialog(
   crudable: Crudable,
   state: WorkingSetDialogState
-): AbstractWsDialog<FilesWorkingSetConfig, WorkingSetDialogState.TableRow, WorkingSetDialogState>(crudable, WorkingSetDialogState::class.java, state) {
+) : AbstractWsDialog<FilesWorkingSetConfig, WorkingSetDialogState.TableRow, WorkingSetDialogState>(crudable, WorkingSetDialogState::class.java, state) {
 
   override val masksTable = ValidatingTableView(
     ValidatingListTableModel(MaskColumn, TypeColumn).apply {
@@ -55,7 +55,7 @@ class WorkingSetDialog(
   }
 
   private fun hasDuplicatesInTable(tableElements: List<WorkingSetDialogState.TableRow>): Boolean {
-    return tableElements.size != tableElements.map {it.mask}.distinct().size
+    return tableElements.size != tableElements.map { it.mask }.distinct().size
   }
 
   object MaskColumn : ValidatingColumnInfo<WorkingSetDialogState.TableRow>("Mask") {

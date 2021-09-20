@@ -12,7 +12,7 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.isThe
 
 
-abstract class AbstractWsConfigurable<WSConfig: WorkingSetConfig, WSModel : CrudableTableModel<WSConfig>, DState : AbstractWsDialogState<WSConfig, *>>(
+abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : CrudableTableModel<WSConfig>, DState : AbstractWsDialogState<WSConfig, *>>(
   displayName: String
 ) : BoundSearchableConfigurable(displayName, "mainframe") {
 
@@ -20,9 +20,6 @@ abstract class AbstractWsConfigurable<WSConfig: WorkingSetConfig, WSModel : Crud
 
   abstract val wsTableModel: WSModel
 
-//  val wsTable = ValidatingTableView(wsTableModel, disposable!!).apply {
-//    rowHeight = DEFAULT_ROW_HEIGHT
-//  }
   lateinit var wsTable: ValidatingTableView<WSConfig>
 
   private var panel: DialogPanel? = null
@@ -42,8 +39,6 @@ abstract class AbstractWsConfigurable<WSConfig: WorkingSetConfig, WSModel : Crud
   }
 
   override fun createPanel(): DialogPanel {
-//    val wsTableModel = WSTableModel(sandboxCrudable)
-
     wsTable = ValidatingTableView(wsTableModel, disposable!!).apply {
       rowHeight = DEFAULT_ROW_HEIGHT
     }

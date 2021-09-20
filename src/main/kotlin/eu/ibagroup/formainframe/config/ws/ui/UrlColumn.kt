@@ -8,7 +8,7 @@ import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
 @Suppress("DialogTitleCapitalization")
-class UrlColumn<WSConfig: WorkingSetConfig>(
+class UrlColumn<WSConfig : WorkingSetConfig>(
   private val getUrl: (WSConfig) -> String?
 ) : ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.url.name")) {
 
