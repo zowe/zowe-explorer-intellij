@@ -83,7 +83,6 @@ class GlobalFileExplorerView(
     }.onEach { foundNode ->
       fun invalidate() = myStructure.invalidate(foundNode, true)
 
-
       fun collapseIfNeeded(tp: TreePath) {
         if (collapse) {
           treeModel.onValidThread {
