@@ -85,7 +85,7 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
       if (it is FetchNode) {
         it.query == query
       } else false
-    }.distinct().onEach { foundNode ->
+    }.onEach { foundNode ->
       fun invalidate() = myStructure.invalidate(foundNode, true)
 
       fun collapseIfNeeded(tp: TreePath) {
