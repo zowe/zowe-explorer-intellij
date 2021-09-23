@@ -177,6 +177,14 @@ class MFVirtualFile internal constructor(
     }
   }
 
+  override fun getFileType(): FileType {
+    return if (this.name == this.extension) {
+      PlainTextFileType.INSTANCE
+    } else {
+      super.getFileType()
+    }
+  }
+
   override fun getNameWithoutExtension(): String {
     return name.split(".").dropLast(1).joinToString(separator = ".")
   }
