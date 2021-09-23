@@ -9,7 +9,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.connect.username
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.WorkingSet
 
 private val regularIcon = AllIcons.Nodes.Project
 private val errorIconElement = AllIcons.Nodes.ErrorMark

@@ -10,17 +10,14 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
+import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.fetch.JobQuery
-import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.JesFilterUnit
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import icons.ForMainframeIcons
 
 private val jobIcon = AllIcons.Nodes.Folder
 
@@ -34,13 +31,13 @@ class JobNode(
   library, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
   override fun makeFetchTaskTitle(query: RemoteQuery<JobQuery, Unit>): String {
-    val req = query.request
     return "Fetching members for ${query.request.library.name}"
   }
 
   override val query: RemoteQuery<JobQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
+
 
       return if (connectionConfig != null) {
         UnitRemoteQueryImpl(JobQuery(value), connectionConfig)
