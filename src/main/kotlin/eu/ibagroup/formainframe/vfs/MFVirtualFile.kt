@@ -189,14 +189,6 @@ class MFVirtualFile internal constructor(
     return name.split(".").dropLast(1).joinToString(separator = ".")
   }
 
-  override fun getFileType(): FileType {
-    return if (this.name == this.extension) {
-      PlainTextFileType.INSTANCE
-    } else {
-      super.getFileType()
-    }
-  }
-
   @Suppress("UNCHECKED_CAST")
   val cachedChildren
     get() = fs.model.getChildrenList(this)
