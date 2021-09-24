@@ -1,3 +1,7 @@
+/*
+ * This is a property of IBA Group
+ */
+
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
