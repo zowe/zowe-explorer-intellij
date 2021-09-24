@@ -8,7 +8,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.JesWorkingSet
+import eu.ibagroup.formainframe.explorer.GlobalJesWorkingSet
 
 class JesExplorerRootNode(
   value: Explorer<*>, project: Project,
@@ -23,12 +23,8 @@ class JesExplorerRootNode(
   }
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
-//    return explorer.units.filterIsInstance<JesFilterUnit>().map {
-//       JesFilterNode(it, notNullProject, this, explorer, treeStructure)
-//    }.toMutableList()
-    return explorer.units.filterIsInstance<JesWorkingSet>().map {
+    return explorer.units.filterIsInstance<GlobalJesWorkingSet>().map {
       JobsWsNode(it, notNullProject, this, treeStructure)
     }.toMutableList()
-//    return mutableListOf()
   }
 }

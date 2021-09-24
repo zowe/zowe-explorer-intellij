@@ -8,8 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
-import eu.ibagroup.formainframe.explorer.ui.FileExplorerTreeNodeRoot
-import eu.ibagroup.formainframe.explorer.ui.GlobalFileExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerRootNode
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -30,7 +28,7 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>() {
   override val place: String = "JES Explorer"
 
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
-    return JesExplorerView(explorer as Explorer<JesWorkingSet>, project, parentDisposable, contextMenu, { e, p, t ->
+    return JesExplorerView(explorer as Explorer<GlobalJesWorkingSet>, project, parentDisposable, contextMenu, { e, p, t ->
       JesExplorerRootNode(e, p, t)
     }) {
       lock.withLock {

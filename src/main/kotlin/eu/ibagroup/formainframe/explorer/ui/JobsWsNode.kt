@@ -9,8 +9,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.config.connect.username
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.JesWorkingSet
+import eu.ibagroup.formainframe.explorer.GlobalJesWorkingSet
 
 private val regularIcon = AllIcons.Nodes.Project
 private val errorIconElement = AllIcons.Nodes.ErrorMark
@@ -18,11 +17,11 @@ private val grayscaleIcon = IconUtil.desaturate(regularIcon)
 private val errorIcon = LayeredIcon(grayscaleIcon, errorIconElement)
 
 class JobsWsNode(
-  workingSet: JesWorkingSet,
+  workingSet: GlobalJesWorkingSet,
   project: Project,
   parent: ExplorerTreeNode<*>,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<JesWorkingSet, JesWorkingSet>(
+) : ExplorerUnitTreeNodeBase<GlobalJesWorkingSet, GlobalJesWorkingSet>(
   workingSet, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
 

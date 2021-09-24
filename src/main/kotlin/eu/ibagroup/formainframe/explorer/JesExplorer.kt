@@ -12,12 +12,12 @@ import eu.ibagroup.formainframe.utils.rwLocked
 import java.util.stream.Collectors
 
 
-class JesExplorerFactory : ExplorerFactory<JesWorkingSet, JesExplorer> {
+class JesExplorerFactory : ExplorerFactory<GlobalJesWorkingSet, JesExplorer> {
   override fun buildComponent(): JesExplorer = JesExplorer()
 }
 
-class JesExplorer : AbstractExplorerBase<JesWorkingSet, JobsWorkingSetConfig>() {
-  override val unitClass = JesWorkingSet::class.java
+class JesExplorer : AbstractExplorerBase<GlobalJesWorkingSet, JobsWorkingSetConfig>() {
+  override val unitClass = GlobalJesWorkingSet::class.java
   override val unitConfigClass = JobsWorkingSetConfig::class.java
 
   override val units by rwLocked(
@@ -25,7 +25,7 @@ class JesExplorer : AbstractExplorerBase<JesWorkingSet, JobsWorkingSetConfig>() 
     lock
   )
 
-  override fun JobsWorkingSetConfig.toUnit(parentDisposable: Disposable): JesWorkingSet {
+  override fun JobsWorkingSetConfig.toUnit(parentDisposable: Disposable): GlobalJesWorkingSet {
     return GlobalJesWorkingSet(
       uuid = uuid,
       globalExplorer = this@JesExplorer,
@@ -33,6 +33,7 @@ class JesExplorer : AbstractExplorerBase<JesWorkingSet, JobsWorkingSetConfig>() 
       parentDisposable = parentDisposable
     )
   }
+
   init {
     doInit()
   }

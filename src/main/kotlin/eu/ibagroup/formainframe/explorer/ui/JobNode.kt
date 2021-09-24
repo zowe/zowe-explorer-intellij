@@ -10,13 +10,12 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
-import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.fetch.JobQuery
-import eu.ibagroup.formainframe.explorer.JesWorkingSet
+import eu.ibagroup.formainframe.explorer.GlobalJesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 private val jobIcon = AllIcons.Nodes.Folder
@@ -25,9 +24,9 @@ class JobNode(
   library: MFVirtualFile,
   project: Project,
   parent: ExplorerTreeNode<*>,
-  workingSet: JesWorkingSet,
+  workingSet: GlobalJesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<MFVirtualFile, JobQuery, JesWorkingSet>(
+) : RemoteMFFileFetchNode<MFVirtualFile, JobQuery, GlobalJesWorkingSet>(
   library, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
   override fun makeFetchTaskTitle(query: RemoteQuery<JobQuery, Unit>): String {

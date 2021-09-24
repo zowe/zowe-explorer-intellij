@@ -3,67 +3,27 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.configCrudable
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
-import eu.ibagroup.formainframe.utils.runIfTrue
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class GlobalWorkingSet(
   override val uuid: String,
-  globalExplorer: GlobalExplorer,
+  globalExplorer: AbstractExplorerBase<GlobalWorkingSet, FilesWorkingSetConfig>,
   private val workingSetConfigProvider: (String) -> FilesWorkingSetConfig?,
   parentDisposable: Disposable
-) : FilesWorkingSet {
+) : WorkingSetBase<DSMask, WorkingSet<*>, FilesWorkingSetConfig>(
+  uuid,
+  globalExplorer,
+  workingSetConfigProvider,
+  parentDisposable
+), FilesWorkingSet {
 
-  override val explorer = globalExplorer
+  override val wsConfigClass = FilesWorkingSetConfig::class.java
 
-  private val lock = ReentrantLock()
-
-  private val isDisposed = AtomicBoolean(false)
-
-  private val workingSetConfig: FilesWorkingSetConfig?
-    get() = lock.withLock {
-      (isDisposed.compareAndSet(false, false)).runIfTrue { workingSetConfigProvider(uuid) }
-    }
-
-  init {
-    Disposer.register(parentDisposable, this)
-  }
-
-  override val name
-    get() = workingSetConfig?.name ?: ""
-
-  override val connectionConfig: ConnectionConfig?
-    get() = lock.withLock {
-      workingSetConfig
-        ?.let {
-          return@withLock configCrudable.getByForeignKey(it)
-        }
-    }
-
-
-  override val masks: Collection<DSMask>
-    get() = lock.withLock { workingSetConfig?.dsMasks ?: listOf() }
-
-  override fun addMask(dsMask: DSMask) {
-    val newWsConfig = workingSetConfig?.clone() ?: return
-    if (newWsConfig.dsMasks.add(dsMask)) {
-      configCrudable.update(newWsConfig)
-    }
-  }
-
-  override fun removeMask(dsMask: DSMask) {
-    val newWsConfig = workingSetConfig?.clone() ?: return
-    if (newWsConfig.dsMasks.remove(dsMask)) {
-      configCrudable.update(newWsConfig)
-    }
-  }
+  override fun FilesWorkingSetConfig.masks() = this.dsMasks
 
   override val ussPaths: Collection<UssPath>
     get() = lock.withLock { workingSetConfig?.ussPaths ?: listOf() }
@@ -82,8 +42,7 @@ class GlobalWorkingSet(
     }
   }
 
-  override fun dispose() {
-    isDisposed.set(true)
+  init {
+    Disposer.register(parentDisposable, this)
   }
-
 }
