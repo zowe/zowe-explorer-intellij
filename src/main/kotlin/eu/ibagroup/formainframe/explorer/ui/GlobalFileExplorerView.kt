@@ -524,6 +524,7 @@ class GlobalFileExplorerView(
               project = project,
               cancellable = true
             ) {
+              it.isIndeterminate = false
               operations.forEach { op ->
                 op.sourceAttributes?.let { attr ->
                   service<AnalyticsService>().trackAnalyticsEvent(
@@ -553,37 +554,35 @@ class GlobalFileExplorerView(
                 it.fraction = it.fraction + 1.0 / filesToMoveTotal
               }
               fun List<MoveCopyOperation>.collectByFile(
-                takeParent: Boolean = false,
                 fileChooser: (MoveCopyOperation) -> VirtualFile
               ): List<VirtualFile> {
                 return map(fileChooser)
                   .distinct()
                   .getMinimalCommonParents()
-                  .mapNotNull {
-                    if (takeParent) {
-                      it.parent
-                    } else {
-                      it
-                    }
-                  }.distinct()
+                  .toList()
               }
 
               val destinationFilesToRefresh = operations.collectByFile { it.destination }
               val sourceFilesToRefresh = if (isCut.get()) {
-                operations.collectByFile(true) { it.source }
+                operations.collectByFile { it.source }
               } else {
                 emptyList()
               }
-              val nodesToRefresh = destinationFilesToRefresh
-                .run {
-                  if (isCut.get()) {
-                    plus(sourceFilesToRefresh).distinct().getMinimalCommonParents()
-                  } else {
-                    this
-                  }
-                }.map { myFsTreeStructure.findByVirtualFile(it) }
+              val destinationNodes = destinationFilesToRefresh
+                .map { myFsTreeStructure.findByVirtualFile(it) }
                 .flatten()
                 .distinct()
+              val nodesToRefresh = if (isCut.get()) {
+                val sourceNodesToRefresh = sourceFilesToRefresh
+                  .map { file -> myFsTreeStructure.findByVirtualFile(file).map { it.parent } }
+                  .flatten()
+                  .filterNotNull()
+                  .distinct()
+                destinationNodes.plus(sourceNodesToRefresh)
+              } else {
+                destinationNodes
+              }
+
               nodesToRefresh.forEach {
                 it.cleanCacheIfPossible()
                 myStructure.invalidate(it, true)
@@ -678,6 +677,7 @@ class GlobalFileExplorerView(
             project = project,
             cancellable = true
           ) {
+            it.isIndeterminate = false
             ignoreVFileDeleteEvents.compareAndSet(false, true)
             files.map { DeleteOperation(it, dataOpsManager) }
               .forEach { op ->
