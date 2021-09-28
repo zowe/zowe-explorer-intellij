@@ -36,7 +36,7 @@ data class RemoteDatasetAttributes(
   override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT)
 
   override val isCopyPossible: Boolean
-    get() = !isDirectory && !isMigrated
+    get() = !isMigrated
 
   override val isPastePossible: Boolean
     get() = isDirectory && !isMigrated

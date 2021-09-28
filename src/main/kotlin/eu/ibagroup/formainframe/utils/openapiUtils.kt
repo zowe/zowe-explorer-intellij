@@ -84,7 +84,7 @@ fun assertWriteAllowed() = ApplicationManager.getApplication().assertWriteAccess
 
 fun <T> submitOnWriteThread(block: () -> T): T {
   @Suppress("UnstableApiUsage")
-  return AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).submit(block).get()
+  return AppUIExecutor.onWriteThread(ModalityState.defaultModalityState()).submit(block).get()
 }
 
 @Suppress("UnstableApiUsage")
