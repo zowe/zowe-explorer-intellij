@@ -2,8 +2,8 @@ package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import javax.swing.JComponent
@@ -33,7 +33,7 @@ fun validateConnectionName(component: JTextField, ignoreValue: String? = null, c
 }
 
 fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, crudable: Crudable): ValidationInfo? {
-  val configAlreadyExists = crudable.find<WorkingSetConfig> {
+  val configAlreadyExists = crudable.find<FilesWorkingSetConfig> {
     ignoreValue != it.name && it.name == component.text
   }.count() > 0
   return if (configAlreadyExists) {
@@ -47,8 +47,8 @@ fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, c
 
 }
 
-fun validateWorkingSetMaskName(component: JTextField, ws: WorkingSet): ValidationInfo? {
-  val maskAlreadyExists = ws.dsMasks.map { it.mask }.contains(component.text)
+fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
+  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text)
       || ws.ussPaths.map { it.path }.contains(component.text)
 
   return if (maskAlreadyExists) {

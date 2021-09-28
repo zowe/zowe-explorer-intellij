@@ -10,7 +10,7 @@ import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialog
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
 import eu.ibagroup.formainframe.config.connect.ui.initEmptyUuids
-import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialog
+import eu.ibagroup.formainframe.config.ws.ui.files.WorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW

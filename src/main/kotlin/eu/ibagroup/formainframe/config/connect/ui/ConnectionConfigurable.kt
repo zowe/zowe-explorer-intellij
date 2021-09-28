@@ -13,7 +13,7 @@ import eu.ibagroup.formainframe.common.ui.toolbarTable
 import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.toMutableList
@@ -55,7 +55,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
   }
 
   private fun removeConnectionsWithWarning(selectedConfigs: List<ConnectionDialogState>) {
-    val workingSets = sandboxCrudable.getAll<WorkingSetConfig>().toMutableList()
+    val workingSets = sandboxCrudable.getAll<FilesWorkingSetConfig>().toMutableList()
     val wsUsages = workingSets.filter { wsConfig ->
       selectedConfigs.any { state -> wsConfig.connectionConfigUuid == state.connectionConfig.uuid }
     }

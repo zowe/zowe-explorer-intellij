@@ -7,11 +7,12 @@ import com.intellij.ui.table.TableView
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.common.ui.getColumnIndexByName
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.ui.files.WSTableModel
 import java.util.function.Supplier
 
 fun goToConnectionsButton(
-  table: TableView<WorkingSetConfig>?,
+  table: TableView<FilesWorkingSetConfig>?,
   wsTableModel: WSTableModel
 ): AnActionButton {
 

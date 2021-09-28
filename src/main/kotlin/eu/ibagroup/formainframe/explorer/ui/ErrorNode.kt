@@ -8,7 +8,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 class ErrorNode(
   project: Project,
   parent: ExplorerTreeNode<*>,
-  explorer: Explorer,
+  explorer: Explorer<*>,
   treeStructure: ExplorerTreeStructureBase,
   override var text: String = message("title.error")
 ) : InfoNodeBase(project, parent, explorer, treeStructure) {

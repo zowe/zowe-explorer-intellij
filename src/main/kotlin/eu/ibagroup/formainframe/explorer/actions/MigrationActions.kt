@@ -15,7 +15,7 @@ import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperation
 import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationParams
 import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperation
 import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationParams
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
@@ -23,7 +23,7 @@ import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
 
 
 fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, ConnectionConfig>? {
-  return if (node is ExplorerUnitTreeNodeBase<*, *> && node.unit is WorkingSet) {
+  return if (node is ExplorerUnitTreeNodeBase<*, *> && node.unit is FilesWorkingSet) {
     val file = node.virtualFile
     val config = node.unit.connectionConfig
     if (file != null && config != null) {

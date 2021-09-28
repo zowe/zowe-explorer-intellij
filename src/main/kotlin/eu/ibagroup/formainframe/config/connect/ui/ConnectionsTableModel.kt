@@ -71,4 +71,7 @@ class ConnectionsTableModel(
   }
 
   override val clazz = ConnectionDialogState::class.java
+  init {
+    initialize()
+  }
 }

@@ -9,7 +9,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 private val PROVIDERS = SmartList(FileExplorerTreeStructureProvider())
 
-class FileExplorerTreeStructure(explorer: Explorer, project: Project) : ExplorerTreeStructureBase(explorer, project) {
+class CommonExplorerTreeStructure <Expl: Explorer<*>> (
+  explorer: Expl,
+  project: Project,
+  private val rootNodeProvider: (explorer: Expl, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>
+) : ExplorerTreeStructureBase(explorer, project) {
 
   private val valueToNodeMap = Collections.synchronizedMap(
     WeakHashMap<Any, ConcurrentLinkedQueue<ExplorerTreeNode<*>>>()
@@ -37,7 +41,7 @@ class FileExplorerTreeStructure(explorer: Explorer, project: Project) : Explorer
     return fileToNodeMap[file] ?: emptySet()
   }
 
-  private val root by lazy { FileExplorerTreeNodeRoot(explorer, project, this) }
+  private val root by lazy { rootNodeProvider(explorer, project, this) }
 
   override fun getRootElement(): Any {
     return root

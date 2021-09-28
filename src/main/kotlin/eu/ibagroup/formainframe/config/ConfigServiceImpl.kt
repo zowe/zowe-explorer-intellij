@@ -6,8 +6,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.rd.util.UUID
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.jobs.JobsFilter
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.runIfTrue
@@ -49,7 +49,7 @@ internal abstract class ClassCaseSwitcher<R> {
 
   abstract fun onWorkingSetConfig(): R
 
-  abstract fun onJobFilter() : R
+  abstract fun onJobsWorkingSetConfig() : R
 
   open fun onCredentials(): R {
     return onElse()
@@ -60,8 +60,8 @@ internal abstract class ClassCaseSwitcher<R> {
   operator fun invoke(clazz: Class<*>): R {
     return when (clazz) {
       ConnectionConfig::class.java -> onConnectionConfig()
-      WorkingSetConfig::class.java -> onWorkingSetConfig()
-      JobsFilter::class.java -> onJobFilter()
+      FilesWorkingSetConfig::class.java -> onWorkingSetConfig()
+      JobsWorkingSetConfig::class.java -> onJobsWorkingSetConfig()
       Credentials::class.java -> onCredentials()
       else -> onElse()
     }
@@ -79,13 +79,12 @@ private class FilterSwitcher(
 
 
   override fun onWorkingSetConfig(): Long {
-    return crudable.getByColumnLambda(row as WorkingSetConfig) { it.name }.count()
+    return crudable.getByColumnLambda(row as FilesWorkingSetConfig) { it.name }.count()
   }
 
-  override fun onJobFilter(): Long {
-    return crudable.getByColumnLambda(row as JobsFilter) { it.uuid }.count()
+  override fun onJobsWorkingSetConfig(): Long {
+    return crudable.getByColumnLambda(row as JobsWorkingSetConfig) { it.uuid }.count()
   }
-
   override fun onCredentials(): Long {
     return 0
   }
@@ -110,14 +109,14 @@ private class UpdateFilterSwitcher(
 
 
   override fun onWorkingSetConfig(): Boolean {
-    return if (currentRow is WorkingSetConfig && updatingRow is WorkingSetConfig) {
+    return if (currentRow is FilesWorkingSetConfig && updatingRow is FilesWorkingSetConfig) {
       filterSwitcher.onWorkingSetConfig() == 0L || updatingRow.name == currentRow.name
     } else false
   }
 
-  override fun onJobFilter(): Boolean {
-    return if (currentRow is JobsFilter && updatingRow is JobsFilter) {
-      filterSwitcher.onJobFilter() == 0L || updatingRow.uuid == currentRow.uuid
+  override fun onJobsWorkingSetConfig(): Boolean {
+    return if (currentRow is JobsWorkingSetConfig && updatingRow is JobsWorkingSetConfig) {
+      filterSwitcher.onJobsWorkingSetConfig() == 0L || updatingRow.uuid == currentRow.uuid
     } else false
   }
 
@@ -152,8 +151,8 @@ internal fun makeCrudableWithoutListeners(
         }
       }
 
-      override fun onJobFilter(): MutableList<*> {
-        return stateGetter().jobFilters
+      override fun onJobsWorkingSetConfig(): MutableList<*> {
+        return stateGetter().jobsWorkingSets
       }
 
       override fun onElse(): MutableList<*>? {
@@ -192,10 +191,9 @@ internal fun <T> classToList(clazz: Class<out T>, state: ConfigState): MutableLi
       return state.workingSets as MutableList<T>
     }
 
-    override fun onJobFilter(): MutableList<T> {
-      return state.jobFilters as MutableList<T>
+    override fun onJobsWorkingSetConfig(): MutableList<T> {
+      return state.jobsWorkingSets as MutableList<T>
     }
-
     override fun onElse(): MutableList<T>? {
       return null
     }

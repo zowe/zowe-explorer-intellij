@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.config.jobs.JobsFilter
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
@@ -67,9 +67,9 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
         )
       }
       log.info("${query.request} returned ${attributes?.size ?: 0} entities")
-      log.debug {
-        attributes?.joinToString("\n") ?: ""
-      }
+//      log.debug {
+//        attributes?.joinToString("\n") ?: ""
+//      }
     } else {
       exception = CallException(response, "Cannot retrieve Job files list")
     }

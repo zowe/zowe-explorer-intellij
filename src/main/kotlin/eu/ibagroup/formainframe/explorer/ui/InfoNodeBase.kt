@@ -12,7 +12,7 @@ private val any = Any()
 abstract class InfoNodeBase(
   project: Project,
   parent: ExplorerTreeNode<*>,
-  explorer: Explorer,
+  explorer: Explorer<*>,
   treeStructure: ExplorerTreeStructureBase
 ) :
   ExplorerTreeNode<Any>(any, project, parent, explorer, treeStructure) {

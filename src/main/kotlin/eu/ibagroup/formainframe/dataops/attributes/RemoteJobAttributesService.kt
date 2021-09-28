@@ -67,7 +67,8 @@ class RemoteJobAttributesService(
   override fun continuePathChain(attributes: RemoteJobAttributes): List<PathElementSeed> {
     return listOf(
       PathElementSeed(attributes.jobInfo.subSystem ?: "NOSYS", createAttributes(directory = true)),
-      PathElementSeed(attributes.name, createAttributes(directory = true))
+      PathElementSeed(attributes.name, createAttributes(directory = true)),
+      PathElementSeed(attributes.jobInfo.jobId, createAttributes(directory = true))
     )
   }
 }
