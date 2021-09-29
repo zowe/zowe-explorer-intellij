@@ -15,7 +15,12 @@ import javax.swing.JComponent
 class JobsWsDialog(
   crudable: Crudable,
   state: JobsWorkingSetDialogState
-) : AbstractWsDialog<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow, JobsWorkingSetDialogState>(crudable, JobsWorkingSetDialogState::class.java, state) {
+) : AbstractWsDialog<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow, JobsWorkingSetDialogState>(
+  crudable,
+  JobsWorkingSetDialogState::class.java,
+  state
+) {
+  override val wsConfigClass = JobsWorkingSetConfig::class.java
 
   override val masksTable = ValidatingTableView(
     ValidatingListTableModel(PrefixColumn, OwnerColumn, JobIdColumn).apply {
@@ -46,7 +51,8 @@ class JobsWsDialog(
   }
 
   override fun onWSApplyed(state: JobsWorkingSetDialogState): JobsWorkingSetDialogState {
-    state.maskRow.map { fixEmptyFieldsInState(it, state.connectionUuid) }
+    state.maskRow = state.maskRow.map { fixEmptyFieldsInState(it, state.connectionUuid) }
+      .distinctBy { "pre:" + it.prefix + "owr:" + it.owner + "jid:" + it.jobId } as MutableList<JobsWorkingSetDialogState.TableRow>
     return super.onWSApplyed(state)
   }
 
@@ -60,10 +66,17 @@ class JobsWsDialog(
       masksTable.listTableModel.rowCount == 0 -> {
         validationBuilder.warning("You are going to create a Working Set that doesn't fetch anything")
       }
+      hasDuplicatesInTable(masksTable.items) -> {
+        ValidationInfo("You cannot add several identical job filters to table")
+      }
       else -> null
     }
   }
 
+  private fun hasDuplicatesInTable(tableElements: MutableList<JobsWorkingSetDialogState.TableRow>): Boolean {
+    return tableElements.size != tableElements.map { "pre:" + it.prefix + "owr:" + it.owner + "jid:" + it.jobId }
+      .distinct().size
+  }
 
   object PrefixColumn : ValidatingColumnInfo<JobsWorkingSetDialogState.TableRow>("Prefix") {
     override fun valueOf(item: JobsWorkingSetDialogState.TableRow?): String? = item?.prefix
