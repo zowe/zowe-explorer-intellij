@@ -23,6 +23,7 @@ class WorkingSetDialog(
   crudable: Crudable,
   state: WorkingSetDialogState
 ) : AbstractWsDialog<FilesWorkingSetConfig, WorkingSetDialogState.TableRow, WorkingSetDialogState>(crudable, WorkingSetDialogState::class.java, state) {
+  override val wsConfigClass = FilesWorkingSetConfig::class.java
 
   override val masksTable = ValidatingTableView(
     ValidatingListTableModel(MaskColumn, TypeColumn).apply {

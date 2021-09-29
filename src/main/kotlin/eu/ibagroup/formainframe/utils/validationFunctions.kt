@@ -2,7 +2,7 @@ package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
@@ -20,7 +20,6 @@ fun validateForBlank(component: JTextField): ValidationInfo? {
   return validateForBlank(component.text, component)
 }
 
-
 fun validateConnectionName(component: JTextField, ignoreValue: String? = null, crudable: Crudable): ValidationInfo? {
   val configAlreadyExists = crudable.find<ConnectionConfig> {
     ignoreValue != it.name && it.name == component.text.trim()
@@ -32,8 +31,13 @@ fun validateConnectionName(component: JTextField, ignoreValue: String? = null, c
   }
 }
 
-fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, crudable: Crudable): ValidationInfo? {
-  val configAlreadyExists = crudable.find<FilesWorkingSetConfig> {
+fun <WSConfig: WorkingSetConfig> validateWorkingSetName(
+  component: JTextField,
+  ignoreValue: String? = null,
+  crudable: Crudable,
+  wsConfigClass: Class<out WSConfig>
+): ValidationInfo? {
+  val configAlreadyExists = crudable.find(wsConfigClass) {
     ignoreValue != it.name && it.name == component.text
   }.count() > 0
   return if (configAlreadyExists) {
@@ -44,7 +48,6 @@ fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, c
   } else {
     null
   }
-
 }
 
 fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {

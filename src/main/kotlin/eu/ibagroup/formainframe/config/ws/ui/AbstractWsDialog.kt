@@ -8,23 +8,30 @@ import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.panel
 import com.intellij.util.containers.isEmpty
-import eu.ibagroup.formainframe.common.ui.*
+import eu.ibagroup.formainframe.common.ui.DialogMode
+import eu.ibagroup.formainframe.common.ui.StatefulComponent
+import eu.ibagroup.formainframe.common.ui.ValidatingTableView
+import eu.ibagroup.formainframe.common.ui.toolbarTable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import eu.ibagroup.formainframe.utils.findAnyNullable
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateWorkingSetName
 import java.awt.Dimension
 import javax.swing.JComponent
 import kotlin.streams.toList
 
-abstract class AbstractWsDialog<WSConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
+abstract class AbstractWsDialog<WSConfig: WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
   crudable: Crudable,
   wsdStateClass: Class<out WSDState>,
   override var state: WSDState,
   var initialState: WSDState = state.clone(wsdStateClass)
 ) : DialogWrapper(false), StatefulComponent<WSDState> {
-
+  abstract val wsConfigClass: Class<out WSConfig>
 
   private val connectionComboBoxModel = CollectionComboBoxModel(crudable.getAll<ConnectionConfig>().toList())
 
@@ -45,10 +52,10 @@ abstract class AbstractWsDialog<WSConfig, TableRow, WSDState : AbstractWsDialogS
         textField(getter = { state.workingSetName }, setter = { state.workingSetName = it })
           .withValidationOnInput {
             validateWorkingSetName(
-              it, initialState.workingSetName.ifBlank {
-                null
-              },
-              crudable
+              it,
+              initialState.workingSetName.ifBlank { null },
+              crudable,
+              wsConfigClass
             )
           }
           .withValidationOnApply {
