@@ -246,13 +246,19 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
   }
 
   private fun registerTreeListeners(tree: DnDAwareTree) {
+    val contextMenuPlace : String = when (this) {
+      is GlobalFileExplorerView -> FILE_EXPLORER_CONTEXT_MENU
+      is JesExplorerView -> JES_EXPLORER_CONTEXT_MENU
+      else -> { "Unrecognized" }
+    }
+
     tree.addMouseListener(object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
         val popupActionGroup = DefaultActionGroup()
         popupActionGroup.add(
           contextMenu
         )
-        val popupMenu = ActionManager.getInstance().createActionPopupMenu(FILE_EXPLORER_CONTEXT_MENU, popupActionGroup)
+        val popupMenu = ActionManager.getInstance().createActionPopupMenu(contextMenuPlace, popupActionGroup)
         popupMenu.component.show(comp, x, y)
       }
     })
