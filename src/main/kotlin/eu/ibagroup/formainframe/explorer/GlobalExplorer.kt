@@ -85,7 +85,7 @@ class GlobalExplorer : Explorer {
     }
     NotificationBuilder(
       EXPLORER_NOTIFICATION_GROUP_ID,
-      "Error in plugin For Mainframe",
+      "Error in plugin Zowe Explorer",
       t.message ?: t.toString(),
       NotificationType.ERROR
     ).addAction(reportInSlackAction).build().let {

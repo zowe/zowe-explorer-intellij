@@ -18,7 +18,7 @@
     </extensionPoints>
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
-    <name>For Mainframe</name>
+    <name>Zowe Explorer</name>
     <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y
     </vendor>
 
@@ -111,7 +111,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
 
         <applicationConfigurable id="configurable.mainframe.explorer"
-                                 displayName="For Mainframe"
+                                 displayName="Zowe Explorer"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
 
         <editorFloatingToolbarProvider
@@ -120,9 +120,9 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <notificationGroup displayType="STICKY_BALLOON"
                            id="eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"/>
 
-        <toolWindow id="For Mainframe" anchor="right"
+        <toolWindow id="Zowe Explorer" anchor="right"
                     factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"
-                    doNotActivateOnStart="true"/>
+                    doNotActivateOnStart="true" icon="ForMainframeIcons.explorerToolbarIcon"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"

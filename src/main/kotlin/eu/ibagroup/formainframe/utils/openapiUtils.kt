@@ -43,7 +43,7 @@ fun PluginManager.getPluginDescriptorByClass(clazz: Class<*>): IdeaPluginDescrip
 
 val forMainframePluginDescriptor by lazy {
   PluginManager.getInstance().getPluginDescriptorByClass(Dummy::class.java)
-    ?: throw IllegalStateException("Dummy class wasn't loaded by For Mainframe plugin's class loader for some reason")
+    ?: throw IllegalStateException("Dummy class wasn't loaded by Zowe Explorer plugin's class loader for some reason")
 }
 
 val cachesDir by lazy {

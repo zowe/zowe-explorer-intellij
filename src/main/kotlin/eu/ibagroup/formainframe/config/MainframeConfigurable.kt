@@ -21,7 +21,7 @@ class MainframeConfigurable : TabbedConfigurable() {
   var preferredConfigurableClass: Class<*>? = null
 
   override fun getDisplayName(): String {
-    return "For Mainframe"
+    return "Zowe"
   }
 
   private lateinit var connectionConfigurable: ConnectionConfigurable
