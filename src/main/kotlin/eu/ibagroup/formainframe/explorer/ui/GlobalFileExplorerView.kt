@@ -121,7 +121,7 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
     myStructure = StructureTreeModel(
       CommonExplorerTreeStructure(explorer, project, rootNodeProvider).also { myFsTreeStructure = it },
       { o1, o2 ->
-        if (o1 is WorkingSetNode && o2 is WorkingSetNode) {
+        if (o1 is FilesWorkingSetNode && o2 is FilesWorkingSetNode) {
           o1.unit.name.compareTo(o2.unit.name)
         } else {
           0
@@ -651,7 +651,7 @@ class GlobalFileExplorerView(
   private val deleteProvider = object : DeleteProvider {
     override fun deleteElement(dataContext: DataContext) {
       val selected = mySelectedNodesData
-      selected.map { it.node }.filterIsInstance<WorkingSetNode>()
+      selected.map { it.node }.filterIsInstance<FilesWorkingSetNode>()
         .forEach {
           if (showYesNoDialog(
               title = "Deletion of Working Set ${it.unit.name}",
@@ -660,7 +660,7 @@ class GlobalFileExplorerView(
               icon = AllIcons.General.QuestionDialog
             )
           ) {
-            explorer.disposeUnit(it.unit)
+            explorer.disposeUnit(it.unit as FilesWorkingSet)
           }
         }
       selected.map { it.node }.filterIsInstance<DSMaskNode>()
@@ -692,7 +692,7 @@ class GlobalFileExplorerView(
         }
       val nodeDataAndPaths = selected
         .filterNot {
-          it.node is WorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isConfigUssPath)
+          it.node is FilesWorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isConfigUssPath)
         }.mapNotNull {
           Pair(it, it.file?.getParentsChain() ?: return@mapNotNull null)
         }
@@ -745,7 +745,7 @@ class GlobalFileExplorerView(
         DeleteOperation(it.file ?: return@mapNotNull null, it.attributes ?: return@mapNotNull null)
       }
       return selected.any {
-        it.node is WorkingSetNode
+        it.node is FilesWorkingSetNode
             || it.node is DSMaskNode
             || (it.node is UssDirNode && it.node.isConfigUssPath)
             || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }

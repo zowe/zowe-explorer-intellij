@@ -8,7 +8,7 @@ import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.files.WorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.files.toDialogState
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
-import eu.ibagroup.formainframe.explorer.ui.WorkingSetNode
+import eu.ibagroup.formainframe.explorer.ui.FilesWorkingSetNode
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 
@@ -20,7 +20,7 @@ class EditWorkingSetAction : AnAction() {
       return
     }
     val node = view.mySelectedNodesData[0].node
-    if (node is WorkingSetNode) {
+    if (node is FilesWorkingSetNode) {
       var selected = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(node.value.uuid)?.clone() as FilesWorkingSetConfig
       WorkingSetDialog(configCrudable, selected.toDialogState().apply { mode = DialogMode.UPDATE }).apply {
         if (showAndGet()) {
@@ -42,6 +42,6 @@ class EditWorkingSetAction : AnAction() {
       return
     }
     val selected = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = selected.size == 1 && (selected[0].node is WorkingSetNode)
+    e.presentation.isEnabledAndVisible = selected.size == 1 && (selected[0].node is FilesWorkingSetNode)
   }
 }
