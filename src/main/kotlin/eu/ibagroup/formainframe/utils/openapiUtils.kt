@@ -200,6 +200,12 @@ inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
   }
 }
 
+inline fun runWriteActionInEdtAndWait(crossinline block: () -> Unit) {
+  invokeAndWaitIfNeeded {
+    runWriteAction(block)
+  }
+}
+
 inline fun <reified T : Any> log(level: Level = Level.INFO): Logger {
   return logger<T>().apply { setLevel(level) }
 }

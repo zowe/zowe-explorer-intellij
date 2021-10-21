@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.dataops.operations
 
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -11,12 +10,12 @@ import eu.ibagroup.formainframe.dataops.attributes.USS_DELIMITER
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.r2z.CopyDataUSS
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 import eu.ibagroup.r2z.MoveUssFile
 import retrofit2.Call
+import retrofit2.Response
 
 class UssToUssFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
@@ -25,7 +24,6 @@ class UssToUssFileMoverFactory : OperationRunnerFactory {
 }
 
 class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFileMover() {
-
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.sourceAttributes is RemoteUssAttributes
       && operation.destinationAttributes is RemoteUssAttributes
@@ -77,13 +75,9 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {
       try {
         val (call, from, to) = makeCall(requester.connectionConfig, operation, progressIndicator)
-        val response = call.execute()
+        val operationName = if (operation.isMove) "move" else "copy"
+        val response: Response<Void> = call.execute()
         if (!response.isSuccessful) {
-          val operationName = if (operation.isMove) {
-            "move"
-          } else {
-            "copy"
-          }
           throwable = CallException(response, "Cannot $operationName $from to $to")
         }
         break

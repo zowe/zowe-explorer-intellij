@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
@@ -20,10 +21,10 @@ import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.CREDENTIALS_CHANGED
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import java.util.stream.Collectors
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
@@ -71,7 +72,7 @@ interface Explorer<U: WorkingSet<*>> {
   fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?)
 }
 
-abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid>: Explorer<U> {
+abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid>: Explorer<U>, Disposable {
 
   val lock = ReentrantReadWriteLock()
 
@@ -130,7 +131,12 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
     reportThrowable(t, project)
   }
 
+  override fun dispose() {
+    Disposer.dispose(disposable)
+  }
+
   fun doInit() {
+    Disposer.register(service<DataOpsManager>(), disposable)
     subscribe(CONFIGS_CHANGED, disposable, eventAdapter(unitConfigClass) {
       onDelete { unit ->
         lock.write {

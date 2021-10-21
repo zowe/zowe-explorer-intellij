@@ -182,8 +182,8 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
                   && this@ExplorerTreeView
                 .ignoreVFileDeleteEvents
                 .compareAndSet(true, true) -> {
-                null
-              }
+                  null
+                }
               else -> {
                 nodes.mapNotNull { n -> n.parent }
               }
@@ -601,7 +601,6 @@ class GlobalFileExplorerView(
         }
       }
     }
-
   }
 
   private val deleteProvider = object : DeleteProvider {
@@ -689,13 +688,7 @@ class GlobalFileExplorerView(
               }
             nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
-              .forEach { it.cleanCache(false) }
-//            files.asSequence().mapNotNull { it.parent }.toSet().map {
-//              myFsTreeStructure.findByVirtualFile(it)
-//            }.flatten().toSet().forEach {
-//              it.cleanCacheIfPossible()
-//              myStructure.invalidate(it, true)
-//            }
+              .forEach { it.cleanCache(true) }
           }
         }
       }
