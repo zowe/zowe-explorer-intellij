@@ -14,6 +14,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.GlobalJesWorkingSet
 
 val JES_EXPLORER_VIEW = DataKey.create<JesExplorerView>("jesExplorerView")
+const val JES_EXPLORER_CONTEXT_MENU = "Jes Explorer"
 
 class JesExplorerView(
   explorer: Explorer<GlobalJesWorkingSet>,
