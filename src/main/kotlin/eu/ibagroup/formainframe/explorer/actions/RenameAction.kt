@@ -131,7 +131,7 @@ class RenameAction : AnAction() {
       return
     }
     val selectedNodes = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1 && selectedNodes[0].node !is FilesWorkingSetNode) {
+    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1 && selectedNodes[0].node !is WorkingSetNode) {
       val file = selectedNodes[0].file
       var isMigrated = false
       if (file != null) {

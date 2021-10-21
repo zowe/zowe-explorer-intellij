@@ -9,7 +9,7 @@ class RefreshNodeAction : AnAction() {
 
   private fun cleanInvalidateOnExpand(
     node: ExplorerTreeNode<*>,
-    view: ExplorerTreeView<*,*>
+    view: GlobalFileExplorerView
   ) {
     view.myStructure.promisePath(node, view.myTree).onSuccess {
       val lastNode = it.lastPathComponent
@@ -22,28 +22,25 @@ class RefreshNodeAction : AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: e.getData(JES_EXPLORER_VIEW)
-    view ?: return
+    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
 
     val selected = view.mySelectedNodesData
 
     selected.parallelStream().forEach { data ->
-      when (val node = data.node) {
-        is FetchNode -> {
-          cleanInvalidateOnExpand(node, view)
-          node.cleanCache()
-          val query = node.query ?: return@forEach
-          view.getNodesByQueryAndInvalidate(query)
+      val node = data.node
+      if (node is FetchNode) {
+        cleanInvalidateOnExpand(node, view)
+        node.cleanCache()
+        val query = node.query ?: return@forEach
+        view.getNodesByQueryAndInvalidate(query)
+      } else if (node is WorkingSetNode) {
+        node.cachedChildren.filterIsInstance<FetchNode>()
+          .forEach {
+          it.cleanCache()
+          cleanInvalidateOnExpand(it, view)
         }
-        is WorkingSetNode<*> -> {
-          node.cachedChildren.filterIsInstance<FetchNode>()
-            .forEach {
-              it.cleanCache()
-              cleanInvalidateOnExpand(it, view)
-            }
-          view.myFsTreeStructure.findByValue(node.value).forEach {
-            view.myStructure.invalidate(it, true)
-          }
+        view.myFsTreeStructure.findByValue(node.value).forEach {
+          view.myStructure.invalidate(it, true)
         }
       }
     }
@@ -51,9 +48,7 @@ class RefreshNodeAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: e.getData(JES_EXPLORER_VIEW)
-
-    view ?: let {
+    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
