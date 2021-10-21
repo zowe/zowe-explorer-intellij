@@ -16,7 +16,7 @@ class JesExplorerFactory : ExplorerFactory<GlobalJesWorkingSet, JesExplorer> {
   override fun buildComponent(): JesExplorer = JesExplorer()
 }
 
-class JesExplorer : AbstractExplorerBase<GlobalJesWorkingSet, JobsWorkingSetConfig>() {
+class JesExplorer() : AbstractExplorerBase<GlobalJesWorkingSet, JobsWorkingSetConfig>() {
   override val unitClass = GlobalJesWorkingSet::class.java
   override val unitConfigClass = JobsWorkingSetConfig::class.java
 
@@ -37,5 +37,4 @@ class JesExplorer : AbstractExplorerBase<GlobalJesWorkingSet, JobsWorkingSetConf
   init {
     doInit()
   }
-
 }

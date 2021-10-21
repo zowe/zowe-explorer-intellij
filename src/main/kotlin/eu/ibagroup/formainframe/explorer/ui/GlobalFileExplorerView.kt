@@ -34,6 +34,8 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
@@ -182,8 +184,8 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
                   && this@ExplorerTreeView
                 .ignoreVFileDeleteEvents
                 .compareAndSet(true, true) -> {
-                null
-              }
+                  null
+                }
               else -> {
                 nodes.mapNotNull { n -> n.parent }
               }
@@ -477,7 +479,20 @@ class GlobalFileExplorerView(
               .mapNotNull { destFile ->
                 destFile.children
                   ?.mapNotNull conflicts@{ destChild ->
-                    Pair(destFile, sourceFiles.find { it.name == destChild.name } ?: return@conflicts null)
+                    Pair(destFile, sourceFiles.find { source ->
+                      val sourceAttributes = dataOpsManager.tryToGetAttributes(source)
+                      val destAttributes = dataOpsManager.tryToGetAttributes(destChild)
+                      if (
+                        destAttributes is RemoteMemberAttributes &&
+                        sourceAttributes is RemoteUssAttributes
+                      ) {
+                        val memberName = sourceAttributes.name.filter { it.isLetterOrDigit() }.take(8).toUpperCase()
+                        if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
+                      }
+                      else {
+                        source.name == destChild.name
+                      }
+                    } ?: return@conflicts null)
                   }
               }.flatten()
 
@@ -501,6 +516,30 @@ class GlobalFileExplorerView(
                 1 -> overwriteDestinationSourceList.addAll(conflicts)
                 else -> return
               }
+            }
+
+            val ussToPdsWarnings = pasteDestinations.mapNotNull { destFile ->
+              val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
+              if (destAttributes !is RemoteDatasetAttributes) null
+              else {
+                val sourceUssAttributes = sourceFiles.filter { sourceFile ->
+                  val sourceAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
+                  sourceAttributes is RemoteUssAttributes
+                }
+                sourceUssAttributes.map { Pair(destFile, it) }.ifEmpty { null }
+              }
+            }.flatten()
+
+            if (ussToPdsWarnings.isNotEmpty() &&
+              !showYesNoDialog(
+                "Uss File To Pds Placing",
+                "You are about to place uss file to Pds. All lines exceeding the record length will be truncated.",
+                null,
+                "Ok",
+                "Skip this files",
+                AllIcons.General.WarningDialog
+              )) {
+              skipDestinationSourceList.addAll(ussToPdsWarnings)
             }
 
             val operations = pasteDestinations.map { destFile ->
@@ -607,7 +646,6 @@ class GlobalFileExplorerView(
         }
       }
     }
-
   }
 
   private val deleteProvider = object : DeleteProvider {
@@ -695,13 +733,7 @@ class GlobalFileExplorerView(
               }
             nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
-              .forEach { it.cleanCache(false) }
-//            files.asSequence().mapNotNull { it.parent }.toSet().map {
-//              myFsTreeStructure.findByVirtualFile(it)
-//            }.flatten().toSet().forEach {
-//              it.cleanCacheIfPossible()
-//              myStructure.invalidate(it, true)
-//            }
+              .forEach { it.cleanCache(true) }
           }
         }
       }
