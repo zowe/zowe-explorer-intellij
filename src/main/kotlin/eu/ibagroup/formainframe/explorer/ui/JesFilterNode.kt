@@ -12,7 +12,7 @@ import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
-import eu.ibagroup.formainframe.explorer.GlobalJesWorkingSet
+import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
@@ -22,9 +22,9 @@ class JesFilterNode(
   jobsFilter: JobsFilter,
   project: Project,
   parent: ExplorerTreeNode<*>,
-  workingSet: GlobalJesWorkingSet,
+  workingSet: JesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<JobsFilter, JobsFilter, GlobalJesWorkingSet>(
+) : RemoteMFFileFetchNode<JobsFilter, JobsFilter, JesWorkingSet>(
   jobsFilter, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
 
