@@ -1,8 +1,6 @@
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
-import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.*
@@ -11,13 +9,13 @@ import java.util.stream.Collectors
 
 const val EXPLORER_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"
 
-class GlobalExplorerFactory : ExplorerFactory<GlobalWorkingSet, GlobalExplorer> {
+class GlobalExplorerFactory : ExplorerFactory<GlobalFilesWorkingSet, GlobalExplorer> {
   override fun buildComponent(): GlobalExplorer = GlobalExplorer()
 }
 
-class GlobalExplorer : AbstractExplorerBase<GlobalWorkingSet, FilesWorkingSetConfig>() {
-  override fun FilesWorkingSetConfig.toUnit(parentDisposable: Disposable): GlobalWorkingSet {
-    return GlobalWorkingSet(
+class GlobalExplorer : AbstractExplorerBase<GlobalFilesWorkingSet, FilesWorkingSetConfig>() {
+  override fun FilesWorkingSetConfig.toUnit(parentDisposable: Disposable): GlobalFilesWorkingSet {
+    return GlobalFilesWorkingSet(
       uuid = uuid,
       globalExplorer = this@GlobalExplorer,
       workingSetConfigProvider = { configCrudable.getByUniqueKey(it) },
@@ -25,7 +23,7 @@ class GlobalExplorer : AbstractExplorerBase<GlobalWorkingSet, FilesWorkingSetCon
     )
   }
 
-  override val unitClass = GlobalWorkingSet::class.java
+  override val unitClass = GlobalFilesWorkingSet::class.java
   override val unitConfigClass = FilesWorkingSetConfig::class.java
 
   override val units by rwLocked(
