@@ -15,7 +15,7 @@ class GlobalJesWorkingSet(
   globalExplorer,
   workingSetConfigProvider,
   parentDisposable
-), JesWorkingSet {
+) {
   override val wsConfigClass = JobsWorkingSetConfig::class.java
 
   override fun JobsWorkingSetConfig.masks(): MutableCollection<JobsFilter> = this.jobsFilters

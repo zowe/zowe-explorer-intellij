@@ -15,7 +15,7 @@ import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.fetch.JobQuery
-import eu.ibagroup.formainframe.explorer.JesWorkingSet
+import eu.ibagroup.formainframe.explorer.GlobalJesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 private val jobIcon = AllIcons.Nodes.Folder
@@ -24,9 +24,9 @@ class JobNode(
   library: MFVirtualFile,
   project: Project,
   parent: ExplorerTreeNode<*>,
-  workingSet: JesWorkingSet,
+  workingSet: GlobalJesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<MFVirtualFile, JobQuery, JesWorkingSet>(
+) : RemoteMFFileFetchNode<MFVirtualFile, JobQuery, GlobalJesWorkingSet>(
   library, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
   override fun makeFetchTaskTitle(query: RemoteQuery<JobQuery, Unit>): String {
@@ -53,7 +53,7 @@ class JobNode(
     val attributes = service<DataOpsManager>().tryToGetAttributes(value) as? RemoteJobAttributes
     val job = attributes?.jobInfo
     val jobIdText = if (job == null) "" else "(${job.jobId})"
-    presentation.addText("${job?.jobName ?: ""} $jobIdText ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    presentation.addText("${job?.jobName ?: ""} ${jobIdText} ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
     presentation.addText(job?.status?.value ?: "", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     presentation.setIcon(jobIcon)
   }

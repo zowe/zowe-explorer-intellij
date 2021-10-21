@@ -121,7 +121,7 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
     myStructure = StructureTreeModel(
       CommonExplorerTreeStructure(explorer, project, rootNodeProvider).also { myFsTreeStructure = it },
       { o1, o2 ->
-        if (o1 is FilesWorkingSetNode && o2 is FilesWorkingSetNode) {
+        if (o1 is WorkingSetNode && o2 is WorkingSetNode) {
           o1.unit.name.compareTo(o2.unit.name)
         } else {
           0
@@ -248,19 +248,13 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
   }
 
   private fun registerTreeListeners(tree: DnDAwareTree) {
-    val contextMenuPlace : String = when (this) {
-      is GlobalFileExplorerView -> FILE_EXPLORER_CONTEXT_MENU
-      is JesExplorerView -> JES_EXPLORER_CONTEXT_MENU
-      else -> { "Unrecognized" }
-    }
-
     tree.addMouseListener(object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
         val popupActionGroup = DefaultActionGroup()
         popupActionGroup.add(
           contextMenu
         )
-        val popupMenu = ActionManager.getInstance().createActionPopupMenu(contextMenuPlace, popupActionGroup)
+        val popupMenu = ActionManager.getInstance().createActionPopupMenu(FILE_EXPLORER_CONTEXT_MENU, popupActionGroup)
         popupMenu.component.show(comp, x, y)
       }
     })
@@ -651,7 +645,7 @@ class GlobalFileExplorerView(
   private val deleteProvider = object : DeleteProvider {
     override fun deleteElement(dataContext: DataContext) {
       val selected = mySelectedNodesData
-      selected.map { it.node }.filterIsInstance<FilesWorkingSetNode>()
+      selected.map { it.node }.filterIsInstance<WorkingSetNode>()
         .forEach {
           if (showYesNoDialog(
               title = "Deletion of Working Set ${it.unit.name}",
@@ -660,7 +654,7 @@ class GlobalFileExplorerView(
               icon = AllIcons.General.QuestionDialog
             )
           ) {
-            explorer.disposeUnit(it.unit as FilesWorkingSet)
+            explorer.disposeUnit(it.unit)
           }
         }
       selected.map { it.node }.filterIsInstance<DSMaskNode>()
@@ -692,7 +686,7 @@ class GlobalFileExplorerView(
         }
       val nodeDataAndPaths = selected
         .filterNot {
-          it.node is FilesWorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isConfigUssPath)
+          it.node is WorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isConfigUssPath)
         }.mapNotNull {
           Pair(it, it.file?.getParentsChain() ?: return@mapNotNull null)
         }
@@ -745,7 +739,7 @@ class GlobalFileExplorerView(
         DeleteOperation(it.file ?: return@mapNotNull null, it.attributes ?: return@mapNotNull null)
       }
       return selected.any {
-        it.node is FilesWorkingSetNode
+        it.node is WorkingSetNode
             || it.node is DSMaskNode
             || (it.node is UssDirNode && it.node.isConfigUssPath)
             || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }

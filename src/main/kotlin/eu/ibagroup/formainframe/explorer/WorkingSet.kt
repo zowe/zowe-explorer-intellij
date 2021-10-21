@@ -2,7 +2,6 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
 import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.UssPath
 
 interface WorkingSet<Mask> : ExplorerUnit, Disposable {
@@ -23,6 +22,4 @@ interface FilesWorkingSet : WorkingSet<DSMask> {
   fun removeUssPath(ussPath: UssPath)
 
 }
-
-interface JesWorkingSet : WorkingSet<JobsFilter> {}
 

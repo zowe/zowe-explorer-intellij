@@ -9,9 +9,9 @@ import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.utils.clone
 import kotlin.concurrent.withLock
 
-class GlobalFilesWorkingSet(
+class GlobalWorkingSet(
   override val uuid: String,
-  globalExplorer: AbstractExplorerBase<GlobalFilesWorkingSet, FilesWorkingSetConfig>,
+  globalExplorer: AbstractExplorerBase<GlobalWorkingSet, FilesWorkingSetConfig>,
   private val workingSetConfigProvider: (String) -> FilesWorkingSetConfig?,
   parentDisposable: Disposable
 ) : WorkingSetBase<DSMask, WorkingSet<*>, FilesWorkingSetConfig>(

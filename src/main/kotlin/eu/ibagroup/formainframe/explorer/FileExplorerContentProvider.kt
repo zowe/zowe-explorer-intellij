@@ -28,7 +28,6 @@ class FileExplorerContentProvider : ExplorerContentProviderBase<GlobalExplorer>(
     ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.ActionBarGroup") as ActionGroup
   override val place: String = "File Explorer"
 
-  @Suppress("UNCHECKED_CAST")
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
     return GlobalFileExplorerView(explorer as Explorer<FilesWorkingSet>, project, parentDisposable, contextMenu, { e, p, t ->
       FileExplorerTreeNodeRoot(e, p, t)
