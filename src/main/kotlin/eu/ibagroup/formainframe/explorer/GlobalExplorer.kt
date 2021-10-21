@@ -1,6 +1,8 @@
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
+import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.*
@@ -14,8 +16,6 @@ class GlobalExplorerFactory : ExplorerFactory<GlobalWorkingSet, GlobalExplorer> 
 }
 
 class GlobalExplorer : AbstractExplorerBase<GlobalWorkingSet, FilesWorkingSetConfig>() {
-
-
   override fun FilesWorkingSetConfig.toUnit(parentDisposable: Disposable): GlobalWorkingSet {
     return GlobalWorkingSet(
       uuid = uuid,
@@ -36,7 +36,4 @@ class GlobalExplorer : AbstractExplorerBase<GlobalWorkingSet, FilesWorkingSetCon
   init {
     doInit()
   }
-
-
-
 }

@@ -144,7 +144,10 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
           }
           vFile.isValidInternal = false
           vFile.intermediateOldParent = parent
-          vFile.intermediateOldPathInternal = parent.path + MFVirtualFileSystem.SEPARATOR + vFile.name
+          val lastChar = parent.path.takeLast(1)
+          vFile.intermediateOldPathInternal =
+            if (lastChar == MFVirtualFileSystem.SEPARATOR) parent.path + vFile.name
+            else parent.path + MFVirtualFileSystem.SEPARATOR + vFile.name
           initialContentConditions.remove(vFile)
           sendVfsChangesTopic().after(event)
           return
@@ -178,7 +181,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
         VFileMoveEvent(requestor, vFile, newParent)
       }
     )
-    sendVfsChangesTopic().after(event)
+    sendVfsChangesTopic().before(event)
     var adding: MFVirtualFile? = null
     validWriteLock(vFile, newParent) {
       val oldParent = vFile.parent
@@ -189,10 +192,11 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
         val oldEdge = fsGraph.getEdge(oldParent, vFile)
         if (oldEdge != null) {
           val alreadyExistingFile = newParent.children?.find {
-            it.name == copyName ?: vFile.name
+            it.name == (copyName ?: vFile.name)
           }
           when {
             alreadyExistingFile != null && copyName != null && oldParent == newParent && replace -> {
+              sendVfsChangesTopic().after(event)
               return vFile
             }
             alreadyExistingFile != null && replace -> { // move or copy in another folder with "replace" flag
@@ -206,7 +210,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
             fsGraph.removeEdge(oldEdge)
             vFile
           } else {
-            MFVirtualFile(generateId(), copyName, vFile.attributes).apply {
+            findOrCreate(this, newParent, copyName, vFile.attributes).apply{
               isValidInternal = true
             }
           }
@@ -215,7 +219,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
         }
       }
     }
-    return adding?.also { sendVfsChangesTopic().before(event) }
+    return adding?.also { sendVfsChangesTopic().after(event) }
       ?: throw FsOperationException(if (copyName != null) "copy" else "move", vFile)
   }
 
