@@ -2,10 +2,8 @@ package eu.ibagroup.formainframe.config.connect
 
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
-import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
-import org.jetbrains.annotations.NotNull
 
 class ConnectionConfig : EntityWithUuid {
   @Column
@@ -26,7 +24,7 @@ class ConnectionConfig : EntityWithUuid {
   constructor() {}
 
   constructor(
-    uuid: @NotNull String,
+    uuid: String,
     name: String,
     url: String,
     isAllowSelfSigned: Boolean,
