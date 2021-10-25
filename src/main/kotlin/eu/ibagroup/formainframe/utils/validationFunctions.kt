@@ -126,28 +126,31 @@ fun validateUssFileName(component: JTextField): ValidationInfo? {
 
 private val firstSymbol = "A-Za-z\$@#"
 private val remainingSymbol = firstSymbol + "0-9\\-"
-private val firstGroup = "([$firstSymbol][$remainingSymbol]{0,7})"
-private val remainingGroup = "[$remainingSymbol]{1,8}"
-private val smallErrorMessage = "First segment must be alphabetic (A to Z) or national (# @ \$)"
-private val errorMessageForFullText =
-  "Each name segment (qualifier) is 1 to 8 characters,\nthe first of which must be alphabetic (A to Z) or national (# @ \$).\nThe remaining seven characters are either alphabetic,\nnumeric (0 - 9), national, a hyphen (-).\nName segments are separated by a period (.)"
-
-private val datasetNameRegex = Regex("$firstGroup(\\.$remainingGroup)*")
+private val partPattern = "([$firstSymbol][$remainingSymbol]{0,7})"
+private val notEmptyErrorText = "Dataset name must not be empty"
+private val segmentLengthErrorText = "Each name segment (qualifier) is 1 to 8 characters"
+private val charactersLengthExceededErrorText = "Dataset name cannot exceed 44 characters"
+private val segmentCharsErrorText =
+  "$segmentLengthErrorText," +
+      "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
+      "\nThe remaining seven characters are either alphabetic," +
+      "\nnumeric (0 - 9), national, a hyphen (-)." +
+      "\nName segments are separated by a period (.)"
 
 fun validateDatasetNameOnInput(component: JTextField): ValidationInfo? {
   val text = component.text.trim()
   val length = text.length
-  val firstPart = text.substringBefore('.')
-  return if (length > 44) {
-    ValidationInfo("Dataset name cannot exceed 44 characters", component)
-  } else if (component.text.isNotBlank() && !firstPart.matches(Regex(firstGroup))) {
-    ValidationInfo(smallErrorMessage, component)
-  } else if (!text.endsWith('.') && !text.matches(datasetNameRegex)) {
-    ValidationInfo(
-      errorMessageForFullText, component
-    )
+  val parts = text.split('.')
+  return if (text.isNotEmpty()) {
+    if (length > 44) {
+      ValidationInfo(charactersLengthExceededErrorText, component)
+    } else if (parts.find { !it.matches(Regex(partPattern)) || it.length > 8 } != null) {
+      ValidationInfo(segmentCharsErrorText, component)
+    } else {
+      return null
+    }
   } else {
-    null
+    ValidationInfo(notEmptyErrorText, component)
   }
 }
 
