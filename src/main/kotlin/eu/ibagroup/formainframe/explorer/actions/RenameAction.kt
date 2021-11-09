@@ -88,6 +88,7 @@ class RenameAction : AnAction() {
         attributes.name
       ).withValidationOnInput {
         validateUssFileName(it)
+        validateUssFileNameAlreadyExists(it, selectedNode)
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
