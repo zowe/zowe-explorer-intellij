@@ -4,6 +4,9 @@ import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import eu.ibagroup.formainframe.explorer.ui.NodeData
+import eu.ibagroup.formainframe.explorer.ui.UssDirNode
+import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import javax.swing.JComponent
@@ -122,6 +125,28 @@ fun validateUssFileName(component: JTextField): ValidationInfo? {
   } else {
     null
   }
+}
+
+fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData): ValidationInfo? {
+  val text : String = component.text
+  val childrenNodesFromParent = selectedNode.node.parent?.children
+  when (selectedNode.node) {
+    is UssFileNode -> {
+      childrenNodesFromParent?.forEach {
+        if (it is UssFileNode && it.value.filenameInternal == text) {
+          return ValidationInfo("Filename already exists. Please specify another filename.", component).asWarning()
+        }
+      }
+    }
+    is UssDirNode -> {
+      childrenNodesFromParent?.forEach {
+        if (it is UssDirNode && text == it.value.path.split("/").last()) {
+          return ValidationInfo("Directory name already exists. Please specify another directory name.", component).asWarning()
+        }
+      }
+    }
+  }
+  return null
 }
 
 private val firstSymbol = "A-Za-z\$@#"
