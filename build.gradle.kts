@@ -11,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.4.2"
+version = "0.4.5"
 
 repositories {
   mavenCentral()
@@ -64,9 +64,15 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   untilBuild("212.*")
   changeNotes(
     """
-      In version 0.4.2 we added:<br/>
+      <h1>Version 0.4.5</h1><br/>
+      <h2>Stories resolved</h2><br/>
       <ul>
-        <li>Now you can work with large masks and datasets which contain 1000+ members.</li>
+        <li>IJMP-87 Spike: Drag and drop operations</li>
+      </ul>
+      <h2>Bugs fixed</h2>
+      <ul>
+        <li>IJMP-301 Renaming USS directory or file to existing one duplicates name in tree and shows inconsistent information</li>
+        <li>IJMP-312 Incorrect warning during dataset creation</li>
       </ul>"""
   )
 }
