@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.config.SandboxListener
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
@@ -55,11 +54,7 @@ class ChangeContentModeAction : ToggleAction() {
         view.explorer.componentManager.service<DataOpsManager>()
           .getAttributesService(it.first::class.java, it.second::class.java)
           .updateAttributes(it.first) {
-            contentMode = if (state) {
-              XIBMDataType(XIBMDataType.Type.BINARY)
-            } else {
-              XIBMDataType(XIBMDataType.Type.TEXT)
-            }
+            contentMode = if (state) { XIBMDataType(XIBMDataType.Type.BINARY) } else { XIBMDataType(XIBMDataType.Type.TEXT) }
           }
         ApplicationManager.getApplication()
           .messageBus
@@ -74,7 +69,7 @@ class ChangeContentModeAction : ToggleAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    e.presentation.isEnabledAndVisible = !getMappedNodes(view).isNullOrEmpty()
+    e.presentation.isEnabledAndVisible = getMappedNodes(view).isNotEmpty()
   }
 
 
