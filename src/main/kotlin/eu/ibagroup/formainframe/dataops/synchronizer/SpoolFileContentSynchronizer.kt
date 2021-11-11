@@ -2,6 +2,7 @@ package eu.ibagroup.formainframe.dataops.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.*
@@ -36,7 +37,7 @@ class SpoolFileContentSynchronizer(
     progressIndicator: ProgressIndicator?,
     requester: Requester
   ): Response<ByteArray> {
-    return api<JESApi>(requester.connectionConfig).getSpoolFileRecords(
+    return apiWithBytesConverter<JESApi>(requester.connectionConfig).getSpoolFileRecords(
       basicCredentials = requester.connectionConfig.authToken,
       jobName = parentAttributes.jobInfo.jobName,
       jobId = parentAttributes.jobInfo.jobId,
