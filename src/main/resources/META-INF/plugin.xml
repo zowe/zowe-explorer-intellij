@@ -113,6 +113,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssFileToPdsMoverFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.SequentialToPdsMoverFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
