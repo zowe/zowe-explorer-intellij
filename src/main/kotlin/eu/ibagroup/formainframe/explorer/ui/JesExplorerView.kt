@@ -6,6 +6,7 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -35,6 +36,8 @@ class JesExplorerView(
 
   override fun getData(dataId: String): Any? {
     return when {
+      CommonDataKeys.NAVIGATABLE.`is`(dataId) -> mySelectedNodesData[0].node
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.map { it.node }.toTypedArray()
       JES_EXPLORER_VIEW.`is`(dataId) -> this
       else -> null
     }

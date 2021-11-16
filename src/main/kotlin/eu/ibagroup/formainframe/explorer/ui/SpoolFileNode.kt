@@ -37,4 +37,8 @@ class SpoolFileNode(
   override fun getVirtualFile(): MFVirtualFile? {
     return value
   }
+
+  init {
+    value?.isWritable = false
+  }
 }
