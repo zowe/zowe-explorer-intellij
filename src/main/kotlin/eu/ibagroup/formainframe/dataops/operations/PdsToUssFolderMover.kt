@@ -83,7 +83,6 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
         LibraryQuery::class.java, RemoteQuery::class.java, vFileClass
       )
 
-
     sourceFileFetchProvider.reload(sourceQuery)
     val destinationPath = "${destinationAttributes.path}/${sourceAttributes.name}"
     var throwable: Throwable? = null
@@ -100,7 +99,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
 
         cachedChildren?.forEach {
           var responseCopyMember: Response<Void>? = null
-          try {
+          runCatching {
             responseCopyMember = api<DataAPI>(connectionConfig).copyDatasetOrMemberToUss(
               connectionConfig.authToken,
               XIBMBpxkAutoCvt.OFF,
@@ -109,7 +108,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
               ),
               FilePath(destinationPath)
             ).cancelByIndicator(progressIndicator).execute()
-          } catch (ex: Throwable) {}
+          }
           if (progressIndicator.isCanceled || responseCopyMember?.isSuccessful != true) {
             throwable = rollback(
               responseCopyMember,
@@ -126,13 +125,9 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     }
 
     if (operation.isMove) {
-      try {
-        api<DataAPI>(connectionConfig).deleteDataset(
-          connectionConfig.authToken,
-          sourceAttributes.name
-        ).execute()
-      } catch (throwable: Throwable) { }
-
+      runCatching {
+        dataOpsManager.performOperation(DeleteOperation(operation.source, sourceAttributes))
+      }
     }
 
     return throwable
