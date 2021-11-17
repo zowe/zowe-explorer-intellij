@@ -21,9 +21,9 @@ class SequentialToPdsMoverFactory : OperationRunnerFactory {
   }
 }
 
-class SequentialToPdsMover(val dataOpsManager: DataOpsManager): AbstractFileMover() {
+class SequentialToPdsMover(dataOpsManager: DataOpsManager): DefaultFileMover(dataOpsManager) {
 
-  private fun buildCall(
+  override fun buildCall(
     operation: MoveCopyOperation,
     requesterWithUrl: Pair<Requester, ConnectionConfig>
   ): Call<Void> {
@@ -55,39 +55,5 @@ class SequentialToPdsMover(val dataOpsManager: DataOpsManager): AbstractFileMove
         && operation.sourceAttributes is RemoteDatasetAttributes
         && operation.commonUrls(dataOpsManager).isNotEmpty()
         && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
-  }
-
-
-
-  override fun run(
-    operation: MoveCopyOperation,
-    progressIndicator: ProgressIndicator
-  ) {
-    var throwable: Throwable? = null
-    operation.commonUrls(dataOpsManager).stream().map {
-      progressIndicator.checkCanceled()
-      runCatching {
-        buildCall(operation, it).cancelByIndicator(progressIndicator).execute()
-      }.mapCatching {
-        if (!it.isSuccessful) {
-          throw IOException(it.code().toString())
-        } else {
-          it
-        }
-      }.mapCatching {
-        val sourceAttributes = operation.sourceAttributes
-        if (operation.isMove && sourceAttributes != null) {
-          dataOpsManager.performOperation(DeleteOperation(operation.source, sourceAttributes))
-        } else {
-          it
-        }
-      }.onSuccess {
-        return@map true
-      }.onFailure {
-        throwable = it
-      }
-      return@map false
-    }.filter { it }.findAnyNullable()
-    throwable?.let { throw it }
   }
 }
