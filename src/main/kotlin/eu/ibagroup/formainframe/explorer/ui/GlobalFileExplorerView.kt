@@ -549,6 +549,11 @@ class GlobalFileExplorerView(
                     ) {
                       val memberName = sourceAttributes.name.filter { it.isLetterOrDigit() }.take(8).toUpperCase()
                       if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
+                    } else if (
+                      destAttributes is RemoteMemberAttributes &&
+                      sourceAttributes is RemoteDatasetAttributes
+                    ) {
+                      sourceAttributes.name.split(".").last() == destChild.name
                     } else {
                       source.name == destChild.name
                     }

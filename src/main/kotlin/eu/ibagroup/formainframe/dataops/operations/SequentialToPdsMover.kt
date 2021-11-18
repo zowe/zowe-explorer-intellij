@@ -5,32 +5,23 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.getParentsChain
 import eu.ibagroup.r2z.CopyDataZOS
 import eu.ibagroup.r2z.DataAPI
 import retrofit2.Call
-import java.io.FileNotFoundException
 import java.io.IOException
 
-class MemberToPdsFileMoverFactory : OperationRunnerFactory {
+class SequentialToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-    return MemberToPdsFileMover(dataOpsManager)
+    return SequentialToPdsMover(dataOpsManager)
   }
 }
 
-class MemberToPdsFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
-
-  override fun canRun(operation: MoveCopyOperation): Boolean {
-    return operation.destinationAttributes is RemoteDatasetAttributes
-        && operation.destination.isDirectory
-        && !operation.source.isDirectory
-        && operation.sourceAttributes is RemoteMemberAttributes
-        && operation.commonUrls(dataOpsManager).isNotEmpty()
-        && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
-  }
+class SequentialToPdsMover(dataOpsManager: DataOpsManager): DefaultFileMover(dataOpsManager) {
 
   override fun buildCall(
     operation: MoveCopyOperation,
@@ -38,10 +29,8 @@ class MemberToPdsFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
   ): Call<Void> {
     val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
     var memberName: String
-    val datasetName = (operation.sourceAttributes as RemoteMemberAttributes).run {
-      memberName = name
-      dataOpsManager.tryToGetAttributes(parentFile)?.name
-        ?: throw FileNotFoundException("Cannot find attributes for ${parentFile.path}")
+    val dataset = (operation.sourceAttributes as RemoteDatasetAttributes).also {
+      memberName = it.name.split(".").last()
     }
     return api<DataAPI>(
       url = requesterWithUrl.second.url,
@@ -50,14 +39,21 @@ class MemberToPdsFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
       authorizationToken = requesterWithUrl.first.connectionConfig.authToken,
       body = CopyDataZOS.CopyFromDataset(
         dataset = CopyDataZOS.CopyFromDataset.Dataset(
-          datasetName = datasetName,
-          memberName = memberName
+          datasetName = dataset.name
         ),
         replace = operation.forceOverwriting
       ),
       toDatasetName = destinationAttributes.name,
-      memberName = operation.newName ?: memberName
+      memberName = memberName
     )
   }
 
+  override fun canRun(operation: MoveCopyOperation): Boolean {
+    return operation.destinationAttributes is RemoteDatasetAttributes
+        && operation.destination.isDirectory
+        && !operation.source.isDirectory
+        && operation.sourceAttributes is RemoteDatasetAttributes
+        && operation.commonUrls(dataOpsManager).isNotEmpty()
+        && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+  }
 }
