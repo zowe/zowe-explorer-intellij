@@ -39,6 +39,8 @@ abstract class AbstractWsDialog<WSConfig: WorkingSetConfig, TableRow, WSDState :
 
   abstract val masksTable: ValidatingTableView<TableRow>
 
+  abstract val wsNameLabel: String
+
   abstract fun emptyTableRow(): TableRow
 
   abstract fun validateOnApply(validationBuilder: ValidationInfoBuilder, component: JComponent): ValidationInfo?
@@ -48,7 +50,7 @@ abstract class AbstractWsDialog<WSConfig: WorkingSetConfig, TableRow, WSDState :
   private val panel by lazy {
     panel {
       row {
-        label("Working Set name")
+        label(wsNameLabel)
         textField(getter = { state.workingSetName }, setter = { state.workingSetName = it })
           .withValidationOnInput {
             validateWorkingSetName(
@@ -102,14 +104,6 @@ abstract class AbstractWsDialog<WSConfig: WorkingSetConfig, TableRow, WSDState :
     }.apply {
       minimumSize = Dimension(450, 500)
     }
-  }
-
-  override fun init() {
-    title = when (state.mode) {
-      DialogMode.CREATE -> "Add Working Set"
-      else -> "Edit Working Set"
-    }
-    super.init()
   }
 
   override fun createCenterPanel(): JComponent {

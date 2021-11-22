@@ -3,13 +3,11 @@ package eu.ibagroup.formainframe.config.ws.ui.jobs
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import eu.ibagroup.formainframe.common.ui.*
-import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.sandboxCrudable
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
-import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import javax.swing.JComponent
 
 class JobsWsDialog(
@@ -31,6 +29,16 @@ class JobsWsDialog(
 
   override val tableTitle = "Job Filters included in Working Set"
 
+  override val wsNameLabel = "Jobs Working Set Name"
+
+  override fun init() {
+    title = when (state.mode) {
+      DialogMode.CREATE -> "Add Jobs Working Set"
+      else -> "Edit Jobs Working Set"
+    }
+    super.init()
+  }
+
   init {
     init()
   }
@@ -41,7 +49,7 @@ class JobsWsDialog(
   ): JobsWorkingSetDialogState.TableRow {
     if (state.jobId.isEmpty()) {
       if (state.owner.isEmpty()) {
-        state.owner = sandboxCrudable.getByUniqueKey<Credentials>(connectionUuid)?.username ?: ""
+        state.owner = CredentialService.instance.getUsernameByKey(connectionUuid) ?: ""
       }
       if (state.prefix.isEmpty()) {
         state.prefix = "*"

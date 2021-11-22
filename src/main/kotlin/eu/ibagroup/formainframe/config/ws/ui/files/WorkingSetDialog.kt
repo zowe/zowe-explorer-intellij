@@ -4,10 +4,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ComboBoxCellEditor
-import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
-import eu.ibagroup.formainframe.common.ui.ValidatingColumnInfo
-import eu.ibagroup.formainframe.common.ui.ValidatingListTableModel
-import eu.ibagroup.formainframe.common.ui.ValidatingTableView
+import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
@@ -33,6 +30,16 @@ class WorkingSetDialog(
   ).apply { rowHeight = DEFAULT_ROW_HEIGHT }
 
   override val tableTitle = "DS Masks included in Working Set"
+
+  override val wsNameLabel = "Working Set Name"
+
+  override fun init() {
+    title = when (state.mode) {
+      DialogMode.CREATE -> "Add Working Set"
+      else -> "Edit Working Set"
+    }
+    super.init()
+  }
 
   init {
     init()

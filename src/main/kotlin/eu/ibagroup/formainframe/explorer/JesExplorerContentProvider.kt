@@ -24,7 +24,7 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>() {
   override val explorer: JesExplorer = UIComponentManager.INSTANCE.getExplorer(JesExplorer::class.java)
   override val displayName: String = "JES Explorer"
   override val isLockable: Boolean = false
-  override val actionGroup: ActionGroup = ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.ActionBarGroup") as ActionGroup
+  override val actionGroup: ActionGroup = ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.JESActionBarGroup") as ActionGroup
   override val place: String = "JES Explorer"
 
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
