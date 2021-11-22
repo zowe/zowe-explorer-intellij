@@ -212,6 +212,11 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 text="Working Set"
                 icon="AllIcons.Nodes.Project"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"
+                text="Jobs Working Set"
+                icon="AllIcons.Nodes.Project"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
                 text="Dataset"/>
@@ -283,8 +288,13 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
         </group>
 
-        <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
+        <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.JESActionBarGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
         </group>
 

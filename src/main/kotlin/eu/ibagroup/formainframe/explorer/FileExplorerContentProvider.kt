@@ -25,7 +25,7 @@ class FileExplorerContentProvider : ExplorerContentProviderBase<GlobalExplorer>(
   override val displayName: String = "File Explorer"
   override val isLockable: Boolean = false
   override val actionGroup: ActionGroup =
-    ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.ActionBarGroup") as ActionGroup
+    ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.FilesActionBarGroup") as ActionGroup
   override val place: String = "File Explorer"
 
   @Suppress("UNCHECKED_CAST")

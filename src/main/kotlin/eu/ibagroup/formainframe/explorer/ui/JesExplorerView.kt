@@ -36,7 +36,7 @@ class JesExplorerView(
 
   override fun getData(dataId: String): Any? {
     return when {
-      CommonDataKeys.NAVIGATABLE.`is`(dataId) -> mySelectedNodesData[0].node
+      CommonDataKeys.NAVIGATABLE.`is`(dataId) -> if (mySelectedNodesData.isNotEmpty()) mySelectedNodesData[0].node else null
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.map { it.node }.toTypedArray()
       JES_EXPLORER_VIEW.`is`(dataId) -> this
       else -> null
