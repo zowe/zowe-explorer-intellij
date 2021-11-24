@@ -694,9 +694,18 @@ class GlobalFileExplorerView(
               destinationNodes
             }
 
-            nodesToRefresh.forEach {
-              it.cleanCacheIfPossible()
-              myStructure.invalidate(it, true)
+            nodesToRefresh.forEach { node ->
+              // node.cleanCacheIfPossible()
+              myFsTreeStructure.findByPredicate { foundNode ->
+                if (foundNode is FetchNode && node is FetchNode) {
+                  foundNode.query == node.query
+                } else false
+              }.onEach { foundNode ->
+                foundNode.cleanCacheIfPossible()
+              }.onEach { foundNode ->
+                myStructure.invalidate(foundNode, true)
+              }
+
             }
 
           }

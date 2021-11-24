@@ -38,6 +38,11 @@ class UssDirNode(
   ussPath, project, parent, workingSet, treeStructure
 ), UssNode, RefreshableNode {
 
+  override fun init() {}
+  init {
+    super.init()
+  }
+
   val isConfigUssPath = vFile == null
 
   override val query: RemoteQuery<UssQuery, Unit>?
