@@ -34,9 +34,13 @@ abstract class ExplorerTreeNode<Value : Any>(
   protected val treeStructure: ExplorerTreeStructureBase
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
 
-  init {
+  open fun init() {
     @Suppress("LeakingThis")
     treeStructure.registerNode(this)
+  }
+  init {
+    @Suppress("LeakingThis")
+    init()
   }
 
   private val contentProvider = UIComponentManager.INSTANCE.getExplorerContentProvider(explorer::class.java)
