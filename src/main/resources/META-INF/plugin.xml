@@ -138,6 +138,9 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
+
+        <postStartupActivity implementation="eu.ibagroup.formainframe.zowe.ZoweStartupActivity"/>
+
         <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
 
         <applicationConfigurable id="configurable.mainframe.explorer"
@@ -190,6 +193,9 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>
+
+        <projectService serviceInterface="eu.ibagroup.formainframe.zowe.service.ZoweConfigService"
+                        serviceImplementation="eu.ibagroup.formainframe.zowe.service.ZoweConfigServiceImpl"/>
     </extensions>
 
     <actions>
