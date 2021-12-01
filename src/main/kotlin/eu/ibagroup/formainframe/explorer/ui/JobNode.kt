@@ -57,4 +57,8 @@ class JobNode(
     presentation.addText(job?.status?.value ?: "", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     presentation.setIcon(jobIcon)
   }
+
+  override fun getVirtualFile(): MFVirtualFile? {
+    return value
+  }
 }
