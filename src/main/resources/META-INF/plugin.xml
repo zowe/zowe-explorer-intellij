@@ -246,6 +246,10 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
                 text="Properties"/>
 
+        <action class="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"
+                id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"
+                text="Properties"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
                 class="eu.ibagroup.formainframe.explorer.actions.RenameAction" text="Rename"
                 use-shortcut-of="RenameElement"/>
@@ -321,6 +325,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <reference id="$Delete"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"/>
         </group>
 
         <action id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"
