@@ -138,9 +138,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
     </extensions>
 
     <projectListeners>
-        <listener
-                class="eu.ibagroup.formainframe.zowe.service.ZoweFileListener"
-                topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+        <listener class="eu.ibagroup.formainframe.zowe.service.ZoweFileListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     </projectListeners>
 
     <extensions defaultExtensionNs="com.intellij">
