@@ -17,7 +17,7 @@ import eu.ibagroup.formainframe.zowe.service.ZoweConfigState
 const val ZOWE_CONFIG_NAME = "zowe.config.json"
 
 /**
- * Checks if zowe config needs to be synchronized for crudable configs and show notification with sync action.
+ * Checks if zowe config needs to be synchronized with crudable configs and show notification with sync action.
  * @param project - project instance to check zoweConfig.
  * @return Nothing.
  */
