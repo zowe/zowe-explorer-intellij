@@ -49,7 +49,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
 
   /**
    * Checks project contains zowe.config.json. If zowe config presented
-   * it will parse it and save object model inside zoweConfig field.
+   * it will parse it and save to object model inside zoweConfig field.
    * @return ZoweConfig instance if zowe.config.json is presented or null otherwise.
    */
   private fun scanForZoweConfig (): ZoweConfig? {
