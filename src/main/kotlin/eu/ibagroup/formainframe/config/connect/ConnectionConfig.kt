@@ -22,7 +22,7 @@ class ConnectionConfig : EntityWithUuid {
   var zVersion = ZVersion.ZOS_2_1
 
   @Column
-  var isZoweConnection = false
+  var zoweConfigPath: String? = null
 
   constructor() {}
 
@@ -33,12 +33,14 @@ class ConnectionConfig : EntityWithUuid {
     isAllowSelfSigned: Boolean,
     codePage: CodePage,
     zVersion: ZVersion,
+    zoweConfigPath: String? = null
   ) : super(uuid) {
     this.name = name
     this.url = url
     this.isAllowSelfSigned = isAllowSelfSigned
     this.codePage = codePage
     this.zVersion = zVersion
+    this.zoweConfigPath = zoweConfigPath
   }
 
   override fun equals(other: Any?): Boolean {
@@ -53,7 +55,7 @@ class ConnectionConfig : EntityWithUuid {
     if (isAllowSelfSigned != other.isAllowSelfSigned) return false
     if (codePage != other.codePage) return false
     if (zVersion != other.zVersion) return false
-    if (isZoweConnection != other.isZoweConnection) return false
+    if (zoweConfigPath != other.zoweConfigPath) return false
 
     return true
   }
@@ -65,12 +67,12 @@ class ConnectionConfig : EntityWithUuid {
     result = 31 * result + isAllowSelfSigned.hashCode()
     result = 31 * result + codePage.hashCode()
     result = 31 * result + zVersion.hashCode()
-    result = 31 * result + isZoweConnection.hashCode()
+    result = 31 * result + zoweConfigPath.hashCode()
     return result
   }
 
   override fun toString(): String {
-    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, codePage=$codePage, zVersion=$zVersion, isZoweConnection=$isZoweConnection)"
+    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, codePage=$codePage, zVersion=$zVersion, zoweConfigPath=$zoweConfigPath)"
   }
 
 

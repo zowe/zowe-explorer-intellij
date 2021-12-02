@@ -21,11 +21,12 @@ data class ConnectionDialogState(
     var isAllowSsl: Boolean = false,
     var codePage: CodePage = CodePage.IBM_1047,
     var zVersion: ZVersion = ZVersion.ZOS_2_1,
+    var zoweConfigPath: String? = null,
     override var mode: DialogMode = DialogMode.CREATE
 ) : DialogState, Cloneable {
 
   var connectionConfig
-    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, codePage, zVersion)
+    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, codePage, zVersion, zoweConfigPath)
     set(value) {
       connectionUuid = value.uuid
       connectionName = value.name
@@ -50,7 +51,8 @@ data class ConnectionDialogState(
         connectionUrl = connectionUrl,
         username = username,
         password = password,
-        isAllowSsl = isAllowSsl
+        isAllowSsl = isAllowSsl,
+        zoweConfigPath = zoweConfigPath
     )
   }
 }
@@ -73,6 +75,7 @@ fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
       password = credentials.password,
       isAllowSsl = this.isAllowSelfSigned,
       codePage = this.codePage,
-      zVersion = this.zVersion
+      zVersion = this.zVersion,
+      zoweConfigPath = this.zoweConfigPath
   )
 }

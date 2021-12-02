@@ -137,6 +137,12 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <explorerContentProvider index="1" implementation="eu.ibagroup.formainframe.explorer.JesExplorerContentProviderFactory"/>
     </extensions>
 
+    <projectListeners>
+        <listener
+                class="eu.ibagroup.formainframe.zowe.service.ZoweFileListener"
+                topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </projectListeners>
+
     <extensions defaultExtensionNs="com.intellij">
 
         <postStartupActivity implementation="eu.ibagroup.formainframe.zowe.ZoweStartupActivity"/>
@@ -334,7 +340,14 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 icon="AllIcons.Actions.BuildLoadChanges"
                 text="Sync Data"/>
 
-        <group id="eu.ibagroup.formainframe.dataops.synchronizer.SyncActionGroup" popup="true">
+        <action id="eu.ibagroup.formainframe.zowe.actions.UpdateZoweConfigAction"
+                class="eu.ibagroup.formainframe.zowe.actions.UpdateZoweConfigAction"
+                icon="AllIcons.Actions.BuildLoadChanges"
+                text="Update Zowe Config">
+            <add-to-group group-id="EditorContextBarMenu"/>
+        </action>
+
+        <group id="eu.ibagroup.formainframe.dataops.synchronizer.ForMainframeEditorToolbarGroup" popup="true">
             <reference id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"/>
         </group>
 

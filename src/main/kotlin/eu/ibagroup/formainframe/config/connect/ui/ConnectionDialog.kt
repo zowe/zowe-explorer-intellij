@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.toBinding
 import com.intellij.ui.layout.withTextBinding
@@ -95,19 +96,24 @@ class ConnectionDialog(
     return panel {
       row {
         label("Connection name")
-        textField(state::connectionName)
-          .focused()
-          .withValidationOnInput {
-            validateConnectionName(
-              it,
-              if (initialState.connectionName.isNotBlank()) initialState.connectionName else null,
-              crudable
-            )
-          }
-          .withValidationOnApply {
-            it.text = it.text.trim()
-            validateForBlank(it)
-          }
+        if (state.zoweConfigPath == null) {
+          textField(state::connectionName)
+            .focused()
+            .withValidationOnInput {
+              validateConnectionName(
+                it,
+                if (initialState.connectionName.isNotBlank()) initialState.connectionName else null,
+                crudable
+              )
+            }
+            .withValidationOnApply {
+              it.text = it.text.trim()
+              validateForBlank(it)
+            }
+        } else {
+          JBTextField(state.connectionName).apply { isEditable = false }()
+        }
+
       }
       row {
         label("Connection URL")
