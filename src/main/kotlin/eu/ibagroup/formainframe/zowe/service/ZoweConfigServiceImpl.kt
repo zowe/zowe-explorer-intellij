@@ -52,7 +52,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * it will parse it and save object model inside zoweConfig field.
    * @return ZoweConfig instance if zowe.config.json is presented or null otherwise.
    */
-  fun scanForZoweConfig (): ZoweConfig? {
+  private fun scanForZoweConfig (): ZoweConfig? {
     val zoweConfigLocation = "${myProject.basePath}/$ZOWE_CONFIG_NAME"
     val zoweFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(zoweConfigLocation)) ?: return null
     return try {
@@ -66,7 +66,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * Finds existing connection config related to zowe.config.json.
    * @return ConnectionConfig instance related to zowe config if it exists or null otherwise.
    */
-  fun findExistingConnection(): ConnectionConfig? {
+  private fun findExistingConnection(): ConnectionConfig? {
     val zoweConnectionList = configCrudable.find<ConnectionConfig> {
       it.zoweConfigPath != null && it.name == zoweConnectionName
     }.toList()
