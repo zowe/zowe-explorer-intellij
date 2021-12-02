@@ -70,7 +70,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     if (res == Messages.OK) {
       val zoweConfigPath = state?.zoweConfigPath ?: return
       val configFile = VirtualFileManager.getInstance().findFileByNioPath(java.nio.file.Path.of(zoweConfigPath)) ?: let {
-        Messages.showErrorDialog("Zowe config found not found", "Zowe Config")
+        Messages.showErrorDialog("Zowe config file not found", "Zowe Config")
         return
       }
 
