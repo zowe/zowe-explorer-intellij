@@ -74,7 +74,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   }
 
   /**
-   * Check if connection config related to zowe config is presented.
+   * Check if connection config related to zowe config is presented
    * then extracts existing uuid and generates a new one otherwise.
    * @return created or existing uuid.
    */
@@ -84,8 +84,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
 
   /**
    * Added notification about connection failure with action of force connection adding.
-   * @param message - notification message
-   * @return Nothing
+   * @param message - notification message.
+   * @return Nothing.
    */
   private fun notifyUiOnConnectionFailure(message: String) {
     NotificationGroupManager.getInstance().getNotificationGroup(EXPLORER_NOTIFICATION_GROUP_ID)
@@ -132,8 +132,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   }
 
   /**
-   * Converts ZoweConfig to ConnectionConfig
-   * @param uuid - uuid returned connection
+   * Converts ZoweConfig to ConnectionConfig.
+   * @param uuid - uuid returned connection.
    * @return converted ConnectionConfig.
    */
   fun ZoweConfig.toConnectionConfig(uuid: String): ConnectionConfig {
@@ -159,7 +159,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   }
 
   /**
-   * Converts to connection config with existing connection config uuid
+   * Converts to connection config with existing connection config uuid.
    * related to zowe config or generates a new one.
    * @return converted ConnectionConfig.
    */

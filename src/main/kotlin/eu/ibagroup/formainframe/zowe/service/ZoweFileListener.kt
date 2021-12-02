@@ -22,9 +22,9 @@ class ZoweFileListener: BulkFileListener {
 
   /**
    * Updates zowe config by file events.
-   * @param events - events that was triggered
-   * @param isBefore - true if event triggered before changes action and false otherwise
-   * @return Nothing
+   * @param events - events that was triggered.
+   * @param isBefore - true if event triggered before changes action and false otherwise.
+   * @return Nothing.
    */
   private fun updateZoweConfig(events: MutableList<out VFileEvent>, isBefore: Boolean) {
     events.forEach { e ->

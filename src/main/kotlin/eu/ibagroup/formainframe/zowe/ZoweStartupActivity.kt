@@ -24,7 +24,7 @@ const val ZOWE_CONFIG_NAME = "zowe.config.json"
 /**
  * Checks if zowe config needs to be synchronized for crudable configs and show notification with sync action.
  * @param project - project instance to check zoweConfig.
- * @return Nothing
+ * @return Nothing.
  */
 fun showNotificationForAddUpdateZoweConfigIfNeeded (project: Project) {
   val zoweConfigService = project.service<ZoweConfigService>()

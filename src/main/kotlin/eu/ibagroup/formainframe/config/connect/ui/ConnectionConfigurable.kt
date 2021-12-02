@@ -59,6 +59,11 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     return newZoweConfig
   }
 
+  /**
+   * Shows confirm dialog and if user say yes than updates zowe.config.json related to specified conneciton config.
+   * @param state - state of connection config that will be saved in crudable.
+   * @return Nothing.
+   */
   private fun updateZoweConfigIfNeeded (state: ConnectionDialogState?) {
     val res = showOkCancelDialog(
       title = "Zowe Config Update",

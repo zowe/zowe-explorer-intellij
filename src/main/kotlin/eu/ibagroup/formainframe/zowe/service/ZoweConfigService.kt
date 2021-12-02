@@ -22,7 +22,7 @@ interface ZoweConfigService {
   val myProject: Project
 
   /**
-   * Instance of zowe config file object model
+   * Instance of zowe config file object model.
    */
   var zoweConfig: ZoweConfig?
 
@@ -40,7 +40,7 @@ interface ZoweConfigService {
    * Adds or updates connection config related to zoweConnection
    * @param scanProject - will rescan project for zowe.config.json if true.
    * @param checkConnection - Verify zowe connection by sending info request if true.
-   * @return - ConnectionConfig that was added or updated
+   * @return - ConnectionConfig that was added or updated.
    */
   fun addOrUpdateZoweConfig (scanProject: Boolean = true, checkConnection: Boolean = true): ConnectionConfig?
 
