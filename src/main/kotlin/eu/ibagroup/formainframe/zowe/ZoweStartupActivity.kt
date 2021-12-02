@@ -7,14 +7,9 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import eu.ibagroup.formainframe.config.ConfigService
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialog
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
-import eu.ibagroup.formainframe.config.connect.ui.toDialogState
 import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import eu.ibagroup.formainframe.zowe.service.ZoweConfigService
 import eu.ibagroup.formainframe.zowe.service.ZoweConfigState

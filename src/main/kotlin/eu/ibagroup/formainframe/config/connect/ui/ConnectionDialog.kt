@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.utils.validateConnectionName
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateZosmfUrl
 import eu.ibagroup.r2z.CodePage
-import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.annotations.ZVersion
 import java.awt.Component
 import javax.swing.*

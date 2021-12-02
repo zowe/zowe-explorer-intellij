@@ -4,7 +4,6 @@
 package eu.ibagroup.formainframe.zowe.service
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.r2z.zowe.config.ZoweConfig
 

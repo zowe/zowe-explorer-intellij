@@ -2,9 +2,7 @@ package eu.ibagroup.formainframe.config.connect.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
-import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
@@ -23,12 +21,10 @@ import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.toMutableList
-import eu.ibagroup.formainframe.zowe.service.ZoweConfigService
 import eu.ibagroup.r2z.zowe.config.ZoweConfig
 import eu.ibagroup.r2z.zowe.config.parseConfigJson
 import eu.ibagroup.r2z.zowe.config.toJson
 import java.net.URI
-import kotlin.io.path.Path
 
 @Suppress("DialogTitleCapitalization")
 class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {

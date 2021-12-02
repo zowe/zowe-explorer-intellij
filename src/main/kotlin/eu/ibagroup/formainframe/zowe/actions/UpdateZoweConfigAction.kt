@@ -5,13 +5,9 @@ package eu.ibagroup.formainframe.zowe.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import eu.ibagroup.formainframe.zowe.ZOWE_CONFIG_NAME
 import eu.ibagroup.formainframe.zowe.service.ZoweConfigService
 import eu.ibagroup.formainframe.zowe.service.ZoweConfigState
