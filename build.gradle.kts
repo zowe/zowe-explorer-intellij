@@ -11,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.4.5"
+version = "0.5.0"
 
 repositories {
   mavenCentral()
@@ -64,15 +64,28 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   untilBuild("212.*")
   changeNotes(
     """
-      <h1>Version 0.4.5</h1><br/>
+      <h1>Version 0.5.0</h1><br/>
       <h2>Stories resolved</h2><br/>
       <ul>
+        <li>IJMP-294 Rework navigate method in ExplorerTreeNode class for Jes support</li>
+        <li>IJMP-306 Sequential and Member to PDS + Uss Folder</li>
+        <li>IJMP-293 Add Get...PropertiesAction for JesExplorer support</li>
+        <li>IJMP-336 change functionality of "+" button in JESExplorer</li>
+        <li>IJMP-245 Create JES tab in Settings</li>
+        <li>IJMP-227 SpoolFileContentSynchronizer</li>
+        <li>IJMP-272 Explorer refactoring</li>
+        <li>IJMP-226 JobFetchProvider SpoolFileFetchProvider</li>
+        <li>IJMP-307 Copy PDS to Uss Folder</li>
+        <li>IJMP-308 Copy Uss File and PDS</li>
         <li>IJMP-87 Spike: Drag and drop operations</li>
       </ul>
       <h2>Bugs fixed</h2>
       <ul>
         <li>IJMP-301 Renaming USS directory or file to existing one duplicates name in tree and shows inconsistent information</li>
-        <li>IJMP-312 Incorrect warning during dataset creation</li>
+        <li>IJMP-238 Place the cursor in the Member name field</li>
+        <li>IJMP-221 The same dataset does not open in the second mask</li>
+        <li>IJMP-313 Duplicated JesFilters removed</li>
+        <li>IJMP-281 Empty data set hangs in loading state</li>
       </ul>"""
   )
 }
