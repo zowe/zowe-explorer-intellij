@@ -5,6 +5,8 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkCancelDialog
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
 import eu.ibagroup.formainframe.common.ui.DialogMode
@@ -14,9 +16,15 @@ import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
+import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.toMutableList
+import eu.ibagroup.r2z.zowe.config.ZoweConfig
+import eu.ibagroup.r2z.zowe.config.parseConfigJson
+import eu.ibagroup.r2z.zowe.config.toJson
+import java.net.URI
 
 @Suppress("DialogTitleCapitalization")
 class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {
@@ -35,12 +43,56 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     showAndTestConnection()?.let { connectionsTableModel?.addRow(it) }
   }
 
+  fun ConnectionDialogState.updateZoweConfig (zoweConfig: ZoweConfig): ZoweConfig {
+    val newZoweConfig = zoweConfig.clone()
+    val uri = URI(connectionUrl)
+    newZoweConfig.host = uri.host
+    newZoweConfig.port = uri.port.toLong()
+    newZoweConfig.protocol = connectionUrl.split("://")[0]
+    newZoweConfig.user = username
+    newZoweConfig.password = password
+    newZoweConfig.tsoProfile?.properties?.set("codePage", codePage.toString().split("IBM_").last())
+    return newZoweConfig
+  }
+
+  /**
+   * Shows confirm dialog and if user say yes than updates zowe.config.json related to specified conneciton config.
+   * @param state - state of connection config that will be saved in crudable.
+   * @return Nothing.
+   */
+  private fun updateZoweConfigIfNeeded (state: ConnectionDialogState?) {
+    val res = showOkCancelDialog(
+      title = "Zowe Config Update",
+      message = "Update zowe config file?\n${state?.zoweConfigPath}",
+      okText = "Yes",
+      cancelText = "No"
+    )
+    if (res == Messages.OK) {
+      val zoweConfigPath = state?.zoweConfigPath ?: return
+      val configFile = VirtualFileManager.getInstance().findFileByNioPath(java.nio.file.Path.of(zoweConfigPath)) ?: let {
+        Messages.showErrorDialog("Zowe config file not found", "Zowe Config")
+        return
+      }
+
+      val oldZoweConfig = parseConfigJson(configFile.inputStream)
+      val newZoweConfig = state.updateZoweConfig(oldZoweConfig)
+      runWriteActionOnWriteThread {
+        configFile.setBinaryContent(newZoweConfig.toJson().toByteArray(configFile.charset))
+      }
+    }
+  }
+
+  private val zoweConfigStates = mutableListOf<ConnectionDialogState>()
+
   private fun editConnection() {
     val idx = connectionsTable?.selectedRow
     if (idx != null && connectionsTableModel != null) {
       val state = showAndTestConnection(connectionsTableModel!![idx].apply {
         mode = DialogMode.UPDATE
       })
+      if (state?.zoweConfigPath != null){
+        zoweConfigStates.add(state)
+      }
       if (state != null) {
         connectionsTableModel?.set(idx, state)
       }
@@ -153,6 +205,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val wasModified = isModified
     applySandbox<Credentials>()
     applySandbox<ConnectionConfig>()
+    zoweConfigStates.forEach { updateZoweConfigIfNeeded(it) }
     if (wasModified) {
       panel?.updateUI()
     }
