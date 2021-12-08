@@ -99,8 +99,10 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
                 }
               }
             }
+            initialState.errorMessage = ""
           }.onFailure { t ->
             parentNode.explorer.reportThrowable(t, e.project)
+            initialState.errorMessage = t.message ?: t.toString()
           }
         }
         res
