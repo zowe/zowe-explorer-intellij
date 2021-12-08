@@ -57,6 +57,7 @@ class UpdateZoweConfigAction: DumbAwareAction() {
     val prevZoweConfig = zoweConfigService.zoweConfig
     runCatching {
       zoweConfigService.zoweConfig = parseConfigJson(editor.document.text)
+      zoweConfigService.zoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
     }
     val zoweState = zoweConfigService.getZoweConfigState(false)
     e.presentation.isEnabledAndVisible = zoweState == ZoweConfigState.NEED_TO_UPDATE || zoweState == ZoweConfigState.NEED_TO_ADD

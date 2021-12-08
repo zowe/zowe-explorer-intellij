@@ -23,7 +23,6 @@ import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.toMutableList
 import eu.ibagroup.r2z.zowe.config.ZoweConfig
 import eu.ibagroup.r2z.zowe.config.parseConfigJson
-import eu.ibagroup.r2z.zowe.config.toJson
 import java.net.URI
 
 @Suppress("DialogTitleCapitalization")
@@ -51,7 +50,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     newZoweConfig.protocol = connectionUrl.split("://")[0]
     newZoweConfig.user = username
     newZoweConfig.password = password
-    newZoweConfig.tsoProfile?.properties?.set("codePage", codePage.toString().split("IBM_").last())
+    newZoweConfig.codePage = codePage
     return newZoweConfig
   }
 
@@ -77,6 +76,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
       val oldZoweConfig = parseConfigJson(configFile.inputStream)
       val newZoweConfig = state.updateZoweConfig(oldZoweConfig)
       runWriteActionOnWriteThread {
+        newZoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
         configFile.setBinaryContent(newZoweConfig.toJson().toByteArray(configFile.charset))
       }
     }
