@@ -42,16 +42,14 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     showAndTestConnection()?.let { connectionsTableModel?.addRow(it) }
   }
 
-  fun ConnectionDialogState.updateZoweConfig (zoweConfig: ZoweConfig): ZoweConfig {
-    val newZoweConfig = zoweConfig.clone()
-    val uri = URI(connectionUrl)
-    newZoweConfig.host = uri.host
-    newZoweConfig.port = uri.port.toLong()
-    newZoweConfig.protocol = connectionUrl.split("://")[0]
-    newZoweConfig.user = username
-    newZoweConfig.password = password
-    newZoweConfig.codePage = codePage
-    return newZoweConfig
+  fun ZoweConfig.updateFromState (state: ConnectionDialogState) {
+    val uri = URI(state.connectionUrl)
+    host = uri.host
+    port = uri.port.toLong()
+    protocol = state.connectionUrl.split("://")[0]
+    user = state.username
+    password = state.password
+    codePage = state.codePage
   }
 
   /**
@@ -73,11 +71,12 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
         return
       }
 
-      val oldZoweConfig = parseConfigJson(configFile.inputStream)
-      val newZoweConfig = state.updateZoweConfig(oldZoweConfig)
+      val zoweConfig = parseConfigJson(configFile.inputStream)
+      zoweConfig.extractSecureProperties(configFile.path.split("/").toTypedArray())
+      zoweConfig.updateFromState(state)
       runWriteActionOnWriteThread {
-        newZoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
-        configFile.setBinaryContent(newZoweConfig.toJson().toByteArray(configFile.charset))
+        zoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
+        configFile.setBinaryContent(zoweConfig.toJson().toByteArray(configFile.charset))
       }
     }
   }
