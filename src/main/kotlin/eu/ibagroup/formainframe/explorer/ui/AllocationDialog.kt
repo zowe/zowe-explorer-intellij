@@ -199,6 +199,9 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
       }
     }.apply {
       minimumSize = Dimension(450, 300)
+      if (state.errorMessage != "") {
+        setErrorText(state.errorMessage)
+      }
     }
 
   }
