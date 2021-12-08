@@ -204,7 +204,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val wasModified = isModified
     applySandbox<Credentials>()
     applySandbox<ConnectionConfig>()
-    zoweConfigStates.forEach { updateZoweConfigIfNeeded(it) }
+    zoweConfigStates.distinct().forEach { updateZoweConfigIfNeeded(it) }
     if (wasModified) {
       panel?.updateUI()
     }

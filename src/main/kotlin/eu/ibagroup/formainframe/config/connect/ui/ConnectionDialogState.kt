@@ -9,6 +9,7 @@ import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
+import java.util.*
 
 data class ConnectionDialogState(
     var connectionUuid: String = "",
@@ -42,6 +43,21 @@ data class ConnectionDialogState(
       username = value.username
       password = value.password
     }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) {
+      return false
+    }
+    if (other === this) {
+      return true
+    }
+    if (other !is ConnectionDialogState) {
+      return false
+    }
+    return this.connectionConfig == other.connectionConfig && this.mode == other.mode
+  }
+
+  override fun hashCode(): Int = Objects.hash(connectionConfig, mode)
 
   public override fun clone(): ConnectionDialogState {
     return ConnectionDialogState(
