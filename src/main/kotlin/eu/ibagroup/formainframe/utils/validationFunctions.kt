@@ -1,9 +1,12 @@
 package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.components.JBTextField
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
@@ -125,6 +128,26 @@ fun validateUssFileName(component: JTextField): ValidationInfo? {
   } else {
     null
   }
+}
+
+fun validateJobFilter (prefix: String, owner: String, jobId: String, ws: JesWorkingSet, component: JBTextField): ValidationInfo? {
+  val baseValidation = validateJobFilter(prefix, owner, jobId, component)
+  if (baseValidation != null) {
+    return baseValidation
+  }
+  val newOwner = owner.ifEmpty {
+    ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""
+  }
+  val newPrefix = prefix.ifEmpty { "*" }
+  return if (ws.masks.any { it.owner == newOwner && it.prefix == newPrefix && it.jobId == jobId }) {
+    ValidationInfo("Job Filter with provided data already exists.", component)
+  } else null
+}
+
+fun validateJobFilter (prefix: String, owner: String, jobId: String, component: JComponent): ValidationInfo? {
+  return if ((prefix.isNotEmpty() || owner.isNotEmpty()) && jobId.isNotEmpty()) {
+    ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+  } else null
 }
 
 fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData): ValidationInfo? {

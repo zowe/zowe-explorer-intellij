@@ -8,6 +8,7 @@ import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.validateJobFilter
 import javax.swing.JComponent
 
 class JobsWsDialog(
@@ -93,15 +94,11 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      return if ((oldItem.owner.isNotEmpty() || newValue.isNotEmpty()) && oldItem.jobId.isNotEmpty()) {
-        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
-      } else null
+      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, component)
     }
 
     override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return if ((item.owner.isNotEmpty() || item.prefix.isNotEmpty()) && item.jobId.isNotEmpty()) {
-        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
-      } else null
+      return validateJobFilter(item.prefix, item.owner, item.jobId, component)
     }
 
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
@@ -118,15 +115,11 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      return if ((oldItem.prefix.isNotEmpty() || newValue.isNotEmpty()) && oldItem.jobId.isNotEmpty()) {
-        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
-      } else null
+      return validateJobFilter(oldItem.prefix, newValue, oldItem.jobId, component)
     }
 
     override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return if ((item.prefix.isNotEmpty() || item.owner.isNotEmpty()) && item.jobId.isNotEmpty()) {
-        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
-      } else null
+      return validateJobFilter(item.prefix, item.owner, item.jobId, component)
     }
 
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
@@ -143,15 +136,11 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      return if ((oldItem.prefix.isNotEmpty() || oldItem.owner.isNotEmpty()) && newValue.isNotEmpty()) {
-        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
-      } else null
+      return validateJobFilter(oldItem.prefix, oldItem.owner, newValue, component)
     }
 
     override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return if ((item.prefix.isNotEmpty() || item.owner.isNotEmpty()) && item.jobId.isNotEmpty()) {
-        ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
-      } else null
+      return validateJobFilter(item.prefix, item.owner, item.jobId, component)
     }
 
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
