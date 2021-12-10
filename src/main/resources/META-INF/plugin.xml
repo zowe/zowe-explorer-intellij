@@ -259,6 +259,11 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 icon="AllIcons.Nodes.Module"
                 text="Mask"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
+                icon="ForMainframeIcons.jclDirectoryIcon"
+                text="Jobs Filter"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
                 class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
                 text="Use Binary Mode"/>
@@ -288,8 +293,10 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <reference id="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
