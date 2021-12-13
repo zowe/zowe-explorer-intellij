@@ -23,7 +23,6 @@ import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.toMutableList
 import eu.ibagroup.r2z.zowe.config.ZoweConfig
 import eu.ibagroup.r2z.zowe.config.parseConfigJson
-import eu.ibagroup.r2z.zowe.config.toJson
 import java.net.URI
 
 @Suppress("DialogTitleCapitalization")
@@ -43,16 +42,14 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     showAndTestConnection()?.let { connectionsTableModel?.addRow(it) }
   }
 
-  fun ConnectionDialogState.updateZoweConfig (zoweConfig: ZoweConfig): ZoweConfig {
-    val newZoweConfig = zoweConfig.clone()
-    val uri = URI(connectionUrl)
-    newZoweConfig.host = uri.host
-    newZoweConfig.port = uri.port.toLong()
-    newZoweConfig.protocol = connectionUrl.split("://")[0]
-    newZoweConfig.user = username
-    newZoweConfig.password = password
-    newZoweConfig.tsoProfile?.properties?.set("codePage", codePage.toString().split("IBM_").last())
-    return newZoweConfig
+  fun ZoweConfig.updateFromState (state: ConnectionDialogState) {
+    val uri = URI(state.connectionUrl)
+    host = uri.host
+    port = uri.port.toLong()
+    protocol = state.connectionUrl.split("://")[0]
+    user = state.username
+    password = state.password
+    codePage = state.codePage
   }
 
   /**
@@ -74,10 +71,12 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
         return
       }
 
-      val oldZoweConfig = parseConfigJson(configFile.inputStream)
-      val newZoweConfig = state.updateZoweConfig(oldZoweConfig)
+      val zoweConfig = parseConfigJson(configFile.inputStream)
+      zoweConfig.extractSecureProperties(configFile.path.split("/").toTypedArray())
+      zoweConfig.updateFromState(state)
       runWriteActionOnWriteThread {
-        configFile.setBinaryContent(newZoweConfig.toJson().toByteArray(configFile.charset))
+        zoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
+        configFile.setBinaryContent(zoweConfig.toJson().toByteArray(configFile.charset))
       }
     }
   }
@@ -205,7 +204,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val wasModified = isModified
     applySandbox<Credentials>()
     applySandbox<ConnectionConfig>()
-    zoweConfigStates.forEach { updateZoweConfigIfNeeded(it) }
+    zoweConfigStates.distinct().forEach { updateZoweConfigIfNeeded(it) }
     if (wasModified) {
       panel?.updateUI()
     }

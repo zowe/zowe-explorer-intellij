@@ -19,9 +19,9 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.InfoOperation
 import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import eu.ibagroup.formainframe.utils.crudable.find
+import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.zowe.ZOWE_CONFIG_NAME
-import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 import eu.ibagroup.r2z.zowe.config.ZoweConfig
 import eu.ibagroup.r2z.zowe.config.parseConfigJson
@@ -54,9 +54,14 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   private fun scanForZoweConfig (): ZoweConfig? {
     val zoweConfigLocation = "${myProject.basePath}/$ZOWE_CONFIG_NAME"
-    val zoweFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(zoweConfigLocation)) ?: return null
+    val zoweFile = runReadActionInEdtAndWait {
+      VirtualFileManager.getInstance().findFileByNioPath(Path.of(zoweConfigLocation))
+    } ?: return null
     return try {
-      parseConfigJson(zoweFile.inputStream).also { zoweConfig = it }
+      parseConfigJson(zoweFile.inputStream).also {
+        it.extractSecureProperties(zoweFile.path.split("/").toTypedArray())
+        zoweConfig = it
+      }
     } catch (e: Exception) {
       null
     }
@@ -138,15 +143,10 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   fun ZoweConfig.toConnectionConfig(uuid: String): ConnectionConfig {
     val basePath = if (basePath.last() == '/') basePath.dropLast(1) else basePath
-    val zoweUrl = "${protocol}://${host}:${port}${basePath}"
+    val domain = if (port == null) host else "${host}:${port}"
+    val zoweUrl = "${protocol}://${domain}${basePath}"
     val isAllowSelfSigned = protocol == "https"
-    val tsoProfile = tsoProfile
-    var codePage = CodePage.IBM_1047
-    if (tsoProfile != null) {
-      runCatching {
-        codePage = CodePage.valueOf("IBM_${tsoProfile.properties["codePage"]}")
-      }
-    }
+    val codePage = this.codePage
 
     return ConnectionConfig(
       uuid,
