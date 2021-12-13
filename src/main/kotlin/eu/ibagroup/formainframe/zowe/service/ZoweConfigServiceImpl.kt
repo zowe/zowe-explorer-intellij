@@ -154,8 +154,9 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       zoweUrl,
       isAllowSelfSigned,
       codePage,
-      ZVersion.ZOS_2_1
-    ).apply { zoweConfigPath = "${myProject.basePath}/${ZOWE_CONFIG_NAME}" }
+      ZVersion.ZOS_2_1,
+      "${myProject.basePath}/${ZOWE_CONFIG_NAME}"
+    )
   }
 
   /**
