@@ -261,7 +261,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
-                icon="ForMainframeIcons.jclDirectoryIcon"
+                icon="ForMainframeIcons.JclDirectory"
                 text="Jobs Filter"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"

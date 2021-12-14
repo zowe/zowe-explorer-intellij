@@ -1,16 +1,22 @@
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
 import eu.ibagroup.formainframe.config.ws.ui.files.WorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import javax.swing.Icon
 
 class AddWorkingSetAction : AddWsActionBase() {
+  override val explorerView = FILE_EXPLORER_VIEW
   override val presentationTextInExplorer = "Working Set"
   override val defaultPresentationText = "Create Working Set"
 
@@ -19,9 +25,9 @@ class AddWorkingSetAction : AddWsActionBase() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.getData(FILE_EXPLORER_VIEW) ?: let {
+    super.update(e)
+    if (e.getData(JES_EXPLORER_VIEW) != null) {
       e.presentation.isEnabledAndVisible = false
     }
   }
-
 }

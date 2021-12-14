@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.util.containers.isEmpty
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -13,11 +14,13 @@ import eu.ibagroup.formainframe.config.connect.ui.initEmptyUuids
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
-import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
+import javax.swing.Icon
 
 abstract class AddWsActionBase: AnAction() {
+  abstract val explorerView: DataKey<out ExplorerTreeView<*, *>>
   override fun actionPerformed(e: AnActionEvent) {
     if (configCrudable.getAll<ConnectionConfig>().isEmpty()) {
       val state = ConnectionDialog.showAndTestConnection(
@@ -51,7 +54,7 @@ abstract class AddWsActionBase: AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    if (e.getData(JES_EXPLORER_VIEW) != null) {
+    if (e.getData(explorerView) != null) {
       e.presentation.text = presentationTextInExplorer
       e.presentation.icon = AllIcons.Nodes.Project
     } else {

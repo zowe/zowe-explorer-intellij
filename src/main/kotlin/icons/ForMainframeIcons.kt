@@ -10,8 +10,8 @@ object ForMainframeIcons {
   }
 
   @JvmField
-  val explorerToolbarIcon = getIcon("icons/toolWindowLogo.svg")
+  val ExplorerToolbarIcon = getIcon("icons/toolWindowLogo.svg")
 
   @JvmField
-  val jclDirectoryIcon = getIcon("icons/jclDir.svg")
+  val JclDirectory = getIcon("icons/jclDir.svg")
 }
