@@ -17,7 +17,6 @@ import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
-import javax.swing.Icon
 
 abstract class AddWsActionBase: AnAction() {
   abstract val explorerView: DataKey<out ExplorerTreeView<*, *>>

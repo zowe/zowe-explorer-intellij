@@ -7,7 +7,6 @@ import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsDialog
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.utils.crudable.Crudable
-import icons.ForMainframeIcons
 
 class AddJobsWorkingSetAction : AddWsActionBase() {
   override val explorerView = JES_EXPLORER_VIEW
