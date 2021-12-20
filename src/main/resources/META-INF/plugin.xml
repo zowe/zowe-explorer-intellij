@@ -121,6 +121,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.ForceRenameOperationRunnerFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationFactory"/>
@@ -255,6 +257,10 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 class="eu.ibagroup.formainframe.explorer.actions.RenameAction" text="Rename"
                 use-shortcut-of="RenameElement"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
+                class="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction" text="Force Rename"
+                use-shortcut-of="ForceRefresh"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 icon="AllIcons.Nodes.Module"
@@ -327,6 +333,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
             <separator/>
