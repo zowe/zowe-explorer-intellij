@@ -1,1 +1,76 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 13 13"><defs><style>.cls-1{fill:#6e6e6e;}</style></defs><title>toolWindowLogo</title><rect class="cls-1" x="1.56" y="1.56" width="9.87" height="9.87" rx="1.16" transform="translate(-2.69 6.5) rotate(-45)"/></svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="Layer_1"
+   data-name="Layer 1"
+   viewBox="0 0 13 13"
+   version="1.1"
+   sodipodi:docname="toolWindowLogo.svg"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)">
+  <metadata
+     id="metadata5607">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>toolWindowLogo</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1016"
+     id="namedview5605"
+     showgrid="false"
+     inkscape:zoom="45.254834"
+     inkscape:cx="3.5303159"
+     inkscape:cy="5.6984736"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Layer_1" />
+  <defs
+     id="defs5598">
+    <style
+       id="style5596">.cls-1{fill:#afb1b3;}</style>
+  </defs>
+  <title
+     id="title5600">toolWindowLogo</title>
+  <rect
+     class="cls-1"
+     x="1.56"
+     y="1.56"
+     width="9.87"
+     height="9.87"
+     rx="1.16"
+     transform="translate(-2.69 6.5) rotate(-45)"
+     id="rect5602" />
+  <path
+     style="fill:none;stroke:#f7f7f7;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+     d="m 4.0923157,1.9204071 c 0,0 0.056225,0.054826 0.066933,0.072191 1.0032312,1.6276084 1.7342107,1.0612927 4.6526926,3.0616839 1.3238307,1.0747293 1.2318247,0.8908246 2.5562177,2.8677894 0.01025,0.015309 0.155019,0.1689945 0.331335,0.3468882"
+     id="path4842"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="cscsc" />
+  <path
+     style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:2.9000001;stroke-dasharray:none;stroke-opacity:1"
+     d="m 3.5855362,10.571783 c 0.042329,-0.043 0.080699,-0.08209 0.091666,-0.08993 4.6723035,-3.3391605 -0.1547325,-5.9817993 -1.407235,-6.5900475 -0.09753,-0.047363 0.033646,0.015266 -0.014364,-0.00679 -0.024109,-0.011078 -0.045102,-0.01498 -0.081728,-0.050689"
+     id="path4018"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="csssc" />
+</svg>
