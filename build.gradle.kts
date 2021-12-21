@@ -56,12 +56,12 @@ dependencies {
 }
 
 intellij {
-  version = "2021.2"
+  version = "2021.3"
 }
 
 tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   sinceBuild("203.5981")
-  untilBuild("212.*")
+  untilBuild("213.*")
   changeNotes(
     """
       <h1>Version 0.5.0</h1><br/>
