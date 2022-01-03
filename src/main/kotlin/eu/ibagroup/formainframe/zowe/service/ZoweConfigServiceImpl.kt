@@ -21,6 +21,7 @@ import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import eu.ibagroup.formainframe.utils.crudable.find
 import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runTask
+import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.zowe.ZOWE_CONFIG_NAME
 import eu.ibagroup.r2z.annotations.ZVersion
 import eu.ibagroup.r2z.zowe.config.ZoweConfig
@@ -133,6 +134,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val connectionOpt = configCrudable.addOrUpdate(zoweConnection)
     return if (connectionOpt.isEmpty) null else connectionOpt.get().also {
       CredentialService.instance.setCredentials(it.uuid, username, password)
+      sendTopic(ZOWE_CONFIG_CHANGED).onConfigSaved(zoweConfig, zoweConnection)
     }
   }
 

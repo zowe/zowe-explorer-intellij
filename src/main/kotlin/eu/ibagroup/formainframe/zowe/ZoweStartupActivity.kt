@@ -10,9 +10,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
+import eu.ibagroup.formainframe.utils.subscribe
+import eu.ibagroup.formainframe.zowe.service.ZOWE_CONFIG_CHANGED
+import eu.ibagroup.formainframe.zowe.service.ZoweConfigHandler
 import eu.ibagroup.formainframe.zowe.service.ZoweConfigService
 import eu.ibagroup.formainframe.zowe.service.ZoweConfigState
+import eu.ibagroup.r2z.zowe.config.ZoweConfig
 
 const val ZOWE_CONFIG_NAME = "zowe.config.json"
 
@@ -29,6 +34,11 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded (project: Project) {
     NotificationGroupManager.getInstance().getNotificationGroup(EXPLORER_NOTIFICATION_GROUP_ID)
       .createNotification("Zowe config file detected", NotificationType.INFORMATION)
       .apply {
+        subscribe(ZOWE_CONFIG_CHANGED, object: ZoweConfigHandler {
+          override fun onConfigSaved(config: ZoweConfig, connectionConfig: ConnectionConfig) {
+            hideBalloon()
+          }
+        })
         addAction(object : DumbAwareAction("Add Zowe Connection") {
           override fun actionPerformed(e: AnActionEvent) {
             project.service<ZoweConfigService>().addOrUpdateZoweConfig(false, true)

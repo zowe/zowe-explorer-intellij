@@ -4,8 +4,27 @@
 package eu.ibagroup.formainframe.zowe.service
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.r2z.zowe.config.ZoweConfig
+
+
+/**
+ * ZoweConfigHandler can be used to handle events from config changed topic.
+ * @author Valiantsin Krus
+ * @version 0.5
+ * @since 2021-02-12
+ */
+interface ZoweConfigHandler {
+  fun onConfigSaved(config: ZoweConfig, connectionConfig: ConnectionConfig)
+}
+
+/**
+ * Instance of config changed topic.
+ */
+@JvmField
+val ZOWE_CONFIG_CHANGED = Topic.create("ZOWE_CONFIG_CHANGED", ZoweConfigHandler::class.java)
+
 
 /**
  * ZoweConfigService implements ability to interact
