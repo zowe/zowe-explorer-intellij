@@ -40,7 +40,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
   ) {
     when (val attributes = operation.attributes) {
       is RemoteDatasetAttributes -> {
-        attributes.requesters.stream().map {
+        attributes.requesters.map {
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).renameDataset(
@@ -56,18 +56,17 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               runWriteActionOnWriteThread {
                 operation.file.rename(this@RenameOperationRunner, operation.newName)
               }
-              true
             } else {
-              throw CallException(response, "Unable to rename file")
+              throw CallException(response, "Unable to rename the selected dataset")
             }
           } catch (e: Throwable) {
-            false
+            if (e is CallException) { throw e } else { throw RuntimeException(e) }
           }
-        }.filter { it }.findAnyNullable() ?: throw UnknownError("")
+        }
       }
       is RemoteMemberAttributes -> {
         val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
-        parentAttributes.requesters.stream().map {
+        parentAttributes.requesters.map {
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).renameDatasetMember(
@@ -85,18 +84,17 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               runWriteActionOnWriteThread {
                 operation.file.rename(this@RenameOperationRunner, operation.newName)
               }
-              true
             } else {
-              throw CallException(response, "Unable to rename file")
+              throw CallException(response, "Unable to rename the selected member")
             }
           } catch (e: Throwable) {
-            false
+            if (e is CallException) { throw e } else { throw RuntimeException(e) }
           }
-        }.filter { it }.findAnyNullable() ?: throw UnknownError("")
+        }
       }
       is RemoteUssAttributes -> {
         val parentDirPath = attributes.parentDirPath
-        attributes.requesters.stream().map {
+        attributes.requesters.map {
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).moveUssFile(
@@ -110,14 +108,13 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               runWriteActionOnWriteThread {
                 operation.file.rename(this@RenameOperationRunner, operation.newName)
               }
-              true
             } else {
-              throw CallException(response, "Unable to rename file")
+              throw CallException(response, "Unable to rename the selected file or directory")
             }
           } catch (e: Throwable) {
-            false
+            if (e is CallException) { throw e } else { throw RuntimeException(e) }
           }
-        }.filter { it }.findAnyNullable() ?: throw UnknownError("")
+        }
       }
     }
   }

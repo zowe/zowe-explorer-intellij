@@ -25,8 +25,6 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) : O
     override val operationClass = ForceRenameOperation::class.java
     override val resultClass = Unit::class.java
 
-    private var exception : Throwable? = null
-
     override fun canRun(operation: ForceRenameOperation): Boolean {
         return (when(operation.attributes) {
             is RemoteUssAttributes -> true
@@ -94,11 +92,8 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) : O
                         }
                     }
                 }
-                true
             } catch (e: Throwable) {
-                exception = e
-                false
-                throw RuntimeException(exception)
+                throw RuntimeException(e)
             }
         }
     }
