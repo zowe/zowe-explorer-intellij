@@ -11,6 +11,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
+import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 import eu.ibagroup.r2z.MoveUssFile
@@ -53,9 +54,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               toDatasetName = operation.newName
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              runWriteActionOnWriteThread {
-                operation.file.rename(this@RenameOperationRunner, operation.newName)
-              }
+              sendVfsChangesTopic()
             } else {
               throw CallException(response, "Unable to rename the selected dataset")
             }
@@ -81,9 +80,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               memberName = operation.newName
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              runWriteActionOnWriteThread {
-                operation.file.rename(this@RenameOperationRunner, operation.newName)
-              }
+              sendVfsChangesTopic()
             } else {
               throw CallException(response, "Unable to rename the selected member")
             }
@@ -105,9 +102,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               filePath = FilePath("$parentDirPath/${operation.newName}")
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              runWriteActionOnWriteThread {
-                operation.file.rename(this@RenameOperationRunner, operation.newName)
-              }
+              sendVfsChangesTopic()
             } else {
               throw CallException(response, "Unable to rename the selected file or directory")
             }
