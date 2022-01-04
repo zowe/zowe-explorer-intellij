@@ -2,7 +2,7 @@
  * This is property of IBA Group
  */
 
-package eu.ibagroup.formainframe.analytics.ui
+package eu.ibagroup.formainframe.ui.analytics
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -12,6 +12,7 @@ import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.applyToComponent
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.UIUtil
+import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.PolicyProvider
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -19,7 +20,7 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
 class AnalyticsPolicyDialog(
   private val policyProvider: PolicyProvider,
-  project: Project
+  project: Project?
 ) : DialogWrapper(project, true) {
 
   companion object {
@@ -48,12 +49,21 @@ class AnalyticsPolicyDialog(
         }
       }
     }
+
+    fun open(analyticsService: AnalyticsService, policyProvider: PolicyProvider, project: Project?): Boolean {
+      val dialog = AnalyticsPolicyDialog(policyProvider = policyProvider, project = project)
+      val res = dialog.showAndGet()
+      analyticsService.isAnalyticsEnabled = res
+      analyticsService.isUserAcknowledged = true
+      return res
+    }
   }
 
   init {
     init()
     title = "For Mainframe Plugin Privacy Policy and Terms and Conditions"
     setOKButtonText("I Agree")
+    setCancelButtonText("Dismiss")
   }
 
   override fun createCenterPanel(): JComponent {
@@ -61,7 +71,5 @@ class AnalyticsPolicyDialog(
       buildLicenceComponent(policyProvider.text, policyProvider.buildAgreementText("clicking"))
     }
   }
-
-
 }
 

@@ -28,7 +28,7 @@ class UIComponentManagerImpl : UIComponentManager {
 
   @Suppress("UNCHECKED_CAST")
   override fun <E : Explorer<*>> getExplorerContentProvider(clazz: Class<out E>): ExplorerContentProvider<E> {
-    return explorerContentProviderList.find { it.explorer::class.java.isAssignableFrom(clazz) } as ExplorerContentProvider<E> ?: throw IllegalArgumentException("")
+    return explorerContentProviderList.find { it.explorer::class.java.isAssignableFrom(clazz) } as ExplorerContentProvider<E>
   }
 
   @Suppress("UNCHECKED_CAST")
