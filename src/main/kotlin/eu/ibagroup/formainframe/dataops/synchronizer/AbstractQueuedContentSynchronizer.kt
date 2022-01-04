@@ -103,7 +103,7 @@ abstract class AbstractQueuedContentSynchronizer(
     }
     val length = file.length
     if (length != 0L && acceptancePolicy == AcceptancePolicy.IF_EMPTY_ONLY) {
-      throw IllegalArgumentException("Cannot sync non-empty file due provided acceptance policy $acceptancePolicy")
+      throw IllegalArgumentException("Cannot sync non-empty file due to provided acceptance policy $acceptancePolicy")
     }
     TrailingSpacesStripper.setEnabled(file, false)
     val configFactory = { executor: QueueExecutor<Unit> ->

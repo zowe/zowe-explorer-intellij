@@ -11,6 +11,7 @@ import eu.ibagroup.formainframe.utils.crudable.EventHandler
 import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicBoolean
 
 fun sendConfigServiceTopic(): EventHandler = sendTopic(CONFIGS_CHANGED)
 
@@ -40,6 +41,8 @@ interface ConfigService : PersistentStateComponent<ConfigState> {
   val eventHandler: EventHandler
 
   val autoSaveDelay: Duration
+
+  var isAutoSyncEnabled: AtomicBoolean
 
 }
 
