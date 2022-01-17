@@ -12,6 +12,9 @@
         <extensionPoint name="contentSynchronizer"
                         interface="eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizerFactory"/>
 
+        <extensionPoint name="mfContentAdapter"
+                        interface="eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapterFactory"/>
+
         <extensionPoint name="operationRunner"
                         interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
         <extensionPoint name="explorerContentProvider"
@@ -96,6 +99,12 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <contentSynchronizer
                 implementation="eu.ibagroup.formainframe.dataops.synchronizer.SpoolFileContentSynchronizerFactory"/>
+
+        <mfContentAdapter
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.adapters.MemberContentAdapterFactory"/>
+
+        <mfContentAdapter
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.adapters.SeqDatasetContentAdapterFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DatasetAllocatorFactory"/>
 
@@ -190,6 +199,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>
+
+        <typedHandler implementation="eu.ibagroup.formainframe.explorer.actions.ChangeContentAction"/>
     </extensions>
 
     <actions>
