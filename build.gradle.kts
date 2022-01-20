@@ -64,12 +64,12 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   untilBuild("213.*")
   changeNotes(
     """
-      <h2>New features:</h2><br/>
+      <b>New features:</b><br/>
       <ul>
         <li>JES Explorer - provides the option to submit JCL jobs, view their statuses and operate an input and output of it using the plugin.</li>
         <li>Copy operations - to copy dataset and files both from USS to z/OS and from z/OS to USS using Drag & Drop operation.</li>
       </ul>
-      <h2>Expanded changes list:</h2><br/>
+      <b>Expanded changes list:</b><br/>
       <ul>
         <li>Rework navigate method in ExplorerTreeNode class for Jes support</li>
         <li>Sequential and Member to PDS + Uss Folder</li>
@@ -86,7 +86,7 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
         <li>Create Icon for toolbar</li>
         <li>Consider lrecl constraints in datasets when editing</li>
       </ul>
-      <h2>Bugs fixed:</h2>
+      <b>Bugs fixed:</b>
       <ul>
         <li>Renaming USS directory or file to existing one duplicates name in tree and shows inconsistent information</li>
         <li>Place the cursor in the Member name field</li>
