@@ -64,28 +64,36 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   untilBuild("213.*")
   changeNotes(
     """
-      <h1>Version 0.5.0</h1><br/>
-      <h2>Stories resolved</h2><br/>
+      <h2>New features:</h2><br/>
       <ul>
-        <li>IJMP-294 Rework navigate method in ExplorerTreeNode class for Jes support</li>
-        <li>IJMP-306 Sequential and Member to PDS + Uss Folder</li>
-        <li>IJMP-293 Add Get...PropertiesAction for JesExplorer support</li>
-        <li>IJMP-336 change functionality of "+" button in JESExplorer</li>
-        <li>IJMP-245 Create JES tab in Settings</li>
-        <li>IJMP-227 SpoolFileContentSynchronizer</li>
-        <li>IJMP-272 Explorer refactoring</li>
-        <li>IJMP-226 JobFetchProvider SpoolFileFetchProvider</li>
-        <li>IJMP-307 Copy PDS to Uss Folder</li>
-        <li>IJMP-308 Copy Uss File and PDS</li>
-        <li>IJMP-87 Spike: Drag and drop operations</li>
+        <li>JES Explorer - provides the option to submit JCL jobs, view their statuses and operate an input and output of it using the plugin.</li>
+        <li>Copy operations - to copy dataset and files both from USS to z/OS and from z/OS to USS using Drag & Drop operation.</li>
       </ul>
-      <h2>Bugs fixed</h2>
+      <h2>Expanded changes list:</h2><br/>
       <ul>
-        <li>IJMP-301 Renaming USS directory or file to existing one duplicates name in tree and shows inconsistent information</li>
-        <li>IJMP-238 Place the cursor in the Member name field</li>
-        <li>IJMP-221 The same dataset does not open in the second mask</li>
-        <li>IJMP-313 Duplicated JesFilters removed</li>
-        <li>IJMP-281 Empty data set hangs in loading state</li>
+        <li>Rework navigate method in ExplorerTreeNode class for Jes support</li>
+        <li>Sequential and Member to PDS + Uss Folder</li>
+        <li>Add Get...PropertiesAction for JesExplorer support</li>
+        <li>Changed functionality of "+" button in JESExplorer</li>
+        <li>Create JES tab in Settings</li>
+        <li>SpoolFileContentSynchronizer</li>
+        <li>Explorer refactoring</li>
+        <li>JobFetchProvider SpoolFileFetchProvider</li>
+        <li>Copy PDS to Uss Folder</li>
+        <li>Copy Uss File and PDS</li>
+        <li>Spike: Drag and drop operations</li>
+        <li>Functionality of renaming files and folders as on the Mainframe</li>
+        <li>Create Icon for toolbar</li>
+        <li>Consider lrecl constraints in datasets when editing</li>
+      </ul>
+      <h2>Bugs fixed:</h2>
+      <ul>
+        <li>Renaming USS directory or file to existing one duplicates name in tree and shows inconsistent information</li>
+        <li>Place the cursor in the Member name field</li>
+        <li>The same dataset does not open in the second mask</li>
+        <li>Duplicated JesFilters removed</li>
+        <li>Empty data set hangs in loading state</li>
+        <li>No message details when renaming dataset to existing name</li>
       </ul>"""
   )
 }
