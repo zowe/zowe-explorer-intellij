@@ -18,10 +18,7 @@ import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
 import java.awt.Dimension
-import javax.swing.JComboBox
-import javax.swing.JComponent
-import javax.swing.JTextField
-import javax.swing.border.EmptyBorder
+import javax.swing.*
 
 class AllocationDialog(project: Project?, override var state: DatasetAllocationParams) :
   StatefulDialog<DatasetAllocationParams>(project = project) {
@@ -197,17 +194,18 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           ))
         }
       }
-    }.apply {
+    }
+  }
+
+  override fun createCenterPanel(): JComponent {
+    return JBScrollPane(mainPanel).apply {
+      horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+      verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
       minimumSize = Dimension(450, 300)
       if (state.errorMessage != "") {
         setErrorText(state.errorMessage)
       }
     }
-
-  }
-
-  override fun createCenterPanel(): JComponent {
-    return mainPanel
   }
 
 
