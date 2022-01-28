@@ -74,7 +74,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   private fun findExistingConnection(): ConnectionConfig? {
     val zoweConnectionList = configCrudable.find<ConnectionConfig> {
-      it.zoweConfigPath != null && it.name == zoweConnectionName
+      it.name == zoweConnectionName
     }.toList()
     return if (zoweConnectionList.isEmpty()) null else zoweConnectionList[0]
   }
