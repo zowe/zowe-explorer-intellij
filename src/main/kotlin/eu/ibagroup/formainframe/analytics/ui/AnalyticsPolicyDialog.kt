@@ -52,7 +52,7 @@ class AnalyticsPolicyDialog(
 
   init {
     init()
-    title = "For Mainframe Plugin Privacy Policy and Terms and Conditions"
+    title = "Zowe Explorer Plugin Privacy Policy and Terms and Conditions"
     setOKButtonText("I Agree")
   }
 
@@ -64,4 +64,3 @@ class AnalyticsPolicyDialog(
 
 
 }
-

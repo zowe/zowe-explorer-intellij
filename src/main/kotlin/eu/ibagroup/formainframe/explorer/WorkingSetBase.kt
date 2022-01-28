@@ -5,6 +5,7 @@
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
+import com.intellij.util.containers.orNull
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
@@ -46,7 +47,7 @@ abstract class WorkingSetBase<MaskType, WS : WorkingSet<*>, WSConfig : WorkingSe
     get() = lock.withLock {
       workingSetConfig
         ?.let {
-          return@withLock configCrudable.getByForeignKey(it, ConnectionConfig::class.java).get()
+          return@withLock configCrudable.getByForeignKey(it, ConnectionConfig::class.java).orNull()
         }
     }
 
