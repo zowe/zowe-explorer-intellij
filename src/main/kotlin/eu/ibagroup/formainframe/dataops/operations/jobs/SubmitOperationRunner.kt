@@ -14,10 +14,14 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
+import eu.ibagroup.formainframe.explorer.ui.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SubmitFileNameBody
 import eu.ibagroup.r2z.SubmitJobRequest
+import java.io.InputStream
+import java.io.OutputStream
 
 class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobRequest> {
 
@@ -51,6 +55,7 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
         "Cannot submit ${operation.request.file.name} on ${operation.connectionConfig.name}"
       )
     }
+    sendTopic(JOB_ADDED_TOPIC).submitted(body)
     return body
   }
 

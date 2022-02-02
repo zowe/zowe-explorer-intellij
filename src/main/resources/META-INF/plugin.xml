@@ -137,6 +137,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <explorerContentProvider index="0" implementation="eu.ibagroup.formainframe.explorer.FileExplorerContentProviderFactory" />
         <explorerContentProvider index="1" implementation="eu.ibagroup.formainframe.explorer.JesExplorerContentProviderFactory"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -156,6 +157,10 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                     factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"
                     icon="ForMainframeIcons.ExplorerToolbarIcon"
                     doNotActivateOnStart="true"/>
+
+        <toolWindow id="Jobs Results" anchor="bottom"
+                    factoryClass="eu.ibagroup.formainframe.explorer.ui.jobs.JobResultWindowFactory"
+                    canCloseContents="true"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
@@ -193,6 +198,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>
+
     </extensions>
 
     <actions>
