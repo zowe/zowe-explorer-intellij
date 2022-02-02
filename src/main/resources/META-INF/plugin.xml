@@ -55,33 +55,33 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 Firstly, you need to create a connection to your Mainframe (note: z/OSMF port should be specified at the end of the address).<br/>
 You can do it either by manually specifying all the needed info through the Settings tab, or just by clicking the "+" sign.<br/>
 How to add a connection through the Settings:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_17664703-83e4-4d9f-af7a-65e527b7f427"><img src="https://plugins.jetbrains.com/files/16353/screenshot_17664703-83e4-4d9f-af7a-65e527b7f427" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_17664703-83e4-4d9f-af7a-65e527b7f427"><img src="https://plugins.jetbrains.com/files/16353/screenshot_17664703-83e4-4d9f-af7a-65e527b7f427" width="680"></a><br/>
 To work with the Datasets and USS files you need to set up a Working Set.<br/>
 How to create a new Working Set through the Settings:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_ec760af3-dcdc-46f9-808c-27ea7e867a4f"><img src="https://plugins.jetbrains.com/files/16353/screenshot_ec760af3-dcdc-46f9-808c-27ea7e867a4f" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_ec760af3-dcdc-46f9-808c-27ea7e867a4f"><img src="https://plugins.jetbrains.com/files/16353/screenshot_ec760af3-dcdc-46f9-808c-27ea7e867a4f" width="680"></a><br/>
 Also you can do both of the actions just by clicking the "+" button:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_9b2b3bb9-0305-4826-8b17-ef7a174181f3"><img src="https://plugins.jetbrains.com/files/16353/screenshot_9b2b3bb9-0305-4826-8b17-ef7a174181f3" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_9b2b3bb9-0305-4826-8b17-ef7a174181f3"><img src="https://plugins.jetbrains.com/files/16353/screenshot_9b2b3bb9-0305-4826-8b17-ef7a174181f3" width="680"></a><br/>
 <h4>Data operations</h4>
 The Plugin allows you to operate with you Datasets and USS files. Also it allows to easily copy and move Datasets and USS files between Subsystems<br/>
 Example of creation, renaming and deletion of Datasets and USS files:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_74141b83-3689-4c3b-92ab-aa0bc9abb717"><img src="https://plugins.jetbrains.com/files/16353/screenshot_74141b83-3689-4c3b-92ab-aa0bc9abb717" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_74141b83-3689-4c3b-92ab-aa0bc9abb717"><img src="https://plugins.jetbrains.com/files/16353/screenshot_74141b83-3689-4c3b-92ab-aa0bc9abb717" width="680"></a><br/>
 Example of how to change Dataset and USS file content:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_bbd89a3f-1c27-4467-8b15-b6f3a7523380"><img src="https://plugins.jetbrains.com/files/16353/screenshot_bbd89a3f-1c27-4467-8b15-b6f3a7523380" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_bbd89a3f-1c27-4467-8b15-b6f3a7523380"><img src="https://plugins.jetbrains.com/files/16353/screenshot_bbd89a3f-1c27-4467-8b15-b6f3a7523380" width="680"></a><br/>
 Example of copy and move operations with drag & drop functionality:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_b84aa89b-1534-4cf0-a5ce-5c631ae1470b"><img src="https://plugins.jetbrains.com/files/16353/screenshot_b84aa89b-1534-4cf0-a5ce-5c631ae1470b" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_b84aa89b-1534-4cf0-a5ce-5c631ae1470b"><img src="https://plugins.jetbrains.com/files/16353/screenshot_b84aa89b-1534-4cf0-a5ce-5c631ae1470b" width="680"></a><br/>
 <h4>JES Explorer</h4>
 This is a new feature of the Plugin. Using it you can easily operate with your JCL jobs.<br/>
 First of all, you need to create a JES Working Set, which will hold all the filters for the JES Explorer.<br/>
 You can do it either by clicking the "+" button in the JES Explorer tab, or through the Settings.<br/>
 Example of how to create a JES Working Set through the Settings:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_b1a99bdb-4111-45d1-830c-1a3a126f9433"><img src="https://plugins.jetbrains.com/files/16353/screenshot_b1a99bdb-4111-45d1-830c-1a3a126f9433" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_b1a99bdb-4111-45d1-830c-1a3a126f9433"><img src="https://plugins.jetbrains.com/files/16353/screenshot_b1a99bdb-4111-45d1-830c-1a3a126f9433" width="680"></a><br/>
 Example of how to create a JES Working Set using the "+" button:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_a11ba710-a710-439c-8027-1f82f88eb99a"><img src="https://plugins.jetbrains.com/files/16353/screenshot_a11ba710-a710-439c-8027-1f82f88eb99a" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_a11ba710-a710-439c-8027-1f82f88eb99a"><img src="https://plugins.jetbrains.com/files/16353/screenshot_a11ba710-a710-439c-8027-1f82f88eb99a" width="680"></a><br/>
 Also you can submit a job and see the output.<br/>
 Example of how to submit a job:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_848c4f53-84f1-46da-9fe1-0cbf6603d834"><img src="https://plugins.jetbrains.com/files/16353/screenshot_848c4f53-84f1-46da-9fe1-0cbf6603d834" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_848c4f53-84f1-46da-9fe1-0cbf6603d834"><img src="https://plugins.jetbrains.com/files/16353/screenshot_848c4f53-84f1-46da-9fe1-0cbf6603d834" width="680"></a><br/>
 Example of how to see the output:<br/>
-<a href="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d"><img src="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d" width="700"></a><br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d"><img src="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d" width="680"></a><br/>
 ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
