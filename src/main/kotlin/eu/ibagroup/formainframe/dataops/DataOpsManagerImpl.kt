@@ -12,6 +12,8 @@ import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import com.intellij.openapi.util.Disposer
+import eu.ibagroup.formainframe.dataops.synchronizer.adapters.DefaultContentAdapter
+import eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapter
 
 class DataOpsManagerImpl : DataOpsManager {
 
@@ -81,6 +83,11 @@ class DataOpsManagerImpl : DataOpsManager {
   }
   private val contentSynchronizers by contentSynchronizersDelegate
 
+  private val mfContentAdaptersDelegate = lazy {
+    MFContentAdapter.EP.extensionList.buildComponents()
+  }
+  private val mfContentAdapters by mfContentAdaptersDelegate
+
   override fun isSyncSupported(file: VirtualFile): Boolean {
     return contentSynchronizers.stream()
       .filter { it.accepts(file) }
@@ -91,6 +98,10 @@ class DataOpsManagerImpl : DataOpsManager {
     return contentSynchronizers.stream()
       .filter { it.accepts(file) }
       .findAnyNullable()
+  }
+
+  override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {
+    return mfContentAdapters.filter { it.accepts(file) }.firstOrNull() ?: DefaultContentAdapter(this)
   }
 
   private val operationRunners by lazy {
@@ -118,6 +129,7 @@ class DataOpsManagerImpl : DataOpsManager {
     if (attributesServiceDelegate.isInitialized()) attributesServices.clear()
     if (fileFetchProvidersDelegate.isInitialized()) fileFetchProviders.clear()
     if (contentSynchronizersDelegate.isInitialized()) contentSynchronizers.clear()
+    if (mfContentAdaptersDelegate.isInitialized()) mfContentAdapters.clear()
     Disposer.dispose(this)
   }
 }
