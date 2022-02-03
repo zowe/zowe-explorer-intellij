@@ -3,7 +3,7 @@ package eu.ibagroup.formainframe.common.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.JBColor
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.runIfTrue
 import java.awt.Component
@@ -48,7 +48,7 @@ class ErrorableTableCellRenderer(
     column: Int
   ): Component {
     return renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column).apply {
-      table?.castOrNull<ValidatingTableView<WorkingSetConfig>>()?.let { t ->
+      table?.castOrNull<ValidatingTableView<FilesWorkingSetConfig>>()?.let { t ->
         t.listTableModel.validationInfos[row, column] = hasError().runIfTrue {
           ValidationInfo(errorMessage, this as JComponent)
         }

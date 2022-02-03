@@ -12,39 +12,76 @@
         <extensionPoint name="contentSynchronizer"
                         interface="eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizerFactory"/>
 
+        <extensionPoint name="mfContentAdapter"
+                        interface="eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapterFactory"/>
+
         <extensionPoint name="operationRunner"
                         interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
+        <extensionPoint name="explorerContentProvider"
+                        interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
+        <extensionPoint name="explorer"
+                        interface="eu.ibagroup.formainframe.explorer.ExplorerFactory"/>
 
     </extensionPoints>
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
-    <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y
-    </vendor>
+    <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
 
     <description><![CDATA[
-<h1>Celebrating Pride 2021 with the 0.4 release!</h1>
-
-For Mainframe brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
-Using our plugin you will be able to:<br/>
+We are happy to release version 0.5 of our Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
+IBA Group team of <b>mainframe enthusiasts</b> are actively developing new features for the open-source "For Mainframe" plugin.
+We keep improving existing features that help you to:<br/>
 <ul>
-   <li>Start working with z/OS easily with no complex configurations.</li>
-   <li>Organize datasets on z/OS, files on USS into Working Sets.</li>
-   <li>Allocate datasets, create members, files and directories with different permissions.</li>
-   <li>Perform renaming, copying and moving data in a modern way.</li>
-   <li>Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.</li>
-   <li>Create multiple connections to different z/OS systems.</li>
-   <li>All Intellij supported languages will be automatically highlighted and recognized once opened from the mainframe.</li>
+  <li>Start working with z/OS easily with no complex configurations.</li>
+  <li>Organize datasets on z/OS, files on USS into Working Sets.</li>
+  <li>Allocate datasets, create members, files and directories with different permissions.</li>
+  <li>Perform renaming, copying and moving data in a modern way.</li>
+  <li>Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.</li>
+  <li>Create multiple connections to different z/OS systems.</li>
+  <li>All Intellij supported languages will be automatically highlighted and recognized once opened from the mainframe.</li>
 </ul><br/>
 To start using the plugin:<br/>
 <ul>
-    <li>Install the plugin in your Intellij based IDE.</li>
-    <li>Contact your RACF administrator so that your user is in the <a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua300/V2R4/zosmf/izua300/izulite_SecurityStructuresForZosmf.htm">IZUUSER  RACF group</a></li>
-    <li>You are ready to go! Start working with z/OS from the IDE.</li>
+  <li>Install the plugin in your Intellij based IDE.</li>
+  <li>Contact your RACF administrator so that your user is in the <a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua300/V2R4/zosmf/izua300/izulite_SecurityStructuresForZosmf.htm">IZUUSER  RACF group</a></li>
+  <li>You are ready to go! Start working with z/OS from the IDE.</li>
 </ul></br>
-<b>Note: z/OS 2.1 or higher is required with <a href="https://docs.zowe.org/stable/user-guide/systemrequirements-zosmf.html">configured z/OSMF</a>. Plugin is in active development state. Feel free to recommend or report everything on our <a href="https://github.com/for-mainframe/For-Mainframe/issues">Github</a></b><br/>
+<b>Note: z/OS 2.1 or higher is required with <a href="https://docs.zowe.org/stable/user-guide/systemrequirements-zosmf.html">configured z/OSMF</a>. Plugin is in active development state.<br/>
+Feel free to recommend or report everything on our <a href="https://github.com/for-mainframe/For-Mainframe/issues">Github</a></b><br/>
 Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg">Slack</a><br/>
-
+<h3>How to use the Plugin</h3>
+<h4>First steps</h4>
+Firstly, you need to create a connection to your Mainframe (note: z/OSMF port should be specified at the end of the address).<br/>
+You can do it either by manually specifying all the needed info through the Settings tab, or just by clicking the "+" sign.<br/>
+How to add a connection through the Settings:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_17664703-83e4-4d9f-af7a-65e527b7f427"><img src="https://plugins.jetbrains.com/files/16353/screenshot_17664703-83e4-4d9f-af7a-65e527b7f427" width="680"></a><br/>
+To work with the Datasets and USS files you need to set up a Working Set.<br/>
+How to create a new Working Set through the Settings:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_ec760af3-dcdc-46f9-808c-27ea7e867a4f"><img src="https://plugins.jetbrains.com/files/16353/screenshot_ec760af3-dcdc-46f9-808c-27ea7e867a4f" width="680"></a><br/>
+Also you can do both of the actions just by clicking the "+" button:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_9b2b3bb9-0305-4826-8b17-ef7a174181f3"><img src="https://plugins.jetbrains.com/files/16353/screenshot_9b2b3bb9-0305-4826-8b17-ef7a174181f3" width="680"></a><br/>
+<h4>Data operations</h4>
+The Plugin allows you to operate with you Datasets and USS files. Also it allows to easily copy and move Datasets and USS files between Subsystems<br/>
+Example of creation, renaming and deletion of Datasets and USS files:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_74141b83-3689-4c3b-92ab-aa0bc9abb717"><img src="https://plugins.jetbrains.com/files/16353/screenshot_74141b83-3689-4c3b-92ab-aa0bc9abb717" width="680"></a><br/>
+Example of how to change Dataset and USS file content:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_bbd89a3f-1c27-4467-8b15-b6f3a7523380"><img src="https://plugins.jetbrains.com/files/16353/screenshot_bbd89a3f-1c27-4467-8b15-b6f3a7523380" width="680"></a><br/>
+Example of copy and move operations with drag & drop functionality:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_b84aa89b-1534-4cf0-a5ce-5c631ae1470b"><img src="https://plugins.jetbrains.com/files/16353/screenshot_b84aa89b-1534-4cf0-a5ce-5c631ae1470b" width="680"></a><br/>
+<h4>JES Explorer</h4>
+This is a new feature of the Plugin. Using it you can easily operate with your JCL jobs.<br/>
+First of all, you need to create a JES Working Set, which will hold all the filters for the JES Explorer.<br/>
+You can do it either by clicking the "+" button in the JES Explorer tab, or through the Settings.<br/>
+Example of how to create a JES Working Set through the Settings:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_b1a99bdb-4111-45d1-830c-1a3a126f9433"><img src="https://plugins.jetbrains.com/files/16353/screenshot_b1a99bdb-4111-45d1-830c-1a3a126f9433" width="680"></a><br/>
+Example of how to create a JES Working Set using the "+" button:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_a11ba710-a710-439c-8027-1f82f88eb99a"><img src="https://plugins.jetbrains.com/files/16353/screenshot_a11ba710-a710-439c-8027-1f82f88eb99a" width="680"></a><br/>
+Also you can submit a job and see the output.<br/>
+Example of how to submit a job:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_848c4f53-84f1-46da-9fe1-0cbf6603d834"><img src="https://plugins.jetbrains.com/files/16353/screenshot_848c4f53-84f1-46da-9fe1-0cbf6603d834" width="680"></a><br/>
+Example of how to see the output:<br/>
+<a href="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d"><img src="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d" width="680"></a><br/>
 ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -72,7 +109,14 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <fileDataProvider
                 implementation="eu.ibagroup.formainframe.dataops.fetch.MemberFileFetchProviderFactory"/>
 
-        <fileDataProvider implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProviderFactory"/>
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProviderFactory"/>
+
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.JobFileFetchProviderFactory"/>
+
+        <fileDataProvider
+                implementation="eu.ibagroup.formainframe.dataops.fetch.SpoolFileFetchProviderFactory"/>
 
         <contentSynchronizer
                 implementation="eu.ibagroup.formainframe.dataops.synchronizer.MemberContentSynchronizerFactory"/>
@@ -82,6 +126,15 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <contentSynchronizer
                 implementation="eu.ibagroup.formainframe.dataops.synchronizer.UssFileContentSynchronizerFactory"/>
+
+        <contentSynchronizer
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SpoolFileContentSynchronizerFactory"/>
+
+        <mfContentAdapter
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.adapters.MemberContentAdapterFactory"/>
+
+        <mfContentAdapter
+                implementation="eu.ibagroup.formainframe.dataops.synchronizer.adapters.SeqDatasetContentAdapterFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DatasetAllocatorFactory"/>
 
@@ -93,7 +146,17 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberToPdsFileMoverFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.PdsToUssFolderMoverFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssToUssFileMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssFileToPdsMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.SequentialToPdsMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.SequentialToUssFolderFileMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberToUssFileMoverFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
@@ -105,6 +168,12 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 implementation="eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperationFactory"/>
+
+        <explorer implementation="eu.ibagroup.formainframe.explorer.GlobalExplorerFactory" />
+        <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory" />
+
+        <explorerContentProvider index="0" implementation="eu.ibagroup.formainframe.explorer.FileExplorerContentProviderFactory" />
+        <explorerContentProvider index="1" implementation="eu.ibagroup.formainframe.explorer.JesExplorerContentProviderFactory"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -146,23 +215,22 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>
 
-        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.Explorer"
-                            serviceImplementation="eu.ibagroup.formainframe.explorer.GlobalExplorer"/>
-
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager" preload="true"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
                             serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"/>
 
-        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.ui.ExplorerContent"
-                            serviceImplementation="eu.ibagroup.formainframe.explorer.ui.GlobalExplorerContent"/>
-
         <applicationService serviceInterface="eu.ibagroup.formainframe.analytics.PolicyProvider"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.PolicyProviderImpl"/>
 
+        <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.UIComponentManager"
+                            serviceImplementation="eu.ibagroup.formainframe.explorer.UIComponentManagerImpl"/>
+
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>
+
+        <typedHandler implementation="eu.ibagroup.formainframe.explorer.actions.ChangeContentAction"/>
     </extensions>
 
     <actions>
@@ -183,6 +251,11 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <action id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"
                 text="Working Set"
+                icon="AllIcons.Nodes.Project"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"
+                text="Jobs Working Set"
                 icon="AllIcons.Nodes.Project"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
@@ -212,6 +285,10 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <action class="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
                 id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
+                text="Properties"/>
+
+        <action class="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"
+                id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"
                 text="Properties"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
@@ -256,8 +333,13 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
         </group>
 
-        <group id="eu.ibagroup.formainframe.actions.ActionBarGroup">
+        <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.JESActionBarGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
         </group>
 
@@ -284,6 +366,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <reference id="$Delete"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"/>
         </group>
 
         <action id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"

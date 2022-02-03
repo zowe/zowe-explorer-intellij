@@ -7,7 +7,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 
 abstract class ExplorerTreeStructureBase(
-  protected val explorer: Explorer,
+  protected val explorer: Explorer<*>,
   protected val project: Project
 ) : AbstractTreeStructureBase(project), ExplorerViewSettings {
 

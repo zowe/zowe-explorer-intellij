@@ -13,7 +13,6 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
 
   constructor(crudable: Crudable, vararg columnInfos: ColumnInfo<Item, *>?) : super(*columnInfos) {
     this.crudable = crudable
-    initialize()
   }
 
   constructor(
@@ -22,7 +21,6 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
     crudable: Crudable
   ) : super(columnNames, mutableListOf(), selectedColumn) {
     this.crudable = crudable
-    initialize()
   }
 
   constructor(
@@ -32,7 +30,6 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
     crudable: Crudable
   ) : super(columnNames, mutableListOf(), selectedColumn, order) {
     this.crudable = crudable
-    initialize()
   }
 
   var replacingItems: List<Item>? = null
@@ -74,7 +71,7 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
     needToUpdateCrudableOnSetItems = true
   }
 
-  private fun initialize() {
+  protected fun initialize() {
     reinitialize()
     addTableModelListener {
       if (it.firstRow != TableModelEvent.HEADER_ROW) {

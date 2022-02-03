@@ -22,3 +22,7 @@ $RECYCLE.BIN/
 
 .DS_Store
 **/.DS_Store
+
+# VSCode
+bin
+.vscode

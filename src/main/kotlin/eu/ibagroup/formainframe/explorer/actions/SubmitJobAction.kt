@@ -31,8 +31,7 @@ class SubmitJobAction : AnAction() {
           service<DataOpsManager>().performOperation(
             operation = SubmitJobOperation(
               request = SubmitOperationParams(requestData.first),
-              connectionConfig = requestData.second,
-              urlConnection = requestData.third
+              connectionConfig = requestData.second
             ), it
           )
         }.onSuccess {

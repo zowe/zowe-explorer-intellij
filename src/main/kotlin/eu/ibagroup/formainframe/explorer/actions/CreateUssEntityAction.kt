@@ -34,9 +34,7 @@ abstract class CreateUssEntityAction : AnAction() {
     } ?: return
     val file = node.virtualFile
     if (node is ExplorerUnitTreeNodeBase<*, *>) {
-      val connectionConfig = node.unit.connectionConfig
-      val urlConnection = node.unit.urlConnection
-      if (connectionConfig == null || urlConnection == null) return
+      val connectionConfig = node.unit.connectionConfig ?: return
       val dataOpsManager = node.unit.explorer.componentManager.service<DataOpsManager>()
       val filePath = if (file != null) {
         dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
@@ -65,8 +63,7 @@ abstract class CreateUssEntityAction : AnAction() {
               dataOpsManager.performOperation(
                 operation = UssAllocationOperation(
                   request = allocationParams,
-                  connectionConfig = connectionConfig,
-                  urlConnection = urlConnection
+                  connectionConfig = connectionConfig
                 ),
                 progressIndicator = it
               )

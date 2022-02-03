@@ -3,7 +3,10 @@ package eu.ibagroup.formainframe.utils
 import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import eu.ibagroup.formainframe.explorer.ui.NodeData
+import eu.ibagroup.formainframe.explorer.ui.UssDirNode
+import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import javax.swing.JComponent
@@ -20,7 +23,6 @@ fun validateForBlank(component: JTextField): ValidationInfo? {
   return validateForBlank(component.text, component)
 }
 
-
 fun validateConnectionName(component: JTextField, ignoreValue: String? = null, crudable: Crudable): ValidationInfo? {
   val configAlreadyExists = crudable.find<ConnectionConfig> {
     ignoreValue != it.name && it.name == component.text.trim()
@@ -32,8 +34,13 @@ fun validateConnectionName(component: JTextField, ignoreValue: String? = null, c
   }
 }
 
-fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, crudable: Crudable): ValidationInfo? {
-  val configAlreadyExists = crudable.find<WorkingSetConfig> {
+fun <WSConfig: WorkingSetConfig> validateWorkingSetName(
+  component: JTextField,
+  ignoreValue: String? = null,
+  crudable: Crudable,
+  wsConfigClass: Class<out WSConfig>
+): ValidationInfo? {
+  val configAlreadyExists = crudable.find(wsConfigClass) {
     ignoreValue != it.name && it.name == component.text
   }.count() > 0
   return if (configAlreadyExists) {
@@ -44,11 +51,10 @@ fun validateWorkingSetName(component: JTextField, ignoreValue: String? = null, c
   } else {
     null
   }
-
 }
 
-fun validateWorkingSetMaskName(component: JTextField, ws: WorkingSet): ValidationInfo? {
-  val maskAlreadyExists = ws.dsMasks.map { it.mask }.contains(component.text)
+fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
+  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text)
       || ws.ussPaths.map { it.path }.contains(component.text)
 
   return if (maskAlreadyExists) {
@@ -121,30 +127,55 @@ fun validateUssFileName(component: JTextField): ValidationInfo? {
   }
 }
 
+fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData): ValidationInfo? {
+  val text : String = component.text
+  val childrenNodesFromParent = selectedNode.node.parent?.children
+  when (selectedNode.node) {
+    is UssFileNode -> {
+      childrenNodesFromParent?.forEach {
+        if (it is UssFileNode && it.value.filenameInternal == text) {
+          return ValidationInfo("Filename already exists. Please specify another filename.", component).asWarning()
+        }
+      }
+    }
+    is UssDirNode -> {
+      childrenNodesFromParent?.forEach {
+        if (it is UssDirNode && text == it.value.path.split("/").last()) {
+          return ValidationInfo("Directory name already exists. Please specify another directory name.", component).asWarning()
+        }
+      }
+    }
+  }
+  return null
+}
+
 private val firstSymbol = "A-Za-z\$@#"
 private val remainingSymbol = firstSymbol + "0-9\\-"
-private val firstGroup = "([$firstSymbol][$remainingSymbol]{0,7})"
-private val remainingGroup = "[$remainingSymbol]{1,8}"
-private val smallErrorMessage = "First segment must be alphabetic (A to Z) or national (# @ \$)"
-private val errorMessageForFullText =
-  "Each name segment (qualifier) is 1 to 8 characters,\nthe first of which must be alphabetic (A to Z) or national (# @ \$).\nThe remaining seven characters are either alphabetic,\nnumeric (0 - 9), national, a hyphen (-).\nName segments are separated by a period (.)"
-
-private val datasetNameRegex = Regex("$firstGroup(\\.$remainingGroup)*")
+private val partPattern = "([$firstSymbol][$remainingSymbol]{0,7})"
+private val notEmptyErrorText = "Dataset name must not be empty"
+private val segmentLengthErrorText = "Each name segment (qualifier) is 1 to 8 characters"
+private val charactersLengthExceededErrorText = "Dataset name cannot exceed 44 characters"
+private val segmentCharsErrorText =
+  "$segmentLengthErrorText," +
+      "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
+      "\nThe remaining seven characters are either alphabetic," +
+      "\nnumeric (0 - 9), national, a hyphen (-)." +
+      "\nName segments are separated by a period (.)"
 
 fun validateDatasetNameOnInput(component: JTextField): ValidationInfo? {
   val text = component.text.trim()
   val length = text.length
-  val firstPart = text.substringBefore('.')
-  return if (length > 44) {
-    ValidationInfo("Dataset name cannot exceed 44 characters", component)
-  } else if (component.text.isNotBlank() && !firstPart.matches(Regex(firstGroup))) {
-    ValidationInfo(smallErrorMessage, component)
-  } else if (!text.endsWith('.') && !text.matches(datasetNameRegex)) {
-    ValidationInfo(
-      errorMessageForFullText, component
-    )
+  val parts = text.split('.')
+  return if (text.isNotEmpty()) {
+    if (length > 44) {
+      ValidationInfo(charactersLengthExceededErrorText, component)
+    } else if (parts.find { !it.matches(Regex(partPattern)) || it.length > 8 } != null) {
+      ValidationInfo(segmentCharsErrorText, component)
+    } else {
+      return null
+    }
   } else {
-    null
+    ValidationInfo(notEmptyErrorText, component)
   }
 }
 
@@ -185,7 +216,3 @@ fun validateMemberName(component: JTextField): ValidationInfo? {
     null
   }
 }
-
-
-
-

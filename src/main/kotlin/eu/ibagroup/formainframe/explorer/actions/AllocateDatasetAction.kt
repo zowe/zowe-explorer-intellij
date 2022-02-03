@@ -5,9 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.analytics.AnalyticsService
@@ -17,12 +15,12 @@ import eu.ibagroup.formainframe.analytics.events.FileType
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
@@ -54,11 +52,10 @@ class AllocateDatasetAction : AnAction() {
 private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationParams = DatasetAllocationParams()) {
   val view = e.getData(FILE_EXPLORER_VIEW) ?: return
   val parentNode = view.mySelectedNodesData[0].node
-  if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is WorkingSet) {
+  if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is FilesWorkingSet) {
     val workingSet = parentNode.unit
     val config = parentNode.unit.connectionConfig
-    val urlConfig = parentNode.unit.urlConnection
-    if (config != null && urlConfig != null) {
+    if (config != null) {
       showUntilDone(initialState, { initState ->
         AllocationDialog(project = e.project, initState)
       }) {
@@ -75,8 +72,7 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
               .performOperation(
                 operation = DatasetAllocationOperation(
                   request = state,
-                  connectionConfig = config,
-                  urlConnection = urlConfig
+                  connectionConfig = config
                 ),
                 it
               )
@@ -96,10 +92,10 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
                   noText = "No"
                 )
               ) {
-                val workingSetConfig = configCrudable.getByUniqueKey<WorkingSetConfig>(workingSet.uuid)?.clone()
-                if (workingSetConfig != null) {
-                  workingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
-                  configCrudable.update(workingSetConfig)
+                val filesWorkingSetConfig = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
+                if (filesWorkingSetConfig != null) {
+                  filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
+                  configCrudable.update(filesWorkingSetConfig)
                 }
               }
             }

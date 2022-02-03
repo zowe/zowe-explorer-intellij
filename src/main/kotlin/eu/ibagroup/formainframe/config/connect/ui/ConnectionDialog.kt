@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.toBinding
 import com.intellij.ui.layout.withTextBinding
@@ -17,11 +18,11 @@ import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.utils.validateConnectionName
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateZosmfUrl
+import eu.ibagroup.r2z.CodePage
+import eu.ibagroup.r2z.DatasetOrganization
+import eu.ibagroup.r2z.annotations.ZVersion
 import java.awt.Component
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JPasswordField
-import javax.swing.JTextField
+import javax.swing.*
 
 class ConnectionDialog(
   private val crudable: Crudable,
@@ -41,15 +42,17 @@ class ConnectionDialog(
         initialState = initialState,
         factory = { ConnectionDialog(crudable, initialState, project) },
         test = { state ->
-          val throwable = runTask(title = "Testing Connection to ${state.urlConnection.url}", project = project) {
+          val throwable = runTask(title = "Testing Connection to ${state.connectionConfig.url}", project = project) {
             return@runTask try {
-              service<DataOpsManager>().performOperation(InfoOperation(state.urlConnection.url, state.isAllowSsl), it)
+              val info = service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig.url, state.isAllowSsl), it)
+              state.zVersion = info.zVersion
               null
             } catch (t: Throwable) {
               t
             }
           }
           if (throwable != null) {
+            state.mode = DialogMode.UPDATE
             val confirmMessage = "Do you want to add it anyway?"
             val tMessage = throwable.message
             val message = if (tMessage != null) {
@@ -129,6 +132,35 @@ class ConnectionDialog(
       row {
         checkBox("Accept self-signed SSL certificates", state::isAllowSsl)
           .withLargeLeftGap().also { sslCheckbox = it.component }
+      }
+      row {
+        label("Code Page")
+        comboBox(
+            model = CollectionComboBoxModel(
+                listOf(
+                    CodePage.IBM_1025,
+                    CodePage.IBM_1047
+
+                )
+            ),
+            prop = state::codePage
+        )
+      }
+      if (state.mode == DialogMode.UPDATE) {
+        row {
+          label("z/OS Version")
+          comboBox(
+            model = CollectionComboBoxModel(
+              listOf(
+                ZVersion.ZOS_2_1,
+                ZVersion.ZOS_2_2,
+                ZVersion.ZOS_2_3,
+                ZVersion.ZOS_2_4
+              )
+            ),
+            prop = state::zVersion
+          )
+        }
       }
     }.withMinimumWidth(500)
   }

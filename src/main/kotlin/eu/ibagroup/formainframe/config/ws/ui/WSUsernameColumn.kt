@@ -8,15 +8,15 @@ import javax.swing.table.TableCellRenderer
 
 private val NO_USERNAME_MESSAGE = message("configurable.ws.tables.ws.username.error.empty")
 
-class WSUsernameColumn(
-  private val getUsername: (WorkingSetConfig) -> String?
-) : ColumnInfo<WorkingSetConfig, String>(message("configurable.ws.tables.ws.username.name")) {
+class WSUsernameColumn<WSConfig : WorkingSetConfig>(
+  private val getUsername: (WSConfig) -> String?
+) : ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.username.name")) {
 
-  override fun valueOf(item: WorkingSetConfig): String {
+  override fun valueOf(item: WSConfig): String {
     return getUsername(item) ?: NO_USERNAME_MESSAGE
   }
 
-  override fun getRenderer(item: WorkingSetConfig): TableCellRenderer {
+  override fun getRenderer(item: WSConfig): TableCellRenderer {
     return ErrorableTableCellRenderer(
       errorMessage = message("configurable.ws.tables.ws.url.error.empty.tooltip")
     ) {
@@ -24,7 +24,7 @@ class WSUsernameColumn(
     }
   }
 
-  override fun isCellEditable(item: WorkingSetConfig?): Boolean {
+  override fun isCellEditable(item: WSConfig?): Boolean {
     return false
   }
 

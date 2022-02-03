@@ -1,11 +1,9 @@
 package eu.ibagroup.formainframe.api
 
 import com.google.gson.GsonBuilder
-import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
 import eu.ibagroup.r2z.buildApi
+import eu.ibagroup.r2z.buildApiWithBytesConverter
 import okhttp3.ConnectionPool
 import okhttp3.ConnectionSpec
 import okhttp3.Dispatcher
@@ -24,36 +22,35 @@ class ZosmfApiImpl : ZosmfApi {
 
   private data class ZosmfUrl(val url: String, val isAllowSelfSigned: Boolean)
 
-  private val apis = hashMapOf<Class<out Any>, MutableMap<ZosmfUrl, Any>>()
+  private var apis = hashMapOf<Class<out Any>, Pair<MutableMap<ZosmfUrl, Any>, MutableMap<ZosmfUrl, Any>>>()
 
   override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
-    val urlConnection = configCrudable
-      .getByForeignKey<ConnectionConfig, UrlConnection>(connectionConfig)
-      ?: throw RuntimeException("Cannot find url for connection ${connectionConfig.name}")
-    return getApi(apiClass, urlConnection.url, urlConnection.isAllowSelfSigned)
+    return getApi(apiClass, connectionConfig.url, connectionConfig.isAllowSelfSigned)
+  }
+
+  override fun <Api : Any> getApiWithBytesConverter(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
+    return getApi(apiClass, connectionConfig.url, connectionConfig.isAllowSelfSigned, true)
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <Api : Any> getApi(apiClass: Class<out Api>, url: String, isAllowSelfSigned: Boolean): Api {
+  override fun <Api : Any> getApi(apiClass: Class<out Api>, url: String, isAllowSelfSigned: Boolean, useBytesConverter: Boolean): Api {
     val zosmfUrl = ZosmfUrl(url, isAllowSelfSigned)
     if (!apis.containsKey(apiClass)) {
       synchronized(apis) {
         if (!apis.containsKey(apiClass)) {
-          apis[apiClass] = hashMapOf()
+          apis[apiClass] = Pair(hashMapOf(), hashMapOf())
         }
       }
     }
     val apiClassMap = apis[apiClass]!!
-    if (!apiClassMap.containsKey(zosmfUrl)) {
-      synchronized(apiClassMap) {
-        if (!apiClassMap.containsKey(zosmfUrl)) {
-          val baseUrl = zosmfUrl.url
-          val client = getOkHttpClient(zosmfUrl.isAllowSelfSigned)
-          apiClassMap[zosmfUrl] = buildApi(baseUrl, client, apiClass)
-        }
+    synchronized(apiClassMap) {
+      if (!useBytesConverter && !apiClassMap.first.containsKey(zosmfUrl)) {
+        apiClassMap.first[zosmfUrl] = buildApi(zosmfUrl.url, getOkHttpClient(zosmfUrl.isAllowSelfSigned), apiClass)
+      } else if (useBytesConverter && !apiClassMap.second.containsKey(zosmfUrl)) {
+        apiClassMap.second[zosmfUrl] = buildApiWithBytesConverter(zosmfUrl.url, getOkHttpClient(zosmfUrl.isAllowSelfSigned), apiClass)
       }
     }
-    return apiClassMap[zosmfUrl] as Api
+    return if (!useBytesConverter) apiClassMap.first[zosmfUrl] as Api else apiClassMap.second[zosmfUrl] as Api
   }
 
 }

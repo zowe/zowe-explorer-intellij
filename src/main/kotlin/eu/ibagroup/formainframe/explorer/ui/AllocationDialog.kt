@@ -39,6 +39,8 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           validateDatasetNameOnInput(it)
         }.withValidationOnApply {
           validateForBlank(it)
+        }.apply {
+          focused()
         }
       }
       row {
@@ -213,6 +215,3 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
 
 
 }
-
-
-

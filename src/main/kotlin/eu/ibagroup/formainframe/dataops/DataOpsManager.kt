@@ -11,6 +11,7 @@ import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
+import eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapter
 
 interface DataOpsManager : Disposable {
 
@@ -37,6 +38,8 @@ interface DataOpsManager : Disposable {
   fun isSyncSupported(file: VirtualFile): Boolean
 
   fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer?
+
+  fun getMFContentAdapter(file: VirtualFile): MFContentAdapter
 
   fun isOperationSupported(operation: Operation<*>): Boolean
 

@@ -4,7 +4,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -59,5 +58,4 @@ data class RecallOperationParams(
 data class RecallOperation(
   override val request: RecallOperationParams,
   override val connectionConfig: eu.ibagroup.formainframe.config.connect.ConnectionConfig,
-  override val urlConnection: UrlConnection
 ) : RemoteUnitOperation<RecallOperationParams>

@@ -85,7 +85,11 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
         sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchCancelled(query)
       } else {
         if (it is CallException) {
-          val errorMessage = (it.errorParams?.get("details") as List<*>)[0] as String
+          val details = it.errorParams?.get("details")
+          var errorMessage = it.message ?: "Error"
+          if (details is List<*>) {
+            errorMessage = details[0] as String
+          }
           errorMessages[query] = service<ErrorSeparatorService>().separateErrorMessage(errorMessage)["error.description"] as String
         }
         cache[query] = listOf()

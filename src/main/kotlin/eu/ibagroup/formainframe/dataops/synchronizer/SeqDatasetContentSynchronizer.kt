@@ -12,6 +12,8 @@ import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.DatasetOrganization
+import eu.ibagroup.r2z.XIBMDataType
+import eu.ibagroup.r2z.annotations.ZVersion
 import retrofit2.Call
 import java.io.IOException
 
@@ -62,18 +64,19 @@ class SeqDatasetContentSynchronizer(
 
   private fun makeFetchCall(connectionConfig: ConnectionConfig, attributes: RemoteDatasetAttributes): Call<String> {
     val volser = attributes.volser
+    val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
     return if (volser != null) {
       api<DataAPI>(connectionConfig).retrieveDatasetContent(
         authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
         volser = volser,
-        xIBMDataType = attributes.contentMode
+        xIBMDataType = xIBMDataType
       )
     } else {
       api<DataAPI>(connectionConfig).retrieveDatasetContent(
         authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
-        xIBMDataType = attributes.contentMode
+        xIBMDataType = xIBMDataType
       )
     }
   }
@@ -84,20 +87,21 @@ class SeqDatasetContentSynchronizer(
     content: ByteArray
   ): Call<Void> {
     val volser = attributes.volser
+    val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
     return if (volser != null) {
       api<DataAPI>(connectionConfig).writeToDataset(
         authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
         volser = volser,
         content = String(content).addNewLine(),
-        xIBMDataType = attributes.contentMode
+        xIBMDataType = xIBMDataType
       )
     } else {
       api<DataAPI>(connectionConfig).writeToDataset(
         authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
         content = String(content),
-        xIBMDataType = attributes.contentMode
+        xIBMDataType = xIBMDataType
       )
     }
   }

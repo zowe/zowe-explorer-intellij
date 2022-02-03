@@ -8,8 +8,8 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import javax.swing.JComponent
 import javax.swing.JTable
 
-class WSNameColumn(private val wsProvider: () -> List<WorkingSetConfig>) :
-  ValidatingColumnInfo<WorkingSetConfig>(message("configurable.ws.tables.ws.name")) {
+class WSNameColumn<WSConfig : WorkingSetConfig>(private val wsProvider: () -> List<WSConfig>) :
+  ValidatingColumnInfo<WSConfig>(message("configurable.ws.tables.ws.name")) {
 
   companion object {
     @JvmStatic
@@ -17,7 +17,7 @@ class WSNameColumn(private val wsProvider: () -> List<WorkingSetConfig>) :
       ValidationInfo(message("configurable.ws.tables.ws.name.tooltip.error"), component)
   }
 
-  override fun validateOnInput(oldItem: WorkingSetConfig, newValue: String, component: JComponent): ValidationInfo? {
+  override fun validateOnInput(oldItem: WSConfig, newValue: String, component: JComponent): ValidationInfo? {
     with(newValue.trim()) {
       return if ((oldItem.name == this && wsProvider().count { it.name == this } > 1)
         || (oldItem.name != this && wsProvider().any { it.name == this })) {
@@ -28,11 +28,11 @@ class WSNameColumn(private val wsProvider: () -> List<WorkingSetConfig>) :
     }
   }
 
-  override fun valueOf(item: WorkingSetConfig): String {
+  override fun valueOf(item: WSConfig): String {
     return item.name
   }
 
-  override fun isCellEditable(item: WorkingSetConfig?): Boolean {
+  override fun isCellEditable(item: WSConfig?): Boolean {
     return false
   }
 
@@ -40,7 +40,7 @@ class WSNameColumn(private val wsProvider: () -> List<WorkingSetConfig>) :
     return 200
   }
 
-  override fun setValue(item: WorkingSetConfig, value: String) {
+  override fun setValue(item: WSConfig, value: String) {
     item.name = value
   }
 
@@ -48,7 +48,7 @@ class WSNameColumn(private val wsProvider: () -> List<WorkingSetConfig>) :
     return message("configurable.ws.tables.ws.name.tooltip")
   }
 
-  override fun validateEntered(item: WorkingSetConfig, component: JComponent): ValidationInfo? {
+  override fun validateEntered(item: WSConfig, component: JComponent): ValidationInfo? {
     return if (wsProvider().count { it.name == item.name } > 1) {
       getDefaultError(component)
     } else {
@@ -60,7 +60,7 @@ class WSNameColumn(private val wsProvider: () -> List<WorkingSetConfig>) :
     }
   }
 
-  override fun getValidatingCellRenderer(item: WorkingSetConfig): ValidatingCellRenderer<WorkingSetConfig> {
+  override fun getValidatingCellRenderer(item: WSConfig): ValidatingCellRenderer<WSConfig> {
     return ValidatingCellRenderer()
   }
 }

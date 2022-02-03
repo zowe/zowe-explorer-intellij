@@ -42,6 +42,8 @@ class RenameDialog(project: Project?,
           validationOnInput(it)
         }.withValidationOnApply {
           validationForBlankOnApply(it) ?: validationOnApply(it)
+        }.apply {
+          focused()
         }
       }
     }

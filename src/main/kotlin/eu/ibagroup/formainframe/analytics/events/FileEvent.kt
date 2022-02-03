@@ -1,9 +1,6 @@
 package eu.ibagroup.formainframe.analytics.events
 
-import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.attributes.*
 
 private fun attributesToFileType(fileAttributes: FileAttributes): FileType {
   return when (fileAttributes) {
@@ -12,6 +9,7 @@ private fun attributesToFileType(fileAttributes: FileAttributes): FileType {
       if (fileAttributes.isDirectory) FileType.USS_DIR else FileType.USS_FILE
     }
     is RemoteMemberAttributes -> FileType.MEMBER
+    is RemoteSpoolFileAttributes -> FileType.SPOOL_FILE
     else -> throw IllegalArgumentException("FileType cannot be determined by $fileAttributes.")
   }
 }
@@ -48,7 +46,8 @@ enum class FileType(val value: String) {
   USS_FILE("USS_FILE"),
   USS_DIR("USS_DIR"),
   DATASET("DATASET"),
-  MEMBER("MEMBER");
+  MEMBER("MEMBER"),
+  SPOOL_FILE("SPOOL_FILE");
 
   override fun toString(): String {
     return value

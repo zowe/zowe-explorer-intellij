@@ -13,12 +13,17 @@ interface ZosmfApi {
 
   fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api
 
-  fun <Api : Any> getApi(apiClass: Class<out Api>, url: String, isAllowSelfSigned: Boolean): Api
+  fun <Api : Any> getApi(apiClass: Class<out Api>, url: String, isAllowSelfSigned: Boolean, useBytesConverter: Boolean = false): Api
 
+  fun <Api: Any> getApiWithBytesConverter(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api
 }
 
 inline fun <reified Api : Any> api(connectionConfig: ConnectionConfig): Api {
   return ZosmfApi.instance.getApi(Api::class.java, connectionConfig)
+}
+
+inline fun <reified Api : Any> apiWithBytesConverter(connectionConfig: ConnectionConfig): Api {
+  return ZosmfApi.instance.getApiWithBytesConverter(Api::class.java, connectionConfig)
 }
 
 inline fun <reified Api : Any> api(url: String, isAllowSelfSigned: Boolean): Api {

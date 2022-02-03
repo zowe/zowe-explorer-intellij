@@ -3,7 +3,6 @@ package eu.ibagroup.formainframe.dataops.operations
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
@@ -27,7 +26,6 @@ data class UssAllocationParams(
 data class UssAllocationOperation(
   override val request: UssAllocationParams,
   override val connectionConfig: ConnectionConfig,
-  override val urlConnection: UrlConnection
 ) : RemoteUnitOperation<UssAllocationParams>
 
 class UssAllocator : Allocator<UssAllocationOperation> {

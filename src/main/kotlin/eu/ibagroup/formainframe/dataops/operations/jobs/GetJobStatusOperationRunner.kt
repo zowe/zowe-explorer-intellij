@@ -1,17 +1,11 @@
 package eu.ibagroup.formainframe.dataops.operations.jobs
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
@@ -73,8 +67,7 @@ sealed class GetJobStatusOperationParams {
 
 data class GetJobStatusOperation(
   override val request: GetJobStatusOperationParams,
-  override val connectionConfig: ConnectionConfig,
-  override val urlConnection: UrlConnection
+  override val connectionConfig: ConnectionConfig
 ) : RemoteQuery<GetJobStatusOperationParams, JobStatus> {
   override val resultClass = JobStatus::class.java
 }

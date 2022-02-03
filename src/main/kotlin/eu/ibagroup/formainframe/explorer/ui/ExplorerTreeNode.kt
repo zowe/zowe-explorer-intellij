@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.synchronizer.AcceptancePolicy
 import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.utils.component
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -29,14 +30,20 @@ abstract class ExplorerTreeNode<Value : Any>(
   value: Value,
   project: Project,
   val parent: ExplorerTreeNode<*>?,
-  val explorer: Explorer,
+  val explorer: Explorer<*>,
   protected val treeStructure: ExplorerTreeStructureBase
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
 
-  init {
+  open fun init() {
     @Suppress("LeakingThis")
     treeStructure.registerNode(this)
   }
+  init {
+    @Suppress("LeakingThis")
+    init()
+  }
+
+  private val contentProvider = UIComponentManager.INSTANCE.getExplorerContentProvider(explorer::class.java)
 
   private val descriptor: OpenFileDescriptor?
     get() {
@@ -55,7 +62,7 @@ abstract class ExplorerTreeNode<Value : Any>(
 
   protected fun updateMainTitleUsingCutBuffer(text: String, presentationData: PresentationData) {
     val file = virtualFile ?: return
-    val textAttributes = if (explorer.componentManager.service<ExplorerContent>().isFileInCutBuffer(file)) {
+    val textAttributes = if (contentProvider.isFileInCutBuffer(file)) {
       SimpleTextAttributes.GRAYED_ATTRIBUTES
     } else {
       SimpleTextAttributes.REGULAR_ATTRIBUTES

@@ -1,7 +1,7 @@
 package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.config.connect.UrlConnection
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.*
@@ -34,7 +34,7 @@ class MoveCopyOperation(
 }
 
 @Suppress("UNCHECKED_CAST")
-fun MoveCopyOperation.commonUrls(dataOpsManager: DataOpsManager): Collection<Pair<Requester, UrlConnection>> {
+fun MoveCopyOperation.commonUrls(dataOpsManager: DataOpsManager): Collection<Pair<Requester, ConnectionConfig>> {
   val sourceAttributesPrepared = if (sourceAttributes is RemoteMemberAttributes) {
     sourceAttributes.getLibraryAttributes(dataOpsManager) ?: throw IllegalArgumentException("Cannot find lib attributes")
   } else {
