@@ -36,5 +36,27 @@ class PropertyWithRWLock<V>(
   }
 }
 
+class LazyPropertyWithRWLock<V: Any>(
+  private val valueProvider: () -> V,
+  private val lock: ReadWriteLock
+) : ReadWriteProperty<Any?, V> {
+
+  private val setted = false
+  private lateinit var value: V
+
+  override fun getValue(thisRef: Any?, property: KProperty<*>): V = lock.read {
+    if (setted) value else valueProvider().also { value = it }
+  }
+
+  override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) = lock.write{
+    if (setted) {
+      this.value = value
+    }
+  }
+
+}
+
 fun <V> locked(value: V, lock: Lock = ReentrantLock()) = PropertyWithLock(value, lock)
 fun <V> rwLocked(value: V, lock: ReadWriteLock = ReentrantReadWriteLock()) = PropertyWithRWLock(value, lock)
+fun <V: Any> lazyRwLocked(valueProvider: () -> V, lock: ReadWriteLock = ReentrantReadWriteLock()) =
+  LazyPropertyWithRWLock(valueProvider, lock)

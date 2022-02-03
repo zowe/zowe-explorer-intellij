@@ -3,11 +3,14 @@ package eu.ibagroup.formainframe.utils
 import com.google.gson.Gson
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
+import kotlinx.coroutines.delay
+import org.apache.xerces.impl.dv.xs.BooleanDV
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
+import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 import kotlin.streams.toList
 
@@ -20,6 +23,10 @@ inline fun <reified T> Any?.castOrNull(): T? = (this is T).runIfTrue { this as T
 @Suppress("UNCHECKED_CAST")
 fun <T> Any?.castOrNull(clazz: Class<T>): T? =
   if (this != null && clazz.isAssignableFrom(this::class.java)) this as T else null
+
+inline fun <reified T> Any?.`is`(): Boolean = this.`is`(T::class.java)
+
+fun <T> Any?.`is`(clazz: Class<T>): Boolean = this != null && clazz.isAssignableFrom(this::class.java)
 
 val <E> Optional<out E>.nullable: E?
   inline get() = this.orElse(null)
@@ -97,8 +104,12 @@ fun <T> Collection<T>?.streamOrEmpty(): Stream<T> {
   return this?.stream() ?: Stream.empty()
 }
 
+fun <T> Class<*>.isThe(clazz: Class<out T>): Boolean {
+  return this == clazz
+}
+
 inline fun <reified T> Class<*>.isThe(): Boolean {
-  return this == T::class.java
+  return this.isThe(T::class.java)
 }
 
 inline fun <reified T> Stream<T>.findAnyNullable(): T? {
@@ -199,6 +210,34 @@ fun <T> Iterable<T>.getMinimalCommonParents(parentGetter: T.() -> T?): Collectio
       firstContainsSecond && !secondContainsFirst -> 1
       secondContainsFirst && !firstContainsSecond -> -1
       else -> 0
+    }
+  }
+}
+
+var t: Thread? = null
+fun debounceOld(delayInterval: Long, block: () -> Unit) {
+  if (t?.isAlive == true) {
+    t?.interrupt()
+  }
+  t = thread {
+    runCatching {
+      Thread.sleep(delayInterval)
+      block()
+    }
+  }
+}
+
+fun debounce(delayInterval: Long, block: () -> Unit): () -> Unit {
+  var t: Thread? = null
+  return {
+    if (t?.isAlive == true) {
+      t?.interrupt()
+    }
+    t = thread {
+      runCatching {
+        Thread.sleep(delayInterval)
+        block()
+      }
     }
   }
 }

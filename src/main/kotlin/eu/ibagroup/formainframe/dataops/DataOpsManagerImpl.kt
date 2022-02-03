@@ -11,6 +11,9 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
+import com.intellij.openapi.util.Disposer
+import eu.ibagroup.formainframe.dataops.synchronizer.adapters.DefaultContentAdapter
+import eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapter
 
 class DataOpsManagerImpl : DataOpsManager {
 
@@ -21,10 +24,11 @@ class DataOpsManagerImpl : DataOpsManager {
   override val componentManager: ComponentManager
     get() = ApplicationManager.getApplication()
 
-  private val attributesServices by lazy {
+  private val attributesServiceDelegate = lazy {
     @Suppress("UNCHECKED_CAST")
     AttributesService.EP.extensionList.buildComponents() as MutableList<AttributesService<FileAttributes, VirtualFile>>
   }
+  private val attributesServices by attributesServiceDelegate
 
   override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
     attributesClass: Class<out A>,
@@ -53,9 +57,10 @@ class DataOpsManagerImpl : DataOpsManager {
       .findAnyNullable()
   }
 
-  private val fileFetchProviders by lazy {
+  private val fileFetchProvidersDelegate = lazy {
     FileFetchProvider.EP.extensionList.buildComponents()
   }
+  private val fileFetchProviders by fileFetchProvidersDelegate
 
   override fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> getFileFetchProvider(
     requestClass: Class<out R>,
@@ -69,13 +74,19 @@ class DataOpsManagerImpl : DataOpsManager {
         && it.vFileClass.isAssignableFrom(vFileClass)
     } as FileFetchProvider<R, Q, File>? ?: throw IllegalArgumentException(
       "Cannot find FileFetchProvider for " +
-        "requestClass=${requestClass.name}; queryClass=${queryClass.name}; vFileClass=${vFileClass.name}"
+              "requestClass=${requestClass.name}; queryClass=${queryClass.name}; vFileClass=${vFileClass.name}"
     )
   }
 
-  private val contentSynchronizers by lazy {
+  private val contentSynchronizersDelegate = lazy {
     ContentSynchronizer.EP.extensionList.buildComponents()
   }
+  private val contentSynchronizers by contentSynchronizersDelegate
+
+  private val mfContentAdaptersDelegate = lazy {
+    MFContentAdapter.EP.extensionList.buildComponents()
+  }
+  private val mfContentAdapters by mfContentAdaptersDelegate
 
   override fun isSyncSupported(file: VirtualFile): Boolean {
     return contentSynchronizers.stream()
@@ -89,12 +100,15 @@ class DataOpsManagerImpl : DataOpsManager {
       .findAnyNullable()
   }
 
+  override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {
+    return mfContentAdapters.filter { it.accepts(file) }.firstOrNull() ?: DefaultContentAdapter(this)
+  }
+
   private val operationRunners by lazy {
     @Suppress("UNCHECKED_CAST")
     val operationRunnersList = OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
     operationRunnersList.associateListedBy { it.operationClass }
   }
-
   override fun isOperationSupported(operation: Operation<*>): Boolean {
     return operationRunners[operation::class.java]?.any { it.canRun(operation) } == true
   }
@@ -112,8 +126,10 @@ class DataOpsManagerImpl : DataOpsManager {
   }
 
   override fun dispose() {
-    attributesServices.clear()
-    fileFetchProviders.clear()
-    contentSynchronizers.clear()
+    if (attributesServiceDelegate.isInitialized()) attributesServices.clear()
+    if (fileFetchProvidersDelegate.isInitialized()) fileFetchProviders.clear()
+    if (contentSynchronizersDelegate.isInitialized()) contentSynchronizers.clear()
+    if (mfContentAdaptersDelegate.isInitialized()) mfContentAdapters.clear()
+    Disposer.dispose(this)
   }
 }

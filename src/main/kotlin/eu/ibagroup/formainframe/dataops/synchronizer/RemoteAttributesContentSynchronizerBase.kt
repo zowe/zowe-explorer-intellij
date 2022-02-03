@@ -3,13 +3,11 @@ package eu.ibagroup.formainframe.dataops.synchronizer
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.messages.Topic
 import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
-import eu.ibagroup.formainframe.utils.ContentStorage
-import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.runWriteActionInEdt
+import eu.ibagroup.formainframe.utils.*
 import java.io.IOException
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
@@ -18,7 +16,7 @@ private val log = log<RemoteAttributesContentSynchronizerBase<*>>()
 
 abstract class RemoteAttributesContentSynchronizerBase<Attributes : FileAttributes>(
   dataOpsManager: DataOpsManager
-) : AbstractAttributedContentSynchronizer<Attributes>(dataOpsManager) {
+) : AbstractAttributedContentSynchronizer<Attributes>(dataOpsManager), FileAttributesChangeListener {
 
   protected abstract val storageNamePostfix: String
 
@@ -62,19 +60,21 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : FileAttribut
       }
       log.info("first fetch: $neverFetchedBefore; recordId: $recordId; attributes: $attributes")
       val fetchedRemoteContentBytes = fetchRemoteContentBytes(attributes, indicator)
+      val contentAdapter = dataOpsManager.getMFContentAdapter(syncProvider.file)
+      val adaptedFetchedBytes = contentAdapter.performAdaptingFromMainframe(fetchedRemoteContentBytes, syncProvider.file)
       if (neverFetchedBefore) {
         runWriteActionInEdt {
-          syncProvider.putInitialContent(fetchedRemoteContentBytes)
+          syncProvider.putInitialContent(adaptedFetchedBytes)
         }
         successfulStatesStorage.writeStream(recordId).use {
-          it.write(fetchedRemoteContentBytes)
+          it.write(adaptedFetchedBytes)
         }
         fetchedAtLeastOnce.add(syncProvider)
         syncProvider.notifySyncStarted()
         log.info("Initial content set")
       } else {
         val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
-        if (fileContent contentEquals fetchedRemoteContentBytes) {
+        if (fileContent contentEquals adaptedFetchedBytes) {
           successfulStatesStorage.writeStream(recordId).use {
             it.write(fileContent)
           }
@@ -84,20 +84,23 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : FileAttribut
         val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
         syncProvider.beforeSaveDecision()
         val doUploadContent = syncProvider.saveStrategy
-          .decide(syncProvider.file, oldStorageBytes, fetchedRemoteContentBytes)
+          .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
         syncProvider.afterSaveDecision()
         log.info("doUploadContent: $doUploadContent")
         if (doUploadContent) {
-          uploadNewContent(attributes, fileContent)
+
+          val newContentPrepared = contentAdapter.performAdaptingToMainframe(fileContent, syncProvider.file)
+          runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
+          uploadNewContent(attributes, newContentPrepared)
           successfulStatesStorage.writeStream(recordId).use {
-            it.write(fileContent)
+            it.write(newContentPrepared)
           }
         } else {
           successfulStatesStorage.writeStream(recordId).use {
-            it.write(fetchedRemoteContentBytes)
+            it.write(adaptedFetchedBytes)
           }
           runWriteActionInEdt {
-            syncProvider.loadNewContent(fetchedRemoteContentBytes)
+            syncProvider.loadNewContent(adaptedFetchedBytes)
           }
           log.info("set local content from remote")
         }
@@ -108,11 +111,25 @@ abstract class RemoteAttributesContentSynchronizerBase<Attributes : FileAttribut
     }
   }
 
+  override fun onFileAttributesChange(file: VirtualFile) {
+    triggerSync(file)
+  }
+
   private fun onThrowable(t: Throwable, syncProvider: SyncProvider, neverFetchedBefore: Boolean) {
     if (neverFetchedBefore) {
       syncProvider.notifySyncStarted()
     }
     syncProvider.onThrowable(t)
   }
+
+}
+
+interface FileAttributesChangeListener {
+
+  companion object {
+    val TOPIC = Topic.create("fileAttributesChangeListener", FileAttributesChangeListener::class.java)
+  }
+
+  fun onFileAttributesChange(file: VirtualFile)
 
 }

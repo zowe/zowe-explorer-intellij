@@ -4,7 +4,7 @@ import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.JobStatus
 import eu.ibagroup.r2z.XIBMDataType
 
-class RemoteJobAttributes(
+data class RemoteJobAttributes(
   val jobInfo: JobStatus,
   override val url: String,
   override val requesters: MutableList<JobsRequester>,

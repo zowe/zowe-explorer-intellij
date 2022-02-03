@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -57,5 +56,4 @@ class MigrateOperationFactory : OperationRunnerFactory {
 data class MigrateOperation(
   override val request: MigrateOperationParams,
   override val connectionConfig: ConnectionConfig,
-  override val urlConnection: UrlConnection
 ) : RemoteUnitOperation<MigrateOperationParams>

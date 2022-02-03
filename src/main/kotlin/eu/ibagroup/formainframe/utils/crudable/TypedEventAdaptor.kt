@@ -66,9 +66,9 @@ class TypedEventAdaptorBuilder<Row> {
 
 }
 
-inline fun <reified Row> eventAdaptor(init: TypedEventAdaptorBuilder<Row>.() -> Unit): TypedEventAdaptor<Row> {
+fun <Row> eventAdapter(rowClass: Class<Row>, init: TypedEventAdaptorBuilder<Row>.() -> Unit): TypedEventAdaptor<Row>{
   val proxy = TypedEventAdaptorBuilder<Row>().apply(init)
-  return object : TypedEventAdaptor<Row>(Row::class.java) {
+  return object : TypedEventAdaptor<Row>(rowClass) {
     override fun onOurRowAdd(added: Row) {
       proxy.onAdd(added)
     }
@@ -81,6 +81,10 @@ inline fun <reified Row> eventAdaptor(init: TypedEventAdaptorBuilder<Row>.() -> 
       proxy.onDelete(row)
     }
   }
+}
+
+inline fun <reified Row> eventAdaptor(noinline init: TypedEventAdaptorBuilder<Row>.() -> Unit): TypedEventAdaptor<Row> {
+  return eventAdapter(Row::class.java, init)
 }
 
 inline fun <reified Row> anyEventAdaptor(crossinline block: (Row) -> Unit): TypedEventAdaptor<Row> {

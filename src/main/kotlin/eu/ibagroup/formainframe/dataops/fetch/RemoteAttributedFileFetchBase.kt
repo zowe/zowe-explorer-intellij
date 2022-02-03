@@ -15,5 +15,4 @@ abstract class RemoteAttributedFileFetchBase<Request : Any, Response : FileAttri
   override fun convertResponseToFile(response: Response): File? {
     return attributesService.getOrCreateVirtualFile(response)
   }
-
 }

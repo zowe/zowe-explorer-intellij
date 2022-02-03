@@ -11,14 +11,14 @@ import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
@@ -36,8 +36,8 @@ class RenameAction : AnAction() {
         validateDatasetMask(it.text, it)
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet()) {
-        val parentValue = selectedNode.node.parent?.value as WorkingSet
-        val wsToUpdate = configCrudable.getByUniqueKey<WorkingSetConfig>(parentValue.uuid)?.clone()
+        val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
+        val wsToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentValue.uuid)?.clone()
         if (wsToUpdate != null) {
           wsToUpdate.dsMasks.filter { it.mask == initialState }[0].mask = dialog.state
           configCrudable.update(wsToUpdate)
@@ -71,8 +71,8 @@ class RenameAction : AnAction() {
         validateUssMask(it.text, it)
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet()) {
-        val parentValue = selectedNode.node.parent?.value as WorkingSet
-        val wsToUpdate = configCrudable.getByUniqueKey<WorkingSetConfig>(parentValue.uuid)?.clone()
+        val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
+        val wsToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentValue.uuid)?.clone()
         if (wsToUpdate != null) {
           wsToUpdate.ussPaths.filter { it.path == initialState }[0].path = dialog.state
           configCrudable.update(wsToUpdate)
@@ -88,6 +88,7 @@ class RenameAction : AnAction() {
         attributes.name
       ).withValidationOnInput {
         validateUssFileName(it)
+        validateUssFileNameAlreadyExists(it, selectedNode)
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
@@ -131,7 +132,7 @@ class RenameAction : AnAction() {
       return
     }
     val selectedNodes = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1 && selectedNodes[0].node !is WorkingSetNode) {
+    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1 && selectedNodes[0].node !is FilesWorkingSetNode) {
       val file = selectedNodes[0].file
       var isMigrated = false
       if (file != null) {

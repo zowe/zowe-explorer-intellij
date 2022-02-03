@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
-import org.apache.log4j.Level
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
@@ -84,7 +83,7 @@ fun assertWriteAllowed() = ApplicationManager.getApplication().assertWriteAccess
 
 fun <T> submitOnWriteThread(block: () -> T): T {
   @Suppress("UnstableApiUsage")
-  return AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).submit(block).get()
+  return AppUIExecutor.onWriteThread(ModalityState.defaultModalityState()).submit(block).get()
 }
 
 @Suppress("UnstableApiUsage")
@@ -200,8 +199,14 @@ inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
   }
 }
 
-inline fun <reified T : Any> log(level: Level = Level.INFO): Logger {
-  return logger<T>().apply { setLevel(level) }
+inline fun runWriteActionInEdtAndWait(crossinline block: () -> Unit) {
+  invokeAndWaitIfNeeded {
+    runWriteAction(block)
+  }
+}
+
+inline fun <reified T : Any> log(): Logger {
+  return logger<T>()
 }
 
 fun VirtualFile.getParentsChain(): List<VirtualFile> {

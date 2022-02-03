@@ -6,8 +6,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.rd.util.UUID
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.runIfTrue
@@ -47,9 +47,9 @@ internal abstract class ClassCaseSwitcher<R> {
 
   abstract fun onConnectionConfig(): R
 
-  abstract fun onZOSMFUrlConnection(): R
-
   abstract fun onWorkingSetConfig(): R
+
+  abstract fun onJobsWorkingSetConfig() : R
 
   open fun onCredentials(): R {
     return onElse()
@@ -60,8 +60,8 @@ internal abstract class ClassCaseSwitcher<R> {
   operator fun invoke(clazz: Class<*>): R {
     return when (clazz) {
       ConnectionConfig::class.java -> onConnectionConfig()
-      UrlConnection::class.java -> onZOSMFUrlConnection()
-      WorkingSetConfig::class.java -> onWorkingSetConfig()
+      FilesWorkingSetConfig::class.java -> onWorkingSetConfig()
+      JobsWorkingSetConfig::class.java -> onJobsWorkingSetConfig()
       Credentials::class.java -> onCredentials()
       else -> onElse()
     }
@@ -77,18 +77,14 @@ private class FilterSwitcher(
     return crudable.getByColumnLambda(row as ConnectionConfig) { it.name }.count()
   }
 
-  override fun onZOSMFUrlConnection(): Long {
-    return if (row is UrlConnection) {
-      crudable.find<UrlConnection> { it.url == row.url && it.isAllowSelfSigned == row.isAllowSelfSigned }.count()
-    } else {
-      Long.MAX_VALUE
-    }
-  }
 
   override fun onWorkingSetConfig(): Long {
-    return crudable.getByColumnLambda(row as WorkingSetConfig) { it.name }.count()
+    return crudable.getByColumnLambda(row as FilesWorkingSetConfig) { it.name }.count()
   }
 
+  override fun onJobsWorkingSetConfig(): Long {
+    return crudable.getByColumnLambda(row as JobsWorkingSetConfig) { it.uuid }.count()
+  }
   override fun onCredentials(): Long {
     return 0
   }
@@ -107,19 +103,20 @@ private class UpdateFilterSwitcher(
 
   override fun onConnectionConfig(): Boolean {
     return if (currentRow is ConnectionConfig && updatingRow is ConnectionConfig) {
-      filterSwitcher.onConnectionConfig() == 0L || updatingRow.name == currentRow.name
+      filterSwitcher.onConnectionConfig() == 0L || updatingRow.name == currentRow.name || updatingRow.zVersion == currentRow.zVersion || updatingRow.url == currentRow.url || updatingRow.codePage == currentRow.codePage || updatingRow.isAllowSelfSigned == updatingRow.isAllowSelfSigned
     } else false
   }
 
-  override fun onZOSMFUrlConnection(): Boolean {
-    return if (currentRow is UrlConnection && updatingRow is UrlConnection) {
-      filterSwitcher.onZOSMFUrlConnection() == 0L || updatingRow.url == currentRow.url
-    } else false
-  }
 
   override fun onWorkingSetConfig(): Boolean {
-    return if (currentRow is WorkingSetConfig && updatingRow is WorkingSetConfig) {
+    return if (currentRow is FilesWorkingSetConfig && updatingRow is FilesWorkingSetConfig) {
       filterSwitcher.onWorkingSetConfig() == 0L || updatingRow.name == currentRow.name
+    } else false
+  }
+
+  override fun onJobsWorkingSetConfig(): Boolean {
+    return if (currentRow is JobsWorkingSetConfig && updatingRow is JobsWorkingSetConfig) {
+      filterSwitcher.onJobsWorkingSetConfig() == 0L || updatingRow.uuid == currentRow.uuid
     } else false
   }
 
@@ -144,10 +141,6 @@ internal fun makeCrudableWithoutListeners(
         return stateGetter().connections
       }
 
-      override fun onZOSMFUrlConnection(): MutableList<*> {
-        return stateGetter().urls
-      }
-
       override fun onWorkingSetConfig(): MutableList<*> {
         return stateGetter().workingSets
       }
@@ -156,6 +149,10 @@ internal fun makeCrudableWithoutListeners(
         return withCredentials.runIfTrue {
           credentialsGetter()
         }
+      }
+
+      override fun onJobsWorkingSetConfig(): MutableList<*> {
+        return stateGetter().jobsWorkingSets
       }
 
       override fun onElse(): MutableList<*>? {
@@ -190,14 +187,13 @@ internal fun <T> classToList(clazz: Class<out T>, state: ConfigState): MutableLi
       return state.connections as MutableList<T>
     }
 
-    override fun onZOSMFUrlConnection(): MutableList<T> {
-      return state.urls as MutableList<T>
-    }
-
     override fun onWorkingSetConfig(): MutableList<T> {
       return state.workingSets as MutableList<T>
     }
 
+    override fun onJobsWorkingSetConfig(): MutableList<T> {
+      return state.jobsWorkingSets as MutableList<T>
+    }
     override fun onElse(): MutableList<T>? {
       return null
     }

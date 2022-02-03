@@ -1,7 +1,6 @@
 package eu.ibagroup.formainframe.explorer
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
 
 interface ExplorerUnit {
 
@@ -11,8 +10,6 @@ interface ExplorerUnit {
 
   val connectionConfig: ConnectionConfig?
 
-  val urlConnection: UrlConnection?
-
-  val explorer: Explorer
+  val explorer: Explorer<*>
 
 }

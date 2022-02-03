@@ -1,11 +1,11 @@
 package eu.ibagroup.formainframe.config
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.UrlConnection
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 
 data class ConfigState(
   var connections: MutableList<ConnectionConfig> = mutableListOf(),
-  var urls: MutableList<UrlConnection> = mutableListOf(),
-  var workingSets: MutableList<WorkingSetConfig> = mutableListOf(),
+  var workingSets: MutableList<FilesWorkingSetConfig> = mutableListOf(),
+  var jobsWorkingSets: MutableList<JobsWorkingSetConfig> = mutableListOf()
 )

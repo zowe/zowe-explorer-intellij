@@ -99,7 +99,8 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
               xIBMOption = XIBMOption.RECURSIVE
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
+              // TODO: clarify issue with removing from MF Virtual file system
+              // runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
               true
             } else {
               throwable = CallException(response, "Cannot delete USS File/Directory")

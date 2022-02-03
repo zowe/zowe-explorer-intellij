@@ -2,7 +2,7 @@ package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.UrlConnection
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.*
@@ -21,11 +21,20 @@ class MemberToPdsFileMoverFactory : OperationRunnerFactory {
   }
 }
 
-class MemberToPdsFileMover(private val dataOpsManager: DataOpsManager) : AbstractFileMover() {
+class MemberToPdsFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
 
-  private fun buildCall(
+  override fun canRun(operation: MoveCopyOperation): Boolean {
+    return operation.destinationAttributes is RemoteDatasetAttributes
+        && operation.destination.isDirectory
+        && !operation.source.isDirectory
+        && operation.sourceAttributes is RemoteMemberAttributes
+        && operation.commonUrls(dataOpsManager).isNotEmpty()
+        && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+  }
+
+  override fun buildCall(
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, UrlConnection>
+    requesterWithUrl: Pair<Requester, ConnectionConfig>
   ): Call<Void> {
     val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
     var memberName: String
@@ -51,44 +60,4 @@ class MemberToPdsFileMover(private val dataOpsManager: DataOpsManager) : Abstrac
     )
   }
 
-  override fun canRun(operation: MoveCopyOperation): Boolean {
-    return operation.destinationAttributes is RemoteDatasetAttributes
-      && operation.destination.isDirectory
-      && !operation.source.isDirectory
-      && operation.sourceAttributes is RemoteMemberAttributes
-      && operation.commonUrls(dataOpsManager).isNotEmpty()
-      && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
-  }
-
-  override fun run(
-    operation: MoveCopyOperation,
-    progressIndicator: ProgressIndicator
-  ) {
-    var throwable: Throwable? = null
-    operation.commonUrls(dataOpsManager).stream().map {
-      progressIndicator.checkCanceled()
-      runCatching {
-        buildCall(operation, it).cancelByIndicator(progressIndicator).execute()
-      }.mapCatching {
-        if (!it.isSuccessful) {
-          throw IOException(it.code().toString())
-        } else {
-          it
-        }
-      }.mapCatching {
-        val sourceAttributes = operation.sourceAttributes
-        if (operation.isMove && sourceAttributes != null) {
-          dataOpsManager.performOperation(DeleteOperation(operation.source, sourceAttributes))
-        } else {
-          it
-        }
-      }.onSuccess {
-        return@map true
-      }.onFailure {
-        throwable = it
-      }
-      return@map false
-    }.filter { it }.findAnyNullable()
-    throwable?.let { throw it }
-  }
 }

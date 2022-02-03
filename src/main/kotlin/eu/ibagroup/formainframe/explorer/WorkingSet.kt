@@ -1,16 +1,21 @@
 package eu.ibagroup.formainframe.explorer
 
+import com.intellij.openapi.Disposable
 import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.UssPath
 
-interface WorkingSet : ExplorerUnit {
+interface WorkingSet<Mask> : ExplorerUnit, Disposable {
 
-  val dsMasks: Collection<DSMask>
+  val masks: Collection<Mask>
 
-  fun addMask(dsMask: DSMask)
+  fun addMask(mask: Mask)
 
-  fun removeMask(dsMask: DSMask)
+  fun removeMask(mask: Mask)
 
+}
+
+interface FilesWorkingSet : WorkingSet<DSMask> {
   val ussPaths: Collection<UssPath>
 
   fun addUssPath(ussPath: UssPath)
@@ -18,3 +23,6 @@ interface WorkingSet : ExplorerUnit {
   fun removeUssPath(ussPath: UssPath)
 
 }
+
+interface JesWorkingSet : WorkingSet<JobsFilter> {}
+

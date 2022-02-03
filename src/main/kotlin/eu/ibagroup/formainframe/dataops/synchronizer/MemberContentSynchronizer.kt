@@ -12,6 +12,8 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.XIBMDataType
+import eu.ibagroup.r2z.annotations.ZVersion
 import java.io.IOException
 
 class MemberContentSynchronizerFactory : ContentSynchronizerFactory {
@@ -49,11 +51,13 @@ class MemberContentSynchronizer(
     for (requester in libAttributes.requesters) {
       try {
         log.info("Trying to execute a call using $requester")
-        val response = api<DataAPI>(requester.connectionConfig).retrieveMemberContent(
-          authorizationToken = requester.connectionConfig.authToken,
+        val connectionConfig = requester.connectionConfig
+        val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+        val response = api<DataAPI>(connectionConfig).retrieveMemberContent(
+          authorizationToken = connectionConfig.authToken,
           datasetName = libAttributes.name,
           memberName = attributes.name,
-          xIBMDataType = attributes.contentMode
+          xIBMDataType = xIBMDataType
         ).applyIfNotNull(progressIndicator) { indicator ->
           cancelByIndicator(indicator)
         }.execute()
@@ -81,12 +85,14 @@ class MemberContentSynchronizer(
     for (requester in libAttributes.requesters) {
       try {
         log.info("Trying to execute a call using $requester")
-        val response = api<DataAPI>(requester.connectionConfig).writeToDatasetMember(
-          authorizationToken = requester.connectionConfig.authToken,
+        val connectionConfig = requester.connectionConfig
+        val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+        val response = api<DataAPI>(connectionConfig).writeToDatasetMember(
+          authorizationToken = connectionConfig.authToken,
           datasetName = libAttributes.name,
           memberName = attributes.name,
           content = String(newContentBytes).addNewLine(),
-          xIBMDataType = attributes.contentMode
+          xIBMDataType = xIBMDataType
         ).execute()
         if (response.isSuccessful) {
           log.info("Content has been uploaded successfully")

@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
@@ -9,14 +8,13 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.asMutableList
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.nullIfBlank
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.Dataset
+import eu.ibagroup.r2z.*
+import retrofit2.Response
 
 class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
@@ -24,10 +22,12 @@ class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
   }
 }
 
-private val log = log<DatasetFileFetchProvider>()
+private val logger = log<DatasetFileFetchProvider>()
 
 class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
-  RemoteAttributedFileFetchBase<DSMask, RemoteDatasetAttributes, MFVirtualFile>(dataOpsManager) {
+  RemoteBatchedFileFetchProviderBase<DataSetsList, Dataset, DSMask, RemoteDatasetAttributes, MFVirtualFile>(
+    dataOpsManager
+  ) {
 
   override val requestClass = DSMask::class.java
 
@@ -38,39 +38,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
     progressIndicator: ProgressIndicator
   ): Collection<RemoteDatasetAttributes> {
     log.info("Fetching DS Lists for $query")
-    var attributes: Collection<RemoteDatasetAttributes>? = null
-    var exception: Throwable? = null
-    val response = api<DataAPI>(query.connectionConfig).listDataSets(
-      authorizationToken = query.connectionConfig.authToken,
-      dsLevel = query.request.mask,
-      volser = query.request.volser.nullIfBlank()
-    ).cancelByIndicator(progressIndicator).execute()
-    if (response.isSuccessful) {
-      attributes = response.body()?.items?.map { buildAttributes(query, it) }
-      log.info("${query.request} returned ${attributes?.size ?: 0} entities")
-      log.debug {
-        attributes?.joinToString("\n") ?: ""
-      }
-    } else {
-      exception = CallException(response, "Cannot retrieve dataset list")
-    }
-
-    if (exception != null) {
-      throw exception
-    }
-
-    return attributes ?: emptyList()
-  }
-
-  private fun buildAttributes(query: RemoteQuery<DSMask, Unit>, dataset: Dataset): RemoteDatasetAttributes {
-    return RemoteDatasetAttributes(
-      dataset,
-      query.urlConnection.url,
-      MaskedRequester(
-        query.connectionConfig,
-        query.request
-      ).asMutableList()
-    )
+    return super.fetchResponse(query, progressIndicator)
   }
 
   override val responseClass = RemoteDatasetAttributes::class.java
@@ -94,6 +62,41 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
         }
       }
     }
+  }
+
+  override val log = logger
+
+  override fun fetchBatch(
+    query: RemoteQuery<DSMask, Unit>,
+    progressIndicator: ProgressIndicator,
+    start: String?
+  ): Response<DataSetsList> {
+    return api<DataAPI>(query.connectionConfig).listDataSets(
+      authorizationToken = query.connectionConfig.authToken,
+      dsLevel = query.request.mask,
+      volser = query.request.volser.nullIfBlank(),
+      xIBMAttr = XIBMAttr(isTotal = true),
+      xIBMMaxItems = BATCH_SIZE,
+      start = start
+    ).cancelByIndicator(progressIndicator).execute()
+  }
+
+  override fun convertResponseToBody(responseList: DataSetsList?): BatchedBody<Dataset> {
+    return BatchedBody(responseList?.items?.map { BatchedItem(it.name, it) }, responseList?.totalRows)
+  }
+
+  override fun buildAttributes(
+    query: RemoteQuery<DSMask, Unit>,
+    batchedItem: BatchedItem<Dataset>
+  ): RemoteDatasetAttributes {
+    return RemoteDatasetAttributes(
+      batchedItem.original,
+      query.connectionConfig.url,
+      MaskedRequester(
+        query.connectionConfig,
+        query.request
+      ).asMutableList()
+    )
   }
 
 }

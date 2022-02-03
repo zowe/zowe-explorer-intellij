@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.utils.validateDatasetMask
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateUssMask
@@ -44,7 +44,8 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
             validateDatasetMask(it.text, component)
           else
             validateUssMask(it.text, it)
-
+        }.apply {
+          focused()
         }
 
       }
@@ -55,7 +56,7 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
 }
 
 class MaskState(
-  var ws: WorkingSet,
+  var ws: FilesWorkingSet,
   var mask: String = "",
   var type: String = "z/OS",
   var isSingle: Boolean = false,
