@@ -123,10 +123,12 @@ class ConnectionDialog(
       }
       row {
         label("Username")
-        textField(state::username).withValidationOnApply {
-          it.text = it.text.trim()
-          validateForBlank(it)
-        }
+        (if (state.zoweConfigPath == null) textField(state::username)
+        else JPasswordField(state.username)().withTextBinding(state::username.toBinding()))
+          .withValidationOnApply {
+            it.text = it.text.trim()
+            validateForBlank(it)
+          }
       }
       row {
         label("Password")
