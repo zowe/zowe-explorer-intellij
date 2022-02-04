@@ -14,12 +14,14 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.jesrun.ui.JobSubmitSettingsEditor
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.jeslog.JobLogProvider
 import eu.ibagroup.formainframe.dataops.jeslog.MFLogger
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitOperationParams
 import eu.ibagroup.formainframe.utils.MfFilePath
+import eu.ibagroup.formainframe.utils.MfFileType
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import java.lang.IllegalArgumentException
 
@@ -61,14 +63,26 @@ class JobSubmitConfiguration(
   }
 
   override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> {
-    TODO("Not yet implemented")
+    return JobSubmitSettingsEditor()
   }
 
   override fun getOptions(): JobSubmitConfigurationOptions {
     return super.getOptions() as JobSubmitConfigurationOptions
   }
 
-  fun getJobSubmitFileType() = options.jobSubmitFileType
-  fun getJobSubmitFilePath() = options.jobSubmitFilePath
-  fun getJobSubmitMemberName() = options.jobSubmitMemberName
+  var jobSubmitFileType: MfFileType
+    get() = options.getJobSubmitFileType()
+    set(value) { options.setJobSubmitFileType(value) }
+
+  var jobSubmitFilePath: String
+    get() = options.getJobSubmitFilePath()
+    set(value) { options.setJobSubmitFilePath(value) }
+
+  var jobSubmitMemberName: String?
+    get() = options.getJobSubmitMemberName()
+    set(value) { options.setJobSubmitMemberName(value) }
+
+  var jobSubmitConnectionId: String
+    get() = options.getConnectionConfigId() ?: ""
+    set(value) { options.setConnectionConfigId(value) }
 }

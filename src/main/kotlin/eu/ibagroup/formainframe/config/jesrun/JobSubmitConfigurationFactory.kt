@@ -13,4 +13,8 @@ class JobSubmitConfigurationFactory(type: ConfigurationType): ConfigurationFacto
   override fun getId() = JobSubmitConfigurationType.ID
 
   override fun getOptionsClass() = JobSubmitConfigurationOptions::class.java
+
+  override fun isEditableInDumbMode(): Boolean {
+    return true
+  }
 }

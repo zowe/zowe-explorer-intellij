@@ -171,6 +171,9 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <fileType name="Unknown Data Set"
                   implementationClass="eu.ibagroup.formainframe.filetypes.UnknownDataSetFileType"/>
 
+        <configurationType id="eu.ibagroup.formainframe.config.jesrun.JobSubmitConfigurationType"
+                implementation="eu.ibagroup.formainframe.config.jesrun.JobSubmitConfigurationType"/>
+
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
 
