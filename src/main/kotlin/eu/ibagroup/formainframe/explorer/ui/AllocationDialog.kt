@@ -68,29 +68,30 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
       }
       row {
         label("Primary allocation")
-        intTextField(PropertyBinding(
-          get = { state.allocationParameters.primaryAllocation },
-          set = { state.allocationParameters.primaryAllocation = it }
+        textField(PropertyBinding(
+          get = { state.allocationParameters.primaryAllocation.toString() },
+          set = { state.allocationParameters.primaryAllocation = it.toIntOrNull() ?: 0 }
         )).withValidationOnInput {
           validateForPositiveInteger(it)
         }.also { primaryAllocationField = it.component }
       }
       row {
         label("Secondary allocation")
-        intTextField(state.allocationParameters::secondaryAllocation).withValidationOnInput {
+        textField(PropertyBinding(
+          get = { state.allocationParameters.secondaryAllocation.toString() },
+          set = { state.allocationParameters.secondaryAllocation = it.toIntOrNull() ?: 0 }
+        )).withValidationOnInput {
           validateForPositiveInteger(it)
         }
       }
       row {
         label("Directory")
-        intTextField(
-          PropertyBinding(
-            get = { state.allocationParameters.directoryBlocks ?: 0 },
-            set = { state.allocationParameters.directoryBlocks = it }
-          )
-        ).withValidationOnInput {
+        textField(PropertyBinding(
+          get = { state.allocationParameters.directoryBlocks.toString() ?: "0" },
+          set = { state.allocationParameters.directoryBlocks = it.toIntOrNull() ?: 0 }
+        )).withValidationOnInput {
           validateForPositiveInteger(it)
-            ?: if (it.text.toIntOrNull() ?: 0 > primaryAllocationField.text.toIntOrNull() ?: 0) {
+            ?: if ((it.text.toIntOrNull() ?: 0) > (primaryAllocationField.text.toIntOrNull() ?: 0)) {
               ValidationInfo("Directory cannot exceed primary allocation", it)
             } else {
               null
@@ -124,33 +125,28 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
       }
       row {
         label("Record Length")
-        intTextField(
-          PropertyBinding(
-            get = { state.allocationParameters.recordLength ?: 0 },
-            set = { state.allocationParameters.recordLength = it }
-          )
-        ).withValidationOnInput {
+        textField(PropertyBinding(
+          get = { state.allocationParameters.recordLength?.toString() ?: "0" },
+          set = { state.allocationParameters.recordLength = it.toIntOrNull() }
+        )).withValidationOnInput {
           validateForPositiveInteger(it)
         }
       }
       row {
         label("Block size")
-        intTextField(
-          PropertyBinding(
-            get = { state.allocationParameters.blockSize ?: 0 },
-            set = { state.allocationParameters.blockSize = it }
-          )).withValidationOnInput {
+        textField(PropertyBinding(
+          get = { state.allocationParameters.blockSize?.toString() ?: "0" },
+          set = { state.allocationParameters.blockSize = it.toIntOrNull() }
+        )).withValidationOnInput {
           validateForPositiveInteger(it)
         }
       }
       row {
         label("Average Block Length")
-        intTextField(
-          PropertyBinding(
-            get = { state.allocationParameters.averageBlockLength ?: 0 },
-            set = { state.allocationParameters.averageBlockLength = it }
-          )
-        ).withValidationOnInput {
+        textField(PropertyBinding(
+          get = { state.allocationParameters.averageBlockLength?.toString() ?: "0" },
+          set = { state.allocationParameters.averageBlockLength = it.toIntOrNull() }
+        )).withValidationOnInput {
           validateForPositiveInteger(it)
         }.enableIf(spaceUnitBox.selectedValueMatches { it == AllocationUnit.BLK })
 
