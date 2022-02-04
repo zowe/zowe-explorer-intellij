@@ -11,6 +11,8 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitOperationParams
 import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.formMfPath
+import java.lang.IllegalArgumentException
 
 class SubmitJobAction : AnAction() {
 
@@ -28,9 +30,12 @@ class SubmitJobAction : AnAction() {
         runCatching {
           service<AnalyticsService>().trackAnalyticsEvent(JobEvent(JobAction.SUBMIT))
 
+          val attributes = service<DataOpsManager>().tryToGetAttributes(requestData.first)
+            ?: throw IllegalArgumentException("Cannot find attributes for specified file.")
+
           service<DataOpsManager>().performOperation(
             operation = SubmitJobOperation(
-              request = SubmitOperationParams(requestData.first),
+              request = SubmitOperationParams(attributes.formMfPath()),
               connectionConfig = requestData.second
             ), it
           )

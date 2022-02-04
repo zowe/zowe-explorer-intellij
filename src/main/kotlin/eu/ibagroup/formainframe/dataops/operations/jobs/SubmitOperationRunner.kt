@@ -30,32 +30,18 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
   override fun run(operation: SubmitJobOperation, progressIndicator: ProgressIndicator): SubmitJobRequest {
     progressIndicator.checkCanceled()
 
-    val fileName = when (val attributes = service<DataOpsManager>().tryToGetAttributes(operation.request.file)) {
-      is RemoteUssAttributes -> {
-        attributes.path
-      }
-      is RemoteDatasetAttributes -> {
-        "//'${attributes.datasetInfo.name}'"
-      }
-      else -> {
-        val castedAttributes = attributes as RemoteMemberAttributes
-        val parentFileAttributes = service<DataOpsManager>().tryToGetAttributes(castedAttributes.parentFile) as RemoteDatasetAttributes
-        "//'${parentFileAttributes.datasetInfo.name}(${castedAttributes.info.name})'"
-      }
-    }
-
     val response = api<JESApi>(operation.connectionConfig).submitJobRequest(
       basicCredentials = operation.connectionConfig.authToken,
-      body = SubmitFileNameBody(fileName)
+      body = SubmitFileNameBody(operation.request.submitFilePath)
     ).cancelByIndicator(progressIndicator).execute()
     val body = response.body()
     if (!response.isSuccessful || body == null) {
       throw CallException(
         response,
-        "Cannot submit ${operation.request.file.name} on ${operation.connectionConfig.name}"
+        "Cannot submit ${operation.request.submitFilePath} on ${operation.connectionConfig.name}"
       )
     }
-    sendTopic(JOB_ADDED_TOPIC).submitted(body)
+    sendTopic(JOB_ADDED_TOPIC).submitted(operation.connectionConfig, operation.request.submitFilePath, body)
     return body
   }
 
@@ -73,7 +59,7 @@ class SubmitJobOperationFactory : OperationRunnerFactory {
 }
 
 data class SubmitOperationParams(
-  val file: VirtualFile
+  val submitFilePath: String
 )
 
 data class SubmitJobOperation(

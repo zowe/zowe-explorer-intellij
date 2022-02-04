@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,6 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import org.apache.log4j.Level
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.AsyncPromise
@@ -243,4 +249,37 @@ val minimalParentComparator: Comparator<VirtualFile> = Comparator { o1, o2 ->
     secondParentsChain.containsAll(firstParentChain) -> -1
     else -> 0
   }
+}
+
+enum class MfFileType {
+  USS, DATASET, MEMBER
+}
+
+class MfFilePath(
+  val mfFileType: MfFileType,
+  val filePath: String,
+  val memberName: String? = null
+) {
+  override fun toString(): String {
+    return when(mfFileType) {
+      MfFileType.USS -> filePath
+      MfFileType.DATASET -> "//'${filePath}'"
+      else -> "//'${filePath}(${memberName})'"
+    }
+  }
+}
+
+fun FileAttributes.formMfPath(): String {
+  val fileType = when(this) {
+    is RemoteUssAttributes -> MfFileType.USS
+    is RemoteDatasetAttributes -> MfFileType.DATASET
+    else -> MfFileType.MEMBER
+  }
+  val filePath = when(this) {
+    is RemoteMemberAttributes -> parentFile.name
+    is RemoteUssAttributes -> path
+    else -> name
+  }
+  val memberName = if (this is RemoteMemberAttributes) name else null
+  return MfFilePath(fileType, filePath, memberName).toString()
 }
