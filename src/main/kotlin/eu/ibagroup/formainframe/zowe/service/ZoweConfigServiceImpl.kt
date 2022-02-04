@@ -147,8 +147,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val basePath = if (basePath.last() == '/') basePath.dropLast(1) else basePath
     val domain = if (port == null) host else "${host}:${port}"
     val zoweUrl = "${protocol}://${domain}${basePath}"
-    val isAllowSelfSigned = protocol == "https"
-    val codePage = this.codePage
+    val isAllowSelfSigned = rejectUnauthorized ?: true
+    val codePage = codePage
 
     return ConnectionConfig(
       uuid,
