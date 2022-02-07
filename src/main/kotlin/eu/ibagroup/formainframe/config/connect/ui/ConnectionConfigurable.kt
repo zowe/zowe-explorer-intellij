@@ -42,7 +42,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     showAndTestConnection()?.let { connectionsTableModel?.addRow(it) }
   }
 
-  fun ZoweConfig.updateFromState (state: ConnectionDialogState) {
+  private fun ZoweConfig.updateFromState (state: ConnectionDialogState) {
     val uri = URI(state.connectionUrl)
     host = uri.host
     port = uri.port.toLong()
@@ -50,6 +50,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     user = state.username
     password = state.password
     codePage = state.codePage
+    rejectUnauthorized = !state.isAllowSsl
   }
 
   /**
