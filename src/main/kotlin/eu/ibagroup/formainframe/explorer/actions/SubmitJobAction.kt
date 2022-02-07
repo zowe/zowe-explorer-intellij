@@ -1,5 +1,6 @@
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.execution.RunManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -7,6 +8,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.JobAction
 import eu.ibagroup.formainframe.analytics.events.JobEvent
+import eu.ibagroup.formainframe.config.jesrun.JobSubmitConfigurationType
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitOperationParams
@@ -25,6 +27,11 @@ class SubmitJobAction : AnAction() {
     val node = selected.getOrNull(0)?.node ?: return
 
     val requestData = getRequestDataForNode(node)
+    val projectNotNull = e.project ?: return
+    val jobConfigurationType = JobSubmitConfigurationType()
+    val runManager = RunManager.getInstance(projectNotNull)
+    val configuration = runManager.createConfiguration("hello", jobConfigurationType.configurationFactories[0])
+    runManager.addConfiguration(configuration)
     if (requestData != null) {
       runBackgroundableTask("Job Submission") {
         runCatching {

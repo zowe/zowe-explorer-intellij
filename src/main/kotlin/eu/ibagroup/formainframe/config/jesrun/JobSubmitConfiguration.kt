@@ -39,7 +39,7 @@ class JobSubmitConfiguration(
         lateinit var processHandler: ProcessHandler
 
         runCatching {
-          val connectionConfig = configCrudable.getByUniqueKey<ConnectionConfig>(options.connectionConfigId)
+          val connectionConfig = configCrudable.getByUniqueKey<ConnectionConfig>(options.getConnectionConfigId() ?: "")
             ?: throw IllegalArgumentException("Cannot find specified connection")
 
           val mfFilePath = MfFilePath(options.getJobSubmitFileType(), options.getJobSubmitFilePath(), options.getJobSubmitMemberName())
@@ -53,7 +53,7 @@ class JobSubmitConfiguration(
         }.onFailure {
           processHandler = NopProcessHandler()
           consoleView.attachToProcess(processHandler)
-          processHandler.notifyTextAvailable(it.toString(), ProcessOutputType.STDERR)
+          processHandler.notifyTextAvailable(it.message ?: "", ProcessOutputType.STDERR)
           processHandler.destroyProcess()
         }
 
