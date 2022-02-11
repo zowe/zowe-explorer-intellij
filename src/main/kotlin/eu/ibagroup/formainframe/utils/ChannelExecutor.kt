@@ -10,6 +10,8 @@
 
 package eu.ibagroup.formainframe.utils
 
+import com.intellij.openapi.components.service
+import eu.ibagroup.formainframe.config.ConfigService
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
@@ -17,14 +19,25 @@ import kotlinx.coroutines.sync.withLock
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
+private val configService = service<ConfigService>()
+
 class ChannelExecutor<V>(
   private val channel: Channel<V>,
   delayDuration: Duration
 ) : QueueExecutor<V> {
 
   private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+  
+  private val executionChannel = Channel<Unit>(Channel.RENDEZVOUS)
+  private val pauseChannel = Channel<Unit>(Channel.RENDEZVOUS)
 
-  private val initChannel = Channel<Unit>(Channel.RENDEZVOUS)
+  private val executionMutex = Mutex()
+
+  private val isOnPause = AtomicBoolean(false)
+  private val isCancelled = AtomicBoolean(false)
+  private val isFirstReceive = AtomicBoolean(true)
+
+  private val delayDurationInMilliseconds = delayDuration.toMillis()
 
   private lateinit var execution: (V) -> Unit
 
@@ -33,14 +46,10 @@ class ChannelExecutor<V>(
     val needToNotifyInitialized = !this::execution.isInitialized
     this.execution = execution
     if (needToNotifyInitialized) {
-      scope.launch { initChannel.send(Unit) }
+      scope.launch { executionChannel.send(Unit) }
     }
   }
-
-  private val delayDurationInMilliseconds = delayDuration.toMillis()
-
-  private val executionMutex = Mutex()
-
+  
   private suspend fun processInput(input: V) = coroutineScope {
     withContext(NonCancellable) {
       executionMutex.withLock {
@@ -51,21 +60,21 @@ class ChannelExecutor<V>(
 
   private suspend fun processChannel(afterCancelled: Boolean) {
     val input = if (afterCancelled) {
-      channel.poll()
+      channel.tryReceive().getOrNull()
     } else {
       channel.receive()
     }
-    input?.let { processInput(it) }
+    if (configService.isAutoSyncEnabled.get() || isFirstReceive.compareAndSet(true, false)) {
+      input?.let { processInput(it) }
+    }
   }
-
-  private val cancelled = AtomicBoolean(false)
-
+  
   private val job = scope.launch {
     while (true) {
       try {
         ensureActive()
         if (!this@ChannelExecutor::execution.isInitialized) {
-          initChannel.receive()
+          executionChannel.receive()
         }
         if (isOnPause.get()) {
           pauseChannel.receive()
@@ -73,10 +82,10 @@ class ChannelExecutor<V>(
         processChannel(false)
         delay(delayDurationInMilliseconds)
       } catch (ignored: CancellationException) {
-        cancelled.compareAndSet(false, true)
+        isCancelled.compareAndSet(false, true)
         break
       } finally {
-        if (cancelled.compareAndSet(true, true)) {
+        if (isCancelled.compareAndSet(true, true)) {
           processChannel(true)
         }
       }
@@ -94,9 +103,6 @@ class ChannelExecutor<V>(
       job.cancelAndJoin()
     }
   }
-
-  private val isOnPause = AtomicBoolean(false)
-  private val pauseChannel = Channel<Unit>(Channel.RENDEZVOUS)
 
   override fun pause() {
     isOnPause.set(true)

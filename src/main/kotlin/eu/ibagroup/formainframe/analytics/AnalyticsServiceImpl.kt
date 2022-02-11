@@ -72,7 +72,7 @@ class AnalyticsServiceImpl : AnalyticsService, PersistentStateComponent<Analytic
     return Analytics.builder(analyticsProperties.getProperty("segment.api.key")).build()
   }
 
-  private val licenceProvider = service<PolicyProvider>()
+  private val licenseProvider = service<PolicyProvider>()
 
   override var isAnalyticsEnabled: Boolean
     get() = state.isAnalyticsEnabled
@@ -80,9 +80,9 @@ class AnalyticsServiceImpl : AnalyticsService, PersistentStateComponent<Analytic
       state.isAnalyticsEnabled = value
     }
   override var isUserAcknowledged: Boolean
-    get() = state.lastAcknowledgedPolicyVersion >= licenceProvider.version
+    get() = state.lastAcknowledgedPolicyVersion >= licenseProvider.version
     set(value) {
-      val analyticsVersion = licenceProvider.version
+      val analyticsVersion = licenseProvider.version
       state.lastAcknowledgedPolicyVersion = if (value) {
         analyticsVersion
       } else {

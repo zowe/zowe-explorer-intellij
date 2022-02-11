@@ -69,6 +69,7 @@ enum class FileAction(val value: String) {
   DELETE("DELETE"),
   OPEN("OPEN"),
   RENAME("RENAME"),
+  FORCE_RENAME("FORCE_RENAME"),
   COPY("COPY"),
   MOVE("MOVE"),
 }

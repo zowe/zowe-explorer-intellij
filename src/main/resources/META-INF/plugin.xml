@@ -26,7 +26,7 @@
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>Zowe Explorer</name>
-    <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
+    <vendor email="zowe.robot@gmail.com" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
 
     <description><![CDATA[
 We are happy to release version 0.1 of our Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
@@ -128,6 +128,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.ForceRenameOperationRunnerFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationFactory"/>
@@ -167,7 +169,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <toolWindow id="Zowe Explorer" anchor="right"
                     factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"
-                    icon="ForMainframeIcons.explorerToolbarIcon"
+                    icon="ForMainframeIcons.ExplorerToolbarIcon"
                     doNotActivateOnStart="true"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
@@ -275,10 +277,19 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 class="eu.ibagroup.formainframe.explorer.actions.RenameAction" text="Rename"
                 use-shortcut-of="RenameElement"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
+                class="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction" text="Force Rename"
+                use-shortcut-of="ForceRefresh"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 icon="AllIcons.Nodes.Module"
                 text="Mask"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
+                icon="ForMainframeIcons.JclDirectory"
+                text="Jobs Filter"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
                 class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
@@ -309,8 +320,10 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <reference id="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
@@ -340,6 +353,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
             <separator/>

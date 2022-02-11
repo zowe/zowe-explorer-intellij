@@ -53,6 +53,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
 
 data class DatasetAllocationParams(
   var datasetName: String = "",
+  var errorMessage: String = "",
   val allocationParameters: CreateDataset = CreateDataset(
     allocationUnit = AllocationUnit.TRK,
     primaryAllocation = 0,

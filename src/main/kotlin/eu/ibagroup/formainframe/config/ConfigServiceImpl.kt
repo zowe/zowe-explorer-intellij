@@ -51,6 +51,8 @@ class ConfigServiceImpl : ConfigService {
     .configureCrudable {
       eventHandler = this@ConfigServiceImpl.eventHandler
     }
+
+  override var isAutoSyncEnabled = AtomicBoolean(false)
 }
 
 internal abstract class ClassCaseSwitcher<R> {
