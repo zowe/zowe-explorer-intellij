@@ -2,7 +2,7 @@
 "Zowe Explorer" brings support for browsing, editing and creating data on z/OS via 
 <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.
 
-Plugin in Marketplace: [link](https://plugins.jetbrains.com/plugin/16353-for-mainframe)
+Plugin in Marketplace: N/A
 
 Using our plugin you will be able to:
 * Start working with z/OS easily with no complex configurations.

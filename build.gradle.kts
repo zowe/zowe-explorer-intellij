@@ -1,3 +1,14 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
+
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -59,7 +70,7 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
       <ul>
         <li>JES Explorer - provides the option to submit JCL jobs, view their statuses and operate an input and output of it using the plugin.</li>
         <li>Copy operations - to copy dataset and files both from USS to z/OS and from z/OS to USS using Drag & Drop operation.</li>
-        <li>Support of the new version of Zowe config</li>
+        <li>Zowe v2 team config - now it is possible to manage connections and other settings using Zowe v2 team config both ways.</li>
       </ul>
       <b>Expanded changes list:</b><br/>
       <ul>

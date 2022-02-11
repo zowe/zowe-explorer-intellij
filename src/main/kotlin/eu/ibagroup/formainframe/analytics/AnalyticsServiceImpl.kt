@@ -30,7 +30,7 @@ internal val analyticsProperties by lazy {
 
 @State(
   name = "eu.ibagroup.formainframe.analytics.AnalyticsService",
-  storages = [Storage(value = "for-mainframe-analytics.xml", exportable = true)]
+  storages = [Storage(value = "zowe-explorer-analytics.xml", exportable = true)]
 )
 class AnalyticsServiceImpl : AnalyticsService, PersistentStateComponent<AnalyticsState> {
 

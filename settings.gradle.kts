@@ -1,2 +1,1 @@
-rootProject.name = "for-mainframe"
-
+rootProject.name = "zowe-exporer"

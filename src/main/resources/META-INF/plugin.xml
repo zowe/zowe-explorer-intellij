@@ -26,11 +26,11 @@
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>Zowe Explorer</name>
-    <vendor email="zowe.robot@gmail.com" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
+    <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
 
     <description><![CDATA[
 We are happy to release version 0.1 of our Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.<br/>
-IBA Group team of <b>mainframe enthusiasts</b> are actively developing new features for the open-source "Zowe Explorer" plugin.
+Zowe community is actively developing new features for the open-source "Zowe Explorer" plugin.
 We keep improving existing features that help you to:<br/>
 <ul>
   <li>Start working with z/OS easily with no complex configurations.</li>
@@ -48,7 +48,7 @@ To start using the plugin:<br/>
   <li>You are ready to go! Start working with z/OS from the IDE.</li>
 </ul></br>
 <b>Note: z/OS 2.1 or higher is required with <a href="https://docs.zowe.org/stable/user-guide/systemrequirements-zosmf.html">configured z/OSMF</a>. Plugin is in active development state.<br/>
-Feel free to recommend or report everything on our <a href="https://github.com/for-mainframe/For-Mainframe/issues">Github</a></b><br/>
+Feel free to recommend or report everything on our <a href="https://github.com/zowe/zowe-explorer-intellij/issues">Github</a></b><br/>
 Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg">Slack</a><br/>
 ]]></description>
 
