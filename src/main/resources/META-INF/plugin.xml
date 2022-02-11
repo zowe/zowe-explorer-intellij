@@ -304,7 +304,7 @@ Example of how to see the output:<br/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
-                icon="AllIcons.Nodes.Module"
+                icon="ForMainframeIcons.DatasetMask"
                 text="Mask"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
