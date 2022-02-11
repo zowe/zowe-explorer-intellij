@@ -41,15 +41,16 @@ class SettingsConfigurable : BoundSearchableConfigurable("Settings", "mainframe"
             .also { agreementLabelComponent = it.component }
         }
       }
-      titledRow("Other Settings") {
-        row {
-          checkBox("Enable auto-sync with mainframe", isAutoSyncEnabled.get())
-            .also { res ->
-              isAutoSyncEnabledComponent = res.component
-              res.component.addItemListener { isAutoSyncEnabled.set(res.component.isSelected) }
-            }
-        }
-      }
+//      Not applicable in this release
+//      titledRow("Other Settings") {
+//        row {
+//          checkBox("Enable auto-sync with mainframe", isAutoSyncEnabled.get())
+//            .also { res ->
+//              isAutoSyncEnabledComponent = res.component
+//              res.component.addItemListener { isAutoSyncEnabled.set(res.component.isSelected) }
+//            }
+//        }
+//      }
     }.also { panel = it }
   }
 

@@ -52,7 +52,7 @@ class ConfigServiceImpl : ConfigService {
       eventHandler = this@ConfigServiceImpl.eventHandler
     }
 
-  override var isAutoSyncEnabled = AtomicBoolean(false)
+  override var isAutoSyncEnabled = AtomicBoolean(true)
 }
 
 internal abstract class ClassCaseSwitcher<R> {
