@@ -10,10 +10,7 @@
 
 package eu.ibagroup.formainframe.analytics.events
 
-import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.attributes.*
 
 private fun attributesToFileType(fileAttributes: FileAttributes): FileType {
   return when (fileAttributes) {

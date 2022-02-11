@@ -15,6 +15,9 @@ version = "0.1.0"
 
 repositories {
   mavenCentral()
+  flatDir {
+    dirs("libs")
+  }
 }
 
 java {
