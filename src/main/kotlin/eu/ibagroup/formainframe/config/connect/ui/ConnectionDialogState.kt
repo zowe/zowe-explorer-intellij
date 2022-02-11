@@ -1,3 +1,13 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
 package eu.ibagroup.formainframe.config.connect.ui
 
 import eu.ibagroup.formainframe.common.ui.DialogMode
@@ -78,19 +88,18 @@ fun ConnectionDialogState.initEmptyUuids(crudable: Crudable): ConnectionDialogSt
 }
 
 fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
-
   val credentials = crudable.getByUniqueKey<Credentials>(this.uuid) ?: Credentials().apply {
     this.connectionConfigUuid = this@toDialogState.uuid
   }
   return ConnectionDialogState(
-      connectionUuid = this.uuid,
-      connectionName = this.name,
-      connectionUrl = this.url,
-      username = credentials.username,
-      password = credentials.password,
-      isAllowSsl = this.isAllowSelfSigned,
-      codePage = this.codePage,
-      zVersion = this.zVersion,
-      zoweConfigPath = this.zoweConfigPath
+    connectionUuid = this.uuid,
+    connectionName = this.name,
+    connectionUrl = this.url,
+    username = credentials.username,
+    password = credentials.password,
+    isAllowSsl = this.isAllowSelfSigned,
+    codePage = this.codePage,
+    zVersion = this.zVersion,
+    zoweConfigPath = this.zoweConfigPath
   )
 }

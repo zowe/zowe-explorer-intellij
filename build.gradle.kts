@@ -11,23 +11,10 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.5.0"
+version = "0.1.0"
 
 repositories {
   mavenCentral()
-  maven {
-    url = uri("http://10.221.23.186:8082/repository/internal/")
-    isAllowInsecureProtocol = true
-    credentials {
-      username = "admin"
-      password = "password123"
-    }
-    metadataSources {
-      mavenPom()
-      artifact()
-      ignoreGradleMetadataRedirection()
-    }
-  }
 }
 
 java {
@@ -51,7 +38,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
   implementation("org.jgrapht:jgrapht-core:1.5.0")
   implementation("com.starxg:java-keytar:1.0.0")
-  implementation("eu.ibagroup:zowe-r2z:1.0.24")
+  implementation("eu.ibagroup:zowe-r2z:1.0.24") // TODO: change
   implementation("com.segment.analytics.java:analytics:+")
   testImplementation("junit", "junit", "4.12")
 }
