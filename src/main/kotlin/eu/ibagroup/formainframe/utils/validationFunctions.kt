@@ -104,6 +104,8 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
     ValidationInfo("Dataset mask must be less than 46 characters", component)
   } else if (text.isNotBlank() && !text.matches(maskRegex)) {
     ValidationInfo("Enter valid dataset mask", component)
+  } else if (text[0] in '0'..'9') {
+    ValidationInfo("Dataset mask must begin with an alphabetic character or the special character @, #, or $", component)
   } else {
     null
   }
