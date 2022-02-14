@@ -1,0 +1,48 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
+package org.zowe.explorer.explorer.ui
+
+import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.project.Project
+import com.intellij.ui.SimpleTextAttributes
+import org.zowe.explorer.config.ws.DSMask
+import org.zowe.explorer.explorer.FilesWorkingSet
+
+class FilesWorkingSetNode(
+  workingSet: FilesWorkingSet,
+  project: Project,
+  parent: ExplorerTreeNode<*>,
+  treeStructure: ExplorerTreeStructureBase
+) : WorkingSetNode<DSMask>(
+  workingSet, project, parent, treeStructure
+), MFNode, RefreshableNode {
+
+  private val valueForFilesWS = value as FilesWorkingSet
+
+  override fun update(presentation: PresentationData) {
+    presentation.addText(valueForFilesWS.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    when {
+      valueForFilesWS.connectionConfig == null -> connectionIsNotSet(presentation)
+      valueForFilesWS.masks.isEmpty() && valueForFilesWS.ussPaths.isEmpty() -> destinationsAreEmpty(presentation)
+      else -> regular(presentation)
+    }
+    if (treeStructure.showWorkingSetInfo) {
+      addInfo(presentation)
+    }
+  }
+
+  override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
+    return valueForFilesWS.masks.map { DSMaskNode(it, notNullProject, this, valueForFilesWS, treeStructure) }.plus(
+      valueForFilesWS.ussPaths.map { UssDirNode(it, notNullProject, this, valueForFilesWS, treeStructure, isRootNode = true) }
+    ).toMutableList().also { cachedChildrenInternal = it }
+  }
+}

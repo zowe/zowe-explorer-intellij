@@ -21,7 +21,7 @@ plugins {
 apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
-group = "eu.ibagroup"
+group = "org.zowe"
 version = "0.1.0"
 
 repositories {
