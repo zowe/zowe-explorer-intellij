@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.common.ui
+package eu.ibagroup.formainframe.ui
 
 import com.intellij.ui.layout.*
 import java.awt.Dimension
