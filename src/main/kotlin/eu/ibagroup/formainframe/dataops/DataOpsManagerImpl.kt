@@ -1,5 +1,6 @@
 package eu.ibagroup.formainframe.dataops
 
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -12,6 +13,10 @@ import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import com.intellij.openapi.util.Disposer
+import eu.ibagroup.formainframe.dataops.log.AbstractMFLoggerBase
+import eu.ibagroup.formainframe.dataops.log.LogInfo
+import eu.ibagroup.formainframe.dataops.log.LogFetcher
+import eu.ibagroup.formainframe.dataops.log.MFLogger
 
 class DataOpsManagerImpl : DataOpsManager {
 
@@ -98,6 +103,12 @@ class DataOpsManagerImpl : DataOpsManager {
     val operationRunnersList = OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
     operationRunnersList.associateListedBy { it.operationClass }
   }
+
+  private val logFetchers by lazy {
+    val logFetcherList = LogFetcher.EP.extensionList.buildComponents()
+    logFetcherList.associateBy { it.logInfoClass }
+  }
+
   override fun isOperationSupported(operation: Operation<*>): Boolean {
     return operationRunners[operation::class.java]?.any { it.canRun(operation) } == true
   }
@@ -112,6 +123,21 @@ class DataOpsManagerImpl : DataOpsManager {
       ?: throw IllegalArgumentException("Unsupported Operation $operation")
     @Suppress("UNCHECKED_CAST")
     return result as R
+  }
+
+  override fun <LInfo : LogInfo, LFetcher : LogFetcher<LInfo>> createMFLogger(
+    logInfo: LInfo,
+    consoleView: ConsoleView
+  ): MFLogger<LFetcher> {
+    val logFetcher = logFetchers[logInfo::class.java]
+      ?: throw IllegalArgumentException("Unsupported Log Information $logInfo")
+    @Suppress("UNCHECKED_CAST")
+    val resultFetcher: LFetcher = logFetcher as LFetcher
+    return object: AbstractMFLoggerBase<LInfo, LFetcher>(logInfo, consoleView) {
+      override val logFetcher: LFetcher = resultFetcher
+    }.also {
+      Disposer.register(this, it)
+    }
   }
 
   override fun dispose() {
