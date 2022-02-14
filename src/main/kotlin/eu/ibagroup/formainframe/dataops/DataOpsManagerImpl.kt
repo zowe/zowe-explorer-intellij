@@ -125,15 +125,18 @@ class DataOpsManagerImpl : DataOpsManager {
     return result as R
   }
 
-  override fun <LInfo : MFProcessInfo, LFetcher : LogFetcher<LInfo>> createMFLogger(
-    logInfo: LInfo,
+  /**
+   * @see DataOpsManager.createMFLogger
+   */
+  override fun <PInfo : MFProcessInfo, LFetcher : LogFetcher<PInfo>> createMFLogger(
+    mfProcessInfo: PInfo,
     consoleView: ConsoleView
   ): MFLogger<LFetcher> {
-    val logFetcher = logFetchers[logInfo::class.java]
-      ?: throw IllegalArgumentException("Unsupported Log Information $logInfo")
+    val logFetcher = logFetchers[mfProcessInfo::class.java]
+      ?: throw IllegalArgumentException("Unsupported Log Information $mfProcessInfo")
     @Suppress("UNCHECKED_CAST")
     val resultFetcher: LFetcher = logFetcher as LFetcher
-    return object: AbstractMFLoggerBase<LInfo, LFetcher>(logInfo, consoleView) {
+    return object: AbstractMFLoggerBase<PInfo, LFetcher>(mfProcessInfo, consoleView) {
       override val logFetcher: LFetcher = resultFetcher
     }.also {
       Disposer.register(this, it)

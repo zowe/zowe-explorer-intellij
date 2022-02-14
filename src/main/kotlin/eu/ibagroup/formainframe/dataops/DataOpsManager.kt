@@ -50,8 +50,15 @@ interface DataOpsManager : Disposable {
     progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE
   ): R
 
-  fun <LInfo : MFProcessInfo, LFetcher : LogFetcher<LInfo>> createMFLogger(
-    logInfo: LInfo,
+  /**
+   * Creates mainframe process logger for corresponding MFProcessInfo and LogFetcher.
+   * @param mfProcessInfo information about mainframe process that identifies it.
+   * @param consoleView console to log into
+   * @return instance of MFLogger.
+   * @see MFLogger
+   */
+  fun <PInfo : MFProcessInfo, LFetcher : LogFetcher<PInfo>> createMFLogger(
+    mfProcessInfo: PInfo,
     consoleView: ConsoleView
   ): MFLogger<LFetcher>
 
