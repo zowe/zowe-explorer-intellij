@@ -14,7 +14,7 @@ import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.dataops.log.AbstractMFLoggerBase
-import eu.ibagroup.formainframe.dataops.log.LogInfo
+import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
 import eu.ibagroup.formainframe.dataops.log.LogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
 
@@ -106,7 +106,7 @@ class DataOpsManagerImpl : DataOpsManager {
 
   private val logFetchers by lazy {
     val logFetcherList = LogFetcher.EP.extensionList.buildComponents()
-    logFetcherList.associateBy { it.logInfoClass }
+    logFetcherList.associateBy { it.mfProcessInfoClass }
   }
 
   override fun isOperationSupported(operation: Operation<*>): Boolean {
@@ -125,7 +125,7 @@ class DataOpsManagerImpl : DataOpsManager {
     return result as R
   }
 
-  override fun <LInfo : LogInfo, LFetcher : LogFetcher<LInfo>> createMFLogger(
+  override fun <LInfo : MFProcessInfo, LFetcher : LogFetcher<LInfo>> createMFLogger(
     logInfo: LInfo,
     consoleView: ConsoleView
   ): MFLogger<LFetcher> {

@@ -11,7 +11,7 @@ import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
-import eu.ibagroup.formainframe.dataops.log.LogInfo
+import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
 import eu.ibagroup.formainframe.dataops.log.LogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
 import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
@@ -50,7 +50,7 @@ interface DataOpsManager : Disposable {
     progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE
   ): R
 
-  fun <LInfo : LogInfo, LFetcher : LogFetcher<LInfo>> createMFLogger(
+  fun <LInfo : MFProcessInfo, LFetcher : LogFetcher<LInfo>> createMFLogger(
     logInfo: LInfo,
     consoleView: ConsoleView
   ): MFLogger<LFetcher>

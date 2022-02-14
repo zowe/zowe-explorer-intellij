@@ -165,8 +165,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                     icon="ForMainframeIcons.ExplorerToolbarIcon"
                     doNotActivateOnStart="true"/>
 
-        <toolWindow id="Jobs Results" anchor="bottom"
-                    factoryClass="eu.ibagroup.formainframe.explorer.ui.jobs.JobResultWindowFactory"
+        <toolWindow id="Jobs" anchor="bottom"
+                    factoryClass="eu.ibagroup.formainframe.explorer.ui.jobs.JobsWindowFactory"
                     canCloseContents="true"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"

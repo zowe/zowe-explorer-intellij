@@ -9,13 +9,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
-import eu.ibagroup.formainframe.dataops.log.JobLogInfo
+import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
 import eu.ibagroup.r2z.SpoolFile
 import java.util.*
 import javax.swing.JComponent
 
+/**
+ * Console with BuildTree for display job execution process and results.
+ * @param jobLogInfo job process information necessary to get log and status.
+ * @param consoleView console to log
+ * @param dataOpsManager instance of dataOpsManager
+ * @param workingDir working directory (in most cases path to submitted file)
+ * @param project project instance
+ * @author Valentine Krus
+ */
 class JobBuildTreeView(
-  jobLogInfo: JobLogInfo,
+  jobLogInfo: JobProcessInfo,
   consoleView: ConsoleView,
   dataOpsManager: DataOpsManager,
   workingDir: String = "",
@@ -24,16 +33,28 @@ class JobBuildTreeView(
 
   private val buildId = jobLogInfo.jobId ?: "UNKNOWN JOB ID"
   private val jobNameNotNull = jobLogInfo.jobName ?: "UNKNOWN JOB"
+
   private val buildDescriptor = DefaultBuildDescriptor(buildId, jobNameNotNull, workingDir, Date().time)
   private val treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, consoleView) { false }
+
+  /**
+   * Spool files associated with their content.
+   */
   private val spoolFileToLogMap = mutableMapOf<SpoolFile, String>()
-  private val jobLogger = dataOpsManager.createMFLogger<JobLogInfo, JobLogFetcher>(jobLogInfo, consoleView)
+
+  /**
+   * MFLogger instance to display job process log.
+   */
+  private val jobLogger = dataOpsManager.createMFLogger<JobProcessInfo, JobLogFetcher>(jobLogInfo, consoleView)
 
   init {
     Disposer.register(this, consoleView)
     Disposer.register(this, treeConsoleView)
   }
 
+  /**
+   * Starts fetching log via jobLogger to console view and update component UI.
+   */
   fun start() {
     treeConsoleView.onEvent(buildId, StartBuildEventImpl(buildDescriptor, buildId))
 
@@ -54,7 +75,8 @@ class JobBuildTreeView(
     }
 
     jobLogger.onLogFinished {
-      val result = if (jobLogger
+      val result = if (
+        jobLogger
           .logFetcher
           .getCachedJobStatus()
           ?.returnedCode
@@ -69,6 +91,13 @@ class JobBuildTreeView(
     }
 
     jobLogger.startLogging()
+  }
+
+  /**
+   * Stops requesting logs to mainframe.
+   */
+  fun stop() {
+    jobLogger.stopLogging()
   }
 
   override fun dispose() {
