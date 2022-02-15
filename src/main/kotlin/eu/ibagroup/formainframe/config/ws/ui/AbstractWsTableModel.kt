@@ -15,7 +15,14 @@ abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
     columnInfos = arrayOf(
       WSNameColumn { this.items },
       WSConnectionNameColumn<WSConfig>(crudable),
-      WSUsernameColumn { crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username },
+      WSUsernameColumn(
+        { crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username },
+        {
+          val username = crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username
+          val connectionConfig = crudable.getByUniqueKey<ConnectionConfig>(it.connectionConfigUuid)
+          if (connectionConfig?.zoweConfigPath == null) username else "*".repeat(username?.length ?: 0)
+        }
+      ),
       UrlColumn { crudable.getByUniqueKey<ConnectionConfig>(it.connectionConfigUuid)?.url }
     )
   }
