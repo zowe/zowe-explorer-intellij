@@ -17,8 +17,13 @@
 
         <extensionPoint name="operationRunner"
                         interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
+
+        <extensionPoint name="logFetcher"
+                        interface="eu.ibagroup.formainframe.dataops.log.LogFetcherFactory"/>
+
         <extensionPoint name="explorerContentProvider"
                         interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
+
         <extensionPoint name="explorer"
                         interface="eu.ibagroup.formainframe.explorer.ExplorerFactory"/>
 
@@ -171,6 +176,8 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperationFactory"/>
 
+        <logFetcher implementation="eu.ibagroup.formainframe.dataops.log.JobLogFetcherFactory"/>
+
         <explorer implementation="eu.ibagroup.formainframe.explorer.GlobalExplorerFactory" />
         <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory" />
 
@@ -195,6 +202,10 @@ Example of how to see the output:<br/>
                     factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"
                     icon="ForMainframeIcons.ExplorerToolbarIcon"
                     doNotActivateOnStart="true"/>
+
+        <toolWindow id="Jobs" anchor="bottom"
+                    factoryClass="eu.ibagroup.formainframe.ui.build.jobs.JobsWindowFactory"
+                    canCloseContents="true"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"

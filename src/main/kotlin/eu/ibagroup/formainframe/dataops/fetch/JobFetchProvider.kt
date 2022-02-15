@@ -46,8 +46,7 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
     val response = if (query.request.jobId.isNotEmpty()) {
       api<JESApi>(query.connectionConfig).getFilteredJobs(
         basicCredentials = query.connectionConfig.authToken,
-        jobId = query.request.jobId,
-        userCorrelator = query.request.userCorrelatorFilter
+        jobId = query.request.jobId
       ).cancelByIndicator(progressIndicator).execute()
     } else {
       api<JESApi>(query.connectionConfig).getFilteredJobs(

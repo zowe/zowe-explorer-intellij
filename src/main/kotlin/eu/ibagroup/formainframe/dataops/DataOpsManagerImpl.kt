@@ -1,5 +1,6 @@
 package eu.ibagroup.formainframe.dataops
 
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,6 +15,10 @@ import eu.ibagroup.formainframe.utils.findAnyNullable
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.dataops.synchronizer.adapters.DefaultContentAdapter
 import eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapter
+import eu.ibagroup.formainframe.dataops.log.AbstractMFLoggerBase
+import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
+import eu.ibagroup.formainframe.dataops.log.LogFetcher
+import eu.ibagroup.formainframe.dataops.log.MFLogger
 
 class DataOpsManagerImpl : DataOpsManager {
 
@@ -109,6 +114,12 @@ class DataOpsManagerImpl : DataOpsManager {
     val operationRunnersList = OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
     operationRunnersList.associateListedBy { it.operationClass }
   }
+
+  private val logFetchers by lazy {
+    val logFetcherList = LogFetcher.EP.extensionList.buildComponents()
+    logFetcherList.associateBy { it.mfProcessInfoClass }
+  }
+
   override fun isOperationSupported(operation: Operation<*>): Boolean {
     return operationRunners[operation::class.java]?.any { it.canRun(operation) } == true
   }
@@ -123,6 +134,24 @@ class DataOpsManagerImpl : DataOpsManager {
       ?: throw IllegalArgumentException("Unsupported Operation $operation")
     @Suppress("UNCHECKED_CAST")
     return result as R
+  }
+
+  /**
+   * @see DataOpsManager.createMFLogger
+   */
+  override fun <PInfo : MFProcessInfo, LFetcher : LogFetcher<PInfo>> createMFLogger(
+    mfProcessInfo: PInfo,
+    consoleView: ConsoleView
+  ): MFLogger<LFetcher> {
+    val logFetcher = logFetchers[mfProcessInfo::class.java]
+      ?: throw IllegalArgumentException("Unsupported Log Information $mfProcessInfo")
+    @Suppress("UNCHECKED_CAST")
+    val resultFetcher: LFetcher = logFetcher as LFetcher
+    return object: AbstractMFLoggerBase<PInfo, LFetcher>(mfProcessInfo, consoleView) {
+      override val logFetcher: LFetcher = resultFetcher
+    }.also {
+      Disposer.register(this, it)
+    }
   }
 
   override fun dispose() {
