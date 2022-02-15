@@ -12,6 +12,7 @@ import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import icons.ForMainframeIcons
 
 class DSMaskNode(
   dsMask: DSMask,
@@ -26,7 +27,7 @@ class DSMaskNode(
   override fun update(presentation: PresentationData) {
     presentation.addText(value.mask, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     presentation.addText(" ${value.volser}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    presentation.setIcon(AllIcons.Nodes.Module)
+    presentation.setIcon(ForMainframeIcons.DatasetMask)
   }
 
   override val query: RemoteQuery<DSMask, Unit>?

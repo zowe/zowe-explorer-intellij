@@ -14,4 +14,7 @@ object ForMainframeIcons {
 
   @JvmField
   val JclDirectory = getIcon("icons/jclDir.svg")
+
+  @JvmField
+  val DatasetMask = getIcon("icons/datasetMask.svg")
 }
