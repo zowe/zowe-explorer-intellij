@@ -24,8 +24,8 @@ class MainframeConfigurable : TabbedConfigurable() {
     return mutableListOf(
       WSConfigurable().also { wsConfigurable = it },
       ConnectionConfigurable().also { connectionConfigurable = it },
-      JobsWsConfigurable().also { jobsWsConfigurable = it },
-      AnalyticsConfigurable().also { analyticsConfigurable = it }
+      JobsWsConfigurable().also { jobsWsConfigurable = it }
+//      AnalyticsConfigurable().also { analyticsConfigurable = it }
     )
   }
 

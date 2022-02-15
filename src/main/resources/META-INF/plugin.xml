@@ -153,7 +153,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <postStartupActivity implementation="eu.ibagroup.formainframe.zowe.ZoweStartupActivity"/>
 
-        <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
+<!--        <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>-->
 
         <applicationConfigurable id="configurable.mainframe.explorer"
                                  displayName="Zowe Explorer"
