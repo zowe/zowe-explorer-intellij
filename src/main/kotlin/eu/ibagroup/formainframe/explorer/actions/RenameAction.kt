@@ -33,8 +33,7 @@ class RenameAction : AnAction() {
     if (node is DSMaskNode) {
       initialState = (selectedNode.node.value as DSMask).mask
       val dialog = RenameDialog(e.project, "Dataset Mask", initialState).withValidationOnInput {
-        validateDatasetMask(it.text, it)
-        validateWorkingSetMaskName(it, node.parent?.value as FilesWorkingSet)
+        validateDatasetMask(it.text, it) ?: validateWorkingSetMaskName(it, node.parent?.value as FilesWorkingSet)
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet()) {
         val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
@@ -69,8 +68,7 @@ class RenameAction : AnAction() {
     } else if (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath) {
       initialState = selectedNode.node.value.path
       val dialog = RenameDialog(e.project, "Directory", initialState).withValidationOnInput {
-        validateUssMask(it.text, it)
-        validateWorkingSetMaskName(it, node.parent?.value as FilesWorkingSet)
+        validateUssMask(it.text, it) ?: validateWorkingSetMaskName(it, node.parent?.value as FilesWorkingSet)
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet()) {
         val parentValue = selectedNode.node.parent?.value as FilesWorkingSet

@@ -12,6 +12,7 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
+import org.intellij.markdown.flavours.gfm.table.GitHubTableMarkerProvider.Companion.contains
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -100,10 +101,19 @@ private val maskRegex = Regex("^[A-Za-z$@#]+[A-Za-z$@#" + "0-9\\-" + "\\.\\*%]{0
 private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
 
 fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
+  val noMoreThan3AsteriskRule = "\\*{3,}"
+  val noMoreThan2AsteriskBeforeTextInTheQualifierRule = "\\*{2,}[^\\*\\.]+"
+  val noMoreThan2AsteriskAfterTextInTheQualifierRule = "[^\\*\\.]+\\*{2,}"
+  val noSecondAsteriskInTheMiddleOfTheQualifierRule = "\\*+[^\\*\\.]+\\*+[^\\*\\.]+"
+  val noFirstAsteriskInTheMiddleOfTheQualifierRule = "[^\\*\\.]+\\*+[^\\*\\.]+\\*+"
+  val asteriskRegex = arrayOf(noMoreThan3AsteriskRule, noMoreThan2AsteriskAfterTextInTheQualifierRule, noMoreThan2AsteriskBeforeTextInTheQualifierRule,noSecondAsteriskInTheMiddleOfTheQualifierRule, noFirstAsteriskInTheMiddleOfTheQualifierRule).joinToString(separator = "|")
+
   return if (text.length > 46) {
     ValidationInfo("Dataset mask must be less than 46 characters", component)
   } else if (text.isNotBlank() && !text.matches(maskRegex)) {
     ValidationInfo("Enter valid dataset mask", component)
+  } else if (text.contains(Regex(asteriskRegex))) {
+    ValidationInfo("Invalid asterisks in the qualifier", component)
   } else {
     null
   }
