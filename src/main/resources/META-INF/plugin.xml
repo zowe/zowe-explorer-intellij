@@ -21,6 +21,9 @@
         <extensionPoint name="logFetcher"
                         interface="eu.ibagroup.formainframe.dataops.log.LogFetcherFactory"/>
 
+        <extensionPoint name="oldConfigAdapter"
+                        interface="eu.ibagroup.formainframe.config.OldConfigAdapterFactory"/>
+
         <extensionPoint name="explorerContentProvider"
                         interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
 
@@ -177,6 +180,10 @@ Example of how to see the output:<br/>
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperationFactory"/>
 
         <logFetcher implementation="eu.ibagroup.formainframe.dataops.log.JobLogFetcherFactory"/>
+
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldConnectionsAdapterFactory"/>
+
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldWorkingSetAdapterFactory"/>
 
         <explorer implementation="eu.ibagroup.formainframe.explorer.GlobalExplorerFactory" />
         <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory" />
