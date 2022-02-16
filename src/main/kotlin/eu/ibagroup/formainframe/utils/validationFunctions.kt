@@ -101,13 +101,18 @@ private val maskRegex = Regex("[A-Za-z\$@#" + "0-9\\-" + "\\.\\*%]{0,46}")
 private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
 
 fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
-  val hasMoreThanTwoAsterisks = Regex("\\*{3,}|\\*{2,}[^\\*\\.]+|[^\\*\\.]+\\*{2,}|\\*+[^\\*\\.]+\\*+[^\\*\\.]+|[^\\*\\.]+\\*+[^\\*\\.]+\\*+").containsMatchIn(text)
+  val noMoreThan3AsteriskRule = "\\*{3,}"
+  val noMoreThan2AsteriskBeforeTextInTheQualifierRule = "\\*{2,}[^\\*\\.]+"
+  val noMoreThan2AsteriskAfterTextInTheQualifierRule = "[^\\*\\.]+\\*{2,}"
+  val noSecondAsteriskInTheMiddleOfTheQualifierRule = "\\*+[^\\*\\.]+\\*+[^\\*\\.]+"
+  val noFirstAsteriskInTheMiddleOfTheQualifierRule = "[^\\*\\.]+\\*+[^\\*\\.]+\\*+"
+  val asteriskRegex = arrayOf(noMoreThan3AsteriskRule, noMoreThan2AsteriskAfterTextInTheQualifierRule, noMoreThan2AsteriskBeforeTextInTheQualifierRule,noSecondAsteriskInTheMiddleOfTheQualifierRule, noFirstAsteriskInTheMiddleOfTheQualifierRule).joinToString(separator = "|")
 
   return if (text.length > 46) {
     ValidationInfo("Dataset mask must be less than 46 characters", component)
   } else if (text.isNotBlank() && !text.matches(maskRegex)) {
     ValidationInfo("Enter valid dataset mask", component)
-  } else if (hasMoreThanTwoAsterisks) {
+  } else if (text.contains(Regex(asteriskRegex))) {
     ValidationInfo("Invalid asterisks in the qualifier", component)
   } else {
     null
