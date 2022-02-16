@@ -96,7 +96,7 @@ fun validatePassword(component: JTextField): ValidationInfo? {
   return validateFieldWithLengthRestriction(component, 8, "Password")
 }
 
-private val maskRegex = Regex("[A-Za-z\$@#" + "0-9\\-" + "\\.\\*%]{0,46}")
+private val maskRegex = Regex("^[A-Za-z$@#]+[A-Za-z$@#" + "0-9\\-" + "\\.\\*%]{0,46}")
 private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
 
 fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
