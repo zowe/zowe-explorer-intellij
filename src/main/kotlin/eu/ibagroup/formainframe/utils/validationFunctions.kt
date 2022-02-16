@@ -101,25 +101,14 @@ private val maskRegex = Regex("[A-Za-z\$@#" + "0-9\\-" + "\\.\\*%]{0,46}")
 private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
 
 fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
-  var countAsterisks = 0
-  if (text.contains('*')) {
-    for (index in text.indexOf('*')..text.lastIndexOf('*')) {
-      if (text[index] == '*') {
-        countAsterisks++
-      } else if (text[index] == '.') {
-        countAsterisks = 0
-      }
-      if (countAsterisks == 3)
-        break
-    }
-  }
+  val hasMoreThanTwoAsterisks = Regex("\\*{3,}|\\*{2,}[^\\*\\.]+|[^\\*\\.]+\\*{2,}|\\*+[^\\*\\.]+\\*+[^\\*\\.]+|[^\\*\\.]+\\*+[^\\*\\.]+\\*+").containsMatchIn(text)
 
   return if (text.length > 46) {
     ValidationInfo("Dataset mask must be less than 46 characters", component)
   } else if (text.isNotBlank() && !text.matches(maskRegex)) {
     ValidationInfo("Enter valid dataset mask", component)
-  } else if (countAsterisks == 3) {
-    ValidationInfo("Two asterisks are the maximum permissible in a qualifier", component)
+  } else if (hasMoreThanTwoAsterisks) {
+    ValidationInfo("Invalid asterisks in the qualifier", component)
   } else {
     null
   }
