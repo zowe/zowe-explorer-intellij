@@ -26,7 +26,6 @@ import org.zowe.explorer.config.*
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
 import org.zowe.explorer.utils.runWriteActionOnWriteThread

@@ -63,6 +63,7 @@ abstract class WorkingSetNode<MaskType>(
     val connectionConfig = value.connectionConfig ?: return
     val url = value.connectionConfig?.url ?: return
     val username = username(connectionConfig)
-    presentation.addText(" $username on ${connectionConfig.name} [${url}]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    val formedUsername = if (connectionConfig.zoweConfigPath == null) username else "*".repeat(username.length)
+    presentation.addText(" $formedUsername on ${connectionConfig.name} [${url}]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }
 }
