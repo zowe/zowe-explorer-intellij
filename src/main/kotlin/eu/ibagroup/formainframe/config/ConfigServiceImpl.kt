@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.config
 
-import com.intellij.configurationStore.StoreUtil
 import com.intellij.configurationStore.getPersistentStateComponentStorageLocation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.State
@@ -22,7 +21,7 @@ import javax.xml.parsers.DocumentBuilderFactory
   name = "by.iba.connector.services.ConfigService",
   storages = [Storage(value = "iba_connector_config.xml", exportable = true)]
 )
-class ConfigServiceImpl : ConfigService {
+class ConfigServiceImpl: ConfigService{
 
   companion object {
     private val myState = ConfigState()

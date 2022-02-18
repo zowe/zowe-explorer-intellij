@@ -86,7 +86,7 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
     get() = ApplicationManager.getApplication()
 
   override fun disposeUnit(unit: U) {
-    configCrudable.getByUniqueKey(unitConfigClass, unit.uuid).let {
+    configCrudable.getByUniqueKey(unitConfigClass, unit.uuid).nullable?.let {
       configCrudable.delete(it)
     }
   }
