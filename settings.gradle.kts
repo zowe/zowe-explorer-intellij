@@ -1,1 +1,1 @@
-rootProject.name = "zowe-exporer"
+rootProject.name = "zowe-explorer"

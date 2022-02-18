@@ -13,8 +13,9 @@ package org.zowe.explorer.config
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
 import org.zowe.explorer.config.connect.ui.ConnectionConfigurable
-import org.zowe.explorer.config.ws.ui.jobs.JobsWsConfigurable
 import org.zowe.explorer.config.ws.ui.files.WSConfigurable
+import org.zowe.explorer.config.ws.ui.jobs.JobsWsConfigurable
+import org.zowe.explorer.ui.configs.SettingsConfigurable
 
 class MainframeConfigurable : TabbedConfigurable() {
   var preferredConfigurableClass: Class<*>? = null
