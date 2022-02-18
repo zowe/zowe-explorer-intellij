@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -11,6 +12,10 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 class SyncAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
+    val vFile = getSupportedVirtualFile(e) ?: return
+    val editor = getEditor(e) ?: return
+    service<DataOpsManager>().getContentSynchronizer(vFile)?.userSync(vFile)
+    FileDocumentManager.getInstance().saveDocument(editor.document)
   }
 
   override fun update(e: AnActionEvent) {
@@ -29,10 +34,6 @@ class SyncAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = false
   }
 
-  private fun getDataOpsManager(e: AnActionEvent): DataOpsManager {
-    return service()
-  }
-
   private fun getEditor(e: AnActionEvent): Editor? {
     return e.getData(CommonDataKeys.EDITOR)
   }
@@ -43,7 +44,7 @@ class SyncAction : DumbAwareAction() {
 
   private fun getSupportedVirtualFile(e: AnActionEvent): VirtualFile? {
     return getVirtualFile(e)?.let {
-      if (getDataOpsManager(e).isSyncSupported(it)) {
+      if (service<DataOpsManager>().isSyncSupported(it)) {
         it
       } else {
         null

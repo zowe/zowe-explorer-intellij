@@ -37,6 +37,8 @@ interface ContentSynchronizer {
 
   fun triggerSync(file: VirtualFile)
 
+  fun userSync(file: VirtualFile)
+
   fun startSyncIfNeeded(
     file: VirtualFile,
     project: Project,

@@ -175,6 +175,11 @@ abstract class AbstractQueuedContentSynchronizer(
     executor.accept(Unit)
   }
 
+  override fun userSync(file: VirtualFile) {
+    val executor = fileToExecutorMap[file] ?: throw IllegalArgumentException("File ${file.path} is not synced")
+    executor.userAccept(Unit)
+  }
+
   override fun removeSync(file: VirtualFile) {
     val executor = fileToExecutorMap[file] ?: return
     executor.shutdown()

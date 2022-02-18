@@ -50,7 +50,7 @@ class ChannelExecutor<V>(
 
   private suspend fun processChannel(afterCancelled: Boolean) {
     val input = if (afterCancelled) {
-      channel.tryReceive().getOrNull()
+      channel.poll()
     } else {
       channel.receive()
     }
@@ -85,6 +85,12 @@ class ChannelExecutor<V>(
   override fun accept(input: V) {
     scope.launch {
       channel.send(input)
+    }
+  }
+
+  override fun userAccept(input: V) {
+    scope.launch {
+      processInput(input)
     }
   }
 
