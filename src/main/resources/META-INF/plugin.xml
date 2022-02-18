@@ -155,7 +155,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <postStartupActivity implementation="org.zowe.explorer.zowe.ZoweStartupActivity"/>
 
-<!--        <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>-->
+<!--        <postStartupActivity implementation="org.zowe.explorer.analytics.AnalyticsStartupActivity"/>-->
 
         <applicationConfigurable id="configurable.mainframe.explorer"
                                  displayName="Zowe Explorer"
@@ -184,12 +184,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <applicationService preload="true" serviceInterface="org.zowe.explorer.config.ConfigService"
                             serviceImplementation="org.zowe.explorer.config.ConfigServiceImpl"/>
 
-        <applicationService preload="true" serviceInterface="org.zowe.explorer.analytics.AnalyticsService"
-                            serviceImplementation="org.zowe.explorer.analytics.AnalyticsServiceImpl"/>
-
         <applicationService serviceInterface="org.zowe.explorer.config.connect.CredentialService"
                             serviceImplementation="org.zowe.explorer.config.connect.CredentialServiceImpl"/>
-
 
         <applicationService serviceInterface="org.zowe.explorer.config.ConfigSandbox"
                             serviceImplementation="org.zowe.explorer.config.ConfigSandboxImpl"/>

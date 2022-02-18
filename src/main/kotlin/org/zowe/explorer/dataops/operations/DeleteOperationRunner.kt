@@ -10,12 +10,8 @@
 
 package org.zowe.explorer.dataops.operations
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
@@ -45,7 +41,6 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   ) {
     when (val attr = operation.attributes) {
       is RemoteDatasetAttributes -> {
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
         var throwable: Throwable? = null
         attr.requesters.stream().map {
@@ -69,7 +64,6 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
       }
       is RemoteMemberAttributes -> {
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
         val libraryAttributes = attr.getLibraryAttributes(dataOpsManager)
         if (libraryAttributes != null) {
@@ -97,7 +91,6 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         }
       }
       is RemoteUssAttributes -> {
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
         var throwable: Throwable? = null
         attr.requesters.stream().map {

@@ -8,12 +8,6 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.utils.crudable;
-
-import org.zowe.explorer.analytics.AnalyticsService;
-import org.zowe.explorer.analytics.events.ActionType;
-import org.zowe.explorer.analytics.events.ConnectionEvent;
-import org.zowe.explorer.config.connect.ConnectionConfig;
 import org.zowe.explorer.utils.crudable.annotations.Column;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -84,9 +78,6 @@ public interface Crudable {
         mergedCollections.getToUpdate().forEach(e -> update(rowClass, e));
         mergedCollections.getToAdd().forEach(e -> {
             add(rowClass, e);
-            if (e instanceof ConnectionConfig) {
-                AnalyticsService.getInstance().trackAnalyticsEvent(new ConnectionEvent(ActionType.CREATE));
-            }
         });
     }
 

@@ -24,9 +24,6 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.ui.SimpleTextAttributes
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.synchronizer.AcceptancePolicy
 import org.zowe.explorer.explorer.Explorer
@@ -134,7 +131,6 @@ abstract class ExplorerTreeNode<Value : Any>(
           }
         }
         dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
-          service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
         }
         it.navigate(requestFocus)
       }

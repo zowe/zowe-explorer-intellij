@@ -15,9 +15,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.MigrateActionType
-import org.zowe.explorer.analytics.events.MigrateEvent
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
@@ -66,8 +63,6 @@ class RecallAction : DumbAwareAction() {
         runCatching {
           operations.forEach { operation ->
 
-            service<AnalyticsService>().trackAnalyticsEvent(MigrateEvent(MigrateActionType.RECALL))
-
             service<DataOpsManager>().performOperation(
               operation, progressIndicator
             )
@@ -112,8 +107,6 @@ class MigrateAction : DumbAwareAction() {
       runModalTask("Migrating Datasets") { progressIndicator ->
         runCatching {
           operations.forEach { operation ->
-
-            service<AnalyticsService>().trackAnalyticsEvent(MigrateEvent(MigrateActionType.MIGRATE))
 
             service<DataOpsManager>().performOperation(
               operation, progressIndicator

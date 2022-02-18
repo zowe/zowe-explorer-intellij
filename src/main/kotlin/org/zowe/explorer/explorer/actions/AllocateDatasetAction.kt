@@ -14,14 +14,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.util.IconUtil
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
-import org.zowe.explorer.analytics.events.FileType
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.ws.DSMask
@@ -77,7 +72,6 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
           cancellable = true
         ) {
           runCatching {
-            service<AnalyticsService>().trackAnalyticsEvent(FileEvent(FileType.DATASET, FileAction.CREATE))
             parentNode.unit.explorer.componentManager.service<DataOpsManager>()
               .performOperation(
                 operation = DatasetAllocationOperation(

@@ -14,9 +14,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
@@ -77,16 +74,7 @@ abstract class CreateUssEntityAction : AnAction() {
                 ),
                 progressIndicator = it
               )
-              val analyticsFileType = if (allocationParams.parameters.type == FileType.FILE)
-                org.zowe.explorer.analytics.events.FileType.USS_FILE
-              else org.zowe.explorer.analytics.events.FileType.USS_DIR
 
-              service<AnalyticsService>().trackAnalyticsEvent(
-                FileEvent(
-                  allocationParams.parameters.type,
-                  FileAction.CREATE
-                )
-              )
             }.onSuccess {
               node.castOrNull<UssDirNode>()?.cleanCache(false)
               res = true

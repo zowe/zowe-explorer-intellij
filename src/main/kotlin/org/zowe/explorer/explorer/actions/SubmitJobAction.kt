@@ -14,9 +14,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.JobAction
-import org.zowe.explorer.analytics.events.JobEvent
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.jobs.SubmitJobOperation
 import org.zowe.explorer.dataops.operations.jobs.SubmitOperationParams
@@ -36,8 +33,6 @@ class SubmitJobAction : AnAction() {
     if (requestData != null) {
       runBackgroundableTask("Job Submission") {
         runCatching {
-          service<AnalyticsService>().trackAnalyticsEvent(JobEvent(JobAction.SUBMIT))
-
           service<DataOpsManager>().performOperation(
             operation = SubmitJobOperation(
               request = SubmitOperationParams(requestData.first),

@@ -16,9 +16,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
@@ -73,7 +70,6 @@ class RenameAction : AnAction() {
       val file = node.virtualFile
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
       }
     } else if (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath) {
       initialState = selectedNode.node.value.path
@@ -102,7 +98,6 @@ class RenameAction : AnAction() {
       }.withValidationForBlankOnApply()
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
       }
     }
   }
