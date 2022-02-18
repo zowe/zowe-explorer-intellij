@@ -15,42 +15,18 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.panel
-import com.intellij.util.ui.UIUtil
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.PolicyProvider
 import org.zowe.explorer.config.ConfigService
-import org.zowe.explorer.ui.analytics.AnalyticsPolicyDialog
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.JLabel
 
 class SettingsConfigurable : BoundSearchableConfigurable("Settings", "mainframe") {
-  private val analyticsService = service<AnalyticsService>()
-  private val policyProvider = service<PolicyProvider>()
   private val configService = service<ConfigService>()
-  private val agreed = "you have agreed to the collection and processing of data"
-  private val notAgreed = "you haven't agreed to the collection and processing of data"
-  private var agreementLabelComponent: JLabel? = null
   private var panel: DialogPanel? = null
   private var isAutoSyncEnabled: AtomicBoolean = AtomicBoolean(configService.isAutoSyncEnabled.get())
   private var isAutoSyncEnabledInitial: AtomicBoolean = AtomicBoolean(isAutoSyncEnabled.get())
   private var isAutoSyncEnabledComponent: JBCheckBox? = null
 
-  private fun agreedOrDisagreed(isAnalyticsEnabled: Boolean): String {
-    return if (isAnalyticsEnabled) { agreed } else { notAgreed }
-  }
-
   override fun createPanel(): DialogPanel {
     return panel {
-      titledRow("Analytics") {
-        row {
-          button("Show the Privacy Policy") {
-            AnalyticsPolicyDialog.open(analyticsService, policyProvider, null)
-            agreementLabelComponent?.text = agreedOrDisagreed(analyticsService.isAnalyticsEnabled)
-          }
-          label(agreedOrDisagreed(analyticsService.isAnalyticsEnabled), UIUtil.ComponentStyle.SMALL)
-            .also { agreementLabelComponent = it.component }
-        }
-      }
 //      Not applicable in this release
 //      titledRow("Other Settings") {
 //        row {
