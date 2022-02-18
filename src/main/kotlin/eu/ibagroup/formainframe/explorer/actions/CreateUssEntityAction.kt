@@ -4,9 +4,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
-import eu.ibagroup.formainframe.analytics.AnalyticsService
-import eu.ibagroup.formainframe.analytics.events.FileAction
-import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -67,16 +64,7 @@ abstract class CreateUssEntityAction : AnAction() {
                 ),
                 progressIndicator = it
               )
-              val analyticsFileType = if (allocationParams.parameters.type == FileType.FILE)
-                eu.ibagroup.formainframe.analytics.events.FileType.USS_FILE
-              else eu.ibagroup.formainframe.analytics.events.FileType.USS_DIR
 
-              service<AnalyticsService>().trackAnalyticsEvent(
-                FileEvent(
-                  allocationParams.parameters.type,
-                  FileAction.CREATE
-                )
-              )
             }.onSuccess {
               node.castOrNull<UssDirNode>()?.cleanCache(false)
               res = true

@@ -25,9 +25,6 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
-import eu.ibagroup.formainframe.analytics.AnalyticsService
-import eu.ibagroup.formainframe.analytics.events.FileAction
-import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.DoubleClickTreeMouseListener
 import eu.ibagroup.formainframe.common.ui.makeNodeDataFromTreePath
 import eu.ibagroup.formainframe.common.ui.promisePath
@@ -376,13 +373,6 @@ class GlobalFileExplorerView(
               cutProviderUpdater(emptyList())
             }
           }
-          forEach {
-            it.file?.let { file ->
-              service<DataOpsManager>().tryToGetAttributes(file)?.let { attrs ->
-                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attrs, FileAction.COPY))
-              }
-            }
-          }
         }.let { LinkedList(it) }
         if (selectedNodesData == null) {
           copyPasteBuffer = buffer
@@ -637,14 +627,6 @@ class GlobalFileExplorerView(
           ) {
             it.isIndeterminate = false
             operations.forEach { op ->
-              op.sourceAttributes?.let { attr ->
-                service<AnalyticsService>().trackAnalyticsEvent(
-                  FileEvent(
-                    attr,
-                    if (op.isMove) FileAction.MOVE else FileAction.COPY
-                  )
-                )
-              }
               it.text = "${op.source.name} to ${op.destination.name}"
               runCatching {
                 dataOpsManager.performOperation(

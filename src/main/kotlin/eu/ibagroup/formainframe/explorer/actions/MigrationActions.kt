@@ -5,9 +5,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.analytics.AnalyticsService
-import eu.ibagroup.formainframe.analytics.events.MigrateActionType
-import eu.ibagroup.formainframe.analytics.events.MigrateEvent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -56,8 +53,6 @@ class RecallAction : DumbAwareAction() {
         runCatching {
           operations.forEach { operation ->
 
-            service<AnalyticsService>().trackAnalyticsEvent(MigrateEvent(MigrateActionType.RECALL))
-
             service<DataOpsManager>().performOperation(
               operation, progressIndicator
             )
@@ -102,8 +97,6 @@ class MigrateAction : DumbAwareAction() {
       runModalTask("Migrating Datasets") { progressIndicator ->
         runCatching {
           operations.forEach { operation ->
-
-            service<AnalyticsService>().trackAnalyticsEvent(MigrateEvent(MigrateActionType.MIGRATE))
 
             service<DataOpsManager>().performOperation(
               operation, progressIndicator

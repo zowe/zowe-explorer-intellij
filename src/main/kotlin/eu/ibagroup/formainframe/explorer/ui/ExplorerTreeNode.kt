@@ -14,9 +14,6 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.ui.SimpleTextAttributes
-import eu.ibagroup.formainframe.analytics.AnalyticsService
-import eu.ibagroup.formainframe.analytics.events.FileAction
-import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.synchronizer.AcceptancePolicy
 import eu.ibagroup.formainframe.explorer.Explorer
@@ -124,7 +121,6 @@ abstract class ExplorerTreeNode<Value : Any>(
           }
         }
         dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
-          service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
         }
         it.navigate(requestFocus)
       }

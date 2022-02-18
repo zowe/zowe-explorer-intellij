@@ -4,9 +4,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
-import eu.ibagroup.formainframe.analytics.AnalyticsService
-import eu.ibagroup.formainframe.analytics.events.JobAction
-import eu.ibagroup.formainframe.analytics.events.JobEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitOperationParams
@@ -26,8 +23,6 @@ class SubmitJobAction : AnAction() {
     if (requestData != null) {
       runBackgroundableTask("Job Submission") {
         runCatching {
-          service<AnalyticsService>().trackAnalyticsEvent(JobEvent(JobAction.SUBMIT))
-
           service<DataOpsManager>().performOperation(
             operation = SubmitJobOperation(
               request = SubmitOperationParams(requestData.first),

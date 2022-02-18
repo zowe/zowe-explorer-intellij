@@ -1,11 +1,7 @@
 package eu.ibagroup.formainframe.dataops.operations
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.analytics.AnalyticsService
-import eu.ibagroup.formainframe.analytics.events.FileAction
-import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -35,7 +31,6 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   ) {
     when (val attr = operation.attributes) {
       is RemoteDatasetAttributes -> {
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
         var throwable: Throwable? = null
         attr.requesters.stream().map {
@@ -59,7 +54,6 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
       }
       is RemoteMemberAttributes -> {
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
         val libraryAttributes = attr.getLibraryAttributes(dataOpsManager)
         if (libraryAttributes != null) {
@@ -87,7 +81,6 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         }
       }
       is RemoteUssAttributes -> {
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
         var throwable: Throwable? = null
         attr.requesters.stream().map {

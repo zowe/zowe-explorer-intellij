@@ -1,9 +1,5 @@
 package eu.ibagroup.formainframe.utils.crudable;
 
-import eu.ibagroup.formainframe.analytics.AnalyticsService;
-import eu.ibagroup.formainframe.analytics.events.ActionType;
-import eu.ibagroup.formainframe.analytics.events.ConnectionEvent;
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig;
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -68,9 +64,6 @@ public interface Crudable {
         mergedCollections.getToUpdate().forEach(e -> update(rowClass, e));
         mergedCollections.getToAdd().forEach(e -> {
             add(rowClass, e);
-            if (e instanceof ConnectionConfig){
-                AnalyticsService.getInstance().trackAnalyticsEvent(new ConnectionEvent(ActionType.CREATE));
-            }
         });
     }
 

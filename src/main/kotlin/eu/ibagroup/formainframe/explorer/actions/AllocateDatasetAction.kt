@@ -4,14 +4,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.util.IconUtil
-import eu.ibagroup.formainframe.analytics.AnalyticsService
-import eu.ibagroup.formainframe.analytics.events.FileAction
-import eu.ibagroup.formainframe.analytics.events.FileEvent
-import eu.ibagroup.formainframe.analytics.events.FileType
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
@@ -67,7 +62,6 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
           cancellable = true
         ) {
           runCatching {
-            service<AnalyticsService>().trackAnalyticsEvent(FileEvent(FileType.DATASET, FileAction.CREATE))
             parentNode.unit.explorer.componentManager.service<DataOpsManager>()
               .performOperation(
                 operation = DatasetAllocationOperation(

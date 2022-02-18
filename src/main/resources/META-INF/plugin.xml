@@ -182,12 +182,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
 
-        <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
-                            serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"/>
-
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
                             serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"/>
-
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>

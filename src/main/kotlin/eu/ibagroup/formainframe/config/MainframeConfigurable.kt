@@ -2,7 +2,6 @@ package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
-import eu.ibagroup.formainframe.analytics.ui.AnalyticsConfigurable
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.files.WSConfigurable
@@ -17,7 +16,6 @@ class MainframeConfigurable : TabbedConfigurable() {
 
   private lateinit var connectionConfigurable: ConnectionConfigurable
   private lateinit var wsConfigurable: WSConfigurable
-  private lateinit var analyticsConfigurable: AnalyticsConfigurable
   private lateinit var jobsWsConfigurable: JobsWsConfigurable
 
   override fun createConfigurables(): MutableList<Configurable> {
