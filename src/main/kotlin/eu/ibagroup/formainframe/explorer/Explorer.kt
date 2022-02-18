@@ -123,7 +123,7 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
 
   private val reportInSlackAction = object : DumbAwareAction("Report In Slack") {
     override fun actionPerformed(e: AnActionEvent) {
-      BrowserUtil.browse("https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg")
+      BrowserUtil.browse("https://join.slack.com/t/openmainframeproject/shared_invite/zt-u2nc4hv8-js4clxu87h5UMb~KCfAPuQ")
     }
   }
 

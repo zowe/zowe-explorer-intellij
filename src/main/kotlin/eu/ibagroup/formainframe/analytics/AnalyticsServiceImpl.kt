@@ -18,11 +18,11 @@ internal val analyticsProperties by lazy {
   }
 }
 
-@State(
-  name = "eu.ibagroup.formainframe.analytics.AnalyticsService",
-  storages = [Storage(value = "zowe-analytics.xml", exportable = true)]
-)
-class AnalyticsServiceImpl : AnalyticsService, PersistentStateComponent<AnalyticsState> {
+//@State(
+//  name = "eu.ibagroup.formainframe.analytics.AnalyticsService",
+//  storages = [Storage(value = "zowe-analytics.xml", exportable = true)]
+//)
+class AnalyticsServiceImpl : AnalyticsService {
 
   companion object {
     val myState = AnalyticsState()
@@ -35,9 +35,9 @@ class AnalyticsServiceImpl : AnalyticsService, PersistentStateComponent<Analytic
   }
 
 
-  override fun loadState(state: AnalyticsState) {
-    XmlSerializerUtil.copyBean(state, myState)
-  }
+//  override fun loadState(state: AnalyticsState) {
+//    XmlSerializerUtil.copyBean(state, myState)
+//  }
 
   private fun createAnalyticsUuid(): String {
     val analyticsUuid = UUID.randomUUID().toString()
@@ -65,20 +65,26 @@ class AnalyticsServiceImpl : AnalyticsService, PersistentStateComponent<Analytic
   private val licenceProvider = service<PolicyProvider>()
 
   override var isAnalyticsEnabled: Boolean
-    get() = state.isAnalyticsEnabled
-    set(value) {
-      state.isAnalyticsEnabled = value
-    }
+    get() = false
+    set(_) {}
   override var isUserAcknowledged: Boolean
-    get() = state.lastAcknowledgedPolicyVersion >= licenceProvider.version
-    set(value) {
-      val analyticsVersion = licenceProvider.version
-      state.lastAcknowledgedPolicyVersion = if (value) {
-        analyticsVersion
-      } else {
-        POLICY_NOT_ACKNOWLEDGED
-      }
-    }
+    get() = false
+    set(_) {}
+//  override var isAnalyticsEnabled: Boolean
+//    get() = state.isAnalyticsEnabled
+//    set(value) {
+//      state.isAnalyticsEnabled = value
+//    }
+//  override var isUserAcknowledged: Boolean
+//    get() = state.lastAcknowledgedPolicyVersion >= licenceProvider.version
+//    set(value) {
+//      val analyticsVersion = licenceProvider.version
+//      state.lastAcknowledgedPolicyVersion = if (value) {
+//        analyticsVersion
+//      } else {
+//        POLICY_NOT_ACKNOWLEDGED
+//      }
+//    }
 
 
   override fun trackAnalyticsEvent(eventName: String, eventProperties: Map<String, String>) {
@@ -117,9 +123,9 @@ class AnalyticsServiceImpl : AnalyticsService, PersistentStateComponent<Analytic
     }
   }
 
-  override fun getState(): AnalyticsState {
-    return myState
-  }
+//  override fun getState(): AnalyticsState {
+//    return myState
+//  }
 
 }
 
