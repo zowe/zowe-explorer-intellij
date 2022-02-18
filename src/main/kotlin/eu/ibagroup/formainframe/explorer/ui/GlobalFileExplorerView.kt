@@ -52,7 +52,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeWillExpandListener
-import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 import kotlin.concurrent.withLock
@@ -601,7 +600,7 @@ class GlobalFileExplorerView(
               "You are about to place uss file to Pds. All lines exceeding the record length will be truncated.",
               null,
               "Ok",
-              "Skip this files",
+              "Skip This Files",
               AllIcons.General.WarningDialog
             )
           ) {

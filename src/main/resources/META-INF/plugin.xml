@@ -32,6 +32,11 @@
 
     </extensionPoints>
 
+    <applicationListeners>
+        <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+    </applicationListeners>
+
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
     <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
@@ -190,6 +195,7 @@ Example of how to see the output:<br/>
 
         <explorerContentProvider index="0" implementation="eu.ibagroup.formainframe.explorer.FileExplorerContentProviderFactory" />
         <explorerContentProvider index="1" implementation="eu.ibagroup.formainframe.explorer.JesExplorerContentProviderFactory"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -313,7 +319,8 @@ Example of how to see the output:<br/>
                 text="Properties"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
-                class="eu.ibagroup.formainframe.explorer.actions.RenameAction" text="Rename"
+                class="eu.ibagroup.formainframe.explorer.actions.RenameAction"
+                text="Rename"
                 use-shortcut-of="RenameElement"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
