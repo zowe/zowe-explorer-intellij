@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.synchronizer
+package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,12 +12,10 @@ import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.XIBMDataType
-import eu.ibagroup.r2z.annotations.ZVersion
 import retrofit2.Call
 import java.io.IOException
 
-class SeqDatasetContentSynchronizerFactory : ContentSynchronizerFactory {
+class SeqDatasetContentSynchronizerFactory: ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return SeqDatasetContentSynchronizer(dataOpsManager)
   }
@@ -27,12 +25,12 @@ private val log = log<SeqDatasetContentSynchronizer>()
 
 class SeqDatasetContentSynchronizer(
   dataOpsManager: DataOpsManager
-) : RemoteAttributesContentSynchronizerBase<RemoteDatasetAttributes>(dataOpsManager) {
+): RemoteAttributedContentSynchronizer<RemoteDatasetAttributes>(dataOpsManager) {
   override val vFileClass = MFVirtualFile::class.java
 
   override val attributesClass = RemoteDatasetAttributes::class.java
 
-  override val storageNamePostfix = "seq_datasets"
+  override val entityName = "seq_datasets"
 
   override fun fetchRemoteContentBytes(
     attributes: RemoteDatasetAttributes,
@@ -106,14 +104,21 @@ class SeqDatasetContentSynchronizer(
     }
   }
 
-  override fun uploadNewContent(attributes: RemoteDatasetAttributes, newContentBytes: ByteArray) {
+  override fun uploadNewContent(
+    attributes: RemoteDatasetAttributes,
+    newContentBytes: ByteArray,
+    progressIndicator: ProgressIndicator?
+  ) {
     log.info("Upload remote content for $attributes")
     var throwable: Throwable = IOException("Unknown error")
     var uploaded = false
     for (requester in attributes.requesters) {
       try {
         log.info("Trying to execute a call using $requester")
-        val response = makeUploadCall(requester.connectionConfig, attributes, newContentBytes).execute()
+        val response = makeUploadCall(requester.connectionConfig, attributes, newContentBytes)
+          .applyIfNotNull(progressIndicator) { indicator ->
+            cancelByIndicator(indicator)
+          }.execute()
         if (response.isSuccessful) {
           uploaded = true
         } else {

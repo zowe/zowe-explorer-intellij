@@ -9,7 +9,10 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.utils.log
+import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 
 private val log = log<FileEditorEventsListener>()
 
@@ -32,8 +35,13 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
         ) {
           runInEdt {
             FileDocumentManager.getInstance().saveDocument(document)
-            service<DataOpsManager>().getContentSynchronizer(file)?.userSync(file)
+            val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(source.project))
+            service<DataOpsManager>().getContentSynchronizer(file)?.synchronizeWithRemote(syncProvider, it)
           }
+        }
+      } else {
+        runWriteActionInEdt {
+          document.setText(String(file.contentsToByteArray()))
         }
       }
     }

@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.synchronizer
+package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 
 class SyncAction : DumbAwareAction() {
@@ -14,7 +15,8 @@ class SyncAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val vFile = getSupportedVirtualFile(e) ?: return
     val editor = getEditor(e) ?: return
-    service<DataOpsManager>().getContentSynchronizer(vFile)?.userSync(vFile)
+    val syncProvider = DocumentedSyncProvider(vFile, SaveStrategy.default(e.project))
+    service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider)
     FileDocumentManager.getInstance().saveDocument(editor.document)
   }
 
@@ -28,6 +30,7 @@ class SyncAction : DumbAwareAction() {
       return
     }
     e.presentation.isEnabledAndVisible = !(editor.document.text.toByteArray() contentEquals file.contentsToByteArray())
+        && !service<ConfigService>().isAutoSyncEnabled.get()
   }
 
   private fun makeDisabled(e: AnActionEvent) {

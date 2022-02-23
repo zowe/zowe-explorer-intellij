@@ -9,16 +9,16 @@ import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
-import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import com.intellij.openapi.util.Disposer
-import eu.ibagroup.formainframe.dataops.synchronizer.adapters.DefaultContentAdapter
-import eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapter
+import eu.ibagroup.formainframe.dataops.content.adapters.DefaultContentAdapter
+import eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapter
 import eu.ibagroup.formainframe.dataops.log.AbstractMFLoggerBase
 import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
 import eu.ibagroup.formainframe.dataops.log.LogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
+import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 
 class DataOpsManagerImpl : DataOpsManager {
 
@@ -86,6 +86,7 @@ class DataOpsManagerImpl : DataOpsManager {
   private val contentSynchronizersDelegate = lazy {
     ContentSynchronizer.EP.extensionList.buildComponents()
   }
+
   private val contentSynchronizers by contentSynchronizersDelegate
 
   private val mfContentAdaptersDelegate = lazy {
@@ -94,15 +95,11 @@ class DataOpsManagerImpl : DataOpsManager {
   private val mfContentAdapters by mfContentAdaptersDelegate
 
   override fun isSyncSupported(file: VirtualFile): Boolean {
-    return contentSynchronizers.stream()
-      .filter { it.accepts(file) }
-      .findAnyNullable() != null
+    return contentSynchronizers.firstOrNull { it.accepts(file) } != null
   }
 
   override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
-    return contentSynchronizers.stream()
-      .filter { it.accepts(file) }
-      .findAnyNullable()
+    return contentSynchronizers.firstOrNull { it.accepts(file) }
   }
 
   override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {

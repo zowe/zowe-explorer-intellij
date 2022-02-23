@@ -10,10 +10,10 @@
                         interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
 
         <extensionPoint name="contentSynchronizer"
-                        interface="eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizerFactory"/>
+                        interface="eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizerFactory"/>
 
         <extensionPoint name="mfContentAdapter"
-                        interface="eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapterFactory"/>
+                        interface="eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapterFactory"/>
 
         <extensionPoint name="operationRunner"
                         interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
@@ -33,8 +33,14 @@
     </extensionPoints>
 
     <applicationListeners>
-        <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
-        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+        <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+
+        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+
+        <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     </applicationListeners>
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
@@ -132,22 +138,22 @@ Example of how to see the output:<br/>
                 implementation="eu.ibagroup.formainframe.dataops.fetch.SpoolFileFetchProviderFactory"/>
 
         <contentSynchronizer
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.MemberContentSynchronizerFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.MemberContentSynchronizerFactory"/>
 
         <contentSynchronizer
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SeqDatasetContentSynchronizerFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SeqDatasetContentSynchronizerFactory"/>
 
         <contentSynchronizer
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.UssFileContentSynchronizerFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.UssFileContentSynchronizerFactory"/>
 
         <contentSynchronizer
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SpoolFileContentSynchronizerFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SpoolFileContentSynchronizerFactory"/>
 
         <mfContentAdapter
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.adapters.MemberContentAdapterFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.adapters.MemberContentAdapterFactory"/>
 
         <mfContentAdapter
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.adapters.SeqDatasetContentAdapterFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.adapters.SeqDatasetContentAdapterFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DatasetAllocatorFactory"/>
 
@@ -206,7 +212,7 @@ Example of how to see the output:<br/>
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
 
         <editorFloatingToolbarProvider
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SyncToolbarProvider"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncToolbarProvider"/>
 
         <notificationGroup displayType="STICKY_BALLOON"
                            id="eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"/>
@@ -223,8 +229,6 @@ Example of how to see the output:<br/>
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            key="mf"/>
-
-        <vfs.asyncListener implementation="eu.ibagroup.formainframe.dataops.synchronizer.AfterSaveVfsListener"/>
 
         <fileType name="Unknown Data Set"
                   implementationClass="eu.ibagroup.formainframe.filetypes.UnknownDataSetFileType"/>
@@ -409,13 +413,13 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"/>
         </group>
 
-        <action id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"
-                class="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"
+        <action id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"
+                class="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"
                 icon="AllIcons.Actions.BuildLoadChanges"
                 text="Sync Data"/>
 
-        <group id="eu.ibagroup.formainframe.dataops.synchronizer.SyncActionGroup" popup="true">
-            <reference id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"/>
+        <group id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncActionGroup" popup="true">
+            <reference id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"/>
         </group>
 
     </actions>

@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.synchronizer.adapters
+package eu.ibagroup.formainframe.dataops.content.adapters
 
 import eu.ibagroup.formainframe.dataops.DataOpsComponentFactory
 

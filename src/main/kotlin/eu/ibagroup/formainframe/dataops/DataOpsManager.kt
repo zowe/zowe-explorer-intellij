@@ -14,8 +14,8 @@ import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
 import eu.ibagroup.formainframe.dataops.log.LogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
-import eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizer
-import eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapter
+import eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapter
+import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 
 interface DataOpsManager : Disposable {
 
@@ -39,8 +39,18 @@ interface DataOpsManager : Disposable {
     vFileClass: Class<out File>
   ): FileFetchProvider<R, Q, File>
 
+  /**
+   * Checks if the [ContentSynchronizer] instance capable to specified file exists.
+   * @param file virtual file to check if capable synchronizer exists.
+   * @return true if capable [ContentSynchronizer] instance exists or false otherwise
+   */
   fun isSyncSupported(file: VirtualFile): Boolean
 
+  /**
+   * Finds [ContentSynchronizer] instance that can synchronize content for passed file.
+   * @param file virtual file to find [ContentSynchronizer] instance
+   * @return founded [ContentSynchronizer] instance or null if no one content synchronizer doesn't accept passed file.
+   */
   fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer?
 
   fun getMFContentAdapter(file: VirtualFile): MFContentAdapter

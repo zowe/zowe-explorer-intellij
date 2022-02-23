@@ -24,7 +24,7 @@ class ChangeContentAction: TypedHandlerDelegate() {
           adaptContentFunc = null
           val contentAdapter = dataOpsManager.getMFContentAdapter(file.virtualFile)
           val currentContent = editor.document.text.toByteArray(vFile.charset)
-          val adaptedContent = contentAdapter.performAdaptingToMainframe(currentContent, vFile)
+          val adaptedContent = contentAdapter.prepareContentToMainframe(currentContent, vFile)
           runWriteActionInEdt { editor.document.setText(adaptedContent.toString(vFile.charset)) }
         }
       }

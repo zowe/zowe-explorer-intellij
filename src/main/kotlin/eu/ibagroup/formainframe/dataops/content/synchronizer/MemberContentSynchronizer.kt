@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.synchronizer
+package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
@@ -12,11 +12,9 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.XIBMDataType
-import eu.ibagroup.r2z.annotations.ZVersion
 import java.io.IOException
 
-class MemberContentSynchronizerFactory : ContentSynchronizerFactory {
+class MemberContentSynchronizerFactory: ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return MemberContentSynchronizer(dataOpsManager)
   }
@@ -26,7 +24,7 @@ private val log = log<MemberContentSynchronizer>()
 
 class MemberContentSynchronizer(
   dataOpsManager: DataOpsManager
-) : RemoteAttributesContentSynchronizerBase<RemoteMemberAttributes>(dataOpsManager) {
+): RemoteAttributedContentSynchronizer<RemoteMemberAttributes>(dataOpsManager) {
 
   override val vFileClass = MFVirtualFile::class.java
 
@@ -35,7 +33,7 @@ class MemberContentSynchronizer(
   private val datasetAttributesService = dataOpsManager
     .getAttributesService(RemoteDatasetAttributes::class.java, vFileClass)
 
-  override val storageNamePostfix = "members"
+  override val entityName = "members"
 
   override fun fetchRemoteContentBytes(
     attributes: RemoteMemberAttributes,
@@ -75,7 +73,11 @@ class MemberContentSynchronizer(
     return content ?: throw throwable
   }
 
-  override fun uploadNewContent(attributes: RemoteMemberAttributes, newContentBytes: ByteArray) {
+  override fun uploadNewContent(
+    attributes: RemoteMemberAttributes,
+    newContentBytes: ByteArray,
+    progressIndicator: ProgressIndicator?
+  ) {
     log.info("Upload remote content for $attributes")
     val parentLib = attributes.parentFile
     val libAttributes = datasetAttributesService.getAttributes(parentLib)
@@ -93,7 +95,9 @@ class MemberContentSynchronizer(
           memberName = attributes.name,
           content = String(newContentBytes).addNewLine(),
           xIBMDataType = xIBMDataType
-        ).execute()
+        ).applyIfNotNull(progressIndicator) { indicator ->
+          cancelByIndicator(indicator)
+        }.execute()
         if (response.isSuccessful) {
           log.info("Content has been uploaded successfully")
           throwable = null

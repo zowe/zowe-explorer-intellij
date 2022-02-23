@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.synchronizer.adapters
+package eu.ibagroup.formainframe.dataops.content.adapters
 
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -21,7 +21,7 @@ abstract class MFContentAdapterBase<Attributes: FileAttributes>(
   abstract fun adaptContentToMainframe(content: ByteArray, attributes: Attributes): ByteArray
 
   @Suppress("UNCHECKED_CAST")
-  override fun performAdaptingToMainframe(content: ByteArray, file: VirtualFile): ByteArray {
+  override fun prepareContentToMainframe(content: ByteArray, file: VirtualFile): ByteArray {
     val attributes = dataOpsManager.tryToGetAttributes(file) ?: return content
     return if (attributes.`is`(attributesClass)) adaptContentToMainframe(content, attributes as Attributes) else content
   }
@@ -29,7 +29,7 @@ abstract class MFContentAdapterBase<Attributes: FileAttributes>(
   abstract fun adaptContentFromMainframe(content: ByteArray, attributes: Attributes): ByteArray
 
   @Suppress("UNCHECKED_CAST")
-  override fun performAdaptingFromMainframe(content: ByteArray, file: VirtualFile): ByteArray {
+  override fun adaptContentFromMainframe(content: ByteArray, file: VirtualFile): ByteArray {
     val attributes = dataOpsManager.tryToGetAttributes(file) ?: return content
     return if (attributes.`is`(attributesClass)) adaptContentFromMainframe(content, attributes as Attributes) else content
   }

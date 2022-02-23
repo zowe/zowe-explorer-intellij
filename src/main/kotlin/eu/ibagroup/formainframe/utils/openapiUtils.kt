@@ -8,10 +8,12 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
@@ -222,6 +224,15 @@ fun VirtualFile.getParentsChain(): List<VirtualFile> {
 
 fun VirtualFile.getAncestorNodes(): List<VirtualFile> {
   return getAncestorNodes { children?.asIterable() ?: emptyList() }
+}
+
+fun VirtualFile.isBeingEditingNow(): Boolean {
+  return ProjectManager
+    .getInstance()
+    .openProjects
+    .map { FileEditorManager.getInstance(it).getAllEditors(this).toList() }
+    .flatten()
+    .isNotEmpty()
 }
 
 //fun Iterable<VirtualFile>.getMinimalCommonParents() : Collection<VirtualFile> {
