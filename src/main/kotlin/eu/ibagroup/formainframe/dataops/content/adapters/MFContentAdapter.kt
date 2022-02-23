@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.synchronizer.adapters
+package eu.ibagroup.formainframe.dataops.content.adapters
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,7 +12,7 @@ interface MFContentAdapter {
 
   fun accepts(file: VirtualFile): Boolean
 
-  fun performAdaptingToMainframe (content: ByteArray, file: VirtualFile): ByteArray
+  fun prepareContentToMainframe (content: ByteArray, file: VirtualFile): ByteArray
 
-  fun performAdaptingFromMainframe (content: ByteArray, file: VirtualFile): ByteArray
+  fun adaptContentFromMainframe (content: ByteArray, file: VirtualFile): ByteArray
 }

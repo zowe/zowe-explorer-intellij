@@ -1,20 +1,23 @@
-package eu.ibagroup.formainframe.dataops.synchronizer
+package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.attributes.DependentFileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.MFRemoteFileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import java.io.IOException
 
+// TODO: doc
 abstract class DependentFileContentSynchronizer<
     VFile : VirtualFile,
     InfoType, R : Requester,
     Attributes : DependentFileAttributes<InfoType, VFile>,
-    ParentAttributes : MFRemoteFileAttributes<R>>
-  (dataOpsManager: DataOpsManager, private val log: Logger) :
-  RemoteAttributesContentSynchronizerBase<Attributes>(dataOpsManager) {
+    ParentAttributes : MFRemoteFileAttributes<R>
+    >(dataOpsManager: DataOpsManager, private val log: Logger) :
+  RemoteAttributedContentSynchronizer<Attributes>(dataOpsManager) {
 
   abstract val parentAttributesClass: Class<out ParentAttributes>
 
@@ -33,7 +36,7 @@ abstract class DependentFileContentSynchronizer<
     for (requester in parentAttributes.requesters) {
       try {
         log.info("Trying to execute a call using $requester")
-        val response = executeGetContentRequest(attributes, parentAttributes, progressIndicator, requester)
+        val response = executeGetContentRequest(attributes, parentAttributes, requester, progressIndicator)
         if (response.isSuccessful) {
           log.info("Content has been fetched successfully")
           content = response.toBytes()
@@ -48,7 +51,7 @@ abstract class DependentFileContentSynchronizer<
     return content ?: throw throwable
   }
 
-  override fun uploadNewContent(attributes: Attributes, newContentBytes: ByteArray) {
+  override fun uploadNewContent(attributes: Attributes, newContentBytes: ByteArray, progressIndicator: ProgressIndicator?) {
     log.info("Upload remote content for $attributes")
     val parentLib = attributes.parentFile
     val parentAttributes = parentAttributesService.getAttributes(parentLib)
@@ -58,7 +61,7 @@ abstract class DependentFileContentSynchronizer<
     for (requester in parentAttributes.requesters) {
       try {
         log.info("Trying to execute a call using $requester")
-        val response = executePutContentRequest(attributes, parentAttributes, requester, newContentBytes) ?: return
+        val response = executePutContentRequest(attributes, parentAttributes, requester, newContentBytes, progressIndicator) ?: return
         if (response.isSuccessful) {
           log.info("Content has been uploaded successfully")
           throwable = null
@@ -78,21 +81,22 @@ abstract class DependentFileContentSynchronizer<
   abstract fun executeGetContentRequest(
     attributes: Attributes,
     parentAttributes: ParentAttributes,
-    progressIndicator: ProgressIndicator?,
-    requester: Requester
+    requester: Requester,
+    progressIndicator: ProgressIndicator?
   ): retrofit2.Response<*>
 
   abstract fun executePutContentRequest(
     attributes: Attributes,
     parentAttributes: ParentAttributes,
     requester: Requester,
-    newContentBytes: ByteArray
+    newContentBytes: ByteArray,
+    progressIndicator: ProgressIndicator?
   ): retrofit2.Response<Void>?
 
 }
 
-private fun  retrofit2.Response<*>.toBytes(): ByteArray? {
-  return when (val b = body()){
+private fun retrofit2.Response<*>.toBytes(): ByteArray? {
+  return when (val b = body()) {
     is ByteArray -> b
     else -> body()?.toString()?.removeLastNewLine()?.toByteArray()
   }

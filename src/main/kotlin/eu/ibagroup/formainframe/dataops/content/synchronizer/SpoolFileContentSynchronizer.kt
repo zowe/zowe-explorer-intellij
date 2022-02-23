@@ -1,20 +1,22 @@
-package eu.ibagroup.formainframe.dataops.synchronizer
+package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
-import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.*
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
+import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.utils.applyIfNotNull
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import eu.ibagroup.r2z.JESApi
+import eu.ibagroup.r2z.SpoolFile
 import retrofit2.Response
 
-class SpoolFileContentSynchronizerFactory: ContentSynchronizerFactory {
+class SpoolFileContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return SpoolFileContentSynchronizer(dataOpsManager)
   }
@@ -22,10 +24,14 @@ class SpoolFileContentSynchronizerFactory: ContentSynchronizerFactory {
 
 class SpoolFileContentSynchronizer(
   dataOpsManager: DataOpsManager
-) : DependentFileContentSynchronizer<MFVirtualFile, SpoolFile, JobsRequester, RemoteSpoolFileAttributes, RemoteJobAttributes>(dataOpsManager, log<SpoolFileContentSynchronizer>()) {
+) :
+  DependentFileContentSynchronizer<MFVirtualFile, SpoolFile, JobsRequester, RemoteSpoolFileAttributes, RemoteJobAttributes>(
+    dataOpsManager,
+    log<SpoolFileContentSynchronizer>()
+  ) {
   override val vFileClass = MFVirtualFile::class.java
 
-  override val storageNamePostfix = "jobs"
+  override val entityName = "jobs"
 
   override val attributesClass = RemoteSpoolFileAttributes::class.java
 
@@ -34,8 +40,8 @@ class SpoolFileContentSynchronizer(
   override fun executeGetContentRequest(
     attributes: RemoteSpoolFileAttributes,
     parentAttributes: RemoteJobAttributes,
-    progressIndicator: ProgressIndicator?,
-    requester: Requester
+    requester: Requester,
+    progressIndicator: ProgressIndicator?
   ): Response<ByteArray> {
     return apiWithBytesConverter<JESApi>(requester.connectionConfig).getSpoolFileRecords(
       basicCredentials = requester.connectionConfig.authToken,
@@ -51,9 +57,14 @@ class SpoolFileContentSynchronizer(
     attributes: RemoteSpoolFileAttributes,
     parentAttributes: RemoteJobAttributes,
     requester: Requester,
-    newContentBytes: ByteArray
+    newContentBytes: ByteArray,
+    progressIndicator: ProgressIndicator?
   ): Response<Void>? = null
 
-  override fun uploadNewContent(attributes: RemoteSpoolFileAttributes, newContentBytes: ByteArray) {}
-
+  override fun uploadNewContent(
+    attributes: RemoteSpoolFileAttributes,
+    newContentBytes: ByteArray,
+    progressIndicator: ProgressIndicator?
+  ) {
+  }
 }

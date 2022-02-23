@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.dataops.synchronizer
+package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
@@ -14,7 +14,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import java.io.IOException
 
-class UssFileContentSynchronizerFactory : ContentSynchronizerFactory {
+class UssFileContentSynchronizerFactory: ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return UssFileContentSynchronizer(dataOpsManager)
   }
@@ -22,13 +22,13 @@ class UssFileContentSynchronizerFactory : ContentSynchronizerFactory {
 
 class UssFileContentSynchronizer(
   dataOpsManager: DataOpsManager
-) : RemoteAttributesContentSynchronizerBase<RemoteUssAttributes>(dataOpsManager) {
+): RemoteAttributedContentSynchronizer<RemoteUssAttributes>(dataOpsManager) {
 
   override val vFileClass = MFVirtualFile::class.java
 
   override val attributesClass = RemoteUssAttributes::class.java
 
-  override val storageNamePostfix = "uss"
+  override val entityName = "uss"
 
   override fun fetchRemoteContentBytes(
     attributes: RemoteUssAttributes,
@@ -59,7 +59,11 @@ class UssFileContentSynchronizer(
     }.findAnyNullable() ?: throw throwable
   }
 
-  override fun uploadNewContent(attributes: RemoteUssAttributes, newContentBytes: ByteArray) {
+  override fun uploadNewContent(
+    attributes: RemoteUssAttributes,
+    newContentBytes: ByteArray,
+    progressIndicator: ProgressIndicator?
+  ) {
     var throwable: Throwable = IOException("Unknown error")
     var uploaded = false
     for (requester in attributes.requesters) {
@@ -71,7 +75,9 @@ class UssFileContentSynchronizer(
           filePath = attributes.path.substring(1),
           body = String(newContentBytes).addNewLine(),
           xIBMDataType = xIBMDataType
-        ).execute()
+        ).applyIfNotNull(progressIndicator) { indicator ->
+          cancelByIndicator(indicator)
+        }.execute()
         if (response.isSuccessful) {
           uploaded = true
         } else {
