@@ -1,6 +1,5 @@
 package eu.ibagroup.formainframe.explorer.actions
 
-import com.intellij.execution.RunManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -8,11 +7,15 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.JobAction
 import eu.ibagroup.formainframe.analytics.events.JobEvent
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitOperationParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.formMfPath
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import java.lang.IllegalArgumentException
 
 class SubmitJobAction : AnAction() {
@@ -27,7 +30,15 @@ class SubmitJobAction : AnAction() {
 
     val requestData = getRequestDataForNode(node)
     if (requestData != null) {
-      runBackgroundableTask("Job Submission") {
+      runBackgroundableTask("Preparing for job submission") {
+        val dataOpsManager = service<DataOpsManager>()
+        val file = requestData.first
+        if (service<ConfigService>().isAutoSyncEnabled.get() && dataOpsManager.isSyncSupported(file)) {
+          val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
+          contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)
+        }
+        it.text = "Submitting job from file ${file.name}"
+
         runCatching {
           service<AnalyticsService>().trackAnalyticsEvent(JobEvent(JobAction.SUBMIT))
 

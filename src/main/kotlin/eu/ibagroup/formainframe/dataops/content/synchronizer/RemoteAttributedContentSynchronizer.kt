@@ -82,6 +82,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
   override fun synchronizeWithRemote(syncProvider: SyncProvider, progressIndicator: ProgressIndicator?) {
     runCatching {
       log.info("Starting synchronization for file ${syncProvider.file.name}.")
+      progressIndicator?.text = "Synchronizing file ${syncProvider.file.name} with mainframe"
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
 
