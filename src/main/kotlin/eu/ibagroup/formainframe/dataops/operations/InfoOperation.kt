@@ -1,8 +1,9 @@
 package eu.ibagroup.formainframe.dataops.operations
 
+import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
 import eu.ibagroup.formainframe.dataops.Operation
-import eu.ibagroup.r2z.InfoResponse
+import eu.ibagroup.r2z.SystemsResponse
 
-class InfoOperation(var url: String, val isAllowSelfSigned: Boolean) : Operation<InfoResponse> {
-  override val resultClass = InfoResponse::class.java
+class InfoOperation(var state: ConnectionDialogState) : Operation<SystemsResponse> {
+  override val resultClass = SystemsResponse::class.java
 }
