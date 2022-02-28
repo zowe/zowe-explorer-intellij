@@ -1,6 +1,6 @@
 # Zowe Explorer
 "Zowe Explorer" brings support for browsing, editing and creating data on z/OS via 
-<a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.
+<a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.
 
 Plugin in Marketplace: N/A
 
