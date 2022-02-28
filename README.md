@@ -1,8 +1,8 @@
-# For Mainframe
-"For Mainframe" brings support for browsing, editing and creating data on z/OS via 
+# Zowe Explorer
+"Zowe Explorer" brings support for browsing, editing and creating data on z/OS via 
 <a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.
 
-Plugin in Marketplace: [link](https://plugins.jetbrains.com/plugin/16353-for-mainframe)
+Plugin in Marketplace: N/A
 
 Using our plugin you will be able to:
 * Start working with z/OS easily with no complex configurations.
@@ -24,14 +24,14 @@ To start using the plugin:
 # User Guide
 
 ## Introduction
-"For Mainframe" is an IntelliJ plugin dedicated to facilitate working with z/OS datasets through providing a possibility to work with them in the IDE.
+"Zowe Explorer" is an IntelliJ plugin dedicated to facilitate working with z/OS datasets through providing a possibility to work with them in the IDE.
 
 ## Getting started
 After installing plugin into your IDE from marketplace, the first thing you need to do is to create a connection and a working set.
 Create, edit and delete a connection
 
 ### Create, edit and delete a connection
-To create a connection press the "wrench" pictogram on the right side of your screen, or go to "Settings" (CTRL+ALT+S) and select "For Mainframe" on the left side of the panel.
+To create a connection press the "wrench" pictogram on the right side of your screen, or go to "Settings" (CTRL+ALT+S) and select "Zowe Explorer" on the left side of the panel.
 
 In "Settings" switch to "z/OSMF connections" tab and press "+" at the bottom of the panel. A new panel "Add Connection" will appear.
 
@@ -41,7 +41,7 @@ You can edit the connection in "Settings" by clicking on it and then on the "pen
 
 You can delete working sets in "Settings" by clicking on the connection you'd like to delete and pressing "-" at the bottom of the panel.
 ### Create, edit and delete a working set
-To add a working set press on the "wrench" pictogram on the right side of your screen, or go to "Settings" (CTRL+ALT+S) and select "For Mainframe" on the left side of the panel.
+To add a working set press on the "wrench" pictogram on the right side of your screen, or go to "Settings" (CTRL+ALT+S) and select "Zowe Explorer" on the left side of the panel.
 
 In "Settings" switch to "Working Sets" tab and press "+" at the bottom of the panel. A new panel "Add Working Set" will appear. In it you should enter your desired working set name, specify the existing connection, and add one or more data set masks. Press "OK" when you're done. You will see your newly connected working set in the list in "Settings" and on the right side of your screen after you've closed "Settings".
 
@@ -50,7 +50,7 @@ You can edit working sets in "Settings" by clicking on the desired set and then 
 You can delete working sets in "Settings" by clicking on the working set you'd like to delete and pressing "-" at the bottom of the panel.
 
 ## Working with data sets
-"For Mainframe" provides a number of features for working with z\OS data sets. With the plugin you can create a data set, add a member to a library-type data set, rename a data set or a data set member, view properties of a data set or a data set member, and delete a data set or a data set member.
+"Zowe Explorer" provides a number of features for working with z\OS data sets. With the plugin you can create a data set, add a member to a library-type data set, rename a data set or a data set member, view properties of a data set or a data set member, and delete a data set or a data set member.
 
 ### Add a data set
 Click with the right mouse button on an existing working set in the working set tree on the right side of your screen. Click "New" → "Dataset". Input the desired parameters in the panel that pops up and press "OK". If the data set was created successfully you will see it in the working set tree on the right side of the screen. Library-type datasets are displayed as folders with their members as files. Other types of data sets are displayed as files.
@@ -68,4 +68,3 @@ Click with the right mouse button on the existing data set which properties you'
 
 ### Delete data set/data set member
 Click with the right mouse button on the data set/data set member you'd like to delete in the working set tree on the right side of your screen. Click "Delete".Confirm your intention to delete a data set/data set member in the pop up window by pressing "Yes". After the deleting is complete you should no longer see the data set/data set member in the working set tree.
-
