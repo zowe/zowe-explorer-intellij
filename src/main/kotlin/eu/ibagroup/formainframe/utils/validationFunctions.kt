@@ -97,7 +97,7 @@ fun validatePassword(component: JTextField): ValidationInfo? {
   return validateFieldWithLengthRestriction(component, 8, "Password")
 }
 
-private val maskRegex = Regex("^[A-Za-z$@#]+[A-Za-z$@#" + "0-9\\-" + "\\.\\*%]{0,46}")
+private val maskRegex = Regex("^[A-Za-z\\$\\*%@#][A-Za-z0-9\\-\\$\\*%@#]{0,7}")
 private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
 
 fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
@@ -108,9 +108,13 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
   val noFirstAsteriskInTheMiddleOfTheQualifierRule = "[^\\*\\.]+\\*+[^\\*\\.]+\\*+"
   val asteriskRegex = arrayOf(noMoreThan3AsteriskRule, noMoreThan2AsteriskAfterTextInTheQualifierRule, noMoreThan2AsteriskBeforeTextInTheQualifierRule,noSecondAsteriskInTheMiddleOfTheQualifierRule, noFirstAsteriskInTheMiddleOfTheQualifierRule).joinToString(separator = "|")
 
-  return if (text.length > 46) {
-    ValidationInfo("Dataset mask must be less than 46 characters", component)
-  } else if (text.isNotBlank() && !text.matches(maskRegex)) {
+  val qualifier = text.split('.')
+
+  return if (text.length > 43) {
+    ValidationInfo("Dataset mask must be less than 44 characters", component)
+  } else if (qualifier.find { it.length > 8 } != null) {
+    ValidationInfo("Qualifier must be in 1 to 8 characters", component)
+  } else if (text.isNotBlank() && qualifier.find { !it.matches(maskRegex) } != null ) {
     ValidationInfo("Enter valid dataset mask", component)
   } else if (text.contains(Regex(asteriskRegex))) {
     ValidationInfo("Invalid asterisks in the qualifier", component)
