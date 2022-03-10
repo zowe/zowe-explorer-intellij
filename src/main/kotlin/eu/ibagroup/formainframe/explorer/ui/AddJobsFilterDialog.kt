@@ -9,6 +9,7 @@ import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.utils.validateJobFilter
+import eu.ibagroup.formainframe.utils.validateJobFilterOnInput
 import javax.swing.JComponent
 
 class AddJobsFilterDialog(
@@ -34,29 +35,28 @@ class AddJobsFilterDialog(
         label("Prefix: ")
         textField(state::prefix).also {
           prefixField = it.component
-        }.withValidationOnInput {
-          validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it)
+        }.withValidationOnApply {
+          validateJobFilterOnInput(it) ?: validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it)
         }
       }
       row {
         label("Owner: ")
         textField(state::owner).also{
           ownerField = it.component
-        }.withValidationOnInput {
-          validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it)
+        }.withValidationOnApply {
+          validateJobFilterOnInput(it) ?: validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it)
         }
       }
       row {
         label("Job ID: ")
         textField(state::jobId).also{
           jobIdField = it.component
-        }.withValidationOnInput {
-          validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it)
+        }.withValidationOnApply {
+          validateJobFilterOnInput(it) ?: validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it)
         }
       }
     }
   }
-
 }
 
 class JobsFilterState(
