@@ -12,7 +12,6 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
-import org.intellij.markdown.flavours.gfm.table.GitHubTableMarkerProvider.Companion.contains
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -162,6 +161,18 @@ fun validateJobFilter (prefix: String, owner: String, jobId: String, component: 
   return if ((prefix.isNotEmpty() || owner.isNotEmpty()) && jobId.isNotEmpty()) {
     ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
   } else null
+}
+
+private val filterRegex = Regex("[A-Za-z0-9*%]+")
+
+fun validateJobFilterOnInput(component: JTextField): ValidationInfo? {
+  return if (component.text.length > 8) {
+    ValidationInfo("Text field must not exceed 8 characters.", component)
+  } else if (component.text.isNotBlank() && !component.text.matches(filterRegex)) {
+    ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %", component)
+  } else {
+    null
+  }
 }
 
 fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData): ValidationInfo? {
