@@ -13,13 +13,14 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.runWriteActionInEdt
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 private val log = log<FileEditorEventsListener>()
 
 class FileEditorEventsListener : FileEditorManagerListener.Before {
   override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
     val configService = service<ConfigService>()
-    if (!configService.isAutoSyncEnabled.get()) {
+    if (file is MFVirtualFile && !configService.isAutoSyncEnabled.get()) {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: let {
         log.info("Document cannot be used here")
         return
