@@ -64,7 +64,7 @@ class JobsWindowFactory: ToolWindowFactory {
 
       Disposer.register(toolWindow.disposable, jobBuildTreeView)
 
-      val content = contentManager.factory.createContent(jobBuildTreeView.component, mfFilePath, false)
+      val content = contentManager.factory.createContent(jobBuildTreeView, mfFilePath, false)
       contentManager.addContent(content)
       contentManager.setSelectedContent(content)
 
