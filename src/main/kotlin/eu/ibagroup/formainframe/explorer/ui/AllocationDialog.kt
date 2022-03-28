@@ -10,10 +10,7 @@ import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
-import eu.ibagroup.formainframe.utils.validateDatasetNameOnInput
-import eu.ibagroup.formainframe.utils.validateForBlank
-import eu.ibagroup.formainframe.utils.validateForPositiveInteger
-import eu.ibagroup.formainframe.utils.validateVolser
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
@@ -26,18 +23,24 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   private lateinit var recordFormatBox: JComboBox<RecordFormat>
   private lateinit var spaceUnitBox: ComboBox<AllocationUnit?>
   private lateinit var datasetOrganizationBox: JComboBox<DatasetOrganization>
+  private lateinit var datasetNameField: JTextField
   private lateinit var primaryAllocationField: JTextField
+  private lateinit var secondaryAllocationField: JTextField
+  private lateinit var directoryBlocksField: JTextField
+  private lateinit var recordLengthField: JTextField
+  private lateinit var blockSizeField: JTextField
+  private lateinit var averageBlockLengthField: JTextField
+  private lateinit var advancedParametersField: JTextField
 
   private val mainPanel by lazy {
     panel {
       row {
         label("Dataset name")
-        textField(state::datasetName).withValidationOnInput {
-          validateDatasetNameOnInput(it)
-        }.withValidationOnApply {
-          validateForBlank(it)
-        }.apply {
+        textField(state::datasetName)
+          .apply {
           focused()
+        }.also {
+          datasetNameField = it.component
         }
       }
       row {
@@ -54,7 +57,6 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         ).also {
           datasetOrganizationBox = it.component
         }
-
       }
       row {
         label("Allocation unit")
@@ -71,17 +73,15 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         textField(PropertyBinding(
           get = { state.allocationParameters.primaryAllocation.toString() },
           set = { state.allocationParameters.primaryAllocation = it.toIntOrNull() ?: 0 }
-        )).withValidationOnInput {
-          validateForPositiveInteger(it)
-        }.also { primaryAllocationField = it.component }
+        )).also { primaryAllocationField = it.component }
       }
       row {
         label("Secondary allocation")
         textField(PropertyBinding(
           get = { state.allocationParameters.secondaryAllocation.toString() },
           set = { state.allocationParameters.secondaryAllocation = it.toIntOrNull() ?: 0 }
-        )).withValidationOnInput {
-          validateForPositiveInteger(it)
+        )).also {
+          secondaryAllocationField = it.component
         }
       }
       row {
@@ -89,21 +89,10 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         textField(PropertyBinding(
           get = { state.allocationParameters.directoryBlocks.toString() ?: "0" },
           set = { state.allocationParameters.directoryBlocks = it.toIntOrNull() ?: 0 }
-        )).withValidationOnInput {
-          validateForPositiveInteger(it)
-            ?: if ((it.text.toIntOrNull() ?: 0) > (primaryAllocationField.text.toIntOrNull() ?: 0)) {
-              ValidationInfo("Directory cannot exceed primary allocation", it)
-            } else {
-              null
-            }
-        }.withValidationOnApply {
-          validateForBlank(it)
-            ?: if (it.text == "0" && it.isEnabled) {
-              ValidationInfo("Directory cannot be equal to zero", it)
-            } else {
-              null
-            }
-        }.enableIf(datasetOrganizationBox.selectedValueMatches { it == DatasetOrganization.PO })
+        )).enableIf(datasetOrganizationBox.selectedValueMatches { it == DatasetOrganization.PO })
+          .also {
+            directoryBlocksField = it.component
+          }
       }
       row {
         label("Record format")
@@ -128,8 +117,8 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         textField(PropertyBinding(
           get = { state.allocationParameters.recordLength?.toString() ?: "0" },
           set = { state.allocationParameters.recordLength = it.toIntOrNull() }
-        )).withValidationOnInput {
-          validateForPositiveInteger(it)
+        )).also {
+          recordLengthField = it.component
         }
       }
       row {
@@ -137,8 +126,8 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         textField(PropertyBinding(
           get = { state.allocationParameters.blockSize?.toString() ?: "0" },
           set = { state.allocationParameters.blockSize = it.toIntOrNull() }
-        )).withValidationOnInput {
-          validateForPositiveInteger(it)
+        )).also {
+          blockSizeField = it.component
         }
       }
       row {
@@ -146,9 +135,10 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         textField(PropertyBinding(
           get = { state.allocationParameters.averageBlockLength?.toString() ?: "0" },
           set = { state.allocationParameters.averageBlockLength = it.toIntOrNull() }
-        )).withValidationOnInput {
-          validateForPositiveInteger(it)
-        }.enableIf(spaceUnitBox.selectedValueMatches { it == AllocationUnit.BLK })
+        )).enableIf(spaceUnitBox.selectedValueMatches { it == AllocationUnit.BLK })
+          .also {
+            averageBlockLengthField = it.component
+          }
 
       }
       hideableRow("Advanced Parameters") {
@@ -157,8 +147,8 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           textField(PropertyBinding(
             get = { state.allocationParameters.volumeSerial ?: "" },
             set = { state.allocationParameters.volumeSerial = it }
-          )).withValidationOnInput {
-            validateVolser(it)
+          )).also {
+            advancedParametersField = it.component
           }
         }
         row {
@@ -204,13 +194,23 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
     }
   }
 
+  override fun doOKAction() {
+    super.doOKAction()
+    mainPanel.apply()
+  }
+
+  override fun doValidate(): ValidationInfo? {
+    return validateDatasetNameOnInput(datasetNameField) ?: validateForBlank(datasetNameField) ?:
+    validateForGreaterValue(primaryAllocationField, 1) ?: validateForPositiveInteger(secondaryAllocationField) ?:
+    validateForPositiveInteger(directoryBlocksField) ?: validateForPositiveInteger(recordLengthField) ?:
+    validateForPositiveInteger(blockSizeField) ?: validateForPositiveInteger(averageBlockLengthField) ?:
+    validateVolser(advancedParametersField)
+  }
 
   init {
     title = "Allocate Dataset"
     init()
   }
-
-
 }
 
 
