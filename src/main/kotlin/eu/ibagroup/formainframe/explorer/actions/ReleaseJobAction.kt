@@ -30,7 +30,7 @@ class ReleaseJobAction : AnAction() {
         runCatching {
           dataOpsManager.performOperation(
             operation = ReleaseJobOperation(
-              request = BasicReleaseJobParams(jobStatus.jobId, jobStatus.jobName),
+              request = BasicReleaseJobParams(jobStatus.jobName, jobStatus.jobId),
               connectionConfig = view.getConnectionConfig()
             ),
             progressIndicator = it

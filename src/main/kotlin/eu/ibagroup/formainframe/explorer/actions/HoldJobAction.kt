@@ -30,7 +30,7 @@ class HoldJobAction : AnAction() {
         runCatching {
           dataOpsManager.performOperation(
             operation = HoldJobOperation(
-              request = BasicHoldJobParams(jobStatus.jobId, jobStatus.jobName),
+              request = BasicHoldJobParams(jobStatus.jobName, jobStatus.jobId),
               connectionConfig = view.getConnectionConfig()
             ),
             progressIndicator = it

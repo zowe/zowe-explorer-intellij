@@ -39,7 +39,7 @@ class CancelJobAction : AnAction() {
         runCatching {
           dataOpsManager.performOperation(
             operation = CancelJobOperation(
-              request = BasicCancelJobParams(jobStatus.jobId, jobStatus.jobName),
+              request = BasicCancelJobParams(jobStatus.jobName, jobStatus.jobId),
               connectionConfig = view.getConnectionConfig()
             ),
             progressIndicator = it

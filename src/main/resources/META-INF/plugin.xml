@@ -331,6 +331,10 @@ Example of how to see the output:<br/>
                 id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"
                 text="Properties"/>
 
+        <action class="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"
+                id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"
+                text="View Job"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
                 class="eu.ibagroup.formainframe.explorer.actions.RenameAction"
                 text="Rename"
@@ -412,6 +416,7 @@ Example of how to see the output:<br/>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"/>
             <separator/>
