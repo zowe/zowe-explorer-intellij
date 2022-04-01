@@ -28,4 +28,15 @@ class ViewJobAction : AnAction() {
     return true
   }
 
+  override fun update(e: AnActionEvent) {
+    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val selected = view.mySelectedNodesData
+    val node = selected.getOrNull(0)?.node
+    e.presentation.isVisible = selected.size == 1
+            && node is JobNode
+  }
+
 }

@@ -81,7 +81,6 @@ class JobsWindowFactory: ToolWindowFactory {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    toolWindow.hide()
     subscribe(
       JOB_ADDED_TOPIC,
       object: JobHandler {
@@ -93,5 +92,6 @@ class JobsWindowFactory: ToolWindowFactory {
         }
       }
     )
+    toolWindow.hide()
   }
 }

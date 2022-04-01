@@ -149,12 +149,12 @@ class JobBuildTreeView(
     }
   }
 
-  fun showErrorNotification(title: String, content: String, project: Project?) {
+  fun showNotification(title: String, content: String, project: Project?, type: NotificationType) {
     Notification(
       JOBS_LOG_NOTIFICATION_GROUP_ID,
       title,
       content,
-      NotificationType.ERROR
+      type,
     ).let {
       Notifications.Bus.notify(it, project)
     }
