@@ -18,8 +18,8 @@ import eu.ibagroup.r2z.JobStatus
 import eu.ibagroup.r2z.SubmitJobRequest
 
 interface JobHandler {
-  fun submitted(connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest)
-  fun viewed(connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: JobStatus)
+  fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest)
+  fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: JobStatus)
 }
 
 @JvmField
@@ -81,17 +81,19 @@ class JobsWindowFactory: ToolWindowFactory {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+  }
+
+  override fun init(toolWindow: ToolWindow) {
     subscribe(
       JOB_ADDED_TOPIC,
       object: JobHandler {
-        override fun submitted(connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest) {
+        override fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest) {
           addJobBuildContentTab(project, toolWindow, connectionConfig, mfFilePath, jobRequest.jobid, jobRequest.jobname)
         }
-        override fun viewed(connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: JobStatus) {
+        override fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: JobStatus) {
           addJobBuildContentTab(project, toolWindow, connectionConfig, mfFileName, jobStatus.jobId, jobStatus.jobName)
         }
       }
     )
-    toolWindow.hide()
   }
 }

@@ -233,7 +233,8 @@ Example of how to see the output:<br/>
 
         <toolWindow id="Jobs" anchor="bottom"
                     factoryClass="eu.ibagroup.formainframe.ui.build.jobs.JobsWindowFactory"
-                    canCloseContents="true"/>
+                    canCloseContents="true"
+                    doNotActivateOnStart="true"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"

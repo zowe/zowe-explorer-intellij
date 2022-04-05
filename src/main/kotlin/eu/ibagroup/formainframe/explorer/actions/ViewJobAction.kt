@@ -19,7 +19,9 @@ class ViewJobAction : AnAction() {
       if (virtualFile != null) {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
         val attributes: RemoteJobAttributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone() as RemoteJobAttributes
-        sendTopic(JOB_ADDED_TOPIC).viewed(attributes.requesters[0].connectionConfig, virtualFile.filenameInternal, attributes.jobInfo)
+
+        val project = e.project ?: return
+        sendTopic(JOB_ADDED_TOPIC).viewed(project, attributes.requesters[0].connectionConfig, virtualFile.filenameInternal, attributes.jobInfo)
       }
     }
   }
