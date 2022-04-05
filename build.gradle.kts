@@ -5,6 +5,7 @@ plugins {
   id("org.jetbrains.intellij") version "0.6.5"
   kotlin("jvm") version "1.4.32"
   java
+  jacoco
 }
 
 apply(plugin = "kotlin")
@@ -104,10 +105,11 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
       </ul>"""
   )
 
-tasks.named<Test>("test") {
+tasks.test {
   useJUnitPlatform()
   testLogging {
     events("passed", "skipped", "failed")
   }
+  finalizedBy(tasks.jacocoTestReport)
 }
 }
