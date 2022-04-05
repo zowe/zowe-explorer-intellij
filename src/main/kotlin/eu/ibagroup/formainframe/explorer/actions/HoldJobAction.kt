@@ -53,7 +53,7 @@ class HoldJobAction : AnAction() {
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
     if(jobStatus == JobStatus.Status.OUTPUT || jobStatus == JobStatus.Status.ACTIVE) {
-      e.presentation.isEnabledAndVisible = false
+      e.presentation.isEnabled = false
     }
   }
 

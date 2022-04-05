@@ -53,7 +53,7 @@ class CancelJobAction : AnAction() {
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
     if(jobStatus == JobStatus.Status.OUTPUT) {
-      e.presentation.isEnabledAndVisible = false
+      e.presentation.isEnabled = false
     }
   }
 
