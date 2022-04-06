@@ -28,7 +28,7 @@ To start using the plugin:
 
 ## Getting started
 After installing plugin into your IDE from marketplace, the first thing you need to do is to create a connection and a working set.
-Create, edit and delete a connection
+Create, edit and delete a connection.
 
 ### Create, edit and delete a connection
 To create a connection press the "wrench" pictogram on the right side of your screen, or go to "Settings" (CTRL+ALT+S) and select "For Mainframe" on the left side of the panel.

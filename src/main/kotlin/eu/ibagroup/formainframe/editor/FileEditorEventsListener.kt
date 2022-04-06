@@ -20,7 +20,7 @@ private val log = log<FileEditorEventsListener>()
 class FileEditorEventsListener : FileEditorManagerListener.Before {
   override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
     val configService = service<ConfigService>()
-    if (file is MFVirtualFile && !configService.isAutoSyncEnabled.get()) {
+    if (file is MFVirtualFile && !configService.isAutoSyncEnabled.get() && file.isWritable) {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: let {
         log.info("Document cannot be used here")
         return
