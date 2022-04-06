@@ -69,3 +69,8 @@ Click with the right mouse button on the existing data set which properties you'
 ### Delete data set/data set member
 Click with the right mouse button on the data set/data set member you'd like to delete in the working set tree on the right side of your screen. Click "Delete".Confirm your intention to delete a data set/data set member in the pop up window by pressing "Yes". After the deleting is complete you should no longer see the data set/data set member in the working set tree.
 
+# Developer Guide
+
+## Tests
+Run task "Unit tests" in the IDE to start tests. Test run report is generated in the project folder under the path "build\reports\tests\test". Open file "index.html" in your browser to view the result. Code coverage report is generated based on test run report in the project folder. Coverage report path "build/reports/jacoco/test/html". To view coverage report open file "index.html" in your browser.
+
