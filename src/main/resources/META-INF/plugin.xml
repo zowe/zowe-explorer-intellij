@@ -177,6 +177,10 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberToUssFileMoverFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RemoteToLocalFileMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RemoteToLocalDirectoryMoverFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.ForceRenameOperationRunnerFactory"/>
@@ -211,6 +215,9 @@ Example of how to see the output:<br/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
+        <filePasteProvider implementation="eu.ibagroup.formainframe.explorer.ui.ExplorerPasteProvider"/>
+        <customPasteProvider implementation="eu.ibagroup.formainframe.explorer.ui.ExplorerPasteProvider"/>
+
         <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
 
         <applicationConfigurable id="configurable.mainframe.explorer"

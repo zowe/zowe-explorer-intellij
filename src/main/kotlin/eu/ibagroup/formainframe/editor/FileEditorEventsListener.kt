@@ -40,10 +40,6 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
             service<DataOpsManager>().getContentSynchronizer(file)?.synchronizeWithRemote(syncProvider, it)
           }
         }
-      } else {
-        runWriteActionInEdt {
-          document.setText(String(file.contentsToByteArray()))
-        }
       }
     }
     super.beforeFileClosed(source, file)
