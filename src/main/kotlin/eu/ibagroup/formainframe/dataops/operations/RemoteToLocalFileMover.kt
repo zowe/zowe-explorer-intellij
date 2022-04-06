@@ -48,7 +48,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager): AbstractFileMo
       destFile.createChildData(this, sourceFile.name)
     }
     runWriteActionInEdtAndWait {
-      createdFile.setBinaryContent(syncProvider.retrieveCurrentContent())
+      createdFile.setBinaryContent(sourceFile.contentsToByteArray())
     }
 
     return null
