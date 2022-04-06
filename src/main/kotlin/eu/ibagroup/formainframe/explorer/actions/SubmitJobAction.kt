@@ -13,10 +13,12 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitOperationParams
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
+import eu.ibagroup.formainframe.explorer.ui.UssFileNode
+import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.formMfPath
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import java.lang.IllegalArgumentException
+import eu.ibagroup.formainframe.utils.sendTopic
 
 class SubmitJobAction : AnAction() {
 
@@ -45,12 +47,17 @@ class SubmitJobAction : AnAction() {
           val attributes = service<DataOpsManager>().tryToGetAttributes(requestData.first)
             ?: throw IllegalArgumentException("Cannot find attributes for specified file.")
 
+          val submitFilePath = attributes.formMfPath()
           service<DataOpsManager>().performOperation(
             operation = SubmitJobOperation(
-              request = SubmitOperationParams(attributes.formMfPath()),
+              request = SubmitOperationParams(submitFilePath),
               connectionConfig = requestData.second
             ), it
-          )
+          ).also {result ->
+            e.project?.let {project ->
+              sendTopic(JOB_ADDED_TOPIC).submitted(project, requestData.second, submitFilePath, result)
+            }
+          }
         }.onSuccess {
           view.explorer.showNotification("Job ${it.jobname} has been submitted", "$it", project = e.project)
         }.onFailure {

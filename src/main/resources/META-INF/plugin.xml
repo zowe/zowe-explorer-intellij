@@ -230,6 +230,9 @@ Example of how to see the output:<br/>
         <notificationGroup displayType="STICKY_BALLOON"
                            id="eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"/>
 
+        <notificationGroup displayType="STICKY_BALLOON"
+                           id="eu.ibagroup.formainframe.ui.build.jobs.JobsLogNotificationGroup"/>
+
         <toolWindow id="For Mainframe" anchor="right"
                     factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"
                     icon="ForMainframeIcons.ExplorerToolbarIcon"
@@ -237,7 +240,8 @@ Example of how to see the output:<br/>
 
         <toolWindow id="Jobs" anchor="bottom"
                     factoryClass="eu.ibagroup.formainframe.ui.build.jobs.JobsWindowFactory"
-                    canCloseContents="true"/>
+                    canCloseContents="true"
+                    doNotActivateOnStart="true"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
@@ -335,6 +339,10 @@ Example of how to see the output:<br/>
                 id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"
                 text="Properties"/>
 
+        <action class="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"
+                id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"
+                text="View Job"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
                 class="eu.ibagroup.formainframe.explorer.actions.RenameAction"
                 text="Rename"
@@ -362,6 +370,21 @@ Example of how to see the output:<br/>
                 class="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
                 text="Submit Job"
                 icon="AllIcons.Actions.Execute"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.ReleaseJobAction"
+                class="eu.ibagroup.formainframe.explorer.actions.ReleaseJobAction"
+                text="Release Job"
+                icon="AllIcons.Actions.Resume"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.HoldJobAction"
+                class="eu.ibagroup.formainframe.explorer.actions.HoldJobAction"
+                text="Hold Job"
+                icon="AllIcons.Actions.Pause"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.CancelJobAction"
+                class="eu.ibagroup.formainframe.explorer.actions.CancelJobAction"
+                text="Cancel Job"
+                icon="AllIcons.Actions.Suspend"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
@@ -401,6 +424,7 @@ Example of how to see the output:<br/>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"/>
             <separator/>
@@ -433,6 +457,12 @@ Example of how to see the output:<br/>
 
         <group id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncActionGroup" popup="true">
             <reference id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.JobsLogActionBarGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ReleaseJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.HoldJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.CancelJobAction"/>
         </group>
 
     </actions>

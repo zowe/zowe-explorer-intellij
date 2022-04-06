@@ -5,14 +5,25 @@ import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.impl.*
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.JBPanel
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
 import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
+import eu.ibagroup.formainframe.dataops.log.MFLogger
 import eu.ibagroup.r2z.SpoolFile
+import java.awt.BorderLayout
 import java.util.*
 import javax.swing.JComponent
+
+val JOBS_LOG_VIEW = DataKey.create<JobBuildTreeView>("jobsLogView")
+const val JOBS_LOG_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"
 
 /**
  * Console with BuildTree for display job execution process and results.
@@ -29,13 +40,18 @@ class JobBuildTreeView(
   dataOpsManager: DataOpsManager,
   workingDir: String = "",
   project: Project
-): ExecutionConsole {
+): ExecutionConsole, DataProvider, JBPanel<JobBuildTreeView>() {
 
   private val buildId = jobLogInfo.jobId ?: "UNKNOWN JOB ID"
   private val jobNameNotNull = jobLogInfo.jobName ?: "UNKNOWN JOB"
+  private val connectionConfig = jobLogInfo.connectionConfig
 
   private val buildDescriptor = DefaultBuildDescriptor(buildId, jobNameNotNull, workingDir, Date().time)
   private val treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, consoleView) { false }
+
+  private val actionToolbarGroup: ActionGroup = ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.JobsLogActionBarGroup") as ActionGroup
+  private val place: String = "Jobs Log"
+  private val actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionToolbarGroup, true)
 
   /**
    * Spool files associated with their content.
@@ -50,6 +66,8 @@ class JobBuildTreeView(
   init {
     Disposer.register(this, consoleView)
     Disposer.register(this, treeConsoleView)
+    layout = BorderLayout()
+    add(this.component, BorderLayout.CENTER)
   }
 
   /**
@@ -57,6 +75,10 @@ class JobBuildTreeView(
    */
   fun start() {
     treeConsoleView.onEvent(buildId, StartBuildEventImpl(buildDescriptor, buildId))
+    actionToolbar.let {
+      it.targetComponent = treeConsoleView.component
+      treeConsoleView.component.add(it.component, BorderLayout.PAGE_START)
+    }
 
     jobLogger.onNextLog {
       val cachedSpoolLog = jobLogger.logFetcher.getCachedLog()
@@ -100,6 +122,14 @@ class JobBuildTreeView(
     jobLogger.stopLogging()
   }
 
+  fun getJobLogger(): MFLogger<JobLogFetcher> {
+    return jobLogger
+  }
+
+  fun getConnectionConfig(): ConnectionConfig {
+    return connectionConfig
+  }
+
   override fun dispose() {
     Disposer.dispose(this)
   }
@@ -110,6 +140,24 @@ class JobBuildTreeView(
 
   override fun getPreferredFocusableComponent(): JComponent {
     return treeConsoleView.preferredFocusableComponent
+  }
+
+  override fun getData(dataId: String): Any? {
+    return when {
+      JOBS_LOG_VIEW.`is`(dataId) -> this
+      else -> null
+    }
+  }
+
+  fun showNotification(title: String, content: String, project: Project?, type: NotificationType) {
+    Notification(
+      JOBS_LOG_NOTIFICATION_GROUP_ID,
+      title,
+      content,
+      type,
+    ).let {
+      Notifications.Bus.notify(it, project)
+    }
   }
 
 }

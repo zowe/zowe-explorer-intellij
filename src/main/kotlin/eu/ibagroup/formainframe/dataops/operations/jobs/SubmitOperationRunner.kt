@@ -1,27 +1,18 @@
 package eu.ibagroup.formainframe.dataops.operations.jobs
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SubmitFileNameBody
 import eu.ibagroup.r2z.SubmitJobRequest
-import java.io.InputStream
-import java.io.OutputStream
 
 class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobRequest> {
 
@@ -41,7 +32,6 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
         "Cannot submit ${operation.request.submitFilePath} on ${operation.connectionConfig.name}"
       )
     }
-    sendTopic(JOB_ADDED_TOPIC).submitted(operation.connectionConfig, operation.request.submitFilePath, body)
     return body
   }
 
