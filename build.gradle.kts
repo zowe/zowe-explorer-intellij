@@ -11,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.5.0"
+version = "0.5.2"
 
 repositories {
   mavenCentral()
@@ -68,36 +68,22 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
   untilBuild("213.*")
   changeNotes(
     """
-      <b>New features:</b><br/>
-      <ul>
-        <li>JES Explorer - provides the option to submit JCL jobs, view their statuses and operate an input and output of it using the plugin.</li>
-        <li>Copy operations - to copy dataset and files both from USS to z/OS and from z/OS to USS using Drag & Drop operation.</li>
-      </ul>
       <b>Expanded changes list:</b><br/>
       <ul>
-        <li>Rework navigate method in ExplorerTreeNode class for Jes support</li>
-        <li>Sequential and Member to PDS + Uss Folder</li>
-        <li>Add Get...PropertiesAction for JesExplorer support</li>
-        <li>Changed functionality of "+" button in JESExplorer</li>
-        <li>Create JES tab in Settings</li>
-        <li>SpoolFileContentSynchronizer</li>
-        <li>Explorer refactoring</li>
-        <li>JobFetchProvider SpoolFileFetchProvider</li>
-        <li>Copy PDS to Uss Folder</li>
-        <li>Copy Uss File and PDS</li>
-        <li>Spike: Drag and drop operations</li>
-        <li>Functionality of renaming files and folders as on the Mainframe</li>
-        <li>Create Icon for toolbar</li>
-        <li>Consider lrecl constraints in datasets when editing</li>
+        <li>Manual sync option implemented</li>
+        <li>Separate icons for Datasets and USS folders</li>
+        <li>Autosave reworks</li>
+        <li>Logs in jobs console log view</li>
+        <li>Parse config xml file in old format</li>
       </ul>
       <b>Bugs fixed:</b>
       <ul>
-        <li>Renaming USS directory or file to existing one duplicates name in tree and shows inconsistent information</li>
-        <li>Place the cursor in the Member name field</li>
-        <li>The same dataset does not open in the second mask</li>
-        <li>Duplicated JesFilters removed</li>
-        <li>Empty data set hangs in loading state</li>
-        <li>No message details when renaming dataset to existing name</li>
+        <li>IDE Fatal errors if delete the connection that has working set</li>
+        <li>Delete option does not work for Working Sets in File Explorer</li>
+        <li>Right click->New->WorkingSet on JES Explorer page opens dialog to create WorkingSet instead of JobsWorkingSet</li>
+        <li>Creating z/Os mask with first digit in HLQ is not blocked</li>
+        <li>The creation of masks with three or more asterisks is not blocked</li>
+        <li>Renaming the mask in the file explorer to existing one does not return any message</li>
       </ul>"""
   )
 }
