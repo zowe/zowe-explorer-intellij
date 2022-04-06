@@ -14,10 +14,12 @@ import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
 import eu.ibagroup.formainframe.utils.subscribe
+import eu.ibagroup.r2z.JobStatus
 import eu.ibagroup.r2z.SubmitJobRequest
 
 interface JobHandler {
-  fun submitted(connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest)
+  fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest)
+  fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: JobStatus)
 }
 
 @JvmField
@@ -64,7 +66,7 @@ class JobsWindowFactory: ToolWindowFactory {
 
       Disposer.register(toolWindow.disposable, jobBuildTreeView)
 
-      val content = contentManager.factory.createContent(jobBuildTreeView.component, mfFilePath, false)
+      val content = contentManager.factory.createContent(jobBuildTreeView, mfFilePath, false)
       contentManager.addContent(content)
       contentManager.setSelectedContent(content)
 
@@ -79,12 +81,17 @@ class JobsWindowFactory: ToolWindowFactory {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    toolWindow.hide()
+  }
+
+  override fun init(toolWindow: ToolWindow) {
     subscribe(
       JOB_ADDED_TOPIC,
       object: JobHandler {
-        override fun submitted(connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest) {
+        override fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest) {
           addJobBuildContentTab(project, toolWindow, connectionConfig, mfFilePath, jobRequest.jobid, jobRequest.jobname)
+        }
+        override fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: JobStatus) {
+          addJobBuildContentTab(project, toolWindow, connectionConfig, mfFileName, jobStatus.jobId, jobStatus.jobName)
         }
       }
     )
