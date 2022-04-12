@@ -1,6 +1,8 @@
 package icons
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
+import com.intellij.util.IconUtil
 import javax.swing.Icon
 
 object ForMainframeIcons {
@@ -17,4 +19,7 @@ object ForMainframeIcons {
 
   @JvmField
   val DatasetMask = getIcon("icons/datasetMask.svg")
+
+  @JvmField
+  val MemberIcon = IconUtil.addText(AllIcons.FileTypes.Any_type, "MEM")
 }

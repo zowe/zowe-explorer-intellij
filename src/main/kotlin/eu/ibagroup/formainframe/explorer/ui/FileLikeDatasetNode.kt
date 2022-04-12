@@ -14,10 +14,12 @@ import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.MFRemoteFileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import icons.ForMainframeIcons
 import javax.swing.SwingConstants
 
 private val migratedIcon = AllIcons.FileTypes.Any_type
@@ -38,9 +40,18 @@ class FileLikeDatasetNode(
   }
 
   override fun update(presentation: PresentationData) {
-    val attributes = service<DataOpsManager>().tryToGetAttributes(value) as? RemoteDatasetAttributes
-    val isMigrated = attributes?.isMigrated ?: false
-    presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else if (isMigrated) migratedIcon else AllIcons.FileTypes.Text)
+    val attributes = service<DataOpsManager>().tryToGetAttributes(value)
+    when (attributes) {
+      is RemoteDatasetAttributes -> {
+        presentation.setIcon(if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(AllIcons.FileTypes.Any_type, "DS"))
+      }
+      is RemoteMemberAttributes -> {
+        presentation.setIcon(ForMainframeIcons.MemberIcon)
+      }
+      else -> {
+        presentation.setIcon(AllIcons.FileTypes.Any_type)
+      }
+    }
     updateMainTitleUsingCutBuffer(value.presentableName, presentation)
     val volser = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
