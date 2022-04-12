@@ -36,7 +36,7 @@ class AddJobsFilterDialog(
         textField(state::prefix).also {
           prefixField = it.component
         }.withValidationOnApply {
-          validateJobFilterOnInput(it) ?: validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it)
+          validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it)
         }
       }
       row {
@@ -44,7 +44,7 @@ class AddJobsFilterDialog(
         textField(state::owner).also{
           ownerField = it.component
         }.withValidationOnApply {
-          validateJobFilterOnInput(it) ?: validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it)
+          validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it)
         }
       }
       row {
@@ -52,7 +52,7 @@ class AddJobsFilterDialog(
         textField(state::jobId).also{
           jobIdField = it.component
         }.withValidationOnApply {
-          validateJobFilterOnInput(it) ?: validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it)
+          validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it)
         }
       }
     }
