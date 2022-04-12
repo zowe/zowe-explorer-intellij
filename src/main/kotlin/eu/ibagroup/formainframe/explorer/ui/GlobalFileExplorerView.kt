@@ -34,8 +34,12 @@ import eu.ibagroup.formainframe.common.ui.promisePath
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
+import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.attributesListener
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
@@ -243,6 +247,16 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
         }
       },
       disposable = this
+    )
+    subscribe(
+      componentManager = dataOpsManager.componentManager,
+      topic = AttributesService.FILE_CONTENT_CHANGED,
+      handler = attributesListener<FileAttributes, VirtualFile> {
+        onUpdate { _, _, file ->
+          val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(project))
+          dataOpsManager.getContentSynchronizer(file)?.synchronizeWithRemote(syncProvider, progressIndicator = null)
+        }
+      }
     )
   }
 
