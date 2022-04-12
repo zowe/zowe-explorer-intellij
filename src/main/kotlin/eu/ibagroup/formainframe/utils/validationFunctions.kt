@@ -148,6 +148,10 @@ fun validateJobFilter (prefix: String, owner: String, jobId: String, ws: JesWork
   if (baseValidation != null) {
     return baseValidation
   }
+  val validateOnInput = validateJobFilterOnInput(prefix, owner, jobId, component)
+  if (validateOnInput != null) {
+    return validateOnInput
+  }
   val newOwner = owner.ifEmpty {
     ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""
   }
@@ -165,13 +169,23 @@ fun validateJobFilter (prefix: String, owner: String, jobId: String, component: 
 
 private val filterRegex = Regex("[A-Za-z0-9*%]+")
 
-fun validateJobFilterOnInput(component: JTextField): ValidationInfo? {
-  return if (component.text.length > 8) {
-    ValidationInfo("Text field must not exceed 8 characters.", component)
-  } else if (component.text.isNotBlank() && !component.text.matches(filterRegex)) {
-    ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %", component)
+fun validateJobFilterOnInput(prefix: String, owner: String, jobId: String, component: JComponent): ValidationInfo? {
+  if (prefix.isNotBlank() && owner.isNotBlank()) {
+    return if (prefix.length > 8 || owner.length > 8) {
+      ValidationInfo("Text field must not exceed 8 characters.", component)
+    } else if (!prefix.matches(filterRegex) || !owner.matches(filterRegex)) {
+      ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %", component)
+    } else {
+      null
+    }
   } else {
-    null
+    return if (jobId.length > 8) {
+      ValidationInfo("Text field must not exceed 8 characters.", component)
+    } else if (!jobId.matches(filterRegex)) {
+      ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %", component)
+    } else {
+      null
+    }
   }
 }
 
