@@ -8,6 +8,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.r2z.XIBMDataType
 
 class RemoteToLocalFileMoverFactory: OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
@@ -30,6 +31,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager): AbstractFileMo
     val sourceFile = operation.source
     val destFile = operation.destination
     val sourceFileAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
+      ?: return IllegalArgumentException("Cannot find attributes for file ${sourceFile.name}")
 
     if (sourceFileAttributes is RemoteUssAttributes && sourceFileAttributes.isSymlink) {
       return IllegalArgumentException("Impossible to download symlink. ${sourceFile.name} is symlink to ${sourceFileAttributes.symlinkTarget}." +
@@ -39,8 +41,13 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager): AbstractFileMo
     val contentSynchronizer = dataOpsManager.getContentSynchronizer(sourceFile)
       ?: return IllegalArgumentException("Cannot find synchronizer for file ${sourceFile.name}")
     val syncProvider = DocumentedSyncProvider(sourceFile)
-    contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
 
+    if (!sourceFile.fileType.isBinary) {
+      sourceFileAttributes.contentMode = XIBMDataType(XIBMDataType.Type.TEXT)
+    } else {
+      sourceFileAttributes.contentMode = XIBMDataType(XIBMDataType.Type.BINARY)
+    }
+    contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
     val createdFile = runWriteActionAndWait {
       if (operation.forceOverwriting) {
         destFile.children.filter { it.name === sourceFile.name && !it.isDirectory }.forEach { it.delete(this) }
