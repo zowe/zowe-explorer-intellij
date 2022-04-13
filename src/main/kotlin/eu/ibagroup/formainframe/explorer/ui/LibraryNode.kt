@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import icons.ForMainframeIcons
 
 class LibraryNode(
   library: MFVirtualFile,
@@ -42,7 +43,7 @@ class LibraryNode(
   override val requestClass = LibraryQuery::class.java
 
   override fun update(presentation: PresentationData) {
-    presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else AllIcons.FileTypes.Any_type)
+    presentation.setIcon(if (value.isDirectory) ForMainframeIcons.DatasetMask else AllIcons.FileTypes.Any_type)
     presentation.addText(value.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     val volser = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
