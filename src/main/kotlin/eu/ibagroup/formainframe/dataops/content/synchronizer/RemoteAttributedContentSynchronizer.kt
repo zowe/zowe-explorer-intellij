@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
@@ -36,6 +38,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
   val attributesService by lazy { dataOpsManager.getAttributesService(attributesClass, vFileClass) }
   private val successfulStatesStorage by lazy { ContentStorage(SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX + entityName) }
   private val handlerToStorageIdMap = ConcurrentHashMap<SyncProvider, Int>()
+  private val idToBinaryFileMap = ConcurrentHashMap<Int, VirtualFile>()
   private val fetchedAtLeastOnce = ConcurrentHashMap.newKeySet<SyncProvider>()
 
   /**
@@ -86,6 +89,10 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
 
+      if(!isContentModeText(attributes)) {
+        idToBinaryFileMap[recordId] = syncProvider.file
+      }
+
       val fetchedRemoteContentBytes = fetchRemoteContentBytes(attributes, progressIndicator)
       val contentAdapter = dataOpsManager.getMFContentAdapter(syncProvider.file)
       val adaptedFetchedBytes = contentAdapter.adaptContentFromMainframe(fetchedRemoteContentBytes, syncProvider.file)
@@ -96,31 +103,42 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
         fetchedAtLeastOnce.add(syncProvider)
       } else {
-        val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
-        if (fileContent contentEquals adaptedFetchedBytes) {
-          return
-        }
+        if (!idToBinaryFileMap.containsKey(recordId)) {
+          val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+          if (fileContent contentEquals adaptedFetchedBytes) {
+            return
+          }
 
-        val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
-        val doUploadContent = syncProvider.saveStrategy
-          .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
+          val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
+          val doUploadContent = syncProvider.saveStrategy
+            .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
 
-        if (doUploadContent) {
-          log.info("Save strategy decided to forcefully update file content on mainframe.")
-          val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
-          runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
-          uploadNewContent(attributes, newContentPrepared, progressIndicator)
-          successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
+          if (doUploadContent) {
+            log.info("Save strategy decided to forcefully update file content on mainframe.")
+            val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
+            runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
+            uploadNewContent(attributes, newContentPrepared, progressIndicator)
+            successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
+          } else {
+            log.info("Save strategy decided to accept remote file content.")
+            successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
+            runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
+          }
         } else {
-          log.info("Save strategy decided to accept remote file content.")
+          log.info("Content loaded from mainframe")
           successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
           runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
+          if(isContentModeText(attributes)) { idToBinaryFileMap.remove(recordId) } else { /*do nothing*/ }
         }
       }
     }.onFailure {
       log.error(it)
       syncProvider.onThrowable(it)
     }
+  }
+
+  private fun isContentModeText (attributes: FileAttributes) : Boolean {
+    return attributes.contentMode.type == XIBMDataType.Type.TEXT
   }
 
 }
