@@ -21,6 +21,7 @@ import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.SystemZOSInfo
 import eu.ibagroup.r2z.SystemsResponse
 import eu.ibagroup.r2z.annotations.ZVersion
+import org.intellij.markdown.flavours.gfm.table.GitHubTableMarkerProvider.Companion.contains
 import java.awt.Component
 import javax.swing.*
 
@@ -55,8 +56,16 @@ class ConnectionDialog(
           if (throwable != null) {
             state.mode = DialogMode.UPDATE
             val confirmMessage = "Do you want to add it anyway?"
-            val tMessage = throwable.message
-            val message = if (tMessage != null) {
+            val tMessage = if (throwable.message != null) {
+              if (throwable.message!!.contains("Exception")) {
+                throwable.message!!.substring(throwable.message!!.lastIndexOf(":") + 2).capitalize()
+              } else {
+                throwable.message!!
+              }
+            } else {
+              ""
+            }
+            val message = if (tMessage != "") {
               "$tMessage\n\n$confirmMessage"
             } else {
               confirmMessage
