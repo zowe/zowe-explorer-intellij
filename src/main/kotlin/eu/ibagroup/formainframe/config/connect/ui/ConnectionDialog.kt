@@ -55,7 +55,13 @@ class ConnectionDialog(
           if (throwable != null) {
             state.mode = DialogMode.UPDATE
             val confirmMessage = "Do you want to add it anyway?"
-            val tMessage = throwable.message
+            val tMessage = throwable.message?.let {
+              if (it.contains("Exception")) {
+                it.substring(it.lastIndexOf(":") + 2).capitalize()
+              } else {
+                it
+              }
+            }
             val message = if (tMessage != null) {
               "$tMessage\n\n$confirmMessage"
             } else {
