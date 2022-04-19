@@ -17,9 +17,6 @@ import eu.ibagroup.formainframe.dataops.operations.InfoOperation
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.r2z.CodePage
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.SystemZOSInfo
-import eu.ibagroup.r2z.SystemsResponse
 import eu.ibagroup.r2z.annotations.ZVersion
 import java.awt.Component
 import javax.swing.*
@@ -156,7 +153,8 @@ class ConnectionDialog(
                 ZVersion.ZOS_2_1,
                 ZVersion.ZOS_2_2,
                 ZVersion.ZOS_2_3,
-                ZVersion.ZOS_2_4
+                ZVersion.ZOS_2_4,
+                ZVersion.ZOS_2_5
               )
             ),
             prop = state::zVersion
