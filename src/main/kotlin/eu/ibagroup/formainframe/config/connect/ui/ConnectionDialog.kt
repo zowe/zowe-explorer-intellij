@@ -57,7 +57,7 @@ class ConnectionDialog(
             val confirmMessage = "Do you want to add it anyway?"
             val tMessage = throwable.message?.let {
               if (it.contains("Exception")) {
-                it.substring(throwable.message!!.lastIndexOf(":") + 2).capitalize()
+                it.substring(it.lastIndexOf(":") + 2).capitalize()
               } else {
                 it
               }
