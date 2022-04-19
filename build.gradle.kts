@@ -2,7 +2,7 @@ import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("org.jetbrains.intellij") version "1.5.2"
+  id("org.jetbrains.intellij") version "1.5.3"
   kotlin("jvm") version "1.6.0"
   java
 }
@@ -38,7 +38,7 @@ java {
 tasks.withType(KotlinCompile::class).all {
   kotlinOptions {
     jvmTarget = JavaVersion.VERSION_11.toString()
-    languageVersion = org.jetbrains.kotlin.config.LanguageVersion.LATEST_STABLE.versionString
+    languageVersion = "1.6"
   }
 }
 
