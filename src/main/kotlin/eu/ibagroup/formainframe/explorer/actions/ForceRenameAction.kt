@@ -55,8 +55,9 @@ class ForceRenameAction : AnAction() {
         childrenNodesFromParent?.forEach {
           if (it is UssFileNode && it.value.filenameInternal == text) {
             val confirmTemplate =
-              "You are going to rename file $virtualFilePath \n"
-                .plus("into existing one. This operation cannot be undone. \n".plus("Would you like to proceed?"))
+              "You are going to rename file $virtualFilePath \n" +
+                  "into existing one. This operation cannot be undone. \n" +
+                  "Would you like to proceed?"
             return Messages.showOkCancelDialog(
               confirmTemplate,
               "Warning",
