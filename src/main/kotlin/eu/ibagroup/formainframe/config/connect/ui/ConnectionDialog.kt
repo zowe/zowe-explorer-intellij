@@ -21,7 +21,6 @@ import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.SystemZOSInfo
 import eu.ibagroup.r2z.SystemsResponse
 import eu.ibagroup.r2z.annotations.ZVersion
-import org.intellij.markdown.flavours.gfm.table.GitHubTableMarkerProvider.Companion.contains
 import java.awt.Component
 import javax.swing.*
 
