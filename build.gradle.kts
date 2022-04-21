@@ -67,7 +67,7 @@ tasks {
       <b>New features:</b><br/>
       <ul>
         <li>JES Explorer - provides the option to submit JCL jobs, view their statuses and operate an input and output of it using the plugin.</li>
-        <li>Copy operations - to copy dataset and files both from USS to z/OS and from z/OS to USS using Drag & Drop operation.</li>
+        <li>Copy operations - to copy dataset and files both from USS to z/OS and from z/OS to USS using Drag & Drop operation</li>
       </ul>
       <b>Expanded changes list:</b><br/>
       <ul>
