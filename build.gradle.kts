@@ -7,14 +7,11 @@
  *
  * Copyright IBA Group 2020
  */
-
-
-import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("org.jetbrains.intellij") version "0.6.5"
-  kotlin("jvm") version "1.4.32"
+  id("org.jetbrains.intellij") version "1.5.3"
+  kotlin("jvm") version "1.6.21"
   java
 }
 
@@ -32,40 +29,41 @@ repositories {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-tasks.withType(KotlinCompile::class).all {
-  kotlinOptions {
-    jvmTarget = "1.8"
-    languageVersion = "1.4"
-  }
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
 }
 
 dependencies {
   implementation(group = "com.squareup.retrofit2", name = "retrofit", version = "2.9.0")
-  implementation("com.squareup.retrofit2:converter-gson:2.5.0")
-  implementation("com.squareup.retrofit2:converter-scalars:2.1.0")
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.30")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
-  implementation("org.jgrapht:jgrapht-core:1.5.0")
-  implementation("com.starxg:java-keytar:1.0.0")
   implementation("eu.ibagroup:zowe-r2z:1.0.24") // TODO: change
+  implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+  implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20")
+  implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+  implementation("org.jgrapht:jgrapht-core:1.5.1")
+  implementation("com.starxg:java-keytar:1.0.0")
   implementation("com.segment.analytics.java:analytics:+")
   testImplementation("junit", "junit", "4.12")
 }
 
 intellij {
-  version = "2021.3"
+  version.set("2022.1")
 }
 
-tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
-  sinceBuild("203.5981")
-  untilBuild("213.*")
-  changeNotes(
-    """
+tasks {
+  withType<KotlinCompile> {
+    kotlinOptions {
+      jvmTarget = JavaVersion.VERSION_11.toString()
+      languageVersion = org.jetbrains.kotlin.config.LanguageVersion.LATEST_STABLE.versionString
+    }
+  }
+
+  patchPluginXml {
+    sinceBuild.set("203.5981")
+    untilBuild.set("221.*")
+    changeNotes.set(
+      """
       <b>New features:</b><br/>
       <ul>
         <li>JES Explorer - provides the option to submit JCL jobs, view their statuses and operate an input and output of it using the plugin.</li>
@@ -98,5 +96,6 @@ tasks.getByName<PatchPluginXmlTask>("patchPluginXml") {
         <li>Empty data set hangs in loading state</li>
         <li>No message details when renaming dataset to existing name</li>
       </ul>"""
-  )
+    )
+  }
 }
