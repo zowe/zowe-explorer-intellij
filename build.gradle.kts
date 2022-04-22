@@ -35,7 +35,6 @@ java {
 
 dependencies {
   implementation(group = "com.squareup.retrofit2", name = "retrofit", version = "2.9.0")
-  implementation("eu.ibagroup:zowe-r2z:1.0.24") // TODO: change
   implementation("com.squareup.retrofit2:converter-gson:2.9.0")
   implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20")
@@ -43,6 +42,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("com.starxg:java-keytar:1.0.0")
+  implementation("eu.ibagroup:zowe-r2z:1.0.24") // TODO: change
   implementation("com.segment.analytics.java:analytics:+")
   testImplementation("junit", "junit", "4.12")
 }
