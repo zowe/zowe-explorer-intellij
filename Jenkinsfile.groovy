@@ -56,12 +56,18 @@ pipeline{
                         version = gitlabBranch.split("/")[1]
                         jiraTicket = 'release/' + version
                     } else {
-                        def branchName = gitlabBranch.split("/")[1]
-                        def tokens = branchName.split("-")
-                        jiraTicket = tokens[0] + "-" + tokens[1]
+                        def pattern = ~ /(?i)ijmp-\d+/
+                        def matcher = gitlabBranch =~ pattern
+                        if (matcher.find()) {
+                            jiraTicket = matcher[0].toUpperCase()
+                        }
+                        else {
+                            jiraTicket = "null"
+                            echo "Jira ticket name wasn't found!"
+                        }
                     }
                 }
-                echo "$jiraTicket"
+                echo "Jira ticket: $jiraTicket"
             }
         }
         stage('Clone Branch'){
@@ -88,21 +94,26 @@ pipeline{
                     resultFileName = sh(returnStdout: true, script: "cd build/distributions/ && ls").trim()
                 }
                 sh """
+                if [ "$jiraTicket" = "null" ] 
+                then
+                    echo "jira ticket is not determined"
+                else
                     if [ -d "/var/www/ijmp-plugin/$jiraTicket" ] 
                     then
                         sudo rm -r /var/www/ijmp-plugin/$jiraTicket
                     fi
-                    
                     sudo mkdir /var/www/ijmp-plugin/$jiraTicket
                     sudo mkdir /var/www/ijmp-plugin/$jiraTicket/idea
                     sudo mkdir /var/www/ijmp-plugin/$jiraTicket/pycharm
+
+                    sudo mv build/distributions/$resultFileName /var/www/ijmp-plugin/$jiraTicket/idea
+                fi
                 """
-                sh "sudo mv build/distributions/$resultFileName /var/www/ijmp-plugin/$jiraTicket/idea"
             }
             post{
                 success {
                     script{
-                        if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket)){
+                        if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
                             jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built. You can download your build from the following link http://10.221.23.186/ijmp-plugin/$jiraTicket/idea/$resultFileName.", site:"$jiraSite" 
                         }
                         
@@ -110,7 +121,7 @@ pipeline{
                 }
                 failure {
                     script{
-                        if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket)){
+                        if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
                             jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site:"$jiraSite" 
                         }
                     }
