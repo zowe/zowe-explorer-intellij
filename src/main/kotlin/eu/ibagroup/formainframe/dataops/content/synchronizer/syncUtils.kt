@@ -8,7 +8,7 @@ import eu.ibagroup.r2z.annotations.ZVersion
 private const val NEW_LINE = "\n"
 
 fun updateDataTypeWithEncoding(connectionConfig: ConnectionConfig, oldDataType: XIBMDataType) : XIBMDataType {
-  return if (connectionConfig.zVersion == ZVersion.ZOS_2_4 && oldDataType.encoding != null && oldDataType.encoding != CodePage.IBM_1047 && oldDataType.type == XIBMDataType.Type.TEXT) {
+  return if (connectionConfig.zVersion >= ZVersion.ZOS_2_4 && oldDataType.encoding != null && oldDataType.encoding != CodePage.IBM_1047 && oldDataType.type == XIBMDataType.Type.TEXT) {
     XIBMDataType(oldDataType.type, connectionConfig.codePage)
   } else {
     oldDataType
