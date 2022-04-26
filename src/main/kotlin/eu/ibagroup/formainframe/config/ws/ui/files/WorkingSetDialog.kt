@@ -86,6 +86,11 @@ class WorkingSetDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
+      if (newValue.contains("/")) {
+        oldItem.type = "USS"
+      } else {
+        oldItem.type = "z/OS"
+      }
       return null
     }
 
@@ -127,6 +132,7 @@ class WorkingSetDialog(
 
   object ComboBoxCellEditorImpl : ComboBoxCellEditor() {
     override fun getComboBoxItems(): MutableList<String> {
+      setClickCountToStart(1)
       return with(WorkingSetDialogState.TableRow) { mutableListOf(ZOS, USS) }
     }
   }
