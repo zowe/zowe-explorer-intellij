@@ -88,8 +88,6 @@ class WorkingSetDialog(
     ): ValidationInfo? {
       if (newValue.contains("/")) {
         oldItem.type = "USS"
-      } else {
-        oldItem.type = "z/OS"
       }
       return null
     }
@@ -109,6 +107,7 @@ class WorkingSetDialog(
   object TypeColumn : ColumnInfo<WorkingSetDialogState.TableRow, String>("Type") {
 
     override fun getEditor(item: WorkingSetDialogState.TableRow): TableCellEditor {
+      ComboBoxCellEditorImpl.clickCountToStart = 1
       return ComboBoxCellEditorImpl
     }
 
@@ -132,7 +131,6 @@ class WorkingSetDialog(
 
   object ComboBoxCellEditorImpl : ComboBoxCellEditor() {
     override fun getComboBoxItems(): MutableList<String> {
-      setClickCountToStart(1)
       return with(WorkingSetDialogState.TableRow) { mutableListOf(ZOS, USS) }
     }
   }

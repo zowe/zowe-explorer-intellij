@@ -36,8 +36,11 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
       row {
         label("File System: ")
         comboBox = ComboBox(CollectionComboBoxModel(listOf(MaskState.ZOS, MaskState.USS))).apply {
+          addActionListener {
+            state.type = selectedItem as String
+          }
           addMouseListener(object : MouseAdapter() {
-            override fun mouseExited(e: MouseEvent?) {
+            override fun mouseEntered(e: MouseEvent?) {
               maskTypeIsSelected = true
             }
           })
@@ -54,7 +57,6 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
               comboBox.component.item = MaskState.ZOS
             }
           }
-          state.type = comboBox.component.item
           validateWorkingSetMaskName(it, state.ws)
         }.withValidationOnApply {
           validateForBlank(it.text, it) ?: if (state.type == MaskState.ZOS)
