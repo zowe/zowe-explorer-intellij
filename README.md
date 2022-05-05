@@ -16,7 +16,7 @@ Using our plugin you will be able to:
 To start using the plugin:
 * Install the plugin in your Intellij based IDE.
 * Contact your RACF administrator so that your user is in the 
-  <a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua300/V2R4/zosmf/izua300/izulite_SecurityStructuresForZosmf.htm">IZUUSER RACF group</a>.
+  <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf">IZUUSER RACF group</a>.
 * You are ready to go! Start working with z/OS from the IDE.
 
 **Note: z/OS 2.1 or higher is required**

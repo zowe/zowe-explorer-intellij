@@ -11,6 +11,7 @@
 package org.zowe.explorer.explorer
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -107,12 +108,12 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
 
 
   override fun showNotification(title: String, content: String, type: NotificationType, project: Project?) {
-    NotificationBuilder(
+    Notification(
       EXPLORER_NOTIFICATION_GROUP_ID,
       title,
       content,
       type
-    ).build().let {
+    ).let {
       Notifications.Bus.notify(it, project)
     }
   }
@@ -121,13 +122,13 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
     if (t is ProcessCanceledException) {
       return
     }
-    NotificationBuilder(
+    Notification(
       EXPLORER_NOTIFICATION_GROUP_ID,
       "Error in plugin Zowe Explorer",
       t.message ?: t.toString(),
       NotificationType.ERROR
-    ).addAction(reportInSlackAction).build().let {
-      Notifications.Bus.notify(it, project)
+    ).let {
+      Notifications.Bus.notify(it)
     }
   }
 

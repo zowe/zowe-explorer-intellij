@@ -19,7 +19,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "org.zowe"
-version = "0.1.0"
+version = "0.1.2"
 
 repositories {
   mavenCentral()
@@ -64,37 +64,9 @@ tasks {
     untilBuild.set("221.*")
     changeNotes.set(
       """
-      <b>New features:</b><br/>
-      <ul>
-        <li>JES Explorer - provides the option to submit JCL jobs, view their statuses and operate an input and output of it using the plugin.</li>
-        <li>Copy operations - to copy dataset and files both from USS to z/OS and from z/OS to USS using Drag & Drop operation.</li>
-        <li>Zowe v2 team config - now it is possible to manage connections and other settings using Zowe v2 team config both ways.</li>
-      </ul>
-      <b>Expanded changes list:</b><br/>
-      <ul>
-        <li>Rework navigate method in ExplorerTreeNode class for Jes support</li>
-        <li>Sequential and Member to PDS + Uss Folder</li>
-        <li>Add Get...PropertiesAction for JesExplorer support</li>
-        <li>Changed functionality of "+" button in JESExplorer</li>
-        <li>Create JES tab in Settings</li>
-        <li>SpoolFileContentSynchronizer</li>
-        <li>Explorer refactoring</li>
-        <li>JobFetchProvider SpoolFileFetchProvider</li>
-        <li>Copy PDS to Uss Folder</li>
-        <li>Copy Uss File and PDS</li>
-        <li>Spike: Drag and drop operations</li>
-        <li>Functionality of renaming files and folders as on the Mainframe</li>
-        <li>Create Icon for toolbar</li>
-        <li>Consider lrecl constraints in datasets when editing</li>
-      </ul>
       <b>Bugs fixed:</b>
       <ul>
-        <li>Renaming USS directory or file to existing one duplicates name in tree and shows inconsistent information</li>
-        <li>Place the cursor in the Member name field</li>
-        <li>The same dataset does not open in the second mask</li>
-        <li>Duplicated JesFilters removed</li>
-        <li>Empty data set hangs in loading state</li>
-        <li>No message details when renaming dataset to existing name</li>
+        <li>Support for newer versions of IntelliJ </li>
       </ul>"""
     )
   }
