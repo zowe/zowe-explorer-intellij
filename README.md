@@ -1,6 +1,6 @@
 # For Mainframe
 "For Mainframe" brings support for browsing, editing and creating data on z/OS via 
-<a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.
+<a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.
 
 Plugin in Marketplace: [link](https://plugins.jetbrains.com/plugin/16353-for-mainframe)
 
@@ -16,7 +16,7 @@ Using our plugin you will be able to:
 To start using the plugin:
 * Install the plugin in your Intellij based IDE.
 * Contact your RACF administrator so that your user is in the 
-  <a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua300/V2R4/zosmf/izua300/izulite_SecurityStructuresForZosmf.htm">IZUUSER RACF group</a>.
+  <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf">IZUUSER RACF group</a>.
 * You are ready to go! Start working with z/OS from the IDE.
 
 **Note: z/OS 2.1 or higher is required**
@@ -68,4 +68,3 @@ Click with the right mouse button on the existing data set which properties you'
 
 ### Delete data set/data set member
 Click with the right mouse button on the data set/data set member you'd like to delete in the working set tree on the right side of your screen. Click "Delete".Confirm your intention to delete a data set/data set member in the pop up window by pressing "Yes". After the deleting is complete you should no longer see the data set/data set member in the working set tree.
-

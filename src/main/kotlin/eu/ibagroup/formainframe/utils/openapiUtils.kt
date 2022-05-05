@@ -1,7 +1,5 @@
 package eu.ibagroup.formainframe.utils
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
@@ -24,16 +22,16 @@ import kotlin.concurrent.withLock
 
 class Dummy private constructor()
 
-fun PluginManager.getPluginDescriptorByClass(clazz: Class<*>): IdeaPluginDescriptor? {
-  return getPluginOrPlatformByClassName(clazz.name)?.let {
-    findEnabledPlugin(it)
-  }
-}
+//fun PluginManager.getPluginDescriptorByClass(clazz: Class<*>): IdeaPluginDescriptor? {
+//  return getPluginOrPlatformByClassName(clazz.name)?.let {
+//    findEnabledPlugin(it)
+//  }
+//}
 
-val forMainframePluginDescriptor by lazy {
-  PluginManager.getInstance().getPluginDescriptorByClass(Dummy::class.java)
-    ?: throw IllegalStateException("Dummy class wasn't loaded by For Mainframe plugin's class loader for some reason")
-}
+//val forMainframePluginDescriptor by lazy {
+//  PluginManager.getInstance().getPluginDescriptorByClass(Dummy::class.java)
+//    ?: throw IllegalStateException("Dummy class wasn't loaded by For Mainframe plugin's class loader for some reason")
+//}
 
 val cachesDir by lazy {
   val cachesDirString = System.getProperty("caches_dir")
@@ -102,7 +100,7 @@ inline fun <T> runWriteActionOnWriteThread(crossinline block: () -> T): T {
 }
 
 inline fun <T> runReadActionInEdtAndWait(crossinline block: () -> T): T {
-  return invokeAndWaitIfNeeded { runReadAction(block)}
+  return invokeAndWaitIfNeeded { runReadAction(block) }
 }
 
 fun AlreadyDisposedException(clazz: Class<*>) = AlreadyDisposedException("${clazz.name} is already disposed")
@@ -142,7 +140,6 @@ inline fun <T> runPromiseAsBackgroundTask(
     }
   })
 }
-
 
 
 fun <T> Promise<T>.get(): T? {
@@ -230,7 +227,7 @@ fun VirtualFile.getAncestorNodes(): List<VirtualFile> {
 //  }
 //}
 
-fun Iterable<VirtualFile>.getMinimalCommonParents() : Collection<VirtualFile> {
+fun Iterable<VirtualFile>.getMinimalCommonParents(): Collection<VirtualFile> {
   return getMinimalCommonParents { parent }
 }
 
