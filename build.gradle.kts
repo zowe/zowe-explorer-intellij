@@ -84,6 +84,6 @@ tasks {
     testLogging {
       events("passed", "skipped", "failed")
     }
-    finalizedBy(tasks.jacocoTestReport)
+    finalizedBy(jacocoTestReport)
   }
 }
