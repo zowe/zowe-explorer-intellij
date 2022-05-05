@@ -4,8 +4,10 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.dnd.TransferableWrapper
+import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode
+import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -63,7 +65,7 @@ class GlobalExplorerViewDropTarget(
   }
 
   fun TreePath.getVirtualFile(): VirtualFile? {
-    val treeNode = (lastPathComponent as DefaultMutableTreeNode).userObject as BasePsiNode<*>
+    val treeNode = (lastPathComponent as DefaultMutableTreeNode).userObject as ProjectViewNode<*>
     return if (treeNode is PsiFileNode) treeNode.virtualFile else if (treeNode is PsiDirectoryNode) treeNode.virtualFile else null
   }
 

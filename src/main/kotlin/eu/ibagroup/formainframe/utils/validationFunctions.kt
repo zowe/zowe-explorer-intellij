@@ -109,7 +109,7 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
 
   val qualifier = text.split('.')
 
-  return if (text.length > 43) {
+  return if (text.length > 44) {
     ValidationInfo("Dataset mask must be less than 44 characters", component)
   } else if (qualifier.find { it.length > 8 } != null) {
     ValidationInfo("Qualifier must be in 1 to 8 characters", component)

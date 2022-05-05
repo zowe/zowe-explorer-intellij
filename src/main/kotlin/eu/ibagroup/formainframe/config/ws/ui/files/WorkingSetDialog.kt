@@ -86,6 +86,9 @@ class WorkingSetDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
+      if (newValue.contains("/")) {
+        oldItem.type = "USS"
+      }
       return null
     }
 
@@ -104,6 +107,7 @@ class WorkingSetDialog(
   object TypeColumn : ColumnInfo<WorkingSetDialogState.TableRow, String>("Type") {
 
     override fun getEditor(item: WorkingSetDialogState.TableRow): TableCellEditor {
+      ComboBoxCellEditorImpl.clickCountToStart = 1
       return ComboBoxCellEditorImpl
     }
 

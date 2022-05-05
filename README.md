@@ -1,6 +1,6 @@
 # For Mainframe
 "For Mainframe" brings support for browsing, editing and creating data on z/OS via 
-<a href="https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua700/V2R4/zosmf/izua700/IZUHPINFO_RESTServices.htm">z/OSMF REST API</a>.
+<a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.
 
 Plugin in Marketplace: [link](https://plugins.jetbrains.com/plugin/16353-for-mainframe)
 
@@ -16,7 +16,7 @@ Using our plugin you will be able to:
 To start using the plugin:
 * Install the plugin in your Intellij based IDE.
 * Contact your RACF administrator so that your user is in the 
-  <a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.izua300/V2R4/zosmf/izua300/izulite_SecurityStructuresForZosmf.htm">IZUUSER RACF group</a>.
+  <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf">IZUUSER RACF group</a>.
 * You are ready to go! Start working with z/OS from the IDE.
 
 **Note: z/OS 2.1 or higher is required**
@@ -73,4 +73,3 @@ Click with the right mouse button on the data set/data set member you'd like to 
 
 ## Tests
 Run task "Unit tests" in the IDE to start tests. Test run report is generated in the project folder under the path "build\reports\tests\test". Open file "index.html" in your browser to view the result. Code coverage report is generated based on test run report in the project folder. Coverage report path "build/reports/jacoco/test/html". To view coverage report open file "index.html" in your browser.
-

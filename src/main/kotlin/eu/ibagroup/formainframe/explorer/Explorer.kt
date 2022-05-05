@@ -2,7 +2,6 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
@@ -112,13 +111,13 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
     if (t is ProcessCanceledException) {
       return
     }
-    NotificationBuilder(
+    Notification(
       EXPLORER_NOTIFICATION_GROUP_ID,
       "Error in plugin For Mainframe",
       t.message ?: t.toString(),
       NotificationType.ERROR
-    ).addAction(reportInSlackAction).build().let {
-      Notifications.Bus.notify(it, project)
+    ).let {
+      Notifications.Bus.notify(it)
     }
   }
 

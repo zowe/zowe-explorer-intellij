@@ -72,8 +72,7 @@ class ExplorerPasteProvider: PasteProvider {
         ).let {
           if (!it) {
             copyPasteSupport.removeFromBuffer { nodeData ->
-              @Suppress("TYPE_INFERENCE_ONLY_INPUT_TYPES_WARNING")
-              sourceFiles.contains(nodeData.file)
+              nodeData.file?.let { fileNotNull -> sourceFiles.contains(fileNotNull) } ?: false
             }
             return@withLock
           }
