@@ -346,7 +346,6 @@ class GlobalFileExplorerView(
     myDropTarget = GlobalExplorerViewDropTarget(myTree, explorer, copyPasteSupport)
     DnDManager.getInstance().registerSource(myDragSource!!, myTree)
     DnDManager.getInstance().registerTarget(myDropTarget, myTree)
-    DnDManager.getInstance().registerTarget(myDropTarget, ProjectView.getInstance(project).currentProjectViewPane.tree)
   }
 
   override fun dispose() {

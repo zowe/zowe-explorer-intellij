@@ -32,7 +32,7 @@ class GlobalExplorerViewDragSource(
   private val myTree: Tree,
   private val mySelectedNodesDataProvider: () -> List<NodeData>,
   private val cutCopyPredicate: (NodeData) -> Boolean,
-  private val copyPasteSupport: CopyPasteSupport
+  private val copyPasteSupport: GlobalFileExplorerView.ExplorerCopyPasteSupport
   ): DnDSource {
 
 
@@ -81,7 +81,7 @@ class GlobalExplorerViewDragSource(
 
 
   override fun startDragging(action: DnDAction?, dragOrigin: Point): DnDDragStartBean {
-
+    copyPasteSupport.registerDropTargetInProjectViewIfNeeded()
     return DnDDragStartBean(object : TransferableWrapper {
       override fun asFileList(): List<File>? {
         return PsiCopyPasteManager.asFileList(psiElements)
