@@ -333,8 +333,7 @@ class GlobalFileExplorerView(
 
   private var myDragSource: DnDSource?
   private var myDropTarget: DnDTarget?
-
-
+  private var isDropTargetRegistered = false
 
   internal val isCut = AtomicBoolean(true)
   private val isDrag = AtomicBoolean(false)
@@ -343,11 +342,10 @@ class GlobalFileExplorerView(
     it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isConfigUssPath)
   }
   init {
-    myDragSource = GlobalExplorerViewDragSource(myTree, { mySelectedNodesData }, cutCopyPredicate)
+    myDragSource = GlobalExplorerViewDragSource(myTree, { mySelectedNodesData }, cutCopyPredicate, copyPasteSupport)
     myDropTarget = GlobalExplorerViewDropTarget(myTree, explorer, copyPasteSupport)
     DnDManager.getInstance().registerSource(myDragSource!!, myTree)
     DnDManager.getInstance().registerTarget(myDropTarget, myTree)
-    DnDManager.getInstance().registerTarget(myDropTarget, ProjectView.getInstance(project).currentProjectViewPane.tree)
   }
 
   override fun dispose() {
@@ -449,6 +447,18 @@ class GlobalFileExplorerView(
       it.attributes?.isPastePossible == true
     }
 
+    internal fun registerDropTargetInProjectViewIfNeeded () {
+      if (isDropTargetRegistered) {
+        return
+      }
+      project?.let {
+        val tree = ProjectView.getInstance(project).currentProjectViewPane?.tree
+        tree?.let {
+          DnDManager.getInstance().registerTarget(myDropTarget, tree)
+          isDropTargetRegistered = true
+        }
+      }
+    }
 
     internal fun isPastePossible(destinationFiles: List<VirtualFile>?, sourceNodesData: List<NodeData>): Boolean {
       val destFiles = destinationFiles ?: mySelectedNodesData.mapNotNull { it.file }
