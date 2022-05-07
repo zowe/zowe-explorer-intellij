@@ -82,7 +82,6 @@ tasks {
         <li>Job Release operation runner</li>
         <li>Job Hold operation runner</li>
         <li>Job Cancel operation runner</li>
-        <li>Implement TSO API in old style</li>
         <li>Autosync rework</li>
         <li>ScrollPanel in "Allocate Dataset" frame</li>
         <li>Separate icons for Datasets and USS folders</li>
@@ -90,7 +89,6 @@ tasks {
         <li>Implemented ability to add Job Filter in 'New' popup menu clicking on JobWorkingSet</li>
         <li>z/OSMF 2.5 support</li>
         <li>log4j is removed</li>
-        <li>Implemented possibility to change file mode without contents corruption</li>
         <li>Username/Password validatiion during connection creation</li>
       </ul>
       <b>Bugs fixed:</b>
@@ -116,6 +114,7 @@ tasks {
         <li>Use binary mode changes file contents</li>
         <li>NullPointerException when tree opens by user with incorrect password</li>
         <li>Impossible to close the file located locally on PC (the file was opened not from plugin)</li>
+        <li>Fixed file content corruption after chaging file mode</li>
       </ul>"""
     )
   }
