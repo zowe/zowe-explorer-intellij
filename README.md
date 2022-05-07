@@ -6,12 +6,13 @@ Plugin in Marketplace: [link](https://plugins.jetbrains.com/plugin/16353-for-mai
 
 Using our plugin you will be able to:
 * Start working with z/OS easily with no complex configurations.
-* Organise datasets on z/OS, files on USS into Working Sets.
+* Organize datasets on z/OS, files on USS into Working Sets.
 * Allocate datasets, create members, files and directories with different permissions.
 * Perform renaming, copying and moving data in a modern way.
 * Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.
 * Create multiple connections to different z/OS systems.
-* All Intellij supported languages will be automatically highlighted and recognized once opened from the mainframe.
+* Perform all available operations with Jobs.
+* Highlight all IntelliJ supported languages automatically and recognize them once opened from the mainframe.
 
 To start using the plugin:
 * Install the plugin in your Intellij based IDE.

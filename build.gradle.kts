@@ -68,9 +68,54 @@ tasks {
     untilBuild.set("221.*")
     changeNotes.set(
       """
+      <b>New features:</b>
+      <ul>
+        <li>Added ability to copy from remote host to a local machine</li>
+        <li>Added Job Console log view. Actions on Jobs are being developed</li>
+        <li>Some major fixes and minor features. See in detailed report</li>
+      </ul>
+      <b>Detailed changes list:</b>
+      <ul>
+        <li>Copy from remote to local</li>
+        <li>Change lower case to upper case during DS mask creation</li>
+        <li>Implemented Control panel in Job Console log view to operate with job</li>
+        <li>Job Release operation runner</li>
+        <li>Job Hold operation runner</li>
+        <li>Job Cancel operation runner</li>
+        <li>Implement TSO API in old style</li>
+        <li>Autosync rework</li>
+        <li>ScrollPanel in "Allocate Dataset" frame</li>
+        <li>Separate icons for Datasets and USS folders</li>
+        <li>Force rename option</li>
+        <li>Implemented ability to add Job Filter in 'New' popup menu clicking on JobWorkingSet</li>
+        <li>z/OSMF 2.5 support</li>
+        <li>log4j is removed</li>
+        <li>Implemented possibility to change file mode without contents corruption</li>
+        <li>Username/Password validatiion during connection creation</li>
+      </ul>
       <b>Bugs fixed:</b>
       <ul>
-        <li>Support for newer versions of IntelliJ</li>
+        <li>The creation of masks with three or more asterisks is not blocked</li>
+        <li>NPE when notification was closed</li>
+        <li>Error when the prefix length for JobFilter is more than 8 characters or Prefix contains unacceptable symbols</li>
+        <li>Wrong Directory allocation restrictions</li>
+        <li>Error 404 on try to create a dataset</li>
+        <li>Block size is being removed on error</li>
+        <li>Missing UI error message for z/OS mask with length more than 44 chars</li>
+        <li>Adding job filter through context menu item in JES Explorer doesn't work correctly</li>
+        <li>Creating z/OS mask with first digit in HLQ is not blocked</li>
+        <li>Right click->New->WorkingSet on JES Explorer page opens dialog to create WorkingSet instead of JobsWorkingSet</li>
+        <li>Creating mask with length=44 chars should be available</li>
+        <li>The error message contains java exception when uncheck "Accept self-signed SSL certiаficates" in the connection</li>
+        <li>Delete option does not work for Working Sets in File Explorer</li>
+        <li>Renaming an uss folder/file and then renaming it back to its original name causes an error</li>
+        <li>No message details when renaming dataset to existing name</li>
+        <li>Error message for failed dataset allocation should be duplicated in Dataset Allocation window</li>
+        <li>Impossible to close job's output</li>
+        <li>IDE Fatal errors if delete the connection that has working set</li>
+        <li>Use binary mode changes file contents</li>
+        <li>NullPointerException when tree opens by user with incorrect password</li>
+        <li>Impossible to close the file located locally on PC (the file was opened not from plugin)</li>
       </ul>"""
     )
   }

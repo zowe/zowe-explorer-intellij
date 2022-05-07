@@ -48,7 +48,7 @@
     <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
 
     <description><![CDATA[
-We are happy to release version 0.5 of our Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
+Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
 IBA Group team of <b>mainframe enthusiasts</b> are actively developing new features for the open-source "For Mainframe" plugin.
 We keep improving existing features that help you to:<br/>
 <ul>
@@ -58,7 +58,8 @@ We keep improving existing features that help you to:<br/>
   <li>Perform renaming, copying and moving data in a modern way.</li>
   <li>Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.</li>
   <li>Create multiple connections to different z/OS systems.</li>
-  <li>All Intellij supported languages will be automatically highlighted and recognized once opened from the mainframe.</li>
+  <li>Perform all available operations with Jobs.</li>
+  <li>Highlight all IntelliJ supported languages automatically and recognize them once opened from the mainframe.</li>
 </ul><br/>
 To start using the plugin:<br/>
 <ul>
