@@ -34,7 +34,7 @@ Create, edit and delete a connection.
 ### Create, edit and delete a connection
 To create a connection press the "wrench" pictogram on the right side of your screen, or go to "Settings" (CTRL+ALT+S) and select "For Mainframe" on the left side of the panel.
 
-In "Settings" switch to "z/OSMF connections" tab and press "+" at the bottom of the panel. A new panel "Add Connection" will appear.
+In "Settings" switch to "z/OSMF connections" tab and press "+" at the bottom of the panel. A new panel "Add Connection" will appear. 
 
 Enter your desired connection name, connection URL, username and password into corresponding fields. The plugin provides a possibility to accept self-signed SSL-certificates, so check this box if necessary. Press "OK" when you're done. If the connection is created successfully you'll see it in the list in "Settings" and in the list on the right side of your screen after you've closed "Settings".
 
