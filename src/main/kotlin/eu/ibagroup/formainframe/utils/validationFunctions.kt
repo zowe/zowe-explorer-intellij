@@ -3,7 +3,6 @@ package eu.ibagroup.formainframe.utils
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
@@ -148,44 +147,40 @@ fun validateJobFilter (prefix: String, owner: String, jobId: String, ws: JesWork
   if (baseValidation != null) {
     return baseValidation
   }
-  val validateOnInput = validateJobFilterOnInput(prefix, owner, jobId, component)
-  if (validateOnInput != null) {
-    return validateOnInput
-  }
-  val newOwner = owner.ifEmpty {
-    ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""
-  }
-  val newPrefix = prefix.ifEmpty { "*" }
-  return if (ws.masks.any { it.owner == newOwner && it.prefix == newPrefix && it.jobId == jobId }) {
+  val newOwner = owner.ifBlank { "" }
+  val newPrefix = prefix.ifBlank { "" }
+  val newJobId = jobId.ifBlank { "" }
+  return if (ws.masks.any { it.owner == newOwner && it.prefix == newPrefix && it.jobId == newJobId }) {
     ValidationInfo("Job Filter with provided data already exists.", component)
   } else null
 }
 
-fun validateJobFilter (prefix: String, owner: String, jobId: String, component: JComponent): ValidationInfo? {
-  return if ((prefix.isNotEmpty() || owner.isNotEmpty()) && jobId.isNotEmpty()) {
-    ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
-  } else null
+fun validateJobFilter (prefix: String, owner: String, jobId: String, component: JTextField): ValidationInfo? {
+  if (jobId.isNotBlank()) {
+    if (owner.isNotBlank() || prefix.isNotBlank()) {
+      return ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+    }
+  }
+  if (jobId.isBlank()) {
+    if (owner.isBlank() || prefix.isBlank()) {
+      return ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+    }
+  }
+  return validateJobFilterOnInput(component)
 }
 
 private val filterRegex = Regex("[A-Za-z0-9*%]+")
-
-fun validateJobFilterOnInput(prefix: String, owner: String, jobId: String, component: JComponent): ValidationInfo? {
-  if (prefix.isNotBlank() && owner.isNotBlank()) {
-    return if (prefix.length > 8 || owner.length > 8) {
+fun validateJobFilterOnInput(component: JTextField) : ValidationInfo? {
+  return if (component.text.isNotBlank()) {
+    if (component.text.length > 8) {
       ValidationInfo("Text field must not exceed 8 characters.", component)
-    } else if (!prefix.matches(filterRegex) || !owner.matches(filterRegex)) {
+    } else if (!component.text.matches(filterRegex)) {
       ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %", component)
     } else {
       null
     }
   } else {
-    return if (jobId.length > 8) {
-      ValidationInfo("Text field must not exceed 8 characters.", component)
-    } else if (!jobId.matches(filterRegex)) {
-      ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %", component)
-    } else {
-      null
-    }
+    null
   }
 }
 
