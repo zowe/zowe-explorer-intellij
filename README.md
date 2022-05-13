@@ -25,7 +25,7 @@ To start using the plugin:
 # User Guide
 
 ## Introduction
-"For Mainframe" is an IntelliJ plugin dedicated to facilitate working with z/OS datasets through providing a possibility to work with them in the IDE.
+"For Mainframe" is an IntelliJ plugin dedicated to facilitate working with z/OS datasets through providing a possibility to work with them in the IDE. 
 
 ## Getting started
 After installing plugin into your IDE from marketplace, the first thing you need to do is to create a connection and a working set.
