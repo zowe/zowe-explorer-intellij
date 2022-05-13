@@ -5,11 +5,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.utils.validateJobFilter
-import eu.ibagroup.formainframe.utils.validateJobFilterOnInput
 import javax.swing.JComponent
 
 class AddJobsFilterDialog(
@@ -18,7 +16,7 @@ class AddJobsFilterDialog(
 ) : DialogWrapper(project), StatefulComponent<JobsFilterState> {
 
   init {
-    title = "Create Mask"
+    title = "Create Jobs Filter"
     init()
   }
 
@@ -67,11 +65,10 @@ class JobsFilterState(
 ) {
 
   fun toJobsFilter (): JobsFilter {
-    val resultPrefix = prefix.ifEmpty { "*" }
-    val resultOwner = owner.ifEmpty {
-      CredentialService.instance.getUsernameByKey(ws.connectionConfig?.uuid ?: "") ?: ""
-    }
-    return JobsFilter(resultOwner, resultPrefix, jobId)
+    val resultOwner = owner.ifBlank { "" }
+    val resultPrefix = prefix.ifBlank { "" }
+    val resultJobId = jobId.ifBlank { "" }
+    return JobsFilter(resultOwner, resultPrefix, resultJobId)
   }
 
 }
