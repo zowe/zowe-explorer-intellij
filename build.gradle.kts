@@ -10,7 +10,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.5.1"
+version = "0.5.2"
 
 repositories {
   mavenCentral()
@@ -66,7 +66,7 @@ tasks {
       """
       <b>Bugs fixed:</b>
       <ul>
-        <li>Support for newer versions of IntelliJ</li>
+        <li>https://github.com/zowe/zowe-explorer-intellij/issues/38</li>
       </ul>"""
     )
   }
