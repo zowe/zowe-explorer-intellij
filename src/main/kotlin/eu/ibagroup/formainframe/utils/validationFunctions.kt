@@ -142,8 +142,8 @@ fun validateUssFileName(component: JTextField): ValidationInfo? {
   }
 }
 
-fun validateJobFilter (prefix: String, owner: String, jobId: String, ws: JesWorkingSet, component: JBTextField): ValidationInfo? {
-  val baseValidation = validateJobFilter(prefix, owner, jobId, component)
+fun validateJobFilter (prefix: String, owner: String, jobId: String, ws: JesWorkingSet, component: JBTextField, isJobId: Boolean): ValidationInfo? {
+  val baseValidation = validateJobFilter(prefix, owner, jobId, component, isJobId)
   if (baseValidation != null) {
     return baseValidation
   }
@@ -155,7 +155,7 @@ fun validateJobFilter (prefix: String, owner: String, jobId: String, ws: JesWork
   } else null
 }
 
-fun validateJobFilter (prefix: String, owner: String, jobId: String, component: JTextField): ValidationInfo? {
+fun validateJobFilter (prefix: String, owner: String, jobId: String, component: JTextField, isJobId: Boolean): ValidationInfo? {
   if (jobId.isNotBlank()) {
     if (owner.isNotBlank() || prefix.isNotBlank()) {
       return ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
@@ -166,16 +166,35 @@ fun validateJobFilter (prefix: String, owner: String, jobId: String, component: 
       return ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
     }
   }
-  return validateJobFilterOnInput(component)
+  return if (isJobId) {
+    validateJobId(component)
+  } else {
+    validatePrefixAndOwner(component)
+  }
 }
 
-private val filterRegex = Regex("[A-Za-z0-9*%]+")
-fun validateJobFilterOnInput(component: JTextField) : ValidationInfo? {
+private val prefixAndOwnerRegex = Regex("[A-Za-z0-9*%]+")
+fun validatePrefixAndOwner(component: JTextField) : ValidationInfo? {
   return if (component.text.isNotBlank()) {
     if (component.text.length > 8) {
       ValidationInfo("Text field must not exceed 8 characters.", component)
-    } else if (!component.text.matches(filterRegex)) {
-      ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %", component)
+    } else if (!component.text.matches(prefixAndOwnerRegex)) {
+      ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %.", component)
+    } else {
+      null
+    }
+  } else {
+    null
+  }
+}
+
+private val jobIdRegex = Regex("[A-Za-z0-9]+")
+fun validateJobId(component: JTextField) : ValidationInfo? {
+  return if (component.text.isNotBlank()) {
+    if (component.text.length != 8) {
+      ValidationInfo("Job ID length must be 8 characters.", component)
+    } else if (!component.text.matches(jobIdRegex)) {
+      ValidationInfo("Text field should contain only A-Z, a-z, 0-9", component)
     } else {
       null
     }
