@@ -93,11 +93,11 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue))
+      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue), false)
     }
 
     override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.prefix))
+      return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.prefix), false)
     }
 
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
@@ -114,11 +114,11 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue))
+      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue), false)
     }
 
     override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.owner))
+      return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.owner), false)
     }
 
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
@@ -135,11 +135,11 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue))
+      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue), true)
     }
 
     override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.jobId))
+      return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.jobId), true)
     }
 
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
