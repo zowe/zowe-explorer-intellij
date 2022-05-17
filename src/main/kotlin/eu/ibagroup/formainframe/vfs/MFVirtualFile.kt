@@ -4,10 +4,12 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.util.io.FileAttributes
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import eu.ibagroup.formainframe.utils.lock
 import eu.ibagroup.formainframe.utils.runIfTrue
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
@@ -18,7 +20,7 @@ class MFVirtualFile internal constructor(
   private val fileId: Int,
   name: String,
   private val initialAttributes: FileAttributes,
-) : VirtualFile(), VirtualFileWithId, ReadWriteLock by ReentrantReadWriteLock() {
+) : NewVirtualFile(), VirtualFileWithId, ReadWriteLock by ReentrantReadWriteLock() {
 
   companion object {
     private val fs = MFVirtualFileSystem.instance
@@ -89,7 +91,7 @@ class MFVirtualFile internal constructor(
 
   override fun isDirectory() = initialAttributes.isDirectory
 
-  override fun getCanonicalFile(): VirtualFile? {
+  override fun getCanonicalFile(): NewVirtualFile? {
     return if (fs.isSymLink(this)) {
       fs.model.resolveAndGetSymlink(this)
     } else null
@@ -132,7 +134,7 @@ class MFVirtualFile internal constructor(
   @Volatile
   private var timeStamp = 0L
 
-  fun setTimeStamp(time: Long) = validWriteLock { timeStamp = time }
+  override fun setTimeStamp(time: Long) = validWriteLock { timeStamp = time }
 
   override fun getTimeStamp() = validReadLock(0L) { timeStamp }
 
@@ -146,28 +148,34 @@ class MFVirtualFile internal constructor(
 
   override fun getId() = fileId
 
-  fun refreshAndFindChild(name: String) = findChild(name)
+  override fun refreshAndFindChild(name: String) = findChild(name)
 
-  fun findChildIfCached(name: String) = findChild(name)
+  override fun findChildIfCached(name: String) = findChild(name)
 
   @Volatile
   private var markedAsDirty = false
 
-  fun markDirty() {
+  override fun markDirty() {
     markedAsDirty = true
   }
 
-  fun markDirtyRecursively() {
+  override fun markDirtyRecursively() {
     markDirty()
     parent?.markDirtyRecursively()
   }
 
-  fun isDirty(): Boolean {
+  override fun isDirty(): Boolean {
     return markedAsDirty
   }
 
-  fun markClean() {
+  override fun markClean() {
     markedAsDirty = false
+  }
+
+  // TODO: Doc
+  // TODO: Decide implementation
+  override fun getCachedChildren(): MutableCollection<VirtualFile> {
+    return Collections.emptyList()
   }
 
   override fun getExtension(): String {
@@ -199,7 +207,7 @@ class MFVirtualFile internal constructor(
   val cachedChildren
     get() = fs.model.getChildrenList(this)
 
-  fun iterInDbChildren() = cachedChildren
+  override fun iterInDbChildren() = cachedChildren
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -220,6 +228,7 @@ class MFVirtualFile internal constructor(
     get() = id == MFVirtualFileSystem.ROOT_ID
 
 }
+
 
 @JvmOverloads
 fun createAttributes(
