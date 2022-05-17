@@ -30,9 +30,9 @@ import org.zowe.explorer.utils.runReadActionInEdtAndWait
 import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
-import eu.ibagroup.r2z.annotations.ZVersion
-import eu.ibagroup.r2z.zowe.config.ZoweConfig
-import eu.ibagroup.r2z.zowe.config.parseConfigJson
+import org.zowe.kotlinsdk.annotations.ZVersion
+import org.zowe.kotlinsdk.zowe.config.ZoweConfig
+import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.nio.file.Path
 import java.util.*
 import kotlin.streams.toList

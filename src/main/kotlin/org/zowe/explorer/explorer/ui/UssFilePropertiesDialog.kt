@@ -19,7 +19,7 @@ import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.DialogState
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.r2z.FileModeValue
+import org.zowe.kotlinsdk.FileModeValue
 import javax.swing.JComponent
 
 class UssFilePropertiesDialog(project: Project?, override var state: UssFileState) : DialogWrapper(project),

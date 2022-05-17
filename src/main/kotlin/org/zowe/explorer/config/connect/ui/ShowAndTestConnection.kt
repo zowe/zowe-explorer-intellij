@@ -18,7 +18,7 @@
 //import org.zowe.explorer.utils.cancelByIndicator
 //import org.zowe.explorer.utils.crudable.Crudable
 //import org.zowe.explorer.utils.runTask
-//import eu.ibagroup.r2z.InfoAPI
+//import org.zowe.kotlinsdk.InfoAPI
 //import java.awt.Component
 //
 //class ShowAndTestConnection(

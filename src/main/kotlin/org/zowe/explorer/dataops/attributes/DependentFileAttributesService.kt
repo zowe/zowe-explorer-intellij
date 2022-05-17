@@ -16,7 +16,7 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.vfs.createAttributes
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.XIBMDataType
 import java.io.IOException
 import java.lang.IllegalArgumentException
 import java.util.concurrent.ConcurrentHashMap

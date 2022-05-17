@@ -29,8 +29,8 @@ import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.utils.validateConnectionName
 import org.zowe.explorer.utils.validateForBlank
 import org.zowe.explorer.utils.validateZosmfUrl
-import eu.ibagroup.r2z.CodePage
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.CodePage
+import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
 import javax.swing.*
 

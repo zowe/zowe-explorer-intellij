@@ -13,7 +13,7 @@ package org.zowe.explorer.zowe.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.connect.ConnectionConfig
-import eu.ibagroup.r2z.zowe.config.ZoweConfig
+import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 
 
 /**

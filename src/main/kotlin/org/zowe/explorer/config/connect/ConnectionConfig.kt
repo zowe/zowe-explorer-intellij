@@ -12,8 +12,8 @@ package org.zowe.explorer.config.connect
 
 import org.zowe.explorer.utils.crudable.EntityWithUuid
 import org.zowe.explorer.utils.crudable.annotations.Column
-import eu.ibagroup.r2z.CodePage
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.CodePage
+import org.zowe.kotlinsdk.annotations.ZVersion
 
 class ConnectionConfig : EntityWithUuid {
   @Column

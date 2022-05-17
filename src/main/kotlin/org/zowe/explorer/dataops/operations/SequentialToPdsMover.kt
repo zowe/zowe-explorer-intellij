@@ -20,8 +20,8 @@ import org.zowe.explorer.dataops.attributes.Requester
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
 import org.zowe.explorer.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataZOS
-import eu.ibagroup.r2z.DataAPI
+import org.zowe.kotlinsdk.CopyDataZOS
+import org.zowe.kotlinsdk.DataAPI
 import retrofit2.Call
 import java.io.IOException
 

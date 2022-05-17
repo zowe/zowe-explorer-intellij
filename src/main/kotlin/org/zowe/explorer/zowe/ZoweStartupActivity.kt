@@ -24,7 +24,7 @@ import org.zowe.explorer.zowe.service.ZOWE_CONFIG_CHANGED
 import org.zowe.explorer.zowe.service.ZoweConfigHandler
 import org.zowe.explorer.zowe.service.ZoweConfigService
 import org.zowe.explorer.zowe.service.ZoweConfigState
-import eu.ibagroup.r2z.zowe.config.ZoweConfig
+import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 
 const val ZOWE_CONFIG_NAME = "zowe.config.json"
 

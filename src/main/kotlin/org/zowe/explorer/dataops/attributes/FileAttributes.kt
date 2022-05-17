@@ -12,7 +12,7 @@ package org.zowe.explorer.dataops.attributes
 
 import org.zowe.explorer.utils.Copyable
 import org.zowe.explorer.utils.PasteAcceptor
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.XIBMDataType
 
 interface FileAttributes : Cloneable, Copyable, PasteAcceptor {
 

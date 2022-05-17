@@ -21,8 +21,8 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.SymlinkMode
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.SymlinkMode
 
 data class UssQuery(val path: String)
 

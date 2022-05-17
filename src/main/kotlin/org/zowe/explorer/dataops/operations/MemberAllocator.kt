@@ -16,7 +16,7 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.cancelByIndicator
-import eu.ibagroup.r2z.DataAPI
+import org.zowe.kotlinsdk.DataAPI
 
 class MemberAllocatorFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): Allocator<*> {

@@ -24,7 +24,7 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.fetch.LibraryQuery
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 import retrofit2.Response
 
 class PdsToUssFolderMoverFactory : OperationRunnerFactory {

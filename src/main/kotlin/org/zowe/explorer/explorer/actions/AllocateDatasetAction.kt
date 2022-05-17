@@ -30,7 +30,7 @@ import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.service
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 
 class AllocateDatasetAction : AnAction() {
 

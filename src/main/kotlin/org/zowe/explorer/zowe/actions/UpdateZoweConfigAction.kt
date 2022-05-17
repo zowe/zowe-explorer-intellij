@@ -18,7 +18,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.explorer.zowe.service.ZoweConfigService
 import org.zowe.explorer.zowe.service.ZoweConfigState
-import eu.ibagroup.r2z.zowe.config.parseConfigJson
+import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 
 /**
  * Synchronizes zowe config with crudable config if needed.

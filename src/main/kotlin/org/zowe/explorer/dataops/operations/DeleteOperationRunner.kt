@@ -21,8 +21,8 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
 import org.zowe.explorer.utils.runWriteActionInEdt
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.XIBMOption
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.XIBMOption
 
 
 class DeleteRunnerFactory : OperationRunnerFactory {

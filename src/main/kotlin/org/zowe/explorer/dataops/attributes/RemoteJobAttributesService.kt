@@ -15,7 +15,7 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.mergeWith
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.createAttributes
-import eu.ibagroup.r2z.JobStatus
+import org.zowe.kotlinsdk.JobStatus
 
 
 const val JOBS_FOLDER_NAME = "Jobs"

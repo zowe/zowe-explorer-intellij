@@ -15,8 +15,8 @@ import org.zowe.explorer.api.api
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
-import eu.ibagroup.r2z.InfoAPI
-import eu.ibagroup.r2z.InfoResponse
+import org.zowe.kotlinsdk.InfoAPI
+import org.zowe.kotlinsdk.InfoResponse
 
 class InfoOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {

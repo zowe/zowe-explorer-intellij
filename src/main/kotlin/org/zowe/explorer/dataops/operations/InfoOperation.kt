@@ -11,7 +11,7 @@
 package org.zowe.explorer.dataops.operations
 
 import org.zowe.explorer.dataops.Operation
-import eu.ibagroup.r2z.InfoResponse
+import org.zowe.kotlinsdk.InfoResponse
 
 class InfoOperation(var url: String, val isAllowSelfSigned: Boolean) : Operation<InfoResponse> {
   override val resultClass = InfoResponse::class.java

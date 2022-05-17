@@ -25,9 +25,9 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.SubmitFileNameBody
-import eu.ibagroup.r2z.SubmitJobRequest
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.SubmitFileNameBody
+import org.zowe.kotlinsdk.SubmitJobRequest
 
 class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobRequest> {
 

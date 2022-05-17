@@ -22,8 +22,8 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.dataops.operations.RemoteUnitOperation
 import org.zowe.explorer.utils.cancelByIndicator
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.HMigrate
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.HMigrate
 
 data class MigrateOperationParams(val file: VirtualFile)
 

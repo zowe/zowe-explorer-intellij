@@ -12,8 +12,8 @@ package org.zowe.explorer.dataops.attributes
 
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.vfs.MFVirtualFile
-import eu.ibagroup.r2z.SpoolFile
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.SpoolFile
+import org.zowe.kotlinsdk.XIBMDataType
 
 data class RemoteSpoolFileAttributes(
   override val info: SpoolFile,

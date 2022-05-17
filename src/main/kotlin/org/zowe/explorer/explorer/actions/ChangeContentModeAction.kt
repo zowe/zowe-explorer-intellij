@@ -22,7 +22,7 @@ import org.zowe.explorer.dataops.synchronizer.FileAttributesChangeListener
 import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
 import org.zowe.explorer.explorer.ui.GlobalFileExplorerView
 import org.zowe.explorer.utils.service
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.XIBMDataType
 
 class ChangeContentModeAction : ToggleAction() {
 

@@ -11,9 +11,9 @@
 package org.zowe.explorer.api
 
 import com.google.gson.GsonBuilder
-import eu.ibagroup.r2z.buildApi
+import org.zowe.kotlinsdk.buildApi
 import org.zowe.explorer.config.connect.ConnectionConfig
-import eu.ibagroup.r2z.buildApiWithBytesConverter
+import org.zowe.kotlinsdk.buildApiWithBytesConverter
 import okhttp3.ConnectionPool
 import okhttp3.ConnectionSpec
 import okhttp3.Dispatcher

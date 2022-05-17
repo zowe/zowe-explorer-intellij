@@ -15,7 +15,7 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.mergeWith
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.createAttributes
-import eu.ibagroup.r2z.Dataset
+import org.zowe.kotlinsdk.Dataset
 
 const val MIGRATED = "Migrated"
 const val DATASETS_SUBFOLDER_NAME = "Data Sets"

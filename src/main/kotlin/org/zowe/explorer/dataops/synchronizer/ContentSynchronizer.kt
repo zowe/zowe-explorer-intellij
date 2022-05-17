@@ -16,9 +16,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.connect.ConnectionConfig
-import eu.ibagroup.r2z.CodePage
-import eu.ibagroup.r2z.XIBMDataType
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.CodePage
+import org.zowe.kotlinsdk.XIBMDataType
+import org.zowe.kotlinsdk.annotations.ZVersion
 
 enum class AcceptancePolicy {
   IF_EMPTY_ONLY,

@@ -21,7 +21,7 @@ import org.zowe.explorer.utils.applyIfNotNull
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 import retrofit2.Response
 
 class SpoolFileContentSynchronizerFactory: ContentSynchronizerFactory {

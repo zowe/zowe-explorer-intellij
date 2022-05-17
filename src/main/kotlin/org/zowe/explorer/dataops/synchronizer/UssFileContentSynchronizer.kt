@@ -21,9 +21,9 @@ import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
 import org.zowe.explorer.utils.mapNotNull
 import org.zowe.explorer.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.XIBMDataType
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.XIBMDataType
+import org.zowe.kotlinsdk.annotations.ZVersion
 import java.io.IOException
 
 class UssFileContentSynchronizerFactory : ContentSynchronizerFactory {
@@ -60,7 +60,7 @@ class UssFileContentSynchronizer(
           cancelByIndicator(indicator)
         }.execute()
         if (response.isSuccessful) {
-          content = response.body()?.removeLastNewLine()?.toByteArray()
+          content = response.body()?.string()?.removeLastNewLine()?.toByteArray()
         } else {
           throwable = CallException(response, "Cannot fetch data from ${attributes.path}")
         }

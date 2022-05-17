@@ -13,8 +13,8 @@ package org.zowe.explorer.dataops.attributes
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
-import eu.ibagroup.r2z.SpoolFile
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.SpoolFile
+import org.zowe.kotlinsdk.XIBMDataType
 
 class RemoteSpoolFileAttributesServiceFactory : AttributesServiceFactory{
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {

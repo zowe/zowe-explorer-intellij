@@ -23,7 +23,7 @@ import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
-import eu.ibagroup.r2z.JESApi
+import org.zowe.kotlinsdk.JESApi
 
 data class JobQuery(val library: MFVirtualFile)
 

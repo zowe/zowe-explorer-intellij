@@ -20,10 +20,10 @@ import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.XIBMDataType
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.XIBMDataType
+import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import java.io.IOException
 

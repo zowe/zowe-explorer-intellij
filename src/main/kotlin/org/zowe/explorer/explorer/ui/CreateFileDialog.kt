@@ -18,10 +18,10 @@ import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.dataops.operations.UssAllocationParams
 import org.zowe.explorer.utils.validateForBlank
 import org.zowe.explorer.utils.validateUssFileName
-import eu.ibagroup.r2z.CreateUssFile
-import eu.ibagroup.r2z.FileMode
-import eu.ibagroup.r2z.FileModeValue
-import eu.ibagroup.r2z.FileType
+import org.zowe.kotlinsdk.CreateUssFile
+import org.zowe.kotlinsdk.FileMode
+import org.zowe.kotlinsdk.FileModeValue
+import org.zowe.kotlinsdk.FileType
 import javax.swing.JComponent
 
 val dummyState: CreateFileDialogState

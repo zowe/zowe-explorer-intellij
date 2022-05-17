@@ -11,8 +11,8 @@
 package org.zowe.explorer.dataops.attributes
 
 import org.zowe.explorer.utils.clone
-import eu.ibagroup.r2z.JobStatus
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.JobStatus
+import org.zowe.kotlinsdk.XIBMDataType
 
 data class RemoteJobAttributes(
   val jobInfo: JobStatus,

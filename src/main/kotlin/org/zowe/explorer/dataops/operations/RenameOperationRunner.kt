@@ -22,10 +22,10 @@ import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
 import org.zowe.explorer.utils.runWriteActionOnWriteThread
 import org.zowe.explorer.vfs.sendVfsChangesTopic
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.MoveUssFile
-import eu.ibagroup.r2z.RenameData
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.MoveUssFile
+import org.zowe.kotlinsdk.RenameData
 
 class RenameOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {

@@ -13,7 +13,7 @@ package org.zowe.explorer.dataops.synchronizer.adapters
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.r2z.RecordFormat
+import org.zowe.kotlinsdk.RecordFormat
 
 abstract class LReclContentAdapter<Attributes: FileAttributes>(
   dataOpsManager: DataOpsManager

@@ -17,8 +17,8 @@ import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.crudable.nextUniqueValue
-import eu.ibagroup.r2z.CodePage
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.CodePage
+import org.zowe.kotlinsdk.annotations.ZVersion
 import java.util.*
 
 data class ConnectionDialogState(

@@ -19,7 +19,7 @@ import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.DialogState
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.r2z.HasMigrated
+import org.zowe.kotlinsdk.HasMigrated
 import javax.swing.JComponent
 
 class DatasetPropertiesDialog(val project: Project?, override var state: DatasetState) : DialogWrapper(project), StatefulComponent<DatasetState> {

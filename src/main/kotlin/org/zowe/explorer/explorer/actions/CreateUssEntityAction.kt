@@ -23,7 +23,7 @@ import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
-import eu.ibagroup.r2z.FileType
+import org.zowe.kotlinsdk.FileType
 
 abstract class CreateUssEntityAction : AnAction() {
 

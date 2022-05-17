@@ -24,8 +24,8 @@ import org.zowe.explorer.utils.asMutableList
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.JobStatus
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.JobStatus
 import retrofit2.Response
 
 class JobFileFetchProviderFactory : FileFetchProviderFactory {

@@ -30,8 +30,8 @@ import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
 import org.zowe.explorer.utils.runWriteActionOnWriteThread
 import org.zowe.explorer.utils.toMutableList
-import eu.ibagroup.r2z.zowe.config.ZoweConfig
-import eu.ibagroup.r2z.zowe.config.parseConfigJson
+import org.zowe.kotlinsdk.zowe.config.ZoweConfig
+import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.net.URI
 
 @Suppress("DialogTitleCapitalization")

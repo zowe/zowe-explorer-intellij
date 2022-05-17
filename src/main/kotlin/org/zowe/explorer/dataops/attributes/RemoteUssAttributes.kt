@@ -14,10 +14,10 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.username
 import org.zowe.explorer.utils.Copyable
 import org.zowe.explorer.utils.clone
-import eu.ibagroup.r2z.FileMode
-import eu.ibagroup.r2z.FileModeValue
-import eu.ibagroup.r2z.UssFile
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.FileMode
+import org.zowe.kotlinsdk.FileModeValue
+import org.zowe.kotlinsdk.UssFile
+import org.zowe.kotlinsdk.XIBMDataType
 
 private const val CURRENT_DIR_NAME = "."
 
