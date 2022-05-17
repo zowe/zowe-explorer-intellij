@@ -42,7 +42,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("com.starxg:java-keytar:1.0.0")
-  implementation("eu.ibagroup:zowe-r2z:1.0.24") // TODO: change
+  implementation("org.zowe:kotlindsk:0.1.0")
   implementation("com.segment.analytics.java:analytics:+")
   testImplementation("junit", "junit", "4.12")
 }
