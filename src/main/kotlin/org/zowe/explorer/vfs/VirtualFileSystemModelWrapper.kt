@@ -14,8 +14,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
-import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -28,7 +28,7 @@ open class VirtualFileSystemModelWrapper<File : VirtualFile, Model : VirtualFile
       "${it.path} is not supported by this FS. Only instances of ${vFileClass.name} are allowed"
     )
   }
-) : VirtualFileSystem(), FileSystemInterface, Disposable by model {
+) : NewVirtualFileSystem(), FileSystemInterface, Disposable by model {
 
   private inline fun <R> VirtualFile.ifOurInstance(
     onOurBlock: (File) -> R
@@ -199,19 +199,19 @@ open class VirtualFileSystemModelWrapper<File : VirtualFile, Model : VirtualFile
     }
   }
 
-  fun extractRootPath(normalizedPath: String): String {
+  override fun extractRootPath(normalizedPath: String): String {
     return model.extractRootPath(normalizedPath)
   }
 
-  fun findFileByPathIfCached(path: String): VirtualFile? {
+  override fun findFileByPathIfCached(path: String): VirtualFile? {
     return model.findFileByPathIfCached(path)
   }
 
-  fun getRank(): Int {
+  override fun getRank(): Int {
     return model.getRank()
   }
 
-  fun getAttributes(file: VirtualFile): FileAttributes? {
+  override fun getAttributes(file: VirtualFile): FileAttributes? {
     return file.ifOurInstance {
       model.getAttributes(it)
     }

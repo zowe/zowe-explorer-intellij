@@ -66,7 +66,7 @@ tasks {
       """
       <b>Bugs fixed:</b>
       <ul>
-        <li>Support for newer versions of IntelliJ </li>
+        <li>https://github.com/zowe/zowe-explorer-intellij/issues/38</li>
       </ul>"""
     )
   }
