@@ -59,6 +59,13 @@ class PurgeJobAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    //TODO
+    val view = e.getData(JOBS_LOG_VIEW) ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
+    if(jobStatus == null) {
+      e.presentation.isEnabled = false
+    }
   }
 }

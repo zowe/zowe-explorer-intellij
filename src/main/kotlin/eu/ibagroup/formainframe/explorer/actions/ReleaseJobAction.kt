@@ -52,7 +52,7 @@ class ReleaseJobAction : AnAction() {
       return
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
-    if(jobStatus == JobStatus.Status.OUTPUT || jobStatus == JobStatus.Status.ACTIVE) {
+    if(jobStatus == JobStatus.Status.OUTPUT || jobStatus == JobStatus.Status.ACTIVE || jobStatus == null) {
       e.presentation.isEnabled = false
     }
   }

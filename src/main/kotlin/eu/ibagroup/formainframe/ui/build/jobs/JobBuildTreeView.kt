@@ -90,7 +90,7 @@ class JobBuildTreeView(
       cachedSpoolLog
         .forEach {
           val prevLog = spoolFileToLogMap[it.key] ?: ""
-          val logToDisplay = it.value.substring(prevLog.length)
+          val logToDisplay = if (it.value.length >= prevLog.length) it.value.substring(prevLog.length) else prevLog
           treeConsoleView.onEvent(buildId, OutputBuildEventImpl(it.key.id, logToDisplay, true))
           spoolFileToLogMap[it.key] = it.value
         }
