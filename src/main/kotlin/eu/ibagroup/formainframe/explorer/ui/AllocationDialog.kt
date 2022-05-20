@@ -200,11 +200,18 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   }
 
   override fun doValidate(): ValidationInfo? {
-    return validateDatasetNameOnInput(datasetNameField) ?: validateForBlank(datasetNameField) ?:
-    validateForGreaterValue(primaryAllocationField, 1) ?: validateForPositiveInteger(secondaryAllocationField) ?:
-    validateForPositiveInteger(directoryBlocksField) ?: validateForPositiveInteger(recordLengthField) ?:
-    validateForPositiveInteger(blockSizeField) ?: validateForPositiveInteger(averageBlockLengthField) ?:
-    validateVolser(advancedParametersField)
+    super.doValidate()
+    return validateDataset(
+      datasetNameField,
+      datasetOrganizationBox.selectedItem as DatasetOrganization,
+      primaryAllocationField,
+      secondaryAllocationField,
+      directoryBlocksField,
+      recordLengthField,
+      blockSizeField,
+      averageBlockLengthField,
+      advancedParametersField
+    )
   }
 
   init {

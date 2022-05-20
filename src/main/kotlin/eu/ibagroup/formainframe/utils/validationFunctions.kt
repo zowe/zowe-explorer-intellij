@@ -11,6 +11,7 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
+import eu.ibagroup.r2z.DatasetOrganization
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -237,6 +238,26 @@ private val segmentCharsErrorText =
       "\nThe remaining seven characters are either alphabetic," +
       "\nnumeric (0 - 9), national, a hyphen (-)." +
       "\nName segments are separated by a period (.)"
+
+fun validateDataset(
+  datasetName: JTextField,
+  datasetOrganization: DatasetOrganization,
+  primaryAllocation: JTextField,
+  secondaryAllocation: JTextField,
+  directoryBlocks: JTextField,
+  recordLength: JTextField,
+  blockSize: JTextField,
+  averageBlockLength: JTextField,
+  advancedParameters: JTextField
+) : ValidationInfo? {
+
+  return validateDatasetNameOnInput(datasetName) ?: validateForGreaterValue(primaryAllocation, 1)
+  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForPositiveInteger(directoryBlocks).takeIf {
+    datasetOrganization == DatasetOrganization.PO
+  } ?: validateForPositiveInteger(recordLength) ?: validateForPositiveInteger(blockSize) ?: validateForPositiveInteger(
+    averageBlockLength
+  ) ?: validateVolser(advancedParameters)
+}
 
 fun validateDatasetNameOnInput(component: JTextField): ValidationInfo? {
   val text = component.text.trim()
