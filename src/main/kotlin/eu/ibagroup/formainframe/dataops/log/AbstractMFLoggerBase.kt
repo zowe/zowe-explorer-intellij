@@ -67,7 +67,7 @@ abstract class AbstractMFLoggerBase<PInfo: MFProcessInfo, LFetcher: LogFetcher<P
     while (!isStopped.get() && (maxFetchCount == null || fetchNumber <= maxFetchCount)) {
       val newLog = logFetcher.fetchLog(mfProcessInfo).also { onNextLogHandler(it) }.joinToString("")
 
-      if (newLog.substring(0, oldLog.length) == oldLog) {
+      if (newLog.length >= oldLog.length && newLog.substring(0, oldLog.length) == oldLog) {
         processHandler.notifyTextAvailable(newLog.substring(oldLog.length), ProcessOutputType.STDOUT)
       } else {
         consoleView.clear()

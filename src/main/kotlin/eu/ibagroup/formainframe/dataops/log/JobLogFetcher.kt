@@ -112,7 +112,7 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
    * @return true if job finished and false otherwise.
    */
   override fun isLogFinished(mfProcessInfo: JobProcessInfo): Boolean {
-    return getJobStatus(mfProcessInfo)?.status == JobStatus.Status.OUTPUT
+    return getJobStatus(mfProcessInfo)?.status == JobStatus.Status.OUTPUT || getJobStatus(mfProcessInfo)?.status == null
   }
 
   /**

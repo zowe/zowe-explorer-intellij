@@ -6,11 +6,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.operations.jobs.*
+import eu.ibagroup.formainframe.dataops.operations.jobs.BasicPurgeJobParams
+import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.r2z.JobStatus
+import java.awt.event.MouseEvent
 
-class ReleaseJobAction : AnAction() {
+class PurgeJobAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
     return true
@@ -25,22 +27,32 @@ class ReleaseJobAction : AnAction() {
     val dataOpsManager = service<DataOpsManager>()
     if (jobStatus != null) {
       runBackgroundableTask(
-        title = "Release ${jobStatus.jobName}: ${jobStatus.jobId}",
+        title = "Purging ${jobStatus.jobName}: ${jobStatus.jobId}",
         project = e.project,
         cancellable = true
       ) {
         runCatching {
           dataOpsManager.performOperation(
-            operation = ReleaseJobOperation(
-              request = BasicReleaseJobParams(jobStatus.jobName, jobStatus.jobId),
+            operation = PurgeJobOperation(
+              request = BasicPurgeJobParams(jobStatus.jobName, jobStatus.jobId),
               connectionConfig = view.getConnectionConfig()
             ),
             progressIndicator = it
           )
         }.onFailure {
-          view.showNotification("Error releasing ${jobStatus.jobName}: ${jobStatus.jobId}", "${it.message}", e.project, NotificationType.ERROR)
+          view.showNotification(
+            "Error purging ${jobStatus.jobName}: ${jobStatus.jobId}",
+            "${it.message}",
+            e.project,
+            NotificationType.ERROR
+          )
         }.onSuccess {
-          view.showNotification("${jobStatus.jobName}: ${jobStatus.jobId} has been released", "${it}", e.project, NotificationType.INFORMATION)
+          view.showNotification(
+            "${jobStatus.jobName}: ${jobStatus.jobId} has been purged",
+            "${it}",
+            e.project,
+            NotificationType.INFORMATION
+          )
         }
       }
     }
@@ -52,9 +64,8 @@ class ReleaseJobAction : AnAction() {
       return
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
-    if(jobStatus == JobStatus.Status.OUTPUT || jobStatus == JobStatus.Status.ACTIVE || jobStatus == null) {
+    if(jobStatus == null) {
       e.presentation.isEnabled = false
     }
   }
-
 }
