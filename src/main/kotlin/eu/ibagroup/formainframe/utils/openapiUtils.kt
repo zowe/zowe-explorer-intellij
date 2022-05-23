@@ -1,5 +1,8 @@
 package eu.ibagroup.formainframe.utils
 
+import com.intellij.ide.projectView.ProjectViewNode
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
@@ -27,6 +30,8 @@ import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.Promise
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreePath
 import kotlin.concurrent.withLock
 
 class Dummy private constructor()
@@ -267,3 +272,4 @@ fun FileAttributes.formMfPath(): String {
   val memberName = if (this is RemoteMemberAttributes) name else null
   return MfFilePath(fileType, filePath, memberName).toString()
 }
+

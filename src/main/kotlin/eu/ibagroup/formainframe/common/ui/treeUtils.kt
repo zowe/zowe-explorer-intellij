@@ -1,6 +1,10 @@
 package eu.ibagroup.formainframe.common.ui
 
+import com.intellij.ide.projectView.ProjectViewNode
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.util.ui.tree.TreeUtil
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -29,4 +33,9 @@ fun makeNodeDataFromTreePath (explorer: Explorer<*>, treePath: TreePath?): NodeD
     explorer.componentManager.service<DataOpsManager>().tryToGetAttributes(file)
   } else null
   return NodeData(descriptor, file, attributes)
+}
+
+fun TreePath.getVirtualFile(): VirtualFile? {
+  val treeNode = (lastPathComponent as DefaultMutableTreeNode).userObject as ProjectViewNode<*>
+  return if (treeNode is PsiFileNode) treeNode.virtualFile else if (treeNode is PsiDirectoryNode) treeNode.virtualFile else null
 }

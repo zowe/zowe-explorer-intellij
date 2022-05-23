@@ -4,12 +4,7 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.dnd.TransferableWrapper
-import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.ProjectViewImpl
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode
-import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
@@ -17,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
+import eu.ibagroup.formainframe.common.ui.getVirtualFile
 import eu.ibagroup.formainframe.common.ui.makeNodeDataFromTreePath
 import eu.ibagroup.formainframe.explorer.Explorer
 import groovy.lang.Tuple4
@@ -26,6 +22,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
 val IS_DRAG_AND_DROP_KEY = DataKey.create<Boolean>("IsDropKey")
+val DRAGGED_FROM_PROJECT_FILES_ARRAY = DataKey.create<List<VirtualFile>>("DraggedFilesFromProject")
 
 class GlobalExplorerViewDropTarget(
   val myTree: Tree,
@@ -38,13 +35,17 @@ class GlobalExplorerViewDropTarget(
 
 //    val pasteProvider = copyPasteSupport.getPasteProvider(listOf(sourcesTargetBounds.second))
     val pasteProvider = copyPasteSupport.pasteProvider
-    val cutProvider = copyPasteSupport.getCutProvider(sourcesTargetBounds.first?.toList() ?: listOf())
+    val cutProvider = copyPasteSupport.cutProvider
     val sourceTreePaths = sourcesTargetBounds.first?.toList() ?: listOf()
     val copyCutContext = DataContext {
       when (it) {
         CommonDataKeys.PROJECT.name -> copyPasteSupport.project
         ExplorerDataKeys.NODE_DATA_ARRAY.name -> sourceTreePaths
-          .map { treePath -> makeNodeDataFromTreePath(explorer, treePath) }.toTypedArray()
+          .mapNotNull { treePath ->
+            if ((treePath?.lastPathComponent as DefaultMutableTreeNode).userObject is ExplorerTreeNode<*>)
+              makeNodeDataFromTreePath(explorer, treePath)
+            else null
+          }.toTypedArray()
         CommonDataKeys.VIRTUAL_FILE_ARRAY.name -> {
           if (sourcesTargetBounds.fourth == myTree) {
             arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file)
@@ -53,20 +54,24 @@ class GlobalExplorerViewDropTarget(
           }
         }
         IS_DRAG_AND_DROP_KEY.name -> true
+        DRAGGED_FROM_PROJECT_FILES_ARRAY.name -> {
+          if (event.attachedObject is GlobalExplorerViewDragSource.ExplorerTransferableWrapper) {
+            emptyList()
+          } else {
+            sourcesTargetBounds.first?.mapNotNull { treePath -> treePath?.getVirtualFile() }
+          }
+        }
         else -> null
       }
     }
     if (cutProvider.isCutEnabled(copyCutContext)) {
       cutProvider.performCut(copyCutContext)
     }
-    if (pasteProvider.isPastePossible(copyCutContext)) {
-      pasteProvider.performPaste(copyCutContext)
-    }
+    pasteProvider.performPaste(copyCutContext)
   }
 
-  fun TreePath.getVirtualFile(): VirtualFile? {
-    val treeNode = (lastPathComponent as DefaultMutableTreeNode).userObject as ProjectViewNode<*>
-    return if (treeNode is PsiFileNode) treeNode.virtualFile else if (treeNode is PsiDirectoryNode) treeNode.virtualFile else null
+  fun getProjectTree (): JTree? {
+    return copyPasteSupport.project?.let { ProjectViewImpl.getInstance(it).currentProjectViewPane.tree }
   }
 
   override fun update(event: DnDEvent): Boolean {
@@ -78,16 +83,23 @@ class GlobalExplorerViewDropTarget(
 
 //    val pasteEnabled = copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
 //    val pasteEnabled = false
-    val pasteEnabled = if (sourcesTargetBounds.fourth == myTree)
+    val isCopiedFromRemote = event.attachedObject is GlobalExplorerViewDragSource.ExplorerTransferableWrapper
+
+    val pasteEnabled = if (isCopiedFromRemote && sourcesTargetBounds.fourth == myTree)
       copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
-    else {
+    else if (isCopiedFromRemote && sourcesTargetBounds.fourth === getProjectTree()) {
       val vFile = sourcesTargetBounds.second.getVirtualFile()
       if (vFile == null) {
         false
       } else {
         copyPasteSupport.isPastePossible(listOf(vFile), sources.map { makeNodeDataFromTreePath(explorer, it) })
       }
-    }
+    } else if (!isCopiedFromRemote && sourcesTargetBounds.fourth == myTree) {
+      val sourceFiles = sources.mapNotNull { it?.getVirtualFile() }
+      val target = makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file?.let { listOf(it) } ?: emptyList()
+      copyPasteSupport.isPastePossibleForFiles(target, sourceFiles)
+    } else false
+
     event.isDropPossible = pasteEnabled
     if (pasteEnabled) {
       event.setHighlighting(
@@ -104,8 +116,8 @@ class GlobalExplorerViewDropTarget(
     val point = event.point ?: return null
 
     val treeToUpdate: JTree
-    val projectTree = copyPasteSupport.project?.let { ProjectViewImpl.getInstance(it).currentProjectViewPane.tree }
 
+    val projectTree = getProjectTree()
     treeToUpdate = if (event.currentOverComponent == myTree) {
       myTree
     } else if (event.currentOverComponent == projectTree && projectTree != null) {

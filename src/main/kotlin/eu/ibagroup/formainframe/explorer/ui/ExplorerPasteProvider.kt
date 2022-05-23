@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
@@ -47,7 +48,8 @@ class ExplorerPasteProvider: PasteProvider {
     copyPasteSupport.bufferLock.withLock {
       val sourceFilesRaw = copyPasteSupport.copyPasteBuffer
         .mapNotNull { it.file }
-        .plus(copyPasteSupport.dragAndDropCopyPasteBuffer.mapNotNull { it.file })
+        .plus(dataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) ?: emptyList())
+        .plus(copyPasteSupport.getSourceFilesFromClipboard())
 
       val skipDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
       val overwriteDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
@@ -62,9 +64,17 @@ class ExplorerPasteProvider: PasteProvider {
       val sourceFiles = destinationSourceFilePairs.map { it.second }.toSet().toList()
 
       if (explorerView.isCut.get()) {
-        val hasLocalFilesInDestinations = pasteDestinations.any { it is MFVirtualFile }
-        val dialogTitlePrefix = if (hasLocalFilesInDestinations) "Moving" else "Downloading"
-        val dialogActionMessage = if (hasLocalFilesInDestinations) "move" else "download"
+        val hasRemoteFilesInDestinations = pasteDestinations.any { it is MFVirtualFile }
+        val hasLocalFilesInSources = sourceFiles.any { it !is MFVirtualFile }
+
+        val dialogTitlePrefix = if (!hasLocalFilesInSources && hasRemoteFilesInDestinations) "Moving"
+        else if (hasLocalFilesInSources && hasRemoteFilesInDestinations) "Uploading"
+        else "Downloading"
+
+        val dialogActionMessage = if (!hasLocalFilesInSources && hasRemoteFilesInDestinations) "move"
+        else if (hasLocalFilesInSources && hasRemoteFilesInDestinations) "upload"
+        else "download"
+
         showYesNoDialog(
           title = "$dialogTitlePrefix of ${sourceFiles.size} file(s)",
           message = "Do you want to $dialogActionMessage these files?",
@@ -88,9 +98,9 @@ class ExplorerPasteProvider: PasteProvider {
                 val destAttributes = dataOpsManager.tryToGetAttributes(destChild)
                 if (
                   destAttributes is RemoteMemberAttributes &&
-                  sourceAttributes is RemoteUssAttributes
+                  (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
                 ) {
-                  val memberName = sourceAttributes.name.filter { it.isLetterOrDigit() }.take(8).toUpperCase()
+                  val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).toUpperCase()
                   if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
                 } else if (
                   destAttributes is RemoteMemberAttributes &&
@@ -132,7 +142,7 @@ class ExplorerPasteProvider: PasteProvider {
         else {
           val sourceUssAttributes = sourceFiles.filter { sourceFile ->
             val sourceAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
-            sourceAttributes is RemoteUssAttributes
+            sourceAttributes is RemoteUssAttributes || sourceFile is VirtualFileImpl
           }
           sourceUssAttributes.map { Pair(destFile, it) }.ifEmpty { null }
         }
@@ -172,11 +182,15 @@ class ExplorerPasteProvider: PasteProvider {
       }.flatten()
 
       val filesToMoveTotal = operations.size
+      val hasLocalFilesInOperationsSources = operations.any { it.source !is MFVirtualFile }
+      val hasRemoteFilesInOperationsDestinations = operations.any { it.destination is MFVirtualFile }
       val titlePrefix = if (explorerView.isCut.get()) {
-        if (operations.any { it.destination is MFVirtualFile }) {
+        if (!hasLocalFilesInOperationsSources && hasRemoteFilesInOperationsDestinations) {
           "Moving"
-        } else {
+        } else if (!hasLocalFilesInOperationsSources) {
           "Downloading"
+        } else {
+          "Uploading"
         }
       } else {
         "Copying"

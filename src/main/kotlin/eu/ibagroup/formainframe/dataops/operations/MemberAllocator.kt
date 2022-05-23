@@ -1,7 +1,7 @@
 package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
-import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -28,11 +28,11 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
-    val request = api<DataAPI>(operation.connectionConfig).writeToDatasetMember(
+    val request = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.datasetName,
       memberName = operation.request.memberName,
-      content = ""
+      content = byteArrayOf()
     ).cancelByIndicator(progressIndicator).execute()
     if (!request.isSuccessful) {
       throw Throwable(request.code().toString())

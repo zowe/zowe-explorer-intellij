@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -12,6 +13,7 @@ import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.DatasetOrganization
+import eu.ibagroup.r2z.XIBMDataType
 import retrofit2.Call
 import java.io.IOException
 
@@ -87,18 +89,19 @@ class SeqDatasetContentSynchronizer(
     val volser = attributes.volser
     val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
     return if (volser != null) {
-      api<DataAPI>(connectionConfig).writeToDataset(
+      val newContent = if (xIBMDataType.type === XIBMDataType.Type.BINARY) content else content.addNewLine()
+      apiWithBytesConverter<DataAPI>(connectionConfig).writeToDataset(
         authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
         volser = volser,
-        content = String(content).addNewLine(),
+        content = newContent,
         xIBMDataType = xIBMDataType
       )
     } else {
-      api<DataAPI>(connectionConfig).writeToDataset(
+      apiWithBytesConverter<DataAPI>(connectionConfig).writeToDataset(
         authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
-        content = String(content),
+        content = content,
         xIBMDataType = xIBMDataType
       )
     }

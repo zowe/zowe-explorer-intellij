@@ -23,6 +23,6 @@ fun String.removeLastNewLine(): String {
   }
 }
 
-fun String.addNewLine(): String {
-  return this + NEW_LINE
+fun ByteArray.addNewLine(): ByteArray {
+  return this.plus(NEW_LINE.toByteArray())
 }
