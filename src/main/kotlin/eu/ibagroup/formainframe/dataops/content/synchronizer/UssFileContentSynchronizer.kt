@@ -2,6 +2,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -75,10 +76,13 @@ class UssFileContentSynchronizer(
       try {
         val connectionConfig = requester.connectionConfig
         val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
-        val response = api<DataAPI>(connectionConfig).writeToUssFile(
+
+        val newContent = if (xIBMDataType.type === XIBMDataType.Type.BINARY) newContentBytes else newContentBytes.addNewLine()
+
+        val response = apiWithBytesConverter<DataAPI>(connectionConfig).writeToUssFile(
           authorizationToken = connectionConfig.authToken,
           filePath = attributes.path.substring(1),
-          body = String(newContentBytes).addNewLine(),
+          body = newContent,
           xIBMDataType = xIBMDataType
         ).applyIfNotNull(progressIndicator) { indicator ->
           cancelByIndicator(indicator)

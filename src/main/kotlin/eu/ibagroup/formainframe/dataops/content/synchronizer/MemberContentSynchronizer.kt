@@ -2,6 +2,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
@@ -12,6 +13,7 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 
 class MemberContentSynchronizerFactory: ContentSynchronizerFactory {
@@ -89,11 +91,12 @@ class MemberContentSynchronizer(
         log.info("Trying to execute a call using $requester")
         val connectionConfig = requester.connectionConfig
         val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
-        val response = api<DataAPI>(connectionConfig).writeToDatasetMember(
+        val newContent = if (xIBMDataType.type == XIBMDataType.Type.BINARY) newContentBytes else newContentBytes.addNewLine()
+        val response = apiWithBytesConverter<DataAPI>(connectionConfig).writeToDatasetMember(
           authorizationToken = connectionConfig.authToken,
           datasetName = libAttributes.name,
           memberName = attributes.name,
-          content = String(newContentBytes).addNewLine(),
+          content = newContent,
           xIBMDataType = xIBMDataType
         ).applyIfNotNull(progressIndicator) { indicator ->
           cancelByIndicator(indicator)

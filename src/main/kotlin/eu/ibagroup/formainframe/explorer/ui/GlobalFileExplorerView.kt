@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
@@ -336,7 +337,6 @@ class GlobalFileExplorerView(
   private var isDropTargetRegistered = false
 
   internal val isCut = AtomicBoolean(true)
-  private val isDrag = AtomicBoolean(false)
 
   private val cutCopyPredicate: (NodeData) -> Boolean = {
     it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isConfigUssPath)
@@ -401,8 +401,15 @@ class GlobalFileExplorerView(
         copyPasteBuffer = buffer
       }
     }
+    fun getSourceFilesFromClipboard (): List<VirtualFile> {
+      return CopyPasteManager.getInstance().contents?.let { tr ->
+        FileCopyPasteUtil.getFileList(tr)?.mapNotNull {
+          VirtualFileManager.getInstance().findFileByNioPath(it.absoluteFile.toPath())
+        }
+      } ?: emptyList()
+    }
 
-    inner class ExplorerCutProvider(private val selectedNodesData: List<NodeData>? = null): CutProvider {
+    inner class ExplorerCutProvider : CutProvider {
 
       override fun performCut(dataContext: DataContext) {
         performCopyCut(true, dataContext)
@@ -416,10 +423,6 @@ class GlobalFileExplorerView(
       override fun isCutVisible(dataContext: DataContext): Boolean {
         return isCopyCutEnabledAndVisible(dataContext)
       }
-    }
-
-    fun getCutProvider (selectedTreePaths: List<TreePath?>): CutProvider {
-      return ExplorerCutProvider(selectedTreePaths.mapNotNull { makeNodeDataFromTreePath(explorer, it) })
     }
 
     override fun getCutProvider(): CutProvider {
@@ -460,23 +463,31 @@ class GlobalFileExplorerView(
       }
     }
 
-    internal fun isPastePossible(destinationFiles: List<VirtualFile>?, sourceNodesData: List<NodeData>): Boolean {
+    internal fun isPastePossibleForFiles(destinationFiles: List<VirtualFile>?, sourceFiles: List<VirtualFile>): Boolean {
+      registerDropTargetInProjectViewIfNeeded()
       val destFiles = destinationFiles ?: mySelectedNodesData.mapNotNull { it.file }
       return bufferLock.withLock {
         getDestinationSourceFilePairs(
-          sourceFiles = sourceNodesData.mapNotNull { it.file },
-          destinationFiles = destFiles,
-          isCut = isCut.get()
+                sourceFiles = sourceFiles.plus(copyPasteSupport.getSourceFilesFromClipboard()).distinct(),
+                destinationFiles = destFiles,
+                isCut = isCut.get()
         ).isNotEmpty()
       }
     }
 
+    internal fun isPastePossible(destinationFiles: List<VirtualFile>?, sourceNodesData: List<NodeData>): Boolean {
+      return isPastePossibleForFiles(destinationFiles, sourceNodesData.mapNotNull { it.file })
+    }
+
     fun isPastePossibleFromPath(destinationPaths: List<TreePath>, sourcePaths: List<TreePath?>): Boolean {
       return isPastePossible(
-        destinationPaths.map { makeNodeDataFromTreePath(explorer, it).file as VirtualFile },
+        destinationPaths.mapNotNull {
+          makeNodeDataFromTreePath(explorer, it).let { nodeData -> if (nodeData.file is VirtualFile) nodeData.file else null }
+        },
         sourcePaths.map { makeNodeDataFromTreePath(explorer, it) }
       )
     }
+
 
     internal fun isPastePossibleAndEnabled(destinationFiles: List<VirtualFile>?): Boolean {
       return isPastePossible(destinationFiles, if (dragAndDropCopyPasteBuffer.size > copyPasteBuffer.size) dragAndDropCopyPasteBuffer else copyPasteBuffer)

@@ -79,26 +79,27 @@ class GlobalExplorerViewDragSource(
     return com.intellij.openapi.util.Pair(image, Point())
   }
 
+  public class ExplorerTransferableWrapper(val myTree: Tree): TransferableWrapper {
+    override fun asFileList(): List<File>? {
+      return PsiCopyPasteManager.asFileList(psiElements)
+    }
+
+    override fun getTreePaths(): Array<TreePath>? {
+      return myTree.selectionPaths
+    }
+
+    override fun getTreeNodes(): Array<TreeNode> {
+      return emptyArray()
+    }
+
+    override fun getPsiElements(): Array<PsiElement> {
+      return emptyArray()
+    }
+  }
 
   override fun startDragging(action: DnDAction?, dragOrigin: Point): DnDDragStartBean {
     copyPasteSupport.registerDropTargetInProjectViewIfNeeded()
-    return DnDDragStartBean(object : TransferableWrapper {
-      override fun asFileList(): List<File>? {
-        return PsiCopyPasteManager.asFileList(psiElements)
-      }
-
-      override fun getTreePaths(): Array<TreePath>? {
-        return myTree.selectionPaths
-      }
-
-      override fun getTreeNodes(): Array<TreeNode> {
-        return emptyArray()
-      }
-
-      override fun getPsiElements(): Array<PsiElement> {
-        return emptyArray()
-      }
-    })
+    return DnDDragStartBean(ExplorerTransferableWrapper(myTree))
   }
 
 }

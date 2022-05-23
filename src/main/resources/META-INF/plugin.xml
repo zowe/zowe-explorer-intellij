@@ -182,6 +182,12 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RemoteToLocalDirectoryMoverFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.LocalFileToUssFileMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.LocalDirToUssDirMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.LocalFileToPdsMoverFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.ForceRenameOperationRunnerFactory"/>
