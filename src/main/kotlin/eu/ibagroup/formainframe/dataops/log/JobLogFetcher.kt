@@ -10,6 +10,9 @@ import eu.ibagroup.r2z.JobStatus
 import eu.ibagroup.r2z.SpoolFile
 
 class JobLogFetcherFactory: LogFetcherFactory {
+  override fun acceptsProcessInfo(mfProcessInfo: MFProcessInfo): Boolean {
+    return mfProcessInfo is JobProcessInfo
+  }
   override fun buildComponent(dataOpsManager: DataOpsManager): LogFetcher<*> {
     return JobLogFetcher()
   }

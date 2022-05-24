@@ -2,9 +2,11 @@ package eu.ibagroup.formainframe.ui.build.jobs
 
 import com.intellij.build.BuildTreeConsoleView
 import com.intellij.build.DefaultBuildDescriptor
+import com.intellij.build.ExecutionNode
 import com.intellij.build.events.impl.*
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -21,6 +23,7 @@ import eu.ibagroup.r2z.SpoolFile
 import java.awt.BorderLayout
 import java.util.*
 import javax.swing.JComponent
+import javax.swing.tree.DefaultMutableTreeNode
 
 val JOBS_LOG_VIEW = DataKey.create<JobBuildTreeView>("jobsLogView")
 const val JOBS_LOG_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"
@@ -34,6 +37,7 @@ const val JOBS_LOG_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.Ex
  * @param project project instance
  * @author Valentine Krus
  */
+@Suppress("UnstableApiUsage")
 class JobBuildTreeView(
   jobLogInfo: JobProcessInfo,
   consoleView: ConsoleView,
@@ -109,6 +113,11 @@ class JobBuildTreeView(
         .forEach {
           treeConsoleView.onEvent(buildId, FinishEventImpl(it.key.id, buildId, Date().time, it.key.ddName, result))
         }
+      runCatching {
+        val buildNode = (treeConsoleView.tree.model.root as DefaultMutableTreeNode).firstChild
+        val buildExecutionNode = (buildNode as DefaultMutableTreeNode).userObject as ExecutionNode
+        buildExecutionNode.setIconProvider { AllIcons.General.InspectionsOK }
+      }
       treeConsoleView.onEvent(buildId, FinishBuildEventImpl(buildId, buildId, Date().time, buildId, result))
     }
 
