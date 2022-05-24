@@ -75,10 +75,14 @@ class ExplorerPasteProvider: PasteProvider {
         else if (hasLocalFilesInSources && hasRemoteFilesInDestinations) "upload"
         else "download"
 
+        val dialogMessagePrefix = if (dialogTitlePrefix == "Moving") ""
+        else "$dialogTitlePrefix files can violate security rules of customer who owns this system.\n\n"
+
         showYesNoDialog(
           title = "$dialogTitlePrefix of ${sourceFiles.size} file(s)",
-          message = "Do you want to $dialogActionMessage these files?",
-          project = project
+          message = "${dialogMessagePrefix}Do you want to $dialogActionMessage these files?",
+          project = project,
+          icon = if (dialogTitlePrefix == "Moving") null else AllIcons.General.WarningDialog
         ).let {
           if (!it) {
             copyPasteSupport.removeFromBuffer { nodeData ->
