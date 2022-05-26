@@ -91,6 +91,9 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
             errorMessage = details[0] as String
           }
           errorMessages[query] = service<ErrorSeparatorService>().separateErrorMessage(errorMessage)["error.description"] as String
+        } else {
+          val errorMessage = it.message ?: "Error"
+          errorMessages[query] = errorMessage
         }
         cache[query] = listOf()
         cacheState[query] = CacheState.ERROR
