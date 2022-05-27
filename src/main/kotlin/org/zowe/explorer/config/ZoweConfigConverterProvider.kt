@@ -2,6 +2,7 @@ package org.zowe.explorer.config
 
 import com.intellij.configurationStore.getPersistentStateComponentStorageLocation
 import com.intellij.conversion.*
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import java.io.File
 import java.nio.file.Files
@@ -45,6 +46,7 @@ class ZoweConfigConverterProvider : ConverterProvider() {
                 .replace(oldConfigStorageName.toRegex(), newConfigStorageName)
             newConfigFile.createNewFile()
             Files.write(newConfigFile.toPath(), newContent.toByteArray(charset))
+            service<IComponentStore>().reloadState(ConfigServiceImpl::class.java)
           }
         }
 
