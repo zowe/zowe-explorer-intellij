@@ -49,7 +49,7 @@ To start using the plugin:<br/>
 </ul></br>
 <b>Note: z/OS 2.1 or higher is required with <a href="https://docs.zowe.org/stable/user-guide/systemrequirements-zosmf.html">configured z/OSMF</a>. Plugin is in active development state.<br/>
 Feel free to recommend or report everything on our <a href="https://github.com/zowe/zowe-explorer-intellij/issues">Github</a></b><br/>
-Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg">Slack</a><br/>
+Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M">Slack</a><br/>
 ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -208,6 +208,9 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                         serviceImplementation="org.zowe.explorer.zowe.service.ZoweConfigServiceImpl"/>
 
         <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
+
+        <project.converterProvider id="org.zowe.explorer.config.ZoweConfigConverterProvider"
+                                   implementation="org.zowe.explorer.config.ZoweConfigConverterProvider"/>
     </extensions>
 
     <actions>
