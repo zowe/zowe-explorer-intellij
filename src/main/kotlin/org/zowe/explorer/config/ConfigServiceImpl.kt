@@ -28,8 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.parsers.DocumentBuilderFactory
 
 @State(
-  name = "by.iba.connector.services.ConfigService",
-  storages = [Storage(value = "iba_connector_config.xml", exportable = true)]
+  name = "org.zowe.explorer.config.ConfigService",
+  storages = [Storage(value = "zowe_explorer_intellij_config.xml", exportable = true)]
 )
 class ConfigServiceImpl: ConfigService {
 
