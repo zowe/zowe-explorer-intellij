@@ -15,6 +15,7 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.UnitOperation
 import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.explorer.Explorer
 
 class MoveCopyOperation(
   val source: VirtualFile,
@@ -23,7 +24,8 @@ class MoveCopyOperation(
   val destinationAttributes: FileAttributes?,
   val isMove: Boolean,
   val forceOverwriting: Boolean,
-  val newName: String?
+  val newName: String?,
+  val explorer: Explorer<*>? = null
 ) : UnitOperation {
   constructor(
     source: VirtualFile,
@@ -31,7 +33,8 @@ class MoveCopyOperation(
     isMove: Boolean,
     forceOverwriting: Boolean,
     newName: String?,
-    dataOpsManager: DataOpsManager
+    dataOpsManager: DataOpsManager,
+    explorer: Explorer<*>? = null
   ) : this(
     source = source,
     sourceAttributes = dataOpsManager.tryToGetAttributes(source),
@@ -39,7 +42,8 @@ class MoveCopyOperation(
     destinationAttributes = dataOpsManager.tryToGetAttributes(destination),
     isMove = isMove,
     forceOverwriting = forceOverwriting,
-    newName = newName
+    newName = newName,
+    explorer = explorer
   )
 }
 

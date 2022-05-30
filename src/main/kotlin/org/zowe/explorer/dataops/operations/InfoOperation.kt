@@ -10,9 +10,10 @@
 
 package org.zowe.explorer.dataops.operations
 
+import org.zowe.explorer.config.connect.ui.ConnectionDialogState
 import org.zowe.explorer.dataops.Operation
-import org.zowe.kotlinsdk.InfoResponse
+import org.zowe.kotlinsdk.SystemsResponse
 
-class InfoOperation(var url: String, val isAllowSelfSigned: Boolean) : Operation<InfoResponse> {
-  override val resultClass = InfoResponse::class.java
+class InfoOperation(var state: ConnectionDialogState) : Operation<SystemsResponse> {
+  override val resultClass = SystemsResponse::class.java
 }

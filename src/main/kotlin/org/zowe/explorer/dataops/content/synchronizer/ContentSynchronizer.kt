@@ -1,0 +1,53 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
+package org.zowe.explorer.dataops.content.synchronizer
+
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.vfs.VirtualFile
+import org.zowe.explorer.dataops.DataOpsComponentFactory
+
+/**
+ * Factory interface for creating [ContentSynchronizer] instances.
+ * @author Valentine Krus
+ */
+interface ContentSynchronizerFactory: DataOpsComponentFactory<ContentSynchronizer>
+
+/**
+ * Base interface for synchronization specific file with mainframe.
+ * @author Valentine Krus
+ */
+interface ContentSynchronizer {
+
+  companion object {
+    @JvmField
+    val EP = ExtensionPointName.create<ContentSynchronizerFactory>("org.zowe.explorer.contentSynchronizer")
+  }
+
+  /**
+   * Virtual file class (MFVirtualFile in most cases).
+   */
+  val vFileClass: Class<out VirtualFile>
+
+  /**
+   * Checks if current implementation of content synchronizer can synchronize passed file with mainframe.
+   * @param file virtual file to check compatibility with synchronizer.
+   * @return true if file can be synchronized by current instance or false otherwise.
+   */
+  fun accepts(file: VirtualFile): Boolean
+
+  /**
+   * Performs synchronization of file with mainframe.
+   * @param syncProvider instance of [SyncProvider] class that contains necessary data and handler to start synchronize.
+   * @param progressIndicator indicator to reflect synchronization process (not required).
+   */
+  fun synchronizeWithRemote(syncProvider: SyncProvider, progressIndicator: ProgressIndicator? = null)
+}

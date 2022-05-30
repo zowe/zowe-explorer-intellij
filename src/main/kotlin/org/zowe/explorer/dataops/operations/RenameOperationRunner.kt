@@ -19,8 +19,6 @@ import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.explorer.utils.findAnyNullable
-import org.zowe.explorer.utils.runWriteActionOnWriteThread
 import org.zowe.explorer.vfs.sendVfsChangesTopic
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath

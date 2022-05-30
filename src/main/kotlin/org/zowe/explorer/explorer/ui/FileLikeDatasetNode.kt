@@ -24,10 +24,12 @@ import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.MFRemoteFileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
+import icons.ForMainframeIcons
 import javax.swing.SwingConstants
 
 private val migratedIcon = AllIcons.FileTypes.Any_type
@@ -48,9 +50,18 @@ class FileLikeDatasetNode(
   }
 
   override fun update(presentation: PresentationData) {
-    val attributes = service<DataOpsManager>().tryToGetAttributes(value) as? RemoteDatasetAttributes
-    val isMigrated = attributes?.isMigrated ?: false
-    presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else if (isMigrated) migratedIcon else AllIcons.FileTypes.Text)
+    val attributes = service<DataOpsManager>().tryToGetAttributes(value)
+    when (attributes) {
+      is RemoteDatasetAttributes -> {
+        presentation.setIcon(if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(AllIcons.FileTypes.Any_type, "DS"))
+      }
+      is RemoteMemberAttributes -> {
+        presentation.setIcon(ForMainframeIcons.MemberIcon)
+      }
+      else -> {
+        presentation.setIcon(AllIcons.FileTypes.Any_type)
+      }
+    }
     updateMainTitleUsingCutBuffer(value.presentableName, presentation)
     val volser = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()

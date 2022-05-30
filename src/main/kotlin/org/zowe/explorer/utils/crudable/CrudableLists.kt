@@ -50,7 +50,7 @@ open class CrudableLists(
   }
 
   override fun <E : Any> getAll(rowClass: Class<out E>): Stream<E> {
-    return classToList(rowClass).streamOrEmpty()
+    return classToList(rowClass).streamOrEmpty().filterNotNull()
   }
 
   override fun <E : Any> add(rowClass: Class<out E>, row: E): Optional<E> {

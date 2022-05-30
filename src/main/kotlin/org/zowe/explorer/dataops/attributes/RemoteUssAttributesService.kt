@@ -10,11 +10,13 @@
 
 package org.zowe.explorer.dataops.attributes
 
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.mergeWith
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.createAttributes
+import org.zowe.kotlinsdk.XIBMDataType
 
 class RemoteUssAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
@@ -83,6 +85,14 @@ class RemoteUssAttributesService(
         findOrCreate(current, nameWithFileAttr).also { current = it }
       }
       fsModel.moveFile(this, file, current)
+    }
+  }
+
+  fun updateWritableFlagAfterContentChanged(vFile: VirtualFile, attributes: RemoteUssAttributes) {
+    if(attributes.contentMode.type == XIBMDataType.Type.BINARY) {
+      vFile.isWritable = false
+    } else {
+      vFile.isWritable = attributes.isWritable
     }
   }
 

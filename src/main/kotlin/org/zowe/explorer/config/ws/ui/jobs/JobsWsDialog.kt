@@ -20,6 +20,7 @@ import org.zowe.explorer.config.ws.ui.JobsWorkingSetDialogState
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.validateJobFilter
 import javax.swing.JComponent
+import javax.swing.JTextField
 
 class JobsWsDialog(
   crudable: Crudable,
@@ -54,28 +55,25 @@ class JobsWsDialog(
     init()
   }
 
-  private fun fixEmptyFieldsInState(
-    state: JobsWorkingSetDialogState.TableRow,
-    connectionUuid: String
+  private fun fixBlankFieldsInState(
+    state: JobsWorkingSetDialogState.TableRow
   ): JobsWorkingSetDialogState.TableRow {
-    if (state.jobId.isEmpty()) {
-      if (state.owner.isEmpty()) {
-        state.owner = CredentialService.instance.getUsernameByKey(connectionUuid) ?: ""
-      }
-      if (state.prefix.isEmpty()) {
-        state.prefix = "*"
-      }
-    }
+    state.prefix = state.prefix.ifBlank { "" }
+    state.owner = state.owner.ifBlank { "" }
+    state.jobId = state.jobId.ifBlank { "" }
     return state
   }
 
   override fun onWSApplyed(state: JobsWorkingSetDialogState): JobsWorkingSetDialogState {
-    state.maskRow = state.maskRow.map { fixEmptyFieldsInState(it, state.connectionUuid) }
+    state.maskRow = state.maskRow.map { fixBlankFieldsInState(it) }
       .distinctBy { "pre:" + it.prefix + "owr:" + it.owner + "jid:" + it.jobId } as MutableList<JobsWorkingSetDialogState.TableRow>
     return super.onWSApplyed(state)
   }
 
-  override fun emptyTableRow(): JobsWorkingSetDialogState.TableRow = JobsWorkingSetDialogState.TableRow()
+  override fun emptyTableRow(): JobsWorkingSetDialogState.TableRow = JobsWorkingSetDialogState.TableRow(
+    prefix = "*",
+    owner = CredentialService.instance.getUsernameByKey(state.connectionUuid) ?: ""
+  )
 
   override fun validateOnApply(validationBuilder: ValidationInfoBuilder, component: JComponent): ValidationInfo? {
     return when {
@@ -93,8 +91,9 @@ class JobsWsDialog(
   }
 
   private fun hasDuplicatesInTable(tableElements: MutableList<JobsWorkingSetDialogState.TableRow>): Boolean {
-    return tableElements.size != tableElements.map { "pre:" + it.prefix + "owr:" + it.owner + "jid:" + it.jobId }
-      .distinct().size
+    return tableElements.size != tableElements.map {
+      "pre:" + it.prefix.ifBlank { "" } + "owr:" + it.owner.ifBlank { "" } + "jid:" + it.jobId.ifBlank { "" }
+    }.distinct().size
   }
 
   object PrefixColumn : ValidatingColumnInfo<JobsWorkingSetDialogState.TableRow>("Prefix") {
@@ -104,11 +103,11 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, component)
+      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue), false)
     }
 
     override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return validateJobFilter(item.prefix, item.owner, item.jobId, component)
+      return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.prefix), false)
     }
 
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
@@ -125,11 +124,11 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      return validateJobFilter(oldItem.prefix, newValue, oldItem.jobId, component)
+      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue), false)
     }
 
     override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return validateJobFilter(item.prefix, item.owner, item.jobId, component)
+      return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.owner), false)
     }
 
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
@@ -146,11 +145,11 @@ class JobsWsDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
-      return validateJobFilter(oldItem.prefix, oldItem.owner, newValue, component)
+      return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue), true)
     }
 
     override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
-      return validateJobFilter(item.prefix, item.owner, item.jobId, component)
+      return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.jobId), true)
     }
 
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true

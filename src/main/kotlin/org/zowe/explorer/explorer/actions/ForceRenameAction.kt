@@ -16,11 +16,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import org.zowe.explorer.analytics.AnalyticsService
+import org.zowe.explorer.analytics.events.FileAction
+import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.operations.ForceRenameOperation
 import org.zowe.explorer.dataops.operations.RenameOperation
+import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.validateUssFileName
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -39,10 +43,12 @@ class ForceRenameAction : AnAction() {
       if (renameDialog.showAndGet() && file != null) {
         val confirmDialog = showConfirmDialogIfNecessary(renameDialog.state, selectedNode)
         if (confirmDialog == Messages.OK) {
-          runRenameOperation(e.project, file, attributes, renameDialog.state, selectedNode.node, true)
+          runRenameOperation(e.project, view.explorer, file, attributes, renameDialog.state, selectedNode.node, true)
+          service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.FORCE_RENAME))
         } else {
           if (confirmDialog != Messages.CANCEL && confirmDialog != Messages.OK) {
-            runRenameOperation(e.project, file, attributes, renameDialog.state, selectedNode.node, false)
+            runRenameOperation(e.project, view.explorer, file, attributes, renameDialog.state, selectedNode.node, false)
+            service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
           } else {
             return
           }
@@ -59,8 +65,9 @@ class ForceRenameAction : AnAction() {
         childrenNodesFromParent?.forEach {
           if (it is UssFileNode && it.value.filenameInternal == text) {
             val confirmTemplate =
-              "You are going to rename file $virtualFilePath \n"
-                .plus("into existing one. This operation cannot be undone. \n".plus("Would you like to proceed?"))
+              "You are going to rename file $virtualFilePath \n" +
+                  "into existing one. This operation cannot be undone. \n" +
+                  "Would you like to proceed?"
             return Messages.showOkCancelDialog(
               confirmTemplate,
               "Warning",
@@ -93,6 +100,7 @@ class ForceRenameAction : AnAction() {
 
   private fun runRenameOperation(
     project: Project?,
+    explorer: Explorer<*>,
     file: MFVirtualFile,
     attributes: FileAttributes,
     newName: String,
@@ -111,7 +119,8 @@ class ForceRenameAction : AnAction() {
               file = file,
               attributes = attributes,
               newName = newName,
-              override = override
+              override = override,
+              explorer = explorer
             ),
             progressIndicator = it
           )

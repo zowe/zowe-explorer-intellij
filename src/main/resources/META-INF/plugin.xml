@@ -10,27 +10,46 @@
                         interface="org.zowe.explorer.dataops.fetch.FileFetchProviderFactory"/>
 
         <extensionPoint name="contentSynchronizer"
-                        interface="org.zowe.explorer.dataops.synchronizer.ContentSynchronizerFactory"/>
+                        interface="org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizerFactory"/>
 
         <extensionPoint name="mfContentAdapter"
-                        interface="org.zowe.explorer.dataops.synchronizer.adapters.MFContentAdapterFactory"/>
+                        interface="org.zowe.explorer.dataops.content.adapters.MFContentAdapterFactory"/>
 
         <extensionPoint name="operationRunner"
                         interface="org.zowe.explorer.dataops.operations.OperationRunnerFactory"/>
+
+        <extensionPoint name="logFetcher"
+                        interface="org.zowe.explorer.dataops.log.LogFetcherFactory"/>
+
+        <extensionPoint name="oldConfigAdapter"
+                        interface="org.zowe.explorer.config.OldConfigAdapterFactory"/>
+
         <extensionPoint name="explorerContentProvider"
                         interface="org.zowe.explorer.explorer.ExplorerContentProviderFactory"/>
+
         <extensionPoint name="explorer"
                         interface="org.zowe.explorer.explorer.ExplorerFactory"/>
 
     </extensionPoints>
+
+    <applicationListeners>
+        <listener class="org.zowe.explorer.editor.ProjectCloseListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+
+        <listener class="org.zowe.explorer.editor.FileEditorEventsListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+
+        <listener class="org.zowe.explorer.dataops.content.synchronizer.MFAutoSaveDocumentListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </applicationListeners>
 
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>Zowe Explorer</name>
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
 
     <description><![CDATA[
-We are happy to release version 0.1 of our Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
-Zowe community is actively developing new features for the open-source "Zowe Explorer" plugin.
+Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
+IBA Group team of <b>mainframe enthusiasts</b> are actively developing new features for the open-source "Zowe Explorer" plugin.
 We keep improving existing features that help you to:<br/>
 <ul>
   <li>Start working with z/OS easily with no complex configurations.</li>
@@ -39,7 +58,8 @@ We keep improving existing features that help you to:<br/>
   <li>Perform renaming, copying and moving data in a modern way.</li>
   <li>Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.</li>
   <li>Create multiple connections to different z/OS systems.</li>
-  <li>All Intellij supported languages will be automatically highlighted and recognized once opened from the mainframe.</li>
+  <li>Perform all available operations with Jobs.</li>
+  <li>Highlight all IntelliJ supported languages automatically and recognize them once opened from the mainframe.</li>
 </ul><br/>
 To start using the plugin:<br/>
 <ul>
@@ -87,22 +107,22 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 implementation="org.zowe.explorer.dataops.fetch.SpoolFileFetchProviderFactory"/>
 
         <contentSynchronizer
-                implementation="org.zowe.explorer.dataops.synchronizer.MemberContentSynchronizerFactory"/>
+                implementation="org.zowe.explorer.dataops.content.synchronizer.MemberContentSynchronizerFactory"/>
 
         <contentSynchronizer
-                implementation="org.zowe.explorer.dataops.synchronizer.SeqDatasetContentSynchronizerFactory"/>
+                implementation="org.zowe.explorer.dataops.content.synchronizer.SeqDatasetContentSynchronizerFactory"/>
 
         <contentSynchronizer
-                implementation="org.zowe.explorer.dataops.synchronizer.UssFileContentSynchronizerFactory"/>
+                implementation="org.zowe.explorer.dataops.content.synchronizer.UssFileContentSynchronizerFactory"/>
 
         <contentSynchronizer
-                implementation="org.zowe.explorer.dataops.synchronizer.SpoolFileContentSynchronizerFactory"/>
+                implementation="org.zowe.explorer.dataops.content.synchronizer.SpoolFileContentSynchronizerFactory"/>
 
         <mfContentAdapter
-                implementation="org.zowe.explorer.dataops.synchronizer.adapters.MemberContentAdapterFactory"/>
+                implementation="org.zowe.explorer.dataops.content.adapters.MemberContentAdapterFactory"/>
 
         <mfContentAdapter
-                implementation="org.zowe.explorer.dataops.synchronizer.adapters.SeqDatasetContentAdapterFactory"/>
+                implementation="org.zowe.explorer.dataops.content.adapters.SeqDatasetContentAdapterFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.DatasetAllocatorFactory"/>
 
@@ -126,6 +146,10 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.MemberToUssFileMoverFactory"/>
 
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.RemoteToLocalFileMoverFactory"/>
+
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.RemoteToLocalDirectoryMoverFactory"/>
+
         <operationRunner implementation="org.zowe.explorer.dataops.operations.RenameOperationRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.ForceRenameOperationRunnerFactory"/>
@@ -139,13 +163,24 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.SubmitJobOperationFactory"/>
 
-        <explorer implementation="org.zowe.explorer.explorer.GlobalExplorerFactory"/>
-        <explorer implementation="org.zowe.explorer.explorer.JesExplorerFactory"/>
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.CancelJobOperationRunnerFactory"/>
 
-        <explorerContentProvider index="0"
-                                 implementation="org.zowe.explorer.explorer.FileExplorerContentProviderFactory"/>
-        <explorerContentProvider index="1"
-                                 implementation="org.zowe.explorer.explorer.JesExplorerContentProviderFactory"/>
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.ReleaseJobOperationRunnerFactory"/>
+
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.HoldJobOperationRunnerFactory"/>
+
+        <logFetcher implementation="org.zowe.explorer.dataops.log.JobLogFetcherFactory"/>
+
+        <oldConfigAdapter implementation="org.zowe.explorer.config.connect.OldConnectionsAdapterFactory"/>
+
+        <oldConfigAdapter implementation="org.zowe.explorer.config.ws.OldWorkingSetAdapterFactory"/>
+
+        <explorer implementation="org.zowe.explorer.explorer.GlobalExplorerFactory" />
+        <explorer implementation="org.zowe.explorer.explorer.JesExplorerFactory" />
+
+        <explorerContentProvider index="0" implementation="org.zowe.explorer.explorer.FileExplorerContentProviderFactory" />
+        <explorerContentProvider index="1" implementation="org.zowe.explorer.explorer.JesExplorerContentProviderFactory"/>
+
     </extensions>
 
     <projectListeners>
@@ -156,6 +191,8 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
     <extensions defaultExtensionNs="com.intellij">
 
         <postStartupActivity implementation="org.zowe.explorer.zowe.ZoweStartupActivity"/>
+        <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
+        <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
 
         <!--        <postStartupActivity implementation="org.zowe.explorer.analytics.AnalyticsStartupActivity"/>-->
 
@@ -164,21 +201,26 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
 
         <editorFloatingToolbarProvider
-                implementation="org.zowe.explorer.dataops.synchronizer.SyncToolbarProvider"/>
+                implementation="org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider"/>
 
         <notificationGroup displayType="STICKY_BALLOON"
                            id="org.zowe.explorer.explorer.ExplorerNotificationGroup"/>
+
+        <notificationGroup displayType="STICKY_BALLOON"
+                           id="org.zowe.explorer.ui.build.jobs.JobsLogNotificationGroup"/>
 
         <toolWindow id="Zowe Explorer" anchor="right"
                     factoryClass="org.zowe.explorer.explorer.ui.ExplorerWindowFactory"
                     icon="ForMainframeIcons.ExplorerToolbarIcon"
                     doNotActivateOnStart="true"/>
+        <toolWindow id="Jobs" anchor="bottom"
+                    factoryClass="org.zowe.explorer.ui.build.jobs.JobsWindowFactory"
+                    canCloseContents="true"
+                    doNotActivateOnStart="true"/>
 
         <virtualFileSystem id="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            implementationClass="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            key="mf"/>
-
-        <vfs.asyncListener implementation="org.zowe.explorer.dataops.synchronizer.AfterSaveVfsListener"/>
 
         <fileType name="Unknown Data Set"
                   implementationClass="org.zowe.explorer.filetypes.UnknownDataSetFileType"/>
@@ -253,7 +295,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <action id="org.zowe.explorer.explorer.actions.AddMemberAction"
                 class="org.zowe.explorer.explorer.actions.AddMemberAction" text="Member"
-                icon="AllIcons.FileTypes.Text"
+                icon="ForMainframeIcons.MemberIcon"
         />
 
         <action class="org.zowe.explorer.explorer.actions.SettingAction"
@@ -268,8 +310,13 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 id="org.zowe.explorer.explorer.actions.GetJobPropertiesAction"
                 text="Properties"/>
 
+        <action class="org.zowe.explorer.explorer.actions.ViewJobAction"
+                id="org.zowe.explorer.explorer.actions.ViewJobAction"
+                text="View Job"/>
+
         <action id="org.zowe.explorer.explorer.actions.RenameAction"
-                class="org.zowe.explorer.explorer.actions.RenameAction" text="Rename"
+                class="org.zowe.explorer.explorer.actions.RenameAction"
+                text="Rename"
                 use-shortcut-of="RenameElement"/>
 
         <action id="org.zowe.explorer.explorer.actions.ForceRenameAction"
@@ -278,7 +325,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <action id="org.zowe.explorer.explorer.actions.AddMaskAction"
                 class="org.zowe.explorer.explorer.actions.AddMaskAction"
-                icon="AllIcons.Nodes.Module"
+                icon="ForMainframeIcons.DatasetMask"
                 text="Mask"/>
 
         <action id="org.zowe.explorer.explorer.actions.AddJobsFilerAction"
@@ -294,6 +341,21 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
                 class="org.zowe.explorer.explorer.actions.SubmitJobAction"
                 text="Submit Job"
                 icon="AllIcons.Actions.Execute"/>
+
+        <action id="org.zowe.explorer.explorer.actions.ReleaseJobAction"
+                class="org.zowe.explorer.explorer.actions.ReleaseJobAction"
+                text="Release Job"
+                icon="AllIcons.Actions.Resume"/>
+
+        <action id="org.zowe.explorer.explorer.actions.HoldJobAction"
+                class="org.zowe.explorer.explorer.actions.HoldJobAction"
+                text="Hold Job"
+                icon="AllIcons.Actions.Pause"/>
+
+        <action id="org.zowe.explorer.explorer.actions.CancelJobAction"
+                class="org.zowe.explorer.explorer.actions.CancelJobAction"
+                text="Cancel Job"
+                icon="AllIcons.Actions.Suspend"/>
 
         <action id="org.zowe.explorer.explorer.actions.EditWorkingSetAction"
                 class="org.zowe.explorer.explorer.actions.EditWorkingSetAction"
@@ -333,6 +395,7 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
 
         <group id="org.zowe.explorer.actions.ContextMenuGroup">
             <reference id="org.zowe.explorer.actions.NewItemGroup"/>
+            <reference id="org.zowe.explorer.explorer.actions.ViewJobAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.AllocateLikeAction"/>
             <separator/>
@@ -370,8 +433,14 @@ Join us in <a href="https://join.slack.com/t/iba-mainframe-tools/shared_invite/z
             <add-to-group group-id="EditorContextBarMenu"/>
         </action>
 
-        <group id="org.zowe.explorer.dataops.synchronizer.ForMainframeEditorToolbarGroup" popup="true">
-            <reference id="org.zowe.explorer.dataops.synchronizer.SyncAction"/>
+        <group id="org.zowe.explorer.dataops.content.synchronizer.SyncActionGroup" popup="true">
+            <reference id="org.zowe.explorer.dataops.content.synchronizer.SyncAction"/>
+        </group>
+
+        <group id="org.zowe.explorer.actions.JobsLogActionBarGroup">
+            <reference id="org.zowe.explorer.explorer.actions.ReleaseJobAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.HoldJobAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.CancelJobAction"/>
         </group>
 
     </actions>

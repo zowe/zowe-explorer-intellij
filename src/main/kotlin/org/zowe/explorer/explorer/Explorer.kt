@@ -12,7 +12,6 @@ package org.zowe.explorer.explorer
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationBuilder
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable

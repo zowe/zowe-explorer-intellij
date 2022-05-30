@@ -28,7 +28,7 @@ class AddMaskAction : AnAction() {
     if (dialog.showAndGet()) {
       val state = dialog.state
       when (state.type) {
-        MaskState.ZOS -> ws.addMask(DSMask(state.mask, mutableListOf(), "", state.isSingle))
+        MaskState.ZOS -> ws.addMask(DSMask(state.mask.toUpperCase(), mutableListOf(), "", state.isSingle))
         MaskState.USS -> ws.addUssPath(UssPath(state.mask))
       }
     }

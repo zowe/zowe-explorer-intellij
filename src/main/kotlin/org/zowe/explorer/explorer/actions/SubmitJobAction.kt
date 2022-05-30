@@ -14,10 +14,21 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
+import org.zowe.explorer.analytics.AnalyticsService
+import org.zowe.explorer.analytics.events.JobAction
+import org.zowe.explorer.analytics.events.JobEvent
+import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.operations.jobs.SubmitJobOperation
 import org.zowe.explorer.dataops.operations.jobs.SubmitOperationParams
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
+import org.zowe.explorer.explorer.ui.UssFileNode
+import org.zowe.explorer.ui.build.jobs.JOB_ADDED_TOPIC
+import org.zowe.explorer.utils.formMfPath
+import org.zowe.explorer.utils.sendTopic
 
 class SubmitJobAction : AnAction() {
 
@@ -31,14 +42,32 @@ class SubmitJobAction : AnAction() {
 
     val requestData = getRequestDataForNode(node)
     if (requestData != null) {
-      runBackgroundableTask("Job Submission") {
+      runBackgroundableTask("Preparing for job submission") {
+        val dataOpsManager = service<DataOpsManager>()
+        val file = requestData.first
+        if (service<ConfigService>().isAutoSyncEnabled.get() && dataOpsManager.isSyncSupported(file)) {
+          val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
+          contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)
+        }
+        it.text = "Submitting job from file ${file.name}"
+
         runCatching {
+          service<AnalyticsService>().trackAnalyticsEvent(JobEvent(JobAction.SUBMIT))
+
+          val attributes = service<DataOpsManager>().tryToGetAttributes(requestData.first)
+            ?: throw IllegalArgumentException("Cannot find attributes for specified file.")
+
+          val submitFilePath = attributes.formMfPath()
           service<DataOpsManager>().performOperation(
             operation = SubmitJobOperation(
-              request = SubmitOperationParams(requestData.first),
+              request = SubmitOperationParams(submitFilePath),
               connectionConfig = requestData.second
             ), it
-          )
+          ).also {result ->
+            e.project?.let {project ->
+              sendTopic(JOB_ADDED_TOPIC).submitted(project, requestData.second, submitFilePath, result)
+            }
+          }
         }.onSuccess {
           view.explorer.showNotification("Job ${it.jobname} has been submitted", "$it", project = e.project)
         }.onFailure {

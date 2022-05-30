@@ -12,16 +12,17 @@ package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.observable.operations.subscribe
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.dataops.synchronizer.FileAttributesChangeListener
-import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
-import org.zowe.explorer.explorer.ui.GlobalFileExplorerView
+import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.dataops.content.synchronizer.RemoteAttributedContentSynchronizer
+import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.utils.service
+import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.XIBMDataType
 
 class ChangeContentModeAction : ToggleAction() {
@@ -42,35 +43,87 @@ class ChangeContentModeAction : ToggleAction() {
   private fun getMappedNodes(view: GlobalFileExplorerView): List<Pair<FileAttributes, VirtualFile>> {
     return view.mySelectedNodesData
       .mapNotNull {
-        val file = it.file
-        if (file != null) {
-          val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
-          val isMigrated = attributes?.isMigrated ?: false
-          if (isMigrated) {
-            return@mapNotNull null
+        val vFile = it.file
+        if (vFile != null) {
+          when (val attributes = service<DataOpsManager>().tryToGetAttributes(vFile)) {
+            is RemoteDatasetAttributes -> {
+              val isMigrated = attributes.isMigrated
+              if (isMigrated) {
+                return@mapNotNull null
+              }
+            }
           }
         }
-        if (file?.isDirectory == true) {
+        if (vFile?.isDirectory == true) {
           return@mapNotNull null
         }
-        Pair(it.attributes ?: return@mapNotNull null, file ?: return@mapNotNull null)
+        Pair(it.attributes ?: return@mapNotNull null, vFile ?: return@mapNotNull null)
       }
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
-    getMappedNodes(view)
-      .forEach {
-        view.explorer.componentManager.service<DataOpsManager>()
-          .getAttributesService(it.first::class.java, it.second::class.java)
-          .updateAttributes(it.first) {
-            contentMode = if (state) { XIBMDataType(XIBMDataType.Type.BINARY) } else { XIBMDataType(XIBMDataType.Type.TEXT) }
+    if(showConfirmDialog(state) == Messages.CANCEL) {
+      return
+    } else {
+      getMappedNodes(view)
+        .forEach {
+          val service = view.explorer.componentManager.service<DataOpsManager>()
+            .getAttributesService(it.first::class.java, it.second::class.java)
+          val vFile = it.second as MFVirtualFile
+          when (val oldAttributes = service.getAttributes(vFile)) {
+            is RemoteUssAttributes -> {
+              val ussService = service as RemoteUssAttributesService
+              val newAttributes = oldAttributes.apply {
+                if (state) {
+                  this.contentMode = XIBMDataType(XIBMDataType.Type.BINARY)
+                } else {
+                  this.contentMode = XIBMDataType(XIBMDataType.Type.TEXT)
+                }
+              }
+              ussService.updateWritableFlagAfterContentChanged(vFile, newAttributes)
+              sendTopic(AttributesService.FILE_CONTENT_CHANGED, DataOpsManager.instance.componentManager)
+                .onUpdate(oldAttributes, newAttributes, vFile)
+            }
+            else -> {
+              val newAttributes = oldAttributes.apply {
+                if (state) {
+                  this?.contentMode = XIBMDataType(XIBMDataType.Type.BINARY)
+                  vFile.isWritable = false
+                } else {
+                  this?.contentMode = XIBMDataType(XIBMDataType.Type.TEXT)
+                  vFile.isWritable = true
+                }
+              }
+              if (newAttributes != null && oldAttributes != null) {
+                service.updateAttributes(vFile, newAttributes)
+                sendTopic(AttributesService.FILE_CONTENT_CHANGED, DataOpsManager.instance.componentManager)
+                  .onUpdate(oldAttributes, newAttributes, vFile)
+              }
+            }
           }
-        ApplicationManager.getApplication()
-          .messageBus
-          .syncPublisher(FileAttributesChangeListener.TOPIC)
-          .onFileAttributesChange(it.second)
-      }
+        }
+    }
+    // TODO: For what ???? investigate
+//        ApplicationManager.getApplication()
+//          .messageBus
+//          .syncPublisher(FileAttributesChangeListener.TOPIC)
+//          .onFileAttributesChange(it.second)
+  }
+
+  private fun showConfirmDialog(state: Boolean): Int {
+    val mode = if(state) "binary" else "plain text"
+    val confirmTemplate =
+      "You are going to switch the file content to $mode. \n" +
+          "The file content will be loaded from mainframe in $mode format. \n" +
+          "Would you like to proceed?"
+    return Messages.showOkCancelDialog(
+      confirmTemplate,
+      "Warning",
+      "Ok",
+      "Cancel",
+      Messages.getWarningIcon()
+    )
   }
 
   override fun update(e: AnActionEvent) {

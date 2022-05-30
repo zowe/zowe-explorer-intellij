@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.dataops
 
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,12 +19,16 @@ import org.zowe.explorer.dataops.attributes.AttributesService
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.fetch.FileFetchProvider
 import org.zowe.explorer.dataops.operations.OperationRunner
-import org.zowe.explorer.dataops.synchronizer.ContentSynchronizer
 import org.zowe.explorer.utils.associateListedBy
 import org.zowe.explorer.utils.findAnyNullable
 import com.intellij.openapi.util.Disposer
-import org.zowe.explorer.dataops.synchronizer.adapters.DefaultContentAdapter
-import org.zowe.explorer.dataops.synchronizer.adapters.MFContentAdapter
+import org.zowe.explorer.dataops.content.adapters.DefaultContentAdapter
+import org.zowe.explorer.dataops.content.adapters.MFContentAdapter
+import org.zowe.explorer.dataops.log.AbstractMFLoggerBase
+import org.zowe.explorer.dataops.log.MFProcessInfo
+import org.zowe.explorer.dataops.log.LogFetcher
+import org.zowe.explorer.dataops.log.MFLogger
+import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 
 class DataOpsManagerImpl : DataOpsManager {
 
@@ -91,6 +96,7 @@ class DataOpsManagerImpl : DataOpsManager {
   private val contentSynchronizersDelegate = lazy {
     ContentSynchronizer.EP.extensionList.buildComponents()
   }
+
   private val contentSynchronizers by contentSynchronizersDelegate
 
   private val mfContentAdaptersDelegate = lazy {
@@ -99,15 +105,11 @@ class DataOpsManagerImpl : DataOpsManager {
   private val mfContentAdapters by mfContentAdaptersDelegate
 
   override fun isSyncSupported(file: VirtualFile): Boolean {
-    return contentSynchronizers.stream()
-      .filter { it.accepts(file) }
-      .findAnyNullable() != null
+    return contentSynchronizers.firstOrNull { it.accepts(file) } != null
   }
 
   override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
-    return contentSynchronizers.stream()
-      .filter { it.accepts(file) }
-      .findAnyNullable()
+    return contentSynchronizers.firstOrNull { it.accepts(file) }
   }
 
   override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {
@@ -119,6 +121,11 @@ class DataOpsManagerImpl : DataOpsManager {
     val operationRunnersList = OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
     operationRunnersList.associateListedBy { it.operationClass }
   }
+
+  private fun createLogFetcher (processInfo: MFProcessInfo): LogFetcher<*>? {
+    return LogFetcher.EP.extensionList.firstOrNull { it.acceptsProcessInfo(processInfo) }?.buildComponent(this)
+  }
+
   override fun isOperationSupported(operation: Operation<*>): Boolean {
     return operationRunners[operation::class.java]?.any { it.canRun(operation) } == true
   }
@@ -133,6 +140,24 @@ class DataOpsManagerImpl : DataOpsManager {
       ?: throw IllegalArgumentException("Unsupported Operation $operation")
     @Suppress("UNCHECKED_CAST")
     return result as R
+  }
+
+  /**
+   * @see DataOpsManager.createMFLogger
+   */
+  override fun <PInfo : MFProcessInfo, LFetcher : LogFetcher<PInfo>> createMFLogger(
+    mfProcessInfo: PInfo,
+    consoleView: ConsoleView
+  ): MFLogger<LFetcher> {
+    val logFetcher = createLogFetcher(mfProcessInfo)
+      ?: throw IllegalArgumentException("Unsupported Log Information $mfProcessInfo")
+    @Suppress("UNCHECKED_CAST")
+    val resultFetcher: LFetcher = logFetcher as LFetcher
+    return object: AbstractMFLoggerBase<PInfo, LFetcher>(mfProcessInfo, consoleView) {
+      override val logFetcher: LFetcher = resultFetcher
+    }.also {
+      Disposer.register(this, it)
+    }
   }
 
   override fun dispose() {

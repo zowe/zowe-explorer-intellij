@@ -16,6 +16,8 @@ interface QueueExecutor<V> {
 
   fun accept(input: V)
 
+  fun userAccept(input: V)
+
   fun shutdown()
 
   fun pause()

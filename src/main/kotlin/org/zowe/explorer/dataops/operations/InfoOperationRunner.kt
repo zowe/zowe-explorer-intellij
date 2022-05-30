@@ -12,11 +12,13 @@ package org.zowe.explorer.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.kotlinsdk.InfoAPI
-import org.zowe.kotlinsdk.InfoResponse
+import org.zowe.kotlinsdk.SystemsApi
+import org.zowe.kotlinsdk.SystemsResponse
+import okhttp3.Credentials
 
 class InfoOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
@@ -24,20 +26,22 @@ class InfoOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
-class InfoOperationRunner : OperationRunner<InfoOperation, InfoResponse> {
+class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
   override val operationClass = InfoOperation::class.java
-  override val resultClass = InfoResponse::class.java
+  override val resultClass = SystemsResponse::class.java
 
   override fun canRun(operation: InfoOperation) = true
 
-  override fun run(operation: InfoOperation, progressIndicator: ProgressIndicator): InfoResponse {
-    val response = api<InfoAPI>(url = operation.url, isAllowSelfSigned = operation.isAllowSelfSigned)
-      .getSystemInfo()
+  override fun run(operation: InfoOperation, progressIndicator: ProgressIndicator): SystemsResponse {
+    val state = operation.state
+    val response = api<SystemsApi>(connectionConfig = state.connectionConfig)
+      .getSystems(state.connectionConfig.authToken)
       .cancelByIndicator(progressIndicator)
       .execute()
     if (!response.isSuccessful) {
-      throw CallException(response, "Cannot connect to z/OSMF Server")
+      throw CallException(response, "Credentials are not valid")
     }
-    return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
+    return response?.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
   }
+
 }

@@ -25,6 +25,7 @@ import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
+import icons.ForMainframeIcons
 
 class LibraryNode(
   library: MFVirtualFile,
@@ -52,7 +53,7 @@ class LibraryNode(
   override val requestClass = LibraryQuery::class.java
 
   override fun update(presentation: PresentationData) {
-    presentation.setIcon(if (value.isDirectory) AllIcons.Nodes.Folder else AllIcons.FileTypes.Any_type)
+    presentation.setIcon(if (value.isDirectory) ForMainframeIcons.DatasetMask else AllIcons.FileTypes.Any_type)
     presentation.addText(value.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     val volser = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()

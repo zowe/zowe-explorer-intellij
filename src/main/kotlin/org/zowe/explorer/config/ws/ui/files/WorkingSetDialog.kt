@@ -83,7 +83,8 @@ class WorkingSetDialog(
     }
 
     override fun setValue(item: WorkingSetDialogState.TableRow, value: String) {
-      item.mask = if (value.length > 1 && value.endsWith("/")) value.substringBeforeLast("/") else value
+      val editedCaseValue = if (item.type == "z/OS") value.toUpperCase() else value
+      item.mask = if (editedCaseValue.length > 1 && editedCaseValue.endsWith("/")) editedCaseValue.substringBeforeLast("/") else editedCaseValue
     }
 
     override fun isCellEditable(item: WorkingSetDialogState.TableRow?): Boolean {
@@ -95,6 +96,9 @@ class WorkingSetDialog(
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
+      if (newValue.contains("/")) {
+        oldItem.type = "USS"
+      }
       return null
     }
 
@@ -113,6 +117,7 @@ class WorkingSetDialog(
   object TypeColumn : ColumnInfo<WorkingSetDialogState.TableRow, String>("Type") {
 
     override fun getEditor(item: WorkingSetDialogState.TableRow): TableCellEditor {
+      ComboBoxCellEditorImpl.clickCountToStart = 1
       return ComboBoxCellEditorImpl
     }
 

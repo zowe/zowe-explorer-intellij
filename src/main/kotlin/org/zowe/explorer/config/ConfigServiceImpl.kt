@@ -10,6 +10,8 @@
 
 package org.zowe.explorer.config
 
+import com.intellij.configurationStore.getPersistentStateComponentStorageLocation
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -23,6 +25,7 @@ import org.zowe.explorer.utils.crudable.*
 import org.zowe.explorer.utils.runIfTrue
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.xml.parsers.DocumentBuilderFactory
 
 @State(
   name = "by.iba.connector.services.ConfigService",
@@ -41,6 +44,7 @@ class ConfigServiceImpl: ConfigService {
 
   override fun loadState(state: ConfigState) {
     XmlSerializerUtil.copyBean(state, myState)
+    acceptOldConfigs()
   }
 
   override val eventHandler = ConfigEventHandler()
@@ -52,7 +56,25 @@ class ConfigServiceImpl: ConfigService {
       eventHandler = this@ConfigServiceImpl.eventHandler
     }
 
-  override var isAutoSyncEnabled = AtomicBoolean(true)
+  override var isAutoSyncEnabled = AtomicBoolean(false)
+
+  /**
+   * Adapt all configs in old style to the new one and updates config file.
+   */
+  private fun acceptOldConfigs() {
+    myState.connections = myState.connections.filterNotNull().toMutableList()
+    myState.jobsWorkingSets = myState.jobsWorkingSets.filterNotNull().toMutableList()
+    myState.workingSets = myState.workingSets.filterNotNull().toMutableList()
+
+    val configLocation = getPersistentStateComponentStorageLocation(this.javaClass)
+    val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configLocation?.toFile())
+    val oldConfigsAdapters = OldConfigAdapter.EP.extensions.map { it.buildAdapter(document) }
+    oldConfigsAdapters.forEach { adapter ->
+      adapter.getOldConfigsIds().forEach { crudable.deleteByUniqueKey(adapter.configClass, it) }
+      adapter.castOldConfigs().forEach { crudable.addOrUpdate(it) }
+    }
+    ApplicationManager.getApplication().saveSettings()
+  }
 }
 
 internal abstract class ClassCaseSwitcher<R> {

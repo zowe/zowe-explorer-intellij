@@ -22,6 +22,7 @@ import org.zowe.explorer.dataops.UnitRemoteQueryImpl
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.vfs.MFVirtualFile
+import icons.ForMainframeIcons
 
 class DSMaskNode(
   dsMask: DSMask,
@@ -36,7 +37,7 @@ class DSMaskNode(
   override fun update(presentation: PresentationData) {
     presentation.addText(value.mask, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     presentation.addText(" ${value.volser}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    presentation.setIcon(AllIcons.Nodes.Module)
+    presentation.setIcon(ForMainframeIcons.DatasetMask)
   }
 
   override val query: RemoteQuery<DSMask, Unit>?

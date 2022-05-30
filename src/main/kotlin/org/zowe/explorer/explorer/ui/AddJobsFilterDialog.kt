@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.panel
 import org.zowe.explorer.common.ui.StatefulComponent
-import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.explorer.JesWorkingSet
 import org.zowe.explorer.utils.validateJobFilter
@@ -27,7 +26,7 @@ class AddJobsFilterDialog(
 ) : DialogWrapper(project), StatefulComponent<JobsFilterState> {
 
   init {
-    title = "Create Mask"
+    title = "Create Jobs Filter"
     init()
   }
 
@@ -44,29 +43,28 @@ class AddJobsFilterDialog(
         label("Prefix: ")
         textField(state::prefix).also {
           prefixField = it.component
-        }.withValidationOnInput {
-          validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it)
+        }.withValidationOnApply {
+          validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it, false)
         }
       }
       row {
         label("Owner: ")
         textField(state::owner).also{
           ownerField = it.component
-        }.withValidationOnInput {
-          validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it)
+        }.withValidationOnApply {
+          validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it, false)
         }
       }
       row {
         label("Job ID: ")
         textField(state::jobId).also{
           jobIdField = it.component
-        }.withValidationOnInput {
-          validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it)
+        }.withValidationOnApply {
+          validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it, true)
         }
       }
     }
   }
-
 }
 
 class JobsFilterState(
@@ -77,11 +75,10 @@ class JobsFilterState(
 ) {
 
   fun toJobsFilter (): JobsFilter {
-    val resultPrefix = prefix.ifEmpty { "*" }
-    val resultOwner = owner.ifEmpty {
-      CredentialService.instance.getUsernameByKey(ws.connectionConfig?.uuid ?: "") ?: ""
-    }
-    return JobsFilter(resultOwner, resultPrefix, jobId)
+    val resultOwner = owner.ifBlank { "" }
+    val resultPrefix = prefix.ifBlank { "" }
+    val resultJobId = jobId.ifBlank { "" }
+    return JobsFilter(resultOwner, resultPrefix, resultJobId)
   }
 
 }

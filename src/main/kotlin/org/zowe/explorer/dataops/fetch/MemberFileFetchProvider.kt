@@ -60,7 +60,11 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
     progressIndicator: ProgressIndicator
   ): Collection<RemoteMemberAttributes> {
     log.info("Fetching DS Lists for $query")
-    return super.fetchResponse(query, progressIndicator)
+    return if (!query.request.library.isReadable) {
+      emptyList()
+    } else {
+      super.fetchResponse(query, progressIndicator)
+    }
   }
 
   override fun fetchBatch(

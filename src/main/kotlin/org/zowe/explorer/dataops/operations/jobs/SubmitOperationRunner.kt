@@ -10,17 +10,12 @@
 
 package org.zowe.explorer.dataops.operations.jobs
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
@@ -36,29 +31,15 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
   override fun run(operation: SubmitJobOperation, progressIndicator: ProgressIndicator): SubmitJobRequest {
     progressIndicator.checkCanceled()
 
-    val fileName = when (val attributes = service<DataOpsManager>().tryToGetAttributes(operation.request.file)) {
-      is RemoteUssAttributes -> {
-        attributes.path
-      }
-      is RemoteDatasetAttributes -> {
-        "//'${attributes.datasetInfo.name}'"
-      }
-      else -> {
-        val castedAttributes = attributes as RemoteMemberAttributes
-        val parentFileAttributes = service<DataOpsManager>().tryToGetAttributes(castedAttributes.parentFile) as RemoteDatasetAttributes
-        "//'${parentFileAttributes.datasetInfo.name}(${castedAttributes.info.name})'"
-      }
-    }
-
     val response = api<JESApi>(operation.connectionConfig).submitJobRequest(
       basicCredentials = operation.connectionConfig.authToken,
-      body = SubmitFileNameBody(fileName)
+      body = SubmitFileNameBody(operation.request.submitFilePath)
     ).cancelByIndicator(progressIndicator).execute()
     val body = response.body()
     if (!response.isSuccessful || body == null) {
       throw CallException(
         response,
-        "Cannot submit ${operation.request.file.name} on ${operation.connectionConfig.name}"
+        "Cannot submit ${operation.request.submitFilePath} on ${operation.connectionConfig.name}"
       )
     }
     return body
@@ -78,7 +59,7 @@ class SubmitJobOperationFactory : OperationRunnerFactory {
 }
 
 data class SubmitOperationParams(
-  val file: VirtualFile
+  val submitFilePath: String
 )
 
 data class SubmitJobOperation(

@@ -13,10 +13,12 @@ package org.zowe.explorer.dataops.operations
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.UnitOperation
 import org.zowe.explorer.dataops.attributes.FileAttributes
+import org.zowe.explorer.explorer.Explorer
 
 data class ForceRenameOperation(
     val file: VirtualFile,
     val attributes: FileAttributes,
     val newName: String,
-    val override: Boolean
+    val override: Boolean,
+    val explorer: Explorer<*>?
 ) : UnitOperation

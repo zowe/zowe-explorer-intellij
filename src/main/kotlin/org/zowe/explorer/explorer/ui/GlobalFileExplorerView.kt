@@ -14,13 +14,13 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.dnd.*
 import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -35,16 +35,21 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
+import org.zowe.explorer.analytics.AnalyticsService
+import org.zowe.explorer.analytics.events.FileAction
+import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.common.ui.DoubleClickTreeMouseListener
 import org.zowe.explorer.common.ui.makeNodeDataFromTreePath
 import org.zowe.explorer.common.ui.promisePath
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Query
+import org.zowe.explorer.dataops.attributes.AttributesService
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.attributes.attributesListener
+import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.fetch.FileCacheListener
 import org.zowe.explorer.dataops.fetch.FileFetchProvider
 import org.zowe.explorer.dataops.operations.DeleteOperation
@@ -72,7 +77,7 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
   parentDisposable: Disposable,
   private val contextMenu: ActionGroup,
   rootNodeProvider: (explorer: Explorer<U>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
-  protected val cutProviderUpdater: (List<VirtualFile>) -> Unit
+  internal val cutProviderUpdater: (List<VirtualFile>) -> Unit
 ) : JBScrollPane(), DataProvider, Disposable {
 
 
@@ -253,6 +258,16 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
       },
       disposable = this
     )
+    subscribe(
+      componentManager = dataOpsManager.componentManager,
+      topic = AttributesService.FILE_CONTENT_CHANGED,
+      handler = attributesListener<FileAttributes, VirtualFile> {
+        onUpdate { _, _, file ->
+          val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(project))
+          dataOpsManager.getContentSynchronizer(file)?.synchronizeWithRemote(syncProvider, progressIndicator = null)
+        }
+      }
+    )
   }
 
 
@@ -316,7 +331,6 @@ class GlobalFileExplorerView(
   contextMenu: ActionGroup,
   rootNodeProvider: (explorer: Explorer<FilesWorkingSet>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
   cutProviderUpdater: (List<VirtualFile>) -> Unit
-
 ) : ExplorerTreeView<FilesWorkingSet, FilesWorkingSetConfig>(
   explorer,
   project,
@@ -325,21 +339,20 @@ class GlobalFileExplorerView(
   rootNodeProvider,
   cutProviderUpdater
 ) {
-  private val copyPasteSupport = ExplorerCopyPasteSupport(project)
+  internal val copyPasteSupport = ExplorerCopyPasteSupport(project)
 
   private var myDragSource: DnDSource?
   private var myDropTarget: DnDTarget?
+  private var isDropTargetRegistered = false
 
-
-
-  private val isCut = AtomicBoolean(true)
+  internal val isCut = AtomicBoolean(true)
   private val isDrag = AtomicBoolean(false)
 
   private val cutCopyPredicate: (NodeData) -> Boolean = {
     it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isConfigUssPath)
   }
   init {
-    myDragSource = GlobalExplorerViewDragSource(myTree, { mySelectedNodesData }, cutCopyPredicate)
+    myDragSource = GlobalExplorerViewDragSource(myTree, { mySelectedNodesData }, cutCopyPredicate, copyPasteSupport)
     myDropTarget = GlobalExplorerViewDropTarget(myTree, explorer, copyPasteSupport)
     DnDManager.getInstance().registerSource(myDragSource!!, myTree)
     DnDManager.getInstance().registerTarget(myDropTarget, myTree)
@@ -356,7 +369,7 @@ class GlobalFileExplorerView(
     }
   }
   inner class ExplorerCopyPasteSupport(val project: Project?): CopyPasteSupport {
-    private val bufferLock = ReentrantLock()
+    internal val bufferLock = ReentrantLock()
 
     @Volatile
     var copyPasteBuffer = LinkedList<NodeData>()
@@ -364,46 +377,54 @@ class GlobalFileExplorerView(
     @Volatile
     var dragAndDropCopyPasteBuffer = LinkedList<NodeData>()
 
-    private fun isCopyCutEnabledAndVisible(selectedNodesData: List<NodeData>? = null): Boolean {
-      val nodes = selectedNodesData ?: mySelectedNodesData
+    private fun isCopyCutEnabledAndVisible(dataContext: DataContext): Boolean {
+      val nodes = dataContext.getData(ExplorerDataKeys.NODE_DATA_ARRAY)?.toList() ?: mySelectedNodesData
       return nodes.all(cutCopyPredicate)
     }
 
+    fun removeFromBuffer(removePredicate: (NodeData) -> Boolean = { true }) {
+      val copyPasteBuffer = copyPasteSupport.copyPasteBuffer
+      synchronized(copyPasteBuffer) {
+        copyPasteBuffer.removeIf(removePredicate)
+        cutProviderUpdater(copyPasteBuffer.mapNotNull { it.file })
+      }
+    }
 
-    private fun performCopyCut(isCut: Boolean, selectedNodesData: List<NodeData>? = null) {
-      val nodes = selectedNodesData ?: mySelectedNodesData
+    private fun performCopyCut(isCut: Boolean, dataContext: DataContext) {
+      val nodes = dataContext.getData(ExplorerDataKeys.NODE_DATA_ARRAY)?.toList() ?: mySelectedNodesData
       this@GlobalFileExplorerView.isCut.set(isCut)
       bufferLock.withLock {
         val buffer = nodes.filter(cutCopyPredicate).apply {
-          if (selectedNodesData == null) {
             if (isCut) {
               mapNotNull { it.file }.also(cutProviderUpdater)
             } else {
               cutProviderUpdater(emptyList())
             }
+          forEach {
+            it.file?.let { file ->
+              service<DataOpsManager>().tryToGetAttributes(file)?.let { attrs ->
+                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attrs, FileAction.COPY))
+              }
+            }
           }
         }.let { LinkedList(it) }
-        if (selectedNodesData == null) {
-          copyPasteBuffer = buffer
-        } else {
-          dragAndDropCopyPasteBuffer = buffer
-        }
+        copyPasteBuffer = buffer
       }
     }
 
     inner class ExplorerCutProvider(private val selectedNodesData: List<NodeData>? = null): CutProvider {
 
       override fun performCut(dataContext: DataContext) {
-        performCopyCut(true, selectedNodesData)
+        performCopyCut(true, dataContext)
         //TODO("add analytics")
       }
 
       override fun isCutEnabled(dataContext: DataContext): Boolean {
-        return isCopyCutEnabledAndVisible(selectedNodesData)
+        return isCopyCutEnabledAndVisible(dataContext)
       }
 
       override fun isCutVisible(dataContext: DataContext): Boolean {
-        return isCopyCutEnabledAndVisible(selectedNodesData)
+        return isCopyCutEnabledAndVisible(dataContext)
       }
     }
 
@@ -418,31 +439,43 @@ class GlobalFileExplorerView(
     override fun getCopyProvider(): CopyProvider {
       return object : CopyProvider {
         override fun performCopy(dataContext: DataContext) {
-          performCopyCut(false)
+          performCopyCut(false, dataContext)
           //TODO("add analytics")
         }
 
         override fun isCopyEnabled(dataContext: DataContext): Boolean {
-          return isCopyCutEnabledAndVisible()
+          return isCopyCutEnabledAndVisible(dataContext)
         }
 
         override fun isCopyVisible(dataContext: DataContext): Boolean {
-          return isCopyCutEnabledAndVisible()
+          return isCopyCutEnabledAndVisible(dataContext)
         }
       }
     }
 
-    private val pastePredicate: (NodeData) -> Boolean = {
+    internal val pastePredicate: (NodeData) -> Boolean = {
       it.attributes?.isPastePossible == true
     }
 
+    internal fun registerDropTargetInProjectViewIfNeeded () {
+      if (isDropTargetRegistered) {
+        return
+      }
+      project?.let {
+        val tree = ProjectView.getInstance(project).currentProjectViewPane?.tree
+        tree?.let {
+          DnDManager.getInstance().registerTarget(myDropTarget, tree)
+          isDropTargetRegistered = true
+        }
+      }
+    }
 
-    private fun isPastePossible(destinationsNodesData: List<NodeData>?, sourceNodesData: List<NodeData>): Boolean {
-      val nodes = destinationsNodesData ?: mySelectedNodesData
+    internal fun isPastePossible(destinationFiles: List<VirtualFile>?, sourceNodesData: List<NodeData>): Boolean {
+      val destFiles = destinationFiles ?: mySelectedNodesData.mapNotNull { it.file }
       return bufferLock.withLock {
         getDestinationSourceFilePairs(
           sourceFiles = sourceNodesData.mapNotNull { it.file },
-          destinationFiles = nodes.mapNotNull { it.file },
+          destinationFiles = destFiles,
           isCut = isCut.get()
         ).isNotEmpty()
       }
@@ -450,13 +483,13 @@ class GlobalFileExplorerView(
 
     fun isPastePossibleFromPath(destinationPaths: List<TreePath>, sourcePaths: List<TreePath?>): Boolean {
       return isPastePossible(
-        destinationPaths.map { makeNodeDataFromTreePath(explorer, it) },
+        destinationPaths.map { makeNodeDataFromTreePath(explorer, it).file as VirtualFile },
         sourcePaths.map { makeNodeDataFromTreePath(explorer, it) }
       )
     }
 
-    private fun isPastePossibleAndEnabled(destinationsNodesData: List<NodeData>?): Boolean {
-      return isPastePossible(destinationsNodesData, if (dragAndDropCopyPasteBuffer.size > copyPasteBuffer.size) dragAndDropCopyPasteBuffer else copyPasteBuffer)
+    internal fun isPastePossibleAndEnabled(destinationFiles: List<VirtualFile>?): Boolean {
+      return isPastePossible(destinationFiles, if (dragAndDropCopyPasteBuffer.size > copyPasteBuffer.size) dragAndDropCopyPasteBuffer else copyPasteBuffer)
     }
 
     fun getDestinationSourceFilePairs(
@@ -482,7 +515,8 @@ class GlobalFileExplorerView(
               isMove = isCut,
               forceOverwriting = false,
               newName = null,
-              dataOpsManager
+              dataOpsManager,
+              explorer
             )
           )
         }
@@ -490,226 +524,6 @@ class GlobalFileExplorerView(
 
     override fun getPasteProvider(): PasteProvider {
       return ExplorerPasteProvider()
-    }
-
-    fun getPasteProvider(destinationNodes: List<TreePath>): PasteProvider {
-      return ExplorerPasteProvider(destinationNodes.map{ makeNodeDataFromTreePath(explorer, it) })
-    }
-
-
-    inner class ExplorerPasteProvider(private val destinationsNodesData: List<NodeData>? = null) : PasteProvider {
-      override fun performPaste(dataContext: DataContext) {
-        val selectedNodesData = destinationsNodesData ?: mySelectedNodesData
-        val pasteDestinationsNodesData = selectedNodesData
-          .filter(pastePredicate)
-
-        bufferLock.withLock {
-          val sourceFilesRaw = if (destinationsNodesData == null) {
-            copyPasteBuffer.mapNotNull { it.file }
-          }
-          else {
-            dragAndDropCopyPasteBuffer.mapNotNull { it.file }
-          }
-
-          val skipDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-          val overwriteDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-
-          val destinationSourceFilePairs = getDestinationSourceFilePairs(
-            sourceFiles = sourceFilesRaw,
-            destinationFiles = pasteDestinationsNodesData.mapNotNull { it.file },
-            isCut = isCut.get()
-          )
-
-          val pasteDestinations = destinationSourceFilePairs.map { it.first }.toSet().toList()
-          val sourceFiles = destinationSourceFilePairs.map { it.second }.toSet().toList()
-
-          if (isCut.get()) {
-            showYesNoDialog(
-              title = "Moving of ${sourceFiles.size} file(s)",
-              message = "Do you want to move these files?",
-              project = project
-            ).let {
-              if (!it) {
-                return@withLock
-              }
-            }
-          }
-
-          val conflicts = pasteDestinations
-            .mapNotNull { destFile ->
-              destFile.children
-                ?.mapNotNull conflicts@{ destChild ->
-                  Pair(destFile, sourceFiles.find { source ->
-                    val sourceAttributes = dataOpsManager.tryToGetAttributes(source)
-                    val destAttributes = dataOpsManager.tryToGetAttributes(destChild)
-                    if (
-                      destAttributes is RemoteMemberAttributes &&
-                      sourceAttributes is RemoteUssAttributes
-                    ) {
-                      val memberName = sourceAttributes.name.filter { it.isLetterOrDigit() }.take(8).toUpperCase()
-                      if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
-                    } else if (
-                      destAttributes is RemoteMemberAttributes &&
-                      sourceAttributes is RemoteDatasetAttributes
-                    ) {
-                      sourceAttributes.name.split(".").last() == destChild.name
-                    } else {
-                      source.name == destChild.name
-                    }
-                  } ?: return@conflicts null)
-                }
-            }.flatten()
-
-          if (conflicts.isNotEmpty()) {
-            val choice = Messages.showDialog(
-              project,
-              "Please, select",
-              "Name conflicts in ${conflicts.size} file(s)",
-              arrayOf(
-                //"Decide for Each",
-                "Skip for All",
-                "Overwrite for All",
-              ),
-              0,
-              AllIcons.General.QuestionDialog,
-              null
-            )
-
-            when (choice) {
-              0 -> skipDestinationSourceList.addAll(conflicts)
-              1 -> overwriteDestinationSourceList.addAll(conflicts)
-              else -> return
-            }
-          }
-
-          val ussToPdsWarnings = pasteDestinations.mapNotNull { destFile ->
-            val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
-            if (destAttributes !is RemoteDatasetAttributes) null
-            else {
-              val sourceUssAttributes = sourceFiles.filter { sourceFile ->
-                val sourceAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
-                sourceAttributes is RemoteUssAttributes
-              }
-              sourceUssAttributes.map { Pair(destFile, it) }.ifEmpty { null }
-            }
-          }.flatten()
-
-          if (ussToPdsWarnings.isNotEmpty() &&
-            !showYesNoDialog(
-              "Uss File To Pds Placing",
-              "You are about to place uss file to Pds. All lines exceeding the record length will be truncated.",
-              null,
-              "Ok",
-              "Skip this files",
-              AllIcons.General.WarningDialog
-            )
-          ) {
-            skipDestinationSourceList.addAll(ussToPdsWarnings)
-          }
-
-          val operations = pasteDestinations.map { destFile ->
-            sourceFiles.mapNotNull { sourceFile ->
-              if (skipDestinationSourceList.contains(Pair(destFile, sourceFile))) {
-                return@mapNotNull null
-              }
-              MoveCopyOperation(
-                source = sourceFile,
-                destination = destFile,
-                isMove = isCut.get(),
-                forceOverwriting = overwriteDestinationSourceList.contains(Pair(destFile, sourceFile)),
-                newName = null,
-                dataOpsManager
-              )
-            }
-          }.flatten()
-
-          val filesToMoveTotal = operations.size
-          val titlePrefix = if (isCut.get()) {
-            "Moving"
-          } else {
-            "Copying"
-          }
-          runModalTask(
-            title = "$titlePrefix $filesToMoveTotal file(s)",
-            project = project,
-            cancellable = true
-          ) {
-            it.isIndeterminate = false
-            operations.forEach { op ->
-              it.text = "${op.source.name} to ${op.destination.name}"
-              runCatching {
-                dataOpsManager.performOperation(
-                  operation = op,
-                  progressIndicator = it
-                )
-              }.onSuccess {
-                if (isCut.get()) {
-                  synchronized(copyPasteBuffer) {
-                    copyPasteBuffer.removeIf { it.file == op.source }
-                    cutProviderUpdater(copyPasteBuffer.mapNotNull { it.file })
-                  }
-
-                }
-              }.onFailure {
-                explorer.reportThrowable(it, project)
-              }
-              it.fraction = it.fraction + 1.0 / filesToMoveTotal
-            }
-            fun List<MoveCopyOperation>.collectByFile(
-              fileChooser: (MoveCopyOperation) -> VirtualFile
-            ): List<VirtualFile> {
-              return map(fileChooser)
-                .distinct()
-                .getMinimalCommonParents()
-                .toList()
-            }
-
-            val destinationFilesToRefresh = operations.collectByFile { it.destination }
-            val sourceFilesToRefresh = if (isCut.get()) {
-              operations.collectByFile { it.source }
-            } else {
-              emptyList()
-            }
-            val destinationNodes = destinationFilesToRefresh
-              .map { myFsTreeStructure.findByVirtualFile(it) }
-              .flatten()
-              .distinct()
-            val nodesToRefresh = if (isCut.get()) {
-              val sourceNodesToRefresh = sourceFilesToRefresh
-                .map { file -> myFsTreeStructure.findByVirtualFile(file).map { it.parent } }
-                .flatten()
-                .filterNotNull()
-                .distinct()
-              destinationNodes.plus(sourceNodesToRefresh)
-            } else {
-              destinationNodes
-            }
-
-            nodesToRefresh.forEach { node ->
-              // node.cleanCacheIfPossible()
-              myFsTreeStructure.findByPredicate { foundNode ->
-                if (foundNode is FetchNode && node is FetchNode) {
-                  foundNode.query == node.query
-                } else false
-              }.onEach { foundNode ->
-                foundNode.cleanCacheIfPossible()
-              }.onEach { foundNode ->
-                myStructure.invalidate(foundNode, true)
-              }
-
-            }
-
-          }
-        }
-      }
-
-      override fun isPastePossible(dataContext: DataContext): Boolean {
-        return isPastePossibleAndEnabled(destinationsNodesData)
-      }
-
-      override fun isPasteEnabled(dataContext: DataContext): Boolean {
-        return isPastePossibleAndEnabled(destinationsNodesData)
-      }
     }
   }
 

@@ -282,7 +282,9 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
         }
       }
     }
-    sendVfsChangesTopic().after(event)
+    runCatching {
+      sendVfsChangesTopic().after(event)
+    }
     return file
   }
 

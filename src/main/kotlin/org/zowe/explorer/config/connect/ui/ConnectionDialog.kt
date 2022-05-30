@@ -22,13 +22,11 @@ import com.intellij.ui.layout.withTextBinding
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.showUntilDone
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.InfoOperation
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
-import org.zowe.explorer.utils.runTask
-import org.zowe.explorer.utils.validateConnectionName
-import org.zowe.explorer.utils.validateForBlank
-import org.zowe.explorer.utils.validateZosmfUrl
 import org.zowe.kotlinsdk.CodePage
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
@@ -54,8 +52,9 @@ class ConnectionDialog(
         test = { state ->
           val throwable = runTask(title = "Testing Connection to ${state.connectionConfig.url}", project = project) {
             return@runTask try {
-              val info = service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig.url, state.isAllowSsl), it)
-              state.zVersion = info.zVersion
+              CredentialService.instance.setCredentials(connectionConfigUuid = state.connectionUuid, username = state.username, password = state.password)
+              val info = service<DataOpsManager>().performOperation(InfoOperation(state), it)
+              state.zVersion = info.getZOSVersion()
               null
             } catch (t: Throwable) {
               t
@@ -64,7 +63,13 @@ class ConnectionDialog(
           if (throwable != null) {
             state.mode = DialogMode.UPDATE
             val confirmMessage = "Do you want to add it anyway?"
-            val tMessage = throwable.message
+            val tMessage = throwable.message?.let {
+              if (it.contains("Exception")) {
+                it.substring(it.lastIndexOf(":") + 2).capitalize()
+              } else {
+                it
+              }
+            }
             val message = if (tMessage != null) {
               "$tMessage\n\n$confirmMessage"
             } else {
@@ -172,7 +177,8 @@ class ConnectionDialog(
                 ZVersion.ZOS_2_1,
                 ZVersion.ZOS_2_2,
                 ZVersion.ZOS_2_3,
-                ZVersion.ZOS_2_4
+                ZVersion.ZOS_2_4,
+                ZVersion.ZOS_2_5
               )
             ),
             prop = state::zVersion

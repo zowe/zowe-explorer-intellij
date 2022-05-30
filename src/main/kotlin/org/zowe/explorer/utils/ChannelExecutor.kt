@@ -98,6 +98,12 @@ class ChannelExecutor<V>(
     }
   }
 
+  override fun userAccept(input: V) {
+    scope.launch {
+      processInput(input)
+    }
+  }
+
   override fun shutdown() {
     runBlocking {
       job.cancelAndJoin()
