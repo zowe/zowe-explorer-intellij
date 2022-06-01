@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.ui.build.jobs
+package org.zowe.explorer.ui.build.jobs
 
 import com.intellij.build.BuildTreeConsoleView
 import com.intellij.build.DefaultBuildDescriptor
@@ -24,19 +24,19 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanel
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
-import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
-import eu.ibagroup.formainframe.dataops.log.MFLogger
-import eu.ibagroup.r2z.SpoolFile
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.log.JobLogFetcher
+import org.zowe.explorer.dataops.log.JobProcessInfo
+import org.zowe.explorer.dataops.log.MFLogger
+import org.zowe.kotlinsdk.SpoolFile
 import java.awt.BorderLayout
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.tree.DefaultMutableTreeNode
 
 val JOBS_LOG_VIEW = DataKey.create<JobBuildTreeView>("jobsLogView")
-const val JOBS_LOG_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"
+const val JOBS_LOG_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.ExplorerNotificationGroup"
 
 /**
  * Console with BuildTree for display job execution process and results.
@@ -63,7 +63,7 @@ class JobBuildTreeView(
   private val buildDescriptor = DefaultBuildDescriptor(buildId, jobNameNotNull, workingDir, Date().time)
   private val treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, consoleView) { false }
 
-  private val actionToolbarGroup: ActionGroup = ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.JobsLogActionBarGroup") as ActionGroup
+  private val actionToolbarGroup: ActionGroup = ActionManager.getInstance().getAction("org.zowe.explorer.actions.JobsLogActionBarGroup") as ActionGroup
   private val place: String = "Jobs Log"
   private val actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionToolbarGroup, true)
 

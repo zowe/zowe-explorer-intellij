@@ -20,9 +20,6 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
@@ -198,14 +195,6 @@ class ExplorerPasteProvider: PasteProvider {
       ) {
         it.isIndeterminate = false
         operations.forEach { op ->
-          op.sourceAttributes?.let { attr ->
-            service<AnalyticsService>().trackAnalyticsEvent(
-              FileEvent(
-                attr,
-                if (op.isMove) FileAction.MOVE else FileAction.COPY
-              )
-            )
-          }
           it.text = "${op.source.name} to ${op.destination.name}"
           runCatching {
             dataOpsManager.performOperation(

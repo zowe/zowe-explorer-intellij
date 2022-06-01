@@ -19,6 +19,7 @@ import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.crudable.nextUniqueValue
 import org.zowe.kotlinsdk.CodePage
 import org.zowe.kotlinsdk.annotations.ZVersion
+import java.util.*
 
 data class ConnectionDialogState(
     var connectionUuid: String = "",

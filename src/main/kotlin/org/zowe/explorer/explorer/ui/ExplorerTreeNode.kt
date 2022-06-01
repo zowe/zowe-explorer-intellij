@@ -15,14 +15,10 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.ui.SimpleTextAttributes
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
@@ -95,8 +91,7 @@ abstract class ExplorerTreeNode<Value : Any>(
             contentSynchronizer.synchronizeWithRemote(syncProvider)
           }
         }
-        dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
-        }
+        dataOpsManager.tryToGetAttributes(file)?.let { }
         it.navigate(requestFocus)
       }
     }

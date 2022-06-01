@@ -35,9 +35,6 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.common.ui.DoubleClickTreeMouseListener
 import org.zowe.explorer.common.ui.makeNodeDataFromTreePath
 import org.zowe.explorer.common.ui.promisePath
@@ -394,20 +391,16 @@ class GlobalFileExplorerView(
       val nodes = dataContext.getData(ExplorerDataKeys.NODE_DATA_ARRAY)?.toList() ?: mySelectedNodesData
       this@GlobalFileExplorerView.isCut.set(isCut)
       bufferLock.withLock {
-        val buffer = nodes.filter(cutCopyPredicate).apply {
+        val buffer = nodes
+          .filter(cutCopyPredicate)
+          .apply {
             if (isCut) {
               mapNotNull { it.file }.also(cutProviderUpdater)
             } else {
               cutProviderUpdater(emptyList())
             }
-          forEach {
-            it.file?.let { file ->
-              service<DataOpsManager>().tryToGetAttributes(file)?.let { attrs ->
-                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attrs, FileAction.COPY))
-              }
-            }
           }
-        }.let { LinkedList(it) }
+          .let { LinkedList(it) }
         copyPasteBuffer = buffer
       }
     }

@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.ui.build.jobs
+package org.zowe.explorer.ui.build.jobs
 
 import com.intellij.build.*
 import com.intellij.openapi.application.runInEdt
@@ -21,11 +21,11 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.Topic
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
-import eu.ibagroup.formainframe.utils.subscribe
-import eu.ibagroup.r2z.JobStatus
-import eu.ibagroup.r2z.SubmitJobRequest
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.log.JobProcessInfo
+import org.zowe.explorer.utils.subscribe
+import org.zowe.kotlinsdk.JobStatus
+import org.zowe.kotlinsdk.SubmitJobRequest
 
 interface JobHandler {
   fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest)
