@@ -10,10 +10,10 @@
 
 package org.zowe.explorer.dataops.operations
 
-import org.zowe.explorer.config.connect.ui.ConnectionDialogState
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.Operation
 import org.zowe.kotlinsdk.SystemsResponse
 
-class InfoOperation(var state: ConnectionDialogState) : Operation<SystemsResponse> {
+class InfoOperation(var connectionConfig: ConnectionConfig) : Operation<SystemsResponse> {
   override val resultClass = SystemsResponse::class.java
 }

@@ -52,6 +52,7 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   private val hasError = AtomicBoolean(false)
 
+  private val connectionError = "Error: Check connection"
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return lock.withLock {
@@ -74,7 +75,13 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
           }
         } else {
           hasError.set(true)
-          errorNode(q?.let { it1 -> fileFetchProvider.getFetchedErrorMessage(it1) } ?: message("title.error")).also {
+          errorNode(
+            if (unit.connectionConfig == null) {
+              connectionError
+            } else {
+              q?.let { it1 -> fileFetchProvider.getFetchedErrorMessage(it1) } ?: message("title.error")
+            }
+          ).also {
             cachedChildren = it
           }
         }
