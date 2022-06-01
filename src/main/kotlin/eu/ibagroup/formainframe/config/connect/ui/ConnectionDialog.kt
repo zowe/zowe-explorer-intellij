@@ -42,7 +42,7 @@ class ConnectionDialog(
           val throwable = runTask(title = "Testing Connection to ${state.connectionConfig.url}", project = project) {
             return@runTask try {
               CredentialService.instance.setCredentials(connectionConfigUuid = state.connectionUuid, username = state.username, password = state.password)
-              val info = service<DataOpsManager>().performOperation(InfoOperation(state), it)
+              val info = service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig), it)
               state.zVersion = info.getZOSVersion()
               null
             } catch (t: Throwable) {
