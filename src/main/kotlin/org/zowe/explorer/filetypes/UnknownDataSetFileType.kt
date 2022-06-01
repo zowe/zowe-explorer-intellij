@@ -21,7 +21,7 @@ import javax.swing.Icon
 
 class UnknownDataSetFileType : FileTypeIdentifiableByVirtualFile {
   override fun getName(): String {
-    return "Unknown Data Set"
+    return "Unknown Data Set "
   }
 
   override fun getDescription(): String {

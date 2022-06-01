@@ -129,7 +129,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     if (checkConnection) {
       val res = runTask("Testing Connection to ${zoweConnection.url}", myProject) {
         runCatching {
-          service<DataOpsManager>().performOperation(InfoOperation(zoweConnection.url, zoweConnection.isAllowSelfSigned), it)
+          service<DataOpsManager>().performOperation(InfoOperation(zoweConfig.toConnectionConfig()), it)
         }
       }
       if (res.isFailure) {

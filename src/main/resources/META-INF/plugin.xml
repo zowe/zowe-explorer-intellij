@@ -194,9 +194,7 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
         <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
 
-        <!--        <postStartupActivity implementation="org.zowe.explorer.analytics.AnalyticsStartupActivity"/>-->
-
-        <applicationConfigurable id="configurable.mainframe.explorer"
+        <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
 
@@ -213,16 +211,16 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
                     factoryClass="org.zowe.explorer.explorer.ui.ExplorerWindowFactory"
                     icon="ForMainframeIcons.ExplorerToolbarIcon"
                     doNotActivateOnStart="true"/>
-        <toolWindow id="Jobs" anchor="bottom"
+        <toolWindow id="Zowe Jobs" anchor="bottom"
                     factoryClass="org.zowe.explorer.ui.build.jobs.JobsWindowFactory"
                     canCloseContents="true"
                     doNotActivateOnStart="true"/>
 
         <virtualFileSystem id="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            implementationClass="org.zowe.explorer.vfs.MFVirtualFileSystem"
-                           key="mf"/>
+                           key="zowe_mf"/>
 
-        <fileType name="Unknown Data Set"
+        <fileType name="Unknown Data Set "
                   implementationClass="org.zowe.explorer.filetypes.UnknownDataSetFileType"/>
 
         <applicationService preload="true" serviceInterface="org.zowe.explorer.config.ConfigService"
@@ -424,8 +422,8 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
             <reference id="org.zowe.explorer.explorer.actions.GetJobPropertiesAction"/>
         </group>
 
-        <action id="org.zowe.explorer.dataops.synchronizer.SyncAction"
-                class="org.zowe.explorer.dataops.synchronizer.SyncAction"
+        <action id="org.zowe.explorer.dataops.content.synchronizer.SyncAction"
+                class="org.zowe.explorer.dataops.content.synchronizer.SyncAction"
                 icon="AllIcons.Actions.BuildLoadChanges"
                 text="Sync Data"/>
 
