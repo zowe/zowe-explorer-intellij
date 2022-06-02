@@ -22,7 +22,7 @@ class MFVirtualFileSystem : VirtualFileSystemModelWrapper<MFVirtualFile, MFVirtu
 
   companion object {
     const val SEPARATOR = "/"
-    const val PROTOCOL = "mf"
+    const val PROTOCOL = "zowe_mf"
     const val ROOT_NAME = "Zowe Explorer"
     const val ROOT_ID = 0
 

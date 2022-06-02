@@ -218,7 +218,7 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <virtualFileSystem id="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            implementationClass="org.zowe.explorer.vfs.MFVirtualFileSystem"
-                           key="mf"/>
+                           key="zowe_mf"/>
 
         <fileType name="Unknown Data Set "
                   implementationClass="org.zowe.explorer.filetypes.UnknownDataSetFileType"/>
