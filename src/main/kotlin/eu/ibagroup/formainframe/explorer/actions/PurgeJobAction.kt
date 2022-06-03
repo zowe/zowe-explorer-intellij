@@ -79,7 +79,7 @@ class PurgeJobAction : AnAction() {
           if (view is JesExplorerView) {
             view.explorer.showNotification(
               "${jobStatus.jobName}: ${jobStatus.jobId} has been purged",
-              "${it}",
+              "$it",
               NotificationType.INFORMATION,
               e.project
             )
@@ -91,7 +91,7 @@ class PurgeJobAction : AnAction() {
           } else if (view is JobBuildTreeView) {
             view.showNotification(
               "${jobStatus.jobName}: ${jobStatus.jobId} has been purged",
-              "${it}",
+              "$it",
               e.project,
               NotificationType.INFORMATION
             )
