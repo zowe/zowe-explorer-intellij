@@ -1,4 +1,4 @@
-package eu.ibagroup.formainframe.config
+package eu.ibagroup.formainframe
 import com.intellij.mock.MockApplication
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer

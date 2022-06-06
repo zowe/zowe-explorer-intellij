@@ -1,7 +1,7 @@
 package eu.ibagroup.formainframe.config.connect.ui
 
 import eu.ibagroup.formainframe.config.ConfigSandboxImpl
-import eu.ibagroup.formainframe.config.UnitTestCase
+import eu.ibagroup.formainframe.UnitTestCase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
@@ -82,4 +82,11 @@ class ConnectionsTableModelTest: UnitTestCase() {
         assertEquals(connectionDialogStateA.password,conTab[0].password)
         assertNotEquals(connectionDialogStateA.connectionUuid,conTab[0].connectionUuid)
     }
+
+/*
+
+    @Test
+    fun shouldFail() {
+        assertTrue(false)
+    }*/
 }
