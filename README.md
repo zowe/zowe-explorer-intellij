@@ -1,6 +1,5 @@
 # For Mainframe
-"For Mainframe" brings support for browsing, editing and creating data on z/OS via 
-<a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.
+"For Mainframe" brings support for browsing, editing and creating data on z/OS via [z/OSMF REST API](https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services)
 
 Plugin in Marketplace: [link](https://plugins.jetbrains.com/plugin/16353-for-mainframe)
 
@@ -16,8 +15,7 @@ Using our plugin you will be able to:
 
 To start using the plugin:
 * Install the plugin in your Intellij based IDE.
-* Contact your RACF administrator so that your user is in the 
-  <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf">IZUUSER RACF group</a>.
+* Contact your RACF administrator so that your user is in the [IZUUSER RACF group](https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf)
 * You are ready to go! Start working with z/OS from the IDE.
 
 **Note: z/OS 2.1 or higher is required**
@@ -68,4 +66,18 @@ Click with the right mouse button on the existing data set or data set member th
 Click with the right mouse button on the existing data set which properties you'd like to view. Click "Properties". A pop up window should appear where you would see all the available properties for the data set.
 
 ### Delete data set/data set member
-Click with the right mouse button on the data set/data set member you'd like to delete in the working set tree on the right side of your screen. Click "Delete".Confirm your intention to delete a data set/data set member in the pop up window by pressing "Yes". After the deleting is complete you should no longer see the data set/data set member in the working set tree.
+Click with the right mouse button on the data set/data set member you'd like to delete in the working set tree on the right side of your screen. Click "Delete". Confirm your intention to delete a data set/data set member in the pop up window by pressing "Yes". After the deleting is complete you should no longer see the data set/data set member in the working set tree. 
+
+# How to contribute
+If you want to help the project, improve some functionality, resolve bug or add some new feature, please, refer to the [contribution guide](CONTRIBUTE.md).
+
+# How to obtain and provide feedback
+If you have any questions, related to the project development, further plans or something else, you can reach as out by some of the communication chanels:
+* [For Mainframe Slack channel in IBA workspace](https://iba-mainframe-tools.slack.com/archives/C01V4MZL9DH)
+* [Zowe Explorer IntelliJ Slack channel in Open Mainframe Project workspace](https://openmainframeproject.slack.com/archives/C020BGPSU0M)
+* [For Mainframe GitHub (create or review issues)](https://github.com/for-mainframe/For-Mainframe/issues)
+* [Zowe Explorer IntelliJ GitHub (create or review issues)](https://github.com/zowe/zowe-explorer-intellij/issues)
+* Email to: <a href="mailto:ukalesnikau@ibagroup.eu">Uladzislau Kalesnikau (Team Lead of the IJMP)</a>
+* Email to: <a href="mailto:vkrus@ibagroup.eu">Valiantsin Krus (Tech Lead of the IJMP)</a>
+
+**Note: GitHub issue is the preferred way of communicating in case of creating some bug/feature/request for enhancement. If you need direct consulting or you have any related questions, please, reach us out using Slack channels or E-mail**

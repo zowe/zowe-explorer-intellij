@@ -6,4 +6,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsComponentFactory
  * Base interface for creating MFLoggers.
  * @author Valentine Krus
  */
-interface LogFetcherFactory: DataOpsComponentFactory<LogFetcher<*>>
+interface LogFetcherFactory: DataOpsComponentFactory<LogFetcher<*>> {
+  fun acceptsProcessInfo (mfProcessInfo: MFProcessInfo): Boolean
+}

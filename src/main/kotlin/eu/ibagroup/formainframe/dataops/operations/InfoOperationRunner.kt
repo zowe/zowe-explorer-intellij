@@ -23,9 +23,8 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
   override fun canRun(operation: InfoOperation) = true
 
   override fun run(operation: InfoOperation, progressIndicator: ProgressIndicator): SystemsResponse {
-    val state = operation.state
-    val response = api<SystemsApi>(connectionConfig = state.connectionConfig)
-      .getSystems(state.connectionConfig.authToken)
+    val response = api<SystemsApi>(connectionConfig = operation.connectionConfig)
+      .getSystems(operation.connectionConfig.authToken)
       .cancelByIndicator(progressIndicator)
       .execute()
     if (!response.isSuccessful) {

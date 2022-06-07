@@ -73,7 +73,7 @@ class JobsWindowFactory: ToolWindowFactory {
       contentToBuildViewMap[content] = jobBuildTreeView
       toolWindow.addContentManagerListener(object: ContentManagerListener {
         override fun contentRemoved(event: ContentManagerEvent) {
-          contentToBuildViewMap[content]?.stop()
+          contentToBuildViewMap[event.content]?.stop()
         }
       })
       jobBuildTreeView.start()

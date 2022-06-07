@@ -112,9 +112,8 @@ class DataOpsManagerImpl : DataOpsManager {
     operationRunnersList.associateListedBy { it.operationClass }
   }
 
-  private val logFetchers by lazy {
-    val logFetcherList = LogFetcher.EP.extensionList.buildComponents()
-    logFetcherList.associateBy { it.mfProcessInfoClass }
+  private fun createLogFetcher (processInfo: MFProcessInfo): LogFetcher<*>? {
+    return LogFetcher.EP.extensionList.firstOrNull { it.acceptsProcessInfo(processInfo) }?.buildComponent(this)
   }
 
   override fun isOperationSupported(operation: Operation<*>): Boolean {
@@ -140,7 +139,7 @@ class DataOpsManagerImpl : DataOpsManager {
     mfProcessInfo: PInfo,
     consoleView: ConsoleView
   ): MFLogger<LFetcher> {
-    val logFetcher = logFetchers[mfProcessInfo::class.java]
+    val logFetcher = createLogFetcher(mfProcessInfo)
       ?: throw IllegalArgumentException("Unsupported Log Information $mfProcessInfo")
     @Suppress("UNCHECKED_CAST")
     val resultFetcher: LFetcher = logFetcher as LFetcher
