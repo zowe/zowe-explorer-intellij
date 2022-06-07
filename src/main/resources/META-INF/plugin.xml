@@ -1,52 +1,9 @@
 <idea-plugin>
     <id>eu.ibagroup.formainframe</id>
-
-    <extensionPoints>
-
-        <extensionPoint name="attributesService"
-                        interface="eu.ibagroup.formainframe.dataops.attributes.AttributesServiceFactory"/>
-
-        <extensionPoint name="fileDataProvider"
-                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
-
-        <extensionPoint name="contentSynchronizer"
-                        interface="eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizerFactory"/>
-
-        <extensionPoint name="mfContentAdapter"
-                        interface="eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapterFactory"/>
-
-        <extensionPoint name="operationRunner"
-                        interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
-
-        <extensionPoint name="logFetcher"
-                        interface="eu.ibagroup.formainframe.dataops.log.LogFetcherFactory"/>
-
-        <extensionPoint name="oldConfigAdapter"
-                        interface="eu.ibagroup.formainframe.config.OldConfigAdapterFactory"/>
-
-        <extensionPoint name="explorerContentProvider"
-                        interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
-
-        <extensionPoint name="explorer"
-                        interface="eu.ibagroup.formainframe.explorer.ExplorerFactory"/>
-
-    </extensionPoints>
-
-    <applicationListeners>
-        <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-
-        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
-                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
-
-        <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
-                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-    </applicationListeners>
-
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
     <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
-
+    <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
 Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
 IBA Group team of <b>mainframe enthusiasts</b> are actively developing new features for the open-source "For Mainframe" plugin.
@@ -104,7 +61,47 @@ Example of how to see the output:<br/>
 <a href="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d"><img src="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d" width="680"></a><br/>
 ]]></description>
 
-    <depends>com.intellij.modules.platform</depends>
+    <extensionPoints>
+
+        <extensionPoint name="attributesService"
+                        interface="eu.ibagroup.formainframe.dataops.attributes.AttributesServiceFactory"/>
+
+        <extensionPoint name="fileDataProvider"
+                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
+
+        <extensionPoint name="contentSynchronizer"
+                        interface="eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizerFactory"/>
+
+        <extensionPoint name="mfContentAdapter"
+                        interface="eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapterFactory"/>
+
+        <extensionPoint name="operationRunner"
+                        interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
+
+        <extensionPoint name="logFetcher"
+                        interface="eu.ibagroup.formainframe.dataops.log.LogFetcherFactory"/>
+
+        <extensionPoint name="oldConfigAdapter"
+                        interface="eu.ibagroup.formainframe.config.OldConfigAdapterFactory"/>
+
+        <extensionPoint name="explorerContentProvider"
+                        interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
+
+        <extensionPoint name="explorer"
+                        interface="eu.ibagroup.formainframe.explorer.ExplorerFactory"/>
+
+    </extensionPoints>
+
+    <applicationListeners>
+        <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+
+        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+
+        <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </applicationListeners>
 
     <extensions defaultExtensionNs="eu.ibagroup.formainframe">
 
@@ -454,7 +451,9 @@ Example of how to see the output:<br/>
         <action id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"
                 class="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"
                 icon="AllIcons.Actions.BuildLoadChanges"
-                text="Sync Data"/>
+                text="Sync Data">
+            <keyboard-shortcut first-keystroke="control shift S" keymap="$default"/>
+        </action>
 
         <group id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncActionGroup" popup="true">
             <reference id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"/>
