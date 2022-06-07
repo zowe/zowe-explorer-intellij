@@ -72,7 +72,9 @@ data class RemoteUssAttributes(
 
   val isWritable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig).equals(owner, ignoreCase = true) }
+      val hasFileOwnerInRequesters = requesters.any {
+        runCatching { username(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
+      }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
       } else {
@@ -86,7 +88,9 @@ data class RemoteUssAttributes(
 
   val isReadable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig).equals(owner, ignoreCase = true) }
+      val hasFileOwnerInRequesters = requesters.any {
+        runCatching { username(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
+      }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
       } else {

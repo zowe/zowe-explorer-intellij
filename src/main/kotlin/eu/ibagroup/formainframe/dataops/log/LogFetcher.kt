@@ -4,6 +4,14 @@ import com.intellij.openapi.extensions.ExtensionPointName
 
 /**
  * Base interface for performing fetching mainframe process log.
+ *
+ * ATTENTION!!!
+ * Each mainframe process will have its own LogFetcher instance.
+ * LogFetcher class can be registered through LogFetcherFactory and
+ * DataOpsManager will create several log fetcher through this factory
+ * for each process. That's why it is possible to store temporary process
+ * log data inside log fetcher if it is needed.
+ *
  * @author Valentine Krus
  */
 interface LogFetcher<PInfo: MFProcessInfo> {

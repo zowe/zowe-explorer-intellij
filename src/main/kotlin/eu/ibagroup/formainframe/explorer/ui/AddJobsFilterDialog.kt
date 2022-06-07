@@ -5,11 +5,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.utils.validateJobFilter
-import eu.ibagroup.formainframe.utils.validateJobFilterOnInput
 import javax.swing.JComponent
 
 class AddJobsFilterDialog(
@@ -18,7 +16,7 @@ class AddJobsFilterDialog(
 ) : DialogWrapper(project), StatefulComponent<JobsFilterState> {
 
   init {
-    title = "Create Mask"
+    title = "Create Jobs Filter"
     init()
   }
 
@@ -36,7 +34,7 @@ class AddJobsFilterDialog(
         textField(state::prefix).also {
           prefixField = it.component
         }.withValidationOnApply {
-          validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it)
+          validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it, false)
         }
       }
       row {
@@ -44,7 +42,7 @@ class AddJobsFilterDialog(
         textField(state::owner).also{
           ownerField = it.component
         }.withValidationOnApply {
-          validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it)
+          validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it, false)
         }
       }
       row {
@@ -52,7 +50,7 @@ class AddJobsFilterDialog(
         textField(state::jobId).also{
           jobIdField = it.component
         }.withValidationOnApply {
-          validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it)
+          validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it, true)
         }
       }
     }
@@ -67,11 +65,10 @@ class JobsFilterState(
 ) {
 
   fun toJobsFilter (): JobsFilter {
-    val resultPrefix = prefix.ifEmpty { "*" }
-    val resultOwner = owner.ifEmpty {
-      CredentialService.instance.getUsernameByKey(ws.connectionConfig?.uuid ?: "") ?: ""
-    }
-    return JobsFilter(resultOwner, resultPrefix, jobId)
+    val resultOwner = owner.ifBlank { "" }
+    val resultPrefix = prefix.ifBlank { "" }
+    val resultJobId = jobId.ifBlank { "" }
+    return JobsFilter(resultOwner, resultPrefix, resultJobId)
   }
 
 }
