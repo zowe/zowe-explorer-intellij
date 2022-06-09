@@ -456,6 +456,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
             <separator/>
             <reference id="$Delete"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"/>
