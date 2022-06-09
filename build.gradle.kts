@@ -43,7 +43,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.0.27")
+  implementation("eu.ibagroup:r2z:1.1.0")
   implementation("com.segment.analytics.java:analytics:+")
   testImplementation("io.mockk:mockk:1.10.2")
   testImplementation("org.mock-server:mockserver-netty:5.11.1")
@@ -115,6 +115,18 @@ tasks {
         <li>NullPointerException when tree opens by user with incorrect password</li>
         <li>Impossible to close the file located locally on PC (the file was opened not from plugin)</li>
         <li>Fixed file content corruption after chaging file mode</li>
+        <li>InfoOperation requires state instead of connection settings</li>
+        <li>"Error" message if connection is deleted</li>
+        <li>The job is marked as finished in job console if close tab for any another job</li>
+        <li>Hold/release only works for first selected jobid</li>
+        <li>Validation of directory blocks when creating dataset</li>
+        <li>File cache conflict message if create new member in PDS and open it right after creation</li>
+        <li>Validate jobId when creating job filter</li>
+        <li>CredentialsNotFoundForConnection exception in plugin</li>
+        <li>Creating Job Filters in configuration table with prefix/owner/job id length >8 is not blocked</li>
+        <li>'Test passed' message in the jobs console</li>
+        <li>Allocate like does not save some parameters</li>
+        <li>GitHub issue #42</li>
       </ul>"""
     )
   }
