@@ -99,9 +99,9 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
 
     if (sourceFileFetchProvider.isCacheValid(sourceQuery)) {
       val response = api<DataAPI>(connectionConfig).createUssFile(
-        connectionConfig.authToken,
-        FilePath(destinationAttributes.path + "/" + sourceAttributes.name),
-        CreateUssFile(FileType.DIR, destinationAttributes.fileMode ?: FileMode(7,7,7))
+        authorizationToken = connectionConfig.authToken,
+        filePath = FilePath(destinationAttributes.path + "/" + sourceAttributes.name),
+        body = CreateUssFile(FileType.DIR, destinationAttributes.fileMode ?: FileMode(7,7,7))
       ).cancelByIndicator(progressIndicator).execute()
 
       if (response.isSuccessful) {
