@@ -1,7 +1,9 @@
 package eu.ibagroup.formainframe.config
 
+import com.intellij.configurationStore.getDefaultStoragePathSpec
 import com.intellij.configurationStore.getPersistentStateComponentStorageLocation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -13,9 +15,11 @@ import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.runIfTrue
+import java.nio.file.Paths
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.parsers.DocumentBuilderFactory
+import kotlin.io.path.Path
 
 @State(
   name = "by.iba.connector.services.ConfigService",
@@ -56,7 +60,9 @@ class ConfigServiceImpl: ConfigService{
     myState.jobsWorkingSets = myState.jobsWorkingSets.filterNotNull().toMutableList()
     myState.workingSets = myState.workingSets.filterNotNull().toMutableList()
 
-    val configLocation = getPersistentStateComponentStorageLocation(this.javaClass)
+    PathManager.getConfigPath()
+
+    val configLocation = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, getDefaultStoragePathSpec(this.javaClass))
     val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configLocation?.toFile())
     val oldConfigsAdapters = OldConfigAdapter.EP.extensions.map { it.buildAdapter(document) }
     oldConfigsAdapters.forEach { adapter ->
