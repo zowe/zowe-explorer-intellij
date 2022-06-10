@@ -58,7 +58,7 @@ class ConfigServiceImpl: ConfigService{
     myState.jobsWorkingSets = myState.jobsWorkingSets.toMutableList()
     myState.workingSets = myState.workingSets.toMutableList()
 
-    val configLocation = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, getDefaultStoragePathSpec(this.javaClass))
+    val configLocation = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, "iba_connector_config.xml")
     val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configLocation?.toFile())
     val oldConfigsAdapters = OldConfigAdapter.EP.extensions.map { it.buildAdapter(document) }
     oldConfigsAdapters.forEach { adapter ->
