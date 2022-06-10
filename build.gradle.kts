@@ -11,7 +11,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.6.0"
+version = "0.6.1"
 
 repositories {
   mavenCentral()
