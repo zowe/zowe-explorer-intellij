@@ -1,6 +1,8 @@
 package icons
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
+import com.intellij.util.IconUtil
 import javax.swing.Icon
 
 object ForMainframeIcons {
@@ -10,8 +12,14 @@ object ForMainframeIcons {
   }
 
   @JvmField
-  val explorerToolbarIcon = getIcon("icons/toolWindowLogo.svg")
+  val ExplorerToolbarIcon = getIcon("icons/toolWindowLogo.svg")
 
   @JvmField
-  val jclDirectoryIcon = getIcon("icons/jclDir.svg")
+  val JclDirectory = getIcon("icons/jclDir.svg")
+
+  @JvmField
+  val DatasetMask = getIcon("icons/datasetMask.svg")
+
+  @JvmField
+  val MemberIcon = IconUtil.addText(AllIcons.FileTypes.Any_type, "MEM")
 }

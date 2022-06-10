@@ -3,15 +3,24 @@ package eu.ibagroup.formainframe.utils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import org.apache.log4j.Level
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.CancellablePromise
@@ -21,17 +30,6 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class Dummy private constructor()
-
-//fun PluginManager.getPluginDescriptorByClass(clazz: Class<*>): IdeaPluginDescriptor? {
-//  return getPluginOrPlatformByClassName(clazz.name)?.let {
-//    findEnabledPlugin(it)
-//  }
-//}
-
-//val forMainframePluginDescriptor by lazy {
-//  PluginManager.getInstance().getPluginDescriptorByClass(Dummy::class.java)
-//    ?: throw IllegalStateException("Dummy class wasn't loaded by For Mainframe plugin's class loader for some reason")
-//}
 
 val cachesDir by lazy {
   val cachesDirString = System.getProperty("caches_dir")
@@ -214,18 +212,14 @@ fun VirtualFile.getAncestorNodes(): List<VirtualFile> {
   return getAncestorNodes { children?.asIterable() ?: emptyList() }
 }
 
-//fun Iterable<VirtualFile>.getMinimalCommonParents() : Collection<VirtualFile> {
-//  val parentsChains = map { it.getParentsChain() }
-//  return parentsChains.filter { candidateChain ->
-//    parentsChains.filter {
-//      candidateChain.size > it.size
-//    }.none {
-//      candidateChain.containsAll(it)
-//    }
-//  }.mapNotNull {
-//    it.firstOrNull()
-//  }
-//}
+fun VirtualFile.isBeingEditingNow(): Boolean {
+  return ProjectManager
+    .getInstance()
+    .openProjects
+    .map { FileEditorManager.getInstance(it).getAllEditors(this).toList() }
+    .flatten()
+    .isNotEmpty()
+}
 
 fun Iterable<VirtualFile>.getMinimalCommonParents(): Collection<VirtualFile> {
   return getMinimalCommonParents { parent }
@@ -239,4 +233,37 @@ val minimalParentComparator: Comparator<VirtualFile> = Comparator { o1, o2 ->
     secondParentsChain.containsAll(firstParentChain) -> -1
     else -> 0
   }
+}
+
+enum class MfFileType {
+  USS, DATASET, MEMBER
+}
+
+class MfFilePath(
+  val mfFileType: MfFileType,
+  val filePath: String,
+  val memberName: String? = null
+) {
+  override fun toString(): String {
+    return when(mfFileType) {
+      MfFileType.USS -> filePath
+      MfFileType.DATASET -> "//'${filePath}'"
+      else -> "//'${filePath}(${memberName})'"
+    }
+  }
+}
+
+fun FileAttributes.formMfPath(): String {
+  val fileType = when(this) {
+    is RemoteUssAttributes -> MfFileType.USS
+    is RemoteDatasetAttributes -> MfFileType.DATASET
+    else -> MfFileType.MEMBER
+  }
+  val filePath = when(this) {
+    is RemoteMemberAttributes -> parentFile.name
+    is RemoteUssAttributes -> path
+    else -> name
+  }
+  val memberName = if (this is RemoteMemberAttributes) name else null
+  return MfFilePath(fileType, filePath, memberName).toString()
 }

@@ -27,7 +27,11 @@ class GlobalExplorer : AbstractExplorerBase<GlobalFilesWorkingSet, FilesWorkingS
   override val unitConfigClass = FilesWorkingSetConfig::class.java
 
   override val units by rwLocked(
-    configCrudable.getAll(unitConfigClass).map { it.toUnit(disposable) }.collect(Collectors.toSet()).toMutableSet(),
+    configCrudable
+      .getAll(unitConfigClass)
+      .map { it.toUnit(disposable) }
+      .collect(Collectors.toSet())
+      .toMutableSet(),
     lock
   )
 

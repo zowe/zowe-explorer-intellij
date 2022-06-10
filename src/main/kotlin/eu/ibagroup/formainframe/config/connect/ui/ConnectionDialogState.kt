@@ -5,7 +5,6 @@ import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.utils.crudable.Crudable
-import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
 import eu.ibagroup.r2z.CodePage

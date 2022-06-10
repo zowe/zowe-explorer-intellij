@@ -5,6 +5,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.explorer.Explorer
 
 class MoveCopyOperation(
   val source: VirtualFile,
@@ -13,7 +14,8 @@ class MoveCopyOperation(
   val destinationAttributes: FileAttributes?,
   val isMove: Boolean,
   val forceOverwriting: Boolean,
-  val newName: String?
+  val newName: String?,
+  val explorer: Explorer<*>? = null
 ) : UnitOperation {
   constructor(
     source: VirtualFile,
@@ -21,7 +23,8 @@ class MoveCopyOperation(
     isMove: Boolean,
     forceOverwriting: Boolean,
     newName: String?,
-    dataOpsManager: DataOpsManager
+    dataOpsManager: DataOpsManager,
+    explorer: Explorer<*>? = null
   ) : this(
     source = source,
     sourceAttributes = dataOpsManager.tryToGetAttributes(source),
@@ -29,7 +32,8 @@ class MoveCopyOperation(
     destinationAttributes = dataOpsManager.tryToGetAttributes(destination),
     isMove = isMove,
     forceOverwriting = forceOverwriting,
-    newName = newName
+    newName = newName,
+    explorer = explorer
   )
 }
 

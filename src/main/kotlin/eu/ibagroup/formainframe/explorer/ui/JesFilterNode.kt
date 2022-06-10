@@ -16,7 +16,7 @@ import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
-private val jesFilterIcon = ForMainframeIcons.jclDirectoryIcon
+private val jesFilterIcon = ForMainframeIcons.JclDirectory
 
 class JesFilterNode(
   jobsFilter: JobsFilter,

@@ -16,10 +16,10 @@ import javax.swing.JComponent
 import kotlin.concurrent.withLock
 
 class FileExplorerContentProviderFactory : ExplorerContentProviderFactory<GlobalExplorer>() {
-  override fun buildComponent(): ExplorerContentProvider<GlobalExplorer> = FileExplorerContentProvider()
+  override fun buildComponent(): ExplorerContentProvider<GlobalExplorer> = FileExplorerContentProvider.getInstance()
 }
 
-class FileExplorerContentProvider : ExplorerContentProviderBase<GlobalExplorer>() {
+class FileExplorerContentProvider private constructor() : ExplorerContentProviderBase<GlobalExplorer>() {
 
   override val explorer: GlobalExplorer = UIComponentManager.INSTANCE.getExplorer(GlobalExplorer::class.java)
   override val displayName: String = "File Explorer"
@@ -27,6 +27,19 @@ class FileExplorerContentProvider : ExplorerContentProviderBase<GlobalExplorer>(
   override val actionGroup: ActionGroup =
     ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.FilesActionBarGroup") as ActionGroup
   override val place: String = "File Explorer"
+  private val globalFileExplorerViews = mutableMapOf<Project, GlobalFileExplorerView>()
+
+
+  companion object {
+    private val fileExplorerContentProvider = FileExplorerContentProvider()
+    fun getInstance(): FileExplorerContentProvider {
+      return fileExplorerContentProvider
+    }
+  }
+
+  fun getExplorerView (project: Project): GlobalFileExplorerView? {
+    return globalFileExplorerViews[project]
+  }
 
   @Suppress("UNCHECKED_CAST")
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
@@ -39,6 +52,8 @@ class FileExplorerContentProvider : ExplorerContentProviderBase<GlobalExplorer>(
         sendTopic(CutBufferListener.CUT_BUFFER_CHANGES, explorer.componentManager)
           .onUpdate(previousState, it)
       }
+    }.also {
+      globalFileExplorerViews[project] = it
     }
   }
 

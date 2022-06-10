@@ -1,10 +1,12 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
+import eu.ibagroup.r2z.XIBMDataType
 
 class RemoteUssAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
@@ -73,6 +75,14 @@ class RemoteUssAttributesService(
         findOrCreate(current, nameWithFileAttr).also { current = it }
       }
       fsModel.moveFile(this, file, current)
+    }
+  }
+
+  fun updateWritableFlagAfterContentChanged(vFile: VirtualFile, attributes: RemoteUssAttributes) {
+    if(attributes.contentMode.type == XIBMDataType.Type.BINARY) {
+      vFile.isWritable = false
+    } else {
+      vFile.isWritable = attributes.isWritable
     }
   }
 

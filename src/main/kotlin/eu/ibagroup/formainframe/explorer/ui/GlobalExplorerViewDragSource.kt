@@ -1,5 +1,6 @@
 package eu.ibagroup.formainframe.explorer.ui
 
+import com.intellij.ide.CopyPasteSupport
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.PsiCopyPasteManager
 import com.intellij.ide.dnd.DnDAction
@@ -30,7 +31,8 @@ import javax.swing.tree.TreePath
 class GlobalExplorerViewDragSource(
   private val myTree: Tree,
   private val mySelectedNodesDataProvider: () -> List<NodeData>,
-  private val cutCopyPredicate: (NodeData) -> Boolean
+  private val cutCopyPredicate: (NodeData) -> Boolean,
+  private val copyPasteSupport: GlobalFileExplorerView.ExplorerCopyPasteSupport
   ): DnDSource {
 
 
@@ -79,7 +81,7 @@ class GlobalExplorerViewDragSource(
 
 
   override fun startDragging(action: DnDAction?, dragOrigin: Point): DnDDragStartBean {
-
+    copyPasteSupport.registerDropTargetInProjectViewIfNeeded()
     return DnDDragStartBean(object : TransferableWrapper {
       override fun asFileList(): List<File>? {
         return PsiCopyPasteManager.asFileList(psiElements)

@@ -89,7 +89,7 @@ abstract class FsStructuringAttributesServiceBase<Attributes : FileAttributes, V
   override fun clearAttributes(file: VFile) {
     lock.write {
       getAttributes(file)?.let {
-        attributesToFileMap.remove(it)
+        attributesToFileMap.remove(buildUniqueAttributes(it))
         fileToAttributesMap.remove(file)
         sendTopic(AttributesService.ATTRIBUTES_CHANGED, dataOpsManager.componentManager).onDelete(it, file)
       }

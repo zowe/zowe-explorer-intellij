@@ -1,5 +1,8 @@
 package eu.ibagroup.formainframe.config
 
+import com.intellij.configurationStore.getDefaultStoragePathSpec
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -11,14 +14,16 @@ import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.runIfTrue
+import java.nio.file.Paths
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.xml.parsers.DocumentBuilderFactory
 
 @State(
   name = "by.iba.connector.services.ConfigService",
   storages = [Storage(value = "iba_connector_config.xml", exportable = true)]
 )
-class ConfigServiceImpl : ConfigService {
+class ConfigServiceImpl: ConfigService{
 
   companion object {
     private val myState = ConfigState()
@@ -31,6 +36,7 @@ class ConfigServiceImpl : ConfigService {
 
   override fun loadState(state: ConfigState) {
     XmlSerializerUtil.copyBean(state, myState)
+    acceptOldConfigs()
   }
 
   override val eventHandler = ConfigEventHandler()
@@ -41,6 +47,26 @@ class ConfigServiceImpl : ConfigService {
     .configureCrudable {
       eventHandler = this@ConfigServiceImpl.eventHandler
     }
+
+  override var isAutoSyncEnabled = AtomicBoolean(false)
+
+  /**
+   * Adapt all configs in old style to the new one and updates config file.
+   */
+  private fun acceptOldConfigs() {
+    myState.connections = myState.connections.toMutableList()
+    myState.jobsWorkingSets = myState.jobsWorkingSets.toMutableList()
+    myState.workingSets = myState.workingSets.toMutableList()
+
+    val configLocation = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, getDefaultStoragePathSpec(this.javaClass))
+    val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configLocation?.toFile())
+    val oldConfigsAdapters = OldConfigAdapter.EP.extensions.map { it.buildAdapter(document) }
+    oldConfigsAdapters.forEach { adapter ->
+      adapter.getOldConfigsIds().forEach { crudable.deleteByUniqueKey(adapter.configClass, it) }
+      adapter.castOldConfigs().forEach { crudable.addOrUpdate(it) }
+    }
+    ApplicationManager.getApplication().saveSettings()
+  }
 }
 
 internal abstract class ClassCaseSwitcher<R> {

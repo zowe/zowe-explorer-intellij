@@ -1,35 +1,11 @@
 <idea-plugin>
     <id>eu.ibagroup.formainframe</id>
-
-    <extensionPoints>
-
-        <extensionPoint name="attributesService"
-                        interface="eu.ibagroup.formainframe.dataops.attributes.AttributesServiceFactory"/>
-
-        <extensionPoint name="fileDataProvider"
-                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
-
-        <extensionPoint name="contentSynchronizer"
-                        interface="eu.ibagroup.formainframe.dataops.synchronizer.ContentSynchronizerFactory"/>
-
-        <extensionPoint name="mfContentAdapter"
-                        interface="eu.ibagroup.formainframe.dataops.synchronizer.adapters.MFContentAdapterFactory"/>
-
-        <extensionPoint name="operationRunner"
-                        interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
-        <extensionPoint name="explorerContentProvider"
-                        interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
-        <extensionPoint name="explorer"
-                        interface="eu.ibagroup.formainframe.explorer.ExplorerFactory"/>
-
-    </extensionPoints>
-
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
     <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
-
+    <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
-We are happy to release version 0.5 of our Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
+Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
 IBA Group team of <b>mainframe enthusiasts</b> are actively developing new features for the open-source "For Mainframe" plugin.
 We keep improving existing features that help you to:<br/>
 <ul>
@@ -39,7 +15,8 @@ We keep improving existing features that help you to:<br/>
   <li>Perform renaming, copying and moving data in a modern way.</li>
   <li>Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.</li>
   <li>Create multiple connections to different z/OS systems.</li>
-  <li>All Intellij supported languages will be automatically highlighted and recognized once opened from the mainframe.</li>
+  <li>Perform all available operations with Jobs.</li>
+  <li>Highlight all IntelliJ supported languages automatically and recognize them once opened from the mainframe.</li>
 </ul><br/>
 To start using the plugin:<br/>
 <ul>
@@ -84,7 +61,47 @@ Example of how to see the output:<br/>
 <a href="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d"><img src="https://plugins.jetbrains.com/files/16353/screenshot_055b143d-114f-42fc-bfb8-f5f88516454d" width="680"></a><br/>
 ]]></description>
 
-    <depends>com.intellij.modules.platform</depends>
+    <extensionPoints>
+
+        <extensionPoint name="attributesService"
+                        interface="eu.ibagroup.formainframe.dataops.attributes.AttributesServiceFactory"/>
+
+        <extensionPoint name="fileDataProvider"
+                        interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
+
+        <extensionPoint name="contentSynchronizer"
+                        interface="eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizerFactory"/>
+
+        <extensionPoint name="mfContentAdapter"
+                        interface="eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapterFactory"/>
+
+        <extensionPoint name="operationRunner"
+                        interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
+
+        <extensionPoint name="logFetcher"
+                        interface="eu.ibagroup.formainframe.dataops.log.LogFetcherFactory"/>
+
+        <extensionPoint name="oldConfigAdapter"
+                        interface="eu.ibagroup.formainframe.config.OldConfigAdapterFactory"/>
+
+        <extensionPoint name="explorerContentProvider"
+                        interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
+
+        <extensionPoint name="explorer"
+                        interface="eu.ibagroup.formainframe.explorer.ExplorerFactory"/>
+
+    </extensionPoints>
+
+    <applicationListeners>
+        <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+
+        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+
+        <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </applicationListeners>
 
     <extensions defaultExtensionNs="eu.ibagroup.formainframe">
 
@@ -119,22 +136,22 @@ Example of how to see the output:<br/>
                 implementation="eu.ibagroup.formainframe.dataops.fetch.SpoolFileFetchProviderFactory"/>
 
         <contentSynchronizer
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.MemberContentSynchronizerFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.MemberContentSynchronizerFactory"/>
 
         <contentSynchronizer
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SeqDatasetContentSynchronizerFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SeqDatasetContentSynchronizerFactory"/>
 
         <contentSynchronizer
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.UssFileContentSynchronizerFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.UssFileContentSynchronizerFactory"/>
 
         <contentSynchronizer
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SpoolFileContentSynchronizerFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SpoolFileContentSynchronizerFactory"/>
 
         <mfContentAdapter
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.adapters.MemberContentAdapterFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.adapters.MemberContentAdapterFactory"/>
 
         <mfContentAdapter
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.adapters.SeqDatasetContentAdapterFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.adapters.SeqDatasetContentAdapterFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DatasetAllocatorFactory"/>
 
@@ -158,7 +175,13 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberToUssFileMoverFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RemoteToLocalFileMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RemoteToLocalDirectoryMoverFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.ForceRenameOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 
@@ -169,14 +192,30 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperationFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.CancelJobOperationRunnerFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.ReleaseJobOperationRunnerFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.HoldJobOperationRunnerFactory"/>
+
+        <logFetcher implementation="eu.ibagroup.formainframe.dataops.log.JobLogFetcherFactory"/>
+
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldConnectionsAdapterFactory"/>
+
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldWorkingSetAdapterFactory"/>
+
         <explorer implementation="eu.ibagroup.formainframe.explorer.GlobalExplorerFactory" />
         <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory" />
 
         <explorerContentProvider index="0" implementation="eu.ibagroup.formainframe.explorer.FileExplorerContentProviderFactory" />
         <explorerContentProvider index="1" implementation="eu.ibagroup.formainframe.explorer.JesExplorerContentProviderFactory"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
+        <filePasteProvider implementation="eu.ibagroup.formainframe.explorer.ui.ExplorerPasteProvider"/>
+        <customPasteProvider implementation="eu.ibagroup.formainframe.explorer.ui.ExplorerPasteProvider"/>
+
         <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
 
         <applicationConfigurable id="configurable.mainframe.explorer"
@@ -184,20 +223,27 @@ Example of how to see the output:<br/>
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
 
         <editorFloatingToolbarProvider
-                implementation="eu.ibagroup.formainframe.dataops.synchronizer.SyncToolbarProvider"/>
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncToolbarProvider"/>
 
         <notificationGroup displayType="STICKY_BALLOON"
                            id="eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"/>
 
+        <notificationGroup displayType="STICKY_BALLOON"
+                           id="eu.ibagroup.formainframe.ui.build.jobs.JobsLogNotificationGroup"/>
+
         <toolWindow id="For Mainframe" anchor="right"
                     factoryClass="eu.ibagroup.formainframe.explorer.ui.ExplorerWindowFactory"
+                    icon="ForMainframeIcons.ExplorerToolbarIcon"
+                    doNotActivateOnStart="true"/>
+
+        <toolWindow id="Jobs" anchor="bottom"
+                    factoryClass="eu.ibagroup.formainframe.ui.build.jobs.JobsWindowFactory"
+                    canCloseContents="true"
                     doNotActivateOnStart="true"/>
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            key="mf"/>
-
-        <vfs.asyncListener implementation="eu.ibagroup.formainframe.dataops.synchronizer.AfterSaveVfsListener"/>
 
         <fileType name="Unknown Data Set"
                   implementationClass="eu.ibagroup.formainframe.filetypes.UnknownDataSetFileType"/>
@@ -276,7 +322,7 @@ Example of how to see the output:<br/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AddMemberAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddMemberAction" text="Member"
-                icon="AllIcons.FileTypes.Text"
+                icon="ForMainframeIcons.MemberIcon"
         />
 
         <action class="eu.ibagroup.formainframe.explorer.actions.SettingAction"
@@ -291,14 +337,28 @@ Example of how to see the output:<br/>
                 id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"
                 text="Properties"/>
 
+        <action class="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"
+                id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"
+                text="View Job"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
-                class="eu.ibagroup.formainframe.explorer.actions.RenameAction" text="Rename"
+                class="eu.ibagroup.formainframe.explorer.actions.RenameAction"
+                text="Rename"
                 use-shortcut-of="RenameElement"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
+                class="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction" text="Force Rename"
+                use-shortcut-of="ForceRefresh"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
-                icon="AllIcons.Nodes.Module"
+                icon="ForMainframeIcons.DatasetMask"
                 text="Mask"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
+                icon="ForMainframeIcons.JclDirectory"
+                text="Jobs Filter"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
                 class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
@@ -308,6 +368,21 @@ Example of how to see the output:<br/>
                 class="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
                 text="Submit Job"
                 icon="AllIcons.Actions.Execute"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.ReleaseJobAction"
+                class="eu.ibagroup.formainframe.explorer.actions.ReleaseJobAction"
+                text="Release Job"
+                icon="AllIcons.Actions.Resume"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.HoldJobAction"
+                class="eu.ibagroup.formainframe.explorer.actions.HoldJobAction"
+                text="Hold Job"
+                icon="AllIcons.Actions.Pause"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.CancelJobAction"
+                class="eu.ibagroup.formainframe.explorer.actions.CancelJobAction"
+                text="Cancel Job"
+                icon="AllIcons.Actions.Suspend"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
@@ -329,8 +404,10 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
@@ -345,6 +422,7 @@ Example of how to see the output:<br/>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"/>
             <separator/>
@@ -360,6 +438,7 @@ Example of how to see the output:<br/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
             <separator/>
@@ -369,13 +448,19 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"/>
         </group>
 
-        <action id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"
-                class="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"
+        <action id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"
+                class="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"
                 icon="AllIcons.Actions.BuildLoadChanges"
                 text="Sync Data"/>
 
-        <group id="eu.ibagroup.formainframe.dataops.synchronizer.SyncActionGroup" popup="true">
-            <reference id="eu.ibagroup.formainframe.dataops.synchronizer.SyncAction"/>
+        <group id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncActionGroup" popup="true">
+            <reference id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.JobsLogActionBarGroup">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ReleaseJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.HoldJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.CancelJobAction"/>
         </group>
 
     </actions>

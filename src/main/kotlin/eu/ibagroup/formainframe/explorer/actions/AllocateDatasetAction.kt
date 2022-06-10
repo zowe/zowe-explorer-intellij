@@ -99,8 +99,10 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
                 }
               }
             }
+            initialState.errorMessage = ""
           }.onFailure { t ->
             parentNode.explorer.reportThrowable(t, e.project)
+            initialState.errorMessage = t.message ?: t.toString()
           }
         }
         res
@@ -153,6 +155,7 @@ class AllocateLikeAction : AnAction() {
     val datasetInfo = (selected[0].attributes as RemoteDatasetAttributes).datasetInfo
     val initialState = DatasetAllocationParams().apply {
       allocationParameters.datasetOrganization = datasetInfo.datasetOrganization ?: DatasetOrganization.PS
+      allocationParameters.allocationUnit = spaceUnitsToAllocationUnits(datasetInfo.spaceUnits) ?: AllocationUnit.TRK
       allocationParameters.blockSize = datasetInfo.blockSize
       allocationParameters.recordLength = datasetInfo.recordLength
       allocationParameters.recordFormat = datasetInfo.recordFormat ?: RecordFormat.FB
@@ -168,6 +171,13 @@ class AllocateLikeAction : AnAction() {
       }
     }
     doAllocateAction(e, initialState)
+  }
+
+  private fun spaceUnitsToAllocationUnits(spaceUnits: SpaceUnits?): AllocationUnit? {
+    if (spaceUnits == SpaceUnits.TRACKS) { return AllocationUnit.TRK }
+    if (spaceUnits == SpaceUnits.BLOCKS) { return AllocationUnit.BLK }
+    if (spaceUnits == SpaceUnits.CYLINDERS) { return AllocationUnit.CYL }
+    return null
   }
 
   override fun update(e: AnActionEvent) {

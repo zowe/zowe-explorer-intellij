@@ -13,6 +13,9 @@ interface AttributesService<Attributes : FileAttributes, VFile : VirtualFile> {
 
     @JvmField
     val ATTRIBUTES_CHANGED = Topic.create("attributesChanged", AttributesListener::class.java)
+
+    @JvmField
+    val FILE_CONTENT_CHANGED = Topic.create("fileContentChanged", AttributesListener::class.java)
   }
 
   @Throws(IOException::class)

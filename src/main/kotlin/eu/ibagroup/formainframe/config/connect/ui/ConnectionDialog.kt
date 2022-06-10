@@ -11,15 +11,12 @@ import com.intellij.ui.layout.withTextBinding
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.InfoOperation
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
-import eu.ibagroup.formainframe.utils.runTask
-import eu.ibagroup.formainframe.utils.validateConnectionName
-import eu.ibagroup.formainframe.utils.validateForBlank
-import eu.ibagroup.formainframe.utils.validateZosmfUrl
 import eu.ibagroup.r2z.CodePage
-import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.annotations.ZVersion
 import java.awt.Component
 import javax.swing.*
@@ -44,8 +41,9 @@ class ConnectionDialog(
         test = { state ->
           val throwable = runTask(title = "Testing Connection to ${state.connectionConfig.url}", project = project) {
             return@runTask try {
-              val info = service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig.url, state.isAllowSsl), it)
-              state.zVersion = info.zVersion
+              CredentialService.instance.setCredentials(connectionConfigUuid = state.connectionUuid, username = state.username, password = state.password)
+              val info = service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig), it)
+              state.zVersion = info.getZOSVersion()
               null
             } catch (t: Throwable) {
               t
@@ -54,7 +52,13 @@ class ConnectionDialog(
           if (throwable != null) {
             state.mode = DialogMode.UPDATE
             val confirmMessage = "Do you want to add it anyway?"
-            val tMessage = throwable.message
+            val tMessage = throwable.message?.let {
+              if (it.contains("Exception")) {
+                it.substring(it.lastIndexOf(":") + 2).capitalize()
+              } else {
+                it
+              }
+            }
             val message = if (tMessage != null) {
               "$tMessage\n\n$confirmMessage"
             } else {
@@ -155,7 +159,8 @@ class ConnectionDialog(
                 ZVersion.ZOS_2_1,
                 ZVersion.ZOS_2_2,
                 ZVersion.ZOS_2_3,
-                ZVersion.ZOS_2_4
+                ZVersion.ZOS_2_4,
+                ZVersion.ZOS_2_5
               )
             ),
             prop = state::zVersion
