@@ -10,8 +10,9 @@
 
 package org.zowe.explorer.config
 
-import com.intellij.configurationStore.getPersistentStateComponentStorageLocation
+import com.intellij.configurationStore.getDefaultStoragePathSpec
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -23,6 +24,7 @@ import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.crudable.*
 import org.zowe.explorer.utils.runIfTrue
+import java.nio.file.Paths
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.parsers.DocumentBuilderFactory
@@ -62,11 +64,11 @@ class ConfigServiceImpl: ConfigService {
    * Adapt all configs in old style to the new one and updates config file.
    */
   private fun acceptOldConfigs() {
-    myState.connections = myState.connections.filterNotNull().toMutableList()
-    myState.jobsWorkingSets = myState.jobsWorkingSets.filterNotNull().toMutableList()
-    myState.workingSets = myState.workingSets.filterNotNull().toMutableList()
+    myState.connections = myState.connections.toMutableList()
+    myState.jobsWorkingSets = myState.jobsWorkingSets.toMutableList()
+    myState.workingSets = myState.workingSets.toMutableList()
 
-    val configLocation = getPersistentStateComponentStorageLocation(this.javaClass)
+    val configLocation = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, getDefaultStoragePathSpec(this.javaClass))
     val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configLocation?.toFile())
     val oldConfigsAdapters = OldConfigAdapter.EP.extensions.map { it.buildAdapter(document) }
     oldConfigsAdapters.forEach { adapter ->

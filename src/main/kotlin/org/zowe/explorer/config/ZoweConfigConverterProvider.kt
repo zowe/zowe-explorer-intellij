@@ -10,13 +10,14 @@
 
 package org.zowe.explorer.config
 
-import com.intellij.configurationStore.getPersistentStateComponentStorageLocation
 import com.intellij.conversion.*
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Paths
 import kotlin.io.path.pathString
 
 /**
@@ -34,6 +35,7 @@ class ZoweConfigConverterProvider : ConverterProvider() {
     private val newConfigStorageName = "org.zowe.explorer.config.ConfigService"
     private val oldConfigStorageName = "by.iba.connector.services.ConfigService"
     private val oldConfigName = "iba_connector_config.xml"
+    private val newConfigName = "zowe_explorer_intellij_config.xml"
     private lateinit var newConfigFile: File
     private lateinit var oldConfigFile: File
 
@@ -45,17 +47,11 @@ class ZoweConfigConverterProvider : ConverterProvider() {
          * Check if the new config file is not exist yet and the old config file is already exist
          */
         override fun isConversionNeeded(settings: RunManagerSettings?): Boolean {
-          val newConfigStorage = getPersistentStateComponentStorageLocation(service<ConfigService>().javaClass)
-          val newConfigPath = newConfigStorage?.pathString
-          val newConfigPathSplitted = newConfigPath?.split("/")
-          val oldConfigPath =
-            newConfigPathSplitted
-              ?.dropLast(1)
-              ?.plus(oldConfigName)
-              ?.joinToString("/")
+          val configPathDir = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY)
+          val oldConfigPath = Paths.get(configPathDir.pathString, oldConfigName).pathString
+          val newConfigPath = Paths.get(configPathDir.pathString, newConfigName).pathString
           oldConfigFile = File(oldConfigPath)
           newConfigFile = File(newConfigPath)
-
           return !newConfigFile.exists() && oldConfigFile.exists()
         }
 
