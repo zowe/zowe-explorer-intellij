@@ -1,7 +1,6 @@
 package eu.ibagroup.formainframe.config
 
 import com.intellij.configurationStore.getDefaultStoragePathSpec
-import com.intellij.configurationStore.getPersistentStateComponentStorageLocation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.State
@@ -19,7 +18,6 @@ import java.nio.file.Paths
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.parsers.DocumentBuilderFactory
-import kotlin.io.path.Path
 
 @State(
   name = "by.iba.connector.services.ConfigService",
@@ -56,11 +54,9 @@ class ConfigServiceImpl: ConfigService{
    * Adapt all configs in old style to the new one and updates config file.
    */
   private fun acceptOldConfigs() {
-    myState.connections = myState.connections.filterNotNull().toMutableList()
-    myState.jobsWorkingSets = myState.jobsWorkingSets.filterNotNull().toMutableList()
-    myState.workingSets = myState.workingSets.filterNotNull().toMutableList()
-
-    PathManager.getConfigPath()
+    myState.connections = myState.connections.toMutableList()
+    myState.jobsWorkingSets = myState.jobsWorkingSets.toMutableList()
+    myState.workingSets = myState.workingSets.toMutableList()
 
     val configLocation = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, getDefaultStoragePathSpec(this.javaClass))
     val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configLocation?.toFile())
