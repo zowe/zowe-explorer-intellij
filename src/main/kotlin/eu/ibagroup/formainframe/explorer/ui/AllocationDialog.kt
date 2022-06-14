@@ -104,7 +104,6 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
               RecordFormat.V,
               RecordFormat.VA,
               RecordFormat.VB,
-              RecordFormat.U
             )
           ),
           prop = state.allocationParameters::recordFormat

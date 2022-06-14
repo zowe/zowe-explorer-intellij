@@ -252,11 +252,10 @@ fun validateDataset(
 ) : ValidationInfo? {
 
   return validateDatasetNameOnInput(datasetName) ?: validateForGreaterValue(primaryAllocation, 1)
-  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForPositiveInteger(directoryBlocks).takeIf {
+  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterValue(directoryBlocks, 1).takeIf {
     datasetOrganization == DatasetOrganization.PO
-  } ?: validateForPositiveInteger(recordLength) ?: validateForPositiveInteger(blockSize) ?: validateForPositiveInteger(
-    averageBlockLength
-  ) ?: validateVolser(advancedParameters)
+  } ?: validateForGreaterValue(recordLength, 1) ?: validateForPositiveInteger(blockSize)
+  ?: validateForPositiveInteger(averageBlockLength) ?: validateVolser(advancedParameters)
 }
 
 fun validateDatasetNameOnInput(component: JTextField): ValidationInfo? {
