@@ -106,7 +106,7 @@ class JobBuildTreeView(
           .logFetcher
           .getCachedJobStatus()
           ?.returnedCode
-          ?.toUpperCase()
+          ?.uppercase(Locale.getDefault())
           ?.contains("ERR") == true
       ) FailureResultImpl() else SuccessResultImpl()
       jobLogger.logFetcher.getCachedLog()

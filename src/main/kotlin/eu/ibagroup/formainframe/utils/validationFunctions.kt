@@ -12,6 +12,7 @@ import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import eu.ibagroup.r2z.DatasetOrganization
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -57,8 +58,8 @@ fun <WSConfig: WorkingSetConfig> validateWorkingSetName(
 }
 
 fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
-  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.toUpperCase())
-      || ws.ussPaths.map { it.path.toUpperCase() }.contains(component.text.toUpperCase())
+  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.uppercase(Locale.getDefault()))
+      || ws.ussPaths.map { it.path.uppercase(Locale.getDefault()) }.contains(component.text.uppercase(Locale.getDefault()))
 
   return if (maskAlreadyExists) {
     return ValidationInfo(

@@ -38,18 +38,18 @@ class GlobalExplorerViewDropTarget(
 
 //    val pasteProvider = copyPasteSupport.getPasteProvider(listOf(sourcesTargetBounds.second))
     val pasteProvider = copyPasteSupport.pasteProvider
-    val cutProvider = copyPasteSupport.getCutProvider(sourcesTargetBounds.first?.toList() ?: listOf())
-    val sourceTreePaths = sourcesTargetBounds.first?.toList() ?: listOf()
+    val cutProvider = copyPasteSupport.getCutProvider(sourcesTargetBounds.v1?.toList() ?: listOf())
+    val sourceTreePaths = sourcesTargetBounds.v1?.toList() ?: listOf()
     val copyCutContext = DataContext {
       when (it) {
         CommonDataKeys.PROJECT.name -> copyPasteSupport.project
         ExplorerDataKeys.NODE_DATA_ARRAY.name -> sourceTreePaths
           .map { treePath -> makeNodeDataFromTreePath(explorer, treePath) }.toTypedArray()
         CommonDataKeys.VIRTUAL_FILE_ARRAY.name -> {
-          if (sourcesTargetBounds.fourth == myTree) {
-            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file)
+          if (sourcesTargetBounds.v4 == myTree) {
+            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2).file)
           } else {
-            arrayOf(sourcesTargetBounds.second.getVirtualFile())
+            arrayOf(sourcesTargetBounds.v2.getVirtualFile())
           }
         }
         IS_DRAG_AND_DROP_KEY.name -> true
@@ -71,17 +71,17 @@ class GlobalExplorerViewDropTarget(
 
   override fun update(event: DnDEvent): Boolean {
     val sourcesTargetBounds = getSourcesTargetAndBounds(event) ?: return false
-    val sources = sourcesTargetBounds.first ?: return false
-    if (ArrayUtilRt.find(sources, sourcesTargetBounds.second) != -1 || !FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
+    val sources = sourcesTargetBounds.v1 ?: return false
+    if (ArrayUtilRt.find(sources, sourcesTargetBounds.v2) != -1 || !FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
       return false
     }
 
 //    val pasteEnabled = copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
 //    val pasteEnabled = false
-    val pasteEnabled = if (sourcesTargetBounds.fourth == myTree)
-      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
+    val pasteEnabled = if (sourcesTargetBounds.v4 == myTree)
+      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.v2), sources.toList())
     else {
-      val vFile = sourcesTargetBounds.second.getVirtualFile()
+      val vFile = sourcesTargetBounds.v2.getVirtualFile()
       if (vFile == null) {
         false
       } else {
@@ -91,7 +91,7 @@ class GlobalExplorerViewDropTarget(
     event.isDropPossible = pasteEnabled
     if (pasteEnabled) {
       event.setHighlighting(
-        RelativeRectangle(sourcesTargetBounds.fourth, sourcesTargetBounds.third),
+        RelativeRectangle(sourcesTargetBounds.v4, sourcesTargetBounds.v3),
         DnDEvent.DropTargetHighlightingType.RECTANGLE
       )
     }
