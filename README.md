@@ -66,10 +66,29 @@ Click with the right mouse button on the existing data set or data set member th
 Click with the right mouse button on the existing data set which properties you'd like to view. Click "Properties". A pop up window should appear where you would see all the available properties for the data set.
 
 ### Delete data set/data set member
-Click with the right mouse button on the data set/data set member you'd like to delete in the working set tree on the right side of your screen. Click "Delete". Confirm your intention to delete a data set/data set member in the pop up window by pressing "Yes". After the deleting is complete you should no longer see the data set/data set member in the working set tree. 
+Click with the right mouse button on the data set/data set member you'd like to delete in the working set tree on the right side of your screen. Click "Delete". Confirm your intention to delete a data set/data set member in the pop up window by pressing "Yes". After the deleting is complete you should no longer see the data set/data set member in the working set tree.
+
+# Developer guide
+
+## Requirements
+- Latest IntelliJ IDEA version (Community will be enough)
+- Java SDK 11 (IntelliJ built-in)
+
+## Setup steps
+- Clone the project repo:
+
+``git clone git@github.com:for-mainframe/For-Mainframe.git``
+
+- Three options of working with the plugin are available:
+  - **Run plugin** - run the plugin in development mode
+  - **Package plugin** - make a zip portable package to install it in IntelliJ IDEA or publish somewhere
+  - **Run tests** - run plugin tests to check the codebase with automated tests
+- Proceed to [Contribution Guidelines](#how-to-contribute) to develop some new functionality for the project.
+
+**In case of any troubles during plugin usage, feel free to contact us.**
 
 # How to contribute
-If you want to help the project, improve some functionality, resolve bug or add some new feature, please, refer to the [contribution guide](CONTRIBUTE.md).
+If you want to help the project, improve some functionality, resolve bug or add some new feature, please, refer to the [contribution guide](CONTRIBUTING.md).
 
 # How to obtain and provide feedback
 If you have any questions, related to the project development, further plans or something else, you can reach as out by some of the communication chanels:
