@@ -3,6 +3,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -64,7 +65,7 @@ class DocumentedSyncProvider (
   }
 
   override fun loadNewContent(content: ByteArray) {
-    getDocument().setText(String(content))
+    CommandProcessor.getInstance().runUndoTransparentAction { getDocument().setText(String(content)) }
   }
 
   override fun retrieveCurrentContent(): ByteArray {

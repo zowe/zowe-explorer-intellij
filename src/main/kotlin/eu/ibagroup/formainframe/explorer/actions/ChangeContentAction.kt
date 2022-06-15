@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -25,7 +26,11 @@ class ChangeContentAction: TypedHandlerDelegate() {
           val contentAdapter = dataOpsManager.getMFContentAdapter(file.virtualFile)
           val currentContent = editor.document.text.toByteArray(vFile.charset)
           val adaptedContent = contentAdapter.prepareContentToMainframe(currentContent, vFile)
-          runWriteActionInEdt { editor.document.setText(adaptedContent.toString(vFile.charset)) }
+          runWriteActionInEdt {
+            CommandProcessor.getInstance().runUndoTransparentAction {
+              editor.document.setText(adaptedContent.toString(vFile.charset))
+            }
+          }
         }
       }
       adaptContentFunc?.let { it() }
