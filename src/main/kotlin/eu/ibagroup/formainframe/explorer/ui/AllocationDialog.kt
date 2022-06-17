@@ -99,7 +99,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         textField(PropertyBinding(
           get = { state.allocationParameters.directoryBlocks.toString() ?: "0" },
           set = { state.allocationParameters.directoryBlocks = it.toIntOrNull() ?: 0 }
-        )).enableIf(datasetOrganizationBox.selectedValueMatches { it == DatasetOrganization.PO })
+        )).enableIf(datasetOrganizationBox.selectedValueMatches { it != DatasetOrganization.PS })
           .also {
             directoryBlocksField = it.component
           }
