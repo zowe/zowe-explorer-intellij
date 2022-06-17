@@ -1,3 +1,13 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
 package eu.ibagroup.formainframe.utils.crudable;
 
 import eu.ibagroup.formainframe.analytics.AnalyticsService;
@@ -19,16 +29,19 @@ import static eu.ibagroup.formainframe.utils.crudable.Utils.*;
 
 public interface Crudable {
 
-    @NotNull <E> Optional<E> add(@NotNull Class<? extends E> rowClass, @NotNull E row);
+    @NotNull
+    <E> Optional<E> add(@NotNull Class<? extends E> rowClass, @NotNull E row);
 
     @SuppressWarnings("unchecked")
     default <E> Optional<E> add(@NotNull E row) {
         return (Optional<E>) add(row.getClass(), row);
     }
 
-    @NotNull <E> Stream<E> getAll(@NotNull Class<? extends E> rowClass);
+    @NotNull
+    <E> Stream<E> getAll(@NotNull Class<? extends E> rowClass);
 
-    @NotNull <E> Optional<E> update(@NotNull Class<? extends E> rowClass, @NotNull E row);
+    @NotNull
+    <E> Optional<E> update(@NotNull Class<? extends E> rowClass, @NotNull E row);
 
     @SuppressWarnings("unchecked")
     default <E> Optional<E> update(@NotNull E row) {
@@ -48,14 +61,16 @@ public interface Crudable {
         return (Optional<E>) addOrUpdate(row.getClass(), row);
     }
 
-    @NotNull <E> Optional<E> delete(@NotNull Class<? extends E> rowClass, @NotNull E row);
+    @NotNull
+    <E> Optional<E> delete(@NotNull Class<? extends E> rowClass, @NotNull E row);
 
     @SuppressWarnings("unchecked")
     default @NotNull <E> Optional<E> delete(@NotNull E row) {
         return (Optional<E>) delete(row.getClass(), row);
     }
 
-    @NotNull <E, V> V nextUniqueValue(@NotNull Class<? extends E> rowClass);
+    @NotNull
+    <E, V> V nextUniqueValue(@NotNull Class<? extends E> rowClass);
 
     default <E> void replaceGracefully(@NotNull Class<? extends E> rowClass, @NotNull Stream<? extends E> rows) {
         final List<E> current = this.getAll(rowClass).collect(Collectors.toList());
@@ -63,19 +78,20 @@ public interface Crudable {
         applyMergedCollections(rowClass, mergeCollections(current, newRows));
     }
 
-    default <E> void applyMergedCollections(@NotNull Class<? extends E> rowClass, @NotNull MergedCollections<? extends E> mergedCollections) {
+    default <E> void applyMergedCollections(@NotNull Class<? extends E> rowClass,
+            @NotNull MergedCollections<? extends E> mergedCollections) {
         mergedCollections.getToDelete().forEach(e -> delete(rowClass, e));
         mergedCollections.getToUpdate().forEach(e -> update(rowClass, e));
         mergedCollections.getToAdd().forEach(e -> {
             add(rowClass, e);
-            if (e instanceof ConnectionConfig){
+            if (e instanceof ConnectionConfig) {
                 AnalyticsService.getInstance().trackAnalyticsEvent(new ConnectionEvent(ActionType.CREATE));
             }
         });
     }
 
     static <E> @NotNull MergedCollections<E> mergeCollections(@NotNull Collection<? extends E> oldCollection,
-                                                              @NotNull Collection<? extends E> newCollection) {
+            @NotNull Collection<? extends E> newCollection) {
         final List<Pair<Optional<?>, E>> oldCollectionWithUniqueValues = mapWithUniqueValues(oldCollection);
         final List<Pair<Optional<?>, E>> newCollectionWithUniqueValues = mapWithUniqueValues(newCollection);
 
@@ -88,8 +104,8 @@ public interface Crudable {
                                 return oldOptional.get().equals(newOptional.get());
                             }
                             return false;
-                        })
-                ).map(Pair::getSecond)
+                        }))
+                .map(Pair::getSecond)
                 .collect(Collectors.toList());
 
         final List<E> toAdd = newCollectionWithUniqueValues.stream()
@@ -101,8 +117,8 @@ public interface Crudable {
                                 return oldOptional.get().equals(newOptional.get());
                             }
                             return false;
-                        })
-                ).map(Pair::getSecond)
+                        }))
+                .map(Pair::getSecond)
                 .collect(Collectors.toList());
 
         final List<E> toUpdate = newCollectionWithUniqueValues.stream()
@@ -111,16 +127,16 @@ public interface Crudable {
                             final Optional<?> newOptional = optionalEPair.getFirst();
                             final Optional<?> oldOptional = optionalEPairOld.getFirst();
                             if (oldOptional.isPresent() && newOptional.isPresent()) {
-                                return oldOptional.get().equals(newOptional.get()) && !optionalEPair.getSecond().equals(optionalEPairOld.getSecond());
+                                return oldOptional.get().equals(newOptional.get())
+                                        && !optionalEPair.getSecond().equals(optionalEPairOld.getSecond());
                             }
                             return false;
-                        })
-                ).map(Pair::getSecond)
+                        }))
+                .map(Pair::getSecond)
                 .collect(Collectors.toList());
 
         return new MergedCollections<>(
-                toAdd, toUpdate, toDelete
-        );
+                toAdd, toUpdate, toDelete);
     }
 
     default <E> void addAll(@NotNull Stream<? extends E> rows) {
@@ -128,20 +144,20 @@ public interface Crudable {
     }
 
     default <E> void addAll(@NotNull Class<? extends E> rowClass,
-                            @NotNull Stream<? extends E> rows) {
+            @NotNull Stream<? extends E> rows) {
         rows.forEach(r -> add(rowClass, r));
     }
 
     @SuppressWarnings("unchecked")
     default @NotNull <E> Stream<E> find(@NotNull Class<? extends E> rowClass,
-                                        @NotNull Predicate<? super E> predicate) {
+            @NotNull Predicate<? super E> predicate) {
         return (Stream<E>) getAll(rowClass).filter(predicate);
     }
 
     @SuppressWarnings("unchecked")
     default @NotNull <E, V> Stream<E> getByColumnValue(@NotNull Class<? extends E> rowClass,
-                                                       @NotNull String columnName,
-                                                       @NotNull V columnValue) {
+            @NotNull String columnName,
+            @NotNull V columnValue) {
         return Arrays.stream(getFieldsDeeply(rowClass))
                 .filter(getPredicateByColumnName(columnName))
                 .findAny()
@@ -156,20 +172,20 @@ public interface Crudable {
     }
 
     default @NotNull <E, V> Stream<E> getByColumnValue(@NotNull Class<? extends E> rowClass,
-                                                       @NotNull Function<? super E, ? extends V> columnGetter,
-                                                       @NotNull V columnValue) {
+            @NotNull Function<? super E, ? extends V> columnGetter,
+            @NotNull V columnValue) {
         return find(rowClass, obj -> columnGetter.apply(obj).equals(columnValue));
     }
 
     default @NotNull <E, V> Stream<E> getByColumnValueFromRow(@NotNull Class<? extends E> rowClass,
-                                                              @NotNull Function<? super E, ? extends V> columnGetter,
-                                                              @NotNull E anotherRow) {
+            @NotNull Function<? super E, ? extends V> columnGetter,
+            @NotNull E anotherRow) {
         return find(rowClass, obj -> columnGetter.apply(obj).equals(columnGetter.apply(anotherRow)));
     }
 
     @SuppressWarnings("unchecked")
     default @NotNull <E, U> Optional<E> getByUniqueKey(@NotNull Class<? extends E> rowClass,
-                                                       @NotNull U uniqueKey) {
+            @NotNull U uniqueKey) {
         final Field uniqueField = Arrays.stream(getFieldsDeeply(rowClass))
                 .filter(getUniqueFieldPredicate())
                 .findAny()
@@ -189,7 +205,7 @@ public interface Crudable {
     }
 
     default <E, U> @NotNull Optional<? extends E> deleteByUniqueKey(@NotNull Class<? extends E> rowClass,
-                                                                    @NotNull U uniqueKey) {
+            @NotNull U uniqueKey) {
         final Optional<? extends E> optional = getByUniqueKey(rowClass, uniqueKey);
         if (optional.isPresent()) {
             return delete(optional.get());
@@ -199,14 +215,15 @@ public interface Crudable {
     }
 
     default @NotNull <E> Stream<E> deleteIf(@NotNull Class<? extends E> rowClass,
-                                            @NotNull Predicate<? super E> predicate) {
+            @NotNull Predicate<? super E> predicate) {
         return find(rowClass, predicate)
                 .map(this::delete)
                 .filter(Optional::isPresent)
                 .map(Optional::get);
     }
 
-    default <E, F> @NotNull Optional<F> getByForeignKey(@NotNull E row, @NotNull String columnName, @NotNull Class<? extends F> foreignRowClass) {
+    default <E, F> @NotNull Optional<F> getByForeignKey(@NotNull E row, @NotNull String columnName,
+            @NotNull Class<? extends F> foreignRowClass) {
         return getByForeignKeyInternal(this, row, columnName, foreignRowClass);
     }
 
@@ -214,11 +231,13 @@ public interface Crudable {
         return getByForeignKeyInternal(this, row, null, foreignRowClass);
     }
 
-    default <E, F> @NotNull Optional<F> getByForeignKeyDeeply(@NotNull E row, @NotNull Class<? extends F> foreignRowClass) {
+    default <E, F> @NotNull Optional<F> getByForeignKeyDeeply(@NotNull E row,
+            @NotNull Class<? extends F> foreignRowClass) {
         return getByForeignKeyDeeply(row.getClass(), row, foreignRowClass);
     }
 
-    default <E, F> @NotNull Optional<F> getByForeignKeyDeeply(@NotNull Class<? extends E> rowClass, @NotNull E row, @NotNull Class<? extends F> foreignRowClass) {
+    default <E, F> @NotNull Optional<F> getByForeignKeyDeeply(@NotNull Class<? extends E> rowClass, @NotNull E row,
+            @NotNull Class<? extends F> foreignRowClass) {
         return Optional.ofNullable(getByForeignKeyDeeplyInternal(this, row, foreignRowClass));
     }
 

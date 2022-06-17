@@ -1,3 +1,13 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
 import groovy.xml.XmlUtil
 
 def jiraSite = 'jira-iba'
@@ -12,16 +22,16 @@ properties([gitLabConnection('git.icdc.io-connection')])
 
 // @NonCPS
 // def changeVersion(String xmlFile) {
-    
-    
+
+
 //     def xml = new XmlSlurper().parseText(xmlFile)
 //     println xml.'idea-version'.'@since-build'
 //     xml.'idea-version'.'@since-build' =  '203.7148.72'
 
 //     def w = new StringWriter()
 //     XmlUtil.serialize(xml, w)
-    
-    
+
+
 //     return w.toString()
 
 // }
@@ -32,8 +42,8 @@ pipeline{
         gitlab(triggerOnPush: true, triggerOnMergeRequest: true, skipWorkInProgressMergeRequest: true,
                 noteRegex: "Jenkins please retry a build")
     }
-    options { 
-        disableConcurrentBuilds() 
+    options {
+        disableConcurrentBuilds()
     }
     tools{
         gradle 'Default'
@@ -53,8 +63,7 @@ pipeline{
                     } else if(gitlabBranch.equals("zowe-development")) {
                         jiraTicket = 'zowe-development'
                     } else if(gitlabBranch.contains("release")){
-                        version = gitlabBranch.split("/")[1]
-                        jiraTicket = 'release/' + version
+                        jiraTicket = gitlabBranch
                     } else {
                         def pattern = ~ /(?i)ijmp-\d+/
                         def matcher = gitlabBranch =~ pattern
@@ -94,15 +103,15 @@ pipeline{
                     resultFileName = sh(returnStdout: true, script: "cd build/distributions/ && ls").trim()
                 }
                 sh """
-                if [ "$jiraTicket" = "null" ] 
+                if [ "$jiraTicket" = "null" ]
                 then
                     echo "jira ticket is not determined"
                 else
-                    if [ -d "/var/www/ijmp-plugin/$jiraTicket" ] 
+                    if [ -d "/var/www/ijmp-plugin/$jiraTicket" ]
                     then
                         sudo rm -r /var/www/ijmp-plugin/$jiraTicket
                     fi
-                    sudo mkdir /var/www/ijmp-plugin/$jiraTicket
+                    sudo mkdir -p /var/www/ijmp-plugin/$jiraTicket
                     sudo mkdir /var/www/ijmp-plugin/$jiraTicket/idea
                     sudo mkdir /var/www/ijmp-plugin/$jiraTicket/pycharm
 
@@ -114,15 +123,15 @@ pipeline{
                 success {
                     script{
                         if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
-                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built. You can download your build from the following link http://10.221.23.186/ijmp-plugin/$jiraTicket/idea/$resultFileName.", site:"$jiraSite" 
+                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built. You can download your build from the following link http://10.221.23.186/ijmp-plugin/$jiraTicket/idea/$resultFileName.", site:"$jiraSite"
                         }
-                        
+
                     }
                 }
                 failure {
                     script{
                         if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
-                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site:"$jiraSite" 
+                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site:"$jiraSite"
                         }
                     }
                 }
@@ -136,7 +145,7 @@ pipeline{
         //             def res = changeVersion(xmlFileData)
         //             writeFile file: "src/main/resources/META-INF/plugin.xml", text: res
         //         }
-                
+
         //     }
         // }
         // stage('Build Plugin PyCharm'){
@@ -161,24 +170,24 @@ pipeline{
         //         success {
         //             script{
         //                 if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket)){
-        //                     jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built for PyCharm version. You can download your build from the following link http://10.221.23.186/ijmp-plugin/$jiraTicket/pycharm/$resultFileName.", site:"$jiraSite" 
+        //                     jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built for PyCharm version. You can download your build from the following link http://10.221.23.186/ijmp-plugin/$jiraTicket/pycharm/$resultFileName.", site:"$jiraSite"
         //                 }
-                        
+
         //             }
         //         }
         //         failure {
         //             script{
         //                 if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket)){
-        //                     jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for PyCharm. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site:"$jiraSite" 
+        //                     jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for PyCharm. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site:"$jiraSite"
         //                 }
         //             }
         //         }
         //     }
         // }
 
-        
+
     }
-    
-    
-    
+
+
+
 }

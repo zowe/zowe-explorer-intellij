@@ -1,3 +1,13 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -25,11 +35,13 @@ class AddMemberAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
-    val currentNode = view.mySelectedNodesData[0].node
-    if (currentNode is ExplorerUnitTreeNodeBase<*, *>
-      && currentNode.unit is FilesWorkingSet
-      && currentNode is FetchNode
-    ) {
+    var currentNode = view.mySelectedNodesData[0].node
+    DataOpsManager.instance
+    if (currentNode !is FetchNode) {
+      currentNode = currentNode.parent ?: return
+      if (currentNode !is LibraryNode) return
+    }
+    if ((currentNode as ExplorerUnitTreeNodeBase<*, *>).unit is FilesWorkingSet) {
       val connectionConfig = currentNode.unit.connectionConfig
       val dataOpsManager = currentNode.explorer.componentManager.service<DataOpsManager>()
       if (currentNode is LibraryNode && connectionConfig != null) {

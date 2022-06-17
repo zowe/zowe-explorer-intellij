@@ -1,3 +1,13 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
 package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -89,9 +99,9 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
 
     if (sourceFileFetchProvider.isCacheValid(sourceQuery)) {
       val response = api<DataAPI>(connectionConfig).createUssFile(
-        connectionConfig.authToken,
-        FilePath(destinationAttributes.path + "/" + sourceAttributes.name),
-        CreateUssFile(FileType.DIR, destinationAttributes.fileMode ?: FileMode(7,7,7))
+        authorizationToken = connectionConfig.authToken,
+        filePath = FilePath(destinationAttributes.path + "/" + sourceAttributes.name),
+        body = CreateUssFile(FileType.DIR, destinationAttributes.fileMode ?: FileMode(7,7,7))
       ).cancelByIndicator(progressIndicator).execute()
 
       if (response.isSuccessful) {

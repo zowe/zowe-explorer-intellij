@@ -1,3 +1,13 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -11,7 +21,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.6.0"
+version = "0.6.1"
 
 repositories {
   mavenCentral()
@@ -117,6 +127,18 @@ tasks {
         <li>NullPointerException when tree opens by user with incorrect password</li>
         <li>Impossible to close the file located locally on PC (the file was opened not from plugin)</li>
         <li>Fixed file content corruption after chaging file mode</li>
+        <li>InfoOperation requires state instead of connection settings</li>
+        <li>"Error" message if connection is deleted</li>
+        <li>The job is marked as finished in job console if close tab for any another job</li>
+        <li>Hold/release only works for first selected jobid</li>
+        <li>Validation of directory blocks when creating dataset</li>
+        <li>File cache conflict message if create new member in PDS and open it right after creation</li>
+        <li>Validate jobId when creating job filter</li>
+        <li>CredentialsNotFoundForConnection exception in plugin</li>
+        <li>Creating Job Filters in configuration table with prefix/owner/job id length >8 is not blocked</li>
+        <li>'Test passed' message in the jobs console</li>
+        <li>Allocate like does not save some parameters</li>
+        <li>GitHub issue #42</li>
       </ul>"""
     )
   }
