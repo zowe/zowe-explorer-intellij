@@ -82,11 +82,4 @@ class ConnectionsTableModelTest: UnitTestCase() {
         assertEquals(connectionDialogStateA.password,conTab[0].password)
         assertNotEquals(connectionDialogStateA.connectionUuid,conTab[0].connectionUuid)
     }
-
-/*
-
-    @Test
-    fun shouldFail() {
-        assertTrue(false)
-    }*/
 }
