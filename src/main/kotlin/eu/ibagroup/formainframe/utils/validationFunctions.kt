@@ -57,7 +57,7 @@ fun <WSConfig: WorkingSetConfig> validateWorkingSetName(
     ignoreValue != it.name && it.name == component.text
   }.count() > 0
   return if (configAlreadyExists) {
-    return ValidationInfo(
+    ValidationInfo(
       "You must provide unique working set name. Working Set ${component.text} already exists.",
       component
     )
@@ -71,8 +71,7 @@ fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): Vali
       || ws.ussPaths.map { it.path.toUpperCase() }.contains(component.text.toUpperCase())
 
   return if (maskAlreadyExists) {
-    return ValidationInfo(
-      "You must provide unique mask in working set. Working Set " +
+    ValidationInfo("You must provide unique mask in working set. Working Set " +
           "\"${ws.name}\" already has mask - ${component.text}", component
     )
   } else {
@@ -91,7 +90,7 @@ fun validateZosmfUrl(component: JTextField): ValidationInfo? {
 
 fun validateFieldWithLengthRestriction(component: JTextField, length: Int, fieldName: String): ValidationInfo? {
   return if (component.text.trim().length > length) {
-    ValidationInfo("$fieldName length must be not exceed $length characters.")
+    ValidationInfo("$fieldName length must not exceed $length characters.")
   } else {
     null
   }
@@ -120,10 +119,10 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
   val qualifier = text.split('.')
 
   return if (text.length > 44) {
-    ValidationInfo("Dataset mask must be less than 44 characters", component)
+    ValidationInfo("Dataset mask must be no more than 44 characters", component)
   } else if (qualifier.find { it.length > 8 } != null) {
     ValidationInfo("Qualifier must be in 1 to 8 characters", component)
-  } else if (text.isNotBlank() && qualifier.find { !it.matches(maskRegex) } != null ) {
+  } else if (text.isBlank() || qualifier.find { !it.matches(maskRegex) } != null ) {
     ValidationInfo("Enter valid dataset mask", component)
   } else if (text.contains(Regex(asteriskRegex))) {
     ValidationInfo("Invalid asterisks in the qualifier", component)

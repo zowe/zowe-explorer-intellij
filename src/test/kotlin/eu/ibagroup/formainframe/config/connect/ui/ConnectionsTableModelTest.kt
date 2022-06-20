@@ -11,7 +11,7 @@
 package eu.ibagroup.formainframe.config.connect.ui
 
 import eu.ibagroup.formainframe.config.ConfigSandboxImpl
-import eu.ibagroup.formainframe.config.UnitTestCase
+import eu.ibagroup.formainframe.UnitTestCase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
