@@ -33,7 +33,7 @@ const val ZOWE_CONFIG_NAME = "zowe.config.json"
  * @param project - project instance to check zoweConfig.
  * @return Nothing.
  */
-fun showNotificationForAddUpdateZoweConfigIfNeeded (project: Project) {
+fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project) {
   val zoweConfigService = project.service<ZoweConfigService>()
   val zoweConfigState = zoweConfigService.getZoweConfigState()
 
@@ -41,7 +41,7 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded (project: Project) {
     NotificationGroupManager.getInstance().getNotificationGroup(EXPLORER_NOTIFICATION_GROUP_ID)
       .createNotification("Zowe config file detected", NotificationType.INFORMATION)
       .apply {
-        subscribe(ZOWE_CONFIG_CHANGED, object: ZoweConfigHandler {
+        subscribe(ZOWE_CONFIG_CHANGED, object : ZoweConfigHandler {
           override fun onConfigSaved(config: ZoweConfig, connectionConfig: ConnectionConfig) {
             hideBalloon()
           }
@@ -62,7 +62,7 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded (project: Project) {
  * @version 0.5
  * @since 2021-02-12
  */
-class ZoweStartupActivity: StartupActivity {
+class ZoweStartupActivity : StartupActivity {
 
   override fun runActivity(project: Project) {
     showNotificationForAddUpdateZoweConfigIfNeeded(project)

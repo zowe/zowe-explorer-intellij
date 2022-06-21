@@ -181,11 +181,13 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <oldConfigAdapter implementation="org.zowe.explorer.config.ws.OldWorkingSetAdapterFactory"/>
 
-        <explorer implementation="org.zowe.explorer.explorer.GlobalExplorerFactory" />
-        <explorer implementation="org.zowe.explorer.explorer.JesExplorerFactory" />
+        <explorer implementation="org.zowe.explorer.explorer.GlobalExplorerFactory"/>
+        <explorer implementation="org.zowe.explorer.explorer.JesExplorerFactory"/>
 
-        <explorerContentProvider index="0" implementation="org.zowe.explorer.explorer.FileExplorerContentProviderFactory" />
-        <explorerContentProvider index="1" implementation="org.zowe.explorer.explorer.JesExplorerContentProviderFactory"/>
+        <explorerContentProvider index="0"
+                                 implementation="org.zowe.explorer.explorer.FileExplorerContentProviderFactory"/>
+        <explorerContentProvider index="1"
+                                 implementation="org.zowe.explorer.explorer.JesExplorerContentProviderFactory"/>
 
     </extensions>
 
@@ -196,6 +198,7 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
     <extensions defaultExtensionNs="com.intellij">
 
+        <preloadingActivity implementation="org.zowe.explorer.config.ZoweOldConfigConvertPreloadingActivity"/>
         <postStartupActivity implementation="org.zowe.explorer.zowe.ZoweStartupActivity"/>
         <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
@@ -255,8 +258,6 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
 
-        <project.converterProvider id="org.zowe.explorer.config.ZoweConfigConverterProvider"
-                                   implementation="org.zowe.explorer.config.ZoweConfigConverterProvider"/>
     </extensions>
 
     <actions>

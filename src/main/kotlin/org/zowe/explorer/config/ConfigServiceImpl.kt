@@ -10,7 +10,6 @@
 
 package org.zowe.explorer.config
 
-import com.intellij.configurationStore.getDefaultStoragePathSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.State
@@ -19,8 +18,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.rd.util.UUID
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
-import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.crudable.*
 import org.zowe.explorer.utils.runIfTrue
@@ -33,7 +32,7 @@ import javax.xml.parsers.DocumentBuilderFactory
   name = "org.zowe.explorer.config.ConfigService",
   storages = [Storage(value = "zowe_explorer_intellij_config.xml", exportable = true)]
 )
-class ConfigServiceImpl: ConfigService {
+class ConfigServiceImpl : ConfigService {
 
   companion object {
     private val myState = ConfigState()
@@ -68,7 +67,8 @@ class ConfigServiceImpl: ConfigService {
     myState.jobsWorkingSets = myState.jobsWorkingSets.toMutableList()
     myState.workingSets = myState.workingSets.toMutableList()
 
-    val configLocation = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, "zowe_explorer_intellij_config.xml")
+    val configLocation =
+      Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, "zowe_explorer_intellij_config.xml")
     val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configLocation?.toFile())
     val oldConfigsAdapters = OldConfigAdapter.EP.extensions.map { it.buildAdapter(document) }
     oldConfigsAdapters.forEach { adapter ->
@@ -85,7 +85,7 @@ internal abstract class ClassCaseSwitcher<R> {
 
   abstract fun onWorkingSetConfig(): R
 
-  abstract fun onJobsWorkingSetConfig() : R
+  abstract fun onJobsWorkingSetConfig(): R
 
   open fun onCredentials(): R {
     return onElse()
@@ -121,6 +121,7 @@ private class FilterSwitcher(
   override fun onJobsWorkingSetConfig(): Long {
     return crudable.getByColumnLambda(row as JobsWorkingSetConfig) { it.uuid }.count()
   }
+
   override fun onCredentials(): Long {
     return 0
   }
@@ -230,6 +231,7 @@ internal fun <T> classToList(clazz: Class<out T>, state: ConfigState): MutableLi
     override fun onJobsWorkingSetConfig(): MutableList<T> {
       return state.jobsWorkingSets as MutableList<T>
     }
+
     override fun onElse(): MutableList<T>? {
       return null
     }
