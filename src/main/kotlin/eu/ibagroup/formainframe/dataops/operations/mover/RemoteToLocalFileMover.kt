@@ -7,18 +7,27 @@
  *
  * Copyright IBA Group 2020
  */
+package eu.ibagroup.formainframe.dataops.operations.mover
 
-package eu.ibagroup.formainframe.dataops.operations
-
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.operations.OperationRunner
+import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
+import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.XIBMDataType
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
+import java.nio.file.Paths
 
 class RemoteToLocalFileMoverFactory: OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
@@ -30,7 +39,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager): AbstractFileMo
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
         operation.source is MFVirtualFile &&
-        operation.destination !is VirtualFileImpl &&
+        operation.destination is VirtualFileSystemEntry &&
         operation.destination.isDirectory
   }
 
@@ -58,16 +67,17 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager): AbstractFileMo
       sourceFileAttributes.contentMode = XIBMDataType(XIBMDataType.Type.BINARY)
     }
     contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
-    val createdFile = runWriteActionAndWait {
+
+    runWriteActionInEdtAndWait {
       if (operation.forceOverwriting) {
         destFile.children.filter { it.name === sourceFile.name && !it.isDirectory }.forEach { it.delete(this) }
       }
-      destFile.createChildData(this, sourceFile.name)
     }
-    runWriteActionInEdtAndWait {
-      createdFile.setBinaryContent(sourceFile.contentsToByteArray())
+    val createdFileJava = Paths.get(destFile.path, sourceFile.name).toFile().apply { createNewFile() }
+    createdFileJava.writeBytes(sourceFile.contentsToByteArray())
+    runReadActionInEdtAndWait {
+      destFile.refresh(false, false)
     }
-
     return null
   }
 

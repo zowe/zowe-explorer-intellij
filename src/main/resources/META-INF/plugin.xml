@@ -170,33 +170,37 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberToPdsFileMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToPdsFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.PdsToUssFolderMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.PdsToUssFolderMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssToUssFileMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.UssToUssFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssFileToPdsMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.UssFileToPdsMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.SequentialToPdsMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.SequentialToPdsMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.SequentialToUssFolderFileMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.SequentialToUssFolderFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.MemberToUssFileMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToUssFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RemoteToLocalFileMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RemoteToLocalDirectoryMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalDirectoryMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.LocalFileToUssFileMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.LocalFileToUssFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.LocalDirToUssDirMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToUssFolderMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.LocalFileToPdsMoverFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssDirMoverFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemPdsToUssDirMoverFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.ForceRenameOperationRunnerFactory"/>
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.ForceRenameOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 

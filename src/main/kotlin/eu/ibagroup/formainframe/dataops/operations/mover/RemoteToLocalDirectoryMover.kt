@@ -7,8 +7,7 @@
  *
  * Copyright IBA Group 2020
  */
-
-package eu.ibagroup.formainframe.dataops.operations
+package eu.ibagroup.formainframe.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,6 +21,8 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
+import eu.ibagroup.formainframe.dataops.operations.OperationRunner
+import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 

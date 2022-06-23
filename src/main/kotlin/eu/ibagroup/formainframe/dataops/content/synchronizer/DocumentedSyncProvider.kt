@@ -13,7 +13,6 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -29,20 +28,24 @@ import java.util.concurrent.atomic.AtomicBoolean
 class DocumentedSyncProvider (
   override val file: VirtualFile,
   override val saveStrategy: SaveStrategy = SaveStrategy.default(),
-  val onThrowableHandler: (Throwable) -> Unit = {
-    Notifications.Bus.notify(
-      Notification(
-        SYNC_NOTIFICATION_GROUP_ID,
-        "Cannot synchronize file \"${file.name}\" with mainframe",
-        it.message ?: "",
-        NotificationType.ERROR
-      )
-    )
-  }
+  val onThrowableHandler: (Throwable) -> Unit = { defaultOnThrowableHandler(file, it) }
 ) : SyncProvider {
 
-  override fun getDocument(): Document {
-    return FileDocumentManager.getInstance().getDocument(file) ?: throw IOException("Unsupported file ${file.path}")
+  companion object {
+    val defaultOnThrowableHandler: (VirtualFile, Throwable) -> Unit = { file, th ->
+      Notifications.Bus.notify(
+        Notification(
+          SYNC_NOTIFICATION_GROUP_ID,
+          "Cannot synchronize file \"${file.name}\" with mainframe",
+          th.message ?: "",
+          NotificationType.ERROR
+        )
+      )
+    }
+  }
+
+  override fun getDocument(): Document? {
+    return FileDocumentManager.getInstance().getDocument(file)
   }
 
   override val vFileClass = MFVirtualFile::class.java
@@ -50,7 +53,7 @@ class DocumentedSyncProvider (
   private val isInitialContentSet = AtomicBoolean(false)
 
   override val isReadOnly: Boolean
-    get() = !getDocument().isWritable
+    get() = getDocument()?.isWritable != true
 
   override fun putInitialContent(content: ByteArray) {
     if (isInitialContentSet.compareAndSet(false, true)) {
@@ -62,11 +65,11 @@ class DocumentedSyncProvider (
         document.castOrNull<DocumentImpl>()?.setAcceptSlashR(true)
         val wasReadOnly = isReadOnly
         if (wasReadOnly) {
-          document.setReadOnly(false)
+          document?.setReadOnly(false)
         }
-        document.setText(String(content))
+        document?.setText(String(content))
         if (wasReadOnly) {
-          document.setReadOnly(true)
+          document?.setReadOnly(true)
         }
       }.onFailure {
         isInitialContentSet.set(false)
@@ -75,11 +78,11 @@ class DocumentedSyncProvider (
   }
 
   override fun loadNewContent(content: ByteArray) {
-    CommandProcessor.getInstance().runUndoTransparentAction { getDocument().setText(String(content)) }
+    getDocument()?.setText(String(content))
   }
 
   override fun retrieveCurrentContent(): ByteArray {
-    return getDocument().text.toByteArray()
+    return getDocument()?.text?.toByteArray() ?: ByteArray(0)
   }
 
   override fun onThrowable(t: Throwable) {

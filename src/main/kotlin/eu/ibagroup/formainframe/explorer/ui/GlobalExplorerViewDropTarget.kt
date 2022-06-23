@@ -18,12 +18,14 @@ import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import eu.ibagroup.formainframe.common.ui.getVirtualFile
 import eu.ibagroup.formainframe.common.ui.makeNodeDataFromTreePath
+import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.explorer.Explorer
 import groovy.lang.Tuple4
 import java.awt.Rectangle
@@ -40,13 +42,35 @@ class GlobalExplorerViewDropTarget(
   private val copyPasteSupport: GlobalFileExplorerView.ExplorerCopyPasteSupport
 ) : DnDNativeTarget {
 
+  @Suppress("UNCHECKED_CAST")
+  private fun isCrossSystemCopy (sources: Collection<TreePath?>, target: TreePath): Boolean {
+
+    val sourceFilesAttributes = sources
+      .mapNotNull { runCatching { makeNodeDataFromTreePath(explorer, it) }.getOrNull()?.attributes }
+      .mapNotNull { if (it is RemoteMemberAttributes) it.getLibraryAttributes(service()) else it }
+      .mapNotNull { runCatching { it as MFRemoteFileAttributes<Requester> }.getOrNull() }
+
+    val targetAttributes = runCatching {
+      makeNodeDataFromTreePath(explorer, target).attributes as MFRemoteFileAttributes<Requester>
+    }.getOrNull() ?: return false
+
+    return sourceFilesAttributes.any {
+      it.findCommonUrlConnections(targetAttributes).isEmpty()
+    }
+  }
+
   override fun drop(event: DnDEvent) {
     val sourcesTargetBounds = getSourcesTargetAndBounds(event) ?: return
 
 //    val pasteProvider = copyPasteSupport.getPasteProvider(listOf(sourcesTargetBounds.second))
     val pasteProvider = copyPasteSupport.pasteProvider
     val cutProvider = copyPasteSupport.cutProvider
+    val copyProvider = copyPasteSupport.copyProvider
     val sourceTreePaths = sourcesTargetBounds.first?.toList() ?: listOf()
+
+    val isCopiedFromRemote = event.attachedObject is GlobalExplorerViewDragSource.ExplorerTransferableWrapper
+    val isCopiedToRemote = sourcesTargetBounds.fourth == myTree
+
     val copyCutContext = DataContext {
       when (it) {
         CommonDataKeys.PROJECT.name -> copyPasteSupport.project
@@ -65,7 +89,7 @@ class GlobalExplorerViewDropTarget(
         }
         IS_DRAG_AND_DROP_KEY.name -> true
         DRAGGED_FROM_PROJECT_FILES_ARRAY.name -> {
-          if (event.attachedObject is GlobalExplorerViewDragSource.ExplorerTransferableWrapper) {
+          if (isCopiedFromRemote) {
             emptyList()
           } else {
             sourcesTargetBounds.first?.mapNotNull { treePath -> treePath?.getVirtualFile() }
@@ -74,8 +98,14 @@ class GlobalExplorerViewDropTarget(
         else -> null
       }
     }
-    if (cutProvider.isCutEnabled(copyCutContext)) {
-      cutProvider.performCut(copyCutContext)
+    if (isCopiedFromRemote && isCopiedToRemote && !isCrossSystemCopy(sourceTreePaths, sourcesTargetBounds.v2)) {
+      if (cutProvider.isCutEnabled(copyCutContext)) {
+        cutProvider.performCut(copyCutContext)
+      }
+    } else {
+      if (copyProvider.isCopyEnabled(copyCutContext)) {
+        copyProvider.performCopy(copyCutContext)
+      }
     }
     pasteProvider.performPaste(copyCutContext)
   }

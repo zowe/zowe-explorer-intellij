@@ -7,8 +7,9 @@
  *
  * Copyright IBA Group 2020
  */
+package eu.ibagroup.formainframe.dataops.operations.mover
 
-package eu.ibagroup.formainframe.dataops.operations
+import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 
 abstract class AbstractFileMover : OperationRunner<MoveCopyOperation, Unit> {
 

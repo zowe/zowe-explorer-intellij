@@ -1,41 +1,51 @@
-package eu.ibagroup.formainframe.dataops.operations
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+package eu.ibagroup.formainframe.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.addNewLine
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
+import eu.ibagroup.formainframe.dataops.operations.OperationRunner
+import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.applyIfNotNull
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.FilePath
 import eu.ibagroup.r2z.XIBMDataType
 
-class LocalFileToPdsMoverFactory: OperationRunnerFactory {
+class CrossSystemUssFileToPdsMoverFactory: OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-    return LocalFileToPdsMover(dataOpsManager)
+    return CrossSystemUssFileToPdsMover(dataOpsManager)
   }
 }
 
-class LocalFileToPdsMover(val dataOpsManager: DataOpsManager): AbstractFileMover() {
+class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager): AbstractFileMover() {
   override fun canRun(operation: MoveCopyOperation): Boolean {
-    return operation.source is VirtualFileSystemEntry &&
-        !operation.source.isDirectory &&
+    return !operation.source.isDirectory &&
         operation.destination.isDirectory &&
+        operation.destinationAttributes is RemoteDatasetAttributes &&
         operation.destination is MFVirtualFile &&
-        dataOpsManager.tryToGetAttributes(operation.destination) is RemoteDatasetAttributes
+        (operation.source !is MFVirtualFile || operation.commonUrls(dataOpsManager).isEmpty())
   }
 
-  private fun proceedLocalUpload (
-    operation: MoveCopyOperation,
-    progressIndicator: ProgressIndicator
-  ): Throwable? {
+  fun proceedCrossSystemMoveCopy (operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
     var throwable: Throwable? = null
     val sourceFile = operation.source
     val destFile = operation.destination
@@ -45,12 +55,22 @@ class LocalFileToPdsMover(val dataOpsManager: DataOpsManager): AbstractFileMover
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
       ?: return Throwable("No connection for destination directory found.")
 
+    if (sourceFile is MFVirtualFile) {
+      val contentSynchronizer = dataOpsManager.getContentSynchronizer(sourceFile)
+      val syncProvider = DocumentedSyncProvider(sourceFile)
+      contentSynchronizer?.synchronizeWithRemote(syncProvider, progressIndicator)
+    }
+
     var memberName = sourceFile.name.filter { it.isLetterOrDigit() }.take(8)
     if (memberName.isEmpty()) {
       memberName = "empty"
     }
 
-    val xIBMDataType = if (sourceFile.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY) else XIBMDataType(XIBMDataType.Type.TEXT)
+    val xIBMDataType = if (sourceFile.fileType.isBinary ||
+      (operation.sourceAttributes.castOrNull<RemoteUssAttributes>()?.contentMode?.type == XIBMDataType.Type.BINARY)
+    ) XIBMDataType(XIBMDataType.Type.BINARY)
+    else XIBMDataType(XIBMDataType.Type.TEXT)
+
     val sourceContent = sourceFile.contentsToByteArray()
     val contentToUpload = if (sourceFile.fileType.isBinary) sourceContent else sourceContent.filter { it != '\r'.code.toByte() }.toByteArray()
 
@@ -84,9 +104,10 @@ class LocalFileToPdsMover(val dataOpsManager: DataOpsManager): AbstractFileMover
 
     return throwable
   }
+
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
-    val throwable = try {
-      proceedLocalUpload(operation, progressIndicator)
+    val throwable: Throwable? = try {
+      proceedCrossSystemMoveCopy(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }

@@ -7,57 +7,59 @@
  *
  * Copyright IBA Group 2020
  */
-
-package eu.ibagroup.formainframe.dataops.operations
+package eu.ibagroup.formainframe.dataops.operations.mover
 
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.Requester
+import eu.ibagroup.formainframe.dataops.operations.OperationRunner
+import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataUSS
 import eu.ibagroup.r2z.CopyDataZOS
 import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
 import retrofit2.Call
 
-class MemberToUssFileMoverFactory : OperationRunnerFactory {
+class SequentialToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-    return MemberToUssFileMover(dataOpsManager)
+    return SequentialToPdsMover(dataOpsManager)
   }
 }
 
-class MemberToUssFileMover(dataOpsManager: DataOpsManager): DefaultFileMover(dataOpsManager) {
+class SequentialToPdsMover(dataOpsManager: DataOpsManager): DefaultFileMover(dataOpsManager) {
+
   override fun buildCall(
     operation: MoveCopyOperation,
     requesterWithUrl: Pair<Requester, ConnectionConfig>
   ): Call<Void> {
-    val destinationAttributes = operation.destinationAttributes as RemoteUssAttributes
-    val sourceAttributes = operation.sourceAttributes as RemoteMemberAttributes
-    val pdsAttributes = sourceAttributes.getLibraryAttributes(dataOpsManager)
-      ?: throw IllegalArgumentException("Cannot get PDS attributes of member \"${sourceAttributes.name}\"")
-    val to = destinationAttributes.path + USS_DELIMITER + (operation.newName ?: sourceAttributes.name)
+    val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
+    var memberName: String
+    val dataset = (operation.sourceAttributes as RemoteDatasetAttributes).also {
+      memberName = it.name.split(".").last()
+    }
     return api<DataAPI>(
       url = requesterWithUrl.second.url,
       isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned
-    ).copyDatasetOrMemberToUss(
+    ).copyToDatasetMember(
       authorizationToken = requesterWithUrl.first.connectionConfig.authToken,
-      body = CopyDataUSS.CopyFromDataset(
-        from = CopyDataUSS.CopyFromDataset.Dataset(
-          datasetName = pdsAttributes.name,
-          memberName = sourceAttributes.name
-        )
+      body = CopyDataZOS.CopyFromDataset(
+        dataset = CopyDataZOS.CopyFromDataset.Dataset(
+          datasetName = dataset.name
+        ),
+        replace = operation.forceOverwriting
       ),
-      filePath = FilePath(to)
+      toDatasetName = destinationAttributes.name,
+      memberName = memberName
     )
   }
 
   override fun canRun(operation: MoveCopyOperation): Boolean {
-    return operation.destinationAttributes is RemoteUssAttributes
+    return operation.destinationAttributes is RemoteDatasetAttributes
         && operation.destination.isDirectory
         && !operation.source.isDirectory
-        && operation.sourceAttributes is RemoteMemberAttributes
+        && operation.sourceAttributes is RemoteDatasetAttributes
         && operation.commonUrls(dataOpsManager).isNotEmpty()
         && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
