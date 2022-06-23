@@ -1,17 +1,6 @@
-/*
- * This program and the accompanying materials are made available under the terms of the
- * Eclipse Public License v2.0 which accompanies this distribution, and is available at
- * https://www.eclipse.org/legal/epl-v20.html
- *
- * SPDX-License-Identifier: EPL-2.0
- *
- * Copyright IBA Group 2020
- */
-
-package eu.ibagroup.formainframe.dataops.operations
+package eu.ibagroup.formainframe.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
@@ -22,31 +11,26 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
+import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.*
 import retrofit2.Response
 
-class PdsToUssFolderMoverFactory : OperationRunnerFactory {
-  override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-    return PdsToUssFolderMover(dataOpsManager, MFVirtualFile::class.java)
-  }
-}
+abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
-class PdsToUssFolderMover<VFile : VirtualFile>(
-  private val dataOpsManager: DataOpsManager,
-  val vFileClass: Class<out VFile>
-) : AbstractFileMover() {
-  override fun canRun(operation: MoveCopyOperation): Boolean {
-    return operation.sourceAttributes is RemoteDatasetAttributes
-        && operation.destinationAttributes is RemoteUssAttributes
-        && operation.sourceAttributes.isDirectory
-        && operation.destinationAttributes.isDirectory
-        && operation.commonUrls(dataOpsManager).isNotEmpty()
-  }
+  abstract fun copyMember(
+    operation: MoveCopyOperation,
+    libraryAttributes: RemoteDatasetAttributes,
+    memberName: String,
+    sourceConnectionConfig: ConnectionConfig,
+    destinationPath: String,
+    destConnectionConfig: ConnectionConfig,
+    progressIndicator: ProgressIndicator
+  ): Response<*>?
 
   private fun rollback(
-    prevResponse: Response<Void>? = null,
+    prevResponse: Response<*>? = null,
     sourceName: String,
     destinationPath: String,
     connectionConfig: ConnectionConfig,
@@ -78,53 +62,59 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     return throwable
   }
 
-  private fun proceedCopyCutPds(
-    connectionConfig: ConnectionConfig,
+  fun proceedPdsMove(
+    sourceConnectionConfig: ConnectionConfig,
+    destConnectionConfig: ConnectionConfig,
     operation: MoveCopyOperation,
     progressIndicator: ProgressIndicator
   ): Throwable? {
     val sourceAttributes = (operation.sourceAttributes as RemoteDatasetAttributes)
     val destinationAttributes = (operation.destinationAttributes as RemoteUssAttributes)
 
-    val sourceQuery = UnitRemoteQueryImpl(LibraryQuery(operation.source as MFVirtualFile), connectionConfig)
+    val sourceQuery = UnitRemoteQueryImpl(LibraryQuery(operation.source as MFVirtualFile), sourceConnectionConfig)
 
     val sourceFileFetchProvider = dataOpsManager
-      .getFileFetchProvider<LibraryQuery, RemoteQuery<LibraryQuery, Unit>, VFile>(
-        LibraryQuery::class.java, RemoteQuery::class.java, vFileClass
+      .getFileFetchProvider<LibraryQuery, RemoteQuery<LibraryQuery, Unit>, MFVirtualFile>(
+        LibraryQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
       )
 
     sourceFileFetchProvider.reload(sourceQuery)
-    val destinationPath = "${destinationAttributes.path}/${sourceAttributes.name}"
     var throwable: Throwable? = null
 
     if (sourceFileFetchProvider.isCacheValid(sourceQuery)) {
-      val response = api<DataAPI>(connectionConfig).createUssFile(
-        authorizationToken = connectionConfig.authToken,
+      val destinationPath = "${destinationAttributes.path}/${sourceAttributes.name}"
+
+      if (operation.forceOverwriting) {
+        val response = api<DataAPI>(destConnectionConfig).deleteUssFile(
+          authorizationToken = destConnectionConfig.authToken,
+          filePath = destinationPath.substring(1),
+          xIBMOption = XIBMOption.RECURSIVE
+        ).cancelByIndicator(progressIndicator).execute()
+        if (!response.isSuccessful) {
+          throw CallException(response, "Cannot overwrite directory '$destinationPath'.")
+        }
+      }
+
+      val response = api<DataAPI>(destConnectionConfig).createUssFile(
+        authorizationToken = destConnectionConfig.authToken,
         filePath = FilePath(destinationAttributes.path + "/" + sourceAttributes.name),
-        body = CreateUssFile(FileType.DIR, destinationAttributes.fileMode ?: FileMode(7,7,7))
+        body = CreateUssFile(FileType.DIR, destinationAttributes.fileMode ?: FileMode(7, 7, 7))
       ).cancelByIndicator(progressIndicator).execute()
 
       if (response.isSuccessful) {
         val cachedChildren = sourceFileFetchProvider.getCached(sourceQuery)
 
         cachedChildren?.forEach {
-          var responseCopyMember: Response<Void>? = null
+          var responseCopyMember: Response<*>? = null
           runCatching {
-            responseCopyMember = api<DataAPI>(connectionConfig).copyDatasetOrMemberToUss(
-              connectionConfig.authToken,
-              XIBMBpxkAutoCvt.OFF,
-              CopyDataUSS.CopyFromDataset(
-                from = CopyDataUSS.CopyFromDataset.Dataset(sourceAttributes.name, it.name.toUpperCase())
-              ),
-              FilePath(destinationPath)
-            ).cancelByIndicator(progressIndicator).execute()
+            responseCopyMember = copyMember(operation, sourceAttributes, it.name, sourceConnectionConfig, destinationPath, destConnectionConfig, progressIndicator)
           }
           if (progressIndicator.isCanceled || responseCopyMember?.isSuccessful != true) {
             throwable = rollback(
               responseCopyMember,
               "${sourceAttributes.name}(${it.name})",
               destinationPath,
-              connectionConfig,
+              destConnectionConfig,
               operation,
               progressIndicator
             )
@@ -143,18 +133,4 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     return throwable
   }
 
-  override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
-    var throwable: Throwable? = null
-    for ((requester, _) in operation.commonUrls(dataOpsManager)) {
-      try {
-        throwable = proceedCopyCutPds(requester.connectionConfig, operation, progressIndicator)
-        break
-      } catch (t: Throwable) {
-        throwable = t
-      }
-    }
-    if (throwable != null) {
-      throw throwable
-    }
-  }
 }

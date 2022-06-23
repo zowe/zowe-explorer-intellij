@@ -28,7 +28,7 @@ interface SyncProvider {
 
   val vFileClass: Class<out VirtualFile>
 
-  fun getDocument(): Document
+  fun getDocument(): Document?
 
   @Throws(IOException::class)
   fun putInitialContent(content: ByteArray)

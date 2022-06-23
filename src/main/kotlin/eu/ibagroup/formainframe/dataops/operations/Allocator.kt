@@ -7,7 +7,6 @@
  *
  * Copyright IBA Group 2020
  */
-
 package eu.ibagroup.formainframe.dataops.operations
 
 import eu.ibagroup.formainframe.dataops.Query
