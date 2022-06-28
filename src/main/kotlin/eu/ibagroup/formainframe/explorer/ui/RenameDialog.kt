@@ -10,48 +10,35 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import eu.ibagroup.formainframe.explorer.actions.RenameAction
+import eu.ibagroup.formainframe.utils.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 
 class RenameDialog(project: Project?,
                    type: String,
+                   private val selectedNode: NodeData,
+                   private val currentAction: AnAction,
                    override var state: String
 ) : DialogWrapper(project),
   StatefulComponent<String> {
 
-  private var validationOnInput : (JTextField) -> ValidationInfo? = {null}
-  private var validationOnApply : (JTextField) -> ValidationInfo? = {null}
-  private var validationForBlankOnApply : (JTextField) -> ValidationInfo? = {null}
-
-  fun withValidationOnApply(func: (JTextField) -> ValidationInfo?) : RenameDialog {
-    validationOnApply = func
-    return this
-  }
-
-  fun withValidationOnInput(func: (JTextField) -> ValidationInfo?) : RenameDialog {
-    validationOnInput = func
-    return this
-  }
-
-  fun withValidationForBlankOnApply(): RenameDialog {
-    validationForBlankOnApply = { validateForBlank(it) }
-    return this
-  }
+  private val node = selectedNode.node
 
   override fun createCenterPanel(): JComponent {
     return panel {
       row {
         label("New name")
         textField(this@RenameDialog::state).withValidationOnInput {
-          validationOnInput(it)
-        }.withValidationOnApply {
-          validationForBlankOnApply(it) ?: validationOnApply(it)
+          validateOnInput(it) ?: validateOnBlank(it)
         }.apply {
           focused()
         }
@@ -64,5 +51,43 @@ class RenameDialog(project: Project?,
     init()
   }
 
+  private fun validateOnInput(component: JTextField): ValidationInfo? {
+    val attributes = selectedNode.attributes
+    when (node) {
+      is DSMaskNode -> {
+        return validateDatasetMask(component.text, component) ?: validateWorkingSetMaskName(component, node.parent?.value as FilesWorkingSet)
+      }
+      is LibraryNode, is FileLikeDatasetNode -> {
+        return if (attributes is RemoteDatasetAttributes) {
+          validateDatasetNameOnInput(component)
+        } else {
+          validateMemberName(component)
+        }
+      }
+      is UssDirNode -> {
+        return if (node.isConfigUssPath) {
+          validateUssMask(component.text, component) ?: validateWorkingSetMaskName(component, node.parent?.value as FilesWorkingSet)
+        } else {
+          if (currentAction is RenameAction) {
+            validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNode)
+          } else {
+            validateUssFileName(component)
+          }
+        }
+      }
+      is UssFileNode -> {
+        return if (currentAction is RenameAction) {
+          validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNode)
+        } else {
+          validateUssFileName(component)
+        }
+      }
+    }
+    return null
+  }
+
+  private fun validateOnBlank(component: JTextField): ValidationInfo? {
+    return validateForBlank(component)
+  }
 
 }
