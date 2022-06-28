@@ -47,7 +47,11 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
       is RemoteDatasetAttributes -> {
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
-        operation.file.children.forEach { it.isWritable = false }
+        if (operation.file.children != null) {
+          operation.file.children.forEach { it.isWritable = false }
+        } else {
+          operation.file.isWritable = false
+        }
         var throwable: Throwable? = null
         attr.requesters.stream().map {
           try {
