@@ -26,7 +26,6 @@ import eu.ibagroup.formainframe.dataops.operations.ForceRenameOperation
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.validateUssFileName
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 class ForceRenameAction : AnAction() {
@@ -37,10 +36,9 @@ class ForceRenameAction : AnAction() {
     if (selectedNode.node is UssDirNode || selectedNode.node is UssFileNode) {
       val attributes = selectedNode.attributes as RemoteUssAttributes
       val file = selectedNode.file as MFVirtualFile
-      val renameDialog = RenameDialog(e.project, if (attributes.isDirectory) "Directory" else "File", attributes.name)
-        .withValidationOnInput { validateUssFileName(it) }
-        .withValidationForBlankOnApply()
-      if (renameDialog.showAndGet() && file != null) {
+      val type = if (attributes.isDirectory) { "Directory" } else { "File" }
+      val renameDialog = RenameDialog(e.project, type, selectedNode, this, attributes.name)
+      if (renameDialog.showAndGet()) {
         val confirmDialog = showConfirmDialogIfNecessary(renameDialog.state, selectedNode)
         if (confirmDialog == Messages.OK) {
           runRenameOperation(e.project, view.explorer, file, attributes, renameDialog.state, selectedNode.node, true)

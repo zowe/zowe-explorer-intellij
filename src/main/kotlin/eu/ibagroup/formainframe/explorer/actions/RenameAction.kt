@@ -32,6 +32,7 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import java.util.*
 
 class RenameAction : AnAction() {
 
@@ -42,14 +43,12 @@ class RenameAction : AnAction() {
     var initialState = ""
     if (node is DSMaskNode) {
       initialState = (selectedNode.node.value as DSMask).mask
-      val dialog = RenameDialog(e.project, "Dataset Mask", initialState).withValidationOnInput {
-        validateDatasetMask(it.text, it) ?: validateWorkingSetMaskName(it, node.parent?.value as FilesWorkingSet)
-      }.withValidationForBlankOnApply()
+      val dialog = RenameDialog(e.project, "Dataset Mask", selectedNode, this, initialState)
       if (dialog.showAndGet()) {
         val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
         val wsToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentValue.uuid)?.clone()
         if (wsToUpdate != null) {
-          wsToUpdate.dsMasks.filter { it.mask == initialState }[0].mask = dialog.state.toUpperCase()
+          wsToUpdate.dsMasks.filter { it.mask == initialState }[0].mask = dialog.state.uppercase()
           configCrudable.update(wsToUpdate)
         }
       }
@@ -63,13 +62,7 @@ class RenameAction : AnAction() {
         initialState = attributes.info.name
         type = "Member"
       }
-      val dialog = RenameDialog(e.project, type, initialState).withValidationOnInput {
-        if (attributes is RemoteDatasetAttributes) {
-          validateDatasetNameOnInput(it)
-        } else {
-          validateMemberName(it)
-        }
-      }.withValidationForBlankOnApply()
+      val dialog = RenameDialog(e.project, type, selectedNode, this, initialState)
       val file = node.virtualFile
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
@@ -77,9 +70,7 @@ class RenameAction : AnAction() {
       }
     } else if (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath) {
       initialState = selectedNode.node.value.path
-      val dialog = RenameDialog(e.project, "Directory", initialState).withValidationOnInput {
-        validateUssMask(it.text, it) ?: validateWorkingSetMaskName(it, node.parent?.value as FilesWorkingSet)
-      }.withValidationForBlankOnApply()
+      val dialog = RenameDialog(e.project, "Directory", selectedNode, this, initialState)
       if (dialog.showAndGet()) {
         val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
         val wsToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentValue.uuid)?.clone()
@@ -95,11 +86,10 @@ class RenameAction : AnAction() {
       val dialog = RenameDialog(
         e.project,
         if (attributes.isDirectory) "Directory" else "File",
+        selectedNode,
+        this,
         attributes.name
-      ).withValidationOnInput {
-        validateUssFileName(it)
-        validateUssFileNameAlreadyExists(it, selectedNode)
-      }.withValidationForBlankOnApply()
+      )
       if (dialog.showAndGet() && file != null) {
         runRenameOperation(e.project, file, attributes, dialog.state, node)
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
