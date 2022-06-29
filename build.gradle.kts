@@ -66,7 +66,7 @@ dependencies {
   testImplementation("io.kotest:kotest-assertions-core:5.3.0")
   testImplementation("io.kotest:kotest-runner-junit5:5.3.0")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
-  testImplementation ("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
+  testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
   testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
 }
@@ -236,7 +236,7 @@ tasks.downloadRobotServerPlugin {
   version.set(remoteRobotVersion)
 }
 
-tasks.runIdeForUiTests{
+tasks.runIdeForUiTests {
   systemProperty("idea.trust.all.projects", "true")
 }
 
@@ -245,7 +245,3 @@ tasks {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   }
 }
-
-
-
-
