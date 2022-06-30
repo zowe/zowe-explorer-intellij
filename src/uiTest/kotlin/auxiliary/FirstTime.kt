@@ -5,9 +5,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import auxiliary.containers.*
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.search.locators.byXpath
 import org.junit.jupiter.api.Tag
-import java.time.Duration
 
 /**
  * When adding UI tests to GitHub Actions pipeline, there is a need to first run dummy test, which
@@ -24,17 +22,11 @@ class ConnectionManager {
         welcomeFrame {
             open(projectName)
         }
-        Thread.sleep(300000)
+        Thread.sleep(60000)
         ideFrameImpl(projectName, stack) {
             dialog("For Mainframe Plugin Privacy Policy and Terms and Conditions") {
                 clickButton("I Agree")
             }
-           dialog("Tip of the Day") {
-                checkBox("Don't show tips").select()
-                clickButton("Close")
-            }
-            clickButton(byXpath("//div[@accessiblename='Got It' and @class='JButton' and @text='Got It']"),
-                Duration.ofSeconds(180))
             close()
         }
     }

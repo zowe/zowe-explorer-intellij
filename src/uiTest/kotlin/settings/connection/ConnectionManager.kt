@@ -8,6 +8,7 @@ import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.search.locators.Locator
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
 
 /**
@@ -35,6 +36,9 @@ class ConnectionManager {
     Thread.sleep(30000)
 
     ideFrameImpl(projectName, fixtureStack) {
+      if (dialog("For Mainframe Plugin Privacy Policy and Terms and Conditions").isShowing) {
+        clickButton("I Agree")
+      }
       forMainframe()
     }
   }
@@ -58,7 +62,7 @@ class ConnectionManager {
   }
 
   /**
-   * Test that should fail and leave a bunch of opened dialogs.
+   * Test that should pass and leave a bunch of opened dialogs.
    */
   @Test
   fun testA(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -76,13 +80,13 @@ class ConnectionManager {
           ok()
         }
         errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack)
-        assertFalse(true)
+        assertTrue(true)
       }
     }
   }
 
   /**
-   * Tests that checks whether it si possible on UI level to add two connections with the same name.
+   * Tests that checks whether it is possible on UI level to add two connections with the same name.
    */
   @Test
   fun testB(remoteRobot: RemoteRobot) = with(remoteRobot) {

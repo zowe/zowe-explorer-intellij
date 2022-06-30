@@ -238,6 +238,7 @@ tasks.downloadRobotServerPlugin {
 
 tasks.runIdeForUiTests {
   systemProperty("idea.trust.all.projects", "true")
+  systemProperty("ide.show.tips.on.startup.default.value","false")
 }
 
 tasks {
