@@ -9,6 +9,12 @@ import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.waitFor
 
 /**
+ * This class represents the TabLAbel.
+ */
+@FixtureName("TabLabel")
+class TabLabel(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : ComponentFixture(remoteRobot, remoteComponent)
+
+/**
  * Function, which looks for the TabLabel.
  */
 fun ContainerFixture.tabLabel(remoteRobot: RemoteRobot, name: String): TabLabel {
@@ -18,9 +24,3 @@ fun ContainerFixture.tabLabel(remoteRobot: RemoteRobot, name: String): TabLabel 
     }
     return findAll<TabLabel>(xpath).first()
 }
-
-/**
- * This class represents the TabLAbel.
- */
-@FixtureName("TabLabel")
-class TabLabel(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : ComponentFixture(remoteRobot, remoteComponent)

@@ -10,20 +10,6 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
- * Finds the AddConnectionDialog and modifies fixtureStack.
- */
-fun ContainerFixture.addConnectionDialog(
-    fixtureStack: MutableList<Locator>,
-    timeout: Duration = Duration.ofSeconds(60),
-    function: AddConnectionDialog.() -> Unit = {}) {
-    find<AddConnectionDialog>(AddConnectionDialog.xPath(), timeout).apply {
-        fixtureStack.add(AddConnectionDialog.xPath())
-        function()
-        fixtureStack.removeLast()
-    }
-}
-
-/**
  * Class representing the Add Connection Dialog.
  */
 @FixtureName("Add Connection Dialog")
@@ -49,24 +35,10 @@ open class AddConnectionDialog(
     }
 
     /**
-     * Clicks on the Cancel button.
-     */
-    fun cancel() {
-        clickButton("Cancel")
-    }
-
-    /**
-     * Clicks on the Ok button.
-     */
-    fun ok() {
-        clickButton("OK")
-    }
-
-    /**
      * The close function, which is used to close the dialog in the tear down method.
      */
     override fun close() {
-        cancel()
+        clickButton("Cancel")
     }
     companion object {
         const val name = "Add Connection Dialog"
@@ -76,5 +48,19 @@ open class AddConnectionDialog(
          */
         @JvmStatic
         fun xPath() = byXpath( name,"//div[@accessiblename='Add Connection' and @class='MyDialog']")
+    }
+}
+
+/**
+ * Finds the AddConnectionDialog and modifies fixtureStack.
+ */
+fun ContainerFixture.addConnectionDialog(
+    fixtureStack: MutableList<Locator>,
+    timeout: Duration = Duration.ofSeconds(60),
+    function: AddConnectionDialog.() -> Unit = {}) {
+    find<AddConnectionDialog>(AddConnectionDialog.xPath(), timeout).apply {
+        fixtureStack.add(AddConnectionDialog.xPath())
+        function()
+        fixtureStack.removeLast()
     }
 }

@@ -12,6 +12,31 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
+ * Class representing the Error Creating Connection Dialog.
+ */
+@FixtureName("Error Creating Connection Dialog")
+class ErrorCreatingConnectionDialog(
+    remoteRobot: RemoteRobot,
+    remoteComponent: RemoteComponent
+) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
+    /**
+     * The close function, which is used to close the Error Creating Connection Dialog in the tear down method.
+     */
+    override fun close() {
+        clickButton("No")
+    }
+
+    companion object {
+        const val name = "Error Creating Connection Dialog"
+        /**
+         * Returns the xPath of the Error Creating Connection Dialog.
+         */
+        @JvmStatic
+        fun xPath() = byXpath( name,"//div[@accessiblename='Error Creating Connection' and @class='MyDialog']")
+    }
+}
+
+/**
  * Finds the Error Creating Connection Dialog.
  *
  * After this error, the Add Connection Dialog is changed into Edit Connection Dialog.
@@ -32,43 +57,5 @@ fun ContainerFixture.errorCreatingConnectionDialog(
         }
         closableFixtureCollector.add(ErrorCreatingConnectionDialog.xPath(), fixtureStack)
         function()
-    }
-}
-
-/**
- * Class representing the Error Creating Connection Dialog.
- */
-@FixtureName("Error Creating Connection Dialog")
-class ErrorCreatingConnectionDialog(
-    remoteRobot: RemoteRobot,
-    remoteComponent: RemoteComponent
-) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
-    /**
-     * The close function, which is used to close the Error Creating Connection Dialog in the tear down method.
-     */
-    override fun close() {
-        no()
-    }
-
-    /**
-     * Clicks on the No button.
-     */
-    fun no() {
-        clickButton("No")
-    }
-
-    /**
-     * Clicks on the Yes button.
-     */
-    fun yes() {
-        clickButton("Yes")
-    }
-    companion object {
-        const val name = "Error Creating Connection Dialog"
-        /**
-         * Returns the xPath of the Error Creating Connection Dialog.
-         */
-        @JvmStatic
-        fun xPath() = byXpath( name,"//div[@accessiblename='Error Creating Connection' and @class='MyDialog']")
     }
 }

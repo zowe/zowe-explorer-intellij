@@ -9,6 +9,14 @@ import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.waitFor
 
 /**
+ * This class was copied from ui-robot at jet brains
+ *
+ * It represents the ActionMenu
+ */
+@FixtureName("ActionMenu")
+class ActionMenuFixture(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : ComponentFixture(remoteRobot, remoteComponent)
+
+/**
  * Function, which looks for the ActionMenu.
  */
 fun ContainerFixture.actionMenu(remoteRobot: RemoteRobot, text: String): ActionMenuFixture {
@@ -18,11 +26,3 @@ fun ContainerFixture.actionMenu(remoteRobot: RemoteRobot, text: String): ActionM
     }
     return findAll<ActionMenuFixture>(xpath).first()
 }
-
-/**
- * This class was copied from ui-robot at jet brains
- *
- * It represents the ActionMenu
- */
-@FixtureName("ActionMenu")
-class ActionMenuFixture(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : ComponentFixture(remoteRobot, remoteComponent)

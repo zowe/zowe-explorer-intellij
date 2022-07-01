@@ -65,7 +65,7 @@ class ConnectionManager {
    * Test that should pass and leave a bunch of opened dialogs.
    */
   @Test
-  fun testA(remoteRobot: RemoteRobot) = with(remoteRobot) {
+  fun testAddWrongConnection(remoteRobot: RemoteRobot) = with(remoteRobot) {
     ideFrameImpl(projectName, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
@@ -77,7 +77,7 @@ class ConnectionManager {
         }
         addConnectionDialog(fixtureStack) {
           addConnection("a", "https://a.com", "a", "a", true)
-          ok()
+          clickButton("OK")
         }
         errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack)
         assertTrue(true)
@@ -89,7 +89,7 @@ class ConnectionManager {
    * Tests that checks whether it is possible on UI level to add two connections with the same name.
    */
   @Test
-  fun testB(remoteRobot: RemoteRobot) = with(remoteRobot) {
+  fun testAddTwoConnectionsWithTheSameName(remoteRobot: RemoteRobot) = with(remoteRobot) {
     ideFrameImpl(projectName, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
@@ -101,11 +101,11 @@ class ConnectionManager {
         }
         addConnectionDialog(fixtureStack) {
           addConnection("a", "https://a.com", "a", "a", true)
-          ok()
+          clickButton("OK")
         }
         closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
         errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
-          yes()
+          clickButton("Yes")
         }
         closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
         configurableEditor {

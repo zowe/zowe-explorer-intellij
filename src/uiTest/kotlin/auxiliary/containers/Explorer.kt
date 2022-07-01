@@ -12,13 +12,6 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
- * Finds the Explorer and modifies the fixtureStack.
- */
-fun ContainerFixture.explorer(function: Explorer.() -> Unit) {
-    find<Explorer>(Explorer.xPath(), Duration.ofSeconds(60)).apply(function)
-}
-
-/**
  * Class representing the Explorer.
  */
 @FixtureName("Explorer")
@@ -37,4 +30,11 @@ class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : Com
         @JvmStatic
         fun xPath() = byXpath( "//div[@accessiblename='File Explorer Tool Window' and @class='InternalDecoratorImpl']")
     }
+}
+
+/**
+ * Finds the Explorer and modifies the fixtureStack.
+ */
+fun ContainerFixture.explorer(function: Explorer.() -> Unit) {
+    find<Explorer>(Explorer.xPath(), Duration.ofSeconds(60)).apply(function)
 }

@@ -13,13 +13,6 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
- * Calls the Configurable Editor, which is the For Mainframe section in the Settings Dialog.
- */
-fun ContainerFixture.configurableEditor(function: ConfigurableEditor.() -> Unit) {
-    find<ConfigurableEditor>(ConfigurableEditor.xPath(), Duration.ofSeconds(60)).apply(function)
-}
-
-/**
  * The representation of the Configurable Editor, which is the For Mainframe section in the Settings Dialog.
  */
 @FixtureName("ConfigurableEditor")
@@ -43,4 +36,11 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
         @JvmStatic
         fun xPath() = byXpath("//div[@class='ConfigurableEditor']")
     }
+}
+
+/**
+ * Calls the Configurable Editor, which is the For Mainframe section in the Settings Dialog.
+ */
+fun ContainerFixture.configurableEditor(function: ConfigurableEditor.() -> Unit) {
+    find<ConfigurableEditor>(ConfigurableEditor.xPath(), Duration.ofSeconds(60)).apply(function)
 }

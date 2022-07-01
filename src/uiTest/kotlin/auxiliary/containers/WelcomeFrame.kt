@@ -10,14 +10,6 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
- * Finds the Welcome Frame and modifies the fixtureStack. The frame needs to be called from the
- * RemoteRobot as there is no ContainerFixture containing it.
- */
-fun RemoteRobot.welcomeFrame(function: WelcomeFrame.()-> Unit) {
-    find(WelcomeFrame::class.java, Duration.ofSeconds(60)).apply(function)
-}
-
-/**
  * Class representing the Welcome Frame.
  */
 @FixtureName("Welcome Frame")
@@ -37,4 +29,12 @@ class WelcomeFrame(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
             clickButton("OK")
         }
     }
+}
+
+/**
+ * Finds the Welcome Frame and modifies the fixtureStack. The frame needs to be called from the
+ * RemoteRobot as there is no ContainerFixture containing it.
+ */
+fun RemoteRobot.welcomeFrame(function: WelcomeFrame.()-> Unit) {
+    find(WelcomeFrame::class.java, Duration.ofSeconds(60)).apply(function)
 }
