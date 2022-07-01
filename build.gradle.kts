@@ -22,6 +22,7 @@ apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
 version = "0.6.1"
+val remoteRobotVersion = "0.11.14"
 
 repositories {
   mavenCentral()
@@ -31,6 +32,10 @@ repositories {
     credentials {
       username = "admin"
       password = "password123"
+    }
+    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    flatDir {
+      dir("libs")
     }
     metadataSources {
       mavenPom()
@@ -60,7 +65,10 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
   testImplementation("io.kotest:kotest-assertions-core:5.3.0")
   testImplementation("io.kotest:kotest-runner-junit5:5.3.0")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
+  testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
+  testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
 }
 
 intellij {
@@ -165,5 +173,76 @@ tasks {
         }
       })
     )
+  }
+}
+
+/**
+ * Adds uiTest source sets
+ */
+sourceSets {
+  create("uiTest") {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+    java.srcDirs("src/uiTest/java", "src/uiTest/kotlin")
+    resources.srcDirs("src/uiTest/resources")
+  }
+}
+
+/**
+ * configures the UI Tests to inherit the testImplementation in dependencies
+ */
+val uiTestImplementation by configurations.getting {
+  extendsFrom(configurations.testImplementation.get())
+}
+
+/**
+ * configures the UI Tests to inherit the testRuntimeOnly in dependencies
+ */
+configurations["uiTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
+
+/**
+ * runs UI tests
+ */
+val uiTest = task<Test>("uiTest") {
+  description = "Runs the integration tests for UI."
+  group = "verification"
+  testClassesDirs = sourceSets["uiTest"].output.classesDirs
+  classpath = sourceSets["uiTest"].runtimeClasspath
+  useJUnitPlatform() {
+    excludeTags("FirstTime")
+  }
+  testLogging {
+    events("passed", "skipped", "failed")
+  }
+}
+
+/**
+ * Runs the first UI test, which agrees to the license agreement
+ */
+val firstTimeUiTest = task<Test>("firstTimeUiTest") {
+  description = "Gets rid of license agreement, etc."
+  group = "verification"
+  testClassesDirs = sourceSets["uiTest"].output.classesDirs
+  classpath = sourceSets["uiTest"].runtimeClasspath
+  useJUnitPlatform() {
+    includeTags("FirstTime")
+  }
+  testLogging {
+    events("passed", "skipped", "failed")
+  }
+}
+
+tasks.downloadRobotServerPlugin {
+  version.set(remoteRobotVersion)
+}
+
+tasks.runIdeForUiTests {
+  systemProperty("idea.trust.all.projects", "true")
+  systemProperty("ide.show.tips.on.startup.default.value","false")
+}
+
+tasks {
+  withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   }
 }
