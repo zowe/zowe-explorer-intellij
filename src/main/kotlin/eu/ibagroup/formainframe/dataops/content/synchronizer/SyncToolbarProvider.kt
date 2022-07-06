@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvi
 
 private const val ACTION_GROUP = "eu.ibagroup.formainframe.dataops.content.synchronizer.SyncActionGroup"
 
+// TODO: doc
 class SyncToolbarProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
   override val autoHideable = true
   override val priority = 1

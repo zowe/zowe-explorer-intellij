@@ -13,6 +13,11 @@ package eu.ibagroup.formainframe.editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 
+/**
+ * Show dialog which prevents user from closing the file without synchronizing
+ * @param fileName the name of the file for the dialog message
+ * @param project the project on which to issue the dialog
+ */
 fun showSyncOnCloseDialog(fileName: String, project: Project): Boolean {
   return MessageDialogBuilder
     .yesNo(

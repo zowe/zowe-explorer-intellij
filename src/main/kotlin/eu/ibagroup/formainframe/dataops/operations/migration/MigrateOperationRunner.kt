@@ -25,6 +25,7 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HMigrate
 
+// TODO: doc
 data class MigrateOperationParams(val file: VirtualFile)
 
 class MigrateOperationRunner : MigrationRunner<MigrateOperation> {

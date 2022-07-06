@@ -16,10 +16,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.operations.jobs.*
+import eu.ibagroup.formainframe.dataops.operations.jobs.BasicCancelJobParams
+import eu.ibagroup.formainframe.dataops.operations.jobs.CancelJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.r2z.JobStatus
 
+// TODO: doc Nikita
 class CancelJobAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
@@ -48,9 +50,19 @@ class CancelJobAction : AnAction() {
             progressIndicator = it
           )
         }.onFailure {
-          view.showNotification("Error cancelling ${jobStatus.jobName}: ${jobStatus.jobId}", "${it.message}", e.project, NotificationType.ERROR)
+          view.showNotification(
+            "Error cancelling ${jobStatus.jobName}: ${jobStatus.jobId}",
+            "${it.message}",
+            e.project,
+            NotificationType.ERROR
+          )
         }.onSuccess {
-          view.showNotification("${jobStatus.jobName}: ${jobStatus.jobId} has been cancelled", "${it}", e.project, NotificationType.INFORMATION)
+          view.showNotification(
+            "${jobStatus.jobName}: ${jobStatus.jobId} has been cancelled",
+            "${it}",
+            e.project,
+            NotificationType.INFORMATION
+          )
         }
       }
     }
@@ -62,7 +74,7 @@ class CancelJobAction : AnAction() {
       return
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
-    if(jobStatus == JobStatus.Status.OUTPUT || jobStatus == null) {
+    if (jobStatus == JobStatus.Status.OUTPUT || jobStatus == null) {
       e.presentation.isEnabled = false
     }
   }

@@ -11,14 +11,11 @@
 package eu.ibagroup.formainframe.filetypes
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import javax.swing.Icon
 
+/** Class that represents unknown dataset file type */
 class UnknownDataSetFileType : FileTypeIdentifiableByVirtualFile {
   override fun getName(): String {
     return "Unknown Data Set"

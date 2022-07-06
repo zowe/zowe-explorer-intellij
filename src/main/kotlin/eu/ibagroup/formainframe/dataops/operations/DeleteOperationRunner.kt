@@ -28,7 +28,7 @@ import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMOption
 
-
+// TODO: doc
 class DeleteRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return DeleteOperationRunner(dataOpsManager)
@@ -64,7 +64,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
               runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
               true
             } else {
-              throwable =  CallException(response, "Cannot delete data set")
+              throwable = CallException(response, "Cannot delete data set")
               false
             }
           } catch (t: Throwable) {
@@ -92,7 +92,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
                 runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
                 true
               } else {
-                throwable =  CallException(response, "Cannot delete data set member")
+                throwable = CallException(response, "Cannot delete data set member")
                 false
               }
             } catch (t: Throwable) {
@@ -105,7 +105,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
       is RemoteUssAttributes -> {
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
-        if(operation.file.isDirectory) {
+        if (operation.file.isDirectory) {
           operation.file.children.forEach { it.isWritable = false }
         } else {
           operation.file.isWritable = false

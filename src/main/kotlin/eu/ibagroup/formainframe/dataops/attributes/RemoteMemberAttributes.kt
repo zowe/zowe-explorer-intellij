@@ -16,6 +16,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.Member
 import eu.ibagroup.r2z.XIBMDataType
 
+// TODO: doc
 data class RemoteMemberAttributes(
   override val info: Member,
   override val parentFile: MFVirtualFile,

@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.config.connect
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
 
+// TODO: doc
 class Credentials {
   @Column(unique = true)
   @ForeignKey(foreignClass = ConnectionConfig::class)
@@ -49,9 +50,9 @@ class Credentials {
 
   override fun toString(): String {
     return "Credentials{" +
-        "connectionConfigUuid='" + connectionConfigUuid + '\'' +
-        ", username='" + username + '\'' +
-        ", password='" + password + '\'' +
-        '}'
+            "connectionConfigUuid='" + connectionConfigUuid + '\'' +
+            ", username='" + username + '\'' +
+            ", password='" + password + '\'' +
+            '}'
   }
 }

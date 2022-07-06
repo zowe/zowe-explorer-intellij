@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.config
 
 import eu.ibagroup.formainframe.utils.crudable.EventHandler
 
+// TODO: doc
 class ConfigEventHandler : EventHandler {
 
   override fun <E : Any> onAdd(rowClass: Class<out E>, added: E) {

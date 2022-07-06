@@ -28,36 +28,39 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 import eu.ibagroup.r2z.XIBMDataType
 
-class CrossSystemUssFileToUssFolderMoverFactory: OperationRunnerFactory {
+// TODO: doc Valiantsin
+class CrossSystemUssFileToUssFolderMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return CrossSystemUssFileToUssFolderMover(dataOpsManager)
   }
 }
 
-class CrossSystemUssFileToUssFolderMover(val dataOpsManager: DataOpsManager): AbstractFileMover() {
+class CrossSystemUssFileToUssFolderMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
-        operation.destination.isDirectory &&
-        operation.destinationAttributes is RemoteUssAttributes &&
-        operation.source is MFVirtualFile &&
-        operation.destination is MFVirtualFile &&
-        operation.commonUrls(dataOpsManager).isEmpty()
+            operation.destination.isDirectory &&
+            operation.destinationAttributes is RemoteUssAttributes &&
+            operation.source is MFVirtualFile &&
+            operation.destination is MFVirtualFile &&
+            operation.commonUrls(dataOpsManager).isEmpty()
   }
 
-  fun FileAttributes?.toUssAttributes (fileName: String): RemoteUssAttributes {
+  fun FileAttributes?.toUssAttributes(fileName: String): RemoteUssAttributes {
     return castOrNull<RemoteUssAttributes>()
       ?: throw IllegalArgumentException("Cannot find attributes for file \"${fileName}\"")
   }
 
-  fun proceedCrossSystemMoveCopy (op: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
+  fun proceedCrossSystemMoveCopy(op: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
     val sourceAttributes = op.sourceAttributes.toUssAttributes(op.source.name)
     val destAttributes = op.destinationAttributes.toUssAttributes(op.destination.name)
     val destConnectionConfig = destAttributes.requesters.firstOrNull()?.connectionConfig
       ?: return IllegalArgumentException("Cannot find connection configuration for file \"${op.destination.name}\"")
 
     if (sourceAttributes.isSymlink) {
-      return IllegalArgumentException("Impossible to move symlink. ${op.source.name} is symlink to ${sourceAttributes.symlinkTarget}." +
-          " Please, move ${sourceAttributes.symlinkTarget} directly.")
+      return IllegalArgumentException(
+        "Impossible to move symlink. ${op.source.name} is symlink to ${sourceAttributes.symlinkTarget}." +
+                " Please, move ${sourceAttributes.symlinkTarget} directly."
+      )
     }
 
     val contentSynchronizer = dataOpsManager.getContentSynchronizer(op.source)
@@ -65,7 +68,8 @@ class CrossSystemUssFileToUssFolderMover(val dataOpsManager: DataOpsManager): Ab
     val syncProvider = DocumentedSyncProvider(op.source)
     contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
 
-    val contentMode = if (op.source.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY) else sourceAttributes.contentMode
+    val contentMode =
+      if (op.source.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY) else sourceAttributes.contentMode
     val pathToFile = destAttributes.path + "/" + op.source.name
     progressIndicator.text = "Uploading file '$pathToFile'"
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(

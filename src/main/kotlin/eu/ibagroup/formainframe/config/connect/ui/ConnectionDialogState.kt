@@ -20,17 +20,18 @@ import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 
+// TODO: doc
 data class ConnectionDialogState(
-    var connectionUuid: String = "",
-    var connectionName: String = "",
-    var connectionUrl: String = "",
-    /*var apiMeditationLayer: String = "",*/
-    var username: String = "",
-    var password: String = "",
-    var isAllowSsl: Boolean = false,
-    var codePage: CodePage = CodePage.IBM_1047,
-    var zVersion: ZVersion = ZVersion.ZOS_2_1,
-    override var mode: DialogMode = DialogMode.CREATE
+  var connectionUuid: String = "",
+  var connectionName: String = "",
+  var connectionUrl: String = "",
+  /*var apiMeditationLayer: String = "",*/
+  var username: String = "",
+  var password: String = "",
+  var isAllowSsl: Boolean = false,
+  var codePage: CodePage = CodePage.IBM_1047,
+  var zVersion: ZVersion = ZVersion.ZOS_2_1,
+  override var mode: DialogMode = DialogMode.CREATE
 ) : DialogState, Cloneable {
 
   var connectionConfig
@@ -54,12 +55,12 @@ data class ConnectionDialogState(
 
   public override fun clone(): ConnectionDialogState {
     return ConnectionDialogState(
-        connectionUuid = connectionUuid,
-        connectionName = connectionName,
-        connectionUrl = connectionUrl,
-        username = username,
-        password = password,
-        isAllowSsl = isAllowSsl
+      connectionUuid = connectionUuid,
+      connectionName = connectionName,
+      connectionUrl = connectionUrl,
+      username = username,
+      password = password,
+      isAllowSsl = isAllowSsl
     )
   }
 }
@@ -75,13 +76,13 @@ fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
     this.connectionConfigUuid = this@toDialogState.uuid
   }
   return ConnectionDialogState(
-      connectionUuid = this.uuid,
-      connectionName = this.name,
-      connectionUrl = this.url,
-      username = credentials.username,
-      password = credentials.password,
-      isAllowSsl = this.isAllowSelfSigned,
-      codePage = this.codePage,
-      zVersion = this.zVersion
+    connectionUuid = this.uuid,
+    connectionName = this.name,
+    connectionUrl = this.url,
+    username = credentials.username,
+    password = credentials.password,
+    isAllowSsl = this.isAllowSelfSigned,
+    codePage = this.codePage,
+    zVersion = this.zVersion
   )
 }

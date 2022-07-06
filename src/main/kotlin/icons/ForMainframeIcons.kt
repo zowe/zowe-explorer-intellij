@@ -15,8 +15,10 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.util.IconUtil
 import javax.swing.Icon
 
+/** Object to load icons to use them in the plugin */
 object ForMainframeIcons {
 
+  /** Get icon by its relative path. The function will search for the icon in resources folder */
   private fun getIcon(path: String): Icon {
     return IconLoader.getIcon(path, this::class.java)
   }

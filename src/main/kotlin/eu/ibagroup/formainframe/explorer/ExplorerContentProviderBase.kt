@@ -33,7 +33,8 @@ fun interface CutBufferListener {
   fun onUpdate(previousBufferState: List<VirtualFile>, currentBufferState: List<VirtualFile>)
 }
 
-abstract class ExplorerContentProviderBase<E : Explorer<*>> : ExplorerContentProvider<E>  {
+/** Base implementation of explorer content provider */
+abstract class ExplorerContentProviderBase<E : Explorer<*>> : ExplorerContentProvider<E> {
 
   abstract val actionGroup: ActionGroup
   abstract val place: String
@@ -43,6 +44,11 @@ abstract class ExplorerContentProviderBase<E : Explorer<*>> : ExplorerContentPro
 
   fun buildActionToolbar() = ActionManager.getInstance().createActionToolbar(place, actionGroup, true)
 
+  /**
+   * Build the explorer content vertical panel
+   * @param parentDisposable the parent disposable to register the component to be disposed
+   * @param project the project where to build the panel
+   */
   override fun buildExplorerContent(parentDisposable: Disposable, project: Project): JComponent {
     return object : SimpleToolWindowPanel(true, true), Disposable {
 
@@ -52,7 +58,7 @@ abstract class ExplorerContentProviderBase<E : Explorer<*>> : ExplorerContentPro
       init {
         Disposer.register(parentDisposable, this)
         actionToolbar.let {
-          it.setTargetComponent(this)
+          it.targetComponent = this
           toolbar = it.component
         }
         setContent(buildContent(this, project).also { builtContent = it })
@@ -67,19 +73,22 @@ abstract class ExplorerContentProviderBase<E : Explorer<*>> : ExplorerContentPro
     }
   }
 
+  /**
+   * Check is file in the cut buffer
+   * @param virtualFile the file to check
+   */
   override fun isFileInCutBuffer(virtualFile: VirtualFile): Boolean {
     return lock.withLock {
       filesToCut.map { it.getAncestorNodes() }.flatten().distinct().contains(virtualFile)
     }
   }
 
-  abstract fun buildContent(parentDisposable: Disposable, project: Project) : JComponent
+  abstract fun buildContent(parentDisposable: Disposable, project: Project): JComponent
 
   protected val lock = ReentrantLock()
 
   @Volatile
   protected var filesToCut = listOf<VirtualFile>()
-
 
 
 }

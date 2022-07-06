@@ -13,7 +13,6 @@ package eu.ibagroup.formainframe.utils.crudable;
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column;
 import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey;
 import kotlin.Pair;
-import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,11 +22,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@SuppressWarnings("deprecation")
+// TODO: doc
 class Utils {
 
   private static @NotNull Predicate<? super Field> getFieldFilterPredicate(@Nullable String columnName,
-      final boolean unique) {
+                                                                           final boolean unique) {
     return field -> {
       if (!field.isAccessible()) {
         field.setAccessible(true);
@@ -64,7 +63,7 @@ class Utils {
 
   @SuppressWarnings("unchecked")
   public static <E, F> @NotNull Optional<F> getByForeignKeyInternal(@NotNull Crudable crudable, @NotNull E row,
-      @Nullable String columnName, @NotNull Class<? extends F> foreignRowClass) {
+                                                                    @Nullable String columnName, @NotNull Class<? extends F> foreignRowClass) {
     return Stream
         .concat(Arrays.stream(row.getClass().getDeclaredFields()),
             Arrays.stream(row.getClass().getSuperclass().getDeclaredFields()))
@@ -73,7 +72,7 @@ class Utils {
           return field.isAnnotationPresent(ForeignKey.class)
               && field.isAnnotationPresent(Column.class)
               && (columnName == null || (field.getName().equals(columnName)
-                  || field.getAnnotation(Column.class).name().equals(columnName)))
+              || field.getAnnotation(Column.class).name().equals(columnName)))
               && foreignRowClass.isAssignableFrom(field.getAnnotation(ForeignKey.class).foreignClass());
         })
         .findAny()
@@ -90,8 +89,8 @@ class Utils {
 
   @SuppressWarnings("unchecked")
   public static <F> @Nullable F getByForeignKeyDeeplyInternal(@NotNull Crudable crudable,
-      @NotNull Object row,
-      @NotNull Class<? extends F> foreignRowClass) {
+                                                              @NotNull Object row,
+                                                              @NotNull Class<? extends F> foreignRowClass) {
     final List<Field> fieldList = Arrays.stream(row.getClass().getDeclaredFields())
         .filter(field -> {
           field.setAccessible(true);

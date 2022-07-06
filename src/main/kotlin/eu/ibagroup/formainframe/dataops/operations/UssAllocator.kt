@@ -21,6 +21,7 @@ import eu.ibagroup.r2z.CreateUssFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 
+// TODO: doc
 class UssAllocatorFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): Allocator<*> {
     return UssAllocator()

@@ -14,6 +14,7 @@ import eu.ibagroup.formainframe.utils.optionalLock
 import java.util.*
 import java.util.stream.Stream
 
+/** Class that represents working with the concurrent CRUDable object */
 class ConcurrentCrudable(
   val wrappingCrudable: Crudable,
   private val locksManager: LocksManager

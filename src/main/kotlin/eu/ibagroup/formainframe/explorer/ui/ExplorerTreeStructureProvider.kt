@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 
+/** Base explorer tree structure provider. Allows to implement explorers as in the project tree view */
 abstract class ExplorerTreeStructureProvider : TreeStructureProvider {
 
   override fun modify(

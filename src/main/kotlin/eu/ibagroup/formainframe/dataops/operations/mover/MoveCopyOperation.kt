@@ -17,7 +17,7 @@ import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.explorer.Explorer
 
-
+// TODO: doc
 class MoveCopyOperation(
   val source: VirtualFile,
   val sourceAttributes: FileAttributes?,
@@ -51,7 +51,8 @@ class MoveCopyOperation(
 @Suppress("UNCHECKED_CAST")
 fun MoveCopyOperation.commonUrls(dataOpsManager: DataOpsManager): Collection<Pair<Requester, ConnectionConfig>> {
   val sourceAttributesPrepared = if (sourceAttributes is RemoteMemberAttributes) {
-    sourceAttributes.getLibraryAttributes(dataOpsManager) ?: throw IllegalArgumentException("Cannot find lib attributes")
+    sourceAttributes.getLibraryAttributes(dataOpsManager)
+      ?: throw IllegalArgumentException("Cannot find lib attributes")
   } else {
     sourceAttributes
   }

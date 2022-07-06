@@ -24,6 +24,7 @@ import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SubmitFileNameBody
 import eu.ibagroup.r2z.SubmitJobRequest
 
+// TODO: doc Hleb
 class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobRequest> {
 
   override val operationClass = SubmitJobOperation::class.java

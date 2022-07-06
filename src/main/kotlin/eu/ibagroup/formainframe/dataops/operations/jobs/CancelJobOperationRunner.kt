@@ -25,6 +25,7 @@ import eu.ibagroup.r2z.CancelJobRequestBody
 import eu.ibagroup.r2z.JESApi
 import retrofit2.Response
 
+// TODO: doc Denis
 class CancelJobOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return CancelJobOperationRunner()
@@ -44,7 +45,7 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
   override fun run(operation: CancelJobOperation, progressIndicator: ProgressIndicator): CancelJobRequest {
     progressIndicator.checkCanceled()
 
-    val response : Response<CancelJobRequest> = when (operation.request) {
+    val response: Response<CancelJobRequest> = when (operation.request) {
       is BasicCancelJobParams -> {
         api<JESApi>(operation.connectionConfig).cancelJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
@@ -75,7 +76,7 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
 
 open class CancelJobOperationParams
 
-class BasicCancelJobParams(val jobName: String, val jobId: String)  : CancelJobOperationParams()
+class BasicCancelJobParams(val jobName: String, val jobId: String) : CancelJobOperationParams()
 
 class CorrelatorCancelJobParams(val correlator: String) : CancelJobOperationParams()
 

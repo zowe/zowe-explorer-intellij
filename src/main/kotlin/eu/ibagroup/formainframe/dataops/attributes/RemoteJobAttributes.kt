@@ -14,6 +14,7 @@ import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.JobStatus
 import eu.ibagroup.r2z.XIBMDataType
 
+// TODO: doc Valiantsin
 data class RemoteJobAttributes(
   val jobInfo: JobStatus,
   override val url: String,

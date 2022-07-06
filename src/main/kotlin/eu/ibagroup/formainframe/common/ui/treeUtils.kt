@@ -27,6 +27,7 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
+// TODO: doc
 fun <S : AbstractTreeStructure> StructureTreeModel<S>.promisePath(
   node: Any,
   tree: JTree,
@@ -36,7 +37,7 @@ fun <S : AbstractTreeStructure> StructureTreeModel<S>.promisePath(
   }
 }
 
-fun makeNodeDataFromTreePath (explorer: Explorer<*>, treePath: TreePath?): NodeData {
+fun makeNodeDataFromTreePath(explorer: Explorer<*>, treePath: TreePath?): NodeData {
   val descriptor = (treePath?.lastPathComponent as DefaultMutableTreeNode).userObject as ExplorerTreeNode<*>
   val file = descriptor.virtualFile
   val attributes = if (file != null) {

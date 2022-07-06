@@ -28,6 +28,7 @@ import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.FileType
 
+// TODO: doc
 abstract class CreateUssEntityAction : AnAction() {
 
   abstract val fileType: CreateFileDialogState

@@ -37,6 +37,7 @@ import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.*
 
+// TODO: doc
 class AllocateDatasetAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -102,7 +103,8 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
                   noText = "No"
                 )
               ) {
-                val filesWorkingSetConfig = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
+                val filesWorkingSetConfig =
+                  configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
                 if (filesWorkingSetConfig != null) {
                   filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
                   configCrudable.update(filesWorkingSetConfig)
@@ -174,19 +176,26 @@ class AllocateLikeAction : AnAction() {
       allocationParameters.dsnType = datasetInfo.dsnameType
       allocationParameters.primaryAllocation = datasetInfo.sizeInTracks ?: 100
       allocationParameters.secondaryAllocation = (datasetInfo.sizeInTracks ?: 100) / 2
-      allocationParameters.directoryBlocks = if (datasetInfo.datasetOrganization == DatasetOrganization.PO || datasetInfo.datasetOrganization == DatasetOrganization.POE) {
-        (datasetInfo.sizeInTracks ?: 100) / 3
-      } else {
-        0
-      }
+      allocationParameters.directoryBlocks =
+        if (datasetInfo.datasetOrganization == DatasetOrganization.PO || datasetInfo.datasetOrganization == DatasetOrganization.POE) {
+          (datasetInfo.sizeInTracks ?: 100) / 3
+        } else {
+          0
+        }
     }
     doAllocateAction(e, initialState)
   }
 
   private fun spaceUnitsToAllocationUnits(spaceUnits: SpaceUnits?): AllocationUnit? {
-    if (spaceUnits == SpaceUnits.TRACKS) { return AllocationUnit.TRK }
-    if (spaceUnits == SpaceUnits.BLOCKS) { return AllocationUnit.BLK }
-    if (spaceUnits == SpaceUnits.CYLINDERS) { return AllocationUnit.CYL }
+    if (spaceUnits == SpaceUnits.TRACKS) {
+      return AllocationUnit.TRK
+    }
+    if (spaceUnits == SpaceUnits.BLOCKS) {
+      return AllocationUnit.BLK
+    }
+    if (spaceUnits == SpaceUnits.CYLINDERS) {
+      return AllocationUnit.CYL
+    }
     return null
   }
 
@@ -197,8 +206,8 @@ class AllocateLikeAction : AnAction() {
     }
     val selected = view.mySelectedNodesData
     e.presentation.isEnabledAndVisible = selected.size == 1
-        && selected[0].attributes is RemoteDatasetAttributes
-        && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
+            && selected[0].attributes is RemoteDatasetAttributes
+            && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 

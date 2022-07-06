@@ -13,9 +13,13 @@ package eu.ibagroup.formainframe.config.connect.ui
 import eu.ibagroup.formainframe.common.ui.CrudableTableModel
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.utils.crudable.*
+import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.MergedCollections
+import eu.ibagroup.formainframe.utils.crudable.getAll
+import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
 import eu.ibagroup.formainframe.utils.toMutableList
 
+// TODO: doc
 class ConnectionsTableModel(
   crudable: Crudable
 ) : CrudableTableModel<ConnectionDialogState>(
@@ -33,10 +37,10 @@ class ConnectionsTableModel(
 
   override fun onUpdate(crudable: Crudable, value: ConnectionDialogState): Boolean {
     return with(crudable) {
-        listOf(
-          update(value.credentials),
-          update(value.connectionConfig)
-        ).all { it.isPresent }
+      listOf(
+        update(value.credentials),
+        update(value.connectionConfig)
+      ).all { it.isPresent }
     }
   }
 
@@ -81,6 +85,7 @@ class ConnectionsTableModel(
   }
 
   override val clazz = ConnectionDialogState::class.java
+
   init {
     initialize()
   }

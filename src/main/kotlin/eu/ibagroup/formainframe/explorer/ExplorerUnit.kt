@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 
+// TODO: doc
 interface ExplorerUnit {
 
   val name: String

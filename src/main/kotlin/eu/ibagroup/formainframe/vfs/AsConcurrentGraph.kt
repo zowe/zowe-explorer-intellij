@@ -17,6 +17,7 @@ import org.jgrapht.Graph
 import org.jgrapht.graph.GraphDelegator
 import java.util.concurrent.locks.ReadWriteLock
 
+/** Class to describe the file system as concurrent graph */
 class AsConcurrentGraph<Vertex : ReadWriteLock, Edge>(
   graph: Graph<Vertex, Edge>
 ) : GraphDelegator<Vertex, Edge>(graph) {

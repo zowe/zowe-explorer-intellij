@@ -15,9 +15,10 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.r2z.RecordFormat
 
-abstract class LReclContentAdapter<Attributes: FileAttributes>(
+// TODO: doc Valiantsin
+abstract class LReclContentAdapter<Attributes : FileAttributes>(
   dataOpsManager: DataOpsManager
-): MFContentAdapterBase<Attributes>(dataOpsManager) {
+) : MFContentAdapterBase<Attributes>(dataOpsManager) {
 
   fun RemoteDatasetAttributes.hasVariableFormatRecords(): Boolean {
     val recordFormat = datasetInfo.recordFormat
@@ -29,7 +30,7 @@ abstract class LReclContentAdapter<Attributes: FileAttributes>(
     return recordFormat == RecordFormat.VA
   }
 
-  protected fun transferLinesByLRecl (content: ByteArray, lrecl: Int): ByteArray {
+  protected fun transferLinesByLRecl(content: ByteArray, lrecl: Int): ByteArray {
     val contentString = String(content)
     val contentRows = contentString.split(Regex("\n|\r|\r\n"))
     val resultRows = mutableListOf<String>()
@@ -39,8 +40,8 @@ abstract class LReclContentAdapter<Attributes: FileAttributes>(
       } else {
         var nextLine = it
         while (nextLine.length > lrecl) {
-          resultRows.add(nextLine.slice(IntRange(0, lrecl-1)))
-          nextLine = nextLine.slice(IntRange(lrecl, nextLine.length-1))
+          resultRows.add(nextLine.slice(IntRange(0, lrecl - 1)))
+          nextLine = nextLine.slice(IntRange(lrecl, nextLine.length - 1))
         }
         resultRows.add(nextLine)
       }
@@ -49,12 +50,12 @@ abstract class LReclContentAdapter<Attributes: FileAttributes>(
     return resultContent.toByteArray()
   }
 
-  protected fun removeFirstCharacter (content: ByteArray): ByteArray {
+  protected fun removeFirstCharacter(content: ByteArray): ByteArray {
     val contentString = String(content)
     val contentRows = contentString.split(Regex("\n|\r|\r\n"))
     val resultRows = mutableListOf<String>()
     contentRows.forEach {
-      resultRows.add(it.slice(IntRange(1, it.length-1)))
+      resultRows.add(it.slice(IntRange(1, it.length - 1)))
     }
     val resultContent = resultRows.joinToString("\n")
     return resultContent.toByteArray()

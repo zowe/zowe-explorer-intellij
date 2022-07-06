@@ -46,7 +46,6 @@ const walkThroughDir = (dir) => {
 walkThroughDir(srcPath)
 walkThroughDir(testPath)
 
-let isTryOccured = false
 sources.forEach((source) => {
   fs.readFile(source, 'utf8', (err, fileData) => {
     if (err) {

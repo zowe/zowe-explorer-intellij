@@ -21,9 +21,13 @@ import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.Member
+import eu.ibagroup.r2z.MembersList
+import eu.ibagroup.r2z.XIBMAttr
 import retrofit2.Response
 
+// TODO: doc
 data class LibraryQuery(val library: MFVirtualFile)
 
 class MemberFileFetchProviderFactory : FileFetchProviderFactory {
@@ -35,7 +39,9 @@ class MemberFileFetchProviderFactory : FileFetchProviderFactory {
 private val logger = log<MemberFileFetchProvider>()
 
 class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
-  RemoteBatchedFileFetchProviderBase<MembersList, Member, LibraryQuery, RemoteMemberAttributes, MFVirtualFile>(dataOpsManager) {
+  RemoteBatchedFileFetchProviderBase<MembersList, Member, LibraryQuery, RemoteMemberAttributes, MFVirtualFile>(
+    dataOpsManager
+  ) {
 
   private val remoteDatasetAttributesService by lazy {
     dataOpsManager.getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()

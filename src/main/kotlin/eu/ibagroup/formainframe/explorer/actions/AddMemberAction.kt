@@ -31,6 +31,7 @@ import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
+// TODO: doc
 class AddMemberAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -94,8 +95,8 @@ class AddMemberAction : AnAction() {
     }
     val selected = view.mySelectedNodesData.getOrNull(0)
     e.presentation.isEnabledAndVisible = selected?.node is LibraryNode || (
-      selected?.node is FileLikeDatasetNode && selected.attributes is RemoteMemberAttributes
-      )
+            selected?.node is FileLikeDatasetNode && selected.attributes is RemoteMemberAttributes
+            )
   }
 
 }

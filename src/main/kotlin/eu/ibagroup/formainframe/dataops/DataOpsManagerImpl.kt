@@ -14,22 +14,23 @@ import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.content.adapters.DefaultContentAdapter
+import eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapter
+import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
+import eu.ibagroup.formainframe.dataops.log.AbstractMFLoggerBase
+import eu.ibagroup.formainframe.dataops.log.LogFetcher
+import eu.ibagroup.formainframe.dataops.log.MFLogger
+import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
-import com.intellij.openapi.util.Disposer
-import eu.ibagroup.formainframe.dataops.content.adapters.DefaultContentAdapter
-import eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapter
-import eu.ibagroup.formainframe.dataops.log.AbstractMFLoggerBase
-import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
-import eu.ibagroup.formainframe.dataops.log.LogFetcher
-import eu.ibagroup.formainframe.dataops.log.MFLogger
-import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 
+// TODO: doc
 class DataOpsManagerImpl : DataOpsManager {
 
   private fun <Component> List<DataOpsComponentFactory<Component>>.buildComponents(): MutableList<Component> {
@@ -85,8 +86,8 @@ class DataOpsManagerImpl : DataOpsManager {
     @Suppress("UNCHECKED_CAST")
     return fileFetchProviders.find {
       it.requestClass.isAssignableFrom(requestClass)
-        && it.queryClass.isAssignableFrom(queryClass)
-        && it.vFileClass.isAssignableFrom(vFileClass)
+              && it.queryClass.isAssignableFrom(queryClass)
+              && it.vFileClass.isAssignableFrom(vFileClass)
     } as FileFetchProvider<R, Q, File>? ?: throw IllegalArgumentException(
       "Cannot find FileFetchProvider for " +
               "requestClass=${requestClass.name}; queryClass=${queryClass.name}; vFileClass=${vFileClass.name}"
@@ -113,16 +114,17 @@ class DataOpsManagerImpl : DataOpsManager {
   }
 
   override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {
-    return mfContentAdapters.filter { it.accepts(file) }.firstOrNull() ?: DefaultContentAdapter(this)
+    return mfContentAdapters.firstOrNull { it.accepts(file) } ?: DefaultContentAdapter(this)
   }
 
   private val operationRunners by lazy {
     @Suppress("UNCHECKED_CAST")
-    val operationRunnersList = OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
+    val operationRunnersList =
+      OperationRunner.EP.extensionList.buildComponents() as MutableList<OperationRunner<Operation<*>, *>>
     operationRunnersList.associateListedBy { it.operationClass }
   }
 
-  private fun createLogFetcher (processInfo: MFProcessInfo): LogFetcher<*>? {
+  private fun createLogFetcher(processInfo: MFProcessInfo): LogFetcher<*>? {
     return LogFetcher.EP.extensionList.firstOrNull { it.acceptsProcessInfo(processInfo) }?.buildComponent(this)
   }
 
@@ -151,9 +153,10 @@ class DataOpsManagerImpl : DataOpsManager {
   ): MFLogger<LFetcher> {
     val logFetcher = createLogFetcher(mfProcessInfo)
       ?: throw IllegalArgumentException("Unsupported Log Information $mfProcessInfo")
+
     @Suppress("UNCHECKED_CAST")
     val resultFetcher: LFetcher = logFetcher as LFetcher
-    return object: AbstractMFLoggerBase<PInfo, LFetcher>(mfProcessInfo, consoleView) {
+    return object : AbstractMFLoggerBase<PInfo, LFetcher>(mfProcessInfo, consoleView) {
       override val logFetcher: LFetcher = resultFetcher
     }.also {
       Disposer.register(this, it)

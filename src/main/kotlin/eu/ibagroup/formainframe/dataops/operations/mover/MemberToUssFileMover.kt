@@ -23,13 +23,14 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 import retrofit2.Call
 
+// TODO: doc Valiantsin
 class MemberToUssFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return MemberToUssFileMover(dataOpsManager)
   }
 }
 
-class MemberToUssFileMover(dataOpsManager: DataOpsManager): DefaultFileMover(dataOpsManager) {
+class MemberToUssFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
   override fun buildCall(
     operation: MoveCopyOperation,
     requesterWithUrl: Pair<Requester, ConnectionConfig>
@@ -56,10 +57,10 @@ class MemberToUssFileMover(dataOpsManager: DataOpsManager): DefaultFileMover(dat
 
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.destinationAttributes is RemoteUssAttributes
-        && operation.destination.isDirectory
-        && !operation.source.isDirectory
-        && operation.sourceAttributes is RemoteMemberAttributes
-        && operation.commonUrls(dataOpsManager).isNotEmpty()
-        && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+            && operation.destination.isDirectory
+            && !operation.source.isDirectory
+            && operation.sourceAttributes is RemoteMemberAttributes
+            && operation.commonUrls(dataOpsManager).isNotEmpty()
+            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 }

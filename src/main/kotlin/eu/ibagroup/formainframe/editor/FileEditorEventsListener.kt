@@ -22,12 +22,21 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 private val log = log<FileEditorEventsListener>()
 
+/**
+ * File editor events listener.
+ * Needed to handle file close event
+ */
 class FileEditorEventsListener : FileEditorManagerListener.Before {
+
+  /**
+   * Handle synchronize before close if the file is not synchronized
+   * @param source the source file editor manager to get the project where the file is being edited
+   * @param file the file to be checked and synchronized
+   */
   override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
     val configService = service<ConfigService>()
     if (file is MFVirtualFile && !configService.isAutoSyncEnabled.get() && file.isWritable) {

@@ -21,16 +21,21 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
+/**
+ * Working set base abstraction to describe all the basic interactions with working sets
+ * @param uuid the UUID of the working set for config
+ * @param definedExplorer the explorer object defined by an implementation
+ */
 abstract class WorkingSetBase<MaskType, WS : WorkingSet<*>, WSConfig : WorkingSetConfig>(
   override val uuid: String,
-  globalExplorer: AbstractExplorerBase<out WorkingSet<*>, WSConfig>,
+  definedExplorer: AbstractExplorerBase<out WorkingSet<*>, WSConfig>,
   private val workingSetConfigProvider: (String) -> WSConfig?,
   parentDisposable: Disposable
 ) : WorkingSet<MaskType> {
 
   abstract val wsConfigClass: Class<out WSConfig>
 
-  override val explorer = globalExplorer
+  override val explorer = definedExplorer
 
   private val isDisposed = AtomicBoolean(false)
 
@@ -57,6 +62,10 @@ abstract class WorkingSetBase<MaskType, WS : WorkingSet<*>, WSConfig : WorkingSe
         }
     }
 
+  /**
+   * Add mask and update config
+   * @param mask the mask to add
+   */
   override fun addMask(mask: MaskType) {
     val newWsConfig = workingSetConfig?.clone(wsConfigClass) ?: return
     if (newWsConfig.masks().add(mask)) {
@@ -64,6 +73,10 @@ abstract class WorkingSetBase<MaskType, WS : WorkingSet<*>, WSConfig : WorkingSe
     }
   }
 
+  /**
+   * Remove mask and update config
+   * @param mask the mask to remove
+   */
   override fun removeMask(mask: MaskType) {
     val newWsConfig = workingSetConfig?.clone(wsConfigClass) ?: return
     if (newWsConfig.masks().remove(mask)) {

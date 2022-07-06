@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.vfs.VirtualFile
 
+// TODO: doc
 interface AttributesListener {
 
   fun onCreate(attributes: FileAttributes, file: VirtualFile)

@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.toMutableList
 import javax.swing.table.TableCellEditor
 
+// TODO: doc
 class WSConnectionNameColumn<WSConfig : WorkingSetConfig>(private val crudable: Crudable) :
   ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.connection.name")) {
 

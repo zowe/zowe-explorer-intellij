@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service
 
+// TODO: doc Vadim
 class GetJobPropertiesAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -54,7 +55,7 @@ class GetJobPropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-      && (node is JobNode
-          || node is SpoolFileNode)
+            && (node is JobNode
+            || node is SpoolFileNode)
   }
 }

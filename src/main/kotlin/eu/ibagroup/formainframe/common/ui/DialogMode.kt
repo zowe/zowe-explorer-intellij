@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.common.ui
 
+/** Enum to represent dialog mode */
 enum class DialogMode {
   CREATE, READ, UPDATE, DELETE
 }

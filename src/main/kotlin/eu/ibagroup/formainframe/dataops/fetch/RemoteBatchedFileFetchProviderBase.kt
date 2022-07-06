@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 
+// TODO: doc Valiantsin
 abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseItem : Any, Request : Any, Response : FileAttributes, File : VirtualFile>(
   dataOpsManager: DataOpsManager,
   val BATCH_SIZE: Int = 100

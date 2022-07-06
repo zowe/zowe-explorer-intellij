@@ -22,11 +22,11 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
+/** Dataset node presentation implementation */
 class LibraryNode(
   library: MFVirtualFile,
   project: Project,

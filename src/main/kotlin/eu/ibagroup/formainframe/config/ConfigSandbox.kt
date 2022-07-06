@@ -12,11 +12,12 @@ package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
 
+// TODO: doc
 interface ConfigSandbox {
 
   companion object {
@@ -48,7 +49,7 @@ interface ConfigSandbox {
 
 val sandboxCrudable get() = ConfigSandbox.instance.crudable
 
-fun <T: Any> applySandbox(clazz: Class<out T>) {
+fun <T : Any> applySandbox(clazz: Class<out T>) {
   ConfigSandbox.instance.apply(clazz)
 }
 

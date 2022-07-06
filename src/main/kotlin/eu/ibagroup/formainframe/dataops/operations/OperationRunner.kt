@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.dataops.Operation
 
+// TODO: doc
 interface OperationRunner<O : Operation<R>, R : Any> {
 
   companion object {

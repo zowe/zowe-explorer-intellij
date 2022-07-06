@@ -16,6 +16,7 @@ import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.JobStatus
 
+// TODO: doc Nikita
 class PurgeJobAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
@@ -35,7 +36,8 @@ class PurgeJobAction : AnAction() {
         val virtualFile = node.virtualFile
         if (virtualFile != null) {
           val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
-          val attributes: RemoteJobAttributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone() as RemoteJobAttributes
+          val attributes: RemoteJobAttributes =
+            dataOpsManager.tryToGetAttributes(virtualFile)?.clone() as RemoteJobAttributes
           jobStatus = attributes.jobInfo
           connectionConfig = attributes.requesters[0].connectionConfig
         }

@@ -22,13 +22,14 @@ import eu.ibagroup.r2z.CopyDataZOS
 import eu.ibagroup.r2z.DataAPI
 import retrofit2.Call
 
+// TODO: doc Valiantsin
 class SequentialToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return SequentialToPdsMover(dataOpsManager)
   }
 }
 
-class SequentialToPdsMover(dataOpsManager: DataOpsManager): DefaultFileMover(dataOpsManager) {
+class SequentialToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
 
   override fun buildCall(
     operation: MoveCopyOperation,
@@ -57,10 +58,10 @@ class SequentialToPdsMover(dataOpsManager: DataOpsManager): DefaultFileMover(dat
 
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.destinationAttributes is RemoteDatasetAttributes
-        && operation.destination.isDirectory
-        && !operation.source.isDirectory
-        && operation.sourceAttributes is RemoteDatasetAttributes
-        && operation.commonUrls(dataOpsManager).isNotEmpty()
-        && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+            && operation.destination.isDirectory
+            && !operation.source.isDirectory
+            && operation.sourceAttributes is RemoteDatasetAttributes
+            && operation.commonUrls(dataOpsManager).isNotEmpty()
+            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 }

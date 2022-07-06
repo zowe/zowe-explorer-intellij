@@ -28,6 +28,7 @@ import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.toMutableList
 
+// TODO: doc
 @Suppress("DialogTitleCapitalization")
 class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {
 
@@ -179,7 +180,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
 
   override fun isModified(): Boolean {
     return isSandboxModified<Credentials>()
-        || isSandboxModified<ConnectionConfig>()
+            || isSandboxModified<ConnectionConfig>()
   }
 
   override fun cancel() {

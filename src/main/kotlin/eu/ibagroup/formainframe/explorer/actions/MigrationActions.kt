@@ -31,7 +31,7 @@ import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
 
-
+// TODO: doc
 fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, ConnectionConfig>? {
   return if (node is ExplorerUnitTreeNodeBase<*, *> && node.unit is FilesWorkingSet) {
     val file = node.virtualFile

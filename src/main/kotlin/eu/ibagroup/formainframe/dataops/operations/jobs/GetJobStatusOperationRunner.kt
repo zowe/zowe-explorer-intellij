@@ -24,6 +24,7 @@ import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.JobStatus
 import retrofit2.Response
 
+// TODO: doc Hleb
 class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, JobStatus> {
 
   override val operationClass = GetJobStatusOperation::class.java
@@ -31,7 +32,7 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, JobSt
   override fun run(operation: GetJobStatusOperation, progressIndicator: ProgressIndicator): JobStatus {
     progressIndicator.checkCanceled()
 
-    val response : Response<JobStatus> = when (operation.request) {
+    val response: Response<JobStatus> = when (operation.request) {
       is GetJobStatusOperationParams.BasicStatusParams -> {
         api<JESApi>(operation.connectionConfig).getJobStatus(
           basicCredentials = operation.connectionConfig.authToken,
@@ -71,7 +72,7 @@ class GetJobStatusOperationFactory : OperationRunnerFactory {
 }
 
 sealed class GetJobStatusOperationParams {
-  class BasicStatusParams(val jobName: String, val jobId: String)  : GetJobStatusOperationParams()
+  class BasicStatusParams(val jobName: String, val jobId: String) : GetJobStatusOperationParams()
   class CorrelatorStatusParams(val correlator: String) : GetJobStatusOperationParams()
 }
 

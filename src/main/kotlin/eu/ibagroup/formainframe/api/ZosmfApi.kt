@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.api
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 
+// TODO: doc
 interface ZosmfApi {
 
   companion object {
@@ -23,9 +24,14 @@ interface ZosmfApi {
 
   fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api
 
-  fun <Api : Any> getApi(apiClass: Class<out Api>, url: String, isAllowSelfSigned: Boolean, useBytesConverter: Boolean = false): Api
+  fun <Api : Any> getApi(
+    apiClass: Class<out Api>,
+    url: String,
+    isAllowSelfSigned: Boolean,
+    useBytesConverter: Boolean = false
+  ): Api
 
-  fun <Api: Any> getApiWithBytesConverter(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api
+  fun <Api : Any> getApiWithBytesConverter(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api
 }
 
 inline fun <reified Api : Any> api(connectionConfig: ConnectionConfig): Api {

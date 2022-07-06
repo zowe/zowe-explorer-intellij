@@ -24,6 +24,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.SymlinkMode
 
+// TODO: doc
 data class UssQuery(val path: String)
 
 private const val UPPER_DIR_NAME = ".."

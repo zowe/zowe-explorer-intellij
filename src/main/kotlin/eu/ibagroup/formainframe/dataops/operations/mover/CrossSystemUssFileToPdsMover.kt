@@ -18,7 +18,6 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.addNewLine
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.applyIfNotNull
@@ -27,25 +26,25 @@ import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
 import eu.ibagroup.r2z.XIBMDataType
 
-class CrossSystemUssFileToPdsMoverFactory: OperationRunnerFactory {
+// TODO: doc Valiantsin
+class CrossSystemUssFileToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return CrossSystemUssFileToPdsMover(dataOpsManager)
   }
 }
 
-class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager): AbstractFileMover() {
+class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
-        operation.destination.isDirectory &&
-        operation.destinationAttributes is RemoteDatasetAttributes &&
-        operation.destination is MFVirtualFile &&
-        (operation.source !is MFVirtualFile || operation.commonUrls(dataOpsManager).isEmpty())
+            operation.destination.isDirectory &&
+            operation.destinationAttributes is RemoteDatasetAttributes &&
+            operation.destination is MFVirtualFile &&
+            (operation.source !is MFVirtualFile || operation.commonUrls(dataOpsManager).isEmpty())
   }
 
-  fun proceedCrossSystemMoveCopy (operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
+  fun proceedCrossSystemMoveCopy(operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
     var throwable: Throwable? = null
     val sourceFile = operation.source
     val destFile = operation.destination
@@ -72,7 +71,9 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager): Abstract
     else XIBMDataType(XIBMDataType.Type.TEXT)
 
     val sourceContent = sourceFile.contentsToByteArray()
-    val contentToUpload = if (sourceFile.fileType.isBinary) sourceContent else sourceContent.filter { it != '\r'.code.toByte() }.toByteArray()
+    val contentToUpload =
+      if (sourceFile.fileType.isBinary) sourceContent else sourceContent.filter { it != '\r'.code.toByte() }
+        .toByteArray()
 
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToDatasetMember(
       authorizationToken = destConnectionConfig.authToken,
@@ -85,7 +86,8 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager): Abstract
     }.execute()
 
     if (!response.isSuccessful &&
-      response.errorBody()?.string()?.contains("Truncation of a record occurred during an I/O operation.") != true) {
+      response.errorBody()?.string()?.contains("Truncation of a record occurred during an I/O operation.") != true
+    ) {
       throwable = CallException(response, "Cannot upload data to '${destAttributes.name}(${memberName})'")
     } else {
       destFile.children.firstOrNull { it.name.uppercase() == memberName.uppercase() }?.let { file ->

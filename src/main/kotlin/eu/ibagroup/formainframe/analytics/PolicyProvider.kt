@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.analytics
 
+// TODO: doc Valiantsin
 interface PolicyProvider {
 
   val text: String

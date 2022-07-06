@@ -28,6 +28,7 @@ import eu.ibagroup.r2z.MoveUssFile
 import retrofit2.Call
 import retrofit2.Response
 
+// TODO: doc
 class UssToUssFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return UssToUssFileMover(dataOpsManager)
@@ -37,10 +38,10 @@ class UssToUssFileMoverFactory : OperationRunnerFactory {
 class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFileMover() {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.sourceAttributes is RemoteUssAttributes
-      && operation.destinationAttributes is RemoteUssAttributes
-      && operation.destinationAttributes.isDirectory
-      && operation.commonUrls(dataOpsManager).isNotEmpty()
-      && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+            && operation.destinationAttributes is RemoteUssAttributes
+            && operation.destinationAttributes.isDirectory
+            && operation.commonUrls(dataOpsManager).isNotEmpty()
+            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
   private fun makeCall(

@@ -28,6 +28,7 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
+// TODO: doc
 class ZosmfApiImpl : ZosmfApi {
 
   private data class ZosmfUrl(val url: String, val isAllowSelfSigned: Boolean)
@@ -43,7 +44,12 @@ class ZosmfApiImpl : ZosmfApi {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <Api : Any> getApi(apiClass: Class<out Api>, url: String, isAllowSelfSigned: Boolean, useBytesConverter: Boolean): Api {
+  override fun <Api : Any> getApi(
+    apiClass: Class<out Api>,
+    url: String,
+    isAllowSelfSigned: Boolean,
+    useBytesConverter: Boolean
+  ): Api {
     val zosmfUrl = ZosmfUrl(url, isAllowSelfSigned)
     if (!apis.containsKey(apiClass)) {
       synchronized(apis) {
@@ -57,7 +63,8 @@ class ZosmfApiImpl : ZosmfApi {
       if (!useBytesConverter && !apiClassMap.first.containsKey(zosmfUrl)) {
         apiClassMap.first[zosmfUrl] = buildApi(zosmfUrl.url, getOkHttpClient(zosmfUrl.isAllowSelfSigned), apiClass)
       } else if (useBytesConverter && !apiClassMap.second.containsKey(zosmfUrl)) {
-        apiClassMap.second[zosmfUrl] = buildApiWithBytesConverter(zosmfUrl.url, getOkHttpClient(zosmfUrl.isAllowSelfSigned), apiClass)
+        apiClassMap.second[zosmfUrl] =
+          buildApiWithBytesConverter(zosmfUrl.url, getOkHttpClient(zosmfUrl.isAllowSelfSigned), apiClass)
       }
     }
     return if (!useBytesConverter) apiClassMap.first[zosmfUrl] as Api else apiClassMap.second[zosmfUrl] as Api

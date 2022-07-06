@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.common.ui
 
+/** Interface to represent dialog state */
 interface DialogState {
   var mode: DialogMode
 }

@@ -19,6 +19,7 @@ import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.JTextField
 
+// TODO: doc
 class ValidatingCellEditor<Item> : DefaultCellEditor(JBTextField()) {
 
   @Suppress("UNCHECKED_CAST")

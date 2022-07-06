@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable.getUniqueValueForRow
 import java.util.*
 import java.util.stream.Stream
 
+// TODO: doc
 class CrudableListsBuilder(
   private val getListByClass: (Class<*>) -> MutableList<*>?
 ) {

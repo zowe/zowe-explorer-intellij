@@ -15,21 +15,19 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
-import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import eu.ibagroup.r2z.CopyDataUSS
+import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.FilePath
+import eu.ibagroup.r2z.XIBMBpxkAutoCvt
 import retrofit2.Response
-import java.util.*
 
+// TODO: doc Valiantsin
 class PdsToUssFolderMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return PdsToUssFolderMover(dataOpsManager, MFVirtualFile::class.java)
@@ -42,10 +40,10 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
 ) : AbstractPdsToUssFolderMover(dataOpsManager) {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.sourceAttributes is RemoteDatasetAttributes
-        && operation.destinationAttributes is RemoteUssAttributes
-        && operation.sourceAttributes.isDirectory
-        && operation.destinationAttributes.isDirectory
-        && operation.commonUrls(dataOpsManager).isNotEmpty()
+            && operation.destinationAttributes is RemoteUssAttributes
+            && operation.sourceAttributes.isDirectory
+            && operation.destinationAttributes.isDirectory
+            && operation.commonUrls(dataOpsManager).isNotEmpty()
   }
 
 

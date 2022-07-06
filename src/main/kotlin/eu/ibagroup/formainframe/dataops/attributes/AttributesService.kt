@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import java.io.IOException
 
+// TODO: doc
 interface AttributesService<Attributes : FileAttributes, VFile : VirtualFile> {
 
   companion object {

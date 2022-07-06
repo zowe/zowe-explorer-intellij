@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.analytics
 
+// TODO: doc Valiantsin
 data class AnalyticsState(
   var isAnalyticsEnabled: Boolean = false,
   var lastAcknowledgedPolicyVersion: Int = POLICY_NOT_ACKNOWLEDGED,

@@ -12,11 +12,12 @@ package eu.ibagroup.formainframe.utils.crudable.annotations;
 
 import java.lang.annotation.*;
 
+/**
+ * Interface to describe the foreign key class assigned to the property
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @Inherited
 public @interface ForeignKey {
-
   Class<?> foreignClass();
-
 }

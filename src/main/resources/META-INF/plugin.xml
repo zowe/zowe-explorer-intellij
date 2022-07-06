@@ -11,7 +11,8 @@
     <id>eu.ibagroup.formainframe</id>
     <resource-bundle>messages.CommonBundle</resource-bundle>
     <name>For Mainframe</name>
-    <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y</vendor>
+    <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y
+    </vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
 Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
@@ -170,7 +171,8 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToPdsFileMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToPdsFileMoverFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.PdsToUssFolderMoverFactory"/>
 
@@ -178,29 +180,40 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.UssFileToPdsMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.SequentialToPdsMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.SequentialToPdsMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.SequentialToUssFolderFileMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.SequentialToUssFolderFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToUssFileMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToUssFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalDirectoryMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalDirectoryMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.LocalFileToUssFileMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.LocalFileToUssFileMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToUssFolderMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToUssFolderMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssDirMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssDirMoverFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemPdsToUssDirMoverFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemPdsToUssDirMoverFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.ForceRenameOperationRunnerFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.ForceRenameOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 
@@ -211,13 +224,17 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperationFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.CancelJobOperationRunnerFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.jobs.CancelJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.ReleaseJobOperationRunnerFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.jobs.ReleaseJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.HoldJobOperationRunnerFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.jobs.HoldJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
 
         <logFetcher implementation="eu.ibagroup.formainframe.dataops.log.JobLogFetcherFactory"/>
 
@@ -225,11 +242,13 @@ Example of how to see the output:<br/>
 
         <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldWorkingSetAdapterFactory"/>
 
-        <explorer implementation="eu.ibagroup.formainframe.explorer.GlobalExplorerFactory" />
-        <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory" />
+        <explorer implementation="eu.ibagroup.formainframe.explorer.FileExplorerFactory"/>
+        <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory"/>
 
-        <explorerContentProvider index="0" implementation="eu.ibagroup.formainframe.explorer.FileExplorerContentProviderFactory" />
-        <explorerContentProvider index="1" implementation="eu.ibagroup.formainframe.explorer.JesExplorerContentProviderFactory"/>
+        <explorerContentProvider index="0"
+                                 implementation="eu.ibagroup.formainframe.explorer.FileExplorerContentProviderFactory"/>
+        <explorerContentProvider index="1"
+                                 implementation="eu.ibagroup.formainframe.explorer.JesExplorerContentProviderFactory"/>
 
     </extensions>
 

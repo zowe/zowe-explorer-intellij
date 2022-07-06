@@ -26,9 +26,9 @@ import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.XIBMDataType
 import retrofit2.Response
 
+// TODO: doc Valiantsin
 class CrossSystemPdsToUssDirMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return CrossSystemPdsToUssDirMover(dataOpsManager)
@@ -38,12 +38,12 @@ class CrossSystemPdsToUssDirMoverFactory : OperationRunnerFactory {
 class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsToUssFolderMover(dataOpsManager) {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
-        operation.destination.isDirectory &&
-        operation.destinationAttributes is RemoteUssAttributes &&
-        operation.sourceAttributes is RemoteDatasetAttributes &&
-        operation.source is MFVirtualFile &&
-        operation.destination is MFVirtualFile &&
-        operation.commonUrls(dataOpsManager).isEmpty()
+            operation.destination.isDirectory &&
+            operation.destinationAttributes is RemoteUssAttributes &&
+            operation.sourceAttributes is RemoteDatasetAttributes &&
+            operation.source is MFVirtualFile &&
+            operation.destination is MFVirtualFile &&
+            operation.commonUrls(dataOpsManager).isEmpty()
   }
 
   override fun copyMember(

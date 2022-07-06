@@ -12,4 +12,5 @@ package eu.ibagroup.formainframe.dataops.content.adapters
 
 import eu.ibagroup.formainframe.dataops.DataOpsComponentFactory
 
+// TODO: doc Valiantsin
 interface MFContentAdapterFactory : DataOpsComponentFactory<MFContentAdapter>

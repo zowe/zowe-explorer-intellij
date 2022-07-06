@@ -16,6 +16,7 @@ import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.HasMigrated
 import eu.ibagroup.r2z.XIBMDataType
 
+// TODO: doc
 data class RemoteDatasetAttributes(
   val datasetInfo: Dataset,
   override val url: String,

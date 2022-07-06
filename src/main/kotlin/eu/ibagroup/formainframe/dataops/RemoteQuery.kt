@@ -10,4 +10,5 @@
 
 package eu.ibagroup.formainframe.dataops
 
+// TODO: doc
 interface RemoteQuery<Request, Result> : Query<Request, Result>, RemoteInfo

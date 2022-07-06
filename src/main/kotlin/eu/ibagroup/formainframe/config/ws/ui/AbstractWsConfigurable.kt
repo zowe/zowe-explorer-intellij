@@ -15,13 +15,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.panel
-import eu.ibagroup.formainframe.common.ui.*
+import eu.ibagroup.formainframe.common.ui.CrudableTableModel
+import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
+import eu.ibagroup.formainframe.common.ui.ValidatingTableView
+import eu.ibagroup.formainframe.common.ui.toolbarTable
 import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.isThe
 
-
+// TODO: doc Valiantsin
 abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : CrudableTableModel<WSConfig>, DState : AbstractWsDialogState<WSConfig, *>>(
   displayName: String
 ) : BoundSearchableConfigurable(displayName, "mainframe") {

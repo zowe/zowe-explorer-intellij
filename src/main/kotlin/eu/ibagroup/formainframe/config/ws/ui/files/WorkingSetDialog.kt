@@ -26,10 +26,15 @@ import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.table.TableCellEditor
 
+// TODO: doc Valiantsin
 class WorkingSetDialog(
   crudable: Crudable,
   state: WorkingSetDialogState
-) : AbstractWsDialog<FilesWorkingSetConfig, WorkingSetDialogState.TableRow, WorkingSetDialogState>(crudable, WorkingSetDialogState::class.java, state) {
+) : AbstractWsDialog<FilesWorkingSetConfig, WorkingSetDialogState.TableRow, WorkingSetDialogState>(
+  crudable,
+  WorkingSetDialogState::class.java,
+  state
+) {
   override val wsConfigClass = FilesWorkingSetConfig::class.java
 
   override val masksTable = ValidatingTableView(
@@ -84,7 +89,8 @@ class WorkingSetDialog(
 
     override fun setValue(item: WorkingSetDialogState.TableRow, value: String) {
       val editedCaseValue = if (item.type == "z/OS") value.toUpperCase() else value
-      item.mask = if (editedCaseValue.length > 1 && editedCaseValue.endsWith("/")) editedCaseValue.substringBeforeLast("/") else editedCaseValue
+      item.mask =
+        if (editedCaseValue.length > 1 && editedCaseValue.endsWith("/")) editedCaseValue.substringBeforeLast("/") else editedCaseValue
     }
 
     override fun isCellEditable(item: WorkingSetDialogState.TableRow?): Boolean {

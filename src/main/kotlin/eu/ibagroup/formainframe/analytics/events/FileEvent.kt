@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.analytics.events
 
 import eu.ibagroup.formainframe.dataops.attributes.*
 
+// TODO: doc Valiantsin
 private fun attributesToFileType(fileAttributes: FileAttributes): FileType {
   return when (fileAttributes) {
     is RemoteDatasetAttributes -> FileType.DATASET

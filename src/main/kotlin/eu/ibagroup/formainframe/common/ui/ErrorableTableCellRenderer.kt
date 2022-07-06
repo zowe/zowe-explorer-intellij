@@ -22,6 +22,7 @@ import javax.swing.JTable
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellRenderer
 
+// TODO: doc
 class ErrorableTableCellRenderer(
   private val errorMessage: String,
   private val renderer: DefaultTableCellRenderer = DefaultTableCellRenderer(),

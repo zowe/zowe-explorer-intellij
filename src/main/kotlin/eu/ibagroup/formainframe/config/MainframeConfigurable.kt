@@ -12,11 +12,12 @@ package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
-import eu.ibagroup.formainframe.ui.configs.SettingsConfigurable
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionConfigurable
-import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsConfigurable
+import eu.ibagroup.formainframe.config.settings.ui.SettingsConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.files.WSConfigurable
+import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsConfigurable
 
+// TODO: doc
 class MainframeConfigurable : TabbedConfigurable() {
   var preferredConfigurableClass: Class<*>? = null
 

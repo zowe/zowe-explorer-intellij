@@ -16,7 +16,8 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.r2z.SpoolFile
 import eu.ibagroup.r2z.XIBMDataType
 
-class RemoteSpoolFileAttributesServiceFactory : AttributesServiceFactory{
+// TODO: doc Valiantsin
+class RemoteSpoolFileAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteSpoolFileAttributesService(dataOpsManager)
   }
@@ -24,7 +25,9 @@ class RemoteSpoolFileAttributesServiceFactory : AttributesServiceFactory{
 
 class RemoteSpoolFileAttributesService(
   val dataOpsManager: DataOpsManager
-) : DependentFileAttributesService<RemoteSpoolFileAttributes, SpoolFile, RemoteJobAttributes, MFVirtualFile>(dataOpsManager) {
+) : DependentFileAttributesService<RemoteSpoolFileAttributes, SpoolFile, RemoteJobAttributes, MFVirtualFile>(
+  dataOpsManager
+) {
 
   companion object {
     private val fsModel = MFVirtualFileSystem.instance.model

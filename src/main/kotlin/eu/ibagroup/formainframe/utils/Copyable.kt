@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.utils
 
+/** Interface to specify whether the copy operation is possible */
 interface Copyable {
 
   val isCopyPossible: Boolean

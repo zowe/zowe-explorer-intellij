@@ -12,6 +12,9 @@ package eu.ibagroup.formainframe.utils.crudable.annotations;
 
 import java.lang.annotation.*;
 
+/**
+ * Interface to describe the column in configuration services. Accepts the name of the column and the "unique" property to represent the uniqueness of the column
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @Inherited

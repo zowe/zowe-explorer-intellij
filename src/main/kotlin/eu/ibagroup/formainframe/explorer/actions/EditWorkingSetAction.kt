@@ -22,7 +22,7 @@ import eu.ibagroup.formainframe.explorer.ui.FilesWorkingSetNode
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 
-
+// TODO: doc Hleb
 class EditWorkingSetAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
@@ -31,7 +31,8 @@ class EditWorkingSetAction : AnAction() {
     }
     val node = view.mySelectedNodesData[0].node
     if (node is FilesWorkingSetNode) {
-      var selected = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(node.value.uuid)?.clone() as FilesWorkingSetConfig
+      var selected =
+        configCrudable.getByUniqueKey<FilesWorkingSetConfig>(node.value.uuid)?.clone() as FilesWorkingSetConfig
       WorkingSetDialog(configCrudable, selected.toDialogState().apply { mode = DialogMode.UPDATE }).apply {
         if (showAndGet()) {
           selected = state.workingSetConfig

@@ -22,6 +22,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.r2z.FileModeValue
 import javax.swing.JComponent
 
+/** Class for USS file properties dialog */
 class UssFilePropertiesDialog(project: Project?, override var state: UssFileState) : DialogWrapper(project),
   StatefulComponent<UssFileState> {
 

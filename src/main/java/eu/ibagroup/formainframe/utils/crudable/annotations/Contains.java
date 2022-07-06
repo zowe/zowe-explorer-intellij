@@ -12,8 +12,11 @@ package eu.ibagroup.formainframe.utils.crudable.annotations;
 
 import java.lang.annotation.*;
 
+/**
+ * Interface to describe the element that contains the entries, provided by the "entities" method
+ */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.FIELD, ElementType.METHOD })
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Inherited
 public @interface Contains {
   Class<?>[] entities();

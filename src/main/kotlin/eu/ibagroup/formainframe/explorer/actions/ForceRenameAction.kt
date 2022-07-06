@@ -28,6 +28,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
+// TODO: doc Arseni
 class ForceRenameAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -43,13 +44,11 @@ class ForceRenameAction : AnAction() {
         if (confirmDialog == Messages.OK) {
           runRenameOperation(e.project, view.explorer, file, attributes, renameDialog.state, selectedNode.node, true)
           service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.FORCE_RENAME))
+        } else if (confirmDialog != Messages.CANCEL) {
+          runRenameOperation(e.project, view.explorer, file, attributes, renameDialog.state, selectedNode.node, false)
+          service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
         } else {
-          if (confirmDialog != Messages.CANCEL && confirmDialog != Messages.OK) {
-            runRenameOperation(e.project, view.explorer, file, attributes, renameDialog.state, selectedNode.node, false)
-            service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
-          } else {
-            return
-          }
+          return
         }
       }
     }
@@ -64,8 +63,8 @@ class ForceRenameAction : AnAction() {
           if (it is UssFileNode && it.value.filenameInternal == text) {
             val confirmTemplate =
               "You are going to rename file $virtualFilePath \n" +
-                  "into existing one. This operation cannot be undone. \n" +
-                  "Would you like to proceed?"
+                      "into existing one. This operation cannot be undone. \n" +
+                      "Would you like to proceed?"
             return Messages.showOkCancelDialog(
               confirmTemplate,
               "Warning",

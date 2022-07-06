@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import eu.ibagroup.formainframe.config.MainframeConfigurable
 
+/** Action to show settings of the plugin */
 class SettingAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     ShowSettingsUtil.getInstance().showSettingsDialog(e.project, MainframeConfigurable::class.java)

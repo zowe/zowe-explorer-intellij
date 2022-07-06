@@ -29,23 +29,24 @@ import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.*
 
-class CrossSystemUssDirMoverFactory: OperationRunnerFactory {
+// TODO: doc Valiantsin
+class CrossSystemUssDirMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return CrossSystemUssDirMover(dataOpsManager)
   }
 }
 
-class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager): AbstractFileMover() {
+class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
-        operation.sourceAttributes is RemoteUssAttributes &&
-        operation.destination.isDirectory &&
-        operation.destination is MFVirtualFile &&
-        dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
+            operation.sourceAttributes is RemoteUssAttributes &&
+            operation.destination.isDirectory &&
+            operation.destination is MFVirtualFile &&
+            dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
   }
 
-  fun proceedDirMove (operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
+  fun proceedDirMove(operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
     val sourceFile = operation.source
     val destFile = operation.destination
     val destAttributes = operation.destinationAttributes.castOrNull<RemoteUssAttributes>()
@@ -105,7 +106,12 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager): AbstractFileMo
     createdDirFile?.let { createdDirFileNotNull ->
       sourceFile.children.forEach {
         val op = MoveCopyOperation(
-          it, createdDirFileNotNull, isMove = false, forceOverwriting = false, newName = null, dataOpsManager = dataOpsManager
+          it,
+          createdDirFileNotNull,
+          isMove = false,
+          forceOverwriting = false,
+          newName = null,
+          dataOpsManager = dataOpsManager
         )
         dataOpsManager.performOperation(op, progressIndicator)
       }

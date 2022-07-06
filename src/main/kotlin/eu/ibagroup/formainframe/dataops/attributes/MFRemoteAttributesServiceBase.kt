@@ -16,6 +16,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.formainframe.vfs.createAttributes
 
+// TODO: doc
 private fun String.trimUrl(): String {
   val lastSlashIdx = indexOfLast { it == '/' }
   return if (lastSlashIdx != -1) {

@@ -17,6 +17,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
 import eu.ibagroup.formainframe.utils.sendTopic
 
+// TODO: doc
 private fun createCredentialAttributes(key: String): CredentialAttributes {
   return CredentialAttributes(generateServiceName("MySystem", key))
 }

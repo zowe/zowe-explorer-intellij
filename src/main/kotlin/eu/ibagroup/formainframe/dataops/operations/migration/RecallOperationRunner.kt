@@ -24,6 +24,7 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HRecall
 
+// TODO: doc
 class RecallOperationRunner : MigrationRunner<RecallOperation> {
 
   override fun canRun(operation: RecallOperation): Boolean {

@@ -14,7 +14,9 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
@@ -23,6 +25,7 @@ import eu.ibagroup.r2z.DataAPI
 import retrofit2.Call
 import java.io.FileNotFoundException
 
+// TODO: doc
 class MemberToPdsFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return MemberToPdsFileMover(dataOpsManager)
@@ -33,11 +36,11 @@ class MemberToPdsFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
 
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.destinationAttributes is RemoteDatasetAttributes
-        && operation.destination.isDirectory
-        && !operation.source.isDirectory
-        && operation.sourceAttributes is RemoteMemberAttributes
-        && operation.commonUrls(dataOpsManager).isNotEmpty()
-        && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+            && operation.destination.isDirectory
+            && !operation.source.isDirectory
+            && operation.sourceAttributes is RemoteMemberAttributes
+            && operation.commonUrls(dataOpsManager).isNotEmpty()
+            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
   override fun buildCall(

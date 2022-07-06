@@ -14,6 +14,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.utils.nullIfBlank
 
+// TODO: doc
 data class MaskedRequester(
   override val connectionConfig: ConnectionConfig,
   val queryMask: DSMask,

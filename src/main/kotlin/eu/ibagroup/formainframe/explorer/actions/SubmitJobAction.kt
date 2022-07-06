@@ -30,6 +30,7 @@ import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.formMfPath
 import eu.ibagroup.formainframe.utils.sendTopic
 
+// TODO: doc Hleb
 class SubmitJobAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -63,8 +64,8 @@ class SubmitJobAction : AnAction() {
               request = SubmitOperationParams(submitFilePath),
               connectionConfig = requestData.second
             ), it
-          ).also {result ->
-            e.project?.let {project ->
+          ).also { result ->
+            e.project?.let { project ->
               sendTopic(JOB_ADDED_TOPIC).submitted(project, requestData.second, submitFilePath, result)
             }
           }
@@ -89,6 +90,6 @@ class SubmitJobAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-        && (node is FileLikeDatasetNode || node is UssFileNode)
+            && (node is FileLikeDatasetNode || node is UssFileNode)
   }
 }

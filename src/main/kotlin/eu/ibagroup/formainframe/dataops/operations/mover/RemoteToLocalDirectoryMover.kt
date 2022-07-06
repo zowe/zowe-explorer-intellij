@@ -26,21 +26,22 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-class RemoteToLocalDirectoryMoverFactory: OperationRunnerFactory {
+// TODO: doc Valiantsin
+class RemoteToLocalDirectoryMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return RemoteToLocalDirectoryMover(dataOpsManager, MFVirtualFile::class.java)
   }
 }
 
-class RemoteToLocalDirectoryMover<VFile: VirtualFile>(
+class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
   val dataOpsManager: DataOpsManager,
   val vFileClass: Class<out VFile>
-): AbstractFileMover() {
+) : AbstractFileMover() {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
-        operation.source is MFVirtualFile &&
-        operation.destination is VirtualDirectoryImpl &&
-        operation.destination.isDirectory
+            operation.source is MFVirtualFile &&
+            operation.destination is VirtualDirectoryImpl &&
+            operation.destination.isDirectory
   }
 
   private fun fetchRemoteChildren(
@@ -48,7 +49,8 @@ class RemoteToLocalDirectoryMover<VFile: VirtualFile>(
     connectionConfig: ConnectionConfig,
     progressIndicator: ProgressIndicator
   ): Boolean {
-    val attributes = dataOpsManager.tryToGetAttributes(file) ?: throw IllegalArgumentException("Cannot attributes for file ${file.name}.")
+    val attributes = dataOpsManager.tryToGetAttributes(file)
+      ?: throw IllegalArgumentException("Cannot attributes for file ${file.name}.")
     if (!file.isDirectory) {
       throw IllegalArgumentException("File ${file.name} is not a directory.")
     }
@@ -72,7 +74,7 @@ class RemoteToLocalDirectoryMover<VFile: VirtualFile>(
     throw IllegalArgumentException("Children of file ${file.name} cannot be fetched.")
   }
 
-  private fun proceedLocalMoveCopy (
+  private fun proceedLocalMoveCopy(
     operation: MoveCopyOperation,
     connectionConfig: ConnectionConfig,
     progressIndicator: ProgressIndicator
@@ -88,7 +90,8 @@ class RemoteToLocalDirectoryMover<VFile: VirtualFile>(
           }
           createdDir = destFile.createChildDirectory(this, sourceFile.name)
         }
-        val createdDirNotNull = createdDir ?: return IllegalArgumentException("Cannot create directory ${sourceFile.name}")
+        val createdDirNotNull =
+          createdDir ?: return IllegalArgumentException("Cannot create directory ${sourceFile.name}")
         sourceFile.children?.forEach {
           runCatching {
             dataOpsManager.performOperation(

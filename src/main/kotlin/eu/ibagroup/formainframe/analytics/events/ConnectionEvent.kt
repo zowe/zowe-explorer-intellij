@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.analytics.events
 
+// TODO: doc Valiantsin
 class ConnectionEvent(
   override var actionType: ActionType
 ) : CrudAnalyticsEvent("connections", actionType)

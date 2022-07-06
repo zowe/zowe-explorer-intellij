@@ -25,6 +25,7 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 import retrofit2.Call
 
+// TODO: doc Valiantsin
 class SequentialToUssFolderFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return SequentialToUssFolderMover(dataOpsManager)
@@ -35,11 +36,11 @@ class SequentialToUssFolderMover(dataOpsManager: DataOpsManager) : DefaultFileMo
 
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.destinationAttributes is RemoteUssAttributes
-        && operation.destination.isDirectory
-        && !operation.source.isDirectory
-        && operation.sourceAttributes is RemoteDatasetAttributes
-        && operation.commonUrls(dataOpsManager).isNotEmpty()
-        && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+            && operation.destination.isDirectory
+            && !operation.source.isDirectory
+            && operation.sourceAttributes is RemoteDatasetAttributes
+            && operation.commonUrls(dataOpsManager).isNotEmpty()
+            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
   override fun buildCall(

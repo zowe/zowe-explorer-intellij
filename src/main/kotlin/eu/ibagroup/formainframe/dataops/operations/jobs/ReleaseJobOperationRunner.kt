@@ -25,6 +25,7 @@ import eu.ibagroup.r2z.ReleaseJobRequest
 import eu.ibagroup.r2z.ReleaseJobRequestBody
 import retrofit2.Response
 
+// TODO: doc Nikita
 class ReleaseJobOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return ReleaseJobOperationRunner()
@@ -44,7 +45,7 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
   override fun run(operation: ReleaseJobOperation, progressIndicator: ProgressIndicator): ReleaseJobRequest {
     progressIndicator.checkCanceled()
 
-    val response : Response<ReleaseJobRequest> = when (operation.request) {
+    val response: Response<ReleaseJobRequest> = when (operation.request) {
       is BasicReleaseJobParams -> {
         api<JESApi>(operation.connectionConfig).releaseJobRequest(
           basicCredentials = operation.connectionConfig.authToken,

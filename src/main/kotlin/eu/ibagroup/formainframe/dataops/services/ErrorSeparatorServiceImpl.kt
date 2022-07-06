@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops.services
 
 import java.util.*
 
+// TODO: doc Valiantsin
 class ErrorSeparatorServiceImpl : ErrorSeparatorService {
   override fun separateErrorMessage(errorMessage: String): Properties {
     val errorProperties = Properties()
@@ -20,7 +21,7 @@ class ErrorSeparatorServiceImpl : ErrorSeparatorService {
       val indOfErrorPostfix = errorMessage.lastIndexOf('(')
 
       val errorCode = errorMessage.subSequence(0, indOfErrorCodeDelimiter)
-      val description = errorMessage.subSequence(indOfErrorCodeDelimiter + 1, indOfErrorPostfix-1);
+      val description = errorMessage.subSequence(indOfErrorCodeDelimiter + 1, indOfErrorPostfix - 1);
       val errorPostfix = errorMessage.subSequence(indOfErrorPostfix, errorMessage.length)
 
       errorProperties["error.code"] = errorCode

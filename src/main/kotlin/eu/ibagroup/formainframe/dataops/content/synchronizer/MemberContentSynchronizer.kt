@@ -26,7 +26,8 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 
-class MemberContentSynchronizerFactory: ContentSynchronizerFactory {
+// TODO: doc
+class MemberContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return MemberContentSynchronizer(dataOpsManager)
   }
@@ -36,7 +37,7 @@ private val log = log<MemberContentSynchronizer>()
 
 class MemberContentSynchronizer(
   dataOpsManager: DataOpsManager
-): RemoteAttributedContentSynchronizer<RemoteMemberAttributes>(dataOpsManager) {
+) : RemoteAttributedContentSynchronizer<RemoteMemberAttributes>(dataOpsManager) {
 
   override val vFileClass = MFVirtualFile::class.java
 
@@ -101,7 +102,8 @@ class MemberContentSynchronizer(
         log.info("Trying to execute a call using $requester")
         val connectionConfig = requester.connectionConfig
         val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
-        val newContent = if (xIBMDataType.type == XIBMDataType.Type.BINARY) newContentBytes else newContentBytes.addNewLine()
+        val newContent =
+          if (xIBMDataType.type == XIBMDataType.Type.BINARY) newContentBytes else newContentBytes.addNewLine()
         val response = apiWithBytesConverter<DataAPI>(connectionConfig).writeToDatasetMember(
           authorizationToken = connectionConfig.authToken,
           datasetName = libAttributes.name,

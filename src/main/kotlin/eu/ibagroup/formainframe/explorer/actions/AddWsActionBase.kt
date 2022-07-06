@@ -28,7 +28,8 @@ import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
 
-abstract class AddWsActionBase: AnAction() {
+// TODO: doc Valiantsin
+abstract class AddWsActionBase : AnAction() {
   abstract val explorerView: DataKey<out ExplorerTreeView<*, *>>
   override fun actionPerformed(e: AnActionEvent) {
     if (configCrudable.getAll<ConnectionConfig>().isEmpty()) {

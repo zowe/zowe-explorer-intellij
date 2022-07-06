@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.config.connect.ui
 
 import com.intellij.util.ui.ColumnInfo
 
+// TODO: doc
 class ConnectionUsernameColumn : ColumnInfo<ConnectionDialogState, String>("Username") {
 
   override fun valueOf(item: ConnectionDialogState): String {

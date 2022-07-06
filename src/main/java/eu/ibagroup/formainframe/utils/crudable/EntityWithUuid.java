@@ -13,6 +13,9 @@ package eu.ibagroup.formainframe.utils.crudable;
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Class that represents the entity with UUID
+ */
 public class EntityWithUuid {
 
   public static final String EMPTY_ID = "";

@@ -38,11 +38,13 @@ object ExplorerDataKeys {
   val NODE_DATA_ARRAY = DataKey.create<Array<NodeData>>("NodeDataArrayKey")
 }
 
-class ExplorerPasteProvider: PasteProvider {
+// TODO: doc Valiantsin
+class ExplorerPasteProvider : PasteProvider {
   private val dataOpsManager = service<DataOpsManager>()
   private val pastePredicate: (NodeData) -> Boolean = {
     it.attributes?.isPastePossible ?: true
   }
+
   override fun performPaste(dataContext: DataContext) {
     val isDragAndDrop = dataContext.getData(IS_DRAG_AND_DROP_KEY) ?: false
 
@@ -237,8 +239,10 @@ class ExplorerPasteProvider: PasteProvider {
           }.onFailure {
             explorerView.explorer.reportThrowable(it, project)
             if (isDragAndDrop) {
-              copyPasteSupport.removeFromBuffer { it.file == op.source && operations.minus(op)
-                .none { operation -> operation.source == op.source } }
+              copyPasteSupport.removeFromBuffer {
+                it.file == op.source && operations.minus(op)
+                  .none { operation -> operation.source == op.source }
+              }
             }
           }
           it.fraction = it.fraction + 1.0 / filesToMoveTotal
@@ -291,7 +295,7 @@ class ExplorerPasteProvider: PasteProvider {
     }
   }
 
-  internal fun isPastePossibleAndEnabled (dataContext: DataContext): Boolean {
+  internal fun isPastePossibleAndEnabled(dataContext: DataContext): Boolean {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return false
     val destinationFiles = dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
     val explorerView = FileExplorerContentProvider.getInstance().getExplorerView(project) ?: return false

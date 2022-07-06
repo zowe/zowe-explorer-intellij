@@ -15,6 +15,7 @@ import java.awt.Component
 import javax.swing.JTable
 import javax.swing.table.DefaultTableCellRenderer
 
+// TODO: doc
 class ValidatingCellRenderer<Item> : DefaultTableCellRenderer() {
 
   @Suppress("UNCHECKED_CAST")

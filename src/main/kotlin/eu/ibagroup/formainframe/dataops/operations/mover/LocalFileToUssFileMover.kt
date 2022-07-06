@@ -24,24 +24,27 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.FilePath
+import eu.ibagroup.r2z.XIBMDataType
 
-class LocalFileToUssFileMoverFactory: OperationRunnerFactory {
+// TODO: doc Valiantsin
+class LocalFileToUssFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return LocalFileToUssFileMover(dataOpsManager)
   }
 }
 
-class LocalFileToUssFileMover(val dataOpsManager: DataOpsManager): AbstractFileMover() {
+class LocalFileToUssFileMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source is VirtualFileSystemEntry &&
-        !operation.source.isDirectory &&
-        operation.destination.isDirectory &&
-        operation.destination is MFVirtualFile &&
-        dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
+            !operation.source.isDirectory &&
+            operation.destination.isDirectory &&
+            operation.destination is MFVirtualFile &&
+            dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
   }
 
-  private fun proceedLocalUpload (
+  private fun proceedLocalUpload(
     operation: MoveCopyOperation,
     progressIndicator: ProgressIndicator
   ): Throwable? {
@@ -49,22 +52,23 @@ class LocalFileToUssFileMover(val dataOpsManager: DataOpsManager): AbstractFileM
     val sourceFile = operation.source
     val destFile = operation.destination
     val destAttributes = operation.destinationAttributes.castOrNull<RemoteUssAttributes>()
-        ?: return IllegalStateException("No attributes found for destination directory \'${destFile.name}\'.")
+      ?: return IllegalStateException("No attributes found for destination directory \'${destFile.name}\'.")
 
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
-        ?: return Throwable("No connection for destination directory found.")
+      ?: return Throwable("No connection for destination directory found.")
 
     val pathToFile = destAttributes.path + "/" + sourceFile.name
 
     val contentToUpload = sourceFile.contentsToByteArray().toMutableList()
-    val xIBMDataType = if (sourceFile.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY) else XIBMDataType(XIBMDataType.Type.TEXT)
+    val xIBMDataType =
+      if (sourceFile.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY) else XIBMDataType(XIBMDataType.Type.TEXT)
 
 
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(
-        authorizationToken = destConnectionConfig.authToken,
-        filePath = FilePath(pathToFile).toString(),
-        body = contentToUpload.toByteArray(),
-        xIBMDataType = xIBMDataType
+      authorizationToken = destConnectionConfig.authToken,
+      filePath = FilePath(pathToFile).toString(),
+      body = contentToUpload.toByteArray(),
+      xIBMDataType = xIBMDataType
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
     }.execute()
@@ -88,6 +92,7 @@ class LocalFileToUssFileMover(val dataOpsManager: DataOpsManager): AbstractFileM
 
     return throwable
   }
+
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable = try {
       proceedLocalUpload(operation, progressIndicator)

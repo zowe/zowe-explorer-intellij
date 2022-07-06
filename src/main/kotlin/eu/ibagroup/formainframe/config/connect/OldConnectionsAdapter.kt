@@ -20,7 +20,7 @@ import org.w3c.dom.Document
  * Factory for creating adapter for old connections.
  * @author Valentine Krus
  */
-class OldConnectionsAdapterFactory: OldConfigAdapterFactory {
+class OldConnectionsAdapterFactory : OldConfigAdapterFactory {
   override fun buildAdapter(document: Document): OldConfigAdapter<*> {
     return OldConnectionsAdapter(document)
   }
@@ -33,8 +33,8 @@ class OldConnectionsAdapterFactory: OldConfigAdapterFactory {
  * 2) UrlConnection removed.
  * @author Valentine Krus
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "0.6")
-class OldConnectionsAdapter(private val document: Document): OldConfigAdapter<ConnectionConfig> {
+@ApiStatus.ScheduledForRemoval(inVersion = "0.7")
+class OldConnectionsAdapter(private val document: Document) : OldConfigAdapter<ConnectionConfig> {
 
   /**
    * @see OldConfigAdapter.configClass
@@ -65,7 +65,8 @@ class OldConnectionsAdapter(private val document: Document): OldConfigAdapter<Co
       .getApplicationOption("urls")?.get("list")?.firstOrNull() ?: return emptyList()
 
     val urlElements = urlsList["UrlConnection"]
-    val oldConnectionElements = connectionsList["ConnectionConfig"].filter { it.getOptionValue("urlConnectionUuid") != "" }
+    val oldConnectionElements =
+      connectionsList["ConnectionConfig"].filter { it.getOptionValue("urlConnectionUuid") != "" }
 
     return oldConnectionElements.mapNotNull { connElement ->
       val oldUrlUuid = connElement.getOptionValue("urlConnectionUuid")

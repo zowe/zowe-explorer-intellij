@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.*
 import retrofit2.Response
 
+// TODO: doc Valiantsin
 abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
   abstract fun copyMember(
@@ -107,7 +108,15 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
         cachedChildren?.forEach {
           var responseCopyMember: Response<*>? = null
           runCatching {
-            responseCopyMember = copyMember(operation, sourceAttributes, it.name, sourceConnectionConfig, destinationPath, destConnectionConfig, progressIndicator)
+            responseCopyMember = copyMember(
+              operation,
+              sourceAttributes,
+              it.name,
+              sourceConnectionConfig,
+              destinationPath,
+              destConnectionConfig,
+              progressIndicator
+            )
           }
           if (progressIndicator.isCanceled || responseCopyMember?.isSuccessful != true) {
             throwable = rollback(

@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.config.connect.ui
 
 import com.intellij.util.ui.ColumnInfo
 
+// TODO: doc
 @Suppress("DialogTitleCapitalization")
 class ConnectionUrlColumn : ColumnInfo<ConnectionDialogState, String>("z/OSMF URL") {
 

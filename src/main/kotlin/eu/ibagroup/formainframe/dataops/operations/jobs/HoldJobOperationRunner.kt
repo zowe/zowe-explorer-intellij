@@ -20,9 +20,12 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.*
+import eu.ibagroup.r2z.HoldJobRequest
+import eu.ibagroup.r2z.HoldJobRequestBody
+import eu.ibagroup.r2z.JESApi
 import retrofit2.Response
 
+// TODO: doc Denis
 class HoldJobOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return HoldJobOperationRunner()
@@ -42,7 +45,7 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
   override fun run(operation: HoldJobOperation, progressIndicator: ProgressIndicator): HoldJobRequest {
     progressIndicator.checkCanceled()
 
-    val response : Response<HoldJobRequest> = when (operation.request) {
+    val response: Response<HoldJobRequest> = when (operation.request) {
       is BasicHoldJobParams -> {
         api<JESApi>(operation.connectionConfig).holdJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
@@ -73,7 +76,7 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
 
 open class HoldJobOperationParams
 
-class BasicHoldJobParams(val jobName: String, val jobId: String)  : HoldJobOperationParams()
+class BasicHoldJobParams(val jobName: String, val jobId: String) : HoldJobOperationParams()
 
 class CorrelatorHoldJobParams(val correlator: String) : HoldJobOperationParams()
 

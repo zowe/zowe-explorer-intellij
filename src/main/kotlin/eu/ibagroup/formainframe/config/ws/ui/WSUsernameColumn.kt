@@ -18,6 +18,7 @@ import javax.swing.table.TableCellRenderer
 
 private val NO_USERNAME_MESSAGE = message("configurable.ws.tables.ws.username.error.empty")
 
+// TODO: doc
 class WSUsernameColumn<WSConfig : WorkingSetConfig>(
   private val getUsername: (WSConfig) -> String?
 ) : ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.username.name")) {

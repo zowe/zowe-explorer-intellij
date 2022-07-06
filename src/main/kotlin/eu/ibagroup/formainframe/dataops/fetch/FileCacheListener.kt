@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops.fetch
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.Query
 
+// TODO: doc
 interface FileCacheListener {
 
   fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> onCacheUpdated(query: Q, files: Collection<File>) {}

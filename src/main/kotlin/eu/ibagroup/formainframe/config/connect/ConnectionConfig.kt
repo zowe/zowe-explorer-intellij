@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 
+// TODO: doc
 class ConnectionConfig : EntityWithUuid {
   @Column
   var name = ""

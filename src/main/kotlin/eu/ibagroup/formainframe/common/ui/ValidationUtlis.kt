@@ -20,6 +20,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.text.JTextComponent
 
+// TODO: doc
 fun ValidationInfo?.getIcon(): Icon? {
   return this?.let {
     if (it.warning) {
