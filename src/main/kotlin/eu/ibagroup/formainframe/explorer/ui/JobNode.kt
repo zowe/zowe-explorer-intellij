@@ -26,6 +26,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 private val jobIcon = AllIcons.Nodes.Folder
 
+/** JES Explorer job node representation */
 class JobNode(
   library: MFVirtualFile,
   project: Project,

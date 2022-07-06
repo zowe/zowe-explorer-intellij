@@ -16,12 +16,13 @@ import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 
-class AddJobsFilerAction: AnAction() {
+// TODO: doc Valiantsin
+class AddJobsFilerAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: return
 
     val ws = getUnits(view).firstOrNull() ?: return
-    val owner = ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid ) } ?: ""
+    val owner = ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""
     val initialState = JobsFilterState(ws, "*", owner)
     val dialog = AddJobsFilterDialog(e.project, initialState)
     if (dialog.showAndGet()) {

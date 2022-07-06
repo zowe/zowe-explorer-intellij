@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 
+// TODO: doc
 class ShowWsInfo : ToggleAction() {
 
   override fun isSelected(e: AnActionEvent): Boolean {

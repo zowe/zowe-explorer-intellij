@@ -24,8 +24,8 @@ import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
@@ -33,6 +33,7 @@ import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
+/** Base class to implement the basic interactions with an explorer node */
 abstract class ExplorerTreeNode<Value : Any>(
   value: Value,
   project: Project,
@@ -45,6 +46,7 @@ abstract class ExplorerTreeNode<Value : Any>(
     @Suppress("LeakingThis")
     treeStructure.registerNode(this)
   }
+
   init {
     @Suppress("LeakingThis")
     init()

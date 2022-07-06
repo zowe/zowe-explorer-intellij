@@ -15,9 +15,10 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.utils.`is`
 
-abstract class MFContentAdapterBase<Attributes: FileAttributes>(
+// TODO: doc Valiantsin
+abstract class MFContentAdapterBase<Attributes : FileAttributes>(
   protected val dataOpsManager: DataOpsManager
-): MFContentAdapter {
+) : MFContentAdapter {
   abstract val vFileClass: Class<out VirtualFile>
   abstract val attributesClass: Class<out Attributes>
 
@@ -25,7 +26,7 @@ abstract class MFContentAdapterBase<Attributes: FileAttributes>(
   override fun accepts(file: VirtualFile): Boolean {
     val fileAttributesClass = dataOpsManager.tryToGetAttributes(file)?.javaClass ?: return false
     return vFileClass.isAssignableFrom(file::class.java) &&
-        attributesClass.isAssignableFrom(fileAttributesClass)
+            attributesClass.isAssignableFrom(fileAttributesClass)
   }
 
   abstract fun adaptContentToMainframe(content: ByteArray, attributes: Attributes): ByteArray
@@ -41,6 +42,9 @@ abstract class MFContentAdapterBase<Attributes: FileAttributes>(
   @Suppress("UNCHECKED_CAST")
   override fun adaptContentFromMainframe(content: ByteArray, file: VirtualFile): ByteArray {
     val attributes = dataOpsManager.tryToGetAttributes(file) ?: return content
-    return if (attributes.`is`(attributesClass)) adaptContentFromMainframe(content, attributes as Attributes) else content
+    return if (attributes.`is`(attributesClass)) adaptContentFromMainframe(
+      content,
+      attributes as Attributes
+    ) else content
   }
 }

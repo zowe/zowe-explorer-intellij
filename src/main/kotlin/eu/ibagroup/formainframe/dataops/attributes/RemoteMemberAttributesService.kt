@@ -16,6 +16,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.r2z.Member
 import eu.ibagroup.r2z.XIBMDataType
 
+// TODO: doc
 class RemoteMemberAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteMemberAttributesService(dataOpsManager)

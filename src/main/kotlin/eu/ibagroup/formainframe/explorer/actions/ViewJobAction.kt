@@ -14,11 +14,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.JobNode
 import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 
+// TODO: doc Nikita
 class ViewJobAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -28,10 +31,16 @@ class ViewJobAction : AnAction() {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
-        val attributes: RemoteJobAttributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone() as RemoteJobAttributes
+        val attributes: RemoteJobAttributes =
+          dataOpsManager.tryToGetAttributes(virtualFile)?.clone() as RemoteJobAttributes
 
         val project = e.project ?: return
-        sendTopic(JOB_ADDED_TOPIC).viewed(project, attributes.requesters[0].connectionConfig, virtualFile.filenameInternal, attributes.jobInfo)
+        sendTopic(JOB_ADDED_TOPIC).viewed(
+          project,
+          attributes.requesters[0].connectionConfig,
+          virtualFile.filenameInternal,
+          attributes.jobInfo
+        )
       }
     }
   }

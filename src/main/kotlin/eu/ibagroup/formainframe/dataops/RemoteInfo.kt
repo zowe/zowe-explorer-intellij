@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 
+// TODO: doc
 interface RemoteInfo {
 
   val connectionConfig: ConnectionConfig

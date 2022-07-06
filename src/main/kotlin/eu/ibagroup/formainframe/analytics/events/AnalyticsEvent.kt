@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.analytics.events
 
+// TODO: doc Valiantsin
 abstract class AnalyticsEvent(
   open var eventName: String
 ) {
@@ -19,7 +20,7 @@ abstract class AnalyticsEvent(
 open class CrudAnalyticsEvent(
   override var eventName: String,
   open var actionType: ActionType
-) : AnalyticsEvent(eventName){
+) : AnalyticsEvent(eventName) {
   override fun getProps(): Map<String, String> {
     return mutableMapOf(Pair("action_type", actionType.toString()))
   }

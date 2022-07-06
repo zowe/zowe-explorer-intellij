@@ -13,16 +13,16 @@ package eu.ibagroup.formainframe.dataops.exceptions
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.gson
 import retrofit2.Response
-import java.io.IOException
 
+// TODO: doc
 private fun formatMessage(code: Int, message: String, errorParams: Map<*, *>?): String {
   val result = "$message\nCode: $code"
   return if (errorParams != null) {
     result + "\nCATEGORY: ${errorParams["category"]}\n" +
-      "MESSAGE: ${errorParams["message"]}\n" +
-      "RETURN CODE: ${errorParams["rc"]}\n" +
-      "DETAILS:\n${errorParams["details"]?.castOrNull<List<String>>()?.joinToString("\n")}\n" +
-      "REASON: ${errorParams["reason"]}"
+            "MESSAGE: ${errorParams["message"]}\n" +
+            "RETURN CODE: ${errorParams["rc"]}\n" +
+            "DETAILS:\n${errorParams["details"]?.castOrNull<List<String>>()?.joinToString("\n")}\n" +
+            "REASON: ${errorParams["reason"]}"
   } else {
     result
   }

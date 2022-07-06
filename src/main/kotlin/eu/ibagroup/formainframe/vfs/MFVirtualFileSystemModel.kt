@@ -49,7 +49,8 @@ private const val VFS_CONTENT_STORAGE_NAME = "mf_vfs_contents"
 
 class FSEdge @JvmOverloads constructor(val type: FSEdgeType = FSEdgeType.DIR)
 
-class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
+/** Interface to describe main functionalities for the mainframe virtual file system model */
+class MFVirtualFileSystemModel {
 
   private var isDisposed = false
 
@@ -85,41 +86,51 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
 
   private fun generateId() = counter.getAndIncrement()
 
-  override fun getProtocol() = MFVirtualFileSystem.PROTOCOL
+  fun getProtocol() = MFVirtualFileSystem.PROTOCOL
 
   @Throws(IOException::class)
   fun findOrCreate(
     requestor: Any?, vDir: MFVirtualFile, name: String, attributes: FileAttributes
   ): MFVirtualFile {
-    var found = vDir.findChild(name)
-    if (found == null) {
-      found = createChildWithAttributes(requestor, vDir, name, attributes)
-    }
-    return found
+    return vDir.findChild(name) ?: createChildWithAttributes(requestor, vDir, name, attributes)
   }
 
+  /**
+   * Find the mainframe virtual file by provided path elements list
+   * @param pathElements list of path elements to search for virtual file
+   */
   fun findFileByPath(pathElements: List<String>): MFVirtualFile? {
     var pointerIndex = 1
     return FilteringBFSIterator(fsGraph, root) { v, e ->
       v.validReadLock(false) {
         (pointerIndex < pathElements.size
-            && e.type == FSEdgeType.DIR
-            && pathElements[pointerIndex] == v.name).also { successful ->
-          if (successful) ++pointerIndex
-        }
+                && e.type == FSEdgeType.DIR
+                && pathElements[pointerIndex] == v.name)
+          .also { successful ->
+            if (successful) ++pointerIndex
+          }
       }
     }.stream().skip(pathElements.size - 1L).findAny().nullable
   }
 
-  override fun findFileByPath(path: String): MFVirtualFile? {
+  /**
+   * Find the mainframe virtual file by provided path
+   * @param path string path to search for the virtual file
+   */
+  fun findFileByPath(path: String): MFVirtualFile? {
     val pathElements = path.formatPath().split(MFVirtualFileSystem.SEPARATOR)
     return findFileByPath(pathElements)
   }
 
-  override fun refresh(asynchronous: Boolean) {
+  fun refresh(asynchronous: Boolean) {
+    TODO("implement refresh of the model")
   }
 
-  override fun refreshAndFindFileByPath(path: String): MFVirtualFile? {
+  /**
+   * Find file by path or refresh the virtual file system model and try to find the file again
+   * @param path string path to search for the virtual file
+   */
+  fun refreshAndFindFileByPath(path: String): MFVirtualFile? {
     return findFileByPath(path).let {
       if (it == null) {
         refresh(false)
@@ -129,21 +140,25 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
-  override fun addVirtualFileListener(listener: VirtualFileListener) {
-
+  fun addVirtualFileListener(listener: VirtualFileListener) {
   }
 
-  override fun removeVirtualFileListener(listener: VirtualFileListener) {
+  fun removeVirtualFileListener(listener: VirtualFileListener) {
   }
 
+  /**
+   * Delete the selected virtual file and it's children if it is a directory
+   * @param requestor requester class for further processing
+   * @param vFile virtual file instance to delete
+   */
   @Throws(IOException::class)
-  override fun deleteFile(requestor: Any?, vFile: MFVirtualFile) {
+  fun deleteFile(requestor: Any?, vFile: MFVirtualFile) {
     val event = listOf(VFileDeleteEvent(requestor, vFile, false))
     vFile.validWriteLock {
       val parent = vFile.parent
-      parent?.validWriteLock {
+      parent?.validWriteLock parentLock@{
         if (vFile.children?.size != 0) {
-          vFile.children?.forEach { deleteFile(requestor, it) }
+          vFile.children?.forEach { it: MFVirtualFile -> deleteFile(requestor, it) }
         }
         sendVfsChangesTopic().before(event)
         if (fsGraph.removeEdge(parent, vFile) != null && fsGraph.removeVertex(vFile)) {
@@ -160,7 +175,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
             else parent.path + MFVirtualFileSystem.SEPARATOR + vFile.name
           initialContentConditions.remove(vFile)
           sendVfsChangesTopic().after(event)
-          return
+          return@parentLock
         }
       }
     }
@@ -168,7 +183,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   @Throws(IOException::class)
-  override fun moveFile(requestor: Any?, vFile: MFVirtualFile, newParent: MFVirtualFile) {
+  fun moveFile(requestor: Any?, vFile: MFVirtualFile, newParent: MFVirtualFile) {
     moveOrCopyFileInternal(requestor, vFile, newParent, copyName = null, replace = false)
   }
 
@@ -177,6 +192,14 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     moveOrCopyFileInternal(requestor, vFile, newParent, copyName = null, replace = true)
   }
 
+  /**
+   * Move or copy file internal function
+   * @param requestor requester class for further processing
+   * @param vFile source virtual file to process move or copy
+   * @param newParent target virtual file to process move or copy
+   * @param copyName new virtual file name
+   * @param replace flag to replace the target in case of "true" value
+   */
   private fun moveOrCopyFileInternal(
     requestor: Any?,
     vFile: MFVirtualFile,
@@ -220,7 +243,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
             fsGraph.removeEdge(oldEdge)
             vFile
           } else {
-            findOrCreate(this, newParent, copyName, vFile.attributes).apply{
+            findOrCreate(this, newParent, copyName, vFile.attributes).apply {
               isValidInternal = true
             }
           }
@@ -233,8 +256,14 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
       ?: throw FsOperationException(if (copyName != null) "copy" else "move", vFile)
   }
 
+  /**
+   * Rename the virtual file
+   * @param requestor requester class for further processing
+   * @param vFile virtual file to rename
+   * @param newName new virtual file name
+   */
   @Throws(IOException::class)
-  override fun renameFile(requestor: Any?, vFile: MFVirtualFile, newName: String) {
+  fun renameFile(requestor: Any?, vFile: MFVirtualFile, newName: String) {
     val event = listOf(VFilePropertyChangeEvent(requestor, vFile, VirtualFile.PROP_NAME, vFile.name, newName, false))
     sendVfsChangesTopic().before(event)
     vFile.validReadLock {
@@ -246,15 +275,22 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   @Throws(IOException::class)
-  override fun createChildDirectory(requestor: Any?, vDir: MFVirtualFile, dirName: String): MFVirtualFile {
+  fun createChildDirectory(requestor: Any?, vDir: MFVirtualFile, dirName: String): MFVirtualFile {
     return createChild(requestor, vDir, dirName, true)
   }
 
   @Throws(IOException::class)
-  override fun createChildFile(requestor: Any?, vDir: MFVirtualFile, fileName: String): MFVirtualFile {
+  fun createChildFile(requestor: Any?, vDir: MFVirtualFile, fileName: String): MFVirtualFile {
     return createChild(requestor, vDir, fileName, false)
   }
 
+  /**
+   * Create child virtual file with provided attributes
+   * @param requestor requester class for further processing
+   * @param vDir virtual directory to create the virtual file in
+   * @param name virtual file name
+   * @param attributes attributes to create virtual file with
+   */
   @Throws(IOException::class)
   fun createChildWithAttributes(
     requestor: Any?, vDir: MFVirtualFile, name: String, attributes: FileAttributes
@@ -288,7 +324,13 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     return file
   }
 
-
+  /**
+   * Create child virtual file with default attributes
+   * @param requestor requester class for further processing
+   * @param vDir virtual directory to create the virtual file in
+   * @param name virtual file name
+   * @param isDir attribute to define is the virtual file directory
+   */
   @Throws(IOException::class)
   private fun createChild(requestor: Any?, vDir: MFVirtualFile, name: String, isDir: Boolean): MFVirtualFile {
     return createChildWithAttributes(
@@ -304,35 +346,48 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     )
   }
 
-  override fun exists(file: MFVirtualFile): Boolean {
+  /**
+   * Check if file exists
+   * @param file virtual file with attributes to check
+   */
+  fun exists(file: MFVirtualFile): Boolean {
     return file.read { fsGraph.containsVertex(file) }.also {
       if (!it) file.isValidInternal = false
     }
   }
 
-  override fun list(file: MFVirtualFile) = file.validReadLock({ arrayOf() }) {
+  /**
+   * List files in provided virtual directory
+   * @param file virtual directory to list files
+   */
+  fun list(file: MFVirtualFile) = file.validReadLock({ arrayOf() }) {
     getChildren(file).run {
       map { it.name }.asArray()
     }
   }
 
-  override fun isDirectory(file: MFVirtualFile) = file.validReadLock(false) { file.isDirectory }
+  fun isDirectory(file: MFVirtualFile) = file.validReadLock(false) { file.isDirectory }
 
-  override fun getTimeStamp(file: MFVirtualFile): Long {
+  fun getTimeStamp(file: MFVirtualFile): Long {
     return file.timeStamp
   }
 
   @Throws(IOException::class)
-  override fun setTimeStamp(file: MFVirtualFile, timeStamp: Long) {
+  fun setTimeStamp(file: MFVirtualFile, timeStamp: Long) {
     file.timeStamp = timeStamp
   }
 
-  override fun isWritable(file: MFVirtualFile) = file.validReadLock(false) { file.attributes.isWritable }
+  fun isWritable(file: MFVirtualFile) = file.validReadLock(false) { file.attributes.isWritable }
 
   fun isReadable(file: MFVirtualFile) = file.isReadable
 
+  /**
+   * Set virtual file writable
+   * @param file virtual file to change
+   * @param writableFlag writable flag to set to the file
+   */
   @Throws(IOException::class)
-  override fun setWritable(file: MFVirtualFile, writableFlag: Boolean) {
+  fun setWritable(file: MFVirtualFile, writableFlag: Boolean) {
     file.validWriteLock {
       if (file.isWritable != writableFlag) {
         val event = listOf(
@@ -356,16 +411,24 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     file.isReadable = readableFlag
   }
 
-  override fun isSymLink(file: MFVirtualFile): Boolean {
+  /**
+   * Check is the file a symbolic link
+   * @param file virtual file to check
+   */
+  fun isSymLink(file: MFVirtualFile): Boolean {
     return file.validReadLock(false) {
       fsGraph.outgoingEdgesOf(file).any { it.type.isSymlink() }
     }
   }
 
-  override fun resolveSymLink(file: MFVirtualFile): String? {
+  fun resolveSymLink(file: MFVirtualFile): String? {
     return resolveAndGetSymlink(file)?.path
   }
 
+  /**
+   * Resolve and get symbolic link for the virtual file
+   * @param file virtual file to check
+   */
   fun resolveAndGetSymlink(file: MFVirtualFile): MFVirtualFile? {
     return file.validReadLock(null) {
       fsGraph.outgoingEdgesOf(file).firstOrNull { it.type.isSymlink() }?.let {
@@ -375,7 +438,7 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
   }
 
   @Throws(IOException::class)
-  override fun copyFile(
+  fun copyFile(
     requestor: Any?,
     virtualFile: MFVirtualFile,
     newParent: MFVirtualFile,
@@ -394,6 +457,10 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     return moveOrCopyFileInternal(requestor, virtualFile, newParent, copyName, true)
   }
 
+  /**
+   * Await for the initial file content if it is null at the beginning
+   * @param file virtual file to get content for
+   */
   private fun awaitForInitialContentIfNeeded(file: MFVirtualFile) {
     if (initialContentConditions[file] != null) {
       file.validWriteLock {
@@ -402,16 +469,24 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
+  /**
+   * Convert contents to byte array
+   * @param file virtual file to convert
+   */
   @Throws(IOException::class)
-  override fun contentsToByteArray(file: MFVirtualFile): ByteArray {
+  fun contentsToByteArray(file: MFVirtualFile): ByteArray {
     awaitForInitialContentIfNeeded(file)
     return file.validReadLock {
       contentStorage.getBytes(getIdForStorageAccess(file))
     }
   }
 
+  /**
+   * Get input stream for the virtual file
+   * @param file virtual file to get input stream
+   */
   @Throws(IOException::class)
-  override fun getInputStream(file: MFVirtualFile): InputStream {
+  fun getInputStream(file: MFVirtualFile): InputStream {
     awaitForInitialContentIfNeeded(file)
     return file.validReadLock {
       val storageStream = contentStorage.readStream(getIdForStorageAccess(file))
@@ -425,6 +500,10 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
+  /**
+   * Get virtual file in storage ID for storage access. Works only for file and not for directory
+   * @param file virtual file to get storage ID
+   */
   private fun getIdForStorageAccess(file: MFVirtualFile): Int {
     val actualFile = if (isSymLink(file)) {
       resolveAndGetSymlink(file) ?: throw IOException("Symlink ${file.path} cannot be resolved to a file")
@@ -449,6 +528,12 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
+  /**
+   * Put initial content to the virtual file if it is possible
+   * @param file virtual file to put content into
+   * @param content content byte array to put in the virtual file
+   * @return "true" if initial content is put, "false" otherwise
+   */
   fun putInitialContentIfPossible(file: MFVirtualFile, content: ByteArray): Boolean {
     if (initialContentConditions[file] == null) {
       return false
@@ -467,8 +552,15 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
+  /**
+   * Get file output stream
+   * @param file virtual file to get output stream for
+   * @param requestor requester class for further processing
+   * @param modStamp file modification stamp
+   * @param timeStamp file time stamp for the modification
+   */
   @Throws(IOException::class)
-  override fun getOutputStream(file: MFVirtualFile, requestor: Any?, modStamp: Long, timeStamp: Long): OutputStream {
+  fun getOutputStream(file: MFVirtualFile, requestor: Any?, modStamp: Long, timeStamp: Long): OutputStream {
     return file.validWriteLock {
       val oldModStamp = file.modificationStamp
 
@@ -498,7 +590,11 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
-  override fun getLength(file: MFVirtualFile): Long {
+  /**
+   * Get file content bytes length
+   * @param file - virtual file to get bytes for
+   */
+  fun getLength(file: MFVirtualFile): Long {
     return file.validReadLock(0L) {
       try {
         val id = getIdForStorageAccess(file)
@@ -509,13 +605,17 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
-  override fun isReadOnly() = false
+  fun isReadOnly() = false
 
-  override fun dispose() {
+  fun dispose() {
     isDisposed = true
     Disposer.dispose(contentStorage)
   }
 
+  /**
+   * Check is file valid
+   * @param file virtual file to check
+   */
   fun isFileValid(file: MFVirtualFile): Boolean {
     return if (isDisposed) {
       false
@@ -535,6 +635,10 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
 
   private val cleanerLock = Any()
 
+  /**
+   * Add file to the cleaner queue
+   * @param file virtual file to add
+   */
   private fun addToCleanerQueue(file: MFVirtualFile) {
     synchronized(cleanerLock) {
       runBlocking {
@@ -547,6 +651,10 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
+  /**
+   * Get virtual file parent
+   * @param file virtual file to get parent
+   */
   fun getParent(file: MFVirtualFile): MFVirtualFile? {
     return file.validReadLock(file::oldParentInternal) {
       (file != root).runIfTrue {
@@ -561,6 +669,10 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     return file.validReadLock({ arrayOf() }) { getChildrenList(file).toTypedArray() }
   }
 
+  /**
+   * Get valid virtual file children list
+   * @param file virtual file to get children for
+   */
   fun getChildrenList(file: MFVirtualFile): List<MFVirtualFile> {
     return file.validReadLock({ listOf() }) {
       fsGraph.successorsOf(file).filter {
@@ -569,6 +681,12 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
+  /**
+   * Check is the edge of the provided type
+   * @param source source virtual file to get the edge
+   * @param target target virtual file to get the edge
+   * @param type type of the edge to check
+   */
   private fun isEdgeOfType(source: MFVirtualFile, target: MFVirtualFile, type: FSEdgeType): Boolean {
     return lock(source.readLock(), target.readLock()) {
       fsGraph.getEdge(source, target)?.type == type
@@ -586,17 +704,17 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     }
   }
 
-  override fun extractRootPath(normalizedPath: String) = with(MFVirtualFileSystem) {
+  fun extractRootPath(normalizedPath: String) = with(MFVirtualFileSystem) {
     ROOT_NAME + SEPARATOR
   }
 
-  override fun findFileByPathIfCached(path: String): MFVirtualFile? {
+  fun findFileByPathIfCached(path: String): MFVirtualFile? {
     return findFileByPath(path)
   }
 
-  override fun getRank() = 1
+  fun getRank() = 1
 
-  override fun getAttributes(file: MFVirtualFile) = file.write {
+  fun getAttributes(file: MFVirtualFile) = file.write {
     file.isValidInternal.runIfTrue { file.attributes }
   }
 
@@ -604,6 +722,10 @@ class MFVirtualFileSystemModel : VirtualFileSystemModel<MFVirtualFile> {
     return Graphs.successorListOf(this, vertex)
   }
 
+  /**
+   * Get predecessors of virtual file as vertex
+   * @param vertex virtual file as vertex
+   */
   private fun <Edge> Graph<MFVirtualFile, Edge>.predecessorsOf(vertex: MFVirtualFile): List<MFVirtualFile> {
     return if (vertex != root) {
       Graphs.predecessorListOf(this, vertex)

@@ -21,8 +21,12 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.*
+import eu.ibagroup.r2z.CopyDataZOS
+import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.XIBMBpxkAutoCvt
+import eu.ibagroup.r2z.XIBMOption
 
+// TODO: doc Valiantsin
 class UssFileToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return UssFileToPdsMover(dataOpsManager)
@@ -32,11 +36,11 @@ class UssFileToPdsMoverFactory : OperationRunnerFactory {
 class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFileMover() {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.sourceAttributes is RemoteUssAttributes
-        && !operation.sourceAttributes.isDirectory
-        && operation.destinationAttributes is RemoteDatasetAttributes
-        && operation.destinationAttributes.isDirectory
-        && operation.commonUrls(dataOpsManager).isNotEmpty()
-        && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+            && !operation.sourceAttributes.isDirectory
+            && operation.destinationAttributes is RemoteDatasetAttributes
+            && operation.destinationAttributes.isDirectory
+            && operation.commonUrls(dataOpsManager).isNotEmpty()
+            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
   fun proceedMoveCopyToPds(
@@ -68,7 +72,8 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
       memberName = memberName
     ).cancelByIndicator(progressIndicator).execute()
     if (!copyResponse.isSuccessful &&
-      copyResponse.errorBody()?.string()?.contains("Truncation of a record occurred during an I/O operation.") != true) {
+      copyResponse.errorBody()?.string()?.contains("Truncation of a record occurred during an I/O operation.") != true
+    ) {
       return CallException(copyResponse, "Cannot $opName $from to $to")
     }
 
@@ -83,7 +88,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
           authorizationToken = connectionConfig.authToken,
           datasetName = to, memberName = memberName
         ).execute()
-        throwable = if (rollbackResponse.isSuccessful){
+        throwable = if (rollbackResponse.isSuccessful) {
           CallException(deleteResponse, "Cannot $opName $from to $to. Rollback proceeded successfully.")
         } else {
           CallException(deleteResponse, "Cannot $opName $from to $to. Rollback failed.")

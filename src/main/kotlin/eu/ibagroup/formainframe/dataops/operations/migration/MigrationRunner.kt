@@ -11,9 +11,10 @@
 package eu.ibagroup.formainframe.dataops.operations.migration
 
 import eu.ibagroup.formainframe.dataops.Query
-import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
+// TODO: doc
 @Suppress("UNCHECKED_CAST")
 interface MigrationRunner<Q : Query<*, Unit>> : OperationRunner<Q, Unit> {
 

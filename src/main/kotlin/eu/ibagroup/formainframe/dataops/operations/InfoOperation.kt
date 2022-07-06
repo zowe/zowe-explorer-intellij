@@ -14,6 +14,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.r2z.SystemsResponse
 
+// TODO: doc Arseni
 class InfoOperation(var connectionConfig: ConnectionConfig) : Operation<SystemsResponse> {
   override val resultClass = SystemsResponse::class.java
 }

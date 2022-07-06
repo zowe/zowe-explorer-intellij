@@ -10,7 +10,6 @@
 
 package eu.ibagroup.formainframe.config
 
-import com.intellij.configurationStore.getDefaultStoragePathSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.State
@@ -19,31 +18,36 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.rd.util.UUID
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.runIfTrue
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.parsers.DocumentBuilderFactory
 
+/** Config service state class. Describes all the interactions with the plugin config */
 @State(
   name = "by.iba.connector.services.ConfigService",
   storages = [Storage(value = "iba_connector_config.xml", exportable = true)]
 )
-class ConfigServiceImpl: ConfigService{
+class ConfigServiceImpl : ConfigService {
 
   companion object {
     private val myState = ConfigState()
-    private val loaded = AtomicBoolean(false)
   }
 
   override fun getState(): ConfigState {
     return myState
   }
 
+  /**
+   * Load current config state
+   * @param state the state to load
+   */
   override fun loadState(state: ConfigState) {
     XmlSerializerUtil.copyBean(state, myState)
     acceptOldConfigs()
@@ -60,15 +64,15 @@ class ConfigServiceImpl: ConfigService{
 
   override var isAutoSyncEnabled = AtomicBoolean(false)
 
-  /**
-   * Adapt all configs in old style to the new one and updates config file.
-   */
+  /** Adapt all configs in old style to the new one and updates config file. */
+  @ApiStatus.ScheduledForRemoval(inVersion = "0.7")
   private fun acceptOldConfigs() {
     myState.connections = myState.connections.toMutableList()
     myState.jobsWorkingSets = myState.jobsWorkingSets.toMutableList()
     myState.workingSets = myState.workingSets.toMutableList()
 
-    val configLocation = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, "iba_connector_config.xml")
+    val configLocation =
+      Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, "iba_connector_config.xml")
     val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configLocation?.toFile())
     val oldConfigsAdapters = OldConfigAdapter.EP.extensions.map { it.buildAdapter(document) }
     oldConfigsAdapters.forEach { adapter ->
@@ -79,13 +83,14 @@ class ConfigServiceImpl: ConfigService{
   }
 }
 
+// TODO: doc
 internal abstract class ClassCaseSwitcher<R> {
 
   abstract fun onConnectionConfig(): R
 
   abstract fun onWorkingSetConfig(): R
 
-  abstract fun onJobsWorkingSetConfig() : R
+  abstract fun onJobsWorkingSetConfig(): R
 
   open fun onCredentials(): R {
     return onElse()
@@ -121,6 +126,7 @@ private class FilterSwitcher(
   override fun onJobsWorkingSetConfig(): Long {
     return crudable.getByColumnLambda(row as JobsWorkingSetConfig) { it.uuid }.count()
   }
+
   override fun onCredentials(): Long {
     return 0
   }
@@ -230,6 +236,7 @@ internal fun <T> classToList(clazz: Class<out T>, state: ConfigState): MutableLi
     override fun onJobsWorkingSetConfig(): MutableList<T> {
       return state.jobsWorkingSets as MutableList<T>
     }
+
     override fun onElse(): MutableList<T>? {
       return null
     }

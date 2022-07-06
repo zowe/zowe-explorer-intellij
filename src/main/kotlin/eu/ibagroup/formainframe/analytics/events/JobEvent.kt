@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.analytics.events
 
+// TODO: doc Valiantsin
 class JobEvent(
   private val jobAction: JobAction
 ) : AnalyticsEvent("jobs") {

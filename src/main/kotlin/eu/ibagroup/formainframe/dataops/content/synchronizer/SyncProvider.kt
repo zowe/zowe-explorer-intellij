@@ -13,11 +13,10 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.IOException
-import kotlin.jvm.Throws
 
 const val SYNC_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.SyncNotificationGroupId"
 
-// TODO: doc
+// TODO: doc Valiantsin
 interface SyncProvider {
 
   val file: VirtualFile

@@ -26,6 +26,7 @@ import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SpoolFile
 import retrofit2.Response
 
+// TODO: doc
 class SpoolFileContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return SpoolFileContentSynchronizer(dataOpsManager)

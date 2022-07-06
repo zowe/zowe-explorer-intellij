@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import javax.swing.JComponent
 import javax.swing.JTable
 
+// TODO: doc
 class WSNameColumn<WSConfig : WorkingSetConfig>(private val wsProvider: () -> List<WSConfig>) :
   ValidatingColumnInfo<WSConfig>(message("configurable.ws.tables.ws.name")) {
 

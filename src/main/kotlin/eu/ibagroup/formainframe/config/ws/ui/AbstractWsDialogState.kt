@@ -13,13 +13,10 @@ package eu.ibagroup.formainframe.config.ws.ui
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
-import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
+// TODO: doc Valiantsin
 abstract class AbstractWsDialogState<WSConfig, TableRow>(
   var uuid: String = "",
   var connectionUuid: String = "",

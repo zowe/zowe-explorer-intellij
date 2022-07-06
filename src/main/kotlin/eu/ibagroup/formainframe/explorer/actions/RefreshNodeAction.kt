@@ -15,11 +15,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.common.ui.promisePath
 import eu.ibagroup.formainframe.explorer.ui.*
 
+// TODO: doc
 class RefreshNodeAction : AnAction() {
 
   private fun cleanInvalidateOnExpand(
     node: ExplorerTreeNode<*>,
-    view: ExplorerTreeView<*,*>
+    view: ExplorerTreeView<*, *>
   ) {
     view.myStructure.promisePath(node, view.myTree).onSuccess {
       val lastNode = it.lastPathComponent

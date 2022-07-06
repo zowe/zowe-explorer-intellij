@@ -9,11 +9,7 @@
  */
 package eu.ibagroup.formainframe.dataops.operations.mover
 
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -24,26 +20,24 @@ import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.XIBMDataType
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileWriter
 import java.nio.file.Paths
 
-class RemoteToLocalFileMoverFactory: OperationRunnerFactory {
+// TODO: doc Valiantsin
+class RemoteToLocalFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return RemoteToLocalFileMover(dataOpsManager)
   }
 }
 
-class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager): AbstractFileMover() {
+class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
-        operation.source is MFVirtualFile &&
-        operation.destination is VirtualFileSystemEntry &&
-        operation.destination.isDirectory
+            operation.source is MFVirtualFile &&
+            operation.destination is VirtualFileSystemEntry &&
+            operation.destination.isDirectory
   }
 
-  private fun proceedLocalMoveCopy (
+  private fun proceedLocalMoveCopy(
     operation: MoveCopyOperation,
     progressIndicator: ProgressIndicator
   ): Throwable? {
@@ -53,8 +47,10 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager): AbstractFileMo
       ?: return IllegalArgumentException("Cannot find attributes for file ${sourceFile.name}")
 
     if (sourceFileAttributes is RemoteUssAttributes && sourceFileAttributes.isSymlink) {
-      return IllegalArgumentException("Impossible to download symlink. ${sourceFile.name} is symlink to ${sourceFileAttributes.symlinkTarget}." +
-          " Please, download ${sourceFileAttributes.symlinkTarget} directly.")
+      return IllegalArgumentException(
+        "Impossible to download symlink. ${sourceFile.name} is symlink to ${sourceFileAttributes.symlinkTarget}." +
+                " Please, download ${sourceFileAttributes.symlinkTarget} directly."
+      )
     }
 
     val contentSynchronizer = dataOpsManager.getContentSynchronizer(sourceFile)

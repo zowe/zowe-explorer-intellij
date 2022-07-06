@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops.content.adapters
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 
+// TODO: doc Valiantsin
 interface MFContentAdapter {
 
   companion object {
@@ -22,7 +23,7 @@ interface MFContentAdapter {
 
   fun accepts(file: VirtualFile): Boolean
 
-  fun prepareContentToMainframe (content: ByteArray, file: VirtualFile): ByteArray
+  fun prepareContentToMainframe(content: ByteArray, file: VirtualFile): ByteArray
 
-  fun adaptContentFromMainframe (content: ByteArray, file: VirtualFile): ByteArray
+  fun adaptContentFromMainframe(content: ByteArray, file: VirtualFile): ByteArray
 }

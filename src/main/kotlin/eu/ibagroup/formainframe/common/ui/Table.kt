@@ -21,6 +21,7 @@ import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.event.TableModelEvent
 
+// TODO: doc
 inline fun <Item> addAction(
   table: TableView<Item>,
   crossinline createEmptyItem: (TableView<Item>) -> Item,

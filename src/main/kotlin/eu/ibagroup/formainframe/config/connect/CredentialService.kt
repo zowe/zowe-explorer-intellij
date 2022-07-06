@@ -12,9 +12,10 @@ package eu.ibagroup.formainframe.config.connect
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.messages.Topic
-import eu.ibagroup.formainframe.config.CredentialsNotFoundForConnection
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnection
 import okhttp3.Credentials
 
+// TODO: doc
 fun interface CredentialsListener {
   fun onChanged(connectionConfigUuid: String)
 }

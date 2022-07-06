@@ -13,18 +13,18 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.observable.operations.subscribe
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.*
-import eu.ibagroup.formainframe.dataops.content.synchronizer.RemoteAttributedContentSynchronizer
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.XIBMDataType
 
+// TODO: doc Arseni
 class ChangeContentModeAction : ToggleAction() {
 
   override fun isSelected(e: AnActionEvent): Boolean {
@@ -40,7 +40,7 @@ class ChangeContentModeAction : ToggleAction() {
       }
   }
 
-  private fun getMappedNodes(view: GlobalFileExplorerView): List<Pair<FileAttributes, VirtualFile>> {
+  private fun getMappedNodes(view: FileExplorerView): List<Pair<FileAttributes, VirtualFile>> {
     return view.mySelectedNodesData
       .mapNotNull {
         val vFile = it.file
@@ -63,7 +63,7 @@ class ChangeContentModeAction : ToggleAction() {
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
-    if(showConfirmDialog(state) == Messages.CANCEL) {
+    if (showConfirmDialog(state) == Messages.CANCEL) {
       return
     } else {
       getMappedNodes(view)
@@ -112,11 +112,11 @@ class ChangeContentModeAction : ToggleAction() {
   }
 
   private fun showConfirmDialog(state: Boolean): Int {
-    val mode = if(state) "binary" else "plain text"
+    val mode = if (state) "binary" else "plain text"
     val confirmTemplate =
       "You are going to switch the file content to $mode. \n" +
-          "The file content will be loaded from mainframe in $mode format. \n" +
-          "Would you like to proceed?"
+              "The file content will be loaded from mainframe in $mode format. \n" +
+              "Would you like to proceed?"
     return Messages.showOkCancelDialog(
       confirmTemplate,
       "Warning",

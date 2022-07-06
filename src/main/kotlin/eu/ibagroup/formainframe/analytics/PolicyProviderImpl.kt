@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.analytics
 
 import eu.ibagroup.formainframe.common.message
 
+// TODO: doc Valiantsin
 class PolicyProviderImpl : PolicyProvider {
 
   private val licenseText by lazy {

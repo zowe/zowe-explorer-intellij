@@ -14,8 +14,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.EventHandler
 import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
@@ -31,6 +31,7 @@ val CONFIGS_CHANGED = Topic.create("configsChanged", EventHandler::class.java)
 @JvmField
 val CONFIGS_LOADED = Topic.create("configsLoaded", Runnable::class.java)
 
+/** Interface to represent the config service */
 interface ConfigService : PersistentStateComponent<ConfigState> {
 
   companion object {
@@ -55,10 +56,6 @@ interface ConfigService : PersistentStateComponent<ConfigState> {
   var isAutoSyncEnabled: AtomicBoolean
 
 }
-
-class CredentialsNotFoundForConnection(val connectionConfig: ConnectionConfig) : Exception(
-  "No username or password found for $connectionConfig"
-)
 
 val configCrudable: Crudable
   get() = ConfigService.instance.crudable

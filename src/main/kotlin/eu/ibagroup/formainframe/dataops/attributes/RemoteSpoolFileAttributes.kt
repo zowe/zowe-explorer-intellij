@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.SpoolFile
 import eu.ibagroup.r2z.XIBMDataType
 
+// TODO: doc Valiantsin
 data class RemoteSpoolFileAttributes(
   override val info: SpoolFile,
   override val parentFile: MFVirtualFile,

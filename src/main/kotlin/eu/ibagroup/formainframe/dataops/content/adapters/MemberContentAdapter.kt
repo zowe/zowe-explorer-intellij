@@ -15,15 +15,17 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-class MemberContentAdapterFactory: MFContentAdapterFactory {
+// TODO: doc Valiantsin
+class MemberContentAdapterFactory : MFContentAdapterFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): MFContentAdapter {
     return MemberContentAdapter(dataOpsManager)
   }
 }
 
+// TODO: duplication with the SeqDatasetContentAdapter
 class MemberContentAdapter(
   dataOpsManager: DataOpsManager
-): LReclContentAdapter<RemoteMemberAttributes>(dataOpsManager) {
+) : LReclContentAdapter<RemoteMemberAttributes>(dataOpsManager) {
 
   override val vFileClass = MFVirtualFile::class.java
   override val attributesClass = RemoteMemberAttributes::class.java

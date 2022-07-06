@@ -12,4 +12,5 @@ package eu.ibagroup.formainframe.dataops.fetch
 
 import eu.ibagroup.formainframe.dataops.DataOpsComponentFactory
 
+// TODO: doc
 interface FileFetchProviderFactory : DataOpsComponentFactory<FileFetchProvider<*, *, *>>

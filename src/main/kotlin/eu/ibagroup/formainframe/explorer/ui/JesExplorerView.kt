@@ -18,19 +18,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.GlobalJesWorkingSet
+import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
 
 val JES_EXPLORER_VIEW = DataKey.create<JesExplorerView>("jesExplorerView")
-const val JES_EXPLORER_CONTEXT_MENU = "Jes Explorer"
+const val JES_EXPLORER_CONTEXT_MENU = "JES Explorer"
 
+// TODO: doc Valiantsin
+/** JES Explorer tree view implementation */
 class JesExplorerView(
-  explorer: Explorer<GlobalJesWorkingSet>,
+  explorer: Explorer<JesWorkingSetImpl>,
   project: Project,
   parentDisposable: Disposable,
   contextMenu: ActionGroup,
   rootNodeProvider: (Explorer<*>, Project, ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
   cutProviderUpdater: (List<VirtualFile>) -> Unit
-) : ExplorerTreeView<GlobalJesWorkingSet, JobsWorkingSetConfig>(
+) : ExplorerTreeView<JesWorkingSetImpl, JobsWorkingSetConfig>(
   explorer,
   project,
   parentDisposable,

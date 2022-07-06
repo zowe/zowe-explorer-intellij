@@ -19,6 +19,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.*
 
+// TODO: doc
 class DatasetAllocatorFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): Allocator<*> {
     return DatasetAllocator()
@@ -43,7 +44,10 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
       body = operation.request.allocationParameters
     ).cancelByIndicator(progressIndicator).execute()
     if (!response.isSuccessful) {
-      throw CallException(response, "Cannot allocate dataset ${operation.request.datasetName} on ${operation.connectionConfig.name}")
+      throw CallException(
+        response,
+        "Cannot allocate dataset ${operation.request.datasetName} on ${operation.connectionConfig.name}"
+      )
     }
   }
 

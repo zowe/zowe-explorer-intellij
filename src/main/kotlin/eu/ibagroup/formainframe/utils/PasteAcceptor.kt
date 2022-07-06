@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.utils
 
+/** Interface to specify whether the paste operation is possible */
 interface PasteAcceptor {
 
   val isPastePossible: Boolean

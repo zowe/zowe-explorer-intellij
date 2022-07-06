@@ -16,6 +16,7 @@ import java.awt.event.MouseEvent
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
+// TODO: doc
 class DoubleClickTreeMouseListener(
   private val tree: JTree,
   private val onDoubleClick: JTree.(TreePath) -> Unit

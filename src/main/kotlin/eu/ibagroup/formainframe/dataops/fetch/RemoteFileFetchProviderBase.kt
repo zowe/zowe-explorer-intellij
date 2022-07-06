@@ -26,6 +26,7 @@ import kotlin.collections.set
 import kotlin.concurrent.withLock
 import kotlin.streams.toList
 
+// TODO: doc
 abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File : VirtualFile>(
   private val dataOpsManager: DataOpsManager
 ) : FileFetchProvider<Request, RemoteQuery<Request, Unit>, File> {
@@ -100,7 +101,8 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
           if (details is List<*>) {
             errorMessage = details[0] as String
           }
-          errorMessages[query] = service<ErrorSeparatorService>().separateErrorMessage(errorMessage)["error.description"] as String
+          errorMessages[query] =
+            service<ErrorSeparatorService>().separateErrorMessage(errorMessage)["error.description"] as String
         } else {
           val errorMessage = it.message ?: "Error"
           errorMessages[query] = errorMessage

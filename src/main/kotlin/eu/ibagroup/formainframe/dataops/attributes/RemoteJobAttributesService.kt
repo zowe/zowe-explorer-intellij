@@ -20,6 +20,7 @@ import eu.ibagroup.r2z.JobStatus
 
 const val JOBS_FOLDER_NAME = "Jobs"
 
+// TODO: doc Valiantsin
 class RemoteJobAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteJobAttributesService(dataOpsManager)
@@ -29,7 +30,7 @@ class RemoteJobAttributesServiceFactory : AttributesServiceFactory {
 
 class RemoteJobAttributesService(
   val dataOpsManager: DataOpsManager
-) : MFRemoteAttributesServiceBase<RemoteJobAttributes>(dataOpsManager){
+) : MFRemoteAttributesServiceBase<RemoteJobAttributes>(dataOpsManager) {
   override val attributesClass = RemoteJobAttributes::class.java
   override val subFolderName = JOBS_FOLDER_NAME
 

@@ -16,6 +16,7 @@ import com.intellij.util.ui.ListTableModel
 import eu.ibagroup.formainframe.utils.SparseMatrix
 import javax.swing.SortOrder
 
+// TODO: doc
 open class ValidatingListTableModel<Item> : ListTableModel<Item> {
 
   constructor(vararg columnInfos: ColumnInfo<Item, *>?) : super(*columnInfos)
@@ -65,11 +66,5 @@ open class ValidatingListTableModel<Item> : ListTableModel<Item> {
     validationInfos.removeByRow(idx)
     super.removeRow(idx)
   }
-
-//  override fun fireTableChanged(e: TableModelEvent?) {
-//    listenerList.listenerList
-//      .filterIsInstance<TableModelListener>()
-//      .forEach { it.tableChanged(e) }
-//  }
 
 }

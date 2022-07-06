@@ -27,7 +27,8 @@ import eu.ibagroup.r2z.XIBMDataType
 import retrofit2.Call
 import java.io.IOException
 
-class SeqDatasetContentSynchronizerFactory: ContentSynchronizerFactory {
+// TODO: doc
+class SeqDatasetContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return SeqDatasetContentSynchronizer(dataOpsManager)
   }
@@ -37,7 +38,7 @@ private val log = log<SeqDatasetContentSynchronizer>()
 
 class SeqDatasetContentSynchronizer(
   dataOpsManager: DataOpsManager
-): RemoteAttributedContentSynchronizer<RemoteDatasetAttributes>(dataOpsManager) {
+) : RemoteAttributedContentSynchronizer<RemoteDatasetAttributes>(dataOpsManager) {
   override val vFileClass = MFVirtualFile::class.java
 
   override val attributesClass = RemoteDatasetAttributes::class.java
@@ -151,9 +152,9 @@ class SeqDatasetContentSynchronizer(
 
   override fun accepts(file: VirtualFile): Boolean {
     return super.accepts(file) &&
-      dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {
-        !it.isMigrated && it.datasetInfo.datasetOrganization != DatasetOrganization.VS
-      } == true
+            dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {
+              !it.isMigrated && it.datasetInfo.datasetOrganization != DatasetOrganization.VS
+            } == true
   }
 
 }

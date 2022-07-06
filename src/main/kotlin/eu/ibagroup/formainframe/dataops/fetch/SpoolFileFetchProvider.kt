@@ -25,6 +25,7 @@ import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.JESApi
 
+// TODO: doc Valiantsin
 data class JobQuery(val library: MFVirtualFile)
 
 class SpoolFileFetchProviderFactory : FileFetchProviderFactory {

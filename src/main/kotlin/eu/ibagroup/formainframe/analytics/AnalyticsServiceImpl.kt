@@ -28,6 +28,7 @@ internal val analyticsProperties by lazy {
   }
 }
 
+// TODO: doc Valiantsin
 @State(
   name = "eu.ibagroup.formainframe.analytics.AnalyticsService",
   storages = [Storage(value = "for-mainframe-analytics.xml", exportable = true)]

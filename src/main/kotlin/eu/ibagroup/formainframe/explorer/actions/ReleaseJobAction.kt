@@ -16,10 +16,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.operations.jobs.*
+import eu.ibagroup.formainframe.dataops.operations.jobs.BasicReleaseJobParams
+import eu.ibagroup.formainframe.dataops.operations.jobs.ReleaseJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.r2z.JobStatus
 
+// TODO: doc Nikita
 class ReleaseJobAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
@@ -48,9 +50,19 @@ class ReleaseJobAction : AnAction() {
             progressIndicator = it
           )
         }.onFailure {
-          view.showNotification("Error releasing ${jobStatus.jobName}: ${jobStatus.jobId}", "${it.message}", e.project, NotificationType.ERROR)
+          view.showNotification(
+            "Error releasing ${jobStatus.jobName}: ${jobStatus.jobId}",
+            "${it.message}",
+            e.project,
+            NotificationType.ERROR
+          )
         }.onSuccess {
-          view.showNotification("${jobStatus.jobName}: ${jobStatus.jobId} has been released", "${it}", e.project, NotificationType.INFORMATION)
+          view.showNotification(
+            "${jobStatus.jobName}: ${jobStatus.jobId} has been released",
+            "${it}",
+            e.project,
+            NotificationType.INFORMATION
+          )
         }
       }
     }
@@ -62,7 +74,7 @@ class ReleaseJobAction : AnAction() {
       return
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
-    if(jobStatus == JobStatus.Status.OUTPUT || jobStatus == JobStatus.Status.ACTIVE || jobStatus == null) {
+    if (jobStatus == JobStatus.Status.OUTPUT || jobStatus == JobStatus.Status.ACTIVE || jobStatus == null) {
       e.presentation.isEnabled = false
     }
   }

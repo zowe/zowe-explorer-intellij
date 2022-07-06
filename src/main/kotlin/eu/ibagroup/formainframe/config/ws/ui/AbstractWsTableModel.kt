@@ -14,9 +14,12 @@ import eu.ibagroup.formainframe.common.ui.CrudableTableModel
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.utils.crudable.*
+import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.MergedCollections
+import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.toMutableList
 
+// TODO: doc Valiantsin
 abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
   crudable: Crudable
 ) : CrudableTableModel<WSConfig>(crudable) {

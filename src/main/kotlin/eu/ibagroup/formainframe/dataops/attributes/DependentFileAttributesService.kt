@@ -18,13 +18,12 @@ import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.vfs.createAttributes
 import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
-import java.lang.IllegalArgumentException
 import java.util.concurrent.ConcurrentHashMap
 
-abstract class DependentFileAttributesService<Attributes : DependentFileAttributes<InfoType, VFile>, InfoType, ParentAttributes: FileAttributes, VFile: VirtualFile>(
+// TODO: doc Valiantsin
+abstract class DependentFileAttributesService<Attributes : DependentFileAttributes<InfoType, VFile>, InfoType, ParentAttributes : FileAttributes, VFile : VirtualFile>(
   private val dataOpsManager: DataOpsManager
 ) : AttributesService<Attributes, VFile> {
-
 
 
   protected abstract val parentAttributesClass: Class<out ParentAttributes>
@@ -39,7 +38,7 @@ abstract class DependentFileAttributesService<Attributes : DependentFileAttribut
   protected abstract fun buildAttributes(info: InfoType, file: VFile, contentMode: XIBMDataType?): Attributes
 
   protected abstract val findOrCreateFileInVFSModel:
-        (Any?, VFile, String, com.intellij.openapi.util.io.FileAttributes) -> VFile
+            (Any?, VFile, String, com.intellij.openapi.util.io.FileAttributes) -> VFile
 
   protected abstract val moveFileAndReplaceInVFSModel: (requestor: Any?, vFile: VFile, newParent: VFile) -> Unit
 
@@ -93,7 +92,7 @@ abstract class DependentFileAttributesService<Attributes : DependentFileAttribut
         changed = true
         moveFileAndReplaceInVFSModel(this, oldAttributes.parentFile, newAttributes.parentFile)
       }
-      if(oldAttributes.info != newAttributes.info) {
+      if (oldAttributes.info != newAttributes.info) {
         changed = true
         fileToInfoMap[file] = newAttributes.info
       }

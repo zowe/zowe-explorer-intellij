@@ -16,16 +16,13 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 
-// TODO: doc
-class DocumentedSyncProvider (
+// TODO: doc Valiantsin
+class DocumentedSyncProvider(
   override val file: VirtualFile,
   override val saveStrategy: SaveStrategy = SaveStrategy.default(),
   val onThrowableHandler: (Throwable) -> Unit = { defaultOnThrowableHandler(file, it) }

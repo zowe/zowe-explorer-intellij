@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.utils.crudable.MergedCollections
 import javax.swing.SortOrder
 import javax.swing.event.TableModelEvent
 
+// TODO: doc
 abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
 
   private val crudable: Crudable
@@ -97,7 +98,8 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
             if (it.firstRow == 0
               && it.lastRow == Int.MAX_VALUE
               && it.column == TableModelEvent.ALL_COLUMNS
-              && needToUpdateCrudableOnSetItems) {
+              && needToUpdateCrudableOnSetItems
+            ) {
               replacingItems?.let { oldItems ->
                 onApplyingMergedCollection(crudable, Crudable.mergeCollections(oldItems, items))
               }
@@ -111,7 +113,7 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
               }
             }
           }
-          TableModelEvent.DELETE -> replacingItems?.forEach { deleting -> onDelete(crudable, deleting)}
+          TableModelEvent.DELETE -> replacingItems?.forEach { deleting -> onDelete(crudable, deleting) }
         }
       }
     }

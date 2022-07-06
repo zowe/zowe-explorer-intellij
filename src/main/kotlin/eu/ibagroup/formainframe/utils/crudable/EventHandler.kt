@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.utils.crudable
 
+/** Interface that describes possible event handlers to be defined */
 interface EventHandler {
   fun <E : Any> onAdd(rowClass: Class<out E>, added: E)
   fun <E : Any> onUpdate(rowClass: Class<out E>, oldRow: E, newRow: E)

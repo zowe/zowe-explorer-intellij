@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.analytics.events
 
+// TODO: doc Valiantsin
 class MigrateEvent(
   private val migrateActionType: MigrateActionType
 ) : AnalyticsEvent("migrations") {

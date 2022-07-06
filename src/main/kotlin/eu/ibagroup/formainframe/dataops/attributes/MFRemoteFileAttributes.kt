@@ -10,10 +10,9 @@
 
 package eu.ibagroup.formainframe.dataops.attributes
 
-import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.utils.crudable.getByForeignKey
 
+// TODO: doc
 interface MFRemoteFileAttributes<R : Requester> : FileAttributes {
 
   val url: String
@@ -27,7 +26,7 @@ interface Requester {
 }
 
 inline fun <reified R : Requester> MFRemoteFileAttributes<R>.findCommonUrlConnections(other: MFRemoteFileAttributes<R>)
-  : Collection<Pair<R, ConnectionConfig>> {
+        : Collection<Pair<R, ConnectionConfig>> {
   val thisRequestersWithUrlConnection = requesters.map {
     Pair(it, it.connectionConfig)
   }

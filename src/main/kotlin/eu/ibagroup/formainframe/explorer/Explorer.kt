@@ -33,25 +33,28 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.*
-import eu.ibagroup.formainframe.utils.crudable.*
+import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
+import eu.ibagroup.formainframe.utils.crudable.anyEventAdaptor
+import eu.ibagroup.formainframe.utils.crudable.eventAdapter
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-
+// TODO: doc Valiantsin
 interface ExplorerListener {
   fun onChanged(explorer: Explorer<*>, unit: ExplorerUnit)
   fun onAdded(explorer: Explorer<*>, unit: ExplorerUnit)
   fun onDeleted(explorer: Explorer<*>, unit: ExplorerUnit)
 }
 
-interface ExplorerFactory<U: WorkingSet<*>, E : Explorer<U>> {
-  fun buildComponent() : E
+interface ExplorerFactory<U : WorkingSet<*>, E : Explorer<U>> {
+  fun buildComponent(): E
 }
+
 @JvmField
 val UNITS_CHANGED = Topic.create("unitsChanged", ExplorerListener::class.java)
 
-interface Explorer<U: WorkingSet<*>> {
+interface Explorer<U : WorkingSet<*>> {
 
   companion object {
     @JvmField
@@ -82,7 +85,8 @@ interface Explorer<U: WorkingSet<*>> {
   fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?)
 }
 
-abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid>: Explorer<U>, Disposable {
+/** Base explorer implementation */
+abstract class AbstractExplorerBase<U : WorkingSet<*>, UnitConfig : EntityWithUuid> : Explorer<U>, Disposable {
 
   val lock = ReentrantReadWriteLock()
 

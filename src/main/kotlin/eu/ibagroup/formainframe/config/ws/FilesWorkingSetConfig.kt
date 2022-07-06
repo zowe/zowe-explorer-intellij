@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.config.ws
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.isTheSameAs
 
+// TODO: doc Valiantsin
 class FilesWorkingSetConfig : WorkingSetConfig {
 
   @Column
@@ -53,8 +54,8 @@ class FilesWorkingSetConfig : WorkingSetConfig {
 
     if (name != other.name) return false
     if (connectionConfigUuid != other.connectionConfigUuid) return false
-    if (!(dsMasks isTheSameAs  other.dsMasks)) return false
-    if (!(ussPaths isTheSameAs  other.ussPaths)) return false
+    if (!(dsMasks isTheSameAs other.dsMasks)) return false
+    if (!(ussPaths isTheSameAs other.ussPaths)) return false
 
     return true
   }

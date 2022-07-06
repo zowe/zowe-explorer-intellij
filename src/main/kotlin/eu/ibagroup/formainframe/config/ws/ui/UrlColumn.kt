@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
+// TODO: doc
 @Suppress("DialogTitleCapitalization")
 class UrlColumn<WSConfig : WorkingSetConfig>(
   private val getUrl: (WSConfig) -> String?

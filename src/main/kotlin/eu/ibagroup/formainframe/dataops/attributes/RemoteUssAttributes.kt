@@ -21,6 +21,7 @@ import eu.ibagroup.r2z.XIBMDataType
 
 private const val CURRENT_DIR_NAME = "."
 
+// TODO: doc
 private fun constructPath(rootPath: String, ussFile: UssFile): String {
   return when {
     ussFile.name.isEmpty() || ussFile.name == CURRENT_DIR_NAME -> {
@@ -91,9 +92,9 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.WRITE.mode
-        || mode == FileModeValue.WRITE_EXECUTE.mode
-        || mode == FileModeValue.READ_WRITE.mode
-        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+              || mode == FileModeValue.WRITE_EXECUTE.mode
+              || mode == FileModeValue.READ_WRITE.mode
+              || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
   val isReadable: Boolean
@@ -107,9 +108,9 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.READ.mode
-        || mode == FileModeValue.READ_WRITE.mode
-        || mode == FileModeValue.READ_EXECUTE.mode
-        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+              || mode == FileModeValue.READ_WRITE.mode
+              || mode == FileModeValue.READ_EXECUTE.mode
+              || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
   val isExecutable: Boolean
@@ -121,12 +122,12 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.EXECUTE.mode
-        || mode == FileModeValue.READ_EXECUTE.mode
-        || mode == FileModeValue.WRITE_EXECUTE.mode
-        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+              || mode == FileModeValue.READ_EXECUTE.mode
+              || mode == FileModeValue.WRITE_EXECUTE.mode
+              || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
-  override var contentMode: XIBMDataType= XIBMDataType(XIBMDataType.Type.TEXT)
+  override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT)
 
   override val isCopyPossible: Boolean
     get() = true

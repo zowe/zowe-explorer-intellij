@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.config
 
 import com.intellij.util.messages.Topic
 
+// TODO: doc
 interface SandboxListener {
 
   companion object {

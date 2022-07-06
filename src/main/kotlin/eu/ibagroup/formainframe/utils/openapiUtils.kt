@@ -10,13 +10,9 @@
 
 package eu.ibagroup.formainframe.utils
 
-import com.intellij.ide.projectView.ProjectViewNode
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -26,32 +22,28 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
-import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import org.apache.log4j.Level
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.Promise
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
-import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.TreePath
 import kotlin.concurrent.withLock
-
-class Dummy private constructor()
 
 val cachesDir by lazy {
   val cachesDirString = System.getProperty("caches_dir")
-  val cachesDir = File(cachesDirString ?: PathManager.getSystemPath() + "/caches/")
-  return@lazy cachesDir
+  return@lazy File(cachesDirString ?: (PathManager.getSystemPath() + "/caches/"))
 }
 
+/**
+ * Retrieve the topic sync publisher to publish messages by
+ * @param topic the topic to get sync publisher for
+ * @param componentManager the component manager to get the topic sync publisher
+ */
 fun <L> sendTopic(
   topic: Topic<L>,
   componentManager: ComponentManager = ApplicationManager.getApplication()
@@ -59,6 +51,13 @@ fun <L> sendTopic(
   return componentManager.messageBus.syncPublisher(topic)
 }
 
+/**
+ * Subscribe to the specified topic with disposable object
+ * @param componentManager the component manager to retrieve the message bus to subscribe to the topic
+ * @param topic the topic to subscribe to
+ * @param handler the handler to execute on topic message
+ * @param disposable target parent disposable to which life cycle newly created connection shall be bound
+ */
 fun <L : Any> subscribe(
   componentManager: ComponentManager,
   topic: Topic<L>,
@@ -69,6 +68,12 @@ fun <L : Any> subscribe(
   .connect(disposable)
   .subscribe(topic, handler)
 
+/**
+ * Subscribe to the specified topic
+ * @param componentManager the component manager to retrieve the message bus to subscribe to the topic
+ * @param topic the topic to subscribe to
+ * @param handler the handler to execute on topic message
+ */
 fun <L : Any> subscribe(
   componentManager: ComponentManager,
   topic: Topic<L>,
@@ -78,20 +83,34 @@ fun <L : Any> subscribe(
   .connect()
   .subscribe(topic, handler)
 
+/**
+ * Subscribe to the specified topic with the default component manager that gives the message bus
+ * @param topic the topic to subscribe to
+ * @param handler the handler to execute on topic message
+ */
 fun <L : Any> subscribe(topic: Topic<L>, handler: L) = ApplicationManager.getApplication()
   .messageBus
   .connect()
   .subscribe(topic, handler)
 
+/**
+ * Subscribe to the specified topic with the default component manager that gives the message bus and disposable object
+ * @param topic the topic to subscribe to
+ * @param disposable target parent disposable to which life cycle newly created connection shall be bound
+ * @param handler the handler to execute on topic message
+ */
 fun <L : Any> subscribe(topic: Topic<L>, disposable: Disposable, handler: L) = ApplicationManager.getApplication()
   .messageBus
   .connect(disposable)
   .subscribe(topic, handler)
 
-fun assertReadAllowed() = ApplicationManager.getApplication().assertReadAccessAllowed()
-
+/** Asserts whether write access is allowed */
 fun assertWriteAllowed() = ApplicationManager.getApplication().assertWriteAccessAllowed()
 
+/**
+ * Schedule the given task's execution, or cancel the task if it's no longer needed.
+ * Gives the result of the executed task
+ */
 fun <T> submitOnWriteThread(block: () -> T): T {
   @Suppress("UnstableApiUsage")
   return AppUIExecutor.onWriteThread(ModalityState.defaultModalityState()).submit(block).get()
@@ -116,8 +135,6 @@ inline fun <T> runReadActionInEdtAndWait(crossinline block: () -> T): T {
   return invokeAndWaitIfNeeded { runReadAction(block) }
 }
 
-fun AlreadyDisposedException(clazz: Class<*>) = AlreadyDisposedException("${clazz.name} is already disposed")
-
 inline fun <reified S : Any> ComponentManager.service(): S {
   return getService(S::class.java)
 }
@@ -125,35 +142,6 @@ inline fun <reified S : Any> ComponentManager.service(): S {
 inline fun <reified S : Any> ComponentManager.component(): S {
   return getComponent(S::class.java)
 }
-
-inline fun <T> runPromiseAsBackgroundTask(
-  title: String,
-  project: Project? = null,
-  canBeCancelled: Boolean = true,
-  needsToCancelPromise: Boolean = false,
-  crossinline promiseGetter: (ProgressIndicator) -> Promise<T>
-) {
-  ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, canBeCancelled) {
-    private var promise: Promise<T>? = null
-    override fun run(indicator: ProgressIndicator) {
-      val lock = ReentrantLock()
-      val condition = lock.newCondition()
-      promise = promiseGetter(indicator).also {
-        it.onProcessed {
-          lock.withLock { condition.signalAll() }
-        }
-      }
-      lock.withLock { condition.await() }
-    }
-
-    override fun onCancel() {
-      if (needsToCancelPromise) {
-        promise.castOrNull<CancellablePromise<*>>()?.cancel()
-      }
-    }
-  })
-}
-
 
 fun <T> Promise<T>.get(): T? {
   return if (this is AsyncPromise<T>) {
@@ -186,6 +174,13 @@ fun <T> Promise<T>.get(): T? {
   }
 }
 
+/**
+ * Run the specified task in with progress
+ * @param title the title of the task to be shown in the progress
+ * @param project the optional project value to make the specific project handling
+ * @param cancellable the value to specify if the task is cancellable
+ * @param task the task to execute
+ */
 inline fun <reified T> runTask(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
   project: Project? = null,
@@ -197,10 +192,6 @@ inline fun <reified T> runTask(
       return task(indicator)
     }
   })
-}
-
-inline fun <reified S : Any> ComponentManager.hasService(): Boolean {
-  return picoContainer.getComponentInstance(S::class.java.name) != null
 }
 
 inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
@@ -215,6 +206,7 @@ inline fun runWriteActionInEdtAndWait(crossinline block: () -> Unit) {
   }
 }
 
+/** Return the specified logger instance */
 inline fun <reified T : Any> log(): Logger {
   return logger<T>()
 }
@@ -227,6 +219,7 @@ fun VirtualFile.getAncestorNodes(): List<VirtualFile> {
   return getAncestorNodes { children?.asIterable() ?: emptyList() }
 }
 
+/** Check is the file being edited now */
 fun VirtualFile.isBeingEditingNow(): Boolean {
   return ProjectManager
     .getInstance()
@@ -240,27 +233,19 @@ fun Iterable<VirtualFile>.getMinimalCommonParents(): Collection<VirtualFile> {
   return getMinimalCommonParents { parent }
 }
 
-val minimalParentComparator: Comparator<VirtualFile> = Comparator { o1, o2 ->
-  val firstParentChain = o1.getParentsChain()
-  val secondParentsChain = o2.getParentsChain()
-  return@Comparator when {
-    firstParentChain.containsAll(secondParentsChain) -> 1
-    secondParentsChain.containsAll(firstParentChain) -> -1
-    else -> 0
-  }
-}
-
+/** Enumeration class with mainframe file types */
 enum class MfFileType {
   USS, DATASET, MEMBER
 }
 
+/** Class to resolve the mainframe file path */
 class MfFilePath(
-  val mfFileType: MfFileType,
+  private val mfFileType: MfFileType,
   val filePath: String,
   val memberName: String? = null
 ) {
   override fun toString(): String {
-    return when(mfFileType) {
+    return when (mfFileType) {
       MfFileType.USS -> filePath
       MfFileType.DATASET -> "//'${filePath}'"
       else -> "//'${filePath}(${memberName})'"
@@ -268,13 +253,14 @@ class MfFilePath(
   }
 }
 
+/** Get the formed mainframe file path */
 fun FileAttributes.formMfPath(): String {
-  val fileType = when(this) {
+  val fileType = when (this) {
     is RemoteUssAttributes -> MfFileType.USS
     is RemoteDatasetAttributes -> MfFileType.DATASET
     else -> MfFileType.MEMBER
   }
-  val filePath = when(this) {
+  val filePath = when (this) {
     is RemoteMemberAttributes -> parentFile.name
     is RemoteUssAttributes -> path
     else -> name

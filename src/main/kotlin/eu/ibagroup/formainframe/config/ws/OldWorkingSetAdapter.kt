@@ -32,7 +32,7 @@ class OldWorkingSetAdapterFactory : OldConfigAdapterFactory {
  * @see OldConfigAdapter
  * @author Valentine Krus
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "0.6")
+@ApiStatus.ScheduledForRemoval(inVersion = "0.7")
 class OldWorkingSetAdapter(private val document: Document) : OldConfigAdapter<FilesWorkingSetConfig> {
 
   /**

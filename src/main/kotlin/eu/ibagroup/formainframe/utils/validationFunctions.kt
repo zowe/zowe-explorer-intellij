@@ -22,20 +22,57 @@ import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import eu.ibagroup.r2z.DatasetOrganization
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 
 private val urlRegex = Regex("^(https?|http)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")
+private val maskRegex = Regex("^[A-Za-z\\$\\*%@#][A-Za-z0-9\\-\\$\\*%@#]{0,7}")
+private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
+private val forbiddenSymbol = "/"
+private val warningSymbols = "^[^>|:& ]*$"
+private val prefixAndOwnerRegex = Regex("[A-Za-z0-9*%]+")
+private val firstSymbol = "A-Za-z\$@#"
+private val remainingSymbol = firstSymbol + "0-9\\-"
+private val partPattern = "([$firstSymbol][$remainingSymbol]{0,7})"
+private val notEmptyErrorText = "Dataset name must not be empty"
+private val segmentLengthErrorText = "Each name segment (qualifier) is 1 to 8 characters"
+private val charactersLengthExceededErrorText = "Dataset name cannot exceed 44 characters"
+private val segmentCharsErrorText =
+  "$segmentLengthErrorText," +
+          "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
+          "\nThe remaining seven characters are either alphabetic," +
+          "\nnumeric (0 - 9), national, a hyphen (-)." +
+          "\nName segments are separated by a period (.)"
+private val jobIdRegex = Regex("[A-Za-z0-9]+")
+private val volserRegex = Regex("[A-Za-z0-9]{1,6}")
+private val firstLetterRegex = Regex("[A-Z@\$#a-z]")
+private val memberRegex = Regex("[A-Z@$#a-z][A-Z@#\$a-z0-9]{0,7}")
 
 
+/**
+ * Validate text field for blank value
+ * @param text the text of the field to validate
+ * @param component the component containing the invalid data
+ */
 fun validateForBlank(text: String, component: JComponent): ValidationInfo? {
   return if (text.isBlank()) ValidationInfo("This field must not be blank", component) else null
 }
 
+/**
+ * Validate text field for blank value
+ * @param component the component to check the text in
+ */
 fun validateForBlank(component: JTextField): ValidationInfo? {
   return validateForBlank(component.text, component)
 }
 
+/**
+ * Validate connection name not to be the same as the existing one
+ * @param component the component to check the connection name in
+ * @param ignoreValue the value to ignore during the validation (blank value at the start)
+ * @param crudable crudable object to find the connection config
+ */
 fun validateConnectionName(component: JTextField, ignoreValue: String? = null, crudable: Crudable): ValidationInfo? {
   val configAlreadyExists = crudable.find<ConnectionConfig> {
     ignoreValue != it.name && it.name == component.text.trim()
@@ -47,7 +84,14 @@ fun validateConnectionName(component: JTextField, ignoreValue: String? = null, c
   }
 }
 
-fun <WSConfig: WorkingSetConfig> validateWorkingSetName(
+/**
+ * Validate working set name not to be the same as the existing one
+ * @param component the component to check the working set name
+ * @param ignoreValue the value to ignore during the validation (blank value at the start)
+ * @param crudable crudable object to find the working set config
+ * @param wsConfigClass working set config class to get the crudable
+ */
+fun <WSConfig : WorkingSetConfig> validateWorkingSetName(
   component: JTextField,
   ignoreValue: String? = null,
   crudable: Crudable,
@@ -66,13 +110,19 @@ fun <WSConfig: WorkingSetConfig> validateWorkingSetName(
   }
 }
 
+/**
+ * Validate working set mask name not to be the same as the existing one
+ * @param component the component to check the working set mask name
+ * @param ws working set to check the existing masks
+ */
 fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
-  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.toUpperCase())
-      || ws.ussPaths.map { it.path.toUpperCase() }.contains(component.text.toUpperCase())
+  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.uppercase())
+          || ws.ussPaths.map { it.path.uppercase() }.contains(component.text.uppercase())
 
   return if (maskAlreadyExists) {
-    ValidationInfo("You must provide unique mask in working set. Working Set " +
-          "\"${ws.name}\" already has mask - ${component.text}", component
+    ValidationInfo(
+      "You must provide unique mask in working set. Working Set " +
+              "\"${ws.name}\" already has mask - ${component.text}", component
     )
   } else {
     null
@@ -80,6 +130,10 @@ fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): Vali
 
 }
 
+/**
+ * Validate z/OSMF URL to match the regular expression
+ * @param component the component to check the URL
+ */
 fun validateZosmfUrl(component: JTextField): ValidationInfo? {
   return if (!component.text.matches(urlRegex)) {
     ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
@@ -88,6 +142,12 @@ fun validateZosmfUrl(component: JTextField): ValidationInfo? {
   }
 }
 
+/**
+ * Validate field with specified length restriction
+ * @param component the component to validate the text
+ * @param length the specified length to check whether the text exceeds it
+ * @param fieldName field name for validation warning
+ */
 fun validateFieldWithLengthRestriction(component: JTextField, length: Int, fieldName: String): ValidationInfo? {
   return if (component.text.trim().length > length) {
     ValidationInfo("$fieldName length must not exceed $length characters.")
@@ -97,24 +157,40 @@ fun validateFieldWithLengthRestriction(component: JTextField, length: Int, field
 
 }
 
+/**
+ * Validate that the username is not better than 8 characters long
+ * @param component the component with the username to validate
+ */
 fun validateUsername(component: JTextField): ValidationInfo? {
   return validateFieldWithLengthRestriction(component, 8, "Username")
 }
 
+/**
+ * Validate that the password is not better than 8 characters long
+ * @param component the component with the password to validate
+ */
 fun validatePassword(component: JTextField): ValidationInfo? {
   return validateFieldWithLengthRestriction(component, 8, "Password")
 }
 
-private val maskRegex = Regex("^[A-Za-z\\$\\*%@#][A-Za-z0-9\\-\\$\\*%@#]{0,7}")
-private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
-
+/**
+ * Validate that the dataset mask matches the generic rules
+ * @param text the dataset mask text to validate
+ * @param component the component to show the warning message in
+ */
 fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
   val noMoreThan3AsteriskRule = "\\*{3,}"
   val noMoreThan2AsteriskBeforeTextInTheQualifierRule = "\\*{2,}[^\\*\\.]+"
   val noMoreThan2AsteriskAfterTextInTheQualifierRule = "[^\\*\\.]+\\*{2,}"
   val noSecondAsteriskInTheMiddleOfTheQualifierRule = "\\*+[^\\*\\.]+\\*+[^\\*\\.]+"
   val noFirstAsteriskInTheMiddleOfTheQualifierRule = "[^\\*\\.]+\\*+[^\\*\\.]+\\*+"
-  val asteriskRegex = arrayOf(noMoreThan3AsteriskRule, noMoreThan2AsteriskAfterTextInTheQualifierRule, noMoreThan2AsteriskBeforeTextInTheQualifierRule,noSecondAsteriskInTheMiddleOfTheQualifierRule, noFirstAsteriskInTheMiddleOfTheQualifierRule).joinToString(separator = "|")
+  val asteriskRegex = arrayOf(
+    noMoreThan3AsteriskRule,
+    noMoreThan2AsteriskAfterTextInTheQualifierRule,
+    noMoreThan2AsteriskBeforeTextInTheQualifierRule,
+    noSecondAsteriskInTheMiddleOfTheQualifierRule,
+    noFirstAsteriskInTheMiddleOfTheQualifierRule
+  ).joinToString(separator = "|")
 
   val qualifier = text.split('.')
 
@@ -122,7 +198,7 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
     ValidationInfo("Dataset mask must be no more than 44 characters", component)
   } else if (qualifier.find { it.length > 8 } != null) {
     ValidationInfo("Qualifier must be in 1 to 8 characters", component)
-  } else if (text.isBlank() || qualifier.find { !it.matches(maskRegex) } != null ) {
+  } else if (text.isBlank() || qualifier.find { !it.matches(maskRegex) } != null) {
     ValidationInfo("Enter valid dataset mask", component)
   } else if (text.contains(Regex(asteriskRegex))) {
     ValidationInfo("Invalid asterisks in the qualifier", component)
@@ -131,6 +207,11 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
   }
 }
 
+/**
+ * Validate USS mask to match the USS path regular expression
+ * @param text the USS path to validate
+ * @param component the component to show the warning in
+ */
 fun validateUssMask(text: String, component: JComponent): ValidationInfo? {
   return if (text.isNotBlank() && !text.matches(ussPathRegex)) {
     ValidationInfo("Provide a valid USS path", component)
@@ -139,9 +220,10 @@ fun validateUssMask(text: String, component: JComponent): ValidationInfo? {
   }
 }
 
-private const val forbiddenSymbol = "/"
-private const val warningSymbols = "^[^>|:& ]*$"
-
+/**
+ * Validate USS file name to match the specified rules
+ * @param component the component to validate the USS file name and show warning in
+ */
 fun validateUssFileName(component: JTextField): ValidationInfo? {
   return if (component.text.length > 255) {
     ValidationInfo("Filename must not exceed 255 characters.", component)
@@ -152,7 +234,23 @@ fun validateUssFileName(component: JTextField): ValidationInfo? {
   }
 }
 
-fun validateJobFilter (prefix: String, owner: String, jobId: String, ws: JesWorkingSet, component: JBTextField, isJobId: Boolean): ValidationInfo? {
+/**
+ * Validate job filter to match the specified rules
+ * @param prefix the prefix for the job filter
+ * @param owner the owner name for the job filter
+ * @param jobId the job ID for the job filter
+ * @param ws the working set to check the existing masks
+ * @param component the component to show the warning
+ * @param isJobId value to check the job ID if it is "true"
+ */
+fun validateJobFilter(
+  prefix: String,
+  owner: String,
+  jobId: String,
+  ws: JesWorkingSet,
+  component: JBTextField,
+  isJobId: Boolean
+): ValidationInfo? {
   val baseValidation = validateJobFilter(prefix, owner, jobId, component, isJobId)
   if (baseValidation != null) {
     return baseValidation
@@ -165,15 +263,29 @@ fun validateJobFilter (prefix: String, owner: String, jobId: String, ws: JesWork
   } else null
 }
 
-fun validateJobFilter (prefix: String, owner: String, jobId: String, component: JTextField, isJobId: Boolean): ValidationInfo? {
+/**
+ * Validate job filter to match the specified rules
+ * @param prefix the prefix for the job filter
+ * @param owner the owner name for the job filter
+ * @param jobId the job ID for the job filter
+ * @param component the component to show the warning
+ * @param isJobId value to check the job ID if it is "true"
+ */
+fun validateJobFilter(
+  prefix: String,
+  owner: String,
+  jobId: String,
+  component: JTextField,
+  isJobId: Boolean
+): ValidationInfo? {
   if (jobId.isNotBlank()) {
     if (owner.isNotBlank() || prefix.isNotBlank()) {
-      return ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+      return ValidationInfo("You must provide either an owner and a prefix or a job ID.", component)
     }
   }
   if (jobId.isBlank()) {
     if (owner.isBlank() || prefix.isBlank()) {
-      return ValidationInfo("You must provide either an owner and a prefix or a job id.", component)
+      return ValidationInfo("You must provide either an owner and a prefix or a job ID.", component)
     }
   }
   return if (isJobId) {
@@ -183,8 +295,11 @@ fun validateJobFilter (prefix: String, owner: String, jobId: String, component: 
   }
 }
 
-private val prefixAndOwnerRegex = Regex("[A-Za-z0-9*%]+")
-fun validatePrefixAndOwner(component: JTextField) : ValidationInfo? {
+/**
+ * Validate prefix and owner
+ * @param component the current active component to check the owner or prefix and show the warning for
+ */
+fun validatePrefixAndOwner(component: JTextField): ValidationInfo? {
   return if (component.text.isNotBlank()) {
     if (component.text.length > 8) {
       ValidationInfo("Text field must not exceed 8 characters.", component)
@@ -198,8 +313,11 @@ fun validatePrefixAndOwner(component: JTextField) : ValidationInfo? {
   }
 }
 
-private val jobIdRegex = Regex("[A-Za-z0-9]+")
-fun validateJobId(component: JTextField) : ValidationInfo? {
+/**
+ * Validate the job ID
+ * @param component the job ID component to validate the text in and show the warning for
+ */
+fun validateJobId(component: JTextField): ValidationInfo? {
   return if (component.text.isNotBlank()) {
     if (component.text.length != 8) {
       ValidationInfo("Job ID length must be 8 characters.", component)
@@ -213,8 +331,13 @@ fun validateJobId(component: JTextField) : ValidationInfo? {
   }
 }
 
+/**
+ * Validate the USS file name is it already exist
+ * @param component the component to check the USS file name and show the warning for
+ * @param selectedNode the selected node to check whether it is a file or a directory
+ */
 fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData): ValidationInfo? {
-  val text : String = component.text
+  val text: String = component.text
   val childrenNodesFromParent = selectedNode.node.parent?.children
   when (selectedNode.node) {
     is UssFileNode -> {
@@ -227,7 +350,10 @@ fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeDa
     is UssDirNode -> {
       childrenNodesFromParent?.forEach {
         if (it is UssDirNode && text == it.value.path.split("/").last()) {
-          return ValidationInfo("Directory name already exists. Please specify another directory name.", component).asWarning()
+          return ValidationInfo(
+            "Directory name already exists. Please specify another directory name.",
+            component
+          ).asWarning()
         }
       }
     }
@@ -235,19 +361,18 @@ fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeDa
   return null
 }
 
-private val firstSymbol = "A-Za-z\$@#"
-private val remainingSymbol = firstSymbol + "0-9\\-"
-private val partPattern = "([$firstSymbol][$remainingSymbol]{0,7})"
-private val notEmptyErrorText = "Dataset name must not be empty"
-private val segmentLengthErrorText = "Each name segment (qualifier) is 1 to 8 characters"
-private val charactersLengthExceededErrorText = "Dataset name cannot exceed 44 characters"
-private val segmentCharsErrorText =
-  "$segmentLengthErrorText," +
-      "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
-      "\nThe remaining seven characters are either alphabetic," +
-      "\nnumeric (0 - 9), national, a hyphen (-)." +
-      "\nName segments are separated by a period (.)"
-
+/**
+ * Validate the dataset to match the specified rules
+ * @param datasetName the dataset name
+ * @param datasetOrganization the dataset organization
+ * @param primaryAllocation the primary allocation
+ * @param secondaryAllocation the secondary allocation
+ * @param directoryBlocks the directory blocks
+ * @param recordLength the record length for the dataset
+ * @param blockSize the block size
+ * @param averageBlockLength the average block length
+ * @param advancedParameters some advanced parameters
+ */
 fun validateDataset(
   datasetName: JTextField,
   datasetOrganization: DatasetOrganization,
@@ -258,8 +383,7 @@ fun validateDataset(
   blockSize: JTextField,
   averageBlockLength: JTextField,
   advancedParameters: JTextField
-) : ValidationInfo? {
-
+): ValidationInfo? {
   return validateDatasetNameOnInput(datasetName) ?: validateForGreaterValue(primaryAllocation, 1)
   ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterValue(directoryBlocks, 1).takeIf {
     datasetOrganization == DatasetOrganization.PO
@@ -267,6 +391,10 @@ fun validateDataset(
   ?: validateForPositiveInteger(averageBlockLength) ?: validateVolser(advancedParameters)
 }
 
+/**
+ * Validate the dataset name on input
+ * @param component the component text to validate the dataset name
+ */
 fun validateDatasetNameOnInput(component: JTextField): ValidationInfo? {
   val text = component.text.trim()
   val length = text.length
@@ -284,9 +412,10 @@ fun validateDatasetNameOnInput(component: JTextField): ValidationInfo? {
   }
 }
 
-
-private val volserRegex = Regex("[A-Za-z0-9]{1,6}")
-
+/**
+ * Validate the VOLSER value
+ * @param component the component with the VOLSER to validate it and show the warning for
+ */
 fun validateVolser(component: JTextField): ValidationInfo? {
   return if (component.text.isNotBlank() && !component.text.matches(volserRegex)) {
     ValidationInfo("Enter a valid volume serial", component)
@@ -295,21 +424,31 @@ fun validateVolser(component: JTextField): ValidationInfo? {
   }
 }
 
+/**
+ * Validate the number to be positive
+ * @param component the component with the number to validate
+ */
 fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
   return validateForGreaterValue(component, 0)
 }
 
+/**
+ * Validate the component value is greater than the provided value
+ * @param component the component to check the value
+ * @param value the value to check that the component's value is greater
+ */
 fun validateForGreaterValue(component: JTextField, value: Int): ValidationInfo? {
-  return if (component.text.toIntOrNull() ?: -1 < value) {
+  return if ((component.text.toIntOrNull() ?: -1) < value) {
     ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number grater than $value", component)
   } else {
     null
   }
 }
 
-private val firstLetterRegex = Regex("[A-Z@\$#a-z]")
-private val memberRegex = Regex("[A-Z@$#a-z][A-Z@#\$a-z0-9]{0,7}")
-
+/**
+ * Validate that the dataset member name matches the provided rules
+ * @param component the component to check the dataset member name and show the warning for
+ */
 fun validateMemberName(component: JTextField): ValidationInfo? {
   return if (component.text.length > 8) {
     ValidationInfo("Member name must not exceed 8 characters.", component)
@@ -321,7 +460,3 @@ fun validateMemberName(component: JTextField): ValidationInfo? {
     null
   }
 }
-
-
-
-

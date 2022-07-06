@@ -26,7 +26,8 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 
-class UssFileContentSynchronizerFactory: ContentSynchronizerFactory {
+// TODO: doc
+class UssFileContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return UssFileContentSynchronizer(dataOpsManager)
   }
@@ -34,7 +35,7 @@ class UssFileContentSynchronizerFactory: ContentSynchronizerFactory {
 
 class UssFileContentSynchronizer(
   dataOpsManager: DataOpsManager
-): RemoteAttributedContentSynchronizer<RemoteUssAttributes>(dataOpsManager) {
+) : RemoteAttributedContentSynchronizer<RemoteUssAttributes>(dataOpsManager) {
 
   override val vFileClass = MFVirtualFile::class.java
 
@@ -87,7 +88,8 @@ class UssFileContentSynchronizer(
         val connectionConfig = requester.connectionConfig
         val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
 
-        val newContent = if (xIBMDataType.type === XIBMDataType.Type.BINARY) newContentBytes else newContentBytes.addNewLine()
+        val newContent =
+          if (xIBMDataType.type === XIBMDataType.Type.BINARY) newContentBytes else newContentBytes.addNewLine()
 
         val response = apiWithBytesConverter<DataAPI>(connectionConfig).writeToUssFile(
           authorizationToken = connectionConfig.authToken,

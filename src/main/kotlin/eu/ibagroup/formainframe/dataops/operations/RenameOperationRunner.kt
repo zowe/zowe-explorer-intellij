@@ -31,6 +31,7 @@ class RenameOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
+// TODO: doc
 class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : OperationRunner<RenameOperation, Unit> {
 
   override val operationClass = RenameOperation::class.java
@@ -67,7 +68,11 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               throw CallException(response, "Unable to rename the selected dataset")
             }
           } catch (e: Throwable) {
-            if (e is CallException) { throw e } else { throw RuntimeException(e) }
+            if (e is CallException) {
+              throw e
+            } else {
+              throw RuntimeException(e)
+            }
           }
         }
       }
@@ -93,7 +98,11 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               throw CallException(response, "Unable to rename the selected member")
             }
           } catch (e: Throwable) {
-            if (e is CallException) { throw e } else { throw RuntimeException(e) }
+            if (e is CallException) {
+              throw e
+            } else {
+              throw RuntimeException(e)
+            }
           }
         }
       }
@@ -115,7 +124,11 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               throw CallException(response, "Unable to rename the selected file or directory")
             }
           } catch (e: Throwable) {
-            if (e is CallException) { throw e } else { throw RuntimeException(e) }
+            if (e is CallException) {
+              throw e
+            } else {
+              throw RuntimeException(e)
+            }
           }
         }
       }

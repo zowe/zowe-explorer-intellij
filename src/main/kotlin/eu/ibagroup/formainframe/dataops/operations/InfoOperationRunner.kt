@@ -18,8 +18,8 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.SystemsApi
 import eu.ibagroup.r2z.SystemsResponse
-import okhttp3.Credentials
 
+// TODO: doc
 class InfoOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return InfoOperationRunner()

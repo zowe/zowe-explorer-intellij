@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.dataops
 
+// TODO: doc
 interface DataOpsComponentFactory<Component> {
 
   fun buildComponent(dataOpsManager: DataOpsManager): Component

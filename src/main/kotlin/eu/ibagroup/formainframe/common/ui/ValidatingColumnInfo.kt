@@ -16,8 +16,9 @@ import javax.swing.JComponent
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
+// TODO: doc
 abstract class ValidatingColumnInfo<Item>(
-    name: String
+  name: String
 ) : ColumnInfo<Item, String>(name) {
 
   open fun getValidatingCellRenderer(item: Item): ValidatingCellRenderer<Item> {

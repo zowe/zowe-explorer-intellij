@@ -19,6 +19,7 @@ import eu.ibagroup.formainframe.utils.findAnyNullable
 import retrofit2.Call
 import java.io.IOException
 
+// TODO: doc Valiantsin
 abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
   abstract fun buildCall(

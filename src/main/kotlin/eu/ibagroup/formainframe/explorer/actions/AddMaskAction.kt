@@ -15,10 +15,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 
+/** Action to add USS or z/OS mask */
 class AddMaskAction : AnAction() {
+
+  /** Add mask when the dialog is fulfilled    */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
 
@@ -28,7 +30,7 @@ class AddMaskAction : AnAction() {
     if (dialog.showAndGet()) {
       val state = dialog.state
       when (state.type) {
-        MaskState.ZOS -> ws.addMask(DSMask(state.mask.toUpperCase(), mutableListOf(), "", state.isSingle))
+        MaskState.ZOS -> ws.addMask(DSMask(state.mask.uppercase(), mutableListOf(), "", state.isSingle))
         MaskState.USS -> ws.addUssPath(UssPath(state.mask))
       }
     }
@@ -38,6 +40,7 @@ class AddMaskAction : AnAction() {
     return true
   }
 
+  // TODO: doc, why getUnits.size == 1?
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -46,8 +49,10 @@ class AddMaskAction : AnAction() {
     e.presentation.isEnabledAndVisible = getUnits(view).size == 1
   }
 
-  private fun getUnits(view: GlobalFileExplorerView): List<FilesWorkingSet> {
-    return view.mySelectedNodesData.map { it.node }
+  // TODO: doc
+  private fun getUnits(view: FileExplorerView): List<FilesWorkingSet> {
+    return view.mySelectedNodesData
+      .map { it.node }
       .filterIsInstance<ExplorerUnitTreeNodeBase<*, FilesWorkingSet>>()
       .map { it.unit }
       .distinct()

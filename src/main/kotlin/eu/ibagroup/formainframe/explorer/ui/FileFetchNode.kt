@@ -26,6 +26,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
+// TODO: doc
+/** Another unnecessary abstraction (?) to represent tree node */
 abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit>(
   value: Value,
   project: Project,
@@ -45,7 +47,6 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   private val loadingNode by lazy { listOf(LoadingNode(notNullProject, this, explorer, treeStructure)) }
 
-  //  private val errorNode by lazy { listOf(ErrorNode(notNullProject, this, explorer, treeStructure, text = fileFetchProvider.getFetchedErrorMessage())) }
   private fun errorNode(text: String): List<ErrorNode> {
     return listOf(ErrorNode(notNullProject, this, explorer, treeStructure, text = text))
   }

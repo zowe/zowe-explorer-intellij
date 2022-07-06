@@ -15,10 +15,11 @@ import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.explorer.Explorer
 
+// TODO: doc Arseni
 data class ForceRenameOperation(
-    val file: VirtualFile,
-    val attributes: FileAttributes,
-    val newName: String,
-    val override: Boolean,
-    val explorer: Explorer<*>?
+  val file: VirtualFile,
+  val attributes: FileAttributes,
+  val newName: String,
+  val override: Boolean,
+  val explorer: Explorer<*>?
 ) : UnitOperation

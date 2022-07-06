@@ -22,6 +22,7 @@ import eu.ibagroup.formainframe.utils.validateJobFilter
 import javax.swing.JComponent
 import javax.swing.JTextField
 
+// TODO: doc Valiantsin
 class JobsWsDialog(
   crudable: Crudable,
   state: JobsWorkingSetDialogState

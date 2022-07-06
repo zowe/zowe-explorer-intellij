@@ -19,6 +19,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service
 
+// TODO: doc Valiantsin
 class GetFilePropertiesAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -59,9 +60,9 @@ class GetFilePropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-      && (node is UssFileNode
-      || node is FileLikeDatasetNode
-      || node is LibraryNode
-      || node is UssDirNode)
+            && (node is UssFileNode
+            || node is FileLikeDatasetNode
+            || node is LibraryNode
+            || node is UssDirNode)
   }
 }

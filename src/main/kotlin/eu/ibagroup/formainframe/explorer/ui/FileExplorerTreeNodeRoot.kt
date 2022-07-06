@@ -16,7 +16,12 @@ import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 
-class FileExplorerTreeNodeRoot(explorer: Explorer<FilesWorkingSet>, project: Project, treeStructure: ExplorerTreeStructureBase) :
+/** File Explorer root node, where the information about the connection is situated */
+class FileExplorerTreeNodeRoot(
+  explorer: Explorer<FilesWorkingSet>,
+  project: Project,
+  treeStructure: ExplorerTreeStructureBase
+) :
   ExplorerTreeNode<Explorer<FilesWorkingSet>>(explorer, project, null, explorer, treeStructure) {
 
   override fun isAlwaysExpand(): Boolean {

@@ -14,14 +14,17 @@ import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.ReloadableEventHandler
 import eu.ibagroup.formainframe.utils.crudable.getAll
+import eu.ibagroup.formainframe.utils.isThe
+import eu.ibagroup.formainframe.utils.isTheSameAs
 import kotlin.streams.toList
 
+// TODO: doc
 data class SandboxState(
   val configState: ConfigState = ConfigState(),
   val credentials: MutableList<Credentials> = mutableListOf()

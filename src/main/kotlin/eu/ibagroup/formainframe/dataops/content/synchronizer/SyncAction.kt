@@ -22,6 +22,7 @@ import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 
+// TODO: doc
 class SyncAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -50,7 +51,7 @@ class SyncAction : DumbAwareAction() {
       return
     }
     e.presentation.isEnabledAndVisible = !(editor.document.text.toByteArray() contentEquals file.contentsToByteArray())
-        && !service<ConfigService>().isAutoSyncEnabled.get()
+            && !service<ConfigService>().isAutoSyncEnabled.get()
   }
 
   private fun makeDisabled(e: AnActionEvent) {

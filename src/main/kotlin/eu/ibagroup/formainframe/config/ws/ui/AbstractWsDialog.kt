@@ -18,7 +18,6 @@ import com.intellij.ui.layout.PropertyBinding
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.panel
 import com.intellij.util.containers.isEmpty
-import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.common.ui.toolbarTable
@@ -35,7 +34,8 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import kotlin.streams.toList
 
-abstract class AbstractWsDialog<WSConfig: WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
+// TODO: doc Valiantsin
+abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
   crudable: Crudable,
   wsdStateClass: Class<out WSDState>,
   override var state: WSDState,

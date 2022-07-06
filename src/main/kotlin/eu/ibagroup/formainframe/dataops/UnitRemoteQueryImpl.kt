@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
+// TODO: doc
 data class UnitRemoteQueryImpl<R>(
   override val request: R,
   override val connectionConfig: ConnectionConfig

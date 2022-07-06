@@ -12,5 +12,6 @@ package eu.ibagroup.formainframe.dataops.operations
 
 import eu.ibagroup.formainframe.dataops.DataOpsComponentFactory
 
+// TODO: doc
 interface OperationRunnerFactory : DataOpsComponentFactory<OperationRunner<*, *>> {
 }

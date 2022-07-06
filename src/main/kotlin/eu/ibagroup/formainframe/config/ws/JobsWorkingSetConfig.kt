@@ -13,16 +13,21 @@ package eu.ibagroup.formainframe.config.ws
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.isTheSameAs
 
-class JobsWorkingSetConfig: WorkingSetConfig {
+// TODO: doc Valiantsin
+class JobsWorkingSetConfig : WorkingSetConfig {
 
   @Column
   var jobsFilters: MutableCollection<JobsFilter> = mutableListOf()
 
   constructor() : super()
 
-  constructor(name: String, connectionConfigUuid: String, jobsFilters: MutableCollection<JobsFilter>) : super(name, connectionConfigUuid) {
+  constructor(name: String, connectionConfigUuid: String, jobsFilters: MutableCollection<JobsFilter>) : super(
+    name,
+    connectionConfigUuid
+  ) {
     this.jobsFilters = jobsFilters
   }
+
   constructor(
     uuid: String,
     name: String,

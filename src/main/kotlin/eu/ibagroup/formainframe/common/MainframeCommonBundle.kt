@@ -16,6 +16,7 @@ import java.util.function.Supplier
 
 const val BUNDLE = "messages.CommonBundle"
 
+// TODO: doc
 class MainframeCommonBundle private constructor() : DynamicBundle(BUNDLE) {
   companion object {
     @JvmStatic
@@ -23,12 +24,16 @@ class MainframeCommonBundle private constructor() : DynamicBundle(BUNDLE) {
   }
 }
 
-fun message(@PropertyKey(resourceBundle = BUNDLE) key: String,
-            vararg params: Any): String {
+fun message(
+  @PropertyKey(resourceBundle = BUNDLE) key: String,
+  vararg params: Any
+): String {
   return MainframeCommonBundle.instance.getMessage(key, *params)
 }
 
-fun lazyMessage(@PropertyKey(resourceBundle = BUNDLE) key: String,
-                vararg params: Any): Supplier<String> {
+fun lazyMessage(
+  @PropertyKey(resourceBundle = BUNDLE) key: String,
+  vararg params: Any
+): Supplier<String> {
   return MainframeCommonBundle.instance.getLazyMessage(key, *params)
 }

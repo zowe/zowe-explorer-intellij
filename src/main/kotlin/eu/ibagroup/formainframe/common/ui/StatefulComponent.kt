@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.common.ui
 
+// TODO: doc
 interface StatefulComponent<T : Any> {
 
   var state: T

@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops.attributes
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 
+// TODO: doc Valiantsin
 class JobsRequester(
   override val connectionConfig: ConnectionConfig,
   val jobsFilter: JobsFilter

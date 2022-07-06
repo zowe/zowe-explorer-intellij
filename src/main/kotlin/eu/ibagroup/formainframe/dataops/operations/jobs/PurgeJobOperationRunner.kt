@@ -14,6 +14,7 @@ import eu.ibagroup.r2z.CancelJobPurgeOutRequest
 import eu.ibagroup.r2z.JESApi
 import retrofit2.Response
 
+// TODO: doc Nikita
 class PurgeJobOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return PurgeJobOperationRunner()
@@ -33,7 +34,7 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
   override fun run(operation: PurgeJobOperation, progressIndicator: ProgressIndicator): CancelJobPurgeOutRequest {
     progressIndicator.checkCanceled()
 
-    val response : Response<CancelJobPurgeOutRequest> = when (operation.request) {
+    val response: Response<CancelJobPurgeOutRequest> = when (operation.request) {
       is BasicPurgeJobParams -> {
         api<JESApi>(operation.connectionConfig).cancelJobPurgeOutRequest(
           basicCredentials = operation.connectionConfig.authToken,
@@ -62,7 +63,7 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
 
 open class PurgeJobOperationParams
 
-class BasicPurgeJobParams(val jobName: String, val jobId: String)  : PurgeJobOperationParams()
+class BasicPurgeJobParams(val jobName: String, val jobId: String) : PurgeJobOperationParams()
 
 class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams()
 

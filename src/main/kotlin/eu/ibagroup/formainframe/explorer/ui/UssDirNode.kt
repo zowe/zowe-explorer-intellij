@@ -14,7 +14,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -24,10 +23,10 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
+// TODO: doc
 private fun withSlashIfNeeded(ussPath: UssPath): String {
   return if (ussPath.path == "/") {
     ussPath.path
@@ -36,6 +35,7 @@ private fun withSlashIfNeeded(ussPath: UssPath): String {
   }
 }
 
+/** USS directory representation in the explorer tree */
 class UssDirNode(
   ussPath: UssPath,
   project: Project,
@@ -49,6 +49,7 @@ class UssDirNode(
 ), UssNode, RefreshableNode {
 
   override fun init() {}
+
   init {
     super.init()
   }

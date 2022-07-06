@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops.services
 import com.intellij.openapi.application.ApplicationManager
 import java.util.*
 
+// TODO: doc Valiantsin
 interface ErrorSeparatorService {
   companion object {
     @JvmStatic

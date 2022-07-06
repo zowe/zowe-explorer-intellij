@@ -13,7 +13,7 @@ package eu.ibagroup.formainframe.analytics
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.analytics.events.AnalyticsEvent
 
-
+// TODO: doc Valiantsin
 interface AnalyticsService {
 
   companion object {

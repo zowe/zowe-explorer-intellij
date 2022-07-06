@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
 import eu.ibagroup.r2z.XIBMDataType
 
+// TODO: doc
 class RemoteUssAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteUssAttributesService(dataOpsManager)
@@ -89,7 +90,7 @@ class RemoteUssAttributesService(
   }
 
   fun updateWritableFlagAfterContentChanged(vFile: VirtualFile, attributes: RemoteUssAttributes) {
-    if(attributes.contentMode.type == XIBMDataType.Type.BINARY) {
+    if (attributes.contentMode.type == XIBMDataType.Type.BINARY) {
       vFile.isWritable = false
     } else {
       vFile.isWritable = attributes.isWritable

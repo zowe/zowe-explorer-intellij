@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.dataops
 
+// TODO: doc
 interface Query<Request, Result> : Operation<Result> {
 
   val request: Request
