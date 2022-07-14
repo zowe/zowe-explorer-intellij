@@ -112,10 +112,13 @@ class FileExplorerViewDropTarget(
             else null
           }.toTypedArray()
         CommonDataKeys.VIRTUAL_FILE_ARRAY.name -> {
-          if (sourcesTargetBounds.v4 == myTree) {
-            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2).file)
+          // TODO: remove when the support of IntelliJ <= 213 is closed
+          if (sourcesTargetBounds.fourth == myTree) {
+            // TODO: remove when the support of IntelliJ <= 213 is closed
+            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file)
           } else {
-            arrayOf(sourcesTargetBounds.v2.getVirtualFile())
+            // TODO: remove when the support of IntelliJ <= 213 is closed
+            arrayOf(sourcesTargetBounds.second.getVirtualFile())
           }
         }
         IS_DRAG_AND_DROP_KEY.name -> true
@@ -129,7 +132,8 @@ class FileExplorerViewDropTarget(
         else -> null
       }
     }
-    if (isCopiedFromRemote && isCopiedToRemote && !isCrossSystemCopy(sourceTreePaths, sourcesTargetBounds.v2)) {
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    if (isCopiedFromRemote && isCopiedToRemote && !isCrossSystemCopy(sourceTreePaths, sourcesTargetBounds.second)) {
       if (cutProvider.isCutEnabled(copyCutContext)) {
         cutProvider.performCut(copyCutContext)
       }
@@ -147,9 +151,11 @@ class FileExplorerViewDropTarget(
 
   override fun update(event: DnDEvent): Boolean {
     val sourcesTargetBounds = getSourcesTargetAndBounds(event) ?: return false
-    val sources = sourcesTargetBounds.v1 ?: return false
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    val sources = sourcesTargetBounds.first ?: return false
     if (
-      ArrayUtilRt.find(sources, sourcesTargetBounds.v2) != -1
+      // TODO: remove when the support of IntelliJ <= 213 is closed
+      ArrayUtilRt.find(sources, sourcesTargetBounds.second) != -1
       || !FileCopyPasteUtil.isFileListFlavorAvailable(event)
     ) {
       return false
@@ -158,16 +164,18 @@ class FileExplorerViewDropTarget(
     //    val pasteEnabled = copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
     //    val pasteEnabled = false
     val isCopiedFromRemote = event.attachedObject is FileExplorerViewDragSource.ExplorerTransferableWrapper
-    val pasteEnabled = if (sourcesTargetBounds.v4 == myTree)
-      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.v2), sources.toList())
-    else if (isCopiedFromRemote && sourcesTargetBounds.v4 === getProjectTree()) {
-      val vFile = sourcesTargetBounds.v2.getVirtualFile()
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    val pasteEnabled = if (sourcesTargetBounds.fourth == myTree)
+      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
+    else if (isCopiedFromRemote && sourcesTargetBounds.fourth === getProjectTree()) {
+      val vFile = sourcesTargetBounds.second.getVirtualFile()
       if (vFile == null) {
         false
       } else {
         copyPasteSupport.isPastePossible(listOf(vFile), sources.map { makeNodeDataFromTreePath(explorer, it) })
       }
-    } else if (!isCopiedFromRemote && sourcesTargetBounds.v4 == myTree) {
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    } else if (!isCopiedFromRemote && sourcesTargetBounds.fourth == myTree) {
       val sourceFiles = sources.mapNotNull { it?.getVirtualFile() }
       val target =
         makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file?.let { listOf(it) } ?: emptyList()
@@ -177,7 +185,8 @@ class FileExplorerViewDropTarget(
     event.isDropPossible = pasteEnabled
     if (pasteEnabled) {
       event.setHighlighting(
-        RelativeRectangle(sourcesTargetBounds.v4, sourcesTargetBounds.v3),
+        // TODO: remove when the support of IntelliJ <= 213 is closed
+        RelativeRectangle(sourcesTargetBounds.fourth, sourcesTargetBounds.third),
         DnDEvent.DropTargetHighlightingType.RECTANGLE
       )
     }
