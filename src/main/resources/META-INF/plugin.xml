@@ -460,7 +460,9 @@ Example of how to see the output:<br/>
         <action id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"
                 class="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"
                 icon="AllIcons.Actions.BuildLoadChanges"
-                text="Sync Data"/>
+                text="Sync Data">
+            <keyboard-shortcut first-keystroke="control shift S" keymap="$default"/>
+        </action>
 
         <group id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncActionGroup" popup="true">
             <reference id="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncAction"/>
