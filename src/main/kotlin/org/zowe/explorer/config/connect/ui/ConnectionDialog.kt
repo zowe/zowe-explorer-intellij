@@ -25,12 +25,19 @@ import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.InfoOperation
-import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.runTask
+import org.zowe.explorer.utils.validateConnectionName
+import org.zowe.explorer.utils.validateForBlank
+import org.zowe.explorer.utils.validateZosmfUrl
 import org.zowe.kotlinsdk.CodePage
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
-import javax.swing.*
+import java.util.*
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPasswordField
+import javax.swing.JTextField
 
 class ConnectionDialog(
   private val crudable: Crudable,
@@ -52,7 +59,11 @@ class ConnectionDialog(
         test = { state ->
           val throwable = runTask(title = "Testing Connection to ${state.connectionConfig.url}", project = project) {
             return@runTask try {
-              CredentialService.instance.setCredentials(connectionConfigUuid = state.connectionUuid, username = state.username, password = state.password)
+              CredentialService.instance.setCredentials(
+                connectionConfigUuid = state.connectionUuid,
+                username = state.username,
+                password = state.password
+              )
               val info = service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig), it)
               state.zVersion = info.getZOSVersion()
               null
@@ -65,7 +76,8 @@ class ConnectionDialog(
             val confirmMessage = "Do you want to add it anyway?"
             val tMessage = throwable.message?.let {
               if (it.contains("Exception")) {
-                it.substring(it.lastIndexOf(":") + 2).capitalize()
+                it.substring(it.lastIndexOf(":") + 2)
+                  .replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString() }
               } else {
                 it
               }
@@ -103,7 +115,7 @@ class ConnectionDialog(
   private lateinit var sslCheckbox: JCheckBox
 
   init {
-    setResizable(false)
+    isResizable = false
   }
 
   override fun createCenterPanel(): JComponent {
@@ -116,7 +128,7 @@ class ConnectionDialog(
             .withValidationOnInput {
               validateConnectionName(
                 it,
-                if (initialState.connectionName.isNotBlank()) initialState.connectionName else null,
+                initialState.connectionName.ifBlank { null },
                 crudable
               )
             }
@@ -127,7 +139,6 @@ class ConnectionDialog(
         } else {
           JBTextField(state.connectionName).apply { isEditable = false }()
         }
-
       }
       row {
         label("Connection URL")
@@ -158,14 +169,14 @@ class ConnectionDialog(
       row {
         label("Code Page")
         comboBox(
-            model = CollectionComboBoxModel(
-                listOf(
-                    CodePage.IBM_1025,
-                    CodePage.IBM_1047
+          model = CollectionComboBoxModel(
+            listOf(
+              CodePage.IBM_1025,
+              CodePage.IBM_1047
 
-                )
-            ),
-            prop = state::codePage
+            )
+          ),
+          prop = state::codePage
         )
       }
       if (state.mode == DialogMode.UPDATE) {

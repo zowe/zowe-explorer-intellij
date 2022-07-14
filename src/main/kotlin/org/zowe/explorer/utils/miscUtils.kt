@@ -52,7 +52,7 @@ inline fun <T, R> runIfPresent(optional: Optional<out T>, block: (T) -> R): R? {
   return optional.runIfPresent(block)
 }
 
-val <E> E?.optional: Optional<E>
+val <E : Any> E?.optional: Optional<E>
   inline get() = Optional.ofNullable(this)
 
 inline fun <E : Any?> List<E>.indexOf(predicate: (E) -> Boolean): Int? {

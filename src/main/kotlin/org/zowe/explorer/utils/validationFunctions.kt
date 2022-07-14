@@ -22,6 +22,7 @@ import org.zowe.explorer.explorer.ui.UssFileNode
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.kotlinsdk.DatasetOrganization
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -67,8 +68,8 @@ fun <WSConfig: WorkingSetConfig> validateWorkingSetName(
 }
 
 fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
-  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.toUpperCase())
-      || ws.ussPaths.map { it.path.toUpperCase() }.contains(component.text.toUpperCase())
+  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.uppercase(Locale.getDefault()))
+      || ws.ussPaths.map { it.path.uppercase(Locale.getDefault()) }.contains(component.text.uppercase(Locale.getDefault()))
 
   return if (maskAlreadyExists) {
     return ValidationInfo(
@@ -262,11 +263,10 @@ fun validateDataset(
 ) : ValidationInfo? {
 
   return validateDatasetNameOnInput(datasetName) ?: validateForGreaterValue(primaryAllocation, 1)
-  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForPositiveInteger(directoryBlocks).takeIf {
+  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterValue(directoryBlocks, 1).takeIf {
     datasetOrganization == DatasetOrganization.PO
-  } ?: validateForPositiveInteger(recordLength) ?: validateForPositiveInteger(blockSize) ?: validateForPositiveInteger(
-    averageBlockLength
-  ) ?: validateVolser(advancedParameters)
+  } ?: validateForGreaterValue(recordLength, 1) ?: validateForPositiveInteger(blockSize)
+  ?: validateForPositiveInteger(averageBlockLength) ?: validateVolser(advancedParameters)
 }
 
 fun validateDatasetNameOnInput(component: JTextField): ValidationInfo? {

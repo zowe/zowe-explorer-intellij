@@ -432,7 +432,9 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
         <action id="org.zowe.explorer.dataops.content.synchronizer.SyncAction"
                 class="org.zowe.explorer.dataops.content.synchronizer.SyncAction"
                 icon="AllIcons.Actions.BuildLoadChanges"
-                text="Sync Data"/>
+                text="Sync Data">
+            <keyboard-shortcut first-keystroke="control shift S" keymap="$default"/>
+        </action>
 
         <action id="org.zowe.explorer.zowe.actions.UpdateZoweConfigAction"
                 class="org.zowe.explorer.zowe.actions.UpdateZoweConfigAction"

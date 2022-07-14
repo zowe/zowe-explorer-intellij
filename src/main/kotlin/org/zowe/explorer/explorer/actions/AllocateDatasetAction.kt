@@ -126,7 +126,7 @@ private fun String.toNullIfEmpty(): String? {
 }
 
 private fun postProcessState(state: DatasetAllocationParams): DatasetAllocationParams {
-  if (state.allocationParameters.datasetOrganization != DatasetOrganization.PO) {
+  if (state.allocationParameters.datasetOrganization == DatasetOrganization.PS) {
     state.allocationParameters.directoryBlocks = null
   }
   if (state.allocationParameters.datasetOrganization == DatasetOrganization.POE) {
@@ -168,7 +168,7 @@ class AllocateLikeAction : AnAction() {
       allocationParameters.dsnType = datasetInfo.dsnameType
       allocationParameters.primaryAllocation = datasetInfo.sizeInTracks ?: 100
       allocationParameters.secondaryAllocation = (datasetInfo.sizeInTracks ?: 100) / 2
-      allocationParameters.directoryBlocks = if (datasetInfo.datasetOrganization == DatasetOrganization.PO) {
+      allocationParameters.directoryBlocks = if (datasetInfo.datasetOrganization == DatasetOrganization.PO || datasetInfo.datasetOrganization == DatasetOrganization.POE) {
         (datasetInfo.sizeInTracks ?: 100) / 3
       } else {
         0
