@@ -60,7 +60,8 @@ class GlobalExplorerViewDropTarget(
           if (sourcesTargetBounds.fourth == myTree) {
             arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file)
           } else {
-            arrayOf(sourcesTargetBounds.v2.getVirtualFile())
+            // TODO: remove when the support of IntelliJ <= 213 is closed
+            arrayOf(sourcesTargetBounds.second.getVirtualFile())
           }
         }
         IS_DRAG_AND_DROP_KEY.name -> true
@@ -106,7 +107,7 @@ class GlobalExplorerViewDropTarget(
     if (pasteEnabled) {
       // TODO: remove when the support of IntelliJ <= 213 is closed
       event.setHighlighting(
-        RelativeRectangle(sourcesTargetBounds.v4, sourcesTargetBounds.v3),
+        RelativeRectangle(sourcesTargetBounds.fourth, sourcesTargetBounds.third),
         DnDEvent.DropTargetHighlightingType.RECTANGLE
       )
     }
