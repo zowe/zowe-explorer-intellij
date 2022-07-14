@@ -60,6 +60,7 @@ class GlobalExplorerViewDropTarget(
           if (sourcesTargetBounds.fourth == myTree) {
             arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file)
           } else {
+            // TODO: remove when the support of IntelliJ <= 213 is closed
             arrayOf(sourcesTargetBounds.second.getVirtualFile())
           }
         }
