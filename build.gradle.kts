@@ -77,6 +77,7 @@ tasks {
         <li>New member in PDS is not created if right click on PDS content (not on PDS's name)</li>
         <li>https://github.com/zowe/zowe-explorer-intellij/issues/13</li>
         <li>Cannot undo changes in file after saving it</li>
+        <li>https://github.com/zowe/zowe-explorer-intellij/issues/68</li>
       </ul>"""
     )
   }
