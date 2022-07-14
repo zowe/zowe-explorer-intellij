@@ -29,6 +29,7 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 import java.awt.Component
+import java.util.*
 import javax.swing.*
 
 class ConnectionDialog(
@@ -64,7 +65,8 @@ class ConnectionDialog(
             val confirmMessage = "Do you want to add it anyway?"
             val tMessage = throwable.message?.let {
               if (it.contains("Exception")) {
-                it.substring(it.lastIndexOf(":") + 2).capitalize()
+                it.substring(it.lastIndexOf(":") + 2)
+                  .replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString() }
               } else {
                 it
               }
@@ -102,7 +104,7 @@ class ConnectionDialog(
   private lateinit var sslCheckbox: JCheckBox
 
   init {
-    setResizable(false)
+    isResizable = false
   }
 
   override fun createCenterPanel(): JComponent {
@@ -114,7 +116,7 @@ class ConnectionDialog(
           .withValidationOnInput {
             validateConnectionName(
               it,
-              if (initialState.connectionName.isNotBlank()) initialState.connectionName else null,
+              initialState.connectionName.ifBlank { null },
               crudable
             )
           }

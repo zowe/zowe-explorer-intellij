@@ -47,6 +47,11 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
       is RemoteDatasetAttributes -> {
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
+        if (operation.file.children != null) {
+          operation.file.children.forEach { it.isWritable = false }
+        } else {
+          operation.file.isWritable = false
+        }
         var throwable: Throwable? = null
         attr.requesters.stream().map {
           try {
@@ -71,6 +76,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
       is RemoteMemberAttributes -> {
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
+        operation.file.isWritable = false
         val libraryAttributes = attr.getLibraryAttributes(dataOpsManager)
         if (libraryAttributes != null) {
           var throwable: Throwable? = null
@@ -99,6 +105,11 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
       is RemoteUssAttributes -> {
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
+        if(operation.file.isDirectory) {
+          operation.file.children.forEach { it.isWritable = false }
+        } else {
+          operation.file.isWritable = false
+        }
         var throwable: Throwable? = null
         attr.requesters.stream().map {
           try {

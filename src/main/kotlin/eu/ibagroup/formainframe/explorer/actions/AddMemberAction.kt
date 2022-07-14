@@ -35,11 +35,13 @@ class AddMemberAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
-    val currentNode = view.mySelectedNodesData[0].node
-    if (currentNode is ExplorerUnitTreeNodeBase<*, *>
-      && currentNode.unit is FilesWorkingSet
-      && currentNode is FetchNode
-    ) {
+    var currentNode = view.mySelectedNodesData[0].node
+    DataOpsManager.instance
+    if (currentNode !is FetchNode) {
+      currentNode = currentNode.parent ?: return
+      if (currentNode !is LibraryNode) return
+    }
+    if ((currentNode as ExplorerUnitTreeNodeBase<*, *>).unit is FilesWorkingSet) {
       val connectionConfig = currentNode.unit.connectionConfig
       val dataOpsManager = currentNode.explorer.componentManager.service<DataOpsManager>()
       if (currentNode is LibraryNode && connectionConfig != null) {

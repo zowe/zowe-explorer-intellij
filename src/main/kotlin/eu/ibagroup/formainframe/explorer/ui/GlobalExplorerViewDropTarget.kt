@@ -16,8 +16,6 @@ import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.ProjectViewImpl
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode
-import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -48,7 +46,9 @@ class GlobalExplorerViewDropTarget(
 
 //    val pasteProvider = copyPasteSupport.getPasteProvider(listOf(sourcesTargetBounds.second))
     val pasteProvider = copyPasteSupport.pasteProvider
+    // TODO: remove when the support of IntelliJ <= 213 is closed
     val cutProvider = copyPasteSupport.getCutProvider(sourcesTargetBounds.first?.toList() ?: listOf())
+    // TODO: remove when the support of IntelliJ <= 213 is closed
     val sourceTreePaths = sourcesTargetBounds.first?.toList() ?: listOf()
     val copyCutContext = DataContext {
       when (it) {
@@ -56,10 +56,11 @@ class GlobalExplorerViewDropTarget(
         ExplorerDataKeys.NODE_DATA_ARRAY.name -> sourceTreePaths
           .map { treePath -> makeNodeDataFromTreePath(explorer, treePath) }.toTypedArray()
         CommonDataKeys.VIRTUAL_FILE_ARRAY.name -> {
+          // TODO: remove when the support of IntelliJ <= 213 is closed
           if (sourcesTargetBounds.fourth == myTree) {
             arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file)
           } else {
-            arrayOf(sourcesTargetBounds.second.getVirtualFile())
+            arrayOf(sourcesTargetBounds.v2.getVirtualFile())
           }
         }
         IS_DRAG_AND_DROP_KEY.name -> true
@@ -81,27 +82,31 @@ class GlobalExplorerViewDropTarget(
 
   override fun update(event: DnDEvent): Boolean {
     val sourcesTargetBounds = getSourcesTargetAndBounds(event) ?: return false
+    // TODO: remove when the support of IntelliJ <= 213 is closed
     val sources = sourcesTargetBounds.first ?: return false
-    if (ArrayUtilRt.find(sources, sourcesTargetBounds.second) != -1 || !FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    val hasSecondValueInSources = ArrayUtilRt.find(sources, sourcesTargetBounds.second)
+    if (hasSecondValueInSources != -1 || !FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
       return false
     }
 
-//    val pasteEnabled = copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
-//    val pasteEnabled = false
-    val pasteEnabled = if (sourcesTargetBounds.fourth == myTree)
-      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
-    else {
-      val vFile = sourcesTargetBounds.second.getVirtualFile()
-      if (vFile == null) {
-        false
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    val pasteEnabled =
+      if (sourcesTargetBounds.fourth == myTree) {
+        copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
       } else {
-        copyPasteSupport.isPastePossible(listOf(vFile), sources.map { makeNodeDataFromTreePath(explorer, it) })
+        val vFile = sourcesTargetBounds.second.getVirtualFile()
+        if (vFile == null) {
+          false
+        } else {
+          copyPasteSupport.isPastePossible(listOf(vFile), sources.map { makeNodeDataFromTreePath(explorer, it) })
+        }
       }
-    }
     event.isDropPossible = pasteEnabled
     if (pasteEnabled) {
+      // TODO: remove when the support of IntelliJ <= 213 is closed
       event.setHighlighting(
-        RelativeRectangle(sourcesTargetBounds.fourth, sourcesTargetBounds.third),
+        RelativeRectangle(sourcesTargetBounds.v4, sourcesTargetBounds.v3),
         DnDEvent.DropTargetHighlightingType.RECTANGLE
       )
     }

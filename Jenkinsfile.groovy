@@ -63,8 +63,7 @@ pipeline{
                     } else if(gitlabBranch.equals("zowe-development")) {
                         jiraTicket = 'zowe-development'
                     } else if(gitlabBranch.contains("release")){
-                        version = gitlabBranch.split("/")[1]
-                        jiraTicket = 'release/' + version
+                        jiraTicket = gitlabBranch
                     } else {
                         def pattern = ~ /(?i)ijmp-\d+/
                         def matcher = gitlabBranch =~ pattern
@@ -112,7 +111,7 @@ pipeline{
                     then
                         sudo rm -r /var/www/ijmp-plugin/$jiraTicket
                     fi
-                    sudo mkdir /var/www/ijmp-plugin/$jiraTicket
+                    sudo mkdir -p /var/www/ijmp-plugin/$jiraTicket
                     sudo mkdir /var/www/ijmp-plugin/$jiraTicket/idea
                     sudo mkdir /var/www/ijmp-plugin/$jiraTicket/pycharm
 
