@@ -69,7 +69,9 @@ class MFVirtualFileSystemModel {
   private val initialContentConditions = ConcurrentHashMap<MFVirtualFile, Condition>()
 
   val root = MFVirtualFile(
-    generateId(), MFVirtualFileSystem.ROOT_NAME, createAttributes(
+    generateId(),
+    MFVirtualFileSystem.ROOT_NAME,
+    createAttributes(
       directory = true,
       special = false,
       symlink = false,
@@ -78,11 +80,12 @@ class MFVirtualFileSystemModel {
       lastModified = System.nanoTime(),
       writable = false
     )
-  ).apply {
-    if (fsGraph.addVertex(this)) {
-      isValidInternal = true
+  )
+    .apply {
+      if (fsGraph.addVertex(this)) {
+        isValidInternal = true
+      }
     }
-  }
 
   private fun generateId() = counter.getAndIncrement()
 

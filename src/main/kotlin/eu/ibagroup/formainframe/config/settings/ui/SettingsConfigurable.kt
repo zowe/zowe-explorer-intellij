@@ -14,8 +14,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.panel
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.PolicyProvider
 import eu.ibagroup.formainframe.analytics.ui.AnalyticsPolicyDialog
@@ -52,26 +52,27 @@ class SettingsConfigurable : BoundSearchableConfigurable("Settings", "mainframe"
   /** Settings panel description */
   override fun createPanel(): DialogPanel {
     return panel {
-      titledRow("Analytics") {
+      group("Analytics") {
         row {
           button("Show the Privacy Policy") {
             AnalyticsPolicyDialog.open(analyticsService, policyProvider, null)
             agreementLabelComponent?.text = agreedOrDisagreed(analyticsService.isAnalyticsEnabled)
           }
-          label(agreedOrDisagreed(analyticsService.isAnalyticsEnabled), UIUtil.ComponentStyle.SMALL)
+          label(agreedOrDisagreed(analyticsService.isAnalyticsEnabled))
             .also { agreementLabelComponent = it.component }
         }
       }
-      titledRow("Other Settings") {
+      group("Other Settings") {
         row {
-          checkBox("Enable auto-sync with mainframe", isAutoSyncEnabled.get())
+          checkBox("Enable auto-sync with mainframe")
+            .bindSelected({ isAutoSyncEnabled.get() }, { isAutoSyncEnabled.set(it) })
             .also { res ->
-              isAutoSyncEnabledComponent = res.component
               res.component.addItemListener { isAutoSyncEnabled.set(res.component.isSelected) }
             }
         }
       }
-    }.also { panel = it }
+    }
+      .also { panel = it }
   }
 
   /** Reset previously set values to the initial ones */

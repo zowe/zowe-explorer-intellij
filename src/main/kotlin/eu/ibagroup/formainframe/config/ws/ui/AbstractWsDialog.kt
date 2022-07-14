@@ -14,13 +14,14 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.layout.PropertyBinding
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ValidationInfoBuilder
-import com.intellij.ui.layout.panel
 import com.intellij.util.containers.isEmpty
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
-import eu.ibagroup.formainframe.common.ui.toolbarTable
+import eu.ibagroup.formainframe.common.ui.tableWithToolbar
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.clone
@@ -55,14 +56,15 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
 
   abstract fun validateOnApply(validationBuilder: ValidationInfoBuilder, component: JComponent): ValidationInfo?
 
-  open fun onWSApplyed(state: WSDState): WSDState = state
+  open fun onWSApplied(state: WSDState): WSDState = state
 
   private val panel by lazy {
     panel {
       row {
         label(wsNameLabel)
-        textField(getter = { state.workingSetName }, setter = { state.workingSetName = it })
-          .withValidationOnInput {
+        textField()
+          .bindText(state::workingSetName)
+          .validationOnInput {
             validateWorkingSetName(
               it,
               initialState.workingSetName.ifBlank { null },
@@ -70,17 +72,14 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
               wsConfigClass
             )
           }
-          .withValidationOnApply {
-            validateForBlank(it)
-          }
+          .validationOnApply { validateForBlank(it) }
       }
       row {
         label("Specify connection")
-        comboBox(
-          model = connectionComboBoxModel,
-          modelBinding = PropertyBinding(
-            get = {
-              return@PropertyBinding crudable.getByUniqueKey<ConnectionConfig>(state.connectionUuid)
+        comboBox(connectionComboBoxModel, SimpleListCellRenderer.create("") { it?.name })
+          .bindItem(
+            {
+              return@bindItem crudable.getByUniqueKey<ConnectionConfig>(state.connectionUuid)
                 ?: if (!crudable.getAll<ConnectionConfig>().isEmpty()) {
                   crudable.getAll<ConnectionConfig>().findAnyNullable()?.also {
                     state.connectionUuid = it.uuid
@@ -89,31 +88,35 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
                   null
                 }
             },
-            set = { config -> state.connectionUuid = config?.uuid ?: "" }
-          ),
-          renderer = SimpleListCellRenderer.create("") { it?.name }
-        ).withValidationOnApply {
-          if (it.selectedItem == null) {
-            ValidationInfo("You must provide a connection", it)
-          } else {
-            null
+            { config -> state.connectionUuid = config?.uuid ?: "" }
+          )
+          .validationOnApply {
+            if (it.selectedItem == null) {
+              ValidationInfo("You must provide a connection", it)
+            } else {
+              null
+            }
           }
-        }
-
       }
-      row {
-        toolbarTable(tableTitle, masksTable, addDefaultActions = true) {
-          addNewItemProducer { emptyTableRow() }
-        }.withValidationOnApply {
-          validateOnApply(this, it)
-        }.onApply {
-          state.maskRow = masksTable.items
-          state = onWSApplyed(state)
+      group(tableTitle, false) {
+        row {
+          tableWithToolbar(masksTable, addDefaultActions = true) {
+            addNewItemProducer { emptyTableRow() }
+          }
+            .validationRequestor { }
+            .validationOnApply { validateOnApply(this, it) }
+            .onApply {
+              state.maskRow = masksTable.items
+              state = onWSApplied(state)
+            }
         }
+          .resizableRow()
       }
-    }.apply {
-      minimumSize = Dimension(450, 500)
+        .resizableRow()
     }
+      .apply {
+        minimumSize = Dimension(450, 500)
+      }
   }
 
   override fun createCenterPanel(): JComponent {

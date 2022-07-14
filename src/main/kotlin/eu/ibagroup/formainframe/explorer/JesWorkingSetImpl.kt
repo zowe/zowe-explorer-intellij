@@ -24,8 +24,7 @@ class JesWorkingSetImpl(
 ) : WorkingSetBase<JobsFilter, WorkingSet<*>, JobsWorkingSetConfig>(
   uuid,
   jesExplorer,
-  workingSetConfigProvider,
-  parentDisposable
+  workingSetConfigProvider
 ), JesWorkingSet {
   override val wsConfigClass = JobsWorkingSetConfig::class.java
 

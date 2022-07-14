@@ -15,9 +15,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.layout.panel
-import com.intellij.ui.layout.toBinding
-import com.intellij.ui.layout.withTextBinding
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
@@ -33,9 +32,12 @@ import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 import java.awt.Component
 import java.util.*
-import javax.swing.*
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPasswordField
+import javax.swing.JTextField
 
-// TODO: doc
+/** Dialog to add a new connection */
 class ConnectionDialog(
   private val crudable: Crudable,
   override var state: ConnectionDialogState = ConnectionDialogState(),
@@ -43,6 +45,8 @@ class ConnectionDialog(
 ) : StatefulDialog<ConnectionDialogState>(project) {
 
   companion object {
+
+    /** Show Test connection dialog and test the connection */
     @JvmStatic
     fun showAndTestConnection(
       crudable: Crudable,
@@ -115,79 +119,99 @@ class ConnectionDialog(
     isResizable = false
   }
 
+  /** Create dialog with the fields */
   override fun createCenterPanel(): JComponent {
+    val sameWidthLabelsGroup = "CONNECTION_DIALOG_LABELS_WIDTH_GROUP"
+
     return panel {
       row {
-        label("Connection name")
-        textField(state::connectionName)
-          .focused()
-          .withValidationOnInput {
+        label("Connection name: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(state::connectionName)
+          .validationOnInput {
             validateConnectionName(
               it,
               initialState.connectionName.ifBlank { null },
               crudable
             )
           }
-          .withValidationOnApply {
+          .validationOnApply {
             it.text = it.text.trim()
             validateForBlank(it)
           }
+          .focused()
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
-        label("Connection URL")
-        textField(state::connectionUrl).withValidationOnApply {
-          it.text = it.text.trim()
-          validateForBlank(it) ?: validateZosmfUrl(it)
-        }.also { urlTextField = it.component }
+        label("Connection URL: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(state::connectionUrl)
+          .validationOnApply {
+            it.text = it.text.trim()
+            validateForBlank(it) ?: validateZosmfUrl(it)
+          }
+          .also { urlTextField = it.component }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
-        label("Username")
-        textField(state::username).withValidationOnApply {
-          it.text = it.text.trim()
-          validateForBlank(it)
+        label("Username: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(state::username)
+          .validationOnApply {
+            it.text = it.text.trim()
+            validateForBlank(it)
+          }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("Password: ")
+          .widthGroup(sameWidthLabelsGroup)
+        cell(JPasswordField())
+          .bindText(state::password)
+          .validationOnApply { validateForBlank(it) }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      indent {
+        row {
+          checkBox("Accept self-signed SSL certificates")
+            .bindSelected(state::isAllowSsl)
+            .also { sslCheckbox = it.component }
         }
       }
       row {
-        label("Password")
-        JPasswordField(state.password)().withTextBinding(state::password.toBinding()).withValidationOnApply {
-          validateForBlank(it)
-        }
-      }
-      row {
-        checkBox("Accept self-signed SSL certificates", state::isAllowSsl)
-          .withLargeLeftGap().also { sslCheckbox = it.component }
-      }
-      row {
-        label("Code Page")
+        label("Code page: ")
+          .widthGroup(sameWidthLabelsGroup)
         comboBox(
-          model = CollectionComboBoxModel(
+          CollectionComboBoxModel(
             listOf(
               CodePage.IBM_1025,
               CodePage.IBM_1047
-
             )
-          ),
-          prop = state::codePage
+          )
         )
+          .bindItem(state::codePage.toNullableProperty())
       }
       if (state.mode == DialogMode.UPDATE) {
         row {
           label("z/OS Version")
+            .widthGroup(sameWidthLabelsGroup)
           comboBox(
-            model = CollectionComboBoxModel(
-              listOf(
-                ZVersion.ZOS_2_1,
-                ZVersion.ZOS_2_2,
-                ZVersion.ZOS_2_3,
-                ZVersion.ZOS_2_4,
-                ZVersion.ZOS_2_5
-              )
-            ),
-            prop = state::zVersion
+            listOf(
+              ZVersion.ZOS_2_1,
+              ZVersion.ZOS_2_2,
+              ZVersion.ZOS_2_3,
+              ZVersion.ZOS_2_4,
+              ZVersion.ZOS_2_5
+            )
           )
+            .bindItem(state::zVersion.toNullableProperty())
         }
       }
-    }.withMinimumWidth(500)
+    }
+      .withMinimumWidth(500)
   }
 
   init {

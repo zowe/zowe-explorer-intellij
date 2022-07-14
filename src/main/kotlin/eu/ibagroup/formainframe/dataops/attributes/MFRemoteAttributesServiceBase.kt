@@ -40,11 +40,12 @@ abstract class MFRemoteAttributesServiceBase<Attributes : MFRemoteFileAttributes
     return listOf(
       PathElementSeed(name = attributes.url.trimUrl(), fileAttributes = createAttributes(true)),
       PathElementSeed(name = subFolderName, fileAttributes = createAttributes(true))
-    ).plus(continuePathChain(attributes))
+    )
+      .plus(continuePathChain(attributes))
   }
 
   override fun reassignAttributesToFile(file: MFVirtualFile, oldAttributes: Attributes, newAttributes: Attributes) {
-    val urlDir = obtainAndRenameUrlDirIfNeeded(file, oldAttributes, newAttributes)
+    val urlDir = obtainAndRenameUrlDirIfNeeded(newAttributes)
     reassignAttributesAfterUrlFolderRenaming(file, urlDir, oldAttributes, newAttributes)
   }
 
@@ -55,13 +56,14 @@ abstract class MFRemoteAttributesServiceBase<Attributes : MFRemoteFileAttributes
     newAttributes: Attributes
   )
 
-  private fun obtainAndRenameUrlDirIfNeeded(
-    file: MFVirtualFile,
-    oldAttributes: Attributes,
-    newAttributes: Attributes
-  ): MFVirtualFile {
+  /**
+   * Obtain or rename a URL directory creating the new path element if it is not in the file system
+   * @param newAttributes the new file attributes to find or create the directory by
+   */
+  private fun obtainAndRenameUrlDirIfNeeded(newAttributes: Attributes): MFVirtualFile {
     return findOrCreate(
-      fsRoot, PathElementSeed(
+      fsRoot,
+      PathElementSeed(
         name = newAttributes.url.trimUrl(),
         fileAttributes = createAttributes(directory = true)
       )

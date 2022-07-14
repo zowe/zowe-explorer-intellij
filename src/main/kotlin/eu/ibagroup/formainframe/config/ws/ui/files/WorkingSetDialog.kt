@@ -88,7 +88,7 @@ class WorkingSetDialog(
     }
 
     override fun setValue(item: WorkingSetDialogState.TableRow, value: String) {
-      val editedCaseValue = if (item.type == "z/OS") value.toUpperCase() else value
+      val editedCaseValue = if (item.type == "z/OS") value.uppercase() else value
       item.mask =
         if (editedCaseValue.length > 1 && editedCaseValue.endsWith("/")) editedCaseValue.substringBeforeLast("/") else editedCaseValue
     }
