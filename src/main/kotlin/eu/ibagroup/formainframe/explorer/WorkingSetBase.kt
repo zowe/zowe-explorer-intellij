@@ -10,7 +10,6 @@
 
 package eu.ibagroup.formainframe.explorer
 
-import com.intellij.openapi.Disposable
 import com.intellij.util.containers.orNull
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -30,7 +29,6 @@ abstract class WorkingSetBase<MaskType, WS : WorkingSet<*>, WSConfig : WorkingSe
   override val uuid: String,
   definedExplorer: AbstractExplorerBase<out WorkingSet<*>, WSConfig>,
   private val workingSetConfigProvider: (String) -> WSConfig?,
-  parentDisposable: Disposable
 ) : WorkingSet<MaskType> {
 
   abstract val wsConfigClass: Class<out WSConfig>

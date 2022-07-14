@@ -65,10 +65,10 @@ class JobsWsDialog(
     return state
   }
 
-  override fun onWSApplyed(state: JobsWorkingSetDialogState): JobsWorkingSetDialogState {
+  override fun onWSApplied(state: JobsWorkingSetDialogState): JobsWorkingSetDialogState {
     state.maskRow = state.maskRow.map { fixBlankFieldsInState(it) }
       .distinctBy { "pre:" + it.prefix + "owr:" + it.owner + "jid:" + it.jobId } as MutableList<JobsWorkingSetDialogState.TableRow>
-    return super.onWSApplyed(state)
+    return super.onWSApplied(state)
   }
 
   override fun emptyTableRow(): JobsWorkingSetDialogState.TableRow = JobsWorkingSetDialogState.TableRow(

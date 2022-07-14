@@ -10,13 +10,14 @@
 
 package eu.ibagroup.formainframe.common.ui
 
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.ui.AnActionButton
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.layout.Cell
-import com.intellij.ui.layout.CellBuilder
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.table.TableView
-import com.intellij.util.ui.ListTableModel
 import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.event.TableModelEvent
@@ -63,24 +64,6 @@ fun removeActionUpdater(
   return { table.selectedRowCount > 0 }
 }
 
-fun <Item> Cell.toolbarTable(
-  title: String,
-  table: TableView<Item>,
-  hasSeparator: Boolean = true,
-  editingColumnIndex: Int = 0,
-  addDefaultActions: Boolean = false,
-  toolbarTableBuilder: ToolbarTableBuilder<Item>.() -> Unit
-): CellBuilder<JPanel> {
-  return panel(
-    title,
-    ToolbarTableBuilder(table, editingColumnIndex, addDefaultActions)
-      .apply {
-        toolbarTableBuilder()
-      }.createPanel(),
-    hasSeparator
-  )
-}
-
 class ToolbarTableBuilder<Item> @PublishedApi internal constructor(
   private val table: TableView<Item>,
   private val editingColumnIndex: Int = 0,
@@ -98,25 +81,22 @@ class ToolbarTableBuilder<Item> @PublishedApi internal constructor(
     return this
   }
 
-  fun addDeletionPredicate(predicate: (List<Item>) -> Boolean): ToolbarTableBuilder<Item> {
-    deletionPredicate = predicate
-    return this
-  }
-
   fun configureDecorator(): ToolbarTableBuilder<Item> {
     return configureDecorator { }
   }
 
   fun configureDecorator(init: ToolbarDecorator.() -> Unit): ToolbarTableBuilder<Item> {
-    toolbarDecorator = ToolbarDecorator.createDecorator(table).apply(init).apply decorator@{
-      if (addDefaultActions
-        && this@ToolbarTableBuilder::itemProducer.isInitialized
-      ) {
-        this.setAddAction(addAction(table, itemProducer, editingColumnIndex))
-          .setRemoveAction(removeAction(table, deletionPredicate))
-          .setRemoveActionUpdater(removeActionUpdater(table))
+    toolbarDecorator = ToolbarDecorator
+      .createDecorator(table)
+      .apply(init)
+      .apply decorator@{
+        if (addDefaultActions && this@ToolbarTableBuilder::itemProducer.isInitialized) {
+          this.setAddAction(addAction(table, itemProducer, editingColumnIndex))
+            .setRemoveAction(removeAction(table, deletionPredicate))
+            .setRemoveActionUpdater(removeActionUpdater(table))
+        }
       }
-    }
+      .setToolbarPosition(ActionToolbarPosition.BOTTOM)
     return this
   }
 
@@ -129,8 +109,18 @@ class ToolbarTableBuilder<Item> @PublishedApi internal constructor(
 
 }
 
-fun <Item> ListTableModel<Item>.getColumnIndexByName(name: String): Int {
-  return this.columnInfos.indexOfFirst { it.name == name }
+fun <Item> Row.tableWithToolbar(
+  table: TableView<Item>,
+  editingColumnIndex: Int = 0,
+  addDefaultActions: Boolean = false,
+  toolbarTableBuilder: ToolbarTableBuilder<Item>.() -> Unit
+): com.intellij.ui.dsl.builder.Cell<JPanel> {
+  val tableComponent = ToolbarTableBuilder(table, editingColumnIndex, addDefaultActions)
+    .apply { toolbarTableBuilder() }
+    .createPanel()
+  return cell(tableComponent)
+    .horizontalAlign(HorizontalAlign.FILL)
+    .verticalAlign(VerticalAlign.FILL)
 }
 
 val TableModelEvent.rows: IntRange

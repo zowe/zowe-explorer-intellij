@@ -13,8 +13,9 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
@@ -38,67 +39,117 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
 
   override fun createCenterPanel(): JComponent {
     val tabbedPanel = JBTabbedPane()
+    val sameWidthGroup = "USS_FILE_PROPERTIES_DIALOG_LABELS_WIDTH_GROUP"
 
-    tabbedPanel.add("General", panel {
-
-      row {
-        label("$fileTypeName name: ")
-        JBTextField(state.ussAttributes.name).apply { isEditable = false }()
-      }
-      row {
-        label("Location: ")
-        JBTextField(state.ussAttributes.parentDirPath).apply { isEditable = false }()
-      }
-      row {
-        label("Path: ")
-        JBTextField(state.ussAttributes.path).apply { isEditable = false }()
-      }
-      row {
-        label("$fileTypeName size: ")
-        JBTextField("${state.ussAttributes.length} bytes").apply { isEditable = false }()
-
-      }
-      row {
-        label("Last modified: ")
-        JBTextField(state.ussAttributes.modificationTime ?: "").apply {
-          isEditable = false
-        }()
-      }
-      if (state.ussAttributes.isSymlink) {
+    tabbedPanel.add(
+      "General",
+      panel {
         row {
-          label("Symlink to: ")
-          JBTextField(state.ussAttributes.symlinkTarget ?: "").apply { isEditable = false }()
+          label("$fileTypeName name: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.name)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Location: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.parentDirPath)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Path: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.path)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("$fileTypeName size: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text("${state.ussAttributes.length} bytes")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Last modified: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.modificationTime ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        if (state.ussAttributes.isSymlink) {
+          row {
+            label("Symlink to: ")
+              .widthGroup(sameWidthGroup)
+            textField()
+              .text(state.ussAttributes.symlinkTarget ?: "")
+              .applyToComponent { isEditable = false }
+              .horizontalAlign(HorizontalAlign.FILL)
+          }
         }
       }
-    })
+    )
 
-    tabbedPanel.add("Permissions", panel {
-      row {
-        label("Owner: ")
-        JBTextField(state.ussAttributes.owner ?: "").apply { isEditable = false }()
+    tabbedPanel.add(
+      "Permissions",
+      panel {
+        row {
+          label("Owner: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.owner ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Group: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.groupId ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("The numeric group ID (GID): ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.gid?.toString() ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Owner permissions: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.fileMode?.owner?.toFileModeValue().toString())
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Group permissions: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.fileMode?.group?.toFileModeValue().toString())
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Permissions for all users: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.fileMode?.all?.toFileModeValue().toString())
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
       }
-      row {
-        label("Group: ")
-        JBTextField(state.ussAttributes.groupId ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("The numeric group ID (GID): ")
-        JBTextField(state.ussAttributes.gid?.toString() ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Owner permissions: ")
-        JBTextField(state.ussAttributes.fileMode?.owner?.toFileModeValue().toString()).apply { isEditable = false }()
-
-      }
-      row {
-        label("Group permissions: ")
-        JBTextField(state.ussAttributes.fileMode?.group?.toFileModeValue().toString()).apply { isEditable = false }()
-      }
-      row {
-        label("Permissions for all users: ")
-        JBTextField(state.ussAttributes.fileMode?.all?.toFileModeValue().toString()).apply { isEditable = false }()
-      }
-    })
+    )
     return tabbedPanel
   }
 

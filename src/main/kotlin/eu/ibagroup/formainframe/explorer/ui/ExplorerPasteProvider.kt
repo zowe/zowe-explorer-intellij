@@ -116,7 +116,7 @@ class ExplorerPasteProvider : PasteProvider {
                   destAttributes is RemoteMemberAttributes &&
                   (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
                 ) {
-                  val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).toUpperCase()
+                  val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).uppercase()
                   if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
                 } else if (
                   destAttributes is RemoteMemberAttributes &&

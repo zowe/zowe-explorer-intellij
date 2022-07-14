@@ -11,7 +11,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("org.jetbrains.intellij") version "1.6.0"
+  id("org.jetbrains.intellij") version "1.7.0"
   kotlin("jvm") version "1.6.21"
   java
   jacoco
@@ -56,15 +56,15 @@ dependencies {
   implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20")
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("eu.ibagroup:r2z:1.0.27")
   implementation("com.segment.analytics.java:analytics:+")
-  testImplementation("io.mockk:mockk:1.10.2")
-  testImplementation("org.mock-server:mockserver-netty:5.11.1")
-  testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
-  testImplementation("io.kotest:kotest-assertions-core:5.3.0")
-  testImplementation("io.kotest:kotest-runner-junit5:5.3.0")
+  testImplementation("io.mockk:mockk:1.12.4")
+  testImplementation("org.mock-server:mockserver-netty:5.13.2")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
+  testImplementation("io.kotest:kotest-assertions-core:5.3.1")
+  testImplementation("io.kotest:kotest-runner-junit5:5.3.1")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
@@ -187,7 +187,7 @@ tasks.downloadRobotServerPlugin {
 
 tasks.runIdeForUiTests {
   systemProperty("idea.trust.all.projects", "true")
-  systemProperty("ide.show.tips.on.startup.default.value","false")
+  systemProperty("ide.show.tips.on.startup.default.value", "false")
 }
 
 tasks {

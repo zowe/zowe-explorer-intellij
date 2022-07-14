@@ -14,11 +14,11 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import eu.ibagroup.formainframe.common.ui.CrudableTableModel
 import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
-import eu.ibagroup.formainframe.common.ui.toolbarTable
+import eu.ibagroup.formainframe.common.ui.tableWithToolbar
 import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -70,9 +70,9 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
         }
       })
     return panel {
-      row {
-        cell(isVerticalFlow = true, isFullWidth = false) {
-          toolbarTable(displayName, wsTable) {
+      group(displayName, false) {
+        row {
+          tableWithToolbar(wsTable) {
             addNewItemProducer { emptyConfig() }
             configureDecorator {
               disableUpDownActions()
@@ -90,7 +90,9 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
             }
           }
         }
+          .resizableRow()
       }
+        .resizableRow()
     }.also {
       panel = it
     }
