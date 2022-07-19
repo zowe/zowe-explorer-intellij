@@ -31,6 +31,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
      * The connection table
      */
     val conTab = tabLabel(remoteRobot, "z/OSMF Connections")
+    val workingSetsTab = tabLabel(remoteRobot, "Working Sets")
 
     /**
      * Clicks on the add action and adds the Add Connection Dialog to the list of fixtures needed to close.

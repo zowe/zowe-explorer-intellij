@@ -15,6 +15,10 @@ import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.utils.waitFor
 import java.time.Duration
 
+const val ZOS_USERID = "BOL"
+const val ZOS_PWD = "xsw23edc"
+const val CONNECTION_URL = "https://172.20.2.121:10443"
+
 /**
  * Waits 60 seconds for the button to be enabled and then clicks on it.
  */
