@@ -53,6 +53,7 @@ class ClosableFixtureCollector {
             ErrorCreatingConnectionDialog.name -> find<ErrorCreatingConnectionDialog>(locator,
                 Duration.ofSeconds(60))
             AddWorkingSetDialog.name -> find<AddWorkingSetDialog>(locator, Duration.ofSeconds(60))
+            EditWorkingSetDialog.name -> find<EditWorkingSetDialog>(locator, Duration.ofSeconds(60))
             IdeFrameImpl.xPath("untitled").byDescription -> find<IdeFrameImpl>(locator,
                 Duration.ofSeconds(60))
             else -> throw IllegalAccessException("There is no corresponding class to ${locator.byDescription}")

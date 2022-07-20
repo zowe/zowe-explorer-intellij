@@ -13,7 +13,6 @@ package auxiliary.containers
 import auxiliary.ClosableCommonContainerFixture
 import auxiliary.clickActionButton
 import auxiliary.clickButton
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.data.RemoteComponent
 import com.intellij.remoterobot.fixtures.*
@@ -47,15 +46,19 @@ open class AddWorkingSetDialog(
         masks.forEach { mask -> addMask(mask) }
     }
 
-    private fun addMask(mask: Pair<String,String>) {
+    fun addMask(mask: Pair<String,String>) {
         clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[contains(@myaction.key, 'button.add.a')]"))
         find<JTextFieldFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JBTextField']")).click()
         find<JTextFieldFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JBTextField']")).text = mask.first
         val findType = if (mask.first.startsWith('/')) {"USS"} else {"z/OS"}
         findAllText(findType).last().click()
         findAll<ComboBoxFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JComboBox']")).last().selectItem(mask.second)
+        if (mask.first.length>44){
+            findAllText("${mask.first.substring(0,42)}...").last().moveMouse()
+        }
         findAllText(mask.first).last().click()
     }
+
 
     private fun specifyWSNameAndConnection(workingSetName: String, connectionName: String) {
         find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = workingSetName
