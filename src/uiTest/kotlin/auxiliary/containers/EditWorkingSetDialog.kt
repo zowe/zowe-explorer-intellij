@@ -12,7 +12,9 @@ package auxiliary.containers
 
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.data.RemoteComponent
+import com.intellij.remoterobot.fixtures.ComboBoxFixture
 import com.intellij.remoterobot.fixtures.ContainerFixture
+import com.intellij.remoterobot.fixtures.JTextFieldFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
@@ -25,6 +27,16 @@ class EditWorkingSetDialog(
     remoteRobot: RemoteRobot,
     remoteComponent: RemoteComponent
 ) : AddWorkingSetDialog(remoteRobot, remoteComponent) {
+
+    fun renameWorkingSet(newName: String) {
+        find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = newName
+    }
+
+    fun changeConnection(newConnectionName: String) {
+        if (newConnectionName.isNullOrEmpty().not()) {
+            find<ComboBoxFixture>(byXpath("//div[@class='ComboBox']")).selectItem(newConnectionName)
+        }
+    }
     companion object {
         const val name = "Edit Working Set Dialog"
 

@@ -18,6 +18,8 @@ import com.intellij.remoterobot.data.RemoteComponent
 import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import com.intellij.remoterobot.utils.keyboard
+import java.awt.event.KeyEvent
 import java.time.Duration
 
 /**
@@ -53,12 +55,31 @@ open class AddWorkingSetDialog(
         val findType = if (mask.first.startsWith('/')) {"USS"} else {"z/OS"}
         findAllText(findType).last().click()
         findAll<ComboBoxFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JComboBox']")).last().selectItem(mask.second)
-        if (mask.first.length>44){
+        if (mask.first.length > 44) {
             findAllText("${mask.first.substring(0,42)}...").last().moveMouse()
         }
         findAllText(mask.first).last().click()
     }
 
+    fun deleteMask(maskName: String) {
+        if (maskName.length > 44) {
+            findText("${maskName.substring(0,42)}...").moveMouse()
+        }
+        findText(maskName).click()
+        clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[@myaction.key='button.text.remove']"))
+    }
+
+    fun deleteMasks(masksNames: List<String>) {
+        masksNames.forEach { deleteMask(it) }
+    }
+
+    fun deleteAllMasks() {
+        find<ComponentFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]")).click()
+        keyboard {
+            hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_A)
+        }
+        clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[@myaction.key='button.text.remove']"))
+    }
 
     private fun specifyWSNameAndConnection(workingSetName: String, connectionName: String) {
         find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = workingSetName

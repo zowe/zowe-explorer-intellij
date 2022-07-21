@@ -16,10 +16,13 @@ import auxiliary.components.tabLabel
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.data.RemoteComponent
 import com.intellij.remoterobot.fixtures.CommonContainerFixture
+import com.intellij.remoterobot.fixtures.ComponentFixture
 import com.intellij.remoterobot.fixtures.ContainerFixture
 import com.intellij.remoterobot.fixtures.FixtureName
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import com.intellij.remoterobot.utils.keyboard
+import java.awt.event.KeyEvent
 import java.time.Duration
 
 /**
@@ -31,6 +34,10 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
      * The connection table
      */
     val conTab = tabLabel(remoteRobot, "z/OSMF Connections")
+
+    /**
+     * The Working Sets table
+     */
     val workingSetsTab = tabLabel(remoteRobot, "Working Sets")
 
     /**
@@ -52,11 +59,24 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     /**
      * Clicks on the edit action and adds the Edit Working Set Dialog to the list of fixtures needed to close.
      */
-    fun editWS(workingSetName:String, closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
+    fun editWorkingSet(workingSetName:String, closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
         findText(workingSetName).click()
         clickActionButton(byXpath("//div[@accessiblename='Edit' and @class='ActionButton' and @myaction='Edit (Edit)']"))
         closableFixtureCollector.add(EditWorkingSetDialog.xPath(), fixtureStack)
     }
+    fun deleteItem(itemName:String) {
+        findText(itemName).click()
+        clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
+    }
+
+    fun deleteAllItems(items: String) {
+        find<ComponentFixture>(byXpath("//div[@accessiblename='$items' and @class='JPanel']")).click()
+        keyboard {
+            hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_A)
+        }
+        clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
+    }
+
     companion object {
         /**
          * Returns the xPath of the Configurable Editor.

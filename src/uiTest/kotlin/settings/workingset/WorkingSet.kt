@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package settings.connection
+package settings.workingset
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
@@ -33,8 +33,7 @@ class WorkingSet {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private val wantToClose = listOf(
-        "Settings Dialog",
-        "Add Working Set Dialog"
+        "Settings Dialog", "Add Working Set Dialog", "Edit Working Set Dialog"
     )
     private val projectName = "untitled"
     private val connectionName = "valid connection"
@@ -61,8 +60,9 @@ class WorkingSet {
     /**
      * Closes the project.
      */
- //   @AfterAll
+    @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        deleteAllConnections(remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             close()
         }
@@ -71,12 +71,12 @@ class WorkingSet {
     /**
      * Closes all unclosed closable fixtures that we want to close.
      */
-  // @AfterEach
+  @AfterEach
     fun tearDown(remoteRobot: RemoteRobot) {
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
 
-   // @Test
+   @Test
     @Order(1)
     fun testAddWorkingSetWithoutConnection(remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
@@ -92,7 +92,7 @@ class WorkingSet {
                     addWorkingSet("WS1","")
                     clickButton("OK")
                     comboBox("Specify connection").click()
-                   find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow'][.//div[@visible_text='You must provide a connection']]"))
+                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow'][.//div[@visible_text='You must provide a connection']]"))
                     assertFalse(button("OK").isEnabled())
                     clickButton("Cancel")
                 }
@@ -103,10 +103,10 @@ class WorkingSet {
         }
     }
 
-  // @Test
+   @Test
     @Order(2)
     fun testAddEmptyWorkingSetWithVeryLongName(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        createValidConnection(remoteRobot)
+        createConnection(connectionName, true, remoteRobot)
         val wsName: String = "A".repeat(200)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -129,7 +129,7 @@ class WorkingSet {
         }
     }
 
- // @Test
+  @Test
     @Order(3)
     fun testAddWorkingSetWithOneValidMask(remoteRobot: RemoteRobot) = with(remoteRobot) {
       val wsName = "WS1"
@@ -155,7 +155,7 @@ class WorkingSet {
         }
     }
 
-  // @Test
+   @Test
     @Order(4)
     fun testAddWorkingSetWithValidZOSMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
        val wsName = "WS2"
@@ -190,7 +190,7 @@ class WorkingSet {
        //todo open masks in explorer
     }
 
-   //@Test
+   @Test
     @Order(5)
     fun testAddWorkingSetWithValidUSSMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS3"
@@ -222,7 +222,7 @@ class WorkingSet {
     }
 
 
-  // @Test
+   @Test
     @Order(6)
     fun testAddWorkingSetWithInvalidMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
         //todo add mask *.* when bug is fixed
@@ -280,12 +280,206 @@ class WorkingSet {
         }
     }
 
+    @Test
+    @Order(7)
     fun testEditWorkingSetAddOneMask(remoteRobot: RemoteRobot) = with(remoteRobot) {
-
+        val wsName = "WS1"
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    workingSetsTab.click()
+                    editWorkingSet(wsName,closableFixtureCollector, fixtureStack)
+                }
+                editWorkingSetDialog(fixtureStack) {
+                    addMask(Pair("/u/$ZOS_USERID","USS"))
+                    clickButton("OK")
+                    Thread.sleep(5000)
+                }
+                closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+        //todo check in explorer, ws refreshed
+    }
+    @Test
+    @Order(8)
+    fun testEditWorkingSetDeleteMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val wsName = "WS2"
+        val masks = listOf("$ZOS_USERID.*","Q.*", ZOS_USERID)
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    workingSetsTab.click()
+                    editWorkingSet(wsName,closableFixtureCollector, fixtureStack)
+                }
+                editWorkingSetDialog(fixtureStack) {
+                    deleteMasks(masks)
+                    clickButton("OK")
+                    Thread.sleep(5000)
+                }
+                closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+        //todo check in explorer, ws refreshed
     }
 
+    @Test
+    @Order(9)
+    fun testEditWorkingSetDeleteAllMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val wsName = "WS2"
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    workingSetsTab.click()
+                    editWorkingSet(wsName,closableFixtureCollector, fixtureStack)
+                }
+                editWorkingSetDialog(fixtureStack) {
+                    deleteAllMasks()
+                    clickButton("OK")
+                    Thread.sleep(5000)
+                }
+                closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+        //todo check in explorer, ws refreshed
+    }
 
-    private fun createValidConnection(remoteRobot: RemoteRobot) = with(remoteRobot){
+    @Test
+    @Order(10)
+    fun testEditWorkingSetChangeConnectionToInvalid(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val newConnectionName = "invalid connection"
+        createConnection(newConnectionName,false, remoteRobot)
+        val wsName = "WS1"
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    workingSetsTab.click()
+                    editWorkingSet(wsName,closableFixtureCollector, fixtureStack)
+                }
+                editWorkingSetDialog(fixtureStack) {
+                    changeConnection(newConnectionName)
+                    clickButton("OK")
+                    Thread.sleep(5000)
+                }
+                closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+        //todo check in explorer, ws refreshed
+    }
+
+    @Test
+    @Order(11)
+    fun testEditWorkingSetChangeConnectionToValid(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val newConnectionName = "new $connectionName"
+        createConnection(newConnectionName,true, remoteRobot)
+        val wsName = "WS1"
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    workingSetsTab.click()
+                    editWorkingSet(wsName,closableFixtureCollector, fixtureStack)
+                }
+                editWorkingSetDialog(fixtureStack) {
+                    changeConnection(newConnectionName)
+                    clickButton("OK")
+                    Thread.sleep(5000)
+                }
+                closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+        //todo check in explorer, ws refreshed
+    }
+
+    @Test
+    @Order(12)
+    fun testEditWorkingSetRename(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val newWorkingSetName = "new ws name"
+        val oldWorkingSetName = "WS1"
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    workingSetsTab.click()
+                    editWorkingSet(oldWorkingSetName,closableFixtureCollector, fixtureStack)
+                }
+                editWorkingSetDialog(fixtureStack) {
+                    renameWorkingSet(newWorkingSetName)
+                    clickButton("OK")
+                    Thread.sleep(5000)
+                }
+                closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+        //todo check in explorer, ws refreshed
+    }
+
+    @Test
+    @Order(13)
+    fun testDeleteWorkingSet(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val wsName = "WS2"
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    workingSetsTab.click()
+                    deleteItem(wsName)
+                }
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+        //todo check in explorer
+    }
+
+    @Test
+    @Order(14)
+    fun testDeleteAllWorkingSets(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    workingSetsTab.click()
+                    deleteAllItems("Working Sets")
+                }
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+        //todo check in explorer
+    }
+    private fun createConnection(connectionName:String, isValidConnection: Boolean, remoteRobot: RemoteRobot) = with(remoteRobot){
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -296,11 +490,37 @@ class WorkingSet {
                     add(closableFixtureCollector, fixtureStack)
                 }
                 addConnectionDialog(fixtureStack) {
-                    addConnection(connectionName, CONNECTION_URL, ZOS_USERID, ZOS_PWD, true)
+                    if (isValidConnection) {
+                        addConnection(connectionName, CONNECTION_URL, ZOS_USERID, ZOS_PWD, true)
+                    } else {
+                        addConnection(connectionName, "${CONNECTION_URL}1", ZOS_USERID, ZOS_PWD, true)
+                    }
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
                 closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
+                if (isValidConnection.not()){
+                    errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
+                        clickButton("Yes")
+                    }
+                    closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
+                }
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+    }
+
+    private fun deleteAllConnections(remoteRobot: RemoteRobot) = with(remoteRobot){
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    conTab.click()
+                    deleteAllItems("Connections")
+                }
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
