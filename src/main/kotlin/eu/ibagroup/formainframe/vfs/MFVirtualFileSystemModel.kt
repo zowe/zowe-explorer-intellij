@@ -159,7 +159,7 @@ class MFVirtualFileSystemModel {
     val event = listOf(VFileDeleteEvent(requestor, vFile, false))
     vFile.validWriteLock {
       val parent = vFile.parent
-      parent?.validWriteLock parentLock@{
+      parent?.validWriteLock {
         if (vFile.children?.size != 0) {
           vFile.children?.forEach { it: MFVirtualFile -> deleteFile(requestor, it) }
         }
@@ -178,7 +178,7 @@ class MFVirtualFileSystemModel {
             else parent.path + MFVirtualFileSystem.SEPARATOR + vFile.name
           initialContentConditions.remove(vFile)
           sendVfsChangesTopic().after(event)
-          return@parentLock
+          return@deleteFile
         }
       }
     }
