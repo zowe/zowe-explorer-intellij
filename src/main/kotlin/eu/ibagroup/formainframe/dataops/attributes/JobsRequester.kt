@@ -13,7 +13,12 @@ package eu.ibagroup.formainframe.dataops.attributes
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 
-// TODO: doc Valiantsin
+/**
+ * Information object with jobs filter and connection configuration inside to send request for a list of jobs to zosmf.
+ * @param connectionConfig connection configuration to specify the system to work with.
+ * @param jobsFilter filter of the jobs (prefix, owner, jobId).
+ * @author Valiantsin Krus
+ */
 class JobsRequester(
   override val connectionConfig: ConnectionConfig,
   val jobsFilter: JobsFilter

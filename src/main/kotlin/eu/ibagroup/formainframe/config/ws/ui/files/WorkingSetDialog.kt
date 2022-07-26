@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
+import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsDialog.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.validateDatasetMask
 import eu.ibagroup.formainframe.utils.validateForBlank
@@ -26,7 +27,13 @@ import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.table.TableCellEditor
 
-// TODO: doc Valiantsin
+/**
+ * Dialog of Files Working Set configurations.
+ * @param crudable Crudable instance to change data in after dialog applied.
+ * @param state state of Files Working Set configuration data.
+ * @author Valiantsin Krus
+ * @author Viktar Mushtsin
+ */
 class WorkingSetDialog(
   crudable: Crudable,
   state: WorkingSetDialogState
@@ -37,6 +44,11 @@ class WorkingSetDialog(
 ) {
   override val wsConfigClass = FilesWorkingSetConfig::class.java
 
+  /**
+   * TableView with Mask, System Type columns for representation of files masks.
+   * @see MaskColumn
+   * @see TypeColumn
+   */
   override val masksTable = ValidatingTableView(
     ValidatingListTableModel(MaskColumn, TypeColumn).apply {
       items = state.maskRow
@@ -62,6 +74,12 @@ class WorkingSetDialog(
 
   override fun emptyTableRow(): WorkingSetDialogState.TableRow = WorkingSetDialogState.TableRow()
 
+  /**
+   * Validates data in Files Working Set dialog table.
+   * @param validationBuilder Builder that passed through Intellij Platform to build ValidationInfo.
+   * @param component requestor component.
+   * @return info with validation warnings and errors to display inside.
+   */
   override fun validateOnApply(validationBuilder: ValidationInfoBuilder, component: JComponent): ValidationInfo? {
     return when {
       masksTable.listTableModel.validationInfos.asMap.isNotEmpty() -> {
@@ -77,10 +95,17 @@ class WorkingSetDialog(
     }
   }
 
+  /**
+   * Checks if masks table has duplicated rows.
+   */
   private fun hasDuplicatesInTable(tableElements: List<WorkingSetDialogState.TableRow>): Boolean {
     return tableElements.size != tableElements.map { it.mask }.distinct().size
   }
 
+  /**
+   * Class for representation File Mask column in Job Working Set table.
+   * @see ValidatingColumnInfo
+   */
   object MaskColumn : ValidatingColumnInfo<WorkingSetDialogState.TableRow>("Mask") {
 
     override fun valueOf(item: WorkingSetDialogState.TableRow): String {
@@ -120,6 +145,10 @@ class WorkingSetDialog(
 
   }
 
+  /**
+   * Class for representation System Type (USS, z/OS) column in Job Working Set table.
+   * @see ValidatingColumnInfo
+   */
   object TypeColumn : ColumnInfo<WorkingSetDialogState.TableRow, String>("Type") {
 
     override fun getEditor(item: WorkingSetDialogState.TableRow): TableCellEditor {
@@ -145,6 +174,9 @@ class WorkingSetDialog(
 
   }
 
+  /**
+   * Comobobox Editor for System Type in masks table.
+   */
   object ComboBoxCellEditorImpl : ComboBoxCellEditor() {
     override fun getComboBoxItems(): MutableList<String> {
       return with(WorkingSetDialogState.TableRow) { mutableListOf(ZOS, USS) }

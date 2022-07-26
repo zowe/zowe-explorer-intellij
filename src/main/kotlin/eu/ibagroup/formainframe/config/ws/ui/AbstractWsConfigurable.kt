@@ -24,7 +24,17 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.isThe
 
-// TODO: doc Valiantsin
+/**
+ * Abstract class for Working Set configurables.
+ * @param WSConfig - implementation of WorkingSetConfig class.
+ * @see WorkingSetConfig
+ * @param WSModel - implementation of table model to store Working Set
+ *                  List UI data (columns, e.g. name, connection ..., and list of rows (working sets)).
+ * @see CrudableTableModel
+ * @param DState - Working Set dialog state.
+ * @author Valiantsin Krus
+ * @author Viktar Mushtsin
+ */
 abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : CrudableTableModel<WSConfig>, DState : AbstractWsDialogState<WSConfig, *>>(
   displayName: String
 ) : BoundSearchableConfigurable(displayName, "mainframe") {
@@ -45,12 +55,21 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
 
   abstract fun createEditDialog(selected: DState)
 
+  /**
+   * Creates initial unique identifier (uuid) for DState class
+   * @param crudable - Crudable instance that contains UniqueValue provider.
+   * @return this DState object with updated uuid.
+   */
   private fun DState.initEmptyUuids(crudable: Crudable): DState {
     return this.apply {
       uuid = crudable.nextUniqueValue<WSConfig, String>(wsConfigClass)
     }
   }
 
+  /**
+   * Creates panel with table containing Working Set List inside.
+   * @return formed DialogPanel.
+   */
   override fun createPanel(): DialogPanel {
     wsTable = ValidatingTableView(wsTableModel, disposable!!).apply {
       rowHeight = DEFAULT_ROW_HEIGHT
@@ -98,6 +117,9 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
     }
   }
 
+  /**
+   * Saves working sets configurations in config service.
+   */
   override fun apply() {
     val wasModified = isModified
     applySandbox(wsConfigClass)
@@ -106,10 +128,17 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
     }
   }
 
+  /**
+   * Compares state of config sandbox with config service.
+   * @return true if states are equal and false otherwise.
+   */
   override fun isModified(): Boolean {
     return isSandboxModified(wsConfigClass)
   }
 
+  /**
+   * Discards changes in config sandbox.
+   */
   override fun reset() {
     val wasModified = isModified
     rollbackSandbox(wsConfigClass)
@@ -118,6 +147,9 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
     }
   }
 
+  /**
+   * Does the same as reset method.
+   */
   override fun cancel() {
     reset()
   }

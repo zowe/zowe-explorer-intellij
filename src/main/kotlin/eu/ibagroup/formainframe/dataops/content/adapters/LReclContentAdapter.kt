@@ -15,21 +15,55 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.r2z.RecordFormat
 
-// TODO: doc Valiantsin
+/**
+ * Abstraction with utils methods to perform adapting content for files with record length restriction.
+ * @param Attributes attributes of files to work with.
+ * @param dataOpsManager instance of DataOpsManager service to pass it to MFContentAdapterBase.
+ * @author Valiantsin Krus
+ */
 abstract class LReclContentAdapter<Attributes : FileAttributes>(
   dataOpsManager: DataOpsManager
 ) : MFContentAdapterBase<Attributes>(dataOpsManager) {
 
+  /**
+   * Checks if attributes of dataset have variable format (V, VA, VB) of records.
+   * @return true if they are and false otherwise.
+   */
   fun RemoteDatasetAttributes.hasVariableFormatRecords(): Boolean {
     val recordFormat = datasetInfo.recordFormat
     return recordFormat == RecordFormat.V || recordFormat == RecordFormat.VA || recordFormat == RecordFormat.VB
   }
 
+  /**
+   * Checks if attributes of dataset have variable print format (VA) of records.
+   * @return true if they are and false otherwise.
+   */
   fun RemoteDatasetAttributes.hasVariablePrintFormatRecords(): Boolean {
     val recordFormat = datasetInfo.recordFormat
     return recordFormat == RecordFormat.VA
   }
 
+  /**
+   * Adapts content by record length. Cut the end of the line after
+   * record length exceeded and put it on the next line. See example below.
+   *
+   * lrecl = 5
+   * Before
+   * ---------------
+   * Hello|, Wor|ld!
+   *      ^     ^
+   * ---------------
+   * After
+   * ---------------
+   * Hello
+   * , Wor
+   * ld!
+   * ---------------
+   *
+   * @param content content bytes of the file to adapt.
+   * @param lrecl record length of the file.
+   * @return content bytes with transferred lines.
+   */
   protected fun transferLinesByLRecl(content: ByteArray, lrecl: Int): ByteArray {
     val contentString = String(content)
     val contentRows = contentString.split(Regex("\n|\r|\r\n"))
@@ -50,6 +84,11 @@ abstract class LReclContentAdapter<Attributes : FileAttributes>(
     return resultContent.toByteArray()
   }
 
+  /**
+   * Removes first character on each line of the content.
+   * @param content content bytes of file to adapt.
+   * @return content bytes without first character on each line.
+   */
   protected fun removeFirstCharacter(content: ByteArray): ByteArray {
     val contentString = String(content)
     val contentRows = contentString.split(Regex("\n|\r|\r\n"))

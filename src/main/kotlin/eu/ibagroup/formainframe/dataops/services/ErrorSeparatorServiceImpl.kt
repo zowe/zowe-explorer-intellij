@@ -12,8 +12,19 @@ package eu.ibagroup.formainframe.dataops.services
 
 import java.util.*
 
-// TODO: doc Valiantsin
+/**
+ * Implementation for ErrorSeparatorService.
+ * @see ErrorSeparatorService
+ * @author Valiantsin Krus
+ */
 class ErrorSeparatorServiceImpl : ErrorSeparatorService {
+
+  /**
+   * Parses error message from z/OS.
+   * @param errorMessage error message received from z/OS.
+   * @return properties containing error code, error postfix, error description
+   *         in properties error.code, error.description, error.postfix respectively.
+   */
   override fun separateErrorMessage(errorMessage: String): Properties {
     val errorProperties = Properties()
     try {

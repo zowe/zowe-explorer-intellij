@@ -25,7 +25,10 @@ import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.JESApi
 
-// TODO: doc Valiantsin
+/**
+ * Factory to register JobFetchProvider in Intellij IoC container.
+ * @author Valiantsin Krus
+ */
 class JobFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
     return JobFetchProvider(dataOpsManager)
@@ -34,6 +37,10 @@ class JobFileFetchProviderFactory : FileFetchProviderFactory {
 
 private val log = log<JobFetchProvider>()
 
+/**
+ * Provider for fetching list of jobs by the corresponding filter (e.g. owner, job name, job id).
+ * @author Valiantsin Krus
+ */
 class JobFetchProvider(dataOpsManager: DataOpsManager) :
   RemoteAttributedFileFetchBase<JobsFilter, RemoteJobAttributes, MFVirtualFile>(dataOpsManager) {
 
@@ -43,6 +50,10 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val responseClass = RemoteJobAttributes::class.java
 
+  /**
+   * Fetches jobs from zosmf. Creates and registers file attributes for them.
+   * @see RemoteFileFetchProviderBase.fetchResponse
+   */
   override fun fetchResponse(
     query: RemoteQuery<JobsFilter, Unit>,
     progressIndicator: ProgressIndicator
@@ -88,6 +99,10 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
     return attributes ?: emptyList()
   }
 
+  /**
+   * Clears or update attributes of unused job file if needed.
+   * @see RemoteFileFetchProviderBase.cleanupUnusedFile
+   */
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<JobsFilter, Unit>) {
     val deletingFileAttributes = attributesService.getAttributes(file)
     log.info("Cleaning-up file attributes $deletingFileAttributes")

@@ -12,7 +12,11 @@ package eu.ibagroup.formainframe.analytics.events
 
 import eu.ibagroup.formainframe.dataops.attributes.*
 
-// TODO: doc Valiantsin
+/**
+ * Determines value of FileType enum by file attributes.
+ * @param fileAttributes attributes of the file to determine value of FileType enum.
+ * @return determined value of FileType if it is possible to determine it (throws exception otherwise).
+ */
 private fun attributesToFileType(fileAttributes: FileAttributes): FileType {
   return when (fileAttributes) {
     is RemoteDatasetAttributes -> FileType.DATASET
@@ -25,16 +29,32 @@ private fun attributesToFileType(fileAttributes: FileAttributes): FileType {
   }
 }
 
+/**
+ * Convert value of FileType enum from r2z library to plugin FileType.
+ * @see eu.ibagroup.r2z.FileType
+ * @see FileType
+ * @param fileType value of r2z FileType.
+ * @return value of plugin FileType.
+ */
 private fun r2zFileTypeToAnalyticsFileType(fileType: eu.ibagroup.r2z.FileType): FileType {
   return if (fileType == eu.ibagroup.r2z.FileType.FILE) FileType.USS_FILE else FileType.USS_DIR
 }
 
+/**
+ * Class for processing analytics events with files (e.g. create, open, delete and etc).
+ * @param fileType type of the file the action was done on.
+ * @param fileAction action that was done on the file.
+ * @author Valiantsin Krus
+ */
 class FileEvent(
   private val fileType: FileType,
   private val fileAction: FileAction
 ) : AnalyticsEvent("files") {
 
-
+  /**
+   * Determines file event properties.
+   * @return map with properties "fileType", "fileAction".
+   */
   override fun getProps(): Map<String, String> {
     return mapOf(
       Pair("fileType", fileType.toString()),
@@ -42,17 +62,32 @@ class FileEvent(
     )
   }
 
+  /**
+   * One more constructor for creating file event from file attributes.
+   * @param fileAttributes type of the file (value of r2z FileType) the action was done on.
+   * @param fileAction action that was done on the file.
+   */
   constructor(fileAttributes: FileAttributes, fileAction: FileAction) : this(
     attributesToFileType(fileAttributes),
     fileAction
   )
 
+  /**
+   * One more constructor for creating file event from r2z FileType.
+   * @param fileType attributes of the file the action was done on.
+   * @param fileAction action that was done on the file.
+   */
   constructor(
     fileType: eu.ibagroup.r2z.FileType,
     fileAction: FileAction
   ) : this(r2zFileTypeToAnalyticsFileType(fileType), fileAction)
 }
 
+/**
+ * Possible type of file that can be used as a property of FileEvent in analytics.
+ * @see FileEvent
+ * @author Valiantsin Krus
+ */
 enum class FileType(val value: String) {
   USS_FILE("USS_FILE"),
   USS_DIR("USS_DIR"),
@@ -65,6 +100,11 @@ enum class FileType(val value: String) {
   }
 }
 
+/**
+ * Actions on the files that can be tracked in analytics.
+ * @see FileEvent
+ * @author Valiantsin Krus
+ */
 enum class FileAction(val value: String) {
   CREATE("CREATE"),
   DELETE("DELETE"),

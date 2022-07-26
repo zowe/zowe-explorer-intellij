@@ -25,15 +25,28 @@ import eu.ibagroup.r2z.DataAPI
 import retrofit2.Call
 import java.io.FileNotFoundException
 
-// TODO: doc
-class MemberToPdsFileMoverFactory : OperationRunnerFactory {
+/**
+ * Factory for registering MemberToPdsMover in Intellij IoC container.
+ * @see MemberToPdsMover
+ * @author Valiantsin Krus
+ */
+class MemberToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-    return MemberToPdsFileMover(dataOpsManager)
+    return MemberToPdsMover(dataOpsManager)
   }
 }
 
-class MemberToPdsFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
+/**
+ * Implements copying of member to partitioned data set inside 1 system.
+ * @author Viktar Mushtsin
+ */
+class MemberToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
 
+  /**
+   * Checks that source is member, destination is partitioned data set,
+   * and source and destination are located within the same system.
+   * @see OperationRunner.canRun
+   */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.destinationAttributes is RemoteDatasetAttributes
             && operation.destination.isDirectory
@@ -43,6 +56,10 @@ class MemberToPdsFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
             && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
+  /**
+   * Builds call for copying member to partitioned data set.
+   * @see DefaultFileMover.buildCall
+   */
   override fun buildCall(
     operation: MoveCopyOperation,
     requesterWithUrl: Pair<Requester, ConnectionConfig>
@@ -70,5 +87,4 @@ class MemberToPdsFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
       memberName = operation.newName ?: memberName
     )
   }
-
 }

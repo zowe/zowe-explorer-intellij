@@ -15,14 +15,21 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering MemberContentAdapter in Intellij IoC container.
+ * @author Valiantsin Krus
+ */
 class MemberContentAdapterFactory : MFContentAdapterFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): MFContentAdapter {
     return MemberContentAdapter(dataOpsManager)
   }
 }
 
-// TODO: duplication with the SeqDatasetContentAdapter
+/**
+ * Adapts content for member.
+ * @see MFContentAdapter
+ * @author Valiantsin Krus
+ */
 class MemberContentAdapter(
   dataOpsManager: DataOpsManager
 ) : LReclContentAdapter<RemoteMemberAttributes>(dataOpsManager) {
@@ -30,6 +37,13 @@ class MemberContentAdapter(
   override val vFileClass = MFVirtualFile::class.java
   override val attributesClass = RemoteMemberAttributes::class.java
 
+  /**
+   * Checks if text exceed record length of parent dataset. If it is then it transfers
+   * the end of the line on the next row. It also checks file on variable format.
+   * If the first letter of format is V (variable) then mainframe uses some columns
+   * for configuration (for V and VB it first 4 columns on each row, for VA - first 5).
+   * @see MFContentAdapterBase.adaptContentToMainframe
+   */
   override fun adaptContentToMainframe(content: ByteArray, attributes: RemoteMemberAttributes): ByteArray {
     val pdsAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
     var lrecl = pdsAttributes.datasetInfo.recordLength ?: 80
@@ -42,6 +56,10 @@ class MemberContentAdapter(
     return transferLinesByLRecl(content, lrecl)
   }
 
+  /**
+   * Removes first character if parent dataset has VA format.
+   * @see MFContentAdapterBase.adaptContentFromMainframe
+   */
   override fun adaptContentFromMainframe(content: ByteArray, attributes: RemoteMemberAttributes): ByteArray {
     val pdsAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
     if (pdsAttributes.hasVariablePrintFormatRecords()) {

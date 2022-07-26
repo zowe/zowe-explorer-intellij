@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 /**
  * Functional interface to decide if file content can be uploaded or should be updated from mainframe.
- * @author Valentine Krus
+ * @author Valiantsin Krus
  */
 @FunctionalInterface
 fun interface SaveStrategy {

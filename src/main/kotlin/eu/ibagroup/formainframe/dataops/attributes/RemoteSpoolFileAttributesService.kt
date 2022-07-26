@@ -16,13 +16,22 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.r2z.SpoolFile
 import eu.ibagroup.r2z.XIBMDataType
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering RemoteSpoolFileAttributesService.
+ * @author Valiantsin Krus
+ */
 class RemoteSpoolFileAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteSpoolFileAttributesService(dataOpsManager)
   }
 }
 
+/**
+ * Implementation of attributes service for working with spool files of the job.
+ * @see AttributesService
+ * @see DependentFileAttributesService
+ * @author Valiantsin Krus
+ */
 class RemoteSpoolFileAttributesService(
   val dataOpsManager: DataOpsManager
 ) : DependentFileAttributesService<RemoteSpoolFileAttributes, SpoolFile, RemoteJobAttributes, MFVirtualFile>(
@@ -37,6 +46,11 @@ class RemoteSpoolFileAttributesService(
   override val vFileClass = MFVirtualFile::class.java
   override val parentAttributesClass = RemoteJobAttributes::class.java
 
+  /**
+   * Initialize attributes for spool file.
+   * @see RemoteSpoolFileAttributes
+   * @see DependentFileAttributesService.buildAttributes
+   */
   override fun buildAttributes(
     info: SpoolFile,
     file: MFVirtualFile,

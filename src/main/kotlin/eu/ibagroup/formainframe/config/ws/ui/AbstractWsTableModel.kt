@@ -19,7 +19,15 @@ import eu.ibagroup.formainframe.utils.crudable.MergedCollections
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.toMutableList
 
-// TODO: doc Valiantsin
+/**
+ * Abstract table model for table in configurations
+ * for Working Sets (e.g. Jobs Working Set, Files Working Set).
+ * @param WSConfig WorkingSetConfig implementation class.
+ * @see eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+ * @see eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+ * @param crudable Crudable instance to change data.
+ * @author Valiantsin Krus
+ */
 abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
   crudable: Crudable
 ) : CrudableTableModel<WSConfig>(crudable) {

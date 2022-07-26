@@ -24,7 +24,9 @@ import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.XIBMDataType
 
-// TODO: doc Arseni
+/**
+ * Base class implementation of the change content mode action
+ */
 class ChangeContentModeAction : ToggleAction() {
 
   override fun isSelected(e: AnActionEvent): Boolean {
@@ -40,6 +42,11 @@ class ChangeContentModeAction : ToggleAction() {
       }
   }
 
+  /**
+   * Determines the scope of nodes(virtual files) based on the current selection to be passed in setSelected method
+   * @param view represents a file explorer view object
+   * @return list of pairs <attributes, virtualFile>
+   */
   private fun getMappedNodes(view: FileExplorerView): List<Pair<FileAttributes, VirtualFile>> {
     return view.mySelectedNodesData
       .mapNotNull {
@@ -61,6 +68,10 @@ class ChangeContentModeAction : ToggleAction() {
       }
   }
 
+  /**
+   * Determines what nodes should be marked as selected in the context menu.
+   * Selected means that content mode has been changed to binary for particular virtual file
+   */
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     if (showConfirmDialog(state) == Messages.CANCEL) {
@@ -111,6 +122,10 @@ class ChangeContentModeAction : ToggleAction() {
 //          .onFileAttributesChange(it.second)
   }
 
+  /**
+   * Shows a confirmation dialog when content mode is going to be changed
+   * @param state represents selected content - binary or text
+   */
   private fun showConfirmDialog(state: Boolean): Int {
     val mode = if (state) "binary" else "plain text"
     val confirmTemplate =
@@ -126,6 +141,9 @@ class ChangeContentModeAction : ToggleAction() {
     )
   }
 
+  /**
+   * Determines for which nodes the content mode action is visible in the context menu
+   */
   override fun update(e: AnActionEvent) {
     super.update(e)
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
@@ -135,7 +153,9 @@ class ChangeContentModeAction : ToggleAction() {
     e.presentation.isEnabledAndVisible = getMappedNodes(view).isNotEmpty()
   }
 
-
+  /**
+   * This method is needed for interface implementation
+   */
   override fun isDumbAware(): Boolean {
     return true
   }

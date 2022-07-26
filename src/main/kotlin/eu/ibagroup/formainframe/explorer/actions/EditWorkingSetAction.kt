@@ -22,8 +22,15 @@ import eu.ibagroup.formainframe.explorer.ui.FilesWorkingSetNode
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 
-// TODO: doc Hleb
+/**
+ * Action class for edit working set act
+ */
 class EditWorkingSetAction : AnAction() {
+
+  /**
+   * Called when edit working set option is chosen from context menu,
+   * runs the edit working set operation
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -43,10 +50,16 @@ class EditWorkingSetAction : AnAction() {
 
   }
 
+  /**
+   * This method is needed for interface implementation
+   */
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Determines which objects are working sets and therefore can be edited
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
