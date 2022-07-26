@@ -14,7 +14,14 @@ import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.JobStatus
 import eu.ibagroup.r2z.XIBMDataType
 
-// TODO: doc Valiantsin
+/**
+ * Attributes containing information about the job.
+ * @param jobInfo information about the job that was received from zosmf.
+ * @param url resource URL based on original HTTP request.
+ * @param requesters list of information objects with job filter and connection configuration inside.
+ * @see JobsRequester
+ * @author Valiantsin Krus
+ */
 data class RemoteJobAttributes(
   val jobInfo: JobStatus,
   override val url: String,
@@ -28,6 +35,11 @@ data class RemoteJobAttributes(
 
   override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT)
 
+  /**
+   * Clones current instance of job attributes.
+   * @see FileAttributes.clone
+   * @return cloned object.
+   */
   override fun clone(): FileAttributes {
     return RemoteJobAttributes(
       jobInfo.clone(), url, requesters.map {

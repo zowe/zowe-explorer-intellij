@@ -21,13 +21,17 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.HoldJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.r2z.JobStatus
 
-// TODO: doc Nikita
+/** Action to hold a running job in the Jobs Tool Window */
 class HoldJobAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Hold a job on button click
+   * After completion shows a notification
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -68,6 +72,7 @@ class HoldJobAction : AnAction() {
     }
   }
 
+  /** A job can be held if its status is "Input" */
   override fun update(e: AnActionEvent) {
     val view = e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

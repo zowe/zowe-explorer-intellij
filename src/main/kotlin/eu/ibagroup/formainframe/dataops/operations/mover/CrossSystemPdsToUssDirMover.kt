@@ -28,14 +28,27 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 import retrofit2.Response
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering CrossSystemPdsToUssDirMover in Intellij IoC container.
+ * @see CrossSystemPdsToUssDirMover
+ * @author Valiantsin Krus
+ */
 class CrossSystemPdsToUssDirMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return CrossSystemPdsToUssDirMover(dataOpsManager)
   }
 }
 
+/**
+ * Implements copying partitioned data set between different systems.
+ * @author Valiantsin Krus
+ */
 class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsToUssFolderMover(dataOpsManager) {
+
+  /**
+   * Checks that source is PDS and dest is uss directory and source and directory located inside different systems.
+   * @see OperationRunner.canRun
+   */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
             operation.destination.isDirectory &&
@@ -46,6 +59,10 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
             operation.commonUrls(dataOpsManager).isEmpty()
   }
 
+  /**
+   * Implements copying member from one system to another.
+   * @see AbstractPdsToUssFolderMover.canRun
+   */
   override fun copyMember(
     operation: MoveCopyOperation,
     libraryAttributes: RemoteDatasetAttributes,
@@ -76,6 +93,11 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
     }.execute()
   }
 
+  /**
+   * Starts operation execution. Throws throwable if something went wrong.
+   * @throws Throwable
+   * @see OperationRunner.run
+   */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
       val sourceAttributes = operation.sourceAttributes as RemoteDatasetAttributes

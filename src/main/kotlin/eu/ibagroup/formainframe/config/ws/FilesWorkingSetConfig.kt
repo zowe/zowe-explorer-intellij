@@ -13,7 +13,11 @@ package eu.ibagroup.formainframe.config.ws
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.isTheSameAs
 
-// TODO: doc Valiantsin
+/**
+ * Configuration class for Files Working Sets. Instances of these
+ * class will be saved and can be reloaded after Intellij closed.
+ * @author Valiantsin Krus
+ */
 class FilesWorkingSetConfig : WorkingSetConfig {
 
   @Column

@@ -22,7 +22,7 @@ import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
 import javax.swing.JComponent
 
-// TODO: doc Vadim
+/** Class to create dialog for spool file properties*/
 class SpoolFilePropertiesDialog(val project: Project?, override var state: SpoolFileState) : DialogWrapper(project),
   StatefulComponent<SpoolFileState> {
   init {
@@ -30,6 +30,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
     init()
   }
 
+  /** Create spool file properties dialog and fill text fields with received spool file's state*/
   override fun createCenterPanel(): JComponent {
     val spoolFile = state.remoteSpoolFileAttributes.info
     val tabbedPanel = JBTabbedPane()
@@ -159,7 +160,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
   }
 }
 
-
+/** Class to represent spool file state */
 class SpoolFileState(
   val remoteSpoolFileAttributes: RemoteSpoolFileAttributes,
   override var mode: DialogMode = DialogMode.READ

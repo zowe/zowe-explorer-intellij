@@ -17,9 +17,26 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.*
 import retrofit2.Response
 
-// TODO: doc Valiantsin
+/**
+ * Abstract class for moving and copying partitioned data set
+ * to uss directory inside 1 system and between different systems.
+ * @author Valiantsin Krus
+ */
 abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
+  /**
+   * Implementation should copy specified member from pds to created uss directory.
+   * @param operation requested operation instance.
+   * @param libraryAttributes attributes of source pds.
+   * @param memberName name of the member to copy.
+   * @param sourceConnectionConfig connection configuration of the system to copy from
+   *                               (the same as destConnectionConfig for copying inside 1 system).
+   * @param destinationPath destination path inside which to copy member.
+   * @param destConnectionConfig connection configuration of the system to copy to.
+   *                             (the same as sourceConnectionConfig for copying inside 1 system).
+   * @param progressIndicator indicator that will show progress of copying/moving in UI.
+   * @return response of last request to zosmf or null if something went wrong.
+   */
   abstract fun copyMember(
     operation: MoveCopyOperation,
     libraryAttributes: RemoteDatasetAttributes,
@@ -30,6 +47,16 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
     progressIndicator: ProgressIndicator
   ): Response<*>?
 
+  /**
+   * Cancel changes if something went wrong in copying process.
+   * @param prevResponse response of attempted request to copy member.
+   * @param sourceName name of the member to be copied.
+   * @param destinationPath path of created directory to copy all members of source pds to.
+   * @param connectionConfig connection configuration of destination system.
+   * @param operation requested operation instance.
+   * @param progressIndicator indicator that will show progress of rollback in UI.
+   * @return throwable if something went wrong or null otherwise.
+   */
   private fun rollback(
     prevResponse: Response<*>? = null,
     sourceName: String,
@@ -63,6 +90,14 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
     return throwable
   }
 
+  /**
+   * Proceeds copying/moving of partitioned data set (pds) to uss directory.
+   * @param sourceConnectionConfig connection configuration from witch to copy pds.
+   * @param destConnectionConfig connection configuration to which to copy pds.
+   * @param operation requested operation instance.
+   * @param progressIndicator indicator that will show progress of copying/moving in UI.
+   * @return throwable if something went wrong or null otherwise.
+   */
   fun proceedPdsMove(
     sourceConnectionConfig: ConnectionConfig,
     destConnectionConfig: ConnectionConfig,

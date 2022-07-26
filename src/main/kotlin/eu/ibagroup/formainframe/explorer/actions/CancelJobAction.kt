@@ -21,13 +21,17 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.CancelJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.r2z.JobStatus
 
-// TODO: doc Nikita
+/** Action to cancel a running job in the Jobs Tool Window */
 class CancelJobAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Cancel a job on button click
+   * After completion shows a notification
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -68,6 +72,7 @@ class CancelJobAction : AnAction() {
     }
   }
 
+  /** A job can be canceled if its status is "Input" or "Active" */
   override fun update(e: AnActionEvent) {
     val view = e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

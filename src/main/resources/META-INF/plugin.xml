@@ -172,7 +172,7 @@ Example of how to see the output:<br/>
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
 
         <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToPdsFileMoverFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToPdsMoverFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.mover.PdsToUssFolderMoverFactory"/>
 
@@ -196,10 +196,10 @@ Example of how to see the output:<br/>
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalDirectoryMoverFactory"/>
 
         <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.LocalFileToUssFileMoverFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToUssFolderMoverFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToUssDirMoverFactory"/>
 
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>

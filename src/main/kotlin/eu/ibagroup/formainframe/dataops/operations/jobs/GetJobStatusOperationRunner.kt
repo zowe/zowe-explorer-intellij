@@ -24,11 +24,19 @@ import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.JobStatus
 import retrofit2.Response
 
-// TODO: doc Hleb
+/**
+ * Class which represents get job status operation runner
+ */
 class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, JobStatus> {
 
   override val operationClass = GetJobStatusOperation::class.java
 
+  /**
+   * Sends get job status request to mainframe and checks return code of request
+   * @param operation describes the job info of which should be gotten and the connection configuration
+   * @param progressIndicator interrupts operation if the computation is canceled
+   * @return [SubmitJobRequest] body of reply from server
+   */
   override fun run(operation: GetJobStatusOperation, progressIndicator: ProgressIndicator): JobStatus {
     progressIndicator.checkCanceled()
 
@@ -60,22 +68,51 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, JobSt
 
   override val resultClass = JobStatus::class.java
 
+  /**
+   * Determines if operation can be run on selected object
+   * @param operation object which contains all info to execute get job status request
+   */
   override fun canRun(operation: GetJobStatusOperation): Boolean {
     return true
   }
 }
 
+/**
+ * Class which represents factory for get job status operation runner
+ */
 class GetJobStatusOperationFactory : OperationRunnerFactory {
+
+  /**
+   * Creates instance of get job status operation
+   */
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return GetJobStatusOperationRunner()
   }
 }
 
+/**
+ * Sealed class which contains parameters for get job status operation
+ */
 sealed class GetJobStatusOperationParams {
+
+  /**
+   * Class which contains parameters for get job status operation,
+   * consists of jobName and jobID, 1st of 2 options to set particular job
+   */
   class BasicStatusParams(val jobName: String, val jobId: String) : GetJobStatusOperationParams()
+
+  /**
+   * Class which contains parameters for get job status operation,
+   * consists of job correlator, 2nd of 2 options to set particular job
+   */
   class CorrelatorStatusParams(val correlator: String) : GetJobStatusOperationParams()
 }
 
+/**
+ * Data class which represents all info that is needed to execute get job status operation
+ * @param request job on mainframe info of which should be gotten
+ * @param connectionConfig credentials to mainframe on which request should be executed
+ */
 data class GetJobStatusOperation(
   override val request: GetJobStatusOperationParams,
   override val connectionConfig: ConnectionConfig

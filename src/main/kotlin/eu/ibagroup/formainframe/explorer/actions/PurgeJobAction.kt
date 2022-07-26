@@ -16,13 +16,17 @@ import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.JobStatus
 
-// TODO: doc Nikita
+/** An action to purge a job */
 class PurgeJobAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Purge a job on button click
+   * After completion shows a notification
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -103,6 +107,10 @@ class PurgeJobAction : AnAction() {
     }
   }
 
+  /**
+   * A job can be purged from the Jobs Tool Window
+   * or from the Jes Explorer by clicking on the corresponding job
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

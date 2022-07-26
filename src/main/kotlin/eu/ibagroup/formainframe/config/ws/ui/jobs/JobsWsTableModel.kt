@@ -14,7 +14,11 @@ import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsTableModel
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
-// TODO: doc Valiantsin
+/**
+ * Table model for Jobs Working Set configuration table.
+ * @see AbstractWsTableModel
+ * @author Valiantsin Krus
+ */
 class JobsWsTableModel(crudable: Crudable) : AbstractWsTableModel<JobsWorkingSetConfig>(crudable) {
 
   override fun set(row: Int, item: JobsWorkingSetConfig) {

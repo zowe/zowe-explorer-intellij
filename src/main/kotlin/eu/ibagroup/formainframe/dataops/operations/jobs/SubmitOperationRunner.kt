@@ -24,11 +24,19 @@ import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SubmitFileNameBody
 import eu.ibagroup.r2z.SubmitJobRequest
 
-// TODO: doc Hleb
+/**
+ * Class which represents submit operation runner
+ */
 class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobRequest> {
 
   override val operationClass = SubmitJobOperation::class.java
 
+  /**
+   * Sends submit request to mainframe and checks return code of request
+   * @param operation describes the code to be submitted on mainframe and the connection configuration
+   * @param progressIndicator interrupts operation if the computation is canceled
+   * @return [SubmitJobRequest] body of reply from server
+   */
   override fun run(operation: SubmitJobOperation, progressIndicator: ProgressIndicator): SubmitJobRequest {
     progressIndicator.checkCanceled()
 
@@ -48,21 +56,41 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
 
   override val resultClass = SubmitJobRequest::class.java
 
+  /**
+   * Determines if operation can be run on selected object
+   * @param operation object which contains all info to execute submit request
+   */
   override fun canRun(operation: SubmitJobOperation): Boolean {
     return true
   }
 }
 
+/**
+ * Class which represents factory for submit job operation runner
+ */
 class SubmitJobOperationFactory : OperationRunnerFactory {
+
+  /**
+   * Creates instance of Submit operation
+   */
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return SubmitOperationRunner()
   }
 }
 
+/**
+ * Data class which contains parameters for submit operation
+ * @param submitFilePath path to file which contains code that should be submitted on mainframe
+ */
 data class SubmitOperationParams(
   val submitFilePath: String
 )
 
+/**
+ * Data class which represents all info that is needed to execute submit operation
+ * @param request code that should be submitted on mainframe
+ * @param connectionConfig credentials to mainframe on which request should be executed
+ */
 data class SubmitJobOperation(
   override val request: SubmitOperationParams,
   override val connectionConfig: ConnectionConfig,

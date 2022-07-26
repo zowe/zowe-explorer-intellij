@@ -22,7 +22,7 @@ import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import javax.swing.JComponent
 
-// TODO: doc Vadim
+/** Class to create dialog for job file properties*/
 class JobPropertiesDialog(val project: Project?, override var state: JobState) : DialogWrapper(project),
   StatefulComponent<JobState> {
   init {
@@ -30,6 +30,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
     init()
   }
 
+  /** Create job file properties dialog and fill text fields with received job file's state*/
   override fun createCenterPanel(): JComponent {
     val job = state.remoteJobAttributes.jobInfo
     val tabbedPanel = JBTabbedPane()
@@ -198,6 +199,6 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
   }
 }
 
-
+/** Class to represent job file state */
 class JobState(val remoteJobAttributes: RemoteJobAttributes, override var mode: DialogMode = DialogMode.READ) :
   DialogState

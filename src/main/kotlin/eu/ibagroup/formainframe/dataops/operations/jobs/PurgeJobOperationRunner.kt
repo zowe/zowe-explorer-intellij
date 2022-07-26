@@ -14,13 +14,14 @@ import eu.ibagroup.r2z.CancelJobPurgeOutRequest
 import eu.ibagroup.r2z.JESApi
 import retrofit2.Response
 
-// TODO: doc Nikita
+/** Factory for purge job operation runner */
 class PurgeJobOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return PurgeJobOperationRunner()
   }
 }
 
+/** Purge operation runner */
 class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurgeOutRequest> {
 
   override val operationClass = PurgeJobOperation::class.java
@@ -31,6 +32,12 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
     return true
   }
 
+  /**
+   * Method that sends purge request to mf
+   * @param operation describes the parameters to be sent and the connection configuration
+   * @param progressIndicator to interrupt if the computation is canceled
+   * @return [CancelJobPurgeOutRequest] body
+   */
   override fun run(operation: PurgeJobOperation, progressIndicator: ProgressIndicator): CancelJobPurgeOutRequest {
     progressIndicator.checkCanceled()
 
@@ -63,10 +70,13 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
 
 open class PurgeJobOperationParams
 
+/** Job Name and Job Id are used */
 class BasicPurgeJobParams(val jobName: String, val jobId: String) : PurgeJobOperationParams()
 
+/** Correlator is used */
 class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams()
 
+/** Class for purge job operation */
 data class PurgeJobOperation(
   override val request: PurgeJobOperationParams,
   override val connectionConfig: ConnectionConfig

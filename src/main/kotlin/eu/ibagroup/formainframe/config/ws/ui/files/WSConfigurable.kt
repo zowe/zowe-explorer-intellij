@@ -18,7 +18,10 @@ import eu.ibagroup.formainframe.config.ws.ui.AbstractWsConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
-// TODO: doc Valiantsin
+/**
+ * Implementation of AbstractWsConfigurable class for modifying Files Working Set configurations.
+ * @see AbstractWsConfigurable
+ */
 class WSConfigurable :
   AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel, WorkingSetDialogState>("Working Sets") {
   override val wsConfigClass = FilesWorkingSetConfig::class.java
@@ -26,8 +29,16 @@ class WSConfigurable :
 
   override fun emptyConfig() = FilesWorkingSetConfig()
 
+  /**
+   * Creates FilesWorkingSetDialogState based on data of FilesWorkingSetConfig.
+   */
   override fun FilesWorkingSetConfig.toDialogStateAbstract() = this.toDialogState()
 
+  /**
+   * Creates and shows dialog for adding Files Working Set.
+   * @param crudable crudable to modify after applying dialog.
+   * @param state state of dialog.
+   */
   override fun createAddDialog(crudable: Crudable, state: WorkingSetDialogState) {
     WorkingSetDialog(sandboxCrudable, state)
       .apply {
@@ -38,6 +49,11 @@ class WSConfigurable :
       }
   }
 
+  /**
+   * Creates and shows dialog for editing Files Working Set.
+   * @param crudable crudable to modify after applying dialog.
+   * @param state state of dialog.
+   */
   override fun createEditDialog(selected: WorkingSetDialogState) {
     WorkingSetDialog(sandboxCrudable, selected.apply { mode = DialogMode.UPDATE }).apply {
       if (showAndGet()) {
@@ -50,6 +66,9 @@ class WSConfigurable :
 
 }
 
+/**
+ * Creates FilesWorkingSetDialogState based on data of FilesWorkingSetConfig.
+ */
 fun FilesWorkingSetConfig.toDialogState(): WorkingSetDialogState {
   return WorkingSetDialogState(
     uuid = this.uuid,

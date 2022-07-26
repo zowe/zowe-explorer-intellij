@@ -26,14 +26,28 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMBpxkAutoCvt
 import eu.ibagroup.r2z.XIBMOption
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering UssFileToPdsMover in Intellij IoC container.
+ * @see UssFileToPdsMover
+ * @author Valiantsin Krus
+ */
 class UssFileToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return UssFileToPdsMover(dataOpsManager)
   }
 }
 
+/**
+ * Implements copying of uss file to uss directory inside 1 system.
+ * @author Viktar Mushtsin
+ */
 class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFileMover() {
+
+  /**
+   * Checks that source is uss file, destination is partitioned data set,
+   * and source and destination are located within the same system.
+   * @see OperationRunner.canRun
+   */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.sourceAttributes is RemoteUssAttributes
             && !operation.sourceAttributes.isDirectory
@@ -43,7 +57,13 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
             && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
-  fun proceedMoveCopyToPds(
+  /**
+   * Proceeds move/copy of uss file to partitioned data set.
+   * @param connectionConfig connection configuration of system inside which to copy file.
+   * @param operation requested operation.
+   * @param progressIndicator indicator that will show progress of copying/moving in UI.
+   */
+  private fun proceedMoveCopyToPds(
     connectionConfig: ConnectionConfig,
     operation: MoveCopyOperation,
     progressIndicator: ProgressIndicator
@@ -99,6 +119,11 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     return throwable
   }
 
+  /**
+   * Starts operation execution. Throws throwable if something went wrong.
+   * @throws Throwable
+   * @see OperationRunner.run
+   */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {

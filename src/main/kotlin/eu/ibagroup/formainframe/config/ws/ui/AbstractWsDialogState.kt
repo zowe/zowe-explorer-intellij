@@ -16,8 +16,16 @@ import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.config.ws.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
-// TODO: doc Valiantsin
-abstract class AbstractWsDialogState<WSConfig, TableRow>(
+/**
+ * Abstract class for Working Sets state in configuration dialogs (e.g. Files Working Set, Jobs Working Sets)
+ * @param WSConfig WorkingSetConfig implementation class.
+ * @see WorkingSetConfig
+ * @see FilesWorkingSetConfig
+ * @see JobsWorkingSetConfig
+ * @param TableRow
+ * @author Valiantsin Krus
+ */
+abstract class AbstractWsDialogState<WSConfig: WorkingSetConfig, TableRow>(
   var uuid: String = "",
   var connectionUuid: String = "",
   var workingSetName: String = "",
@@ -36,6 +44,10 @@ fun <WSConfig, T : AbstractWsDialogState<WSConfig, *>> T.initEmptyUuids(crudable
   }
 }
 
+/**
+ * Dialog state for Files Working Set configuration dialog.
+ * @see AbstractWsDialogState
+ */
 class WorkingSetDialogState(
   uuid: String = "",
   connectionUuid: String = "",
@@ -72,6 +84,10 @@ class WorkingSetDialogState(
 
 }
 
+/**
+ * Dialog state for Jobs Working Set configuration dialog.
+ * @see AbstractWsDialogState
+ */
 class JobsWorkingSetDialogState(
   uuid: String = "",
   connectionUuid: String = "",

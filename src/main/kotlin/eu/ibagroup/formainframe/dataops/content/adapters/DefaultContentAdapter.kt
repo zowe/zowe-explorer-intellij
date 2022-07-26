@@ -14,12 +14,24 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-// TODO: doc Valiantsin
+/**
+ * Content adapter that doesn't adapt content of the file.
+ * @param dataOpsManager instance of DataOpsManager service.
+ * @author Valiantsin Krus
+ */
 class DefaultContentAdapter(dataOpsManager: DataOpsManager) : MFContentAdapterBase<FileAttributes>(dataOpsManager) {
 
   override val vFileClass = MFVirtualFile::class.java
   override val attributesClass = FileAttributes::class.java
 
+  /**
+   * Passes content to mainframe with no changes.
+   * @see MFContentAdapterBase.adaptContentToMainframe
+   */
   override fun adaptContentToMainframe(content: ByteArray, attributes: FileAttributes): ByteArray = content
+
+  /**
+   * Passes content from mainframe to content storage with no changes.
+   */
   override fun adaptContentFromMainframe(content: ByteArray, attributes: FileAttributes): ByteArray = content
 }

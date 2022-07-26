@@ -18,7 +18,10 @@ import eu.ibagroup.formainframe.config.ws.ui.AbstractWsConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
-// TODO: doc Valiantsin
+/**
+ * Implementation of AbstractWsConfigurable class for modifying Jobs Working Set configurations.
+ * @see AbstractWsConfigurable
+ */
 class JobsWsConfigurable
   : AbstractWsConfigurable<JobsWorkingSetConfig, JobsWsTableModel, JobsWorkingSetDialogState>("Jobs Working Sets") {
   override val wsConfigClass = JobsWorkingSetConfig::class.java
@@ -26,8 +29,16 @@ class JobsWsConfigurable
 
   override fun emptyConfig() = JobsWorkingSetConfig()
 
-  override fun JobsWorkingSetConfig.toDialogStateAbstract(): JobsWorkingSetDialogState = this.toDialogState()
+  /**
+   * Creates JobsWorkingSetDialogState based on data of JobsWorkingSetConfig.
+   */
+  override fun JobsWorkingSetConfig.toDialogStateAbstract() = this.toDialogState()
 
+  /**
+   * Creates and shows dialog for adding Jobs Working Set.
+   * @param crudable crudable to modify after applying dialog.
+   * @param state state of dialog.
+   */
   override fun createAddDialog(crudable: Crudable, state: JobsWorkingSetDialogState) {
     JobsWsDialog(sandboxCrudable, state)
       .apply {
@@ -38,6 +49,11 @@ class JobsWsConfigurable
       }
   }
 
+  /**
+   * Creates and shows dialog for editing Jobs Working Set.
+   * @param crudable crudable to modify after applying dialog.
+   * @param state state of dialog.
+   */
   override fun createEditDialog(selected: JobsWorkingSetDialogState) {
     JobsWsDialog(
       sandboxCrudable,
@@ -54,6 +70,9 @@ class JobsWsConfigurable
 
 }
 
+/**
+ * Creates JobsWorkingSetDialogState based on data of JobsWorkingSetConfig.
+ */
 fun JobsWorkingSetConfig.toDialogState(): JobsWorkingSetDialogState {
   return JobsWorkingSetDialogState(
     uuid = this.uuid,
