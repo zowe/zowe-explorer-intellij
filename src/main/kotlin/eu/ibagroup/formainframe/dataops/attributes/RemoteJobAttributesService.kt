@@ -15,7 +15,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 
 
 const val JOBS_FOLDER_NAME = "Jobs"
@@ -50,7 +50,7 @@ class RemoteJobAttributesService(
    */
   override fun buildUniqueAttributes(attributes: RemoteJobAttributes): RemoteJobAttributes {
     return RemoteJobAttributes(
-      JobStatus(
+      Job(
         owner = attributes.jobInfo.owner,
         phase = attributes.jobInfo.phase,
         phaseName = attributes.jobInfo.phaseName,

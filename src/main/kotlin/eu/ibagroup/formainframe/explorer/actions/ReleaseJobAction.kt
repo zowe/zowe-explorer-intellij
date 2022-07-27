@@ -19,7 +19,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicReleaseJobParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.ReleaseJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 
 /** Action to release a holding job in the Jobs Tool Window */
 class ReleaseJobAction : AnAction() {
@@ -79,7 +79,7 @@ class ReleaseJobAction : AnAction() {
       return
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
-    if (jobStatus == JobStatus.Status.OUTPUT || jobStatus == JobStatus.Status.ACTIVE || jobStatus == null) {
+    if (jobStatus == Job.Status.OUTPUT || jobStatus == Job.Status.ACTIVE || jobStatus == null) {
       e.presentation.isEnabled = false
     }
   }

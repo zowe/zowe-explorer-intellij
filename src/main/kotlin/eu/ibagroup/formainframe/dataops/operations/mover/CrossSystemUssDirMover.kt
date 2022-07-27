@@ -98,7 +98,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     val response = api<DataAPI>(destConnectionConfig).createUssFile(
       authorizationToken = destConnectionConfig.authToken,
       filePath = FilePath(pathToDir),
-      CreateUssFile(FileType.DIR, FileMode(7, 7, 7))
+      body = CreateUssFile(FileType.DIR, FileMode(7, 7, 7))
     ).applyIfNotNull(progressIndicator) {
       cancelByIndicator(it)
     }.execute()

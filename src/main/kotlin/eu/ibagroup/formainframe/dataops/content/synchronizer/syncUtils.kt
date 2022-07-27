@@ -35,6 +35,14 @@ fun String.removeLastNewLine(): String {
   }
 }
 
+fun ByteArray.removeLastNewLine(): ByteArray {
+  return if (last() == NEW_LINE.toByte()) {
+    dropLast(1).toByteArray()
+  } else {
+    this
+  }
+}
+
 /** Add new blank line to the string */
 fun ByteArray.addNewLine(): ByteArray {
   return this.plus(NEW_LINE.toByteArray())

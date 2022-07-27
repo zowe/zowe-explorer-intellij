@@ -19,7 +19,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicCancelJobParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.CancelJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 
 /** Action to cancel a running job in the Jobs Tool Window */
 class CancelJobAction : AnAction() {
@@ -79,7 +79,7 @@ class CancelJobAction : AnAction() {
       return
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
-    if (jobStatus == JobStatus.Status.OUTPUT || jobStatus == null) {
+    if (jobStatus == Job.Status.OUTPUT || jobStatus == null) {
       e.presentation.isEnabled = false
     }
   }

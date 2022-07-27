@@ -14,7 +14,7 @@ import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
 import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 
 /** An action to purge a job */
 class PurgeJobAction : AnAction() {
@@ -32,7 +32,7 @@ class PurgeJobAction : AnAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    var jobStatus: JobStatus? = null
+    var jobStatus: Job? = null
     var connectionConfig: ConnectionConfig? = null
     if (view is JesExplorerView) {
       val node = view.mySelectedNodesData.getOrNull(0)?.node

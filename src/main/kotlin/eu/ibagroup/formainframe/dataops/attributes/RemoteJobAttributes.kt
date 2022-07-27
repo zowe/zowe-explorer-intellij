@@ -11,7 +11,7 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 import eu.ibagroup.r2z.XIBMDataType
 
 /**
@@ -23,7 +23,7 @@ import eu.ibagroup.r2z.XIBMDataType
  * @author Valiantsin Krus
  */
 data class RemoteJobAttributes(
-  val jobInfo: JobStatus,
+  val jobInfo: Job,
   override val url: String,
   override val requesters: MutableList<JobsRequester>,
 ) : MFRemoteFileAttributes<JobsRequester> {

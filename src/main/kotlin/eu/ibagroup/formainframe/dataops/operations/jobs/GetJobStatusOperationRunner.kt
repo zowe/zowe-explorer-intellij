@@ -21,13 +21,13 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 import retrofit2.Response
 
 /**
  * Class which represents get job status operation runner
  */
-class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, JobStatus> {
+class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, Job> {
 
   override val operationClass = GetJobStatusOperation::class.java
 
@@ -37,19 +37,19 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, JobSt
    * @param progressIndicator interrupts operation if the computation is canceled
    * @return [SubmitJobRequest] body of reply from server
    */
-  override fun run(operation: GetJobStatusOperation, progressIndicator: ProgressIndicator): JobStatus {
+  override fun run(operation: GetJobStatusOperation, progressIndicator: ProgressIndicator): Job {
     progressIndicator.checkCanceled()
 
-    val response: Response<JobStatus> = when (operation.request) {
+    val response: Response<Job> = when (operation.request) {
       is GetJobStatusOperationParams.BasicStatusParams -> {
-        api<JESApi>(operation.connectionConfig).getJobStatus(
+        api<JESApi>(operation.connectionConfig).getJob(
           basicCredentials = operation.connectionConfig.authToken,
           jobName = operation.request.jobName,
           jobId = operation.request.jobId
         ).cancelByIndicator(progressIndicator).execute()
       }
       is GetJobStatusOperationParams.CorrelatorStatusParams -> {
-        api<JESApi>(operation.connectionConfig).getJobStatus(
+        api<JESApi>(operation.connectionConfig).getJob(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator
         ).cancelByIndicator(progressIndicator).execute()
@@ -66,7 +66,7 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, JobSt
     return body
   }
 
-  override val resultClass = JobStatus::class.java
+  override val resultClass = Job::class.java
 
   /**
    * Determines if operation can be run on selected object
@@ -116,6 +116,6 @@ sealed class GetJobStatusOperationParams {
 data class GetJobStatusOperation(
   override val request: GetJobStatusOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<GetJobStatusOperationParams, JobStatus> {
-  override val resultClass = JobStatus::class.java
+) : RemoteQuery<GetJobStatusOperationParams, Job> {
+  override val resultClass = Job::class.java
 }

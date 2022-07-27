@@ -16,7 +16,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 import eu.ibagroup.r2z.SpoolFile
 
 class JobLogFetcherFactory: LogFetcherFactory {
@@ -52,7 +52,7 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
   /**
    * Mainframe job status that was saved after last request to mainframe.
    */
-  private var cachedJobStatus: JobStatus? = null
+  private var cachedJobStatus: Job? = null
 
   /**
    * Extracts list of job spool files without creating any virtual files.
@@ -101,12 +101,12 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
    * @param jobInfo job process information.
    * @return statis of requested job.
    */
-  private fun getJobStatus (jobInfo: JobProcessInfo): JobStatus? {
-    var result: JobStatus? = null
+  private fun getJobStatus (jobInfo: JobProcessInfo): Job? {
+    var result: Job? = null
     val jobIdNotNull = jobInfo.jobId ?: return null
     val jobNameNotNull = jobInfo.jobName ?: return null
 
-    val response = api<JESApi>(jobInfo.connectionConfig).getJobStatus(
+    val response = api<JESApi>(jobInfo.connectionConfig).getJob(
       basicCredentials = jobInfo.connectionConfig.authToken,
       jobName = jobNameNotNull,
       jobId = jobIdNotNull
@@ -125,7 +125,7 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
    * @return true if job finished and false otherwise.
    */
   override fun isLogFinished(mfProcessInfo: JobProcessInfo): Boolean {
-    return getJobStatus(mfProcessInfo)?.status == JobStatus.Status.OUTPUT || getJobStatus(mfProcessInfo)?.status == null
+    return getJobStatus(mfProcessInfo)?.status == Job.Status.OUTPUT || getJobStatus(mfProcessInfo)?.status == null
   }
 
   /**
@@ -168,7 +168,7 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
    * Getter for job status
    * @see JobLogFetcher.cachedJobStatus
    */
-  fun getCachedJobStatus(): JobStatus? {
+  fun getCachedJobStatus(): Job? {
     return cachedJobStatus
   }
 
