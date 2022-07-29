@@ -23,14 +23,40 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 import retrofit2.Call
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering MemberToUssFileMover in Intellij IoC container.
+ * @see MemberToUssFileMover
+ * @author Valiantsin Krus
+ */
 class MemberToUssFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return MemberToUssFileMover(dataOpsManager)
   }
 }
 
+/**
+ * Implements copying of member to uss directory inside 1 system.
+ * @author Valiantsin Krus
+ */
 class MemberToUssFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
+
+  /**
+   * Checks that source is member, destination is uss directory, and source and destination located inside 1 system.
+   * @see OperationRunner.canRun
+   */
+  override fun canRun(operation: MoveCopyOperation): Boolean {
+    return operation.destinationAttributes is RemoteUssAttributes
+            && operation.destination.isDirectory
+            && !operation.source.isDirectory
+            && operation.sourceAttributes is RemoteMemberAttributes
+            && operation.commonUrls(dataOpsManager).isNotEmpty()
+            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+  }
+
+  /**
+   * Builds call for copying member to uss directory.
+   * @see DefaultFileMover.buildCall
+   */
   override fun buildCall(
     operation: MoveCopyOperation,
     requesterWithUrl: Pair<Requester, ConnectionConfig>
@@ -53,14 +79,5 @@ class MemberToUssFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
       ),
       filePath = FilePath(to)
     )
-  }
-
-  override fun canRun(operation: MoveCopyOperation): Boolean {
-    return operation.destinationAttributes is RemoteUssAttributes
-            && operation.destination.isDirectory
-            && !operation.source.isDirectory
-            && operation.sourceAttributes is RemoteMemberAttributes
-            && operation.commonUrls(dataOpsManager).isNotEmpty()
-            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 }

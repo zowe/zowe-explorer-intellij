@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
+import com.intellij.ide.dnd.DnDTargetChecker
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.ide.projectView.impl.ProjectViewImpl
@@ -36,14 +37,25 @@ import javax.swing.tree.TreePath
 val IS_DRAG_AND_DROP_KEY = DataKey.create<Boolean>("IsDropKey")
 val DRAGGED_FROM_PROJECT_FILES_ARRAY = DataKey.create<List<VirtualFile>>("DraggedFilesFromProject")
 
-/** Drop target representation */
-// TODO: doc Valiantsin
+/**
+ * Performs copying files with drag&drop operation.
+ * @param myTree file explorer tree.
+ * @param explorer file explorer instance (logical representation of explorer view data).
+ * @param copyPasteSupport explorer copy/paste support.
+ * @author Valiantsin Krus
+ */
 class FileExplorerViewDropTarget(
-  val myTree: Tree,
+  private val myTree: Tree,
   val explorer: Explorer<*>,
   private val copyPasteSupport: FileExplorerView.ExplorerCopyPasteSupport
 ) : DnDNativeTarget {
 
+  /**
+   * Checks if files are copying between different systems (but not between remote and local).
+   * @param sources tree paths corresponding for files to copy.
+   * @param target tree path corresponding for file to copy to.
+   * @return true if it is crossystem copy or false otherwise.
+   */
   @Suppress("UNCHECKED_CAST")
   private fun isCrossSystemCopy(sources: Collection<TreePath?>, target: TreePath): Boolean {
 
@@ -61,11 +73,23 @@ class FileExplorerViewDropTarget(
     }
   }
 
+  /**
+   * Extracts tree paths corresponding for files to copy from transferable wrapper.
+   * @param transferData can be any object, but actually function works only with TransferableWrapper.
+   * @see TransferableWrapper
+   * @return extracted tree paths array.
+   */
   private fun getSourcePaths(transferData: Any): Array<TreePath?>? {
     val wrapper = if (transferData is TransferableWrapper) transferData else null
     return wrapper?.treePaths
   }
 
+  /**
+   * Extracts source tree paths, target path, bounds of target node
+   * and tree containing target node from drag&drop event.
+   * @param event drage&drop event from which to extract necessary data.
+   * @return above information in the specified order inside Tuple4.
+   */
   private fun getSourcesTargetAndBounds(event: DnDEvent): Tuple4<Array<TreePath?>?, TreePath, Rectangle, JTree>? {
     event.setDropPossible(false, "")
 
@@ -90,6 +114,10 @@ class FileExplorerViewDropTarget(
     return Tuple4(sources, target, bounds, treeToUpdate)
   }
 
+  /**
+   * Proceed copying of dragged files.
+   * @param event arisen drag&drop event.
+   */
   override fun drop(event: DnDEvent) {
     val sourcesTargetBounds = getSourcesTargetAndBounds(event) ?: return
 
@@ -97,9 +125,11 @@ class FileExplorerViewDropTarget(
     val pasteProvider = copyPasteSupport.pasteProvider
     val cutProvider = copyPasteSupport.cutProvider
     val copyProvider = copyPasteSupport.copyProvider
+    // TODO: remove when the support of IntelliJ <= 213 is closed
     val sourceTreePaths = sourcesTargetBounds.first?.toList() ?: listOf()
 
     val isCopiedFromRemote = event.attachedObject is FileExplorerViewDragSource.ExplorerTransferableWrapper
+    // TODO: remove when the support of IntelliJ <= 213 is closed
     val isCopiedToRemote = sourcesTargetBounds.fourth == myTree
 
     val copyCutContext = DataContext {
@@ -112,10 +142,13 @@ class FileExplorerViewDropTarget(
             else null
           }.toTypedArray()
         CommonDataKeys.VIRTUAL_FILE_ARRAY.name -> {
-          if (sourcesTargetBounds.v4 == myTree) {
-            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2).file)
+          // TODO: remove when the support of IntelliJ <= 213 is closed
+          if (sourcesTargetBounds.fourth == myTree) {
+            // TODO: remove when the support of IntelliJ <= 213 is closed
+            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file)
           } else {
-            arrayOf(sourcesTargetBounds.v2.getVirtualFile())
+            // TODO: remove when the support of IntelliJ <= 213 is closed
+            arrayOf(sourcesTargetBounds.second.getVirtualFile())
           }
         }
         IS_DRAG_AND_DROP_KEY.name -> true
@@ -123,13 +156,15 @@ class FileExplorerViewDropTarget(
           if (isCopiedFromRemote) {
             emptyList()
           } else {
+            // TODO: remove when the support of IntelliJ <= 213 is closed
             sourcesTargetBounds.first?.mapNotNull { treePath -> treePath?.getVirtualFile() }
           }
         }
         else -> null
       }
     }
-    if (isCopiedFromRemote && isCopiedToRemote && !isCrossSystemCopy(sourceTreePaths, sourcesTargetBounds.v2)) {
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    if (isCopiedFromRemote && isCopiedToRemote && !isCrossSystemCopy(sourceTreePaths, sourcesTargetBounds.second)) {
       if (cutProvider.isCutEnabled(copyCutContext)) {
         cutProvider.performCut(copyCutContext)
       }
@@ -141,15 +176,32 @@ class FileExplorerViewDropTarget(
     pasteProvider.performPaste(copyCutContext)
   }
 
-  fun getProjectTree(): JTree? {
-    return copyPasteSupport.project?.let { ProjectViewImpl.getInstance(it).currentProjectViewPane.tree }
+  /**
+   * Extracts the project tree.
+   * @return project tree if it was initialized or null otherwise.
+   */
+  private fun getProjectTree(): JTree? {
+    return runCatching {
+      copyPasteSupport.project?.let { ProjectViewImpl.getInstance(it).currentProjectViewPane.tree }
+    }.getOrNull()
   }
 
+  /**
+   * Updates the state of mouse and dragged files in UI. For example,
+   * the mouse sign will be forbidding if it is not possible to copy
+   * dragged files on the covered by mouse tree node.
+   * @see DnDTargetChecker.update
+   * @param event arisen drag&drop event.
+   * @return true if this target is unable to handle the event and parent component should be asked to process it.
+   *         false if this target is able to handle the event and parent component should NOT be asked to process it.
+   */
   override fun update(event: DnDEvent): Boolean {
     val sourcesTargetBounds = getSourcesTargetAndBounds(event) ?: return false
-    val sources = sourcesTargetBounds.v1 ?: return false
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    val sources = sourcesTargetBounds.first ?: return false
     if (
-      ArrayUtilRt.find(sources, sourcesTargetBounds.v2) != -1
+      // TODO: remove when the support of IntelliJ <= 213 is closed
+      ArrayUtilRt.find(sources, sourcesTargetBounds.second) != -1
       || !FileCopyPasteUtil.isFileListFlavorAvailable(event)
     ) {
       return false
@@ -158,18 +210,21 @@ class FileExplorerViewDropTarget(
     //    val pasteEnabled = copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
     //    val pasteEnabled = false
     val isCopiedFromRemote = event.attachedObject is FileExplorerViewDragSource.ExplorerTransferableWrapper
-    val pasteEnabled = if (sourcesTargetBounds.v4 == myTree)
-      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.v2), sources.toList())
-    else if (isCopiedFromRemote && sourcesTargetBounds.v4 === getProjectTree()) {
-      val vFile = sourcesTargetBounds.v2.getVirtualFile()
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    val pasteEnabled = if (sourcesTargetBounds.fourth == myTree)
+      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
+    else if (isCopiedFromRemote && sourcesTargetBounds.fourth === getProjectTree()) {
+      val vFile = sourcesTargetBounds.second.getVirtualFile()
       if (vFile == null) {
         false
       } else {
         copyPasteSupport.isPastePossible(listOf(vFile), sources.map { makeNodeDataFromTreePath(explorer, it) })
       }
-    } else if (!isCopiedFromRemote && sourcesTargetBounds.v4 == myTree) {
+    // TODO: remove when the support of IntelliJ <= 213 is closed
+    } else if (!isCopiedFromRemote && sourcesTargetBounds.fourth == myTree) {
       val sourceFiles = sources.mapNotNull { it?.getVirtualFile() }
       val target =
+        // TODO: remove when the support of IntelliJ <= 213 is closed
         makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file?.let { listOf(it) } ?: emptyList()
       copyPasteSupport.isPastePossibleForFiles(target, sourceFiles)
     } else false
@@ -177,10 +232,12 @@ class FileExplorerViewDropTarget(
     event.isDropPossible = pasteEnabled
     if (pasteEnabled) {
       event.setHighlighting(
-        RelativeRectangle(sourcesTargetBounds.v4, sourcesTargetBounds.v3),
+        // TODO: remove when the support of IntelliJ <= 213 is closed
+        RelativeRectangle(sourcesTargetBounds.fourth, sourcesTargetBounds.third),
         DnDEvent.DropTargetHighlightingType.RECTANGLE
       )
     }
     return false
   }
+
 }

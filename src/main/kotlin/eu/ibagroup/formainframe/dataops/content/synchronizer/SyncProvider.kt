@@ -12,32 +12,65 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.io.IOException
 
 const val SYNC_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.SyncNotificationGroupId"
 
-// TODO: doc Valiantsin
+/**
+ * Interface to provide synchronization of content downloaded
+ * and prepared with mainframe with some storage in Intellij.
+ * @author Viktar Mushtsin
+ */
 interface SyncProvider {
 
+  /** file to synchronize */
   val file: VirtualFile
 
+  /** strategy on what to do if someone changed content on mainframe in process the user works with it locally. */
   val saveStrategy: SaveStrategy
 
+  /** Identifies if the file is read only. */
   val isReadOnly: Boolean
 
+  /**
+   *  Class of virtual file. Usually it is MFVirtualFile
+   *  @see MFVirtualFile
+   */
   val vFileClass: Class<out VirtualFile>
 
+  /**
+   * Returns document for the file.
+   * @return document if it was found or null otherwise.
+   */
   fun getDocument(): Document?
 
+  /**
+   * Puts the content of file in storage for the first time.
+   * @param content bytes of the content to put.
+   */
   @Throws(IOException::class)
   fun putInitialContent(content: ByteArray)
 
+  /**
+   * Updates the content of file in storage. Should be invoked after uploading initial content.
+   * @see putInitialContent
+   * @param content bytes of the content to put.
+   */
   @Throws(IOException::class)
   fun loadNewContent(content: ByteArray)
 
+  /**
+   * Extracts content of file from the storage.
+   * @return bytes of the required content content.
+   */
   @Throws(IOException::class)
   fun retrieveCurrentContent(): ByteArray
 
+  /**
+   * Function that will be invoked if some throwable object was thrown.
+   * @param t object that was thrown.
+   */
   fun onThrowable(t: Throwable)
 
 }

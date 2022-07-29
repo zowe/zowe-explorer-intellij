@@ -13,26 +13,30 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.layout.PropertyBinding
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.validateDataset
 import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.JTextField
 
 class AllocationDialog(project: Project?, override var state: DatasetAllocationParams) :
   StatefulDialog<DatasetAllocationParams>(project = project) {
 
   private lateinit var recordFormatBox: JComboBox<RecordFormat>
-  private lateinit var spaceUnitBox: ComboBox<AllocationUnit?>
-  private lateinit var datasetOrganizationBox: JComboBox<DatasetOrganization>
+  private lateinit var spaceUnitBox: ComboBox<AllocationUnit>
+  private lateinit var datasetOrganizationBox: ComboBox<DatasetOrganization>
   private lateinit var datasetNameField: JTextField
   private lateinit var primaryAllocationField: JTextField
   private lateinit var secondaryAllocationField: JTextField
@@ -43,165 +47,202 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   private lateinit var advancedParametersField: JTextField
 
   private val mainPanel by lazy {
+    val sameWidthLabelsGroup = "ALLOCATION_DIALOG_LABELS_WIDTH_GROUP"
+    val sameWidthComboBoxGroup = "ALLOCATION_DIALOG_COMBO_BOX_WIDTH_GROUP"
+
     panel {
       row {
-        label("Dataset name")
-        textField(state::datasetName)
-          .apply {
-          focused()
-        }.also {
-          datasetNameField = it.component
-        }
+        label("Dataset name: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(state::datasetName)
+          .apply { focused() }
+          .also { datasetNameField = it.component }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
-        label("Dataset organization")
+        label("Dataset organization: ")
+          .widthGroup(sameWidthLabelsGroup)
         comboBox(
-          model = CollectionComboBoxModel(
-            listOf(
-              DatasetOrganization.PS,
-              DatasetOrganization.PO,
-              DatasetOrganization.POE
-            )
-          ),
-          prop = state.allocationParameters::datasetOrganization
-        ).also {
-          datasetOrganizationBox = it.component
-        }
-      }
-      row {
-        label("Allocation unit")
-        comboBox(
-          model = CollectionComboBoxModel(listOf(AllocationUnit.TRK, AllocationUnit.BLK, AllocationUnit.CYL)),
-          modelBinding = PropertyBinding(
-            get = { state.allocationParameters.allocationUnit },
-            set = { state.allocationParameters.allocationUnit = it }
+          listOf(
+            DatasetOrganization.PS,
+            DatasetOrganization.PO,
+            DatasetOrganization.POE
           )
-        ).also { spaceUnitBox = it.component }
+        )
+          .bindItem(state.allocationParameters::datasetOrganization.toNullableProperty())
+          .also { datasetOrganizationBox = it.component }
+          .widthGroup(sameWidthComboBoxGroup)
       }
       row {
-        label("Primary allocation")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.primaryAllocation.toString() },
-          set = { state.allocationParameters.primaryAllocation = it.toIntOrNull() ?: 0 }
-        )).also { primaryAllocationField = it.component }
+        label("Allocation unit: ")
+          .widthGroup(sameWidthLabelsGroup)
+        comboBox(listOf(AllocationUnit.TRK, AllocationUnit.BLK, AllocationUnit.CYL))
+          .bindItem(state.allocationParameters::allocationUnit.toNullableProperty())
+          .also { spaceUnitBox = it.component }
+          .widthGroup(sameWidthComboBoxGroup)
       }
       row {
-        label("Secondary allocation")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.secondaryAllocation.toString() },
-          set = { state.allocationParameters.secondaryAllocation = it.toIntOrNull() ?: 0 }
-        )).also {
-          secondaryAllocationField = it.component
-        }
+        label("Primary allocation: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(
+            { state.allocationParameters.primaryAllocation.toString() },
+            { state.allocationParameters.primaryAllocation = it.toIntOrNull() ?: 0 }
+          )
+          .also { primaryAllocationField = it.component }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
-        label("Directory")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.directoryBlocks.toString() },
-          set = { state.allocationParameters.directoryBlocks = it.toIntOrNull() ?: 0 }
-        )).enableIf(datasetOrganizationBox.selectedValueMatches { it != DatasetOrganization.PS })
-          .also {
-            directoryBlocksField = it.component
-          }
+        label("Secondary allocation: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(
+            { state.allocationParameters.secondaryAllocation.toString() },
+            { state.allocationParameters.secondaryAllocation = it.toIntOrNull() ?: 0 }
+          )
+          .also { secondaryAllocationField = it.component }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
-        label("Record format")
+        label("Directory: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(
+            {
+              if (state.allocationParameters.directoryBlocks != null) {
+                state.allocationParameters.directoryBlocks.toString()
+              } else {
+                "0"
+              }
+            },
+            { state.allocationParameters.directoryBlocks = it.toIntOrNull() ?: 0 }
+          )
+          .also { directoryBlocksField = it.component }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+        .visibleIf(datasetOrganizationBox.selectedValueMatches { it != DatasetOrganization.PS })
+      row {
+        label("Record format: ")
+          .widthGroup(sameWidthLabelsGroup)
         comboBox(
-          model = CollectionComboBoxModel(
-            listOf(
-              RecordFormat.F,
-              RecordFormat.FB,
-              RecordFormat.V,
-              RecordFormat.VA,
-              RecordFormat.VB,
-            )
-          ),
-          prop = state.allocationParameters::recordFormat
-        ).also {
-          recordFormatBox = it.component
-        }
+          listOf(
+            RecordFormat.F,
+            RecordFormat.FB,
+            RecordFormat.V,
+            RecordFormat.VA,
+            RecordFormat.VB,
+          )
+        )
+          .bindItem(state.allocationParameters::recordFormat.toNullableProperty())
+          .also { recordFormatBox = it.component }
+          .widthGroup(sameWidthComboBoxGroup)
       }
       row {
-        label("Record Length")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.recordLength?.toString() ?: "0" },
-          set = { state.allocationParameters.recordLength = it.toIntOrNull() }
-        )).also {
-          recordLengthField = it.component
-        }
+        label("Record Length: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(
+            { state.allocationParameters.recordLength?.toString() ?: "0" },
+            { state.allocationParameters.recordLength = it.toIntOrNull() }
+          )
+          .also { recordLengthField = it.component }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
-        label("Block size")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.blockSize?.toString() ?: "0" },
-          set = { state.allocationParameters.blockSize = it.toIntOrNull() }
-        )).also {
-          blockSizeField = it.component
-        }
+        label("Block size: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(
+            { state.allocationParameters.blockSize?.toString() ?: "0" },
+            { state.allocationParameters.blockSize = it.toIntOrNull() }
+          )
+          .also { blockSizeField = it.component }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
-        label("Average Block Length")
-        textField(PropertyBinding(
-          get = { state.allocationParameters.averageBlockLength?.toString() ?: "0" },
-          set = { state.allocationParameters.averageBlockLength = it.toIntOrNull() }
-        )).enableIf(spaceUnitBox.selectedValueMatches { it == AllocationUnit.BLK })
-          .also {
-            averageBlockLengthField = it.component
-          }
+        label("Average Block Length: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(
+            { state.allocationParameters.averageBlockLength?.toString() ?: "0" },
+            { state.allocationParameters.averageBlockLength = it.toIntOrNull() }
+          )
+          .also { averageBlockLengthField = it.component }
+          .horizontalAlign(HorizontalAlign.FILL)
 
       }
-      hideableRow("Advanced Parameters") {
+        .visibleIf(spaceUnitBox.selectedValueMatches { it == AllocationUnit.BLK })
+      collapsibleGroup("Advanced Parameters", false) {
         row {
-          label("Volume")
-          textField(PropertyBinding(
-            get = { state.allocationParameters.volumeSerial ?: "" },
-            set = { state.allocationParameters.volumeSerial = it }
-          )).also {
-            advancedParametersField = it.component
-          }
+          label("Volume: ")
+            .widthGroup(sameWidthLabelsGroup)
+          textField()
+            .bindText(
+              { state.allocationParameters.volumeSerial ?: "" },
+              { state.allocationParameters.volumeSerial = it }
+            )
+            .also { advancedParametersField = it.component }
+            .horizontalAlign(HorizontalAlign.FILL)
         }
         row {
-          label("Device Type")
-          textField(PropertyBinding(
-            get = { state.allocationParameters.deviceType ?: "" },
-            set = { state.allocationParameters.deviceType = it }
-          ))
+          label("Device Type: ")
+            .widthGroup(sameWidthLabelsGroup)
+          textField()
+            .bindText(
+              { state.allocationParameters.deviceType ?: "" },
+              { state.allocationParameters.deviceType = it }
+            )
+            .horizontalAlign(HorizontalAlign.FILL)
         }
         row {
-          label("Storage class")
-          textField(PropertyBinding(
-            get = { state.allocationParameters.storageClass ?: "" },
-            set = { state.allocationParameters.storageClass = it }
-          ))
+          label("Storage class: ")
+            .widthGroup(sameWidthLabelsGroup)
+          textField()
+            .bindText(
+              { state.allocationParameters.storageClass ?: "" },
+              { state.allocationParameters.storageClass = it }
+            )
+            .horizontalAlign(HorizontalAlign.FILL)
         }
         row {
-          label("Management class")
-          textField(PropertyBinding(
-            get = { state.allocationParameters.managementClass ?: "" },
-            set = { state.allocationParameters.managementClass = it }
-          ))
+          label("Management class: ")
+            .widthGroup(sameWidthLabelsGroup)
+          textField()
+            .bindText(
+              { state.allocationParameters.managementClass ?: "" },
+              { state.allocationParameters.managementClass = it }
+            )
+            .horizontalAlign(HorizontalAlign.FILL)
         }
         row {
-          label("Data class")
-          textField(PropertyBinding(
-            get = { state.allocationParameters.dataClass ?: "" },
-            set = { state.allocationParameters.dataClass = it }
-          ))
+          label("Data class: ")
+            .widthGroup(sameWidthLabelsGroup)
+          textField()
+            .bindText(
+              { state.allocationParameters.dataClass ?: "" },
+              { state.allocationParameters.dataClass = it }
+            )
+            .horizontalAlign(HorizontalAlign.FILL)
         }
       }
     }
   }
 
   override fun createCenterPanel(): JComponent {
-    return JBScrollPane(mainPanel).apply {
-      horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
-      verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+    return JBScrollPane(
+      mainPanel,
+      JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+      JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+    ).apply {
       minimumSize = Dimension(450, 300)
       if (state.errorMessage != "") {
         setErrorText(state.errorMessage)
       }
+      border = null
     }
   }
+
 
   override fun doOKAction() {
     super.doOKAction()
@@ -228,6 +269,3 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
     init()
   }
 }
-
-
-

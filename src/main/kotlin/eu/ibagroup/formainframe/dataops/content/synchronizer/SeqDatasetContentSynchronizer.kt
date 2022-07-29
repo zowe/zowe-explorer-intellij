@@ -24,6 +24,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.XIBMDataType
+import okhttp3.ResponseBody
 import retrofit2.Call
 import java.io.IOException
 
@@ -62,7 +63,13 @@ class SeqDatasetContentSynchronizer(
         }.execute()
         if (response.isSuccessful) {
           log.info("Content has been fetched successfully")
-          content = response.body()?.removeLastNewLine()?.toByteArray()
+
+          content = if (attributes.contentMode.type == XIBMDataType.Type.BINARY) {
+            response.body()?.bytes()?.removeLastNewLine()
+          } else {
+            response.body()?.bytes()
+          }
+
         } else {
           throwable = CallException(response, "Cannot fetch data from ${attributes.name}")
         }
@@ -73,7 +80,7 @@ class SeqDatasetContentSynchronizer(
     }.findAnyNullable() ?: throw throwable
   }
 
-  private fun makeFetchCall(connectionConfig: ConnectionConfig, attributes: RemoteDatasetAttributes): Call<String> {
+  private fun makeFetchCall(connectionConfig: ConnectionConfig, attributes: RemoteDatasetAttributes): Call<ResponseBody> {
     val volser = attributes.volser
     val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
     return if (volser != null) {

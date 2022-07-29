@@ -12,8 +12,16 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.vfs.VirtualFile
 
-// TODO: doc Valiantsin
+/**
+ * Attributes for a files that always depend on the parent.
+ * For example members always depend on dataset, spool files always depend on job.
+ * @param InfoType information class whose instances returned by zosmf (e.g. Member or SpoolFile).
+ * @param VFile virtual file class
+ */
 interface DependentFileAttributes<InfoType, VFile : VirtualFile> : FileAttributes {
+  /** parent file for dependent one. */
   val parentFile: VFile
+
+  /** Information about dependent file on mainframe. */
   val info: InfoType
 }

@@ -13,7 +13,9 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
@@ -30,38 +32,50 @@ class AddJobsFilterDialog(
     init()
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     lateinit var prefixField: JBTextField
     lateinit var ownerField: JBTextField
     lateinit var jobIdField: JBTextField
+    val sameWidthGroup = "ADD_JOB_FILTER_DIALOG_LABELS_WIDTH_GROUP"
+
     return panel {
       row {
         label("Jobs Working Set: ")
+          .widthGroup(sameWidthGroup)
         label(state.ws.name)
       }
       row {
         label("Prefix: ")
-        textField(state::prefix).also {
-          prefixField = it.component
-        }.withValidationOnApply {
-          validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it, false)
-        }
+          .widthGroup(sameWidthGroup)
+        textField()
+          .bindText(state::prefix)
+          .also { prefixField = it.component }
+          .validationOnApply {
+            validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it, false)
+          }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
         label("Owner: ")
-        textField(state::owner).also{
-          ownerField = it.component
-        }.withValidationOnApply {
-          validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it, false)
-        }
+          .widthGroup(sameWidthGroup)
+        textField()
+          .bindText(state::owner)
+          .also { ownerField = it.component }
+          .validationOnApply {
+            validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it, false)
+          }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
         label("Job ID: ")
-        textField(state::jobId).also{
-          jobIdField = it.component
-        }.withValidationOnApply {
-          validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it, true)
-        }
+          .widthGroup(sameWidthGroup)
+        textField()
+          .bindText(state::jobId)
+          .also { jobIdField = it.component }
+          .validationOnApply {
+            validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it, true)
+          }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
     }
   }
@@ -74,7 +88,7 @@ class JobsFilterState(
   var jobId: String = "",
 ) {
 
-  fun toJobsFilter (): JobsFilter {
+  fun toJobsFilter(): JobsFilter {
     val resultOwner = owner.ifBlank { "" }
     val resultPrefix = prefix.ifBlank { "" }
     val resultJobId = jobId.ifBlank { "" }

@@ -15,12 +15,15 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 
 
 const val JOBS_FOLDER_NAME = "Jobs"
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering RemoteJobAttributesService.
+ * @author Valiantsin Krus
+ */
 class RemoteJobAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteJobAttributesService(dataOpsManager)
@@ -28,15 +31,26 @@ class RemoteJobAttributesServiceFactory : AttributesServiceFactory {
 
 }
 
+/**
+ * Service to implement work with jobs attributes (e.g. create, update, clear).
+ * @author Viktar Mushtsin
+ * @author Valiantsin Krus
+ */
 class RemoteJobAttributesService(
   val dataOpsManager: DataOpsManager
 ) : MFRemoteAttributesServiceBase<RemoteJobAttributes>(dataOpsManager) {
   override val attributesClass = RemoteJobAttributes::class.java
   override val subFolderName = JOBS_FOLDER_NAME
 
+  /**
+   * Creates unique attributes based on the data from passed one ???
+   * @see MFRemoteAttributesServiceBase.buildUniqueAttributes
+   * @param attributes attributes to get data from.
+   * @return unique attributes
+   */
   override fun buildUniqueAttributes(attributes: RemoteJobAttributes): RemoteJobAttributes {
     return RemoteJobAttributes(
-      JobStatus(
+      Job(
         owner = attributes.jobInfo.owner,
         phase = attributes.jobInfo.phase,
         phaseName = attributes.jobInfo.phaseName,
@@ -52,6 +66,12 @@ class RemoteJobAttributesService(
     )
   }
 
+  /**
+   * Merge requesters from 2 attributes.
+   * @param oldAttributes old attributes data.
+   * @param newAttributes new attributes data.
+   * @return job attributes with data from the new attributes and with the requesters merged with the old one.
+   */
   override fun mergeAttributes(
     oldAttributes: RemoteJobAttributes,
     newAttributes: RemoteJobAttributes
@@ -63,6 +83,11 @@ class RemoteJobAttributesService(
     )
   }
 
+  // TODO: learn more and rewrite doc a bit
+  /**
+   * Reassigns attributes to another file, if it was moved or renamed ???
+   * @see MFRemoteAttributesServiceBase.reassignAttributesAfterUrlFolderRenaming
+   */
   override fun reassignAttributesAfterUrlFolderRenaming(
     file: MFVirtualFile,
     urlFolder: MFVirtualFile,
@@ -75,6 +100,14 @@ class RemoteJobAttributesService(
     }
   }
 
+  /**
+   * Continues path chain with path of the job specified in the order subsystem -> jobName -> jobId.
+   * Look at example below.
+   *
+   * Base path: For Mainframe -> <connection> -> Jobs
+   * Job: subsystem = JES2, jobName = TESTJOB, jobId = TST00001
+   * Result path: For Mainframe -> <connection> -> Jobs -> JES2 -> TESTJOB -> TST00001
+   */
   override fun continuePathChain(attributes: RemoteJobAttributes): List<PathElementSeed> {
     return listOf(
       PathElementSeed(attributes.jobInfo.subSystem ?: "NOSYS", createAttributes(directory = true)),

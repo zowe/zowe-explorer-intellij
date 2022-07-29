@@ -28,8 +28,7 @@ class FilesWorkingSetImpl(
 ) : WorkingSetBase<DSMask, WorkingSet<*>, FilesWorkingSetConfig>(
   uuid,
   fileExplorer,
-  workingSetConfigProvider,
-  parentDisposable
+  workingSetConfigProvider
 ), FilesWorkingSet {
 
   override val wsConfigClass = FilesWorkingSetConfig::class.java

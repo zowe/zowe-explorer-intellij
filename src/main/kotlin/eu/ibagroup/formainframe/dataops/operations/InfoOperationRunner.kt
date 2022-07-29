@@ -40,7 +40,7 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
     if (!response.isSuccessful) {
       throw CallException(response, "Credentials are not valid")
     }
-    return response?.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
+    return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
   }
 
 }

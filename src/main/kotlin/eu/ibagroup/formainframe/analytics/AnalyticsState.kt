@@ -10,10 +10,15 @@
 
 package eu.ibagroup.formainframe.analytics
 
-// TODO: doc Valiantsin
+/**
+ * State of user configurations for analytics that will be saved by Intellij.
+ */
 data class AnalyticsState(
+  /** Defines is the analytics tracking enabled by the user. */
   var isAnalyticsEnabled: Boolean = false,
+  /** Defines the latest version of analytics policy the user agreed with. */
   var lastAcknowledgedPolicyVersion: Int = POLICY_NOT_ACKNOWLEDGED,
+  /** Defines if the user has aware with of analytics policy at least once. */
   var wasIdentified: Boolean = false,
 )
 

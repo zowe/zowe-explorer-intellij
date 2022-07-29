@@ -38,6 +38,11 @@ class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
 
 private val logger = log<DatasetFileFetchProvider>()
 
+/**
+ * Implementation of batched provider for fetching datasets.
+ * @see RemoteBatchedFileFetchProviderBase
+ * @author Valiantsin Krus
+ */
 class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
   RemoteBatchedFileFetchProviderBase<DataSetsList, Dataset, DSMask, RemoteDatasetAttributes, MFVirtualFile>(
     dataOpsManager
@@ -47,6 +52,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val vFileClass = MFVirtualFile::class.java
 
+  // TODO: doc
   override fun fetchResponse(
     query: RemoteQuery<DSMask, Unit>,
     progressIndicator: ProgressIndicator
@@ -57,6 +63,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val responseClass = RemoteDatasetAttributes::class.java
 
+  // TODO: doc
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<DSMask, Unit>) {
     val deletingFileAttributes = attributesService.getAttributes(file)
     log.info("Cleaning-up file attributes $deletingFileAttributes")
@@ -80,6 +87,10 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val log = logger
 
+  /**
+   * Fetches 1 batch of datasets.
+   * @see RemoteBatchedFileFetchProviderBase.fetchBatch
+   */
   override fun fetchBatch(
     query: RemoteQuery<DSMask, Unit>,
     progressIndicator: ProgressIndicator,
@@ -95,10 +106,18 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
     ).cancelByIndicator(progressIndicator).execute()
   }
 
+  /**
+   * Converts datasets response list to BatchedBody.
+   * @see RemoteBatchedFileFetchProviderBase.convertResponseToBody
+   */
   override fun convertResponseToBody(responseList: DataSetsList?): BatchedBody<Dataset> {
     return BatchedBody(responseList?.items?.map { BatchedItem(it.name, it) }, responseList?.totalRows)
   }
 
+  /**
+   * Builds RemoteDatasetAttributes from dataset batched item.
+   * @see RemoteBatchedFileFetchProviderBase.buildAttributes
+   */
   override fun buildAttributes(
     query: RemoteQuery<DSMask, Unit>,
     batchedItem: BatchedItem<Dataset>

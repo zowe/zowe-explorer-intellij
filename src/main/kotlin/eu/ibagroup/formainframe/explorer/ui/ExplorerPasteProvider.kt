@@ -38,13 +38,29 @@ object ExplorerDataKeys {
   val NODE_DATA_ARRAY = DataKey.create<Array<NodeData>>("NodeDataArrayKey")
 }
 
-// TODO: doc Valiantsin
+/**
+ * Implementation of Intellij PasteProvider.
+ * Used to perform paste of files (in MF File Explorer and in Local File Explorer).
+ * @author Valiantsin Krus
+ * @author Viktar Mushtsin
+ */
 class ExplorerPasteProvider : PasteProvider {
   private val dataOpsManager = service<DataOpsManager>()
   private val pastePredicate: (NodeData) -> Boolean = {
     it.attributes?.isPastePossible ?: true
   }
 
+  /**
+   * Performs paste from ForMainframe buffer and from clipboard buffer of local file system.
+   * ForMainframe buffer is just a list of NodeData to copy or cut.
+   * @param dataContext Current context. This method can use the list of context keys below:
+   *                    1) PROJECT {Project} - opened project.
+   *                    2) IS_DRAG_AND_DROP_KEY {boolean} - identifies if the copying performed from drag&drop.
+   *                    3) VIRTUAL_FILE_ARRAY {list} - list of destination files (can be empty if all destinations
+   *                                                   are MF files, in this case destinations fetched from NodeData)
+   *                    4) DRAGGED_FROM_PROJECT_FILES_ARRAY {list} - list of files that was dragged from project files
+   *                                                                 tree (empty if operation is not drag&drop)
+   */
   override fun performPaste(dataContext: DataContext) {
     val isDragAndDrop = dataContext.getData(IS_DRAG_AND_DROP_KEY) ?: false
 
@@ -116,7 +132,7 @@ class ExplorerPasteProvider : PasteProvider {
                   destAttributes is RemoteMemberAttributes &&
                   (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
                 ) {
-                  val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).toUpperCase()
+                  val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).uppercase()
                   if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
                 } else if (
                   destAttributes is RemoteMemberAttributes &&
@@ -295,6 +311,13 @@ class ExplorerPasteProvider : PasteProvider {
     }
   }
 
+  /**
+   * Checks if the paste possible and enabled.
+   * @param dataContext Current context. This method can use the list of context keys below:
+   *                    1) PROJECT {Project} - opened project.
+   *                    2) VIRTUAL_FILE_ARRAY {list} - list of destination files (can be empty if all destinations
+   *                                                   are MF files, in this case destinations fetched from NodeData)
+   */
   internal fun isPastePossibleAndEnabled(dataContext: DataContext): Boolean {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return false
     val destinationFiles = dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
@@ -302,10 +325,19 @@ class ExplorerPasteProvider : PasteProvider {
     return explorerView.copyPasteSupport.isPastePossibleAndEnabled(destinationFiles)
   }
 
+  /**
+   * Does the same as isPastePossibleAndEnabled.
+   * @see ExplorerPasteProvider.isPastePossibleAndEnabled
+   */
   override fun isPastePossible(dataContext: DataContext): Boolean {
     return isPastePossibleAndEnabled(dataContext)
   }
 
+
+  /**
+   * Does the same as isPastePossibleAndEnabled.
+   * @see ExplorerPasteProvider.isPastePossibleAndEnabled
+   */
   override fun isPasteEnabled(dataContext: DataContext): Boolean {
     return isPastePossibleAndEnabled(dataContext)
   }

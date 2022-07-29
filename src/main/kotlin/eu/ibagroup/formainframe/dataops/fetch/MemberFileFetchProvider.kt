@@ -38,6 +38,11 @@ class MemberFileFetchProviderFactory : FileFetchProviderFactory {
 
 private val logger = log<MemberFileFetchProvider>()
 
+/**
+ * Implementation of batched provider for fetching members.
+ * @see RemoteBatchedFileFetchProviderBase
+ * @author Valiantsin Krus
+ */
 class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
   RemoteBatchedFileFetchProviderBase<MembersList, Member, LibraryQuery, RemoteMemberAttributes, MFVirtualFile>(
     dataOpsManager
@@ -55,12 +60,14 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
 
   override val log = logger
 
+  // TODO: doc
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<LibraryQuery, Unit>) {
     log.info("About to clean-up file=$file, query=$query")
     attributesService.clearAttributes(file)
     file.delete(this)
   }
 
+  // TODO: doc
   override fun fetchResponse(
     query: RemoteQuery<LibraryQuery, Unit>,
     progressIndicator: ProgressIndicator
@@ -73,6 +80,10 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
     }
   }
 
+  /**
+   * Fetches 1 batch of members.
+   * @see RemoteBatchedFileFetchProviderBase.fetchBatch
+   */
   override fun fetchBatch(
     query: RemoteQuery<LibraryQuery, Unit>,
     progressIndicator: ProgressIndicator,
@@ -90,10 +101,18 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
     else throw IllegalArgumentException("Virtual file is not a library")
   }
 
+  /**
+   * Converts members response list to BatchedBody.
+   * @see RemoteBatchedFileFetchProviderBase.convertResponseToBody
+   */
   override fun convertResponseToBody(responseList: MembersList?): BatchedBody<Member> {
     return BatchedBody(responseList?.items?.map { BatchedItem(it.name, it) }, responseList?.totalRows)
   }
 
+  /**
+   * Builds RemoteMemberAttributes from member batched item.
+   * @see RemoteBatchedFileFetchProviderBase.buildAttributes
+   */
   override fun buildAttributes(
     query: RemoteQuery<LibraryQuery, Unit>,
     batchedItem: BatchedItem<Member>

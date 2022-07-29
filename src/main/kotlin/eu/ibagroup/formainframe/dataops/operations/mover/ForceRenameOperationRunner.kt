@@ -24,19 +24,28 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
 import eu.ibagroup.r2z.DataAPI
 
-// TODO: doc Arseni
+/**
+ * Factory class for building an instance of the runner class on runtime. Defined in plugin.xml
+ */
 class ForceRenameOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return ForceRenameOperationRunner(dataOpsManager)
   }
 }
 
+/**
+ * Base class implementation for running a force rename operation
+ */
 class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
   OperationRunner<ForceRenameOperation, Unit> {
 
   override val operationClass = ForceRenameOperation::class.java
   override val resultClass = Unit::class.java
 
+  /**
+   * Determines if an operation can be run on selected object
+   * @param operation specifies a force rename operation object
+   */
   override fun canRun(operation: ForceRenameOperation): Boolean {
     return (when (operation.attributes) {
       is RemoteUssAttributes -> true
@@ -44,6 +53,12 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
     })
   }
 
+  /**
+   * Runs an operation and returns a wrapped instance of the response
+   * @param operation specifies a force rename operation object
+   * @param progressIndicator
+   * @return a wrapped instance of the response
+   */
   override fun run(operation: ForceRenameOperation, progressIndicator: ProgressIndicator) {
     val sourceFile = operation.file as MFVirtualFile
     val fileName = sourceFile.filenameInternal

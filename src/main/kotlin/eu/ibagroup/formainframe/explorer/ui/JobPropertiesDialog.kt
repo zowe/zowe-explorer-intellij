@@ -13,15 +13,16 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import javax.swing.JComponent
 
-// TODO: doc Vadim
+/** Class to create dialog for job file properties*/
 class JobPropertiesDialog(val project: Project?, override var state: JobState) : DialogWrapper(project),
   StatefulComponent<JobState> {
   init {
@@ -29,95 +30,175 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
     init()
   }
 
+  /** Create job file properties dialog and fill text fields with received job file's state*/
   override fun createCenterPanel(): JComponent {
     val job = state.remoteJobAttributes.jobInfo
     val tabbedPanel = JBTabbedPane()
+    val sameWidthGroup = "JOB_PROPERTIES_DIALOG_LABELS_WIDTH_GROUP"
 
-    tabbedPanel.add("General", panel {
-      row {
-        label("Job id: ")
-        JBTextField(job.jobId).apply { isEditable = false }()
-      }
-      row {
-        label("Job name: ")
-        JBTextField(job.jobName).apply { isEditable = false }()
-      }
-      row {
-        label("Subsystem: ")
-        JBTextField(job.subSystem ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Owner: ")
-        JBTextField(job.owner).apply { isEditable = false }()
-      }
-      row {
-        label("Status: ")
-        JBTextField(job.status?.toString() ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Job Type: ")
-        JBTextField(job.type.toString()).apply { isEditable = false }()
-      }
-      row {
-        label("Job Class: ")
-        JBTextField(job.jobClass ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Return Code: ")
-        JBTextField(job.returnedCode ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Job correlator: ")
-        JBTextField(job.jobCorrelator ?: "").apply { isEditable = false }()
-      }
-    })
+    tabbedPanel.add(
+      "General",
+      panel {
+        row {
+          label("Job ID: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.jobId)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Job name: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.jobName)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Subsystem: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.subSystem ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Owner: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.owner)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Status: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.status?.toString() ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Job type: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.type.toString())
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Job class: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.jobClass ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Return code: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.returnedCode ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Job correlator: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.jobCorrelator ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+      })
 
-    tabbedPanel.add("Data", panel {
-      row {
-        label("Phase: ")
-        JBTextField(job.phase).apply { isEditable = false }()
-      }
-      row {
-        label("Phase name: ")
-        JBTextField(job.phaseName).apply { isEditable = false }()
-      }
-      row {
-        label("Url: ")
-        JBTextField(job.url).apply { isEditable = false }()
-      }
-      row {
-        label("Files url: ")
-        JBTextField(job.filesUrl).apply { isEditable = false }()
-      }
-      row {
-        label("System executor: ")
-        JBTextField(job.execSystem ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Reason not running: ")
-        JBTextField(job.reasonNotRunning ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("<html><b>Run info</b></html>")
-      }
-      row {
-        label("Submitted (input end time): ")
-        JBTextField(job.execSubmitted ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Job start time: ")
-        JBTextField(job.execStarted ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Time ended: ")
-        JBTextField(job.execEnded ?: "").apply { isEditable = false }()
-      }
-    })
+    tabbedPanel.add(
+      "Data",
+      panel {
+        row {
+          label("Phase: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.phase.toString())
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Phase name: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.phaseName)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("URL: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.url)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Files URL: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.filesUrl)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("System executor: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.execSystem ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Reason not running: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.reasonNotRunning ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Run info")
+            .bold()
+            .widthGroup(sameWidthGroup)
+        }
+        row {
+          label("Submitted (input end time): ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.execSubmitted ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Job start time: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.execStarted ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Time ended: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(job.execEnded ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+      })
 
     return tabbedPanel
   }
 }
 
-
+/** Class to represent job file state */
 class JobState(val remoteJobAttributes: RemoteJobAttributes, override var mode: DialogMode = DialogMode.READ) :
   DialogState

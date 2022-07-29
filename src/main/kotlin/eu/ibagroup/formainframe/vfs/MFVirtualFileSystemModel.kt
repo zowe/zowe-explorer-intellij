@@ -69,7 +69,9 @@ class MFVirtualFileSystemModel {
   private val initialContentConditions = ConcurrentHashMap<MFVirtualFile, Condition>()
 
   val root = MFVirtualFile(
-    generateId(), MFVirtualFileSystem.ROOT_NAME, createAttributes(
+    generateId(),
+    MFVirtualFileSystem.ROOT_NAME,
+    createAttributes(
       directory = true,
       special = false,
       symlink = false,
@@ -78,11 +80,12 @@ class MFVirtualFileSystemModel {
       lastModified = System.nanoTime(),
       writable = false
     )
-  ).apply {
-    if (fsGraph.addVertex(this)) {
-      isValidInternal = true
+  )
+    .apply {
+      if (fsGraph.addVertex(this)) {
+        isValidInternal = true
+      }
     }
-  }
 
   private fun generateId() = counter.getAndIncrement()
 
@@ -156,7 +159,7 @@ class MFVirtualFileSystemModel {
     val event = listOf(VFileDeleteEvent(requestor, vFile, false))
     vFile.validWriteLock {
       val parent = vFile.parent
-      parent?.validWriteLock parentLock@{
+      parent?.validWriteLock {
         if (vFile.children?.size != 0) {
           vFile.children?.forEach { it: MFVirtualFile -> deleteFile(requestor, it) }
         }
@@ -175,7 +178,7 @@ class MFVirtualFileSystemModel {
             else parent.path + MFVirtualFileSystem.SEPARATOR + vFile.name
           initialContentConditions.remove(vFile)
           sendVfsChangesTopic().after(event)
-          return@parentLock
+          return@deleteFile
         }
       }
     }

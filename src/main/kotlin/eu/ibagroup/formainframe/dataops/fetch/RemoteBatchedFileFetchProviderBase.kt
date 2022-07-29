@@ -18,7 +18,16 @@ import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 
-// TODO: doc Valiantsin
+// TODO: redundant. rework.
+/**
+ * Abstract class to fetch files in batches (of 100 units by default)
+ * @param ResponseList class of response list that returns retrofit (e.g. DataSetsList, MembersList)
+ * @param ResponseItem class of response item (e.g. Dataset, Member)
+ * @param Response implementation class of file attributes.
+ * @see FileAttributes
+ * @param File implementation class of VirtualFile that plugin uses.
+ * @author Valiantsin Krus
+ */
 abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseItem : Any, Request : Any, Response : FileAttributes, File : VirtualFile>(
   dataOpsManager: DataOpsManager,
   val BATCH_SIZE: Int = 100
@@ -26,6 +35,12 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
 
   abstract val log: Logger
 
+  /**
+   * Fetches all batches.
+   * @param query query with all necessary information to send request to zosmf.
+   * @param progressIndicator progress indicator to display progress of fetching items in UI.
+   * @return collection of batch responses.
+   */
   override fun fetchResponse(
     query: RemoteQuery<Request, Unit>,
     progressIndicator: ProgressIndicator
@@ -74,22 +89,56 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
     return attributes ?: emptyList()
   }
 
+  /**
+   * Fetches 1 batch. Method that should be overridden in implementation
+   * @param query query with all necessary information to send request to zosmf.
+   * @param progressIndicator progress indicator to display progress of fetching items in UI.
+   * @param start name of the file from which next batch started.
+   * @return response with batch response list inside.
+   */
   abstract fun fetchBatch(
     query: RemoteQuery<Request, Unit>,
     progressIndicator: ProgressIndicator,
     start: String?
   ): retrofit2.Response<ResponseList>
 
+  /**
+   * Converts retrofits response to BatchedBody.
+   * @see BatchedBody
+   * @param responseList response from retrofit.
+   * @return batched body for continuous processing.
+   */
   abstract fun convertResponseToBody(responseList: ResponseList?): BatchedBody<ResponseItem>
 
+  /**
+   * Builds file attributes from batched item.
+   * @see BatchedBody
+   * @param query query with all necessary information to send request to zosmf.
+   * @param batchedItem item that was created in converting process for BatchedBody.
+   * @return created attributes.
+   */
   abstract fun buildAttributes(query: RemoteQuery<Request, Unit>, batchedItem: BatchedItem<ResponseItem>): Response
 }
 
+/**
+ * Wrapper for working with batched lists.
+ * @param Original class of element of response list that would be placed in batched list (e.g. Dataset, Member).
+ * @param items list of batched items which wraps the original list element.
+ * @param totalRows total elements count (for example, total datasets count
+ *                  on mainframe is 1000, size of batch is 100 than totalRows=1000).
+ * @author Valiantsin Krus
+ */
 data class BatchedBody<Original>(
   val items: List<BatchedItem<Original>>?,
   val totalRows: Int? = null
 )
 
+/**
+ * Wrapper for original element of response list. Used as an element of BatchedBody.
+ * @param name name of the file stored inside batched item.
+ * @param original original response item.
+ * @author Valiantsin Krus
+ */
 data class BatchedItem<Original>(
   val name: String,
   val original: Original

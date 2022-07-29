@@ -10,7 +10,11 @@
 
 package eu.ibagroup.formainframe.analytics.events
 
-// TODO: doc Valiantsin
+/**
+ * CRUD event for connections. Uses "connections" as the name of the event.
+ * @see CrudAnalyticsEvent
+ * @author Valiantsin Krus
+ */
 class ConnectionEvent(
   override var actionType: ActionType
 ) : CrudAnalyticsEvent("connections", actionType)

@@ -30,9 +30,15 @@ import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.formMfPath
 import eu.ibagroup.formainframe.utils.sendTopic
 
-// TODO: doc Hleb
+/**
+ * Action class for executing submit job on mainframe
+ */
 class SubmitJobAction : AnAction() {
 
+  /**
+   * Called when submit option is chosen from context menu,
+   * runs the submit operation
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -78,10 +84,16 @@ class SubmitJobAction : AnAction() {
     }
   }
 
+  /**
+   * This method is needed for interface implementation
+   */
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Determines which objects on mainframe can be submitted
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

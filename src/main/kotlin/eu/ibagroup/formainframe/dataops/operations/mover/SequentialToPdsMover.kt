@@ -22,15 +22,41 @@ import eu.ibagroup.r2z.CopyDataZOS
 import eu.ibagroup.r2z.DataAPI
 import retrofit2.Call
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering SequentialToPdsMover in Intellij IoC container.
+ * @see SequentialToPdsMover
+ * @author Valiantsin Krus
+ */
 class SequentialToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return SequentialToPdsMover(dataOpsManager)
   }
 }
 
+/**
+ * Implements copying of sequential data set to partitioned data set inside 1 system.
+ * @author Viktar Mushtsin
+ */
 class SequentialToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
 
+  /**
+   * Checks that source is sequential data set, destination is partitioned data set,
+   * and source and destination are located within the same system.
+   * @see OperationRunner.canRun
+   */
+  override fun canRun(operation: MoveCopyOperation): Boolean {
+    return operation.destinationAttributes is RemoteDatasetAttributes
+            && operation.destination.isDirectory
+            && !operation.source.isDirectory
+            && operation.sourceAttributes is RemoteDatasetAttributes
+            && operation.commonUrls(dataOpsManager).isNotEmpty()
+            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+  }
+
+  /**
+   * Builds call for copying sequential data set to partitioned data set.
+   * @see DefaultFileMover.buildCall
+   */
   override fun buildCall(
     operation: MoveCopyOperation,
     requesterWithUrl: Pair<Requester, ConnectionConfig>
@@ -54,14 +80,5 @@ class SequentialToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
       toDatasetName = destinationAttributes.name,
       memberName = memberName
     )
-  }
-
-  override fun canRun(operation: MoveCopyOperation): Boolean {
-    return operation.destinationAttributes is RemoteDatasetAttributes
-            && operation.destination.isDirectory
-            && !operation.source.isDirectory
-            && operation.sourceAttributes is RemoteDatasetAttributes
-            && operation.commonUrls(dataOpsManager).isNotEmpty()
-            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 }
