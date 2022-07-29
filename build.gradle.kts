@@ -62,7 +62,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.1")
+  version.set("2022.2")
 }
 
 tasks {
@@ -75,17 +75,15 @@ tasks {
 
   patchPluginXml {
     sinceBuild.set("203.5981")
-    untilBuild.set("221.*")
+    untilBuild.set("222.*")
     changeNotes.set(
       """
       <b>Fixed bugs:</b>
       <ul>
-        <li>https://github.com/zowe/zowe-explorer-intellij/issues/48</li>
-        <li>https://github.com/zowe/zowe-explorer-intellij/issues/43</li>
-        <li>https://github.com/zowe/zowe-explorer-intellij/issues/21</li>
-        <li>New member in PDS is not created if right click on PDS content (not on PDS's name)</li>
-        <li>https://github.com/zowe/zowe-explorer-intellij/issues/13</li>
-        <li>Cannot undo changes in file after saving it</li>
+        <li>https://github.com/zowe/zowe-explorer-intellij/issues/8</li>
+        <li>https://github.com/zowe/zowe-explorer-intellij/issues/78</li>
+        <li>https://github.com/zowe/zowe-explorer-intellij/issues/80</li>
+        <li>File tag change API method not working correctly</li>
       </ul>"""
     )
   }
