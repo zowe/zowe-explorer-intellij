@@ -18,32 +18,49 @@ import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.fixtures.JLabelFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import com.intellij.remoterobot.stepsProcessing.step
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
 
 
 /**
  * Tests creating working sets and masks.
  */
+//@Tag("FirstTime")
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
 class WorkingSet {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
-    private val wantToClose = listOf(
+    private var wantToClose = mutableListOf<String>()
+        /*mutableListOf(
         "Settings Dialog", "Add Working Set Dialog", "Edit Working Set Dialog"
-    )
+    )*/
     private val projectName = "untitled"
     private val connectionName = "valid connection"
 
+    private val maskWithLength44 = "$ZOS_USERID."+"A2345678.".repeat((44-(ZOS_USERID.length+1))/9)+"A".repeat((44-(ZOS_USERID.length+1))%9)
+    private val maskWithLength45 = "$ZOS_USERID."+"A2345678.".repeat((45-(ZOS_USERID.length+1))/9)+"A".repeat((45-(ZOS_USERID.length+1))%9)
+
+    private val enterValidDSMaskMessage = "Enter valid dataset mask"
+    private val maskMessageMap = mapOf("1$ZOS_USERID.*" to enterValidDSMaskMessage,
+        "$ZOS_USERID.{!" to enterValidDSMaskMessage,
+        "$ZOS_USERID.A23456789.*" to "Qualifier must be in 1 to 8 characters",
+        "$ZOS_USERID." to enterValidDSMaskMessage,
+        maskWithLength45 to "Dataset mask must be no more than 44 characters",
+    )
 
     /**
      * Opens the project and Explorer, create valid connection.
      */
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        wantToClose.addAll(listOf(
+            "Settings Dialog", "Add Working Set Dialog", "Edit Working Set Dialog"
+        ))
         welcomeFrame {
             open(projectName)
         }
@@ -53,8 +70,10 @@ class WorkingSet {
             if (dialog("For Mainframe Plugin Privacy Policy and Terms and Conditions").isShowing) {
                 clickButton("I Agree")
             }
+
             forMainframe()
         }
+        deleteAllConnections(remoteRobot)
     }
 
     /**
@@ -103,7 +122,7 @@ class WorkingSet {
         }
     }
 
-   @Test
+  @Test
     @Order(2)
     fun testAddEmptyWorkingSetWithVeryLongName(remoteRobot: RemoteRobot) = with(remoteRobot) {
         createConnection(connectionName, true, remoteRobot)
@@ -161,7 +180,7 @@ class WorkingSet {
        val wsName = "WS2"
        val masks: ArrayList<Pair<String,String>>  = ArrayList()
        //todo allocate dataset with 44 length
-       val maskWithLength44 = "$ZOS_USERID."+"A2345678.".repeat((44-(ZOS_USERID.length+1))/9)+"A".repeat((44-(ZOS_USERID.length+1))%9)
+
        val masksNames = listOf("$ZOS_USERID.*","$ZOS_USERID.**","$ZOS_USERID.@#%","$ZOS_USERID.@#%.*","Q.*","WWW.*",maskWithLength44,
            ZOS_USERID
        )
@@ -227,15 +246,6 @@ class WorkingSet {
     fun testAddWorkingSetWithInvalidMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
         //todo add mask *.* when bug is fixed
         val wsName = "WS4"
-        val maskWithLength45 = "$ZOS_USERID."+"A2345678.".repeat((45-(ZOS_USERID.length+1))/9)+"A".repeat((45-(ZOS_USERID.length+1))%9)
-        val enterValidDSMaskMessage = "Enter valid dataset mask"
-        val maskMessageMap = mapOf("1$ZOS_USERID.*" to enterValidDSMaskMessage,
-            "$ZOS_USERID.{!" to enterValidDSMaskMessage,
-            "$ZOS_USERID.A23456789.*" to "Qualifier must be in 1 to 8 characters",
-            "$ZOS_USERID." to enterValidDSMaskMessage,
-            maskWithLength45 to "Dataset mask must be no more than 44 characters",
-        )
-
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -479,6 +489,143 @@ class WorkingSet {
         }
         //todo check in explorer
     }
+
+   @Test
+    @Order(15)
+    fun testAddEmptyWorkingSetWithVeryLongNameFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val wsName: String = "B".repeat(200)
+        wantToClose.clear()
+        wantToClose.add("Add Working Set Dialog")
+       // createConnection(connectionName, true, remoteRobot)
+       // assertTrue(wantToClose.remove("Settings Dialog"))
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                fileExplorer.click()
+                createWorkingSet(closableFixtureCollector, fixtureStack)
+            }
+            addWorkingSetDialog(fixtureStack) {
+                addWorkingSet(wsName,connectionName)
+                clickButton("OK")
+                Thread.sleep(5000)
+            }
+            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+        }
+    }
+
+   @Test
+    @Order(16)
+    fun testAddWorkingSetWithOneValidMaskFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val wsName = "WS1"
+        val mask = Pair("$ZOS_USERID.*","z/OS")
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                fileExplorer.click()
+                createWorkingSet(closableFixtureCollector, fixtureStack)
+            }
+            addWorkingSetDialog(fixtureStack) {
+                    addWorkingSet(wsName,connectionName,mask)
+                    clickButton("OK")
+                    Thread.sleep(5000)
+                }
+            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+        }
+    }
+
+  @Test
+    @Order(17)
+    fun testAddWorkingSetWithValidZOSMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val wsName = "WS2"
+        val masks: ArrayList<Pair<String,String>>  = ArrayList()
+        //todo allocate dataset with 44 length
+        val masksNames = listOf("$ZOS_USERID.*","$ZOS_USERID.**","$ZOS_USERID.@#%","$ZOS_USERID.@#%.*","Q.*","WWW.*",maskWithLength44,
+            ZOS_USERID
+        )
+        masksNames.forEach {
+            masks.add(Pair(it,"z/OS")) }
+
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                fileExplorer.click()
+                createWorkingSet(closableFixtureCollector, fixtureStack)
+            }
+            addWorkingSetDialog(fixtureStack) {
+                addWorkingSet(wsName,connectionName,masks)
+                clickButton("OK")
+                Thread.sleep(5000)
+            }
+            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+        }
+        //todo open masks in explorer
+    }
+
+   @Test
+    @Order(18)
+    fun testAddWorkingSetWithValidUSSMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val wsName = "WS3"
+        val masks: ArrayList<Pair<String,String>>  = ArrayList()
+        val masksNames = listOf("/u","/uuu","/etc/ssh","/u/$ZOS_USERID")
+        masksNames.forEach {
+            masks.add(Pair(it,"USS")) }
+
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                fileExplorer.click()
+                createWorkingSet(closableFixtureCollector, fixtureStack)
+            }
+            addWorkingSetDialog(fixtureStack) {
+                addWorkingSet(wsName,connectionName,masks)
+                clickButton("OK")
+                Thread.sleep(5000)
+            }
+           closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+        }
+        //todo open masks in explorer
+    }
+
+
+   @Test
+    @Order(19)
+    fun testAddWorkingSetWithInvalidMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        //todo add mask *.* when bug is fixed
+        val wsName = "WS4"
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                fileExplorer.click()
+                createWorkingSet(closableFixtureCollector, fixtureStack)
+            }
+            addWorkingSetDialog(fixtureStack) {
+                addWorkingSet(wsName,connectionName)
+                maskMessageMap.forEach{
+                    addMask(Pair(it.key,"z/OS"))
+                    if (button("OK").isEnabled()){
+                        clickButton("OK")
+                    } else {
+                        findText("OK").moveMouse()
+                    }
+                    if (it.key.length<45){
+                        findText(it.key).moveMouse()
+                    } else {
+                        findText("${it.key.substring(0,42)}...").moveMouse()
+                    }
+                    Thread.sleep(5000)
+                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow'][.//div[@class='Header']]")).findText(it.value)
+                    assertFalse(button("OK").isEnabled())
+                    findText(it.key).click()
+                    clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[@myaction.key='button.text.remove']"))
+                }
+
+                addMask(Pair("$ZOS_USERID.*","z/OS"))
+                addMask(Pair("$ZOS_USERID.*","z/OS"))
+                assertFalse(button("OK").isEnabled())
+                find<JLabelFixture>(byXpath("//div[@accessiblename='You cannot add several identical masks to table' and @class='JLabel']"))
+
+                clickButton("Cancel")
+            }
+            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+        }
+    }
+
+
     private fun createConnection(connectionName:String, isValidConnection: Boolean, remoteRobot: RemoteRobot) = with(remoteRobot){
         ideFrameImpl(projectName, fixtureStack) {
             explorer {

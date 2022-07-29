@@ -74,7 +74,9 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
         keyboard {
             hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_A)
         }
-        clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
+        if (button(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']")).isEnabled()) {
+            clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
+        }
     }
 
     companion object {

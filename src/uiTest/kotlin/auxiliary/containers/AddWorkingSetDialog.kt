@@ -83,7 +83,7 @@ open class AddWorkingSetDialog(
 
     private fun specifyWSNameAndConnection(workingSetName: String, connectionName: String) {
         find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = workingSetName
-        if (connectionName.isNullOrEmpty().not()) {
+        if (connectionName.isEmpty().not()) {
             find<ComboBoxFixture>(byXpath("//div[@class='ComboBox']")).selectItem(connectionName)
         }
     }

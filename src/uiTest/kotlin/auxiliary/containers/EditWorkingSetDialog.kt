@@ -33,7 +33,7 @@ class EditWorkingSetDialog(
     }
 
     fun changeConnection(newConnectionName: String) {
-        if (newConnectionName.isNullOrEmpty().not()) {
+        if (newConnectionName.isEmpty().not()) {
             find<ComboBoxFixture>(byXpath("//div[@class='ComboBox']")).selectItem(newConnectionName)
         }
     }
