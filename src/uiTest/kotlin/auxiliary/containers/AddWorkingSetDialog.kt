@@ -55,8 +55,8 @@ open class AddWorkingSetDialog(
         val findType = if (mask.first.startsWith('/')) {"USS"} else {"z/OS"}
         findAllText(findType).last().click()
         findAll<ComboBoxFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JComboBox']")).last().selectItem(mask.second)
-        if (mask.first.length > 44) {
-            findAllText("${mask.first.substring(0,42)}...").last().moveMouse()
+        if (mask.first.length > 48) {
+            findAllText("${mask.first.substring(0,46)}...").last().moveMouse()
         }
         findAllText(mask.first).last().click()
     }

@@ -290,7 +290,7 @@ class WorkingSetFromActionButtonTest {
             settingsDialog(fixtureStack) {
                 configurableEditor {
                     conTab.click()
-                    deleteAllItems("Connections")
+                    deleteAllItems()
                 }
                 clickButton("OK")
             }

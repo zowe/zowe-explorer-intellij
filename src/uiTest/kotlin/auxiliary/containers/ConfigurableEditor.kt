@@ -69,8 +69,8 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
         clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
     }
 
-    fun deleteAllItems(items: String) {
-        find<ComponentFixture>(byXpath("//div[@accessiblename='$items' and @class='JPanel']")).click()
+    fun deleteAllItems() {
+        find<ComponentFixture>(byXpath("//div[@class='DialogPanel']//div[@class='JPanel']")).click()
         keyboard {
             hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_A)
         }
