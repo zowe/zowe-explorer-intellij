@@ -15,14 +15,12 @@ import auxiliary.closable.ClosableFixtureCollector
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
-import com.intellij.remoterobot.fixtures.JLabelFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
-import com.intellij.remoterobot.stepsProcessing.step
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
+import java.time.Duration
 
 
 /**
@@ -40,42 +38,21 @@ class WorkingSetFromActionButtonTest {
     private val projectName = "untitled"
     private val connectionName = "valid connection"
 
-    private val maskWithLength44 = "$ZOS_USERID."+"A2345678.".repeat((44-(ZOS_USERID.length+1))/9)+"A".repeat((44-(ZOS_USERID.length+1))%9)
-    private val maskWithLength45 = "$ZOS_USERID."+"A2345678.".repeat((45-(ZOS_USERID.length+1))/9)+"A".repeat((45-(ZOS_USERID.length+1))%9)
-
-    private val enterValidDSMaskMessage = "Enter valid dataset mask"
-    private val maskMessageMap = mapOf("1$ZOS_USERID.*" to enterValidDSMaskMessage,
-        "$ZOS_USERID.{!" to enterValidDSMaskMessage,
-        "$ZOS_USERID.A23456789.*" to "Qualifier must be in 1 to 8 characters",
-        "$ZOS_USERID." to enterValidDSMaskMessage,
-        maskWithLength45 to "Dataset mask must be no more than 44 characters",
-    )
 
     /**
-     * Opens the project and Explorer, create valid connection.
+     * Opens the project and Explorer, clear test environment.
      */
     @BeforeAll
-    fun setUpAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        welcomeFrame {
-            open(projectName)
-        }
-        Thread.sleep(10000)
-
-        ideFrameImpl(projectName, fixtureStack) {
-          /*  if (dialog("For Mainframe Plugin Privacy Policy and Terms and Conditions").isShowing) {
-                clickButton("I Agree")
-            }*/
-            forMainframe()
-        }
-        deleteAllConnections(remoteRobot)
+    fun setUpAll(remoteRobot: RemoteRobot) {
+        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
     /**
-     * Closes the project.
+     * Closes the project and clear test environment.
      */
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        deleteAllConnections(remoteRobot)
+        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             close()
         }
@@ -89,30 +66,29 @@ class WorkingSetFromActionButtonTest {
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
 
-   // @Test
-   @Order(1)
-    fun testAddWorkingSetWithoutConnection(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    @Test
+    @Order(1)
+    fun testAddWorkingSetWithoutConnectionFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val wsName = "first ws"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
-                settings(closableFixtureCollector, fixtureStack)
+                fileExplorer.click()
+                createWorkingSet(closableFixtureCollector, fixtureStack)
             }
-            settingsDialog(fixtureStack) {
-                configurableEditor {
-                    workingSetsTab.click()
-                    addWS(closableFixtureCollector, fixtureStack)
-                }
-                addWorkingSetDialog(fixtureStack) {
-                    addWorkingSet("WS1","")
-                    clickButton("OK")
-                    comboBox("Specify connection").click()
-                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow'][.//div[@visible_text='You must provide a connection']]"))
-                    assertFalse(button("OK").isEnabled())
-                    clickButton("Cancel")
-                }
-                closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-                clickButton("Cancel")
+            addConnectionDialog(fixtureStack) {
+                addConnection(connectionName, CONNECTION_URL, ZOS_USERID, ZOS_PWD, true)
+                clickButton("OK")
+                Thread.sleep(5000)
             }
-            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+            addWorkingSetDialog(fixtureStack) {
+                addWorkingSet(wsName, connectionName)
+                clickButton("OK")
+                Thread.sleep(3000)
+                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText("You are going to create a Working Set that doesn't fetch anything")
+                clickButton("OK")
+                Thread.sleep(3000)
+            }
+            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
         }
     }
 
@@ -120,7 +96,6 @@ class WorkingSetFromActionButtonTest {
     @Test
     @Order(2)
     fun testAddEmptyWorkingSetWithVeryLongNameFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        createConnection(connectionName, true, remoteRobot)
         val wsName: String = "B".repeat(200)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -128,9 +103,12 @@ class WorkingSetFromActionButtonTest {
                 createWorkingSet(closableFixtureCollector, fixtureStack)
             }
             addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName,connectionName)
+                addWorkingSet(wsName, connectionName)
                 clickButton("OK")
-                Thread.sleep(5000)
+                Thread.sleep(3000)
+                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText("You are going to create a Working Set that doesn't fetch anything")
+                clickButton("OK")
+                Thread.sleep(3000)
             }
             closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
         }
@@ -140,14 +118,14 @@ class WorkingSetFromActionButtonTest {
     @Order(3)
     fun testAddWorkingSetWithOneValidMaskFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS1"
-        val mask = Pair("$ZOS_USERID.*","z/OS")
+        val mask = Pair("$ZOS_USERID.*", "z/OS")
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 fileExplorer.click()
                 createWorkingSet(closableFixtureCollector, fixtureStack)
             }
             addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName,connectionName,mask)
+                addWorkingSet(wsName, connectionName, mask)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
@@ -159,13 +137,12 @@ class WorkingSetFromActionButtonTest {
     @Order(4)
     fun testAddWorkingSetWithValidZOSMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
-        val masks: ArrayList<Pair<String,String>>  = ArrayList()
+        val masks: ArrayList<Pair<String, String>> = ArrayList()
         //todo allocate dataset with 44 length
-        val masksNames = listOf("$ZOS_USERID.*","$ZOS_USERID.**","$ZOS_USERID.@#%","$ZOS_USERID.@#%.*","Q.*","WWW.*",maskWithLength44,
-            ZOS_USERID
-        )
-        masksNames.forEach {
-            masks.add(Pair(it,"z/OS")) }
+
+        validZOSMasks.forEach {
+            masks.add(Pair(it, "z/OS"))
+        }
 
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -173,7 +150,7 @@ class WorkingSetFromActionButtonTest {
                 createWorkingSet(closableFixtureCollector, fixtureStack)
             }
             addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName,connectionName,masks)
+                addWorkingSet(wsName, connectionName, masks)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
@@ -186,10 +163,11 @@ class WorkingSetFromActionButtonTest {
     @Order(5)
     fun testAddWorkingSetWithValidUSSMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS3"
-        val masks: ArrayList<Pair<String,String>>  = ArrayList()
-        val masksNames = listOf("/u","/uuu","/etc/ssh","/u/$ZOS_USERID")
-        masksNames.forEach {
-            masks.add(Pair(it,"USS")) }
+        val masks: ArrayList<Pair<String, String>> = ArrayList()
+
+        validUSSMasks.forEach {
+            masks.add(Pair(it, "USS"))
+        }
 
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -197,7 +175,7 @@ class WorkingSetFromActionButtonTest {
                 createWorkingSet(closableFixtureCollector, fixtureStack)
             }
             addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName,connectionName,masks)
+                addWorkingSet(wsName, connectionName, masks)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
@@ -218,83 +196,55 @@ class WorkingSetFromActionButtonTest {
                 createWorkingSet(closableFixtureCollector, fixtureStack)
             }
             addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName,connectionName)
-                maskMessageMap.forEach{
-                    addMask(Pair(it.key,"z/OS"))
-                    if (button("OK").isEnabled()){
+                addWorkingSet(wsName, connectionName)
+                maskMessageMap.forEach {
+                    addMask(Pair(it.key, "z/OS"))
+                    if (button("OK").isEnabled()) {
                         clickButton("OK")
                     } else {
                         findText("OK").moveMouse()
                     }
-                    if (it.key.length<45){
+                    if (it.key.length < 49) {
                         findText(it.key).moveMouse()
                     } else {
-                        findText("${it.key.substring(0,42)}...").moveMouse()
+                        findText("${it.key.substring(0, 46)}...").moveMouse()
                     }
                     Thread.sleep(5000)
-                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow'][.//div[@class='Header']]")).findText(it.value)
+                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow'][.//div[@class='Header']]")).findText(
+                        it.value
+                    )
                     assertFalse(button("OK").isEnabled())
                     findText(it.key).click()
                     clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[@myaction.key='button.text.remove']"))
                 }
-
-                addMask(Pair("$ZOS_USERID.*","z/OS"))
-                addMask(Pair("$ZOS_USERID.*","z/OS"))
-                assertFalse(button("OK").isEnabled())
-                find<JLabelFixture>(byXpath("//div[@accessiblename='You cannot add several identical masks to table' and @class='JLabel']"))
-
                 clickButton("Cancel")
             }
             closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
         }
     }
 
-
-    private fun createConnection(connectionName:String, isValidConnection: Boolean, remoteRobot: RemoteRobot) = with(remoteRobot){
+    @Test
+    @Order(7)
+    fun testAddWorkingSetWithTheSameMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val wsName = "WS4"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
-                settings(closableFixtureCollector, fixtureStack)
+                fileExplorer.click()
+                createWorkingSet(closableFixtureCollector, fixtureStack)
             }
-            settingsDialog(fixtureStack) {
-                configurableEditor {
-                    conTab.click()
-                    add(closableFixtureCollector, fixtureStack)
-                }
-                addConnectionDialog(fixtureStack) {
-                    if (isValidConnection) {
-                        addConnection(connectionName, CONNECTION_URL, ZOS_USERID, ZOS_PWD, true)
-                    } else {
-                        addConnection(connectionName, "${CONNECTION_URL}1", ZOS_USERID, ZOS_PWD, true)
-                    }
-                    clickButton("OK")
-                    Thread.sleep(5000)
-                }
-                closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
-                if (isValidConnection.not()){
-                    errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
-                        clickButton("Yes")
-                    }
-                    closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
-                }
+            addWorkingSetDialog(fixtureStack) {
+                addWorkingSet(wsName, connectionName)
+                addMask(Pair("$ZOS_USERID.*", "z/OS"))
+                addMask(Pair("$ZOS_USERID.*", "z/OS"))
                 clickButton("OK")
+                find<HeavyWeightWindowFixture>(
+                    byXpath("//div[@class='HeavyWeightWindow']"),
+                    Duration.ofSeconds(30)
+                ).hasText(IDENTICAL_MASKS_MESSAGE)
+                assertFalse(button("OK").isEnabled())
+                clickButton("Cancel")
             }
-            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-        }
-    }
-
-    private fun deleteAllConnections(remoteRobot: RemoteRobot) = with(remoteRobot){
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                settings(closableFixtureCollector, fixtureStack)
-            }
-            settingsDialog(fixtureStack) {
-                configurableEditor {
-                    conTab.click()
-                    deleteAllItems()
-                }
-                clickButton("OK")
-            }
-            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
         }
     }
 }

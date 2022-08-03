@@ -46,16 +46,22 @@ class ClosableFixtureCollector {
      * Finds the closable fixture by its Locator.
      */
     fun findClosable(remoteRobot: RemoteRobot, locator: Locator) = with(remoteRobot) {
-        when(locator.byDescription) {
+        when (locator.byDescription) {
             SettingsDialog.name -> find<SettingsDialog>(locator, Duration.ofSeconds(60))
             AddConnectionDialog.name -> find<AddConnectionDialog>(locator, Duration.ofSeconds(60))
             EditConnectionDialog.name -> find<EditConnectionDialog>(locator, Duration.ofSeconds(60))
-            ErrorCreatingConnectionDialog.name -> find<ErrorCreatingConnectionDialog>(locator,
-                Duration.ofSeconds(60))
+            ErrorCreatingConnectionDialog.name -> find<ErrorCreatingConnectionDialog>(
+                locator,
+                Duration.ofSeconds(60)
+            )
+
             AddWorkingSetDialog.name -> find<AddWorkingSetDialog>(locator, Duration.ofSeconds(60))
             EditWorkingSetDialog.name -> find<EditWorkingSetDialog>(locator, Duration.ofSeconds(60))
-            IdeFrameImpl.xPath("untitled").byDescription -> find<IdeFrameImpl>(locator,
-                Duration.ofSeconds(60))
+            IdeFrameImpl.xPath("untitled").byDescription -> find<IdeFrameImpl>(
+                locator,
+                Duration.ofSeconds(60)
+            )
+
             else -> throw IllegalAccessException("There is no corresponding class to ${locator.byDescription}")
         }
     }
@@ -67,11 +73,11 @@ class ClosableFixtureCollector {
      */
     fun closeItem(i: Int, item: ClosableFixtureItem, remoteRobot: RemoteRobot) {
         findClosable(remoteRobot, item.fixtureStack[i]).apply {
-            if (i == item.fixtureStack.size-1) {
+            if (i == item.fixtureStack.size - 1) {
                 close()
                 items.remove(item)
             } else {
-                closeItem(i+1, item, remoteRobot)
+                closeItem(i + 1, item, remoteRobot)
             }
         }
     }
@@ -98,4 +104,5 @@ class ClosableFixtureCollector {
             }
         }
     }
+
 }

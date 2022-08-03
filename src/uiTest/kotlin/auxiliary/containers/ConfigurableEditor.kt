@@ -41,6 +41,11 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     val workingSetsTab = tabLabel(remoteRobot, "Working Sets")
 
     /**
+     * The Jobs Working Sets table
+     */
+    val jobsWorkingSetsTab = tabLabel(remoteRobot, "Jobs Working Sets")
+
+    /**
      * Clicks on the add action and adds the Add Connection Dialog to the list of fixtures needed to close.
      */
     fun add(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
