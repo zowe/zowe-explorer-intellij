@@ -21,7 +21,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.6.2"
+version = "0.6.3"
 val remoteRobotVersion = "0.11.14"
 
 repositories {
@@ -72,7 +72,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.1")
+  version.set("2022.2")
 }
 
 tasks {
@@ -85,7 +85,7 @@ tasks {
 
   patchPluginXml {
     sinceBuild.set("203.5981")
-    untilBuild.set("221.*")
+    untilBuild.set("222.*")
     changeNotes.set(
       """
       <b>New features:</b>
