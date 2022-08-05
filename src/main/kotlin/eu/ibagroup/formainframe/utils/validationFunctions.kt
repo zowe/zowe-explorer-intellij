@@ -116,12 +116,18 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
   val noMoreThan2AsteriskAfterTextInTheQualifierRule = "[^\\*\\.]+\\*{2,}"
   val noSecondAsteriskInTheMiddleOfTheQualifierRule = "\\*+[^\\*\\.]+\\*+[^\\*\\.]+"
   val noFirstAsteriskInTheMiddleOfTheQualifierRule = "[^\\*\\.]+\\*+[^\\*\\.]+\\*+"
-  val asteriskRegex = arrayOf(noMoreThan3AsteriskRule, noMoreThan2AsteriskAfterTextInTheQualifierRule, noMoreThan2AsteriskBeforeTextInTheQualifierRule,noSecondAsteriskInTheMiddleOfTheQualifierRule, noFirstAsteriskInTheMiddleOfTheQualifierRule).joinToString(separator = "|")
+  val asteriskRegex = arrayOf(
+    noMoreThan3AsteriskRule,
+    noMoreThan2AsteriskAfterTextInTheQualifierRule,
+    noMoreThan2AsteriskBeforeTextInTheQualifierRule,
+    noSecondAsteriskInTheMiddleOfTheQualifierRule,
+    noFirstAsteriskInTheMiddleOfTheQualifierRule
+  ).joinToString(separator = "|")
 
   val qualifier = text.split('.')
 
   return if (text.length > 44) {
-    ValidationInfo("Dataset mask must be less than 44 characters", component)
+    ValidationInfo("Dataset mask length must not exceed 44 characters", component)
   } else if (qualifier.find { it.length > 8 } != null) {
     ValidationInfo("Qualifier must be in 1 to 8 characters", component)
   } else if (text.isNotBlank() && qualifier.find { !it.matches(maskRegex) } != null ) {
