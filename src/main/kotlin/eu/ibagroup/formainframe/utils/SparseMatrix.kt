@@ -38,4 +38,8 @@ class SparseMatrix<T>(
     }
   }
 
+  fun clear() {
+    map.clear()
+  }
+
 }
