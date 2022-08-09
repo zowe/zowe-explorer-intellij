@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package settings.workingset
+package workingset
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
@@ -24,13 +24,13 @@ import java.time.Duration
 
 
 /**
- * Tests creating working sets and masks.
+ * Tests creating working sets and masks via action button.
  */
 @Tag("FirstTime")
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class WorkingSetFromActionButtonTest {
+class WorkingSetViaActionButtonTest {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf("Add Working Set Dialog")
@@ -68,7 +68,7 @@ class WorkingSetFromActionButtonTest {
 
     @Test
     @Order(1)
-    fun testAddWorkingSetWithoutConnectionFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithoutConnectionViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "first ws"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -95,7 +95,7 @@ class WorkingSetFromActionButtonTest {
 
     @Test
     @Order(2)
-    fun testAddEmptyWorkingSetWithVeryLongNameFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddEmptyWorkingSetWithVeryLongNameViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName: String = "B".repeat(200)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -116,7 +116,7 @@ class WorkingSetFromActionButtonTest {
 
     @Test
     @Order(3)
-    fun testAddWorkingSetWithOneValidMaskFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithOneValidMaskViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS1"
         val mask = Pair("$ZOS_USERID.*", "z/OS")
         ideFrameImpl(projectName, fixtureStack) {
@@ -135,7 +135,7 @@ class WorkingSetFromActionButtonTest {
 
     @Test
     @Order(4)
-    fun testAddWorkingSetWithValidZOSMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithValidZOSMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         val masks: ArrayList<Pair<String, String>> = ArrayList()
         //todo allocate dataset with 44 length
@@ -161,7 +161,7 @@ class WorkingSetFromActionButtonTest {
 
     @Test
     @Order(5)
-    fun testAddWorkingSetWithValidUSSMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithValidUSSMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS3"
         val masks: ArrayList<Pair<String, String>> = ArrayList()
 
@@ -187,7 +187,7 @@ class WorkingSetFromActionButtonTest {
 
     @Test
     @Order(6)
-    fun testAddWorkingSetWithInvalidMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithInvalidMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         //todo add mask *.* when bug is fixed
         val wsName = "WS4"
         ideFrameImpl(projectName, fixtureStack) {
@@ -225,7 +225,7 @@ class WorkingSetFromActionButtonTest {
 
     @Test
     @Order(7)
-    fun testAddWorkingSetWithTheSameMasksFromActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithTheSameMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS4"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {

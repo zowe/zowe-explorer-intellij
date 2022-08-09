@@ -11,10 +11,15 @@
 package auxiliary
 
 import auxiliary.closable.ClosableFixtureCollector
+import auxiliary.components.actionMenu
+import auxiliary.components.actionMenuItem
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.CommonContainerFixture
+import com.intellij.remoterobot.fixtures.ComponentFixture
+import com.intellij.remoterobot.fixtures.ContainerFixture
 import com.intellij.remoterobot.search.locators.Locator
+import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
 import com.intellij.remoterobot.utils.waitFor
 import io.kotest.matchers.string.shouldContain
@@ -26,6 +31,7 @@ const val CONNECTION_URL = "https://172.20.2.121:10443"
 
 const val ENTER_VALID_DS_MASK_MESSAGE = "Enter valid dataset mask"
 const val IDENTICAL_MASKS_MESSAGE = "You cannot add several identical masks to table"
+const val EMPTY_DATASET_MESSAGE = "You are going to create a Working Set that doesn't fetch anything"
 
 val maskWithLength44 =
     "$ZOS_USERID." + "A2345678.".repeat((44 - (ZOS_USERID.length + 1)) / 9) + "A".repeat((44 - (ZOS_USERID.length + 1)) % 9)
@@ -38,6 +44,7 @@ val maskMessageMap = mapOf(
     "$ZOS_USERID.A23456789.*" to "Qualifier must be in 1 to 8 characters",
     "$ZOS_USERID." to ENTER_VALID_DS_MASK_MESSAGE,
     maskWithLength45 to "Dataset mask must be no more than 44 characters",
+    "$ZOS_USERID.***" to "Invalid asterisks in the qualifier"
 )
 
 val validZOSMasks = listOf(
@@ -78,6 +85,60 @@ fun CommonContainerFixture.clickActionButton(locator: Locator) {
         button.isEnabled()
     }
     button.click()
+}
+
+fun ContainerFixture.createWSFromContextMenu(
+    fixtureStack: MutableList<Locator>,
+    closableFixtureCollector: ClosableFixtureCollector
+) {
+    explorer {
+        fileExplorer.click()
+        find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenu(remoteRobot, "New").click()
+    actionMenuItem(remoteRobot, "Working Set").click()
+    closableFixtureCollector.add(AddWorkingSetDialog.xPath(), fixtureStack)
+}
+
+fun ContainerFixture.editWSFromContextMenu(
+    wsName: String, fixtureStack: MutableList<Locator>,
+    closableFixtureCollector: ClosableFixtureCollector
+) {
+    explorer {
+        fileExplorer.click()
+        find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(wsName)
+            .rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenuItem(remoteRobot, "Edit").click()
+    closableFixtureCollector.add(EditWorkingSetDialog.xPath(), fixtureStack)
+}
+
+fun ContainerFixture.createMask(
+    wsName: String, fixtureStack: MutableList<Locator>,
+    closableFixtureCollector: ClosableFixtureCollector
+) {
+    explorer {
+        fileExplorer.click()
+        find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(wsName)
+            .rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenu(remoteRobot, "New").click()
+    actionMenuItem(remoteRobot, "Mask").click()
+    closableFixtureCollector.add(CreateMaskDialog.xPath(), fixtureStack)
+}
+
+fun ContainerFixture.deleteWSFromContextMenu(wsName: String) {
+    explorer {
+        fileExplorer.click()
+        find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(wsName)
+            .rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenuItem(remoteRobot, "Delete").click()
+    find<ComponentFixture>(byXpath("//div[@class='MyDialog' and @title='Deletion of Working Set $wsName']"))
 }
 
 fun createConnection(

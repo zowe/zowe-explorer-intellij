@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package settings.workingset
+package workingset
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
@@ -25,13 +25,13 @@ import java.time.Duration
 
 
 /**
- * Tests creating working sets and masks.
+ * Tests creating working sets and masks via settings.
  */
 @Tag("FirstTime")
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class WorkingSetFromSettingsTest {
+class WorkingSetViaSettingsTest {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf(
@@ -69,7 +69,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(1)
-    fun testAddWorkingSetWithoutConnection(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithoutConnectionViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -96,7 +96,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(2)
-    fun testAddEmptyWorkingSetWithVeryLongName(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddEmptyWorkingSetWithVeryLongNameViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         createConnection(projectName, fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
         val wsName: String = "A".repeat(200)
         ideFrameImpl(projectName, fixtureStack) {
@@ -125,7 +125,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(3)
-    fun testAddWorkingSetWithOneValidMask(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithOneValidMaskViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS1"
         val mask = Pair("$ZOS_USERID.*", "z/OS")
         ideFrameImpl(projectName, fixtureStack) {
@@ -151,7 +151,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(4)
-    fun testAddWorkingSetWithValidZOSMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithValidZOSMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         val masks: ArrayList<Pair<String, String>> = ArrayList()
         //todo allocate dataset with 44 length
@@ -184,7 +184,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(5)
-    fun testAddWorkingSetWithValidUSSMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithValidUSSMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS3"
         val masks: ArrayList<Pair<String, String>> = ArrayList()
         validUSSMasks.forEach {
@@ -216,7 +216,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(6)
-    fun testAddWorkingSetWithInvalidMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithInvalidMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         //todo add mask *.* when bug is fixed
         val wsName = "WS4"
         ideFrameImpl(projectName, fixtureStack) {
@@ -261,7 +261,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(7)
-    fun testAddWorkingSetWithTheSameMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddWorkingSetWithTheSameMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS4"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -293,7 +293,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(8)
-    fun testEditWorkingSetAddOneMask(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testEditWorkingSetAddOneMaskViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS1"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -319,7 +319,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(9)
-    fun testEditWorkingSetDeleteMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testEditWorkingSetDeleteMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         val masks = listOf("$ZOS_USERID.*", "Q.*", ZOS_USERID)
         ideFrameImpl(projectName, fixtureStack) {
@@ -346,7 +346,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(10)
-    fun testEditWorkingSetDeleteAllMasks(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testEditWorkingSetDeleteAllMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -374,7 +374,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(11)
-    fun testEditWorkingSetChangeConnectionToInvalid(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testEditWorkingSetChangeConnectionToInvalidViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val newConnectionName = "invalid connection"
         createConnection(projectName, fixtureStack, closableFixtureCollector, newConnectionName, false, remoteRobot)
         val wsName = "WS1"
@@ -402,7 +402,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(12)
-    fun testEditWorkingSetChangeConnectionToValid(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testEditWorkingSetChangeConnectionToValidViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val newConnectionName = "new $connectionName"
         createConnection(projectName, fixtureStack, closableFixtureCollector, newConnectionName, true, remoteRobot)
         val wsName = "WS1"
@@ -430,7 +430,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(13)
-    fun testEditWorkingSetRename(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testEditWorkingSetRenameViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val newWorkingSetName = "new ws name"
         val oldWorkingSetName = "WS1"
         val alreadyExistsWorkingSetName = "WS2"
@@ -464,7 +464,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(14)
-    fun testDeleteWorkingSet(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testDeleteWorkingSetViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -484,7 +484,7 @@ class WorkingSetFromSettingsTest {
 
     @Test
     @Order(15)
-    fun testDeleteAllWorkingSets(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testDeleteAllWorkingSetsViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)

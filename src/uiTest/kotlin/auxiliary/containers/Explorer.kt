@@ -13,7 +13,6 @@ package auxiliary.containers
 import auxiliary.clickActionButton
 import auxiliary.closable.ClosableFixtureCollector
 import auxiliary.components.contentTabLabel
-import auxiliary.components.tabLabel
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.data.RemoteComponent
 import com.intellij.remoterobot.fixtures.CommonContainerFixture
@@ -27,10 +26,12 @@ import java.time.Duration
  * Class representing the Explorer.
  */
 @FixtureName("Explorer")
-class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : CommonContainerFixture(remoteRobot, remoteComponent) {
+class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
+    CommonContainerFixture(remoteRobot, remoteComponent) {
 
     val fileExplorer = contentTabLabel(remoteRobot, "File Explorer")
-    val jesExplorer = contentTabLabel(remoteRobot,"JES Explorer")
+    val jesExplorer = contentTabLabel(remoteRobot, "JES Explorer")
+
     /**
      * Clicks on the settings action and adds the Settings Dialog to the list of fixtures needed to close.
      */
@@ -44,12 +45,13 @@ class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : Com
         closableFixtureCollector.add(AddWorkingSetDialog.xPath(), fixtureStack)
     }
 
+
     companion object {
         /**
          * Returns the xPath of the Explorer.
          */
         @JvmStatic
-        fun xPath() = byXpath( "//div[@accessiblename='File Explorer Tool Window' and @class='InternalDecoratorImpl']")
+        fun xPath() = byXpath("//div[@accessiblename='File Explorer Tool Window' and @class='InternalDecoratorImpl']")
     }
 }
 

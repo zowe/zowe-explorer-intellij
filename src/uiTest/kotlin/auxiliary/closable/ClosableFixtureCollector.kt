@@ -57,6 +57,7 @@ class ClosableFixtureCollector {
 
             AddWorkingSetDialog.name -> find<AddWorkingSetDialog>(locator, Duration.ofSeconds(60))
             EditWorkingSetDialog.name -> find<EditWorkingSetDialog>(locator, Duration.ofSeconds(60))
+            CreateMaskDialog.name -> find<CreateMaskDialog>(locator, Duration.ofSeconds(60))
             IdeFrameImpl.xPath("untitled").byDescription -> find<IdeFrameImpl>(
                 locator,
                 Duration.ofSeconds(60)
