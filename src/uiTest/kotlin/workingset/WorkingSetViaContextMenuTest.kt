@@ -537,14 +537,9 @@ class WorkingSetViaContextMenuTest {
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 fileExplorer.click()
-                find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(
-                    wsName
-                )
-                    .doubleClick()
+                find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
                 Thread.sleep(3000)
-                find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(
-                    maskName
-                ).rightClick()
+                find<ComponentFixture>(viewTree).findText(maskName).rightClick()
             }
             actionMenuItem(remoteRobot, "Delete").click()
             dialog(dialogTitle) {
@@ -552,10 +547,7 @@ class WorkingSetViaContextMenuTest {
             }
             checkItemWasDeletedWSRefreshed(maskName, projectName, fixtureStack, remoteRobot)
             explorer {
-                find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(
-                    wsName
-                )
-                    .doubleClick()
+                find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
             }
         }
     }
@@ -596,14 +588,9 @@ class WorkingSetViaContextMenuTest {
             ideFrameImpl(projectName, fixtureStack) {
                 explorer {
                     fileExplorer.click()
-                    find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(
-                        wsName
-                    )
-                        .doubleClick()
+                    find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
                     Thread.sleep(3000)
-                    find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(
-                        oldMaskName
-                    ).rightClick()
+                    find<ComponentFixture>(viewTree).findText(oldMaskName).rightClick()
                 }
                 actionMenuItem(remoteRobot, "Edit").click()
                 dialog(dialogTitle) {
@@ -619,10 +606,7 @@ class WorkingSetViaContextMenuTest {
                     clickButton("Cancel")
                 }
                 explorer {
-                    find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(
-                        wsName
-                    )
-                        .doubleClick()
+                    find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
                 }
             }
         }
