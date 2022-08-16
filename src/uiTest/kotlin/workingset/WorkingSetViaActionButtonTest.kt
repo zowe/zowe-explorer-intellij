@@ -26,7 +26,6 @@ import java.time.Duration
 /**
  * Tests creating working sets and masks via action button.
  */
-@Tag("FirstTime")
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
@@ -38,9 +37,8 @@ class WorkingSetViaActionButtonTest {
     private val projectName = "untitled"
     private val connectionName = "valid connection"
 
-
     /**
-     * Opens the project and Explorer, clear test environment.
+     * Opens the project and Explorer, clears test environment.
      */
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) {
@@ -48,7 +46,7 @@ class WorkingSetViaActionButtonTest {
     }
 
     /**
-     * Closes the project and clear test environment.
+     * Closes the project and clears test environment.
      */
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -66,6 +64,9 @@ class WorkingSetViaActionButtonTest {
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
 
+    /**
+     * Tests to add new working set without connection, checks that correct message is returned.
+     */
     @Test
     @Order(1)
     fun testAddWorkingSetWithoutConnectionViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -84,7 +85,9 @@ class WorkingSetViaActionButtonTest {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
                 Thread.sleep(3000)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText("You are going to create a Working Set that doesn't fetch anything")
+                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText(
+                    EMPTY_DATASET_MESSAGE
+                )
                 clickButton("OK")
                 Thread.sleep(3000)
             }
@@ -92,7 +95,9 @@ class WorkingSetViaActionButtonTest {
         }
     }
 
-
+    /**
+     * Tests to add new empty working set with very long name, checks that correct message is returned.
+     */
     @Test
     @Order(2)
     fun testAddEmptyWorkingSetWithVeryLongNameViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -106,7 +111,9 @@ class WorkingSetViaActionButtonTest {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
                 Thread.sleep(3000)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText("You are going to create a Working Set that doesn't fetch anything")
+                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText(
+                    EMPTY_DATASET_MESSAGE
+                )
                 clickButton("OK")
                 Thread.sleep(3000)
             }
@@ -114,6 +121,9 @@ class WorkingSetViaActionButtonTest {
         }
     }
 
+    /**
+     * Tests to add new working set with one valid mask.
+     */
     @Test
     @Order(3)
     fun testAddWorkingSetWithOneValidMaskViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -133,12 +143,15 @@ class WorkingSetViaActionButtonTest {
         }
     }
 
+    /**
+     * Tests to add new working set with several valid z/OS masks, opens masks in explorer.
+     */
     @Test
     @Order(4)
     fun testAddWorkingSetWithValidZOSMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         val masks: ArrayList<Pair<String, String>> = ArrayList()
-        //todo allocate dataset with 44 length
+        //todo allocate dataset with 44 length when 'Allocate Dataset Dialog' implemented
 
         validZOSMasks.forEach {
             masks.add(Pair(it, "z/OS"))
@@ -156,9 +169,12 @@ class WorkingSetViaActionButtonTest {
             }
             closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
         }
-        //todo open masks in explorer
+        validZOSMasks.forEach { openWSOpenMaskInExplorer(wsName, it, projectName, fixtureStack, remoteRobot) }
     }
 
+    /**
+     * Tests to add new working set with several valid USS masks, opens masks in explorer.
+     */
     @Test
     @Order(5)
     fun testAddWorkingSetWithValidUSSMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -181,14 +197,15 @@ class WorkingSetViaActionButtonTest {
             }
             closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
         }
-        //todo open masks in explorer
+        validUSSMasks.forEach { openWSOpenMaskInExplorer(wsName, it, projectName, fixtureStack, remoteRobot) }
     }
 
-
+    /**
+     * Tests to add new working set with invalid masks, checks that correct messages are returned.
+     */
     @Test
     @Order(6)
     fun testAddWorkingSetWithInvalidMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        //todo add mask *.* when bug is fixed
         val wsName = "WS4"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -223,6 +240,9 @@ class WorkingSetViaActionButtonTest {
         }
     }
 
+    /**
+     * Tests to add working set with the same masks, checks that correct message is returned.
+     */
     @Test
     @Order(7)
     fun testAddWorkingSetWithTheSameMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {

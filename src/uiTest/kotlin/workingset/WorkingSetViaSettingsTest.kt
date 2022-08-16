@@ -14,6 +14,7 @@ import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
+import com.intellij.remoterobot.fixtures.ActionButtonFixture
 import com.intellij.remoterobot.fixtures.ComponentFixture
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
@@ -27,7 +28,6 @@ import java.time.Duration
 /**
  * Tests creating working sets and masks via settings.
  */
-@Tag("FirstTime")
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
@@ -40,8 +40,9 @@ class WorkingSetViaSettingsTest {
     private val projectName = "untitled"
     private val connectionName = "valid connection"
 
+
     /**
-     * Opens the project and Explorer, clear test environment.
+     * Opens the project and Explorer, clears test environment.
      */
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) {
@@ -49,7 +50,7 @@ class WorkingSetViaSettingsTest {
     }
 
     /**
-     * Closes the project and clear test environment.
+     * Closes the project and clears test environment.
      */
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -67,6 +68,9 @@ class WorkingSetViaSettingsTest {
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
 
+    /**
+     * Tests to add new working set without connection, checks that correct message is returned.
+     */
     @Test
     @Order(1)
     fun testAddWorkingSetWithoutConnectionViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -94,6 +98,9 @@ class WorkingSetViaSettingsTest {
         }
     }
 
+    /**
+     * Tests to add new empty working set with very long name, checks that correct message is returned.
+     */
     @Test
     @Order(2)
     fun testAddEmptyWorkingSetWithVeryLongNameViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -112,7 +119,9 @@ class WorkingSetViaSettingsTest {
                     addWorkingSet(wsName, connectionName)
                     clickButton("OK")
                     Thread.sleep(5000)
-                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText("You are going to create a Working Set that doesn't fetch anything")
+                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
+                        EMPTY_DATASET_MESSAGE
+                    )
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
@@ -123,6 +132,9 @@ class WorkingSetViaSettingsTest {
         }
     }
 
+    /**
+     * Tests to add new working set with one valid mask.
+     */
     @Test
     @Order(3)
     fun testAddWorkingSetWithOneValidMaskViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -149,12 +161,15 @@ class WorkingSetViaSettingsTest {
         }
     }
 
+    /**
+     * Tests to add new working set with several valid z/OS masks, opens masks in explorer.
+     */
     @Test
     @Order(4)
     fun testAddWorkingSetWithValidZOSMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         val masks: ArrayList<Pair<String, String>> = ArrayList()
-        //todo allocate dataset with 44 length
+        //todo allocate dataset with 44 length when 'Allocate Dataset Dialog' implemented
 
         validZOSMasks.forEach {
             masks.add(Pair(it, "z/OS"))
@@ -179,9 +194,12 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        //todo open masks in explorer
+        validZOSMasks.forEach { openWSOpenMaskInExplorer(wsName, it, projectName, fixtureStack, remoteRobot) }
     }
 
+    /**
+     * Tests to add new working set with several valid USS masks, opens masks in explorer.
+     */
     @Test
     @Order(5)
     fun testAddWorkingSetWithValidUSSMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -210,14 +228,16 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        //todo open masks in explorer
+        validUSSMasks.forEach { openWSOpenMaskInExplorer(wsName, it, projectName, fixtureStack, remoteRobot) }
     }
 
 
+    /**
+     * Tests to add new working set with invalid masks, checks that correct messages are returned.
+     */
     @Test
     @Order(6)
     fun testAddWorkingSetWithInvalidMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        //todo add mask *.* when bug is fixed
         val wsName = "WS4"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -259,6 +279,9 @@ class WorkingSetViaSettingsTest {
         }
     }
 
+    /**
+     * Tests to add working set with the same masks, checks that correct message is returned.
+     */
     @Test
     @Order(7)
     fun testAddWorkingSetWithTheSameMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -291,10 +314,15 @@ class WorkingSetViaSettingsTest {
         }
     }
 
+    /**
+     * Tests to edit working set by adding one mask, checks that ws is refreshed in explorer, opens new mask.
+     */
     @Test
     @Order(8)
     fun testEditWorkingSetAddOneMaskViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS1"
+        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+        closeMaskInExplorer("$ZOS_USERID.*", projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -314,14 +342,19 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        //todo check in explorer, ws refreshed
+        openMaskInExplorer("/u/$ZOS_USERID", "", projectName, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
     }
 
+    /**
+     * Tests to edit working set by deleting several masks, checks that ws is refreshed in explorer and masks were deleted.
+     */
     @Test
     @Order(9)
     fun testEditWorkingSetDeleteMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         val masks = listOf("$ZOS_USERID.*", "Q.*", ZOS_USERID)
+        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -341,13 +374,19 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        //todo check in explorer, ws refreshed
+        masks.forEach { checkItemWasDeletedWSRefreshed(it, projectName, fixtureStack, remoteRobot) }
+        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
     }
 
+    /**
+     * Tests to edit working set by deleting all masks, checks that ws is refreshed in explorer and masks were deleted.
+     */
     @Test
     @Order(10)
     fun testEditWorkingSetDeleteAllMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
+        val deletedMasks = listOf("$ZOS_USERID.**", "$ZOS_USERID.@#%", "$ZOS_USERID.@#%.*", "WWW.*", maskWithLength44)
+        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -369,15 +408,20 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        //todo check in explorer, ws refreshed
+        deletedMasks.forEach { checkItemWasDeletedWSRefreshed(it, projectName, fixtureStack, remoteRobot) }
+        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
     }
 
+    /**
+     * Tests to edit working set by changing connection to invalid, checks that correct message is returned.
+     */
     @Test
     @Order(11)
     fun testEditWorkingSetChangeConnectionToInvalidViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val newConnectionName = "invalid connection"
-        createConnection(projectName, fixtureStack, closableFixtureCollector, newConnectionName, false, remoteRobot)
         val wsName = "WS1"
+        createConnection(projectName, fixtureStack, closableFixtureCollector, newConnectionName, false, remoteRobot)
+        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -397,9 +441,18 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        //todo check in explorer, ws refreshed
+        findAll<ComponentFixture>(byXpath("//div[@class='MyComponent'][.//div[@accessiblename='Invalid URL port: \"104431\"' and @class='JEditorPane']]")).forEach {
+            it.click()
+            findAll<ActionButtonFixture>(
+                byXpath("//div[@class='ActionButton' and @myicon= 'close.svg']")
+            ).first().click()
+        }
+        openMaskInExplorer("$ZOS_USERID.*", "Invalid URL port: \"104431\"", projectName, fixtureStack, remoteRobot)
     }
 
+    /**
+     * Tests to edit working set by changing connection from invalid to valid, checks that ws is refreshed in explorer and error message disappeared.
+     */
     @Test
     @Order(12)
     fun testEditWorkingSetChangeConnectionToValidViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -425,15 +478,20 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        //todo check in explorer, ws refreshed
+        checkItemWasDeletedWSRefreshed("Invalid URL port: \"104431\"", projectName, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
     }
 
+    /**
+     * Tests to edit working set by renaming it, checks that ws is refreshed in explorer.
+     */
     @Test
     @Order(13)
     fun testEditWorkingSetRenameViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val newWorkingSetName = "new ws name"
         val oldWorkingSetName = "WS1"
         val alreadyExistsWorkingSetName = "WS2"
+        openOrCloseWorkingSetInExplorer(oldWorkingSetName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -445,6 +503,7 @@ class WorkingSetViaSettingsTest {
                 }
                 editWorkingSetDialog(fixtureStack) {
                     renameWorkingSet(alreadyExistsWorkingSetName)
+                    Thread.sleep(3000)
                     find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).find<ComponentFixture>(
                         byXpath("//div[@class='JEditorPane']")
                     )
@@ -459,9 +518,13 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        //todo check in explorer, ws refreshed
+        checkItemWasDeletedWSRefreshed(oldWorkingSetName, projectName, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(newWorkingSetName, projectName, fixtureStack, remoteRobot)
     }
 
+    /**
+     * Tests to delete working set, checks that explorer info is refreshed.
+     */
     @Test
     @Order(14)
     fun testDeleteWorkingSetViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -479,9 +542,12 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        //todo check in explorer
+        checkItemWasDeletedWSRefreshed(wsName, projectName, fixtureStack, remoteRobot)
     }
 
+    /**
+     * Tests to delete all working sets, checks that explorer info is refreshed.
+     */
     @Test
     @Order(15)
     fun testDeleteAllWorkingSetsViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -497,7 +563,7 @@ class WorkingSetViaSettingsTest {
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+            find<ComponentFixture>(viewTree).findText("Nothing to show")
         }
-        //todo check in explorer
     }
 }

@@ -29,7 +29,8 @@ import java.time.Duration
  * The representation of the Configurable Editor, which is the For Mainframe section in the Settings Dialog.
  */
 @FixtureName("ConfigurableEditor")
-class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : CommonContainerFixture(remoteRobot, remoteComponent) {
+class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
+    CommonContainerFixture(remoteRobot, remoteComponent) {
     /**
      * The connection table
      */
@@ -64,16 +65,27 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     /**
      * Clicks on the edit action and adds the Edit Working Set Dialog to the list of fixtures needed to close.
      */
-    fun editWorkingSet(workingSetName:String, closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
+    fun editWorkingSet(
+        workingSetName: String,
+        closableFixtureCollector: ClosableFixtureCollector,
+        fixtureStack: List<Locator>
+    ) {
         findText(workingSetName).click()
         clickActionButton(byXpath("//div[@accessiblename='Edit' and @class='ActionButton' and @myaction='Edit (Edit)']"))
         closableFixtureCollector.add(EditWorkingSetDialog.xPath(), fixtureStack)
     }
-    fun deleteItem(itemName:String) {
+
+    /**
+     * Clicks on the remove action and deletes the item from config table.
+     */
+    fun deleteItem(itemName: String) {
         findText(itemName).click()
         clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
     }
 
+    /**
+     * Press Ctrl+A and clicks on the remove action to delete all items from the table.
+     */
     fun deleteAllItems() {
         find<ComponentFixture>(byXpath("//div[@class='DialogPanel']//div[@class='JPanel']")).click()
         keyboard {

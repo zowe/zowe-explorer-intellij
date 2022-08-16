@@ -20,7 +20,7 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
- * Class representing the Add Connection Dialog.
+ * Class representing the Create Mask Dialog.
  */
 @FixtureName("Create Mask Dialog")
 open class CreateMaskDialog(
@@ -28,6 +28,9 @@ open class CreateMaskDialog(
     remoteComponent: RemoteComponent
 ) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
 
+    /**
+     * Fills in the required information for creating a new mask.
+     */
     fun createMask(mask: Pair<String, String>) {
         find<ComboBoxFixture>(byXpath("//div[@class='ComboBox']")).selectItem(mask.second)
         find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = mask.first

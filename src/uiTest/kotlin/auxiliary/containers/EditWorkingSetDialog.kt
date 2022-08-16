@@ -28,15 +28,22 @@ class EditWorkingSetDialog(
     remoteComponent: RemoteComponent
 ) : AddWorkingSetDialog(remoteRobot, remoteComponent) {
 
+    /**
+     * Renames the working set.
+     */
     fun renameWorkingSet(newName: String) {
         find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = newName
     }
 
+    /**
+     * Changes the connection for working set.
+     */
     fun changeConnection(newConnectionName: String) {
         if (newConnectionName.isEmpty().not()) {
             find<ComboBoxFixture>(byXpath("//div[@class='ComboBox']")).selectItem(newConnectionName)
         }
     }
+
     companion object {
         const val name = "Edit Working Set Dialog"
 
@@ -44,7 +51,7 @@ class EditWorkingSetDialog(
          * Returns the xPath of the Edit Working Set Dialog.
          */
         @JvmStatic
-        fun xPath() = byXpath( name,"//div[@accessiblename='Edit Working Set' and @class='MyDialog']")
+        fun xPath() = byXpath(name, "//div[@accessiblename='Edit Working Set' and @class='MyDialog']")
     }
 }
 
@@ -54,7 +61,8 @@ class EditWorkingSetDialog(
 fun ContainerFixture.editWorkingSetDialog(
     fixtureStack: MutableList<Locator>,
     timeout: Duration = Duration.ofSeconds(60),
-    function: EditWorkingSetDialog.() -> Unit = {}) {
+    function: EditWorkingSetDialog.() -> Unit = {}
+) {
     find<EditWorkingSetDialog>(EditWorkingSetDialog.xPath(), timeout).apply {
         fixtureStack.add(EditWorkingSetDialog.xPath())
         function()

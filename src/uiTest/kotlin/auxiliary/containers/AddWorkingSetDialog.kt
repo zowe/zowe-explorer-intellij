@@ -32,47 +32,71 @@ open class AddWorkingSetDialog(
 ) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
 
     /**
-     * Fills in the required information for adding a new working set.
+     * Fills in the working set name and connection name for adding a new empty working set.
      */
     fun addWorkingSet(workingSetName: String, connectionName: String) {
         specifyWSNameAndConnection(workingSetName, connectionName)
     }
 
-    fun addWorkingSet(workingSetName: String, connectionName: String, mask: Pair<String,String>) {
+    /**
+     * Fills in the working set name, connection name and mask for adding a new working set.
+     */
+    fun addWorkingSet(workingSetName: String, connectionName: String, mask: Pair<String, String>) {
         specifyWSNameAndConnection(workingSetName, connectionName)
         addMask(mask)
     }
 
-    fun addWorkingSet(workingSetName: String, connectionName: String, masks: ArrayList<Pair<String,String>>) {
+    /**
+     * Fills in the working set name, connection name and list of masks for adding a new working set.
+     */
+    fun addWorkingSet(workingSetName: String, connectionName: String, masks: List<Pair<String, String>>) {
         specifyWSNameAndConnection(workingSetName, connectionName)
-        masks.forEach { mask -> addMask(mask) }
+        masks.forEach { addMask(it) }
     }
 
-    fun addMask(mask: Pair<String,String>) {
+    /**
+     * Adds the mask to working set.
+     */
+    fun addMask(mask: Pair<String, String>) {
         clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[contains(@myaction.key, 'button.add.a')]"))
         find<JTextFieldFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JBTextField']")).click()
-        find<JTextFieldFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JBTextField']")).text = mask.first
-        val findType = if (mask.first.startsWith('/')) {"USS"} else {"z/OS"}
+        find<JTextFieldFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JBTextField']")).text =
+            mask.first
+        val findType = if (mask.first.startsWith('/')) {
+            "USS"
+        } else {
+            "z/OS"
+        }
         findAllText(findType).last().click()
-        findAll<ComboBoxFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JComboBox']")).last().selectItem(mask.second)
+        findAll<ComboBoxFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]//div[@class='JComboBox']")).last()
+            .selectItem(mask.second)
         if (mask.first.length > 48) {
-            findAllText("${mask.first.substring(0,46)}...").last().moveMouse()
+            findAllText("${mask.first.substring(0, 46)}...").last().moveMouse()
         }
         findAllText(mask.first).last().click()
     }
 
+    /**
+     * Deletes the mask from working set.
+     */
     fun deleteMask(maskName: String) {
-        if (maskName.length > 44) {
-            findText("${maskName.substring(0,42)}...").moveMouse()
+        if (maskName.length > 48) {
+            findText("${maskName.substring(0, 46)}...").moveMouse()
         }
         findText(maskName).click()
         clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[@myaction.key='button.text.remove']"))
     }
 
+    /**
+     * Deletes the list of masks from working set.
+     */
     fun deleteMasks(masksNames: List<String>) {
         masksNames.forEach { deleteMask(it) }
     }
 
+    /**
+     * Deletes all masks from working set.
+     */
     fun deleteAllMasks() {
         find<ComponentFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Mask || Type']]")).click()
         keyboard {
@@ -81,6 +105,9 @@ open class AddWorkingSetDialog(
         clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[@myaction.key='button.text.remove']"))
     }
 
+    /**
+     * Fills in the working set name and connection name.
+     */
     private fun specifyWSNameAndConnection(workingSetName: String, connectionName: String) {
         find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = workingSetName
         if (connectionName.isEmpty().not()) {
@@ -88,13 +115,13 @@ open class AddWorkingSetDialog(
         }
     }
 
-
     /**
      * The close function, which is used to close the dialog in the tear down method.
      */
     override fun close() {
         clickButton("Cancel")
     }
+
     companion object {
         const val name = "Add Working Set Dialog"
 
@@ -102,9 +129,7 @@ open class AddWorkingSetDialog(
          * Returns the xPath of the Add Working Set Dialog.
          */
         @JvmStatic
-        fun xPath() = byXpath( name,"//div[@accessiblename='Add Working Set' and @class='MyDialog']")
-
-
+        fun xPath() = byXpath(name, "//div[@accessiblename='Add Working Set' and @class='MyDialog']")
     }
 }
 
@@ -114,7 +139,8 @@ open class AddWorkingSetDialog(
 fun ContainerFixture.addWorkingSetDialog(
     fixtureStack: MutableList<Locator>,
     timeout: Duration = Duration.ofSeconds(60),
-    function: AddWorkingSetDialog.() -> Unit = {}) {
+    function: AddWorkingSetDialog.() -> Unit = {}
+) {
     find<AddWorkingSetDialog>(AddWorkingSetDialog.xPath(), timeout).apply {
         fixtureStack.add(AddWorkingSetDialog.xPath())
         function()

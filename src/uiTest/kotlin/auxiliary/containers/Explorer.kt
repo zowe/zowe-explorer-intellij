@@ -40,11 +40,13 @@ class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
         closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
     }
 
+    /**
+     * Clicks on the creating working set action and adds the Add Working Set Dialog to the list of fixtures needed to close.
+     */
     fun createWorkingSet(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
         clickActionButton(byXpath("//div[@class='ActionButton' and @myaction='Working Set ()']"))
         closableFixtureCollector.add(AddWorkingSetDialog.xPath(), fixtureStack)
     }
-
 
     companion object {
         /**
