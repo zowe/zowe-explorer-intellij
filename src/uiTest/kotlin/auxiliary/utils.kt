@@ -102,7 +102,7 @@ fun ContainerFixture.createWSFromContextMenu(
 ) {
     explorer {
         fileExplorer.click()
-        find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).rightClick()
+        find<ComponentFixture>(viewTree).rightClick()
         Thread.sleep(3000)
     }
     actionMenu(remoteRobot, "New").click()
@@ -127,7 +127,7 @@ fun ContainerFixture.editWSFromContextMenu(
 ) {
     explorer {
         fileExplorer.click()
-        find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(wsName)
+        find<ComponentFixture>(viewTree).findText(wsName)
             .rightClick()
         Thread.sleep(3000)
     }
@@ -144,7 +144,7 @@ fun ContainerFixture.createMask(
 ) {
     explorer {
         fileExplorer.click()
-        find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(wsName)
+        find<ComponentFixture>(viewTree).findText(wsName)
             .rightClick()
         Thread.sleep(3000)
     }
@@ -159,7 +159,7 @@ fun ContainerFixture.createMask(
 fun ContainerFixture.deleteWSFromContextMenu(wsName: String) {
     explorer {
         fileExplorer.click()
-        find<ComponentFixture>(byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")).findText(wsName)
+        find<ComponentFixture>(viewTree).findText(wsName)
             .rightClick()
         Thread.sleep(3000)
     }
