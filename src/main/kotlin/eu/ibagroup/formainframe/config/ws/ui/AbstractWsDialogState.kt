@@ -14,6 +14,7 @@ import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.config.ws.*
+import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
@@ -25,7 +26,7 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  * @param TableRow
  * @author Valiantsin Krus
  */
-abstract class AbstractWsDialogState<WSConfig: WorkingSetConfig, TableRow>(
+abstract class AbstractWsDialogState<WSConfig : WorkingSetConfig, TableRow>(
   var uuid: String = "",
   var connectionUuid: String = "",
   var workingSetName: String = "",
@@ -52,25 +53,15 @@ class WorkingSetDialogState(
   uuid: String = "",
   connectionUuid: String = "",
   workingSetName: String = "",
-  maskRow: MutableList<TableRow> = mutableListOf(),
+  maskRow: MutableList<MaskState> = mutableListOf(),
   mode: DialogMode = DialogMode.CREATE
-) : AbstractWsDialogState<FilesWorkingSetConfig, WorkingSetDialogState.TableRow>(
+) : AbstractWsDialogState<FilesWorkingSetConfig, MaskState>(
   uuid,
   connectionUuid,
   workingSetName,
   maskRow,
   mode
 ) {
-  class TableRow(
-    var mask: String = "",
-    var type: String = "z/OS",
-    var isSingle: Boolean = false
-  ) {
-    companion object {
-      const val ZOS = "z/OS"
-      const val USS = "USS"
-    }
-  }
 
   override fun workingSetConfigClass() = FilesWorkingSetConfig::class.java
   override val workingSetConfig: FilesWorkingSetConfig
@@ -78,8 +69,8 @@ class WorkingSetDialogState(
       this.uuid,
       this.workingSetName,
       this.connectionUuid,
-      this.maskRow.filter { it.type == TableRow.ZOS }.map { DSMask(it.mask, mutableListOf()) }.toMutableSmartList(),
-      this.maskRow.filter { it.type == TableRow.USS }.map { UssPath(it.mask) }.toMutableSmartList()
+      this.maskRow.filter { it.type == MaskType.ZOS }.map { DSMask(it.mask, mutableListOf()) }.toMutableSmartList(),
+      this.maskRow.filter { it.type == MaskType.USS }.map { UssPath(it.mask) }.toMutableSmartList()
     )
 
 }
@@ -106,12 +97,7 @@ class JobsWorkingSetDialogState(
     var prefix: String = "",
     var owner: String = "",
     var jobId: String = ""
-  ) {
-    companion object {
-      const val ZOS = "z/OS"
-      const val USS = "USS"
-    }
-  }
+  )
 
   override fun workingSetConfigClass() = JobsWorkingSetConfig::class.java
   override val workingSetConfig: JobsWorkingSetConfig

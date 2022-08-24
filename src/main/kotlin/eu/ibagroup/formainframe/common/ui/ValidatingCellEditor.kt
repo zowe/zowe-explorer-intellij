@@ -38,7 +38,7 @@ class ValidatingCellEditor<Item> : DefaultCellEditor(JBTextField()) {
               .setup {
                 withValidator { ->
                   with(table as ValidatingTableView<Item>) {
-                    (editingRow in 0 until columnCount).runIfTrue {
+                    (editingRow in 0 until rowCount).runIfTrue {
                       getRow(editingRow)?.let { value ->
                         validator.validateOnInput(
                           value,
