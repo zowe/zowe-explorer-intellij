@@ -126,7 +126,7 @@ class MFVirtualFileSystemModel {
   }
 
   fun refresh(asynchronous: Boolean) {
-    TODO("implement refresh of the model")
+//    TODO("implement refresh of the model")
   }
 
   /**

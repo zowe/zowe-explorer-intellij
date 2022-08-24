@@ -14,8 +14,10 @@ import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.config.sandboxCrudable
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.MaskState
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
+import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
@@ -51,17 +53,19 @@ class WSConfigurable :
 
   /**
    * Creates and shows dialog for editing Files Working Set.
-   * @param crudable crudable to modify after applying dialog.
-   * @param state state of dialog.
+   * @param selected dialog state of selected working set to edit
    */
   override fun createEditDialog(selected: WorkingSetDialogState) {
-    WorkingSetDialog(sandboxCrudable, selected.apply { mode = DialogMode.UPDATE }).apply {
-      if (showAndGet()) {
-        val idx = wsTable.selectedRow
-        wsTableModel[idx] = state.workingSetConfig
-        wsTableModel.reinitialize()
+    WorkingSetDialog(
+      sandboxCrudable,
+      selected.apply { mode = DialogMode.UPDATE })
+      .apply {
+        if (showAndGet()) {
+          val idx = wsTable.selectedRow
+          wsTableModel[idx] = state.workingSetConfig
+          wsTableModel.reinitialize()
+        }
       }
-    }
   }
 
 }
@@ -74,12 +78,14 @@ fun FilesWorkingSetConfig.toDialogState(): WorkingSetDialogState {
     uuid = this.uuid,
     connectionUuid = this.connectionConfigUuid,
     workingSetName = this.name,
-    maskRow = this.dsMasks.map { WorkingSetDialogState.TableRow(mask = it.mask) }
+    maskRow = this.dsMasks
+      .map { MaskState(mask = it.mask) }
       .plus(this.ussPaths.map {
-        WorkingSetDialogState.TableRow(
+        MaskState(
           mask = it.path,
-          type = WorkingSetDialogState.TableRow.USS
+          type = MaskType.USS
         )
-      }).toMutableSmartList(),
+      })
+      .toMutableSmartList(),
   )
 }

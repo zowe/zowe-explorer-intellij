@@ -63,7 +63,7 @@ open class ValidatingListTableModel<Item> : ListTableModel<Item> {
   }
 
   override fun removeRow(idx: Int) {
-    validationInfos.removeByRow(idx)
+    validationInfos.clear()
     super.removeRow(idx)
   }
 
