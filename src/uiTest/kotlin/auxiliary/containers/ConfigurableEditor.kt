@@ -16,21 +16,35 @@ import auxiliary.components.tabLabel
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.data.RemoteComponent
 import com.intellij.remoterobot.fixtures.CommonContainerFixture
+import com.intellij.remoterobot.fixtures.ComponentFixture
 import com.intellij.remoterobot.fixtures.ContainerFixture
 import com.intellij.remoterobot.fixtures.FixtureName
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import com.intellij.remoterobot.utils.keyboard
+import java.awt.event.KeyEvent
 import java.time.Duration
 
 /**
  * The representation of the Configurable Editor, which is the For Mainframe section in the Settings Dialog.
  */
 @FixtureName("ConfigurableEditor")
-class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : CommonContainerFixture(remoteRobot, remoteComponent) {
+class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
+    CommonContainerFixture(remoteRobot, remoteComponent) {
     /**
      * The connection table
      */
     val conTab = tabLabel(remoteRobot, "z/OSMF Connections")
+
+    /**
+     * The Working Sets table
+     */
+    val workingSetsTab = tabLabel(remoteRobot, "Working Sets")
+
+    /**
+     * The Jobs Working Sets table
+     */
+    val jobsWorkingSetsTab = tabLabel(remoteRobot, "Jobs Working Sets")
 
     /**
      * Clicks on the add action and adds the Add Connection Dialog to the list of fixtures needed to close.
@@ -39,6 +53,49 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
         clickActionButton(byXpath("//div[@accessiblename='Add' and @class='ActionButton' and @myaction='Add (Add)']"))
         closableFixtureCollector.add(AddConnectionDialog.xPath(), fixtureStack)
     }
+
+    /**
+     * Clicks on the add action and adds the Add Working Set Dialog to the list of fixtures needed to close.
+     */
+    fun addWS(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
+        clickActionButton(byXpath("//div[@accessiblename='Add' and @class='ActionButton' and @myaction='Add (Add)']"))
+        closableFixtureCollector.add(AddWorkingSetDialog.xPath(), fixtureStack)
+    }
+
+    /**
+     * Clicks on the edit action and adds the Edit Working Set Dialog to the list of fixtures needed to close.
+     */
+    fun editWorkingSet(
+        workingSetName: String,
+        closableFixtureCollector: ClosableFixtureCollector,
+        fixtureStack: List<Locator>
+    ) {
+        findText(workingSetName).click()
+        clickActionButton(byXpath("//div[@accessiblename='Edit' and @class='ActionButton' and @myaction='Edit (Edit)']"))
+        closableFixtureCollector.add(EditWorkingSetDialog.xPath(), fixtureStack)
+    }
+
+    /**
+     * Clicks on the remove action and deletes the item from config table.
+     */
+    fun deleteItem(itemName: String) {
+        findText(itemName).click()
+        clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
+    }
+
+    /**
+     * Press Ctrl+A and clicks on the remove action to delete all items from the table.
+     */
+    fun deleteAllItems() {
+        find<ComponentFixture>(byXpath("//div[@class='DialogPanel']//div[@class='JPanel']")).click()
+        keyboard {
+            hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_A)
+        }
+        if (button(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']")).isEnabled()) {
+            clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
+        }
+    }
+
     companion object {
         /**
          * Returns the xPath of the Configurable Editor.
