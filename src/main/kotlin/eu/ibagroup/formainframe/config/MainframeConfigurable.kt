@@ -12,10 +12,10 @@ package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
-import eu.ibagroup.formainframe.ui.configs.SettingsConfigurable
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionConfigurable
-import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.files.WSConfigurable
+import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsConfigurable
+import eu.ibagroup.formainframe.ui.configs.SettingsConfigurable
 
 class MainframeConfigurable : TabbedConfigurable() {
   var preferredConfigurableClass: Class<*>? = null
@@ -31,8 +31,8 @@ class MainframeConfigurable : TabbedConfigurable() {
 
   override fun createConfigurables(): MutableList<Configurable> {
     return mutableListOf(
-      WSConfigurable().also { wsConfigurable = it },
       ConnectionConfigurable().also { connectionConfigurable = it },
+      WSConfigurable().also { wsConfigurable = it },
       JobsWsConfigurable().also { jobsWsConfigurable = it },
       SettingsConfigurable().also { settingsConfigurable = it }
     )
