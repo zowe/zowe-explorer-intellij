@@ -143,9 +143,12 @@ class ForceRenameAction : AnAction() {
       return
     }
     val selectedNodes = view.mySelectedNodesData
-    val node = selectedNodes[0].node
-    e.presentation.isEnabledAndVisible =
-      selectedNodes.size == 1 && ((node is UssDirNode && !node.isConfigUssPath) || node is UssFileNode)
+    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1) {
+      val node = selectedNodes[0].node
+      (node is UssDirNode && !node.isConfigUssPath) || node is UssFileNode
+    } else {
+      false
+    }
     if (e.presentation.isEnabledAndVisible) {
       e.presentation.text = "Force Rename"
     }

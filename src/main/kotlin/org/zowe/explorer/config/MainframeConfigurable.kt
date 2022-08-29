@@ -31,8 +31,8 @@ class MainframeConfigurable : TabbedConfigurable() {
 
   override fun createConfigurables(): MutableList<Configurable> {
     return mutableListOf(
-      WSConfigurable().also { wsConfigurable = it },
       ConnectionConfigurable().also { connectionConfigurable = it },
+      WSConfigurable().also { wsConfigurable = it },
       JobsWsConfigurable().also { jobsWsConfigurable = it },
       SettingsConfigurable().also { settingsConfigurable = it }
     )
