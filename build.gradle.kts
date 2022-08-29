@@ -21,7 +21,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.6.1"
+version = "0.6.2"
 
 repositories {
   mavenCentral()
@@ -40,7 +40,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.1.0")
+  implementation("eu.ibagroup:r2z:1.1.1")
   implementation("com.segment.analytics.java:analytics:+")
   testImplementation("io.mockk:mockk:1.10.2")
   testImplementation("org.mock-server:mockserver-netty:5.11.1")
@@ -49,7 +49,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.1")
+  version.set("2022.2")
 }
 
 tasks {
@@ -62,17 +62,15 @@ tasks {
 
   patchPluginXml {
     sinceBuild.set("203.5981")
-    untilBuild.set("221.*")
+    untilBuild.set("222.*")
     changeNotes.set(
       """
       <b>Fixed bugs:</b>
       <ul>
-        <li>https://github.com/zowe/zowe-explorer-intellij/issues/48</li>
-        <li>https://github.com/zowe/zowe-explorer-intellij/issues/43</li>
-        <li>https://github.com/zowe/zowe-explorer-intellij/issues/21</li>
-        <li>New member in PDS is not created if right click on PDS content (not on PDS's name)</li>
-        <li>https://github.com/zowe/zowe-explorer-intellij/issues/13</li>
-        <li>Cannot undo changes in file after saving it</li>
+        <li>https://github.com/zowe/zowe-explorer-intellij/issues/8</li>
+        <li>https://github.com/zowe/zowe-explorer-intellij/issues/78</li>
+        <li>https://github.com/zowe/zowe-explorer-intellij/issues/80</li>
+        <li>File tag change API method not working correctly</li>
       </ul>"""
     )
   }
