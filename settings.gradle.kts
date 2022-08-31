@@ -8,4 +8,4 @@
  * Copyright IBA Group 2020
  */
 
-rootProject.name = "for-mainframe"
+rootProject.name = "zowe-explorer"
