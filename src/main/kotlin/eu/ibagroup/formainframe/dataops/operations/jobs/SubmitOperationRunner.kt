@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SubmitFileNameBody
 import eu.ibagroup.r2z.SubmitJobRequest
+import retrofit2.Response
 
 /**
  * Class which represents submit operation runner
@@ -40,15 +41,26 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
   override fun run(operation: SubmitJobOperation, progressIndicator: ProgressIndicator): SubmitJobRequest {
     progressIndicator.checkCanceled()
 
-    val response = api<JESApi>(operation.connectionConfig).submitJobRequest(
-      basicCredentials = operation.connectionConfig.authToken,
-      body = SubmitFileNameBody(operation.request.submitFilePath)
-    ).cancelByIndicator(progressIndicator).execute()
+    val response: Response<SubmitJobRequest> = when (operation.request) {
+      is SubmitFilePathOperationParams -> {
+        api<JESApi>(operation.connectionConfig).submitJobRequest(
+          basicCredentials = operation.connectionConfig.authToken,
+          body = SubmitFileNameBody(operation.request.submitFilePath)
+        ).cancelByIndicator(progressIndicator).execute()
+      }
+      is SubmitJobJclOperationParams -> {
+        api<JESApi>(operation.connectionConfig).submitJobRequest(
+          basicCredentials = operation.connectionConfig.authToken,
+          body = operation.request.jobJcl
+        ).cancelByIndicator(progressIndicator).execute()
+      }
+      else -> throw Exception("Method with such parameters not found")
+    }
     val body = response.body()
     if (!response.isSuccessful || body == null) {
       throw CallException(
         response,
-        "Cannot submit ${operation.request.submitFilePath} on ${operation.connectionConfig.name}"
+        "Cannot submit file on ${operation.connectionConfig.name}"
       )
     }
     return body
@@ -78,13 +90,23 @@ class SubmitJobOperationFactory : OperationRunnerFactory {
   }
 }
 
+
 /**
- * Data class which contains parameters for submit operation
+ *  Base class which contains parameters for submit job operation
+ */
+open class SubmitOperationParams
+
+/**
+ * Class which contains parameters for submit operation by file path
  * @param submitFilePath path to file which contains code that should be submitted on mainframe
  */
-data class SubmitOperationParams(
-  val submitFilePath: String
-)
+class SubmitFilePathOperationParams(val submitFilePath: String) : SubmitOperationParams()
+
+/**
+ * Class which contains parameters for submit operation by job jcl
+ * @param jobJcl code that should be submitted on mainframe
+ */
+class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams()
 
 /**
  * Data class which represents all info that is needed to execute submit operation
