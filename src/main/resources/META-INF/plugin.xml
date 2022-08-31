@@ -236,6 +236,8 @@ Example of how to see the output:<br/>
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
+
         <logFetcher implementation="eu.ibagroup.formainframe.dataops.log.JobLogFetcherFactory"/>
 
         <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldConnectionsAdapterFactory"/>
@@ -264,6 +266,8 @@ Example of how to see the output:<br/>
 
         <editorFloatingToolbarProvider
                 implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncToolbarProvider"/>
+        
+        <editorFloatingToolbarProvider implementation="eu.ibagroup.formainframe.editor.SubmitJobToolbarProvider"/>
 
         <notificationGroup displayType="STICKY_BALLOON"
                            id="eu.ibagroup.formainframe.explorer.ExplorerNotificationGroup"/>
@@ -429,6 +433,19 @@ Example of how to see the output:<br/>
                 text="Purge Job"
                 icon="AllIcons.Actions.GC"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditJclAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditJclAction"
+                text="Edit JCL"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.SubmitJobToolbarAction"
+                class="eu.ibagroup.formainframe.explorer.actions.SubmitJobToolbarAction"
+                text="Submit Job"
+                icon="AllIcons.Actions.Execute"/>
+
+        <group id="eu.ibagroup.formainframe.explorer.actions.SubmitJobToolbarActionGroup" popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobToolbarAction"/>
+        </group>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
                 text="Edit"
@@ -468,6 +485,7 @@ Example of how to see the output:<br/>
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJclAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"/>
             <separator/>

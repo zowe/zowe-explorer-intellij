@@ -21,8 +21,8 @@ import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
+import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitFilePathOperationParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
-import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitOperationParams
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
@@ -67,7 +67,7 @@ class SubmitJobAction : AnAction() {
           val submitFilePath = attributes.formMfPath()
           service<DataOpsManager>().performOperation(
             operation = SubmitJobOperation(
-              request = SubmitOperationParams(submitFilePath),
+              request = SubmitFilePathOperationParams(submitFilePath),
               connectionConfig = requestData.second
             ), it
           ).also { result ->
