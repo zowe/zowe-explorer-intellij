@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -66,15 +67,27 @@ class EditJclAction: AnAction() {
             val virtualFile = node.virtualFile
             if (virtualFile != null) {
               runWriteActionInEdtAndWait {
+                var wasCreatedBefore = true
                 var cachedFile = virtualFile.findChild(attributes.name)
                 if (cachedFile == null) {
                   val createdFile = virtualFile.createChildData(null, attributes.name) as MFVirtualFile
                   cachedFile = createdFile
+                  wasCreatedBefore = false
                 }
                 val descriptor = e.project?.let { pr -> OpenFileDescriptor(pr, cachedFile) }
                 descriptor?.let {
-                  DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(e.project))
-                    .putInitialContent(jclContentBytes)
+                  val syncProvider =
+                    DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(e.project))
+                  if (!wasCreatedBefore) {
+                    syncProvider.putInitialContent(jclContentBytes)
+                  } else {
+                    val currentContent = syncProvider.retrieveCurrentContent()
+                    if (!(currentContent contentEquals jclContentBytes)) {
+                      syncProvider.loadNewContent(jclContentBytes)
+                    }
+                  }
+                  val document = syncProvider.getDocument()
+                  document?.let { doc -> FileDocumentManager.getInstance().saveDocument(doc) }
                   it.navigate(true)
                 }
               }
