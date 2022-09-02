@@ -25,7 +25,7 @@ class ContentTestSpec : ShouldSpec({
     // MemberContentSynchronizer.fetchRemoteContentBytes
     should("fetch remote content bytes") {}
     // MemberContentSynchronizer.uploadNewContent
-    should("upload new content to the mainframe")
+    should("upload new content to the mainframe") {}
     // DocumentedSyncProvider.putInitialContent
     should("put initial file content when the file is read-only") {}
   }
