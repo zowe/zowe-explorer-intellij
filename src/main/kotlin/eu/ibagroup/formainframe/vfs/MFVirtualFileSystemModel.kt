@@ -473,15 +473,33 @@ class MFVirtualFileSystemModel {
   }
 
   /**
-   * Convert contents to byte array
+   * Convert contents to byte array. On conversion, should change CRLF and CR to LF
    * @param file virtual file to convert
    */
   @Throws(IOException::class)
   fun contentsToByteArray(file: MFVirtualFile): ByteArray {
     awaitForInitialContentIfNeeded(file)
-    return file.validReadLock {
+    val crSeparatorByte = "13".toByte() // \r
+    val lfSeparatorByte = "10".toByte() // \n
+    var bytesWithDefaultSeparator = file.validReadLock {
       contentStorage.getBytes(getIdForStorageAccess(file))
     }
+    val fileSeparatorBytes = file.detectedLineSeparator?.toByteArray()
+    if (fileSeparatorBytes != null) {
+      if (fileSeparatorBytes.contains(crSeparatorByte)) {
+        bytesWithDefaultSeparator =
+          if (fileSeparatorBytes.contains(crSeparatorByte)) {
+            bytesWithDefaultSeparator
+              .filter { it.compareTo(crSeparatorByte) != 0 }
+              .toByteArray()
+          } else {
+            bytesWithDefaultSeparator
+              .map { if (it.compareTo(crSeparatorByte) == 0) lfSeparatorByte else it }
+              .toByteArray()
+          }
+      }
+    }
+    return bytesWithDefaultSeparator
   }
 
   /**
