@@ -85,7 +85,7 @@ class WorkingSetViaActionButtonTest {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
                 Thread.sleep(3000)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText(
+                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
                     EMPTY_DATASET_MESSAGE
                 )
                 clickButton("OK")
@@ -111,7 +111,7 @@ class WorkingSetViaActionButtonTest {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
                 Thread.sleep(3000)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText(
+                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
                     EMPTY_DATASET_MESSAGE
                 )
                 clickButton("OK")
@@ -260,7 +260,7 @@ class WorkingSetViaActionButtonTest {
                 find<HeavyWeightWindowFixture>(
                     byXpath("//div[@class='HeavyWeightWindow']"),
                     Duration.ofSeconds(30)
-                ).hasText(IDENTICAL_MASKS_MESSAGE)
+                ).findText(IDENTICAL_MASKS_MESSAGE)
                 assertFalse(button("OK").isEnabled())
                 clickButton("Cancel")
             }

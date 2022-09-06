@@ -21,6 +21,7 @@ import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.fixtures.JTextFieldFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.extension.ExtendWith
@@ -87,7 +88,7 @@ class WorkingSetViaContextMenuTest {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
                 Thread.sleep(3000)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText(
+                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
                     EMPTY_DATASET_MESSAGE
                 )
                 clickButton("OK")
@@ -110,7 +111,7 @@ class WorkingSetViaContextMenuTest {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
                 Thread.sleep(3000)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText(
+                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
                     EMPTY_DATASET_MESSAGE
                 )
                 clickButton("OK")
@@ -244,7 +245,7 @@ class WorkingSetViaContextMenuTest {
                 find<HeavyWeightWindowFixture>(
                     byXpath("//div[@class='HeavyWeightWindow']"),
                     Duration.ofSeconds(30)
-                ).hasText(IDENTICAL_MASKS_MESSAGE)
+                ).findText(IDENTICAL_MASKS_MESSAGE)
                 assertFalse(button("OK").isEnabled())
                 clickButton("Cancel")
             }
@@ -386,11 +387,11 @@ class WorkingSetViaContextMenuTest {
             editWSFromContextMenu(oldWorkingSetName, fixtureStack, closableFixtureCollector)
             editWorkingSetDialog(fixtureStack) {
                 renameWorkingSet(alreadyExistsWorkingSetName)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).find<ComponentFixture>(
-                    byXpath("//div[@class='JEditorPane']")
-                )
-                    .hasText("You must provide unique working set name. Working Set $alreadyExistsWorkingSetName already || exists.")
-
+                val message = find<HeavyWeightWindowFixture>(
+                    byXpath("//div[@class='HeavyWeightWindow']"),
+                    Duration.ofSeconds(30)
+                ).findAllText()
+                (message[0].text + message[1].text).shouldContain("You must provide unique working set name. Working Set $alreadyExistsWorkingSetName already exists.")
                 renameWorkingSet(newWorkingSetName)
                 clickButton("OK")
                 Thread.sleep(5000)
@@ -471,9 +472,11 @@ class WorkingSetViaContextMenuTest {
             createMaskDialog(fixtureStack) {
                 createMask(Pair(maskName, "z/OS"))
                 assertFalse(button("OK").isEnabled())
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText(
-                    "You must provide unique mask in working set. Working Set \"$wsName\" || already has mask - $maskName"
-                )
+                val message = find<HeavyWeightWindowFixture>(
+                    byXpath("//div[@class='HeavyWeightWindow']"),
+                    Duration.ofSeconds(30)
+                ).findAllText()
+                (message[0].text + message[1].text).shouldContain("You must provide unique mask in working set. Working Set \"$wsName\" already has mask - $maskName")
                 clickButton("Cancel")
             }
             closableFixtureCollector.closeOnceIfExists(CreateMaskDialog.name)
@@ -600,9 +603,11 @@ class WorkingSetViaContextMenuTest {
                     clickButton("OK")
                 } else {
                     assertFalse(button("OK").isEnabled())
-                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).hasText(
-                        "You must provide unique mask in working set. Working Set \"$wsName\" || already has mask - $newMaskName"
-                    )
+                    val message = find<HeavyWeightWindowFixture>(
+                        byXpath("//div[@class='HeavyWeightWindow']"),
+                        Duration.ofSeconds(30)
+                    ).findAllText()
+                    (message[0].text + message[1].text).shouldContain("You must provide unique mask in working set. Working Set \"$wsName\" already has mask - $newMaskName")
                     clickButton("Cancel")
                 }
                 explorer {
