@@ -50,8 +50,8 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
-    e.presentation.isEnabledAndVisible = !(editor.document.text.toByteArray() contentEquals file.contentsToByteArray())
-            && !service<ConfigService>().isAutoSyncEnabled.get()
+    e.presentation.isEnabledAndVisible = !service<ConfigService>().isAutoSyncEnabled.get()
+            && !(editor.document.text.toByteArray() contentEquals file.contentsToByteArray())
   }
 
   private fun makeDisabled(e: AnActionEvent) {
