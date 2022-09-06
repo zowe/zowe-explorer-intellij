@@ -88,10 +88,10 @@ class JobsFilterState(
   var jobId: String = "",
 ) {
 
-  fun toJobsFilter(): JobsFilter {
-    val resultOwner = owner.ifBlank { "" }
-    val resultPrefix = prefix.ifBlank { "" }
-    val resultJobId = jobId.ifBlank { "" }
+  fun toJobsFilter (): JobsFilter {
+    val resultOwner = owner.ifBlank { "" }.uppercase()
+    val resultPrefix = prefix.ifBlank { "" }.uppercase()
+    val resultJobId = jobId.ifBlank { "" }.uppercase()
     return JobsFilter(resultOwner, resultPrefix, resultJobId)
   }
 
