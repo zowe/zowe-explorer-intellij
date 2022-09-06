@@ -117,7 +117,7 @@ fun <WSConfig : WorkingSetConfig> validateWorkingSetName(
  */
 fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
   val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.uppercase())
-          || ws.ussPaths.map { it.path.uppercase() }.contains(component.text.uppercase())
+          || ws.ussPaths.map { it.path }.contains(component.text)
 
   return if (maskAlreadyExists) {
     ValidationInfo(
