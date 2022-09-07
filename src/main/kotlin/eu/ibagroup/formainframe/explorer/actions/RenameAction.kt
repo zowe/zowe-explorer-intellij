@@ -32,7 +32,6 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import java.util.*
 
 // TODO: doc
 class RenameAction : AnAction() {
@@ -71,7 +70,7 @@ class RenameAction : AnAction() {
       }
     } else if (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath) {
       initialState = selectedNode.node.value.path
-      val dialog = RenameDialog(e.project, "Directory", selectedNode, this, initialState)
+      val dialog = RenameDialog(e.project, "USS Mask", selectedNode, this, initialState)
       if (dialog.showAndGet()) {
         val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
         val wsToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentValue.uuid)?.clone()
