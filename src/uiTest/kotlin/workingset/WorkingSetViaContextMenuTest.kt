@@ -491,7 +491,7 @@ class WorkingSetViaContextMenuTest {
     fun testRenameMasksViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "new ws name"
         renameMaskFromContextMenu(wsName, "$ZOS_USERID.*", "$ZOS_USERID.**", true, "Rename Dataset Mask", remoteRobot)
-        renameMaskFromContextMenu(wsName, "/u/$ZOS_USERID", "/etc/ssh", true, "Rename Directory", remoteRobot)
+        renameMaskFromContextMenu(wsName, "/u/$ZOS_USERID", "/etc/ssh", true, "Rename USS Mask", remoteRobot)
         openWSOpenMaskInExplorer(wsName, "$ZOS_USERID.**", projectName, fixtureStack, remoteRobot)
         openWSOpenMaskInExplorer(wsName, "/etc/ssh", projectName, fixtureStack, remoteRobot)
         openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
