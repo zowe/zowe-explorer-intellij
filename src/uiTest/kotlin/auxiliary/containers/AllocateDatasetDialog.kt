@@ -28,6 +28,9 @@ open class AllocateDatasetDialog(
     remoteComponent: RemoteComponent
 ) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
 
+    /**
+     * Fills in the parameters for allocating dataset.
+     */
     fun allocateDataset(
         datasetName: String,
         datasetOrganization: String,
