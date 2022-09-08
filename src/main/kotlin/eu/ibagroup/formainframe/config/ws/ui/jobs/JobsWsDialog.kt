@@ -141,7 +141,7 @@ class JobsWsDialog(
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
 
     override fun setValue(item: JobsWorkingSetDialogState.TableRow, value: String) {
-      item.prefix = value
+      item.prefix = value.uppercase()
     }
   }
 
@@ -166,7 +166,7 @@ class JobsWsDialog(
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
 
     override fun setValue(item: JobsWorkingSetDialogState.TableRow, value: String) {
-      item.owner = value
+      item.owner = value.uppercase()
     }
   }
 
@@ -191,7 +191,7 @@ class JobsWsDialog(
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
 
     override fun setValue(item: JobsWorkingSetDialogState.TableRow, value: String) {
-      item.jobId = value
+      item.jobId = value.uppercase()
     }
   }
 }
