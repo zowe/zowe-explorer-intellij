@@ -19,8 +19,9 @@ import com.intellij.remoterobot.fixtures.ComponentFixture
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Duration
 
@@ -303,7 +304,7 @@ class WorkingSetViaSettingsTest {
                     find<HeavyWeightWindowFixture>(
                         byXpath("//div[@class='HeavyWeightWindow']"),
                         Duration.ofSeconds(30)
-                    ).hasText(IDENTICAL_MASKS_MESSAGE)
+                    ).findText(IDENTICAL_MASKS_MESSAGE)
                     assertFalse(button("OK").isEnabled())
                     clickButton("Cancel")
                 }
@@ -503,12 +504,11 @@ class WorkingSetViaSettingsTest {
                 }
                 editWorkingSetDialog(fixtureStack) {
                     renameWorkingSet(alreadyExistsWorkingSetName)
-                    Thread.sleep(3000)
-                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).find<ComponentFixture>(
-                        byXpath("//div[@class='JEditorPane']")
-                    )
-                        .hasText("You must provide unique working set name. Working Set $alreadyExistsWorkingSetName already || exists.")
-
+                    val message = find<HeavyWeightWindowFixture>(
+                        byXpath("//div[@class='HeavyWeightWindow']"),
+                        Duration.ofSeconds(30)
+                    ).findAllText()
+                    (message[0].text + message[1].text).shouldContain("You must provide unique working set name. Working Set $alreadyExistsWorkingSetName already exists.")
                     renameWorkingSet(newWorkingSetName)
                     clickButton("OK")
                     Thread.sleep(5000)

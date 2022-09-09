@@ -47,7 +47,7 @@ val maskMessageMap = mapOf(
     "$ZOS_USERID.{!" to ENTER_VALID_DS_MASK_MESSAGE,
     "$ZOS_USERID.A23456789.*" to "Qualifier must be in 1 to 8 characters",
     "$ZOS_USERID." to ENTER_VALID_DS_MASK_MESSAGE,
-    maskWithLength45 to "Dataset mask must be no more than 44 characters",
+    maskWithLength45 to "Dataset mask length must not exceed 44 characters",
     "$ZOS_USERID.***" to "Invalid asterisks in the qualifier"
 )
 
@@ -56,7 +56,7 @@ val validZOSMasks = listOf(
     ZOS_USERID
 )
 
-val validUSSMasks = listOf("/u", "/uuu", "/etc/ssh", "/u/$ZOS_USERID")
+val validUSSMasks = listOf("/u", "/etc/ssh", "/u/$ZOS_USERID")
 
 val viewTree = byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")
 
