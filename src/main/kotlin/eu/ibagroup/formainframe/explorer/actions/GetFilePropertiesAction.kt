@@ -12,12 +12,16 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
+import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.r2z.ChangeMode
 
 // TODO: doc Valiantsin
 class GetFilePropertiesAction : AnAction() {
@@ -25,8 +29,9 @@ class GetFilePropertiesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
-    if (node is ExplorerTreeNode<*>) {
+    if (node is ExplorerUnitTreeNodeBase<*, *>) {
       val virtualFile = node.virtualFile
+      val connectionConfig = node.unit.connectionConfig ?: return
       if (virtualFile != null) {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone()) {
@@ -36,7 +41,31 @@ class GetFilePropertiesAction : AnAction() {
           }
           is RemoteUssAttributes -> {
             val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes))
+            val initOwner = attributes.fileMode?.owner
+            val initGroup = attributes.fileMode?.group
+            val initAll = attributes.fileMode?.all
             dialog.showAndGet()
+            if (dialog.state.ussAttributes.fileMode?.owner != initOwner || dialog.state.ussAttributes.fileMode?.group != initGroup || dialog.state.ussAttributes.fileMode?.all != initAll) {
+              runBackgroundableTask(
+                title = "Changing file mode on ${attributes.path}",
+                project = e.project,
+                cancellable = true
+              ) {
+                if (attributes.fileMode != null) {
+                  runCatching {
+                    dataOpsManager.performOperation(
+                      operation = UssChangeModeOperation(
+                        request = UssChangeModeParams(ChangeMode(mode = attributes.fileMode), attributes.path),
+                        connectionConfig = connectionConfig
+                      ),
+                      progressIndicator = it
+                    )
+                  }.onFailure { t ->
+                    view.explorer.reportThrowable(t, e.project)
+                  }
+                }
+              }
+            }
           }
           is RemoteMemberAttributes -> {
             val dialog = MemberPropertiesDialog(e.project, MemberState(attributes))
