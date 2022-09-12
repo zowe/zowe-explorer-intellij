@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.InfoOperation
+import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.utils.validateConnectionName
@@ -65,8 +66,20 @@ class ConnectionDialog(
                 username = state.username,
                 password = state.password
               )
-              val info = service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig), it)
-              state.zVersion = info.getZOSVersion()
+              runCatching {
+                service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig), it)
+              }.onSuccess {
+                val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(state.connectionConfig))
+                state.zVersion = when (systemInfo.zosVersion) {
+                  "04.25.00" -> ZVersion.ZOS_2_2
+                  "04.26.00" -> ZVersion.ZOS_2_3
+                  "04.27.00" -> ZVersion.ZOS_2_4
+                  "04.28.00" -> ZVersion.ZOS_2_5
+                  else -> ZVersion.ZOS_2_1
+                }
+              }.onFailure {
+                throw it
+              }
               null
             } catch (t: Throwable) {
               t
@@ -208,6 +221,7 @@ class ConnectionDialog(
             )
           )
             .bindItem(state::zVersion.toNullableProperty())
+            .enabled(false)
         }
       }
     }
