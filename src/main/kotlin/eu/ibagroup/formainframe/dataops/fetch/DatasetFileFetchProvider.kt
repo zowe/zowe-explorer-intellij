@@ -16,6 +16,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.utils.asMutableList
@@ -96,12 +97,13 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
     progressIndicator: ProgressIndicator,
     start: String?
   ): Response<DataSetsList> {
+    val batchSize = if (start != null) BATCH_SIZE + 1 else BATCH_SIZE
     return api<DataAPI>(query.connectionConfig).listDataSets(
       authorizationToken = query.connectionConfig.authToken,
       dsLevel = query.request.mask,
       volser = query.request.volser.nullIfBlank(),
       xIBMAttr = XIBMAttr(isTotal = true),
-      xIBMMaxItems = BATCH_SIZE,
+      xIBMMaxItems = if (query is UnitRemoteQueryImpl) 0 else batchSize,
       start = start
     ).cancelByIndicator(progressIndicator).execute()
   }
