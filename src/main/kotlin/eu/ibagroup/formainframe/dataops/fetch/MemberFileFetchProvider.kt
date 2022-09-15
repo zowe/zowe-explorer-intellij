@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.getAttributesService
@@ -90,12 +91,13 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
     start: String?
   ): Response<MembersList> {
     val libraryAttributes = remoteDatasetAttributesService.getAttributes(query.request.library)
+    val batchSize = if (start != null) BATCH_SIZE + 1 else BATCH_SIZE
     return if (libraryAttributes !== null)
       api<DataAPI>(query.connectionConfig).listDatasetMembers(
         authorizationToken = query.connectionConfig.authToken,
         datasetName = libraryAttributes.name,
         xIBMAttr = XIBMAttr(isTotal = true),
-        xIBMMaxItems = BATCH_SIZE,
+        xIBMMaxItems = if (query is UnitRemoteQueryImpl) 0 else batchSize,
         start = start
       ).cancelByIndicator(progressIndicator).execute()
     else throw IllegalArgumentException("Virtual file is not a library")
