@@ -244,6 +244,10 @@ Example of how to see the output:<br/>
 
         <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldWorkingSetAdapterFactory"/>
 
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldUsernameAdapterFactory"/>
+
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldJobsWorkingSetAdapterFactory"/>
+
         <explorer implementation="eu.ibagroup.formainframe.explorer.FileExplorerFactory"/>
         <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory"/>
 
