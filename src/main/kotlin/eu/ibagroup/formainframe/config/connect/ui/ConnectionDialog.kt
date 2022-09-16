@@ -47,7 +47,11 @@ class ConnectionDialog(
 
   companion object {
 
-    /** Show Test connection dialog and test the connection */
+    /** Show Test connection dialog and test the connection regarding the dialog state.
+     * First the method checks whether connection succeeds for specified user/password.
+     * If connection succeeds then the method automatically fill in z/OS version for this connection.
+     * We do not need to worry about choosing z/OS version manually from combo box.
+     * */
     @JvmStatic
     fun showAndTestConnection(
       crudable: Crudable,
