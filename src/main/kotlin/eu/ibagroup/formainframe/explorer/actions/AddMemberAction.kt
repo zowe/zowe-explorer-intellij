@@ -12,10 +12,8 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
@@ -23,9 +21,9 @@ import eu.ibagroup.formainframe.analytics.events.FileType
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.getAttributesService
-import eu.ibagroup.formainframe.dataops.operations.MemberAllocationOperation
-import eu.ibagroup.formainframe.dataops.operations.MemberAllocationParams
+import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service
@@ -68,15 +66,28 @@ class AddMemberAction : AnAction() {
                   ),
                   progressIndicator = it
                 )
-              }.onSuccess { currentNode.cleanCache() }
-                .onFailure {
-                  runInEdt {
-                    Messages.showErrorDialog(
-                      "Cannot create member ${state.memberName} ${state.datasetName} on ${connectionConfig.name}",
-                      "Cannot Allocate Dataset"
+              }.onSuccess {
+                currentNode.cleanCache()
+              }.onFailure {
+                var throwable = it
+                if (it is CallException && it.code == 500 && it.message?.contains("Directory full") == true) {
+                  runCatching {
+                    dataOpsManager.performOperation(
+                      operation = DeleteMemberOperation(
+                        request = DeleteMemberOperationParams(
+                          datasetName = state.datasetName,
+                          memberName = state.memberName
+                        ),
+                        connectionConfig = connectionConfig
+                      )
                     )
+                  }.onFailure { th ->
+                    throwable = Throwable("Directory is FULL. Invalid member created.\n" + th.message)
+                    currentNode.cleanCache()
                   }
                 }
+                currentNode.explorer.reportThrowable(throwable, e.project)
+              }
             }
           }
         }
