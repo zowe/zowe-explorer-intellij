@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.analytics.AnalyticsService
@@ -141,9 +142,6 @@ private fun postProcessState(state: DatasetAllocationParams): DatasetAllocationP
     state.allocationParameters.datasetOrganization = DatasetOrganization.PO
     state.allocationParameters.dsnType = DsnameType.LIBRARY
   }
-  if (state.allocationParameters.allocationUnit == AllocationUnit.BLK) {
-    state.allocationParameters.allocationUnit = null
-  }
   state.allocationParameters.directoryBlocks = state.allocationParameters.directoryBlocks.toNullIfZero()
   state.allocationParameters.blockSize = state.allocationParameters.blockSize.toNullIfZero()
   state.allocationParameters.averageBlockLength = state.allocationParameters.averageBlockLength.toNullIfZero()
@@ -190,11 +188,14 @@ class AllocateLikeAction : AnAction() {
     if (spaceUnits == SpaceUnits.TRACKS) {
       return AllocationUnit.TRK
     }
-    if (spaceUnits == SpaceUnits.BLOCKS) {
-      return AllocationUnit.BLK
-    }
     if (spaceUnits == SpaceUnits.CYLINDERS) {
       return AllocationUnit.CYL
+    }
+    if (spaceUnits == SpaceUnits.BLOCKS) {
+      Messages.showWarningDialog(
+            "Allocation unit BLK is not supported. It will be changed to TRK.",
+        "Allocation Unit Will Be Changed"
+      )
     }
     return null
   }
