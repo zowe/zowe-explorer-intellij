@@ -21,7 +21,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.6.3"
+version = "0.7.0"
 val remoteRobotVersion = "0.11.14"
 
 repositories {
@@ -58,7 +58,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.0.30")
+  implementation("eu.ibagroup:r2z:1.1.2-pre-release-1")
   implementation("com.segment.analytics.java:analytics:+")
   testImplementation("io.mockk:mockk:1.12.4")
   testImplementation("org.mock-server:mockserver-netty:5.13.2")
@@ -90,12 +90,38 @@ tasks {
       """
       <b>New features:</b>
       <ul>
+        <li>Configurable batch size to load filter smoothly</li>
+        <li>Job Purge operation</li>
+        <li>Job Edit operation</li>
+        <li>Copy local to remote</li>
+        <li>Copy remote to remote</li>
+        <li>GitHub issue #10: Edit Working sets directly from Tool Window</li>
+        <li>GitHub issue #70: Add date and time to JES Explorer</li>
+        <li>GitHub issue #41: Transfer USS files from any encoding, not just from EBCDIC</li>
       </ul>
-      <b>Detailed changes list:</b>
+      <b>Minor changes:</b>
       <ul>
+        <li>JES filter improvement</li>
+        <li>Copy remote to local: clarify warning</li>
+        <li>GitHub issue #67: Allocate like for datasets with BLK will be with warning</li>
+        <li>Move the file attribute conversion to a separate thread</li>
+        <li>Source code documentation added</li>
       </ul>
       <b>Fixed bugs:</b>
       <ul>
+        <li>File cache conflict if open JCL to edit it in JES explorer second time</li>
+        <li>GitHub issue #86: Incorrect error message if mask length > 44</li>
+        <li>GitHub issue #87: Masks type autodetection does not work in Add/Edit Working Set dialogs</li>
+        <li>Problem with automatic refresh after creating new members/deleting members from dataset</li>
+        <li>GitHub issue #89: Impossible to rename USS directory whose name contains &</li>
+        <li>Confusing dialog title 'Rename Directory' when renaming USS mask from context menu</li>
+        <li>GitHub issue #81: There is no difference between upper and lower cases when create USS masks from context menu</li>
+        <li>GitHub issue #88: Lower case is not changed to upper case during Job Filter creation</li>
+        <li>GitHub issue #44: 'Sync data' button does not work properly when multiple changes in USS file</li>
+        <li>GitHub issue #30: Create new member in dataset that does not have enough space creates empty member despite of warning</li>
+        <li>GitHub issue #54: Accumulation of errors in WS that breaks WS</li>
+        <li>USS file cannot be deleted in</li>
+        <li>z/OS version specified in connection information doesn't match the z/OS version returned from z/OSMF</li>
       </ul>"""
     )
   }
