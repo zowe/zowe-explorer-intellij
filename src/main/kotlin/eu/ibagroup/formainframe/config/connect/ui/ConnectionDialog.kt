@@ -163,6 +163,8 @@ class ConnectionDialog(
           .validationOnApply {
             it.text = it.text.trim()
             validateForBlank(it)
+          }.onApply {
+            state.username = state.username.uppercase()
           }
           .horizontalAlign(HorizontalAlign.FILL)
       }

@@ -13,7 +13,6 @@ package eu.ibagroup.formainframe.config.connect
 import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
-import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Document
 
 /**
@@ -33,7 +32,6 @@ class OldConnectionsAdapterFactory : OldConfigAdapterFactory {
  * 2) UrlConnection removed.
  * @author Valentine Krus
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "0.7")
 class OldConnectionsAdapter(private val document: Document) : OldConfigAdapter<ConnectionConfig> {
 
   /**

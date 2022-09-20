@@ -171,6 +171,8 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteMemberOperationRunnerFactory"/>
+
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToPdsMoverFactory"/>
 
@@ -243,6 +245,10 @@ Example of how to see the output:<br/>
         <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldConnectionsAdapterFactory"/>
 
         <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldWorkingSetAdapterFactory"/>
+
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldUsernameAdapterFactory"/>
+
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldJobsWorkingSetAdapterFactory"/>
 
         <explorer implementation="eu.ibagroup.formainframe.explorer.FileExplorerFactory"/>
         <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory"/>

@@ -20,6 +20,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.utils.service
 import org.jetbrains.concurrency.Promise
@@ -49,4 +50,23 @@ fun makeNodeDataFromTreePath(explorer: Explorer<*>, treePath: TreePath?): NodeDa
 fun TreePath.getVirtualFile(): VirtualFile? {
   val treeNode = (lastPathComponent as DefaultMutableTreeNode).userObject as ProjectViewNode<*>
   return if (treeNode is PsiFileNode) treeNode.virtualFile else if (treeNode is PsiDirectoryNode) treeNode.virtualFile else null
+}
+
+/**
+ * Removes node from "invalidateOnExpand" collection of explorer view.
+ * @param node node to remove.
+ * @param view explorer view from wich to return node.
+ */
+fun cleanInvalidateOnExpand(
+  node: ExplorerTreeNode<*>,
+  view: ExplorerTreeView<*, *>
+) {
+  view.myStructure.promisePath(node, view.myTree).onSuccess {
+    val lastNode = it.lastPathComponent
+    if (view.myNodesToInvalidateOnExpand.contains(lastNode)) {
+      synchronized(view.myNodesToInvalidateOnExpand) {
+        view.myNodesToInvalidateOnExpand.remove(lastNode)
+      }
+    }
+  }
 }

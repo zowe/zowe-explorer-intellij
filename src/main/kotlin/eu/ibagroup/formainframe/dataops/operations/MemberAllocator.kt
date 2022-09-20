@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 
@@ -46,7 +47,11 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
       content = byteArrayOf()
     ).cancelByIndicator(progressIndicator).execute()
     if (!request.isSuccessful) {
-      throw Throwable(request.code().toString())
+      throw CallException(
+        request,
+        "Cannot create member ${operation.request.memberName} in ${operation.request.datasetName} " +
+            "on ${operation.connectionConfig.name}"
+      )
     }
   }
 }

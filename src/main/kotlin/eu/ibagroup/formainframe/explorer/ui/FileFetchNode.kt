@@ -17,9 +17,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tree.LeafState
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.message
+import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.locked
 import eu.ibagroup.formainframe.utils.service
 import java.util.concurrent.atomic.AtomicBoolean
@@ -38,6 +40,8 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
+  /** current cache will not be cleaned if this value is true. It was made for fetching files bi batches. */
+  var needToLoadMore = false
 
   private val fileFetchProvider
     get() = explorer.componentManager.service<DataOpsManager>()
@@ -45,7 +49,7 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   protected abstract fun makeFetchTaskTitle(query: Q): String
 
-  private val loadingNode by lazy { listOf(LoadingNode(notNullProject, this, explorer, treeStructure)) }
+  private val loadingNode by lazy { LoadingNode(notNullProject, this, explorer, treeStructure) }
 
   private fun errorNode(text: String): List<ErrorNode> {
     return listOf(ErrorNode(notNullProject, this, explorer, treeStructure, text = text))
@@ -59,12 +63,19 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
     return lock.withLock {
       val childrenNodes = cachedChildren
       if (childrenNodes == null) {
-        val q = query
+        val q = fileFetchProvider.getRealQueryInstance(query) ?: query
         if (q != null && fileFetchProvider.isCacheValid(q)) {
-          val fetched = fileFetchProvider.getCached(q)
-          if (fetched != null) {
-            fetched.toChildrenNodes().also { cachedChildren = it }
+          val fetched = fileFetchProvider.getCached(q)?.toMutableList()
+          if (fetched != null && !needToLoadMore) {
+            fetched.toChildrenNodes().toMutableList().apply {
+              val batchedQ = q.castOrNull<BatchedRemoteQuery<*>>()
+              if (batchedQ?.fetchNeeded == true) {
+                val itemsLeft = batchedQ.totalRows?.let { it - batchedQ.alreadyFetched }
+                add(LoadMoreNode(notNullProject, this@FileFetchNode, explorer, treeStructure, itemsLeft))
+              }
+            }.also { cachedChildren = it }
           } else {
+            needToLoadMore = false
             runBackgroundableTask(
               title = makeFetchTaskTitle(q),
               project = project,
@@ -72,7 +83,7 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
             ) {
               fileFetchProvider.reload(q, it)
             }
-            loadingNode
+            (fetched?.toChildrenNodes()?.toMutableList() ?: mutableListOf()).apply { add(loadingNode) }
           }
         } else {
           hasError.set(true)
@@ -107,18 +118,23 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   private var cachedChildren: List<AbstractTreeNode<*>>? by locked(null, lock)
 
-  fun cleanCache(recursively: Boolean = true) {
+  fun cleanCache(recursively: Boolean = true, cleanFetchProviderCache: Boolean = true, cleanBatchedQuery: Boolean = false) {
     val children = cachedChildren
     if (!hasError.compareAndSet(true, false)) {
       cachedChildren = null
     }
-    query?.let {
-      fileFetchProvider.cleanCache(it)
+    if (cleanFetchProviderCache) {
+      query?.let {
+        fileFetchProvider.cleanCache(it)
+      }
+    }
+    if (cleanBatchedQuery) {
+      fileFetchProvider.getRealQueryInstance(query)?.castOrNull<BatchedRemoteQuery<*>>()?.clear()
     }
     if (recursively) {
       children?.forEach {
         if (it is FileFetchNode<*, *, *, *, *>) {
-          it.cleanCache()
+          it.cleanCache(cleanBatchedQuery = cleanBatchedQuery)
         }
       }
     }

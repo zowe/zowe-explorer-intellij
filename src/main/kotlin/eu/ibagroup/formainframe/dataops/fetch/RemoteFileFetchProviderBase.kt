@@ -14,10 +14,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -71,6 +74,7 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     progressIndicator: ProgressIndicator
   ) {
     runCatching {
+      val needToUpdateFiles = query.castOrNull<BatchedRemoteQuery<*>>()?.let { it.fetchNeeded && it.alreadyFetched > 0 } == true
       val fetched = fetchResponse(query, progressIndicator)
       val files = runWriteActionOnWriteThread {
         fetched.mapNotNull {
@@ -85,7 +89,13 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
           forEach { cleanupUnusedFile(it, query) }
         }
       }
-      cache[query] = files
+      if (needToUpdateFiles) {
+        val newCache = cache[query]?.toMutableList() ?: mutableListOf()
+        newCache.addAll(files)
+        cache[query] = newCache
+      } else {
+        cache[query] = files
+      }
       cacheState[query] = CacheState.FETCHED
       files
     }.onSuccess {
@@ -116,6 +126,12 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
 
   override fun cleanCache(query: RemoteQuery<Request, Unit>) {
     cleanCacheInternal(query, true)
+  }
+
+  /** @see FileFetchProvider.getRealQueryInstance */
+  override fun <Q : Query<Request, Unit>> getRealQueryInstance(query: Q?): Q? {
+    val queryClass = query?.javaClass ?: return null
+    return cache.keys.find { it == query }.castOrNull(queryClass)
   }
 
   private fun cleanCacheInternal(query: RemoteQuery<Request, Unit>, sendTopic: Boolean) {

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
@@ -42,7 +43,7 @@ class DSMaskNode(
     get() {
       val connectionConfig = unit.connectionConfig
       return if (connectionConfig != null) {
-        UnitRemoteQueryImpl(value, connectionConfig)
+        BatchedRemoteQuery(value, connectionConfig)
       } else null
     }
 
