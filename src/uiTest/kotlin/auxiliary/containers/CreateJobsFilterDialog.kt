@@ -20,20 +20,22 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
- * Class representing the Create Mask Dialog.
+ * Class representing the Create Jobs Filter Dialog.
  */
-@FixtureName("Create Mask Dialog")
-open class CreateMaskDialog(
+@FixtureName("Create Jobs Filter Dialog")
+open class CreateJobsFilterDialog(
     remoteRobot: RemoteRobot,
     remoteComponent: RemoteComponent
 ) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
+    private val filterTextParams = findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']"))
 
     /**
-     * Fills in the required information for creating a new mask.
+     * Fills in the required information for creating a new jobs filter.
      */
-    fun createMask(mask: Pair<String, String>) {
-        find<ComboBoxFixture>(byXpath("//div[@class='ComboBox']")).selectItem(mask.second)
-        find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = mask.first
+    fun createJobsFilter(filter: Triple<String, String, String>) {
+        filterTextParams[0].text = filter.first
+        filterTextParams[1].text = filter.second
+        filterTextParams[2].text = filter.third
     }
 
     /**
@@ -44,26 +46,26 @@ open class CreateMaskDialog(
     }
 
     companion object {
-        const val name = "Create Mask Dialog"
+        const val name = "Create Jobs Filter Dialog"
 
         /**
-         * Returns the xPath of the Create Mask Dialog.
+         * Returns the xPath of the Create Jobs Filter Dialog.
          */
         @JvmStatic
-        fun xPath() = byXpath(name, "//div[@accessiblename='Create Mask' and @class='MyDialog']")
+        fun xPath() = byXpath(name, "//div[@accessiblename='Create Jobs Filter' and @class='MyDialog']")
     }
 }
 
 /**
- * Finds the CreateMaskDialog and modifies fixtureStack.
+ * Finds the CreateJobsFilterDialog and modifies fixtureStack.
  */
-fun ContainerFixture.createMaskDialog(
+fun ContainerFixture.createJobsFilterDialog(
     fixtureStack: MutableList<Locator>,
     timeout: Duration = Duration.ofSeconds(60),
-    function: CreateMaskDialog.() -> Unit = {}
+    function: CreateJobsFilterDialog.() -> Unit = {}
 ) {
-    find<CreateMaskDialog>(CreateMaskDialog.xPath(), timeout).apply {
-        fixtureStack.add(CreateMaskDialog.xPath())
+    find<CreateJobsFilterDialog>(CreateJobsFilterDialog.xPath(), timeout).apply {
+        fixtureStack.add(CreateJobsFilterDialog.xPath())
         function()
         fixtureStack.removeLast()
     }

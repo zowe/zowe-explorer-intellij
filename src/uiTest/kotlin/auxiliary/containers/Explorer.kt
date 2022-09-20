@@ -48,12 +48,20 @@ class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
         closableFixtureCollector.add(AddWorkingSetDialog.xPath(), fixtureStack)
     }
 
+    /**
+     * Clicks on the creating jobs working set action and adds the Add Jobs Working Set Dialog to the list of fixtures needed to close.
+     */
+    fun createJobsWorkingSet(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
+        clickActionButton(byXpath("//div[@class='ActionButton' and @myaction='Jobs Working Set ()']"))
+        closableFixtureCollector.add(AddJobsWorkingSetDialog.xPath(), fixtureStack)
+    }
+
     companion object {
         /**
          * Returns the xPath of the Explorer.
          */
         @JvmStatic
-        fun xPath() = byXpath("//div[@accessiblename='File Explorer Tool Window' and @class='InternalDecoratorImpl']")
+        fun xPath() = byXpath("//div[@class='InternalDecoratorImpl']")
     }
 }
 
