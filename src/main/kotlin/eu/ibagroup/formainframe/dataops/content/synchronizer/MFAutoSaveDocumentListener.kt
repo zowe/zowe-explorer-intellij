@@ -29,7 +29,7 @@ class MFAutoSaveDocumentListener: BulkFileListener {
    * Filters file events for saving events and synchronizes file from these events.
    */
   override fun after(events: MutableList<out VFileEvent>) {
-    if (!service<ConfigService>().isAutoSyncEnabled.get()){
+    if (!service<ConfigService>().isAutoSyncEnabled){
       return
     }
     events.forEach {

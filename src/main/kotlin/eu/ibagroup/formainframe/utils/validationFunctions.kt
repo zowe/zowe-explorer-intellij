@@ -459,3 +459,15 @@ fun validateMemberName(component: JTextField): ValidationInfo? {
     null
   }
 }
+
+/**
+ * Validates batch size in int text field. If the value is 0 user should be
+ * warned that in this case all files will be fetched together.
+ * @param component the component to check - should be registered in UI like an int text field
+ *                                           (validation on a digit larger than 0 should be included).
+ */
+fun validateBatchSize(component: JTextField): ValidationInfo? {
+  return if (component.text.toIntOrNull() == 0)
+    ValidationInfo("Setting 0 may lead to performance issues due to elements long fetch processing.").asWarning().withOKEnabled()
+  else null
+}

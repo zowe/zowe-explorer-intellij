@@ -10,8 +10,10 @@
 
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -53,6 +55,10 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val vFileClass = MFVirtualFile::class.java
 
+  override val responseClass = RemoteDatasetAttributes::class.java
+
+  private var configService = service<ConfigService>()
+
   // TODO: doc
   override fun fetchResponse(
     query: RemoteQuery<DSMask, Unit>,
@@ -62,7 +68,6 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
     return super.fetchResponse(query, progressIndicator)
   }
 
-  override val responseClass = RemoteDatasetAttributes::class.java
 
   // TODO: doc
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<DSMask, Unit>) {
@@ -97,7 +102,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
     progressIndicator: ProgressIndicator,
     start: String?
   ): Response<DataSetsList> {
-    val batchSize = if (start != null) BATCH_SIZE + 1 else BATCH_SIZE
+    val batchSize = if (start != null) configService.batchSize + 1 else configService.batchSize
     return api<DataAPI>(query.connectionConfig).listDataSets(
       authorizationToken = query.connectionConfig.authToken,
       dsLevel = query.request.mask,

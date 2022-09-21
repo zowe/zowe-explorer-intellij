@@ -21,7 +21,6 @@ import eu.ibagroup.formainframe.utils.crudable.EventHandler
 import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicBoolean
 
 fun sendConfigServiceTopic(): EventHandler = sendTopic(CONFIGS_CHANGED)
 
@@ -53,8 +52,11 @@ interface ConfigService : PersistentStateComponent<ConfigState> {
 
   val autoSaveDelay: Duration
 
-  var isAutoSyncEnabled: AtomicBoolean
+  /** Identifies if the auto sync is used to save file content. */
+  var isAutoSyncEnabled: Boolean
 
+  /** Identifies size of the files batch to fetch in a single request. */
+  var batchSize: Int
 }
 
 val configCrudable: Crudable

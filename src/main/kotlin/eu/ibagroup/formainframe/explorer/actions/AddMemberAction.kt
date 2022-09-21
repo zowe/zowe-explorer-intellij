@@ -67,7 +67,7 @@ class AddMemberAction : AnAction() {
                   progressIndicator = it
                 )
               }.onSuccess {
-                currentNode.cleanCache()
+                currentNode.cleanCache(cleanBatchedQuery = true)
               }.onFailure {
                 var throwable = it
                 if (it is CallException && it.code == 500 && it.message?.contains("Directory full") == true) {
@@ -83,7 +83,7 @@ class AddMemberAction : AnAction() {
                     )
                   }.onFailure { th ->
                     throwable = Throwable("Directory is FULL. Invalid member created.\n" + th.message)
-                    currentNode.cleanCache()
+                    currentNode.cleanCache(cleanBatchedQuery = true)
                   }
                 }
                 currentNode.explorer.reportThrowable(throwable, e.project)
