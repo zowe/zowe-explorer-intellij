@@ -41,7 +41,7 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
     val configService = service<ConfigService>()
     val dataOpsManager = service<DataOpsManager>()
     val attributes = dataOpsManager.tryToGetAttributes(file)
-    if (file is MFVirtualFile && !configService.isAutoSyncEnabled.get() && file.isWritable &&
+    if (file is MFVirtualFile && !configService.isAutoSyncEnabled && file.isWritable &&
       attributes != null) {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: let {
         log.info("Document cannot be used here")

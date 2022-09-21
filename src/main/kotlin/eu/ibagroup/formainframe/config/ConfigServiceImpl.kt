@@ -26,7 +26,6 @@ import eu.ibagroup.formainframe.utils.runIfTrue
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.parsers.DocumentBuilderFactory
 
 /** Config service state class. Describes all the interactions with the plugin config */
@@ -62,7 +61,17 @@ class ConfigServiceImpl : ConfigService {
       eventHandler = this@ConfigServiceImpl.eventHandler
     }
 
-  override var isAutoSyncEnabled = AtomicBoolean(false)
+  override var isAutoSyncEnabled: Boolean
+    get() = state.settings.isAutoSyncEnabled
+    set(value) {
+      state.settings.isAutoSyncEnabled = value
+    }
+
+  override var batchSize: Int
+    get() = state.settings.batchSize
+    set(value) {
+      state.settings.batchSize = value
+    }
 
   /** Adapt all configs in old style to the new one and updates config file. */
   @ApiStatus.ScheduledForRemoval(inVersion = "0.7")
