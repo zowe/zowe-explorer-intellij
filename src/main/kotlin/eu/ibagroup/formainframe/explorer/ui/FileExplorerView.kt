@@ -456,20 +456,20 @@ class FileExplorerView(
             title = "Deletion of ${files.size} file(s)",
             project = project,
             cancellable = true
-          ) {
-            it.isIndeterminate = false
+          ) { indicator ->
+            indicator.isIndeterminate = false
             ignoreVFileDeleteEvents.compareAndSet(false, true)
             files.map { DeleteOperation(it, dataOpsManager) }
               .forEach { op ->
-                it.text = "Deleting file ${op.file.name}"
+                indicator.text = "Deleting file ${op.file.name}"
                 runCatching {
-                  dataOpsManager.performOperation(op, it)
+                  dataOpsManager.performOperation(op, indicator)
                 }.onFailure { explorer.reportThrowable(it, project) }
-                it.fraction = it.fraction + 1.0 / files.size
+                indicator.fraction = indicator.fraction + 1.0 / files.size
               }
             nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
-              .forEach { it.cleanCache(true) }
+              .forEach { it.cleanCache(cleanBatchedQuery = true) }
           }
         }
       }

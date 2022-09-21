@@ -52,7 +52,7 @@ class SubmitJobAction : AnAction() {
       runBackgroundableTask("Preparing for job submission") {
         val dataOpsManager = service<DataOpsManager>()
         val file = requestData.first
-        if (service<ConfigService>().isAutoSyncEnabled.get() && dataOpsManager.isSyncSupported(file)) {
+        if (service<ConfigService>().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
           contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)
         }

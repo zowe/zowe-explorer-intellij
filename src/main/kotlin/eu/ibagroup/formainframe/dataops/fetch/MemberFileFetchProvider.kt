@@ -10,8 +10,10 @@
 
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -61,6 +63,8 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
 
   override val log = logger
 
+  private val configService = service<ConfigService>()
+
   // TODO: doc
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<LibraryQuery, Unit>) {
     log.info("About to clean-up file=$file, query=$query")
@@ -91,7 +95,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
     start: String?
   ): Response<MembersList> {
     val libraryAttributes = remoteDatasetAttributesService.getAttributes(query.request.library)
-    val batchSize = if (start != null) BATCH_SIZE + 1 else BATCH_SIZE
+    val batchSize = if (start != null) configService.batchSize + 1 else configService.batchSize
     return if (libraryAttributes !== null)
       api<DataAPI>(query.connectionConfig).listDatasetMembers(
         authorizationToken = query.connectionConfig.authToken,

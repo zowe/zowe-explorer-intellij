@@ -31,8 +31,7 @@ import eu.ibagroup.formainframe.utils.castOrNull
  * @author Valiantsin Krus
  */
 abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseItem : Any, Request : Any, Response : FileAttributes, File : VirtualFile>(
-  dataOpsManager: DataOpsManager,
-  val BATCH_SIZE: Int = 100
+  dataOpsManager: DataOpsManager
 ) : RemoteAttributedFileFetchBase<Request, Response, File>(dataOpsManager) {
 
   abstract val log: Logger
