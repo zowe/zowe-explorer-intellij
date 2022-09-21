@@ -313,6 +313,7 @@ class JobsWorkingSetViaSettingsTest {
         val jwsName = "JWS1"
         val newFilter = Triple("TEST1", ZOS_USERID, "")
         openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        closeFilterInExplorer(Triple("*", ZOS_USERID, ""),projectName,fixtureStack,remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
