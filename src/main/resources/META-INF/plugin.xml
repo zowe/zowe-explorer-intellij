@@ -219,6 +219,8 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperationRunnerFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationFactory"/>
 
         <operationRunner
