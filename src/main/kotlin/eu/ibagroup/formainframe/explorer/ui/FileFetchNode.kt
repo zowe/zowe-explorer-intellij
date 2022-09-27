@@ -175,6 +175,6 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
  */
 fun ExplorerTreeNode<*>.cleanCacheIfPossible() {
   if (this is FileFetchNode<*, *, *, *, *>) {
-    cleanCache()
+    cleanCache(cleanBatchedQuery = true)
   }
 }
