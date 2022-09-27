@@ -19,7 +19,12 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 private val PROVIDERS = SmartList(FileExplorerTreeStructureProvider())
 
-// TODO: doc
+/**
+ * Class that represents the common explorer tree structure. Provides basic implementation to work with the explorer tree structure
+ * @param explorer the explorer for which the tree structure should be built. Is used to interact with various components, that could be fetched by the explorer
+ * @param project the project where the tree structure should be visible
+ * @param rootNodeProvider the root node provider that uses explorer
+ */
 class CommonExplorerTreeStructure<Expl : Explorer<*>>(
   explorer: Expl,
   project: Project,
@@ -33,21 +38,37 @@ class CommonExplorerTreeStructure<Expl : Explorer<*>>(
     WeakHashMap<VirtualFile, ConcurrentLinkedQueue<ExplorerTreeNode<*>>>()
   )
 
+  /**
+   * Put the node in the value to node map queue and the file to node map queue if the virtual file is present for the node
+   * @param node the node to be registered
+   */
   override fun registerNode(node: ExplorerTreeNode<*>) {
     valueToNodeMap.getOrPut(node.value) { ConcurrentLinkedQueue() }.add(node)
     val file = node.virtualFile ?: return
     fileToNodeMap.getOrPut(file) { ConcurrentLinkedQueue() }.add(node)
   }
 
+  /**
+   * Get the nodes queue from value to node map by the provided value. Empty set will be returned if the queue is not found
+   * @param value the value to get the queue by
+   */
   @Suppress("UNCHECKED_CAST")
   override fun <V : Any> findByValue(value: V): Collection<ExplorerTreeNode<V>> {
     return valueToNodeMap[value] as Collection<ExplorerTreeNode<V>>? ?: emptySet()
   }
 
+  /**
+   * Search for the values in all the value to node map queues by predicate
+   * @param predicate the predicate to filter by
+   */
   override fun findByPredicate(predicate: (ExplorerTreeNode<*>) -> Boolean): Collection<ExplorerTreeNode<*>> {
     return valueToNodeMap.values.flatten().filter(predicate)
   }
 
+  /**
+   * Get the nodes queue from file to node map by the provided value. Empty set will be returned if the queue is not found
+   * @param file the virtual file to get the queue by
+   */
   override fun findByVirtualFile(file: VirtualFile): Collection<ExplorerTreeNode<*>> {
     return fileToNodeMap[file] ?: emptySet()
   }

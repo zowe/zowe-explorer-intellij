@@ -19,9 +19,18 @@ import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.JTextField
 
-// TODO: doc
+/**
+ * Validating cell editor. Needed for cells with validation
+ */
 class ValidatingCellEditor<Item> : DefaultCellEditor(JBTextField()) {
 
+  /**
+   * Get table cell editor component with the custom validator on each cell
+   * @param table the table to assign validators on columns of it
+   * @param row the row number to find the cell to assign the validator to
+   * @param column the column number to find the cell to assign the validator to
+   * @return the updated editor component
+   */
   @Suppress("UNCHECKED_CAST")
   override fun getTableCellEditorComponent(
     table: JTable?,

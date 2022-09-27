@@ -17,12 +17,18 @@ import java.awt.Dimension
 import javax.swing.DefaultCellEditor
 import javax.swing.table.TableCellRenderer
 
-// TODO: doc
+/** Validating table view class. Provides the functionality to handle table view with validators on the model */
 class ValidatingTableView<Item>(
   model: ValidatingListTableModel<Item>,
   val disposable: Disposable
 ) : TableView<Item>(model) {
 
+  /**
+   * Get cell renderer with the changed cell size for the cells with default cell editor
+   * @param row the row number to get the cell at
+   * @param column the column number to get the cell at
+   * @return cell renderer with the changed cell sizes
+   */
   override fun getCellRenderer(row: Int, column: Int): TableCellRenderer? {
     return super.getCellRenderer(row, column)?.apply {
       val editor = getCellEditor(row, column)
@@ -39,6 +45,10 @@ class ValidatingTableView<Item>(
     return super.getModel() as ValidatingListTableModel<Item>
   }
 
+  /**
+   * Get cell validator by the column number
+   * @param column the column number to get the validator by
+   */
   fun getCellValidator(column: Int): ValidatingColumnInfo<Item>? {
     return listTableModel.columnInfos[convertColumnIndexToModel(column)].castOrNull()
   }

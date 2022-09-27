@@ -15,9 +15,16 @@ import java.awt.Component
 import javax.swing.JTable
 import javax.swing.table.DefaultTableCellRenderer
 
-// TODO: doc
+/** Validating cell renderer. Needed for cells with validation */
 class ValidatingCellRenderer<Item> : DefaultTableCellRenderer() {
 
+  /**
+   * Get table cell renderer component with the custom validator on each cell
+   * @param table the table to assign validators on columns of it
+   * @param row the row number to find the cell to assign the validator to
+   * @param column the column number to find the cell to assign the validator to
+   * @return the updated renderer component
+   */
   @Suppress("UNCHECKED_CAST")
   override fun getTableCellRendererComponent(
     table: JTable?,

@@ -14,7 +14,7 @@ import eu.ibagroup.formainframe.utils.Copyable
 import eu.ibagroup.formainframe.utils.PasteAcceptor
 import eu.ibagroup.r2z.XIBMDataType
 
-// TODO: doc
+/** Interface to describe possible file attributes and interactions with them */
 interface FileAttributes : Cloneable, Copyable, PasteAcceptor {
 
   val name: String

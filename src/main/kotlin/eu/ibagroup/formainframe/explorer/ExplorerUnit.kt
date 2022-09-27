@@ -12,7 +12,7 @@ package eu.ibagroup.formainframe.explorer
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 
-// TODO: doc
+/** Interface to represent base unit in explorer */
 interface ExplorerUnit {
 
   val name: String

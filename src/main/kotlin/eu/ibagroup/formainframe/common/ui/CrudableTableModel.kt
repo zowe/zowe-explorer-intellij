@@ -14,34 +14,18 @@ import com.intellij.util.ui.ColumnInfo
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.MergedCollections
-import javax.swing.SortOrder
 import javax.swing.event.TableModelEvent
 
-// TODO: doc
-abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
-
-  private val crudable: Crudable
-
-  constructor(crudable: Crudable, vararg columnInfos: ColumnInfo<Item, *>?) : super(*columnInfos) {
-    this.crudable = crudable
-  }
-
-  constructor(
-    columnNames: Array<out ColumnInfo<Item, *>>,
-    selectedColumn: Int,
-    crudable: Crudable
-  ) : super(columnNames, mutableListOf(), selectedColumn) {
-    this.crudable = crudable
-  }
-
-  constructor(
-    columnNames: Array<out ColumnInfo<Item, *>>,
-    selectedColumn: Int,
-    order: SortOrder,
-    crudable: Crudable
-  ) : super(columnNames, mutableListOf(), selectedColumn, order) {
-    this.crudable = crudable
-  }
+/**
+ * Abstract crudable class for table model. Provides functions to work with tables
+ * @param crudable Crudable instance to change data
+ * @param columnInfos column info
+ */
+abstract class CrudableTableModel<Item : Any>(
+  private val crudable: Crudable,
+  vararg columnInfos: ColumnInfo<Item, *>?
+) :
+  ValidatingListTableModel<Item>(*columnInfos) {
 
   var replacingItems: List<Item>? = null
 
@@ -52,21 +36,42 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
     } else listOf()
   }
 
+  /**
+   * Method is called when user deletes selected row from table
+   * @param idx row index to delete
+   */
   override fun removeRow(idx: Int) {
     replacingItems = this[idx].cloneAndWrap()
     super.removeRow(idx)
   }
 
+  /**
+   * Setter method to set an Item to specified row number
+   * @param row row number to set an Item
+   * @param item Item object to set
+   */
   override operator fun set(row: Int, item: Item) {
     replacingItems = this[row].cloneAndWrap()
     super.set(row, item)
   }
 
+  /**
+   * Setter method to set a list of Item
+   * @param items list of Item object to set
+   */
   override fun setItems(items: MutableList<Item>) {
     replacingItems = getItems().cloneElements()
     super.setItems(items)
   }
 
+  /**
+   * Sets the value in the cell at columnIndex and rowIndex to aValue.
+   * This method allows to choose will the model listeners notified or not.
+   * @param aValue the new value
+   * @param rowIndex the row whose value is to be changed
+   * @param columnIndex the column whose value is to be changed
+   * @param notifyListeners indicates whether the model listeners are notified
+   */
   override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int, notifyListeners: Boolean) {
     if (notifyListeners) {
       replacingItems = this[rowIndex].cloneAndWrap()
@@ -76,12 +81,19 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
 
   private var needToUpdateCrudableOnSetItems = true
 
+  /**
+   * Fetch list of items
+   */
   fun reinitialize() {
     needToUpdateCrudableOnSetItems = false
     items = fetch(crudable)
     needToUpdateCrudableOnSetItems = true
   }
 
+  /**
+   * Fetch list of items. Contains listener for an insert, update and delete events
+   * @see reinitialize
+   */
   protected fun initialize() {
     reinitialize()
     addTableModelListener {
@@ -121,7 +133,7 @@ abstract class CrudableTableModel<Item> : ValidatingListTableModel<Item> {
   }
 
   private fun List<Item>.cloneElements(): List<Item> {
-    return mapNotNull { it?.clone(clazz) }
+    return mapNotNull { it.clone(clazz) }
   }
 
   abstract fun fetch(crudable: Crudable): MutableList<Item>

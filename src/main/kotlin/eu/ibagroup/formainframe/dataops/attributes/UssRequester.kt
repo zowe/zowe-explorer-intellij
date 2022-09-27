@@ -12,7 +12,10 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 
-// TODO: doc
+/**
+ * Information object with connection configuration inside to send request for a list of uss files to zosmf
+ * @param connectionConfig connection configuration to specify the system to work with
+ */
 data class UssRequester(
   override val connectionConfig: ConnectionConfig
 ) : Requester

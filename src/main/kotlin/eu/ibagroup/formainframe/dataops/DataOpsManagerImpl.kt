@@ -30,9 +30,11 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
 
+// TODO: doc Gleb
 // TODO: doc
 class DataOpsManagerImpl : DataOpsManager {
 
+  // TODO: doc
   private fun <Component> List<DataOpsComponentFactory<Component>>.buildComponents(): MutableList<Component> {
     return buildComponents(this@DataOpsManagerImpl)
   }
@@ -46,6 +48,12 @@ class DataOpsManagerImpl : DataOpsManager {
   }
   private val attributesServices by attributesServiceDelegate
 
+  /**
+   * Returns instance of object which performs actions with attributes of files/folders
+   * @param A object that contains info about attributes of file/folder
+   * @param F object that represents file or folder
+   * @return instance of service which can perform actions on attributes
+   */
   override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
     attributesClass: Class<out A>,
     vFileClass: Class<out F>
@@ -58,6 +66,11 @@ class DataOpsManagerImpl : DataOpsManager {
     )
   }
 
+  /**
+   * Returns attributes of file/folder
+   * @param file object that represents file or folder
+   * @return attributes of file/folder
+   */
   override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
     return attributesServices.stream()
       .filter { it.vFileClass.isAssignableFrom(file::class.java) }
@@ -66,6 +79,11 @@ class DataOpsManagerImpl : DataOpsManager {
       .findAnyNullable()
   }
 
+  /**
+   * Returns instance of object that represents file/folder
+   * @param attributes object that contains info about attributes of file/folder
+   * @return object that represents file/folder
+   */
   override fun tryToGetFile(attributes: FileAttributes): VirtualFile? {
     return attributesServices.stream()
       .map { it.getVirtualFile(attributes) }
@@ -78,6 +96,13 @@ class DataOpsManagerImpl : DataOpsManager {
   }
   private val fileFetchProviders by fileFetchProvidersDelegate
 
+  /**
+   * Returns instance of file fetch provider which fetches content of files/folders from mainframe
+   * @param R root object which requests instance of fetch provider
+   * @param Q query which contains fetch operation inside
+   * @param File file which needs to be fetched
+   * @return instance of object which can fetch content of files/folders
+   */
   override fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> getFileFetchProvider(
     requestClass: Class<out R>,
     queryClass: Class<out Query<*, *>>,
@@ -105,14 +130,29 @@ class DataOpsManagerImpl : DataOpsManager {
   }
   private val mfContentAdapters by mfContentAdaptersDelegate
 
+  /**
+   * Checks if sync with mainframe is supported for provided object
+   * @param file object on mainframe that should be checked on availability of synchronization
+   * @return is sync possible for provided object
+   */
   override fun isSyncSupported(file: VirtualFile): Boolean {
     return contentSynchronizers.firstOrNull { it.accepts(file) } != null
   }
 
+  /**
+   * Returns instance of object responsible for synchronization process of file with mainframe
+   * @param file object on mainframe that should be synchronized
+   * @return instance of object responsible for synchronization
+   */
   override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
     return contentSynchronizers.firstOrNull { it.accepts(file) }
   }
 
+  /**
+   * Returns instance of content adapter to mainframe
+   * @param file object that represents file/folder on mainframe
+   * @return instance of content adapter to mainframe
+   */
   override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {
     return mfContentAdapters.firstOrNull { it.accepts(file) } ?: DefaultContentAdapter(this)
   }
@@ -124,14 +164,30 @@ class DataOpsManagerImpl : DataOpsManager {
     operationRunnersList.associateListedBy { it.operationClass }
   }
 
+  /**
+   * Returns instance of log fetcher object
+   * @param processInfo object that contains unique info about connection to mainframe
+   * @return instance of log fetcher object
+   */
   private fun createLogFetcher(processInfo: MFProcessInfo): LogFetcher<*>? {
     return LogFetcher.EP.extensionList.firstOrNull { it.acceptsProcessInfo(processInfo) }?.buildComponent(this)
   }
 
+  /**
+   * Checks if operation can be executed
+   * @param operation object that represents operation
+   * @return is operation can be performed
+   */
   override fun isOperationSupported(operation: Operation<*>): Boolean {
     return operationRunners[operation::class.java]?.any { it.canRun(operation) } == true
   }
 
+  /**
+   * Perform operation on mainframe
+   * @param operation operation that needs to be executed
+   * @param progressIndicator interrupts operation if the computation is canceled
+   * @return result of operation
+   */
   override fun <R : Any> performOperation(
     operation: Operation<R>,
     progressIndicator: ProgressIndicator
@@ -163,6 +219,7 @@ class DataOpsManagerImpl : DataOpsManager {
     }
   }
 
+  // TODO: doc
   override fun dispose() {
     if (attributesServiceDelegate.isInitialized()) attributesServices.clear()
     if (fileFetchProvidersDelegate.isInitialized()) fileFetchProviders.clear()

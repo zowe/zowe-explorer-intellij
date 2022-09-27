@@ -39,9 +39,9 @@ abstract class AbstractWsDialogState<WSConfig : WorkingSetConfig, TableRow>(
   abstract val workingSetConfig: WSConfig
 }
 
-fun <WSConfig, T : AbstractWsDialogState<WSConfig, *>> T.initEmptyUuids(crudable: Crudable): T {
+fun <WSConfig : Any, T : AbstractWsDialogState<WSConfig, *>> T.initEmptyUuids(crudable: Crudable): T {
   return this.apply {
-    uuid = crudable.nextUniqueValue<WSConfig, String>(workingSetConfigClass())
+    uuid = crudable.nextUniqueValue(workingSetConfigClass())
   }
 }
 

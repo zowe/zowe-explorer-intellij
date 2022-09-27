@@ -32,7 +32,6 @@ import eu.ibagroup.r2z.Dataset
 import eu.ibagroup.r2z.XIBMAttr
 import retrofit2.Response
 
-// TODO: doc
 class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
     return DatasetFileFetchProvider(dataOpsManager)
@@ -69,7 +68,13 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
   }
 
 
-  // TODO: doc
+  /**
+   * Clean up unused invalid files from the local virtual file system.
+   * If the file does not belong to the connection config or if the VOLSER is different, it won't be deleted,
+   * only invalid requesters will be deleted
+   * @param file the file to remove
+   * @param query the query to check the file attributes requesters
+   */
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<DSMask, Unit>) {
     val deletingFileAttributes = attributesService.getAttributes(file)
     log.info("Cleaning-up file attributes $deletingFileAttributes")

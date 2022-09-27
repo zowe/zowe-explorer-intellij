@@ -22,7 +22,14 @@ import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.event.TableModelEvent
 
-// TODO: doc
+/**
+ * An "Add" action callback builder.
+ * The callback creates a new empty row in the table and immediately focuses on it
+ * @param table the table to add a new row to
+ * @param createEmptyItem the function to create an empty row in the table
+ * @param editingColumnIndex the current editing column index to focus on the appropriate cell when the row is created
+ * @return the callback to call, that accepts an action button to be clicked to run the callback
+ */
 inline fun <Item> addAction(
   table: TableView<Item>,
   crossinline createEmptyItem: (TableView<Item>) -> Item,
@@ -40,6 +47,13 @@ inline fun <Item> addAction(
   }
 }
 
+/**
+ * A "Remove" action callback builder.
+ * The callback removes the focused row from the table
+ * @param table the table to remove the row from
+ * @param isDeletionNeeded the function to check whether the row can be deleted
+ * @return the callback to call, that accepts an action button to be clicked to run the callback
+ */
 inline fun <Item> removeAction(
   table: TableView<Item>,
   crossinline isDeletionNeeded: (List<Item>) -> Boolean
@@ -64,6 +78,12 @@ fun removeActionUpdater(
   return { table.selectedRowCount > 0 }
 }
 
+/**
+ * Toolbar builder for the table view
+ * @param table the table to create a toolbar for
+ * @param editingColumnIndex the column index being edited, for "Add" operation
+ * @param addDefaultActions the variable to check if it is needed to initialize the toolbar with the default actions
+ */
 class ToolbarTableBuilder<Item> @PublishedApi internal constructor(
   private val table: TableView<Item>,
   private val editingColumnIndex: Int = 0,
@@ -85,6 +105,11 @@ class ToolbarTableBuilder<Item> @PublishedApi internal constructor(
     return configureDecorator { }
   }
 
+  /**
+   * Configure the toolbar decorator for the toolbar table builder. Sets up the default actions for the toolbar if it is needed.
+   * The toolbar position is bottom by the default
+   * @param init the toolbar actions initializer
+   */
   fun configureDecorator(init: ToolbarDecorator.() -> Unit): ToolbarTableBuilder<Item> {
     toolbarDecorator = ToolbarDecorator
       .createDecorator(table)
@@ -109,6 +134,14 @@ class ToolbarTableBuilder<Item> @PublishedApi internal constructor(
 
 }
 
+/**
+ * Create a table with a toolbar inside the row
+ * @param table the table view to put in the view
+ * @param editingColumnIndex the column index being edited, for "Add" operation
+ * @param addDefaultActions the variable to check if it is needed to initialize the toolbar with the default actions
+ * @param toolbarTableBuilder the toolbar table builder instance to initialize the new one with its parameters
+ * @return DSL cell component builder
+ */
 fun <Item> Row.tableWithToolbar(
   table: TableView<Item>,
   editingColumnIndex: Int = 0,

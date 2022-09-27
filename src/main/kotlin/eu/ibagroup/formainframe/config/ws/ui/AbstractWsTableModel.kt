@@ -46,7 +46,7 @@ abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
   }
 
   override fun onUpdate(crudable: Crudable, value: WSConfig): Boolean {
-    return crudable.update(value).isPresent
+    return crudable.update(value)?.isPresent ?: false
   }
 
   override fun onDelete(crudable: Crudable, value: WSConfig) {
@@ -54,7 +54,7 @@ abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
   }
 
   override fun onAdd(crudable: Crudable, value: WSConfig): Boolean {
-    return crudable.add(value).isPresent
+    return crudable.add(value)?.isPresent ?: false
   }
 
   override fun onApplyingMergedCollection(crudable: Crudable, merged: MergedCollections<WSConfig>) {

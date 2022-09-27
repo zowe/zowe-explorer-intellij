@@ -74,7 +74,7 @@ class FilesWorkingSetConfig : WorkingSetConfig {
   }
 
   override fun toString(): String {
-    return "WorkingSetConfig(name='$name', connectionConfigUuid='$connectionConfigUuid', dsMasks=$dsMasks, ussPaths=$ussPaths)"
+    return "FilesWorkingSetConfig(name='$name', connectionConfigUuid='$connectionConfigUuid', dsMasks=$dsMasks, ussPaths=$ussPaths)"
   }
 
 }

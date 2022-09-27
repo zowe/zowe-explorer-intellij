@@ -13,7 +13,9 @@ package eu.ibagroup.formainframe.api
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 
-// TODO: doc
+/**
+ * Interface to represent z/OSMF API.
+ */
 interface ZosmfApi {
 
   companion object {
@@ -34,14 +36,30 @@ interface ZosmfApi {
   fun <Api : Any> getApiWithBytesConverter(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api
 }
 
+/**
+ * Returns API class object from z/OSMF API instance.
+ * @param connectionConfig connection configuration to specify the system to work with.
+ * @return API class object.
+ */
 inline fun <reified Api : Any> api(connectionConfig: ConnectionConfig): Api {
   return ZosmfApi.instance.getApi(Api::class.java, connectionConfig)
 }
 
+/**
+ * Returns API class object with bytes converter from z/OSMF API instance.
+ * @param connectionConfig connection configuration to specify the system to work with.
+ * @return API class object.
+ */
 inline fun <reified Api : Any> apiWithBytesConverter(connectionConfig: ConnectionConfig): Api {
   return ZosmfApi.instance.getApiWithBytesConverter(Api::class.java, connectionConfig)
 }
 
+/**
+ * Returns API class object from z/OSMF API instance.
+ * @param url url address of the remote system.
+ * @param isAllowSelfSigned whether to allow self-signed certificates.
+ * @return API class object.
+ */
 inline fun <reified Api : Any> api(url: String, isAllowSelfSigned: Boolean): Api {
   return ZosmfApi.instance.getApi(Api::class.java, url, isAllowSelfSigned)
 }
