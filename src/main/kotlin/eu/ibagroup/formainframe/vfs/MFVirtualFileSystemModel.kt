@@ -91,6 +91,13 @@ class MFVirtualFileSystemModel {
 
   fun getProtocol() = MFVirtualFileSystem.PROTOCOL
 
+  /**
+   * Find or create the child in directory by its name
+   * @param requestor the class to describe event requester
+   * @param vDir the virtual directory to search in
+   * @param name the name of the child
+   * @param attributes the attributes to create the child if it is not found
+   */
   @Throws(IOException::class)
   fun findOrCreate(
     requestor: Any?, vDir: MFVirtualFile, name: String, attributes: FileAttributes
@@ -126,7 +133,7 @@ class MFVirtualFileSystemModel {
   }
 
   fun refresh(asynchronous: Boolean) {
-    TODO("implement refresh of the model")
+//    TODO("implement refresh of the model")
   }
 
   /**
@@ -159,7 +166,7 @@ class MFVirtualFileSystemModel {
     val event = listOf(VFileDeleteEvent(requestor, vFile, false))
     vFile.validWriteLock {
       val parent = vFile.parent
-      parent?.validWriteLock parentLock@{
+      parent?.validWriteLock {
         if (vFile.children?.size != 0) {
           vFile.children?.forEach { it: MFVirtualFile -> deleteFile(requestor, it) }
         }
@@ -178,7 +185,7 @@ class MFVirtualFileSystemModel {
             else parent.path + MFVirtualFileSystem.SEPARATOR + vFile.name
           initialContentConditions.remove(vFile)
           sendVfsChangesTopic().after(event)
-          return@parentLock
+          return@deleteFile
         }
       }
     }
@@ -289,7 +296,7 @@ class MFVirtualFileSystemModel {
 
   /**
    * Create child virtual file with provided attributes
-   * @param requestor requester class for further processing
+   * @param requestor class to describe the event requester
    * @param vDir virtual directory to create the virtual file in
    * @param name virtual file name
    * @param attributes attributes to create virtual file with
@@ -473,15 +480,33 @@ class MFVirtualFileSystemModel {
   }
 
   /**
-   * Convert contents to byte array
+   * Convert contents to byte array. On conversion, should change CRLF and CR to LF
    * @param file virtual file to convert
    */
   @Throws(IOException::class)
   fun contentsToByteArray(file: MFVirtualFile): ByteArray {
     awaitForInitialContentIfNeeded(file)
-    return file.validReadLock {
+    val crSeparatorByte = "13".toByte() // \r
+    val lfSeparatorByte = "10".toByte() // \n
+    var bytesWithDefaultSeparator = file.validReadLock {
       contentStorage.getBytes(getIdForStorageAccess(file))
     }
+    val fileSeparatorBytes = file.detectedLineSeparator?.toByteArray()
+    if (fileSeparatorBytes != null) {
+      if (fileSeparatorBytes.contains(crSeparatorByte)) {
+        bytesWithDefaultSeparator =
+          if (fileSeparatorBytes.contains(crSeparatorByte)) {
+            bytesWithDefaultSeparator
+              .filter { it.compareTo(crSeparatorByte) != 0 }
+              .toByteArray()
+          } else {
+            bytesWithDefaultSeparator
+              .map { if (it.compareTo(crSeparatorByte) == 0) lfSeparatorByte else it }
+              .toByteArray()
+          }
+      }
+    }
+    return bytesWithDefaultSeparator
   }
 
   /**

@@ -28,7 +28,6 @@ import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMOption
 
-// TODO: doc
 class DeleteRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return DeleteOperationRunner(dataOpsManager)
@@ -39,6 +38,13 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   OperationRunner<DeleteOperation, Unit> {
   override val operationClass = DeleteOperation::class.java
 
+  /**
+   * Run "Delete" operation.
+   * Runs the action depending on the type of the element to remove.
+   * After the element is removed, removes it from the mainframe virtual file system
+   * @param operation the operation instance to get the file, attributes and requesters to delete the file
+   * @param progressIndicator the progress indicatior for the operation
+   */
   override fun run(
     operation: DeleteOperation,
     progressIndicator: ProgressIndicator

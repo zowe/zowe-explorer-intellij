@@ -35,27 +35,55 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import kotlin.streams.toList
 
-// TODO: doc Valiantsin
+/**
+ * Abstract class for displaying configuration dialog of single Working Set.
+ * @param WSConfig Implementation class of WorkingSetConfig
+ * @see WorkingSetConfig
+ * @param TableRow Class with data for each column of filters/masks table (for example mask, system type, ...)
+ * @param WSDState Implementation of AbstractWsDialogState
+ * @see AbstractWsDialogState
+ * @param crudable Crudable instance to change data in after dialog applied.
+ * @param wsdStateClass Instance of Class for WSDState
+ * @param state Instance of WSDState
+ * @param initialState Initial state of dialog. (used only working set name from initial state ???)
+ * @author Valiantsin Krus
+ * @author Viktar Mushtsin
+ */
 abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
   crudable: Crudable,
   wsdStateClass: Class<out WSDState>,
   override var state: WSDState,
   var initialState: WSDState = state.clone(wsdStateClass)
 ) : DialogWrapper(false), StatefulComponent<WSDState> {
+
   abstract val wsConfigClass: Class<out WSConfig>
 
   private val connectionComboBoxModel = CollectionComboBoxModel(crudable.getAll<ConnectionConfig>().toList())
 
+  /**
+   * Name of masks table.
+   */
   abstract val tableTitle: String
 
+  /**
+   * Represents table of files masks (for Files Working Sets) or job filters (for Jobs Working Sets)
+   */
   abstract val masksTable: ValidatingTableView<TableRow>
 
+  /**
+   * Value of text label before Working Set Name input field.
+   */
   abstract val wsNameLabel: String
 
   abstract fun emptyTableRow(): TableRow
 
   abstract fun validateOnApply(validationBuilder: ValidationInfoBuilder, component: JComponent): ValidationInfo?
 
+  /**
+   * Custom apply for specific WorkingSet implementation (e.g. Files Working Set, Jobs Working Set).
+   * @param state State, modified from dialog, to apply.
+   * @return applied state.
+   */
   open fun onWSApplied(state: WSDState): WSDState = state
 
   private val panel by lazy {

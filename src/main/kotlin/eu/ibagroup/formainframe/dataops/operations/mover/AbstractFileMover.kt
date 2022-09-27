@@ -11,7 +11,7 @@ package eu.ibagroup.formainframe.dataops.operations.mover
 
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 
-// TODO: doc
+/** Class to represent a file mover abstraction */
 abstract class AbstractFileMover : OperationRunner<MoveCopyOperation, Unit> {
 
   override val operationClass = MoveCopyOperation::class.java

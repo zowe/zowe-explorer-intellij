@@ -16,7 +16,9 @@ import com.intellij.util.ui.ListTableModel
 import eu.ibagroup.formainframe.utils.SparseMatrix
 import javax.swing.SortOrder
 
-// TODO: doc
+/**
+ * Class which serves as validator for sparse matrix items in Job Filters and WS Masks tables to add
+ */
 open class ValidatingListTableModel<Item> : ListTableModel<Item> {
 
   constructor(vararg columnInfos: ColumnInfo<Item, *>?) : super(*columnInfos)
@@ -41,6 +43,11 @@ open class ValidatingListTableModel<Item> : ListTableModel<Item> {
 
   val validationInfos = SparseMatrix<ValidationInfo>()
 
+  /**
+   * Method which is always called when new entry is added to WS Mask or Job Filter
+   * @param row - row to validate
+   * @param columnName - column name by which validation is going to be performed
+   */
   fun getValidationInfoByColumnName(row: Int, columnName: String): ValidationInfo? {
     val index = this.columnInfos.indexOfFirst { it.name == columnName }
     return if (index >= 0) {
@@ -50,10 +57,19 @@ open class ValidatingListTableModel<Item> : ListTableModel<Item> {
     }
   }
 
+  /**
+   * Getter method to get a full Item by row number
+   * @param row - row number to retrieve an Item
+   */
   operator fun get(row: Int): Item {
     return this.getItem(row)
   }
 
+  /**
+   * Setter method to set an Item to specified row number
+   * @param row - row number to set an Item
+   * @param item - Item object to set
+   */
   open operator fun set(row: Int, item: Item) {
     (0 until columnCount).forEach { columnIndex ->
       val info = columnInfos[columnIndex]
@@ -62,8 +78,12 @@ open class ValidatingListTableModel<Item> : ListTableModel<Item> {
     fireTableRowsUpdated(row, row)
   }
 
+  /**
+   * Method is called when user deletes selected row from table
+   * @param idx - row index to delete
+   */
   override fun removeRow(idx: Int) {
-    validationInfos.removeByRow(idx)
+    validationInfos.clear()
     super.removeRow(idx)
   }
 

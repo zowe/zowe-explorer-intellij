@@ -22,7 +22,11 @@ import eu.ibagroup.formainframe.utils.validateJobFilter
 import javax.swing.JComponent
 import javax.swing.JTextField
 
-// TODO: doc Valiantsin
+/**
+ * Dialog of Jobs Working Set configurations.
+ * @param crudable Crudable instance to change data in after dialog applied.
+ * @param state state of Jobs Working Set configuration data.
+ */
 class JobsWsDialog(
   crudable: Crudable,
   state: JobsWorkingSetDialogState
@@ -33,6 +37,12 @@ class JobsWsDialog(
 ) {
   override val wsConfigClass = JobsWorkingSetConfig::class.java
 
+  /**
+   * TableView with Job Prefix, Owner, JobId columns for representation of jobs filters.
+   * @see PrefixColumn
+   * @see OwnerColumn
+   * @see JobIdColumn
+   */
   override val masksTable = ValidatingTableView(
     ValidatingListTableModel(PrefixColumn, OwnerColumn, JobIdColumn).apply {
       items = state.maskRow
@@ -65,6 +75,11 @@ class JobsWsDialog(
     return state
   }
 
+  /**
+   * Fills empty columns by default values. Removes duplicates from filters table.
+   * @param state state modified through dialog.
+   * @return applied state.
+   */
   override fun onWSApplied(state: JobsWorkingSetDialogState): JobsWorkingSetDialogState {
     state.maskRow = state.maskRow.map { fixBlankFieldsInState(it) }
       .distinctBy { "pre:" + it.prefix + "owr:" + it.owner + "jid:" + it.jobId } as MutableList<JobsWorkingSetDialogState.TableRow>
@@ -76,6 +91,12 @@ class JobsWsDialog(
     owner = CredentialService.instance.getUsernameByKey(state.connectionUuid) ?: ""
   )
 
+  /**
+   * Validates data in Jobs Working Set dialog table.
+   * @param validationBuilder Builder that passed through Intellij Platform to build ValidationInfo.
+   * @param component requestor component.
+   * @return info with validation warnings and errors to display inside.
+   */
   override fun validateOnApply(validationBuilder: ValidationInfoBuilder, component: JComponent): ValidationInfo? {
     return when {
       masksTable.listTableModel.validationInfos.asMap.isNotEmpty() -> {
@@ -97,8 +118,14 @@ class JobsWsDialog(
     }.distinct().size
   }
 
+  /**
+   * Class for representation Job Prefix column in Job Working Set table.
+   * @see ValidatingColumnInfo
+   */
   object PrefixColumn : ValidatingColumnInfo<JobsWorkingSetDialogState.TableRow>("Prefix") {
+
     override fun valueOf(item: JobsWorkingSetDialogState.TableRow?): String? = item?.prefix
+
     override fun validateOnInput(
       oldItem: JobsWorkingSetDialogState.TableRow,
       newValue: String,
@@ -114,10 +141,14 @@ class JobsWsDialog(
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
 
     override fun setValue(item: JobsWorkingSetDialogState.TableRow, value: String) {
-      item.prefix = value
+      item.prefix = value.uppercase()
     }
   }
 
+  /**
+   * Class for representation Owner column in Job Working Set table.
+   * @see ValidatingColumnInfo
+   */
   object OwnerColumn : ValidatingColumnInfo<JobsWorkingSetDialogState.TableRow>("Owner") {
     override fun valueOf(item: JobsWorkingSetDialogState.TableRow?): String? = item?.owner
     override fun validateOnInput(
@@ -135,10 +166,14 @@ class JobsWsDialog(
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
 
     override fun setValue(item: JobsWorkingSetDialogState.TableRow, value: String) {
-      item.owner = value
+      item.owner = value.uppercase()
     }
   }
 
+  /**
+   * Class for representation Job Id column in Job Working Set table.
+   * @see ValidatingColumnInfo
+   */
   object JobIdColumn : ValidatingColumnInfo<JobsWorkingSetDialogState.TableRow>("Job ID") {
     override fun valueOf(item: JobsWorkingSetDialogState.TableRow?): String? = item?.jobId
     override fun validateOnInput(
@@ -156,7 +191,7 @@ class JobsWsDialog(
     override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
 
     override fun setValue(item: JobsWorkingSetDialogState.TableRow, value: String) {
-      item.jobId = value
+      item.jobId = value.uppercase()
     }
   }
 }

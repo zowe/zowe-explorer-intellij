@@ -16,7 +16,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ExplorerViewSettings
 
-// TODO: doc, is it a Model class?
+/**
+ * Abstract class that represents the explorer tree structure. Provides functions to work with the explorer tree structure
+ * @param explorer the explorer for which the tree structure should be built
+ * @param project the project where the tree structure should be visible
+ */
 abstract class ExplorerTreeStructureBase(
   protected val explorer: Explorer<*>,
   protected val project: Project

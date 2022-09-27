@@ -21,9 +21,10 @@ import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 
-// TODO: doc Nikita
+/** An action to view a process of running job in the Jobs Tool Window */
 class ViewJobAction : AnAction() {
 
+  /** View a process of running job on click in the Jes Explorer */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
@@ -49,6 +50,7 @@ class ViewJobAction : AnAction() {
     return true
   }
 
+  /** Able to click only on a Job Node */
   override fun update(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

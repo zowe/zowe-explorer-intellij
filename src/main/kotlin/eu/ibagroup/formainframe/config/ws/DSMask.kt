@@ -12,7 +12,7 @@ package eu.ibagroup.formainframe.config.ws
 
 import java.util.*
 
-// TODO: doc
+/** Class that represent a dataset mask */
 class DSMask {
 
   var mask = ""
@@ -21,7 +21,7 @@ class DSMask {
 
   var volser = ""
 
-  var isSingle = false
+  private val isSingle = false
 
   constructor()
 
@@ -30,11 +30,10 @@ class DSMask {
     this.excludes = excludes
   }
 
-  constructor(mask: String, excludes: MutableList<String>, volser: String, isSingle: Boolean) {
+  constructor(mask: String, excludes: MutableList<String>, volser: String) {
     this.mask = mask
     this.excludes = excludes
     this.volser = volser
-    this.isSingle = isSingle
   }
 
   override fun equals(other: Any?): Boolean {
@@ -51,6 +50,5 @@ class DSMask {
   override fun toString(): String {
     return "DSMask(mask='$mask', excludes=$excludes, volser='$volser', isSingle=$isSingle)"
   }
-
 
 }

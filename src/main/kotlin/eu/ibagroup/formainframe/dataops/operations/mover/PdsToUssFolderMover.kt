@@ -27,17 +27,30 @@ import eu.ibagroup.r2z.FilePath
 import eu.ibagroup.r2z.XIBMBpxkAutoCvt
 import retrofit2.Response
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering PdsToUssFolderMover in Intellij IoC container.
+ * @see PdsToUssFolderMover
+ * @author Valiantsin Krus
+ */
 class PdsToUssFolderMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return PdsToUssFolderMover(dataOpsManager, MFVirtualFile::class.java)
   }
 }
 
+/**
+ * Implements copying partitioned data set inside 1 system.
+ * @author Valiantsin Krus
+ */
 class PdsToUssFolderMover<VFile : VirtualFile>(
   dataOpsManager: DataOpsManager,
   val vFileClass: Class<out VFile>
 ) : AbstractPdsToUssFolderMover(dataOpsManager) {
+
+  /**
+   * Checks that source is PDS and destination is uss directory and source and destination located inside 1 system.
+   * @see OperationRunner.canRun
+   */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.sourceAttributes is RemoteDatasetAttributes
             && operation.destinationAttributes is RemoteUssAttributes
@@ -46,7 +59,10 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
             && operation.commonUrls(dataOpsManager).isNotEmpty()
   }
 
-
+  /**
+   * Implements copying member inside 1 system.
+   * @see AbstractPdsToUssFolderMover.canRun
+   */
   override fun copyMember(
     operation: MoveCopyOperation,
     libraryAttributes: RemoteDatasetAttributes,
@@ -66,6 +82,10 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     ).cancelByIndicator(progressIndicator).execute()
   }
 
+  /**
+   * Starts operation execution.
+   * @see OperationRunner.run
+   */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {

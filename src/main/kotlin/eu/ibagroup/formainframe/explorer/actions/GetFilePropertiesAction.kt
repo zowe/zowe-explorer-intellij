@@ -24,9 +24,13 @@ import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.ChangeMode
 
-// TODO: doc Valiantsin
+/**
+ * Action for displaying properties of files on UI in dialog by clicking item in explorer context menu.
+ * @author Valiantsin Krus.
+ */
 class GetFilePropertiesAction : AnAction() {
 
+  /** Shows dialog with properties depending on type of the file selected by user. */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
@@ -79,10 +83,12 @@ class GetFilePropertiesAction : AnAction() {
 
   }
 
+  /** Action is available in all time and not only after indexing process will finish. */
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /** Shows action only for datasets (sequential and pds), for uss files and for uss directories. */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

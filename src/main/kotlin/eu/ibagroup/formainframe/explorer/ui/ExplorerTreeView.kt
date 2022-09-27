@@ -46,8 +46,15 @@ import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
-// TODO: doc
-/** Explorer tree view base implementation */
+/**
+ * Explorer tree view base implementation
+ * @param explorer the explorer to provide the tree view for
+ * @param project the project where the view will be shown
+ * @param parentDisposable the parent disposable object to register the disposer for the explorer view
+ * @param contextMenu the context menu for the explorer
+ * @param rootNodeProvider the root node provider for the root node of the explorer
+ * @param cutProviderUpdater the cut provider updater to store the information about the cut elements
+ */
 abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
   (
   val explorer: Explorer<U>,
@@ -70,7 +77,13 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
 
   private var treeModel: AsyncTreeModel
 
-
+  /**
+   * Get node by provided query and invalidate them. The nodes will be either collapsed or invalidated on this action, basing on the provided parameters
+   * @param query the query to search nodes by
+   * @param [collapse] collapse the nodes if the parameter is true. False by default
+   * @param [invalidate] invalidate the nodes if the parameter is true. True by default
+   * @return the nodes found by the query
+   */
   internal fun getNodesByQueryAndInvalidate(
     query: Query<*, *>, collapse: Boolean = false, invalidate: Boolean = true
   ): Collection<ExplorerTreeNode<*>> {
@@ -107,6 +120,9 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
     }
   }
 
+  /**
+   * Register the view disposer, subscribe on UNITS_CHANGED, VFS_CHANGES, CUT_BUFFER_CHANGES, CACHE_CHANGES and FILE_CONTENT_CHANGED topics
+   */
   init {
     Disposer.register(parentDisposable, this)
     myStructure = StructureTreeModel(
@@ -248,7 +264,10 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
     )
   }
 
-
+  /**
+   * Register the tree events listeners. These are both mouse listeners, and the other tree listeners
+   * @param tree the tree where the listeners will be registered
+   */
   private fun registerTreeListeners(tree: DnDAwareTree) {
     val contextMenuPlace: String = when (this) {
       is FileExplorerView -> FILE_EXPLORER_CONTEXT_MENU

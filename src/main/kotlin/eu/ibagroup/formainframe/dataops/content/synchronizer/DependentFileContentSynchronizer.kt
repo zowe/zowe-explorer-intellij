@@ -20,7 +20,7 @@ import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import java.io.IOException
 
-// TODO: doc
+/** Abstract content synchronizer class for the files that are dependent for others */
 abstract class DependentFileContentSynchronizer<
         VFile : VirtualFile,
         InfoType, R : Requester,
@@ -35,6 +35,12 @@ abstract class DependentFileContentSynchronizer<
 
   open val parentFileType: String = "File"
 
+  /**
+   * Fetch remote content bytes for the dependent file
+   * @param attributes the attributes of the file to get the parent file and the name of the file
+   * @param progressIndicator a progress indicator for the operation
+   * @return content bytes after the operation is completed
+   */
   override fun fetchRemoteContentBytes(attributes: Attributes, progressIndicator: ProgressIndicator?): ByteArray {
     log.info("Fetch remote content for $attributes")
     val parentLib = attributes.parentFile
@@ -61,6 +67,12 @@ abstract class DependentFileContentSynchronizer<
     return content ?: throw throwable
   }
 
+  /**
+   * Upload new content bytes of the dependent file to the mainframe
+   * @param attributes the attributes of the file to get the parent file and the name of the file
+   * @param newContentBytes the new content bytes to upload
+   * @param progressIndicator a progress indicator for the operation
+   */
   override fun uploadNewContent(
     attributes: Attributes,
     newContentBytes: ByteArray,
@@ -111,6 +123,7 @@ abstract class DependentFileContentSynchronizer<
 
 }
 
+/** Convert the retrofit response to byte array */
 private fun retrofit2.Response<*>.toBytes(): ByteArray? {
   return when (val b = body()) {
     is ByteArray -> b

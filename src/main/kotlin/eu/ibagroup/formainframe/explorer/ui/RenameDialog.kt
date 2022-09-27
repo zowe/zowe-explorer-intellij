@@ -24,17 +24,26 @@ import eu.ibagroup.formainframe.utils.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 
-class RenameDialog(
-  project: Project?,
-  type: String,
-  private val selectedNode: NodeData,
-  private val currentAction: AnAction,
-  override var state: String
+/**
+ * Base class to create an instance of rename dialog object
+ * @param type represents a virtual file type - file or directory
+ * @param selectedNode represents the current node object
+ * @param currentAction represents the current action to be performed - rename or force rename
+ * @param state represents the current state
+ */
+class RenameDialog(project: Project?,
+                   type: String,
+                   private val selectedNode: NodeData,
+                   private val currentAction: AnAction,
+                   override var state: String
 ) : DialogWrapper(project),
   StatefulComponent<String> {
 
   private val node = selectedNode.node
 
+  /**
+   * Creates UI component of the object
+   */
   override fun createCenterPanel(): JComponent {
     return panel {
       row {
@@ -47,11 +56,17 @@ class RenameDialog(
     }
   }
 
+  /**
+   * Initialization of the object. It's called first
+   */
   init {
     title = "Rename $type"
     init()
   }
 
+  /**
+   * Sets validation rules for text field
+   */
   private fun validateOnInput(component: JTextField): ValidationInfo? {
     val attributes = selectedNode.attributes
     when (node) {
@@ -93,6 +108,9 @@ class RenameDialog(
     return null
   }
 
+  /**
+   * Sets validation rule on blank for text field
+   */
   private fun validateOnBlank(component: JTextField): ValidationInfo? {
     return validateForBlank(component)
   }

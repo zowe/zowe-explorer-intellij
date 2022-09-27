@@ -160,7 +160,11 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
     }
   }
 
-  // TODO: doc Arseni
+  /**
+   * Determines if the current virtual file content is text
+   * @param attributes represents the current virtual file attributes
+   * @return True if the current file content is text. False otherwise
+   */
   private fun isContentModeText(attributes: FileAttributes): Boolean {
     return attributes.contentMode.type == XIBMDataType.Type.TEXT
   }

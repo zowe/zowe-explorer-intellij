@@ -25,15 +25,28 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
 import retrofit2.Call
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering SequentialToUssFolderMover in Intellij IoC container.
+ * @see SequentialToUssFolderMover
+ * @author Valiantsin Krus
+ */
 class SequentialToUssFolderFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return SequentialToUssFolderMover(dataOpsManager)
   }
 }
 
+/**
+ * Implements copying of sequential data set to uss directory inside 1 system.
+ * @author Viktar Mushtsin
+ */
 class SequentialToUssFolderMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
 
+  /**
+   * Checks that source is sequential data set, destination is uss directory,
+   * and source and destination are located within the same system.
+   * @see OperationRunner.canRun
+   */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.destinationAttributes is RemoteUssAttributes
             && operation.destination.isDirectory
@@ -43,6 +56,10 @@ class SequentialToUssFolderMover(dataOpsManager: DataOpsManager) : DefaultFileMo
             && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
+  /**
+   * Builds call for copying sequential data set to uss directory.
+   * @see DefaultFileMover.buildCall
+   */
   override fun buildCall(
     operation: MoveCopyOperation,
     requesterWithUrl: Pair<Requester, ConnectionConfig>

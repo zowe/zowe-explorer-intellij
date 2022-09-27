@@ -28,9 +28,14 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-// TODO: doc Arseni
+/**
+ * Base class implementation of the force rename action
+ */
 class ForceRenameAction : AnAction() {
 
+  /**
+   * Called when force rename is chosen from context menu
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val selectedNode = view.mySelectedNodesData[0]
@@ -54,6 +59,11 @@ class ForceRenameAction : AnAction() {
     }
   }
 
+  /**
+   * Determines if a confirmation dialog should be displayed before sending a request to mainframe
+   * @param text represents an existing file name in VFS with name conflict
+   * @param selectedNode represents a virtual file object in VFS
+   */
   private fun showConfirmDialogIfNecessary(text: String, selectedNode: NodeData): Int {
     val childrenNodesFromParent = selectedNode.node.parent?.children
     val virtualFilePath = selectedNode.node.virtualFile?.canonicalPath
@@ -95,6 +105,16 @@ class ForceRenameAction : AnAction() {
     return Messages.NO
   }
 
+  /**
+   * Base method for running rename operation
+   * @param project represents the current project
+   * @param explorer represents explorer object
+   * @param file represents a virtual file which is going to be renamed
+   * @param attributes represents a current file attributes
+   * @param newName a new name for the virtual file
+   * @param node represents a current node object in explorer view
+   * @param override responsible for the file override behavior in VFS
+   */
   private fun runRenameOperation(
     project: Project?,
     explorer: Explorer<*>,
@@ -139,20 +159,29 @@ class ForceRenameAction : AnAction() {
     }
   }
 
+  /**
+   * Determines for which nodes the force rename action is visible in the context menu
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
     val selectedNodes = view.mySelectedNodesData
-    val node = selectedNodes[0].node
-    e.presentation.isEnabledAndVisible =
-      selectedNodes.size == 1 && ((node is UssDirNode && !node.isConfigUssPath) || node is UssFileNode)
+    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1) {
+      val node = selectedNodes[0].node
+      (node is UssDirNode && !node.isConfigUssPath) || node is UssFileNode
+    } else {
+      false
+    }
     if (e.presentation.isEnabledAndVisible) {
       e.presentation.text = "Force Rename"
     }
   }
 
+  /**
+   * This method is needed for interface implementation
+   */
   override fun isDumbAware(): Boolean {
     return true
   }

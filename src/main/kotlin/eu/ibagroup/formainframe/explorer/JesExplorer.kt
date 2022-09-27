@@ -23,7 +23,7 @@ class JesExplorerFactory : ExplorerFactory<JesWorkingSetImpl, JesExplorer> {
 }
 
 /** JES Explorer implementation */
-class JesExplorer() : AbstractExplorerBase<JesWorkingSetImpl, JobsWorkingSetConfig>() {
+class JesExplorer : AbstractExplorerBase<JesWorkingSetImpl, JobsWorkingSetConfig>() {
   override val unitClass = JesWorkingSetImpl::class.java
   override val unitConfigClass = JobsWorkingSetConfig::class.java
 
@@ -32,7 +32,12 @@ class JesExplorer() : AbstractExplorerBase<JesWorkingSetImpl, JobsWorkingSetConf
     lock
   )
 
-  // TODO: doc Valiantsin
+  /**
+   * Creates a unit class (JesWorkingSetImpl) from config class (JobsWorkingSetConfig).
+   * @see JobsWorkingSetConfig
+   * @see JesWorkingSetImpl
+   * @param parentDisposable disposable parent.
+   */
   override fun JobsWorkingSetConfig.toUnit(parentDisposable: Disposable): JesWorkingSetImpl {
     return JesWorkingSetImpl(
       uuid = uuid,

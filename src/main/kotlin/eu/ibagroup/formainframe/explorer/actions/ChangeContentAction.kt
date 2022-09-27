@@ -22,11 +22,15 @@ import eu.ibagroup.formainframe.utils.`is`
 import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-// TODO: doc Valianstin
+/**
+ * Action for adapting text to mainframe and displaying results right after user typed any char sequence.
+ * @author Valiantsin Krus
+ */
 class ChangeContentAction : TypedHandlerDelegate() {
   private val dataOpsManager = service<DataOpsManager>()
   private var adaptContentFunc: (() -> Unit)? = null
 
+  /** Finds content adapter for mf files and performs its adapting. */
   override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
 
     val vFile = file.virtualFile

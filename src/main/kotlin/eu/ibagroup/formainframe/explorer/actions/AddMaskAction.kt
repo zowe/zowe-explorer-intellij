@@ -13,9 +13,14 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.AddMaskDialog
+import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
+import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.utils.MaskType
 
 /** Action to add USS or z/OS mask */
 class AddMaskAction : AnAction() {
@@ -25,13 +30,13 @@ class AddMaskAction : AnAction() {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
 
     val ws = getUnits(view).firstOrNull() ?: return
-    val initialState = MaskState(ws)
+    val initialState = MaskStateWithWS(ws)
     val dialog = AddMaskDialog(e.project, initialState)
     if (dialog.showAndGet()) {
       val state = dialog.state
       when (state.type) {
-        MaskState.ZOS -> ws.addMask(DSMask(state.mask.uppercase(), mutableListOf(), "", state.isSingle))
-        MaskState.USS -> ws.addUssPath(UssPath(state.mask))
+        MaskType.ZOS -> ws.addMask(DSMask(state.mask.uppercase(), mutableListOf(), ""))
+        MaskType.USS -> ws.addUssPath(UssPath(state.mask))
       }
     }
   }

@@ -13,7 +13,10 @@ package eu.ibagroup.formainframe.config.connect
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
 
-// TODO: doc
+/**
+ * Class which represents credentials.
+ * Instances of these class will be saved and can be reloaded after Intellij closed
+ */
 class Credentials {
   @Column(unique = true)
   @ForeignKey(foreignClass = ConnectionConfig::class)

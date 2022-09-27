@@ -25,11 +25,22 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HMigrate
 
-// TODO: doc
+/**
+ * Data class which represents info about file needed for migration operation
+ * @param file file that is needed to be migrated
+ */
 data class MigrateOperationParams(val file: VirtualFile)
 
+/**
+ * Class which represents migrate operation runner
+ */
 class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
 
+  /**
+   * Checks if migrate operation can be applied to chosen object
+   * @param operation migrate operation instance, contains info about file/object for migration
+   * @return can migrate operation be run or not
+   */
   override fun canRun(operation: MigrateOperation): Boolean {
     val file = operation.request.file
     val attributes = service<DataOpsManager>().tryToGetAttributes(file)
@@ -42,6 +53,11 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
 
   override val operationClass = MigrateOperation::class.java
 
+  /**
+   * Runs migrate operation
+   * @param operation migrate operation instance which contains all info needed for performing operation
+   * @param progressIndicator interrupts operation if the operation is canceled
+   */
   override fun run(operation: MigrateOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
     val response = api<DataAPI>(operation.connectionConfig).migrateDataset(
@@ -58,12 +74,24 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
   }
 }
 
+/**
+ * Class which represents factory for migrate operation
+ */
 class MigrateOperationFactory : OperationRunnerFactory {
+
+  /**
+   * Creates instance of migrate operation
+   */
   override fun buildComponent(dataOpsManager: DataOpsManager): MigrationRunner<*> {
     return MigrateOperationRunner()
   }
 }
 
+/**
+ * Data class which represents all info needed for migrate operation
+ * @param request properties of object/file needed to be migrated
+ * @param connectionConfig info about config to mainframe
+ */
 data class MigrateOperation(
   override val request: MigrateOperationParams,
   override val connectionConfig: ConnectionConfig,

@@ -18,7 +18,9 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import javax.swing.JComponent
 import javax.swing.JTable
 
-// TODO: doc
+/**
+ * Class which represents working set name column in working set table model.
+ */
 class WSNameColumn<WSConfig : WorkingSetConfig>(private val wsProvider: () -> List<WSConfig>) :
   ValidatingColumnInfo<WSConfig>(message("configurable.ws.tables.ws.name")) {
 
@@ -28,6 +30,13 @@ class WSNameColumn<WSConfig : WorkingSetConfig>(private val wsProvider: () -> Li
       ValidationInfo(message("configurable.ws.tables.ws.name.tooltip.error"), component)
   }
 
+  /**
+   * Validate working set name on input. WS name must be unique.
+   * @param oldItem working set config [WorkingSetConfig].
+   * @param newValue new working set name.
+   * @param component validated ui component.
+   * @return validation information or null if validation passed.
+   */
   override fun validateOnInput(oldItem: WSConfig, newValue: String, component: JComponent): ValidationInfo? {
     with(newValue.trim()) {
       return if ((oldItem.name == this && wsProvider().count { it.name == this } > 1)
@@ -39,6 +48,11 @@ class WSNameColumn<WSConfig : WorkingSetConfig>(private val wsProvider: () -> Li
     }
   }
 
+  /**
+   * Overloaded getter method. Gets the working set name from working set config.
+   * @param item working set config [WorkingSetConfig].
+   * @return current working set name.
+   */
   override fun valueOf(item: WSConfig): String {
     return item.name
   }
@@ -51,14 +65,28 @@ class WSNameColumn<WSConfig : WorkingSetConfig>(private val wsProvider: () -> Li
     return 200
   }
 
+  /**
+   * Overloaded setter method. Sets a new name in the working set config.
+   * @param item working set config [WorkingSetConfig].
+   * @param value new working set name.
+   */
   override fun setValue(item: WSConfig, value: String) {
     item.name = value
   }
 
+  /**
+   * Gets the UI tooltip of the working set name column when mouse is hovered.
+   */
   override fun getTooltipText(): String {
     return message("configurable.ws.tables.ws.name.tooltip")
   }
 
+  /**
+   * Validate entered working set name. WS name must be unique, not empty and not blank.
+   * @param item working set config [WorkingSetConfig].
+   * @param component validated ui component.
+   * @return validation information or null if validation passed.
+   */
   override fun validateEntered(item: WSConfig, component: JComponent): ValidationInfo? {
     return if (wsProvider().count { it.name == item.name } > 1) {
       getDefaultError(component)

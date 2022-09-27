@@ -13,8 +13,14 @@ package eu.ibagroup.formainframe.config
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 
-// TODO: doc
+/**
+ * Class which represents object responsible for maintaining configuration on mainframe
+ */
 class MainframeConfigurableProvider : ConfigurableProvider() {
+
+  /**
+   * Creates instance of object responsible for managing configurations on mainframe
+   */
   override fun createConfigurable(): Configurable {
     return MainframeConfigurable()
   }

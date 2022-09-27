@@ -29,24 +29,42 @@ import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.*
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering CrossSystemUssDirMover in Intellij IoC container.
+ * @see CrossSystemUssDirMover
+ * @author Valiantsin Krus
+ */
 class CrossSystemUssDirMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return CrossSystemUssDirMover(dataOpsManager)
   }
 }
 
+/**
+ * Implements copying of uss directory to uss directory between different systems.
+ * @author Valiantsin Krus
+ */
 class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
+  /**
+   * Checks that source and dest files are uss directories, and they are located inside different systems.
+   * @see OperationRunner.canRun
+   */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
             operation.sourceAttributes is RemoteUssAttributes &&
             operation.destination.isDirectory &&
             operation.destination is MFVirtualFile &&
-            dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
+            dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes &&
+            operation.commonUrls(dataOpsManager).isEmpty()
   }
 
-  fun proceedDirMove(operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
+  /**
+   * Proceeds move/copy of uss directory to uss directory between different systems.
+   * @param operation requested operation
+   * @param progressIndicator indicator that will show progress of copying/moving in UI.
+   */
+  private fun proceedDirMove(operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
     val sourceFile = operation.source
     val destFile = operation.destination
     val destAttributes = operation.destinationAttributes.castOrNull<RemoteUssAttributes>()
@@ -80,7 +98,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     val response = api<DataAPI>(destConnectionConfig).createUssFile(
       authorizationToken = destConnectionConfig.authToken,
       filePath = FilePath(pathToDir),
-      CreateUssFile(FileType.DIR, FileMode(7, 7, 7))
+      body = CreateUssFile(FileType.DIR, FileMode(7, 7, 7))
     ).applyIfNotNull(progressIndicator) {
       cancelByIndicator(it)
     }.execute()
@@ -124,6 +142,11 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     return null
   }
 
+  /**
+   * Starts operation execution. Throws throwable if something went wrong.
+   * @throws Throwable
+   * @see OperationRunner.run
+   */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
       proceedDirMove(operation, progressIndicator)

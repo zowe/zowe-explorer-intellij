@@ -125,7 +125,7 @@ class ValidationFunctionsTest : UnitTestCase() {
   fun testValidateDatasetMask_OutOfBoundDsMask() {
     jTextField.text = "qwertyui.qwertyui.qwertyui.qwertyui.qwertyui.qwe"
     val actual = validateDatasetMask(jTextField.text, jTextField)
-    val expected = ValidationInfo("Dataset mask must be no more than 44 characters", jTextField)
+    val expected = ValidationInfo("Dataset mask length must not exceed 44 characters", jTextField)
 
     assertEquals(expected, actual)
   }

@@ -21,8 +21,8 @@ import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
+import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitFilePathOperationParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
-import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitOperationParams
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
@@ -30,9 +30,15 @@ import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.formMfPath
 import eu.ibagroup.formainframe.utils.sendTopic
 
-// TODO: doc Hleb
+/**
+ * Action class for executing submit job on mainframe
+ */
 class SubmitJobAction : AnAction() {
 
+  /**
+   * Called when submit option is chosen from context menu,
+   * runs the submit operation
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -46,7 +52,7 @@ class SubmitJobAction : AnAction() {
       runBackgroundableTask("Preparing for job submission") {
         val dataOpsManager = service<DataOpsManager>()
         val file = requestData.first
-        if (service<ConfigService>().isAutoSyncEnabled.get() && dataOpsManager.isSyncSupported(file)) {
+        if (service<ConfigService>().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
           contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)
         }
@@ -61,7 +67,7 @@ class SubmitJobAction : AnAction() {
           val submitFilePath = attributes.formMfPath()
           service<DataOpsManager>().performOperation(
             operation = SubmitJobOperation(
-              request = SubmitOperationParams(submitFilePath),
+              request = SubmitFilePathOperationParams(submitFilePath),
               connectionConfig = requestData.second
             ), it
           ).also { result ->
@@ -78,10 +84,16 @@ class SubmitJobAction : AnAction() {
     }
   }
 
+  /**
+   * This method is needed for interface implementation
+   */
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Determines which objects on mainframe can be submitted
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

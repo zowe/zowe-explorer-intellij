@@ -30,13 +30,18 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import java.util.*
+import eu.ibagroup.formainframe.utils.service
 
-// TODO: doc
+/**
+ * Class which represents a rename action
+ */
 class RenameAction : AnAction() {
 
+  /**
+   * Overloaded method of AnAction abstract class. Tells what to do if an action was submitted
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val selectedNode = view.mySelectedNodesData[0]
@@ -71,7 +76,7 @@ class RenameAction : AnAction() {
       }
     } else if (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath) {
       initialState = selectedNode.node.value.path
-      val dialog = RenameDialog(e.project, "Directory", selectedNode, this, initialState)
+      val dialog = RenameDialog(e.project, "USS Mask", selectedNode, this, initialState)
       if (dialog.showAndGet()) {
         val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
         val wsToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentValue.uuid)?.clone()
@@ -98,6 +103,16 @@ class RenameAction : AnAction() {
     }
   }
 
+  /**
+   * Method to run rename operation. It passes the control to rename operation runner
+   * @param project - current project
+   * @param file - a virtual file to be renamed
+   * @param attributes - remote attributes of the given virtual file
+   * @param newName - a new name of the virtual file in VFS
+   * @param node - an instance of explorer unit
+   * @throws any throwable during the processing of the request
+   * @return Void
+   */
   private fun runRenameOperation(
     project: Project?,
     file: VirtualFile,
@@ -127,6 +142,9 @@ class RenameAction : AnAction() {
     }
   }
 
+  /**
+   * Method determines if an action is visible for particular virtual file in VFS
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -154,7 +172,9 @@ class RenameAction : AnAction() {
     }
   }
 
-
+  /**
+   * Determines if an action is dumb aware
+   */
   override fun isDumbAware(): Boolean {
     return true
   }

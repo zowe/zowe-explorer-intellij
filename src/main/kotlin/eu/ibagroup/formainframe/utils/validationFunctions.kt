@@ -22,7 +22,6 @@ import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import eu.ibagroup.r2z.DatasetOrganization
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -117,7 +116,7 @@ fun <WSConfig : WorkingSetConfig> validateWorkingSetName(
  */
 fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
   val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.uppercase())
-          || ws.ussPaths.map { it.path.uppercase() }.contains(component.text.uppercase())
+          || ws.ussPaths.map { it.path }.contains(component.text)
 
   return if (maskAlreadyExists) {
     ValidationInfo(
@@ -195,7 +194,7 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
   val qualifier = text.split('.')
 
   return if (text.length > 44) {
-    ValidationInfo("Dataset mask must be no more than 44 characters", component)
+    ValidationInfo("Dataset mask length must not exceed 44 characters", component)
   } else if (qualifier.find { it.length > 8 } != null) {
     ValidationInfo("Qualifier must be in 1 to 8 characters", component)
   } else if (text.isBlank() || qualifier.find { !it.matches(maskRegex) } != null) {
@@ -255,9 +254,9 @@ fun validateJobFilter(
   if (baseValidation != null) {
     return baseValidation
   }
-  val newOwner = owner.ifBlank { "" }
-  val newPrefix = prefix.ifBlank { "" }
-  val newJobId = jobId.ifBlank { "" }
+  val newOwner = owner.ifBlank { "" }.uppercase()
+  val newPrefix = prefix.ifBlank { "" }.uppercase()
+  val newJobId = jobId.ifBlank { "" }.uppercase()
   return if (ws.masks.any { it.owner == newOwner && it.prefix == newPrefix && it.jobId == newJobId }) {
     ValidationInfo("Job Filter with provided data already exists.", component)
   } else null
@@ -459,4 +458,16 @@ fun validateMemberName(component: JTextField): ValidationInfo? {
   } else {
     null
   }
+}
+
+/**
+ * Validates batch size in int text field. If the value is 0 user should be
+ * warned that in this case all files will be fetched together.
+ * @param component the component to check - should be registered in UI like an int text field
+ *                                           (validation on a digit larger than 0 should be included).
+ */
+fun validateBatchSize(component: JTextField): ValidationInfo? {
+  return if (component.text.toIntOrNull() == 0)
+    ValidationInfo("Setting 0 may lead to performance issues due to elements long fetch processing.").asWarning().withOKEnabled()
+  else null
 }

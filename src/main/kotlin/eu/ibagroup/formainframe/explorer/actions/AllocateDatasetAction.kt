@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.analytics.AnalyticsService
@@ -37,13 +38,22 @@ import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.*
 
-// TODO: doc
+/**
+ * Action class for dataset allocation with parameters chosen by user
+ */
 class AllocateDatasetAction : AnAction() {
 
+  /**
+   * Called when allocate option is chosen from context menu,
+   * runs allocate dataset operation
+   */
   override fun actionPerformed(e: AnActionEvent) {
     doAllocateAction(e)
   }
 
+  /**
+   * Determines if dataset allocation is possible for chosen object
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -54,12 +64,19 @@ class AllocateDatasetAction : AnAction() {
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 
-
+  /**
+   * This method is needed for interface implementation
+   */
   override fun isDumbAware(): Boolean {
     return true
   }
 }
 
+/**
+ * Allocates dataset
+ * @param e action event object which contains links to entities with which should operation be performed
+ * @param initialState contains state/parameters with which dataset should be allocated
+ */
 private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationParams = DatasetAllocationParams()) {
   val view = e.getData(FILE_EXPLORER_VIEW) ?: return
   val parentNode = view.mySelectedNodesData[0].node
@@ -124,15 +141,28 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
   }
 }
 
-
+/**
+ * Returns null if object doesn't contain anything
+ * needed for allocation algorithm
+ */
 private fun Int?.toNullIfZero(): Int? {
   return if (this == 0) null else this
 }
 
+/**
+ * Returns null if objects is empty
+ * needed for allocation algorithm
+ */
 private fun String.toNullIfEmpty(): String? {
   return if (this.isBlank()) null else this
 }
 
+/**
+ * Processes parameters which were set for dataset allocation
+ * set some parameters to needed values depending on specific fields states
+ * @param state contains parameters that were set by the user or by default
+ * @return processed params of dataset for allocation
+ */
 private fun postProcessState(state: DatasetAllocationParams): DatasetAllocationParams {
   if (state.allocationParameters.datasetOrganization == DatasetOrganization.PS) {
     state.allocationParameters.directoryBlocks = null
@@ -140,9 +170,6 @@ private fun postProcessState(state: DatasetAllocationParams): DatasetAllocationP
   if (state.allocationParameters.datasetOrganization == DatasetOrganization.POE) {
     state.allocationParameters.datasetOrganization = DatasetOrganization.PO
     state.allocationParameters.dsnType = DsnameType.LIBRARY
-  }
-  if (state.allocationParameters.allocationUnit == AllocationUnit.BLK) {
-    state.allocationParameters.allocationUnit = null
   }
   state.allocationParameters.directoryBlocks = state.allocationParameters.directoryBlocks.toNullIfZero()
   state.allocationParameters.blockSize = state.allocationParameters.blockSize.toNullIfZero()
@@ -156,8 +183,15 @@ private fun postProcessState(state: DatasetAllocationParams): DatasetAllocationP
   return state.clone()
 }
 
+/**
+ * Action class for dataset allocation based on existing dataset
+ */
 class AllocateLikeAction : AnAction() {
 
+  /**
+   * Called when allocate like option is chosen from context menu,
+   * runs allocate dataset like operation
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -186,19 +220,30 @@ class AllocateLikeAction : AnAction() {
     doAllocateAction(e, initialState)
   }
 
+  /**
+   * Transforms info about space units of existing datasets to format that is suitable for allocation operation
+   * @param spaceUnits space units info of existing dataset
+   * @return processed info about space units
+   */
   private fun spaceUnitsToAllocationUnits(spaceUnits: SpaceUnits?): AllocationUnit? {
     if (spaceUnits == SpaceUnits.TRACKS) {
       return AllocationUnit.TRK
     }
-    if (spaceUnits == SpaceUnits.BLOCKS) {
-      return AllocationUnit.BLK
-    }
     if (spaceUnits == SpaceUnits.CYLINDERS) {
       return AllocationUnit.CYL
+    }
+    if (spaceUnits == SpaceUnits.BLOCKS) {
+      Messages.showWarningDialog(
+            "Allocation unit BLK is not supported. It will be changed to TRK.",
+        "Allocation Unit Will Be Changed"
+      )
     }
     return null
   }
 
+  /**
+   * Determines if dataset allocation is possible for chosen object
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -211,6 +256,9 @@ class AllocateLikeAction : AnAction() {
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 
+  /**
+   * This method is needed for interface implementation
+   */
   override fun isDumbAware(): Boolean {
     return true
   }

@@ -20,7 +20,9 @@ import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 
-// TODO: doc
+/**
+ * Data class which represents state for connection dialog
+ */
 data class ConnectionDialogState(
   var connectionUuid: String = "",
   var connectionName: String = "",

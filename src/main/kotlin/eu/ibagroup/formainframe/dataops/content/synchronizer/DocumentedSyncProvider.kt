@@ -21,7 +21,15 @@ import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.util.concurrent.atomic.AtomicBoolean
 
-// TODO: doc Valiantsin
+/**
+ * Provides synchronization with file document.
+ * @param file file to synchronize content.
+ * @param saveStrategy strategy on what to do if someone changed content
+ *                     on mainframe in process the user works with it locally.
+ * @param onThrowableHandler Function that will be invoked if some throwable object was thrown.
+ * @author Viktar Mushtsin
+ * @author Valiantsin Krus
+ */
 class DocumentedSyncProvider(
   override val file: VirtualFile,
   override val saveStrategy: SaveStrategy = SaveStrategy.default(),
@@ -41,6 +49,11 @@ class DocumentedSyncProvider(
     }
   }
 
+  /**
+   * Finds document from FileDocumentManager.
+   * @see FileDocumentManager
+   * @see SyncProvider.getDocument
+   */
   override fun getDocument(): Document? {
     return FileDocumentManager.getInstance().getDocument(file)
   }
@@ -52,6 +65,10 @@ class DocumentedSyncProvider(
   override val isReadOnly: Boolean
     get() = getDocument()?.isWritable != true
 
+  /**
+   * Puts initial content in file document.
+   * @see SyncProvider.putInitialContent
+   */
   override fun putInitialContent(content: ByteArray) {
     if (isInitialContentSet.compareAndSet(false, true)) {
       runCatching {
@@ -74,10 +91,18 @@ class DocumentedSyncProvider(
     }
   }
 
+  /**
+   * Update content in file document.
+   * @see SyncProvider.loadNewContent
+   */
   override fun loadNewContent(content: ByteArray) {
     getDocument()?.setText(String(content))
   }
 
+  /**
+   * Extracts content from the file document.
+   * @see SyncProvider.retrieveCurrentContent
+   */
   override fun retrieveCurrentContent(): ByteArray {
     return getDocument()?.text?.toByteArray() ?: ByteArray(0)
   }

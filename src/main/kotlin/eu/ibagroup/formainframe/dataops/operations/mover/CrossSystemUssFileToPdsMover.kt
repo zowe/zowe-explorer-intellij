@@ -28,14 +28,27 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMDataType
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering CrossSystemUssFileToPdsMover in Intellij IoC container.
+ * @see CrossSystemUssFileToPdsMover
+ * @author Valiantsin Krus
+ */
 class CrossSystemUssFileToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return CrossSystemUssFileToPdsMover(dataOpsManager)
   }
 }
 
+/**
+ * Implements copying of uss file to partitioned data set between different systems.
+ * @author Valiantsin Krus
+ */
 class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
+
+  /**
+   * Checks that source is uss file, dest is partitioned data set, and they are located inside different systems.
+   * @see OperationRunner.canRun
+   */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
             operation.destination.isDirectory &&
@@ -44,7 +57,12 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
             (operation.source !is MFVirtualFile || operation.commonUrls(dataOpsManager).isEmpty())
   }
 
-  fun proceedCrossSystemMoveCopy(operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
+  /**
+   * Proceeds move/copy of uss file to partitioned data set between different systems.
+   * @param operation requested operation.
+   * @param progressIndicator indicator that will show progress of copying/moving in UI.
+   */
+  private fun proceedCrossSystemMoveCopy(operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
     var throwable: Throwable? = null
     val sourceFile = operation.source
     val destFile = operation.destination
@@ -107,6 +125,11 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
     return throwable
   }
 
+  /**
+   * Starts operation execution. Throws throwable if something went wrong.
+   * @throws Throwable
+   * @see OperationRunner.run
+   */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
       proceedCrossSystemMoveCopy(operation, progressIndicator)

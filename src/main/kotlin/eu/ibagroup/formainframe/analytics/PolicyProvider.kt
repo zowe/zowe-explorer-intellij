@@ -10,13 +10,23 @@
 
 package eu.ibagroup.formainframe.analytics
 
-// TODO: doc Valiantsin
+/**
+ * Service for providing analytics policy
+ * @author Uladzislau Kalesnikau
+ */
 interface PolicyProvider {
 
+  /** Text of analytics policy. */
   val text: String
 
+  /**
+   * Text of user agreement.
+   * @param action action that will be performed on analytics policy (clicking).
+   * @return agreement text.
+   */
   fun buildAgreementText(action: String): String
 
+  /** Version of current analytics policy. */
   val version: Int
 
 }

@@ -22,14 +22,27 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.XIBMDataType
 import java.nio.file.Paths
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering RemoteToLocalFileMover in Intellij IoC container.
+ * @see RemoteToLocalFileMover
+ * @author Valiantsin Krus
+ */
 class RemoteToLocalFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return RemoteToLocalFileMover(dataOpsManager)
   }
 }
 
+/**
+ * Implements copying (downloading) of remote uss file to local file system.
+ * @author Valiantsin Krus
+ */
 class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
+
+  /**
+   * Checks that source is remote uss file and destination is local directory.
+   * @see OperationRunner.canRun
+   */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
             operation.source is MFVirtualFile &&
@@ -37,6 +50,11 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
             operation.destination.isDirectory
   }
 
+  /**
+   * Proceeds download of remote uss file to local file system.
+   * @param operation requested operation.
+   * @param progressIndicator indicator that will show progress of copying/moving in UI.
+   */
   private fun proceedLocalMoveCopy(
     operation: MoveCopyOperation,
     progressIndicator: ProgressIndicator
@@ -77,6 +95,11 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     return null
   }
 
+  /**
+   * Starts operation execution. Throws throwable if something went wrong.
+   * @throws Throwable
+   * @see OperationRunner.run
+   */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable?
     try {

@@ -10,5 +10,8 @@
 
 package eu.ibagroup.formainframe.dataops
 
-// TODO: doc
+/**
+ * Interface which represents query that should be executed on remote server,
+ * consists from query and connection config to mainframe
+ */
 interface RemoteQuery<Request, Result> : Query<Request, Result>, RemoteInfo

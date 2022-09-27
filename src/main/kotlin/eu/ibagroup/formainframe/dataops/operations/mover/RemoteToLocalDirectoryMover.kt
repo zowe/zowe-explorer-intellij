@@ -26,17 +26,30 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-// TODO: doc Valiantsin
+/**
+ * Factory for registering RemoteToLocalDirectoryMover in Intellij IoC container.
+ * @see RemoteToLocalDirectoryMover
+ * @author Valiantsin Krus
+ */
 class RemoteToLocalDirectoryMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return RemoteToLocalDirectoryMover(dataOpsManager, MFVirtualFile::class.java)
   }
 }
 
+/**
+ * Implements copying (downloading) of remote uss directory to local file system.
+ * @author Valiantsin Krus
+ */
 class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
   val dataOpsManager: DataOpsManager,
   val vFileClass: Class<out VFile>
 ) : AbstractFileMover() {
+
+  /**
+   * Checks that source is remote uss directory and destination is local directory.
+   * @see OperationRunner.canRun
+   */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
             operation.source is MFVirtualFile &&
@@ -44,6 +57,12 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
             operation.destination.isDirectory
   }
 
+  /**
+   * Fetches all children of remote directory to download (copy to local file system) each of them.
+   * @param file source directory.
+   * @param connectionConfig connection configuration of the system on which the source directory is located.
+   * @param progressIndicator indicator that will show progress of downloading in UI.
+   */
   private fun fetchRemoteChildren(
     file: VirtualFile,
     connectionConfig: ConnectionConfig,
@@ -74,6 +93,12 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     throw IllegalArgumentException("Children of file ${file.name} cannot be fetched.")
   }
 
+  /**
+   * Proceeds download of remote uss directory to local file system.
+   * @param operation requested operation.
+   * @param connectionConfig connection configuration of the system on which the source directory is located.
+   * @param progressIndicator indicator that will show progress of copying/moving in UI.
+   */
   private fun proceedLocalMoveCopy(
     operation: MoveCopyOperation,
     connectionConfig: ConnectionConfig,
@@ -117,6 +142,11 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     return null
   }
 
+  /**
+   * Starts operation execution. Throws throwable if something went wrong.
+   * @throws Throwable
+   * @see OperationRunner.run
+   */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable? = null
     try {

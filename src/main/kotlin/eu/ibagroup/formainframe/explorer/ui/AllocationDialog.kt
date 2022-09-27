@@ -77,7 +77,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
       row {
         label("Allocation unit: ")
           .widthGroup(sameWidthLabelsGroup)
-        comboBox(listOf(AllocationUnit.TRK, AllocationUnit.BLK, AllocationUnit.CYL))
+        comboBox(listOf(AllocationUnit.TRK, AllocationUnit.CYL))
           .bindItem(state.allocationParameters::allocationUnit.toNullableProperty())
           .also { spaceUnitBox = it.component }
           .widthGroup(sameWidthComboBoxGroup)
@@ -170,9 +170,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           )
           .also { averageBlockLengthField = it.component }
           .horizontalAlign(HorizontalAlign.FILL)
-
       }
-        .visibleIf(spaceUnitBox.selectedValueMatches { it == AllocationUnit.BLK })
       collapsibleGroup("Advanced Parameters", false) {
         row {
           label("Volume: ")
@@ -269,6 +267,3 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
     init()
   }
 }
-
-
-

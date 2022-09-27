@@ -13,19 +13,19 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.utils.validateDatasetMask
-import eu.ibagroup.formainframe.utils.validateForBlank
-import eu.ibagroup.formainframe.utils.validateUssMask
-import eu.ibagroup.formainframe.utils.validateWorkingSetMaskName
+import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
+import eu.ibagroup.formainframe.utils.*
 import java.awt.Dimension
 import javax.swing.JComponent
 
-class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWrapper(project),
-  StatefulComponent<MaskState> {
+class AddMaskDialog(project: Project?, override var state: MaskStateWithWS) : DialogWrapper(project),
+  StatefulComponent<MaskStateWithWS> {
 
   init {
     title = "Create Mask"
@@ -35,8 +35,6 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
   override fun createCenterPanel(): JComponent {
     return panel {
       lateinit var comboBox: Cell<ComboBox<String>>
-      var isSelectedAutomatically = false
-      var isManualSelectionPerformed = false
       val sameWidthGroup = "ADD_MASK_DIALOG_LABELS_WIDTH_GROUP"
 
       row {
@@ -47,16 +45,23 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
       row {
         label("File system: ")
           .widthGroup(sameWidthGroup)
-        comboBox = comboBox(listOf(MaskState.ZOS, MaskState.USS))
-          .bindItem(state::type.toNullableProperty())
+        comboBox = comboBox(listOf(MaskType.ZOS.stringType, MaskType.USS.stringType))
+          .bindItem(
+            { state.type.stringType },
+            { selectedType ->
+              state.type = selectedType?.let { selectedTypeStr ->
+                MaskType.values().find { it.stringType == selectedTypeStr }
+              } ?: state.type
+            }
+          )
           .applyToComponent {
             addActionListener {
-              if (!isSelectedAutomatically) {
-                isManualSelectionPerformed = true
+              if (!state.isTypeSelectedAutomatically) {
+                state.isTypeSelectedManually = true
               } else {
-                isSelectedAutomatically = false
+                state.isTypeSelectedAutomatically = false
               }
-              state.type = selectedItem as String
+              state.type = MaskType.values().find { it.stringType == selectedItem as String } ?: state.type
             }
           }
       }
@@ -66,20 +71,16 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
         textField()
           .bindText(state::mask)
           .validationOnInput {
-            if (!isManualSelectionPerformed) {
-              if (it.text.contains("/")) {
-                state.type = MaskState.USS
-              } else {
-                state.type = MaskState.ZOS
-              }
-              isSelectedAutomatically = true
-              comboBox.component.item = state.type
+            if (!state.isTypeSelectedManually) {
+              state.type = if (it.text.contains("/")) MaskType.USS else MaskType.ZOS
+              state.isTypeSelectedAutomatically = true
+              comboBox.component.item = state.type.stringType
             }
             validateWorkingSetMaskName(it, state.ws)
           }
           .validationOnApply {
             validateForBlank(it.text, it)
-              ?: if (state.type == MaskState.ZOS)
+              ?: if (state.type == MaskType.ZOS)
                 validateDatasetMask(it.text, component)
               else
                 validateUssMask(it.text, it)
@@ -94,16 +95,4 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
   }
 
 
-}
-
-class MaskState(
-  var ws: FilesWorkingSet,
-  var mask: String = "",
-  var type: String = "z/OS",
-  var isSingle: Boolean = false,
-) {
-  companion object {
-    const val ZOS = "z/OS"
-    const val USS = "USS"
-  }
 }

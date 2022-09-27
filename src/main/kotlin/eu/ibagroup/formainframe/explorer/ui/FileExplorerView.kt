@@ -48,12 +48,29 @@ import java.util.concurrent.locks.ReentrantLock
 import javax.swing.tree.TreePath
 import kotlin.concurrent.withLock
 
-const val FILE_EXPLORER_CONTEXT_MENU = "File Explorer"
+/**
+ * Data key for extracting current instance of FileExplorerView.
+ * @see FileExplorerView
+ */
 val FILE_EXPLORER_VIEW = DataKey.create<FileExplorerView>("fileExplorerView")
 
+const val FILE_EXPLORER_CONTEXT_MENU = "File Explorer"
+
 // TODO: move providers somewhere?
-// TODO: doc Valiantsin
-/** File Explorer tree view implementation */
+// TODO: Yes. Try to do it. You will get a lot of fun :)
+/**
+ * File Explorer tree view implementation.
+ * @param explorer instance of units explorer (logical representation of explorer view data).
+ * @param project current project.
+ * @param parentDisposable parent disposable.
+ * @param contextMenu action group for context menu (with items New, Delete, Refresh and etc.).
+ * @param rootNodeProvider function to get root node of the tree.
+ * @param cutProviderUpdater function that will be triggered after each cut action.
+ *
+ * @author Viktar Mushtsin
+ * @author Kiril Branavitski
+ * @author Valiantsin Krus
+ */
 class FileExplorerView(
   explorer: Explorer<FilesWorkingSet>,
   project: Project,
@@ -81,6 +98,10 @@ class FileExplorerView(
     it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isConfigUssPath)
   }
 
+  /**
+   * Registers drag source and drop target for explorer view
+   * (it is necessary to add possibility of files drag&drop).
+   */
   init {
     myDragSource = FileExplorerViewDragSource(myTree, { mySelectedNodesData }, cutCopyPredicate, copyPasteSupport)
     myDropTarget = FileExplorerViewDropTarget(myTree, explorer, copyPasteSupport)
@@ -88,6 +109,7 @@ class FileExplorerView(
     DnDManager.getInstance().registerTarget(myDropTarget, myTree)
   }
 
+  /** Unregisters drag source and drop target. */
   override fun dispose() {
     if (myDragSource != null) {
       DnDManager.getInstance().unregisterSource(myDragSource!!, myTree)
@@ -99,20 +121,31 @@ class FileExplorerView(
     }
   }
 
+  /**
+   * Explorer class that provides CopyProvider and PasteProvider.
+   * @author Viktar Mushtsin
+   */
   inner class ExplorerCopyPasteSupport(val project: Project?) : CopyPasteSupport {
     internal val bufferLock = ReentrantLock()
 
+    /** buffer of files to copy */
     @Volatile
     var copyPasteBuffer = LinkedList<NodeData>()
 
+    /** buffer of files that was dragged. */
     @Volatile
     var dragAndDropCopyPasteBuffer = LinkedList<NodeData>()
 
+    /** Checks if copy/cut action can be enabled and visible. */
     private fun isCopyCutEnabledAndVisible(dataContext: DataContext): Boolean {
       val nodes = dataContext.getData(ExplorerDataKeys.NODE_DATA_ARRAY)?.toList() ?: mySelectedNodesData
       return nodes.all(cutCopyPredicate)
     }
 
+    /**
+     * Removes nodes data from copy paste buffer by predicate
+     * @param removePredicate predicate which will decide is node data need to be deleted.
+     */
     fun removeFromBuffer(removePredicate: (NodeData) -> Boolean = { true }) {
       val copyPasteBuffer = copyPasteSupport.copyPasteBuffer
       synchronized(copyPasteBuffer) {
@@ -121,6 +154,13 @@ class FileExplorerView(
       }
     }
 
+    /**
+     * Puts the necessary nodes data to copy paste buffer.
+     * @param isCut defines if the action is cut or copy.
+     * @param dataContext context that may contain NODE_DATA_ARRAY inside
+     *                    (if it is then this value will be stored in buffer,
+     *                    if it is not then mySelectedNodesData will be stored in buffer).
+     */
     private fun performCopyCut(isCut: Boolean, dataContext: DataContext) {
       val nodes = dataContext.getData(ExplorerDataKeys.NODE_DATA_ARRAY)?.toList() ?: mySelectedNodesData
       this@FileExplorerView.isCut.set(isCut)
@@ -143,6 +183,10 @@ class FileExplorerView(
       }
     }
 
+    /**
+     * Extracts virtual files from clipboard.
+     * @return list of files in clipboard buffer.
+     */
     fun getSourceFilesFromClipboard(): List<VirtualFile> {
       return CopyPasteManager.getInstance().contents?.let { tr ->
         FileCopyPasteUtil.getFileList(tr)?.mapNotNull {
@@ -151,43 +195,69 @@ class FileExplorerView(
       } ?: emptyList()
     }
 
+    /**
+     * Provider for performing cut action.
+     * @author Viktar Mushtsin
+     */
     inner class ExplorerCutProvider : CutProvider {
 
+      /** @see ExplorerCopyPasteSupport.performCopyCut */
       override fun performCut(dataContext: DataContext) {
         performCopyCut(true, dataContext)
         //TODO("add analytics")
       }
 
+      /** @see ExplorerCopyPasteSupport.isCopyCutEnabledAndVisible */
       override fun isCutEnabled(dataContext: DataContext): Boolean {
         return isCopyCutEnabledAndVisible(dataContext)
       }
 
+      /** @see ExplorerCopyPasteSupport.isCopyCutEnabledAndVisible */
       override fun isCutVisible(dataContext: DataContext): Boolean {
         return isCopyCutEnabledAndVisible(dataContext)
       }
     }
 
+    /**
+     * Returns cut provider for explorer.
+     * @see ExplorerCutProvider
+     * @return ExplorerCutProvider instance.
+     */
     override fun getCutProvider(): CutProvider {
       return ExplorerCutProvider()
     }
 
+
+    /**
+     * Returns copy provider for explorer.
+     * @see CopyProvider
+     * @return CopyProvider instance.
+     */
     override fun getCopyProvider(): CopyProvider {
       return object : CopyProvider {
+
+        /** @see ExplorerCopyPasteSupport.performCopyCut */
         override fun performCopy(dataContext: DataContext) {
           performCopyCut(false, dataContext)
           //TODO("add analytics")
         }
 
+        /** @see ExplorerCopyPasteSupport.isCopyCutEnabledAndVisible */
         override fun isCopyEnabled(dataContext: DataContext): Boolean {
           return isCopyCutEnabledAndVisible(dataContext)
         }
 
+        /** @see ExplorerCopyPasteSupport.isCopyCutEnabledAndVisible */
         override fun isCopyVisible(dataContext: DataContext): Boolean {
           return isCopyCutEnabledAndVisible(dataContext)
         }
       }
     }
 
+    /**
+     * Registers drop target on project tree (to drag&drop files on local machine)
+     * if the project tree has been initialized.
+     */
     internal fun registerDropTargetInProjectViewIfNeeded() {
       if (isDropTargetRegistered) {
         return
@@ -201,6 +271,12 @@ class FileExplorerView(
       }
     }
 
+    /**
+     * Checks if paste possible in files format (not NodeData)
+     * @param destinationFiles list of files to copy to.
+     * @param sourceFiles list of files to copy.
+     * @return true if paste is possible or false otherwise.
+     */
     internal fun isPastePossibleForFiles(
       destinationFiles: List<VirtualFile>?,
       sourceFiles: List<VirtualFile>
@@ -216,10 +292,22 @@ class FileExplorerView(
       }
     }
 
+    /**
+     * Checks if paste possible in combined format.
+     * @param destinationFiles list of files to copy to.
+     * @param sourceNodesData list of nodes data of files to copy.
+     * @return true if paste is possible or false otherwise.
+     */
     internal fun isPastePossible(destinationFiles: List<VirtualFile>?, sourceNodesData: List<NodeData>): Boolean {
       return isPastePossibleForFiles(destinationFiles, sourceNodesData.mapNotNull { it.file })
     }
 
+    /**
+     * Checks if paste possible in tree path format.
+     * @param destinationPaths list of tree paths of files to copy.
+     * @param sourcePaths list of tree paths of files to copy.
+     * @return true if paste is possible or false otherwise.
+     */
     fun isPastePossibleFromPath(destinationPaths: List<TreePath>, sourcePaths: List<TreePath?>): Boolean {
       return isPastePossible(
         destinationPaths.mapNotNull {
@@ -232,7 +320,11 @@ class FileExplorerView(
       )
     }
 
-
+    /**
+     * Checks if paste enabled. Gets the sources from copy/paste buffer or drag&drop buffer.
+     * @param destinationFiles list of files to copy to.
+     * @return true if paste is possible and false otherise.
+     */
     internal fun isPastePossibleAndEnabled(destinationFiles: List<VirtualFile>?): Boolean {
       return isPastePossible(
         destinationFiles,
@@ -240,6 +332,13 @@ class FileExplorerView(
       )
     }
 
+    /**
+     * Merges source and destination files in list of pairs (from -> to)
+     * @param sourceFiles list of files to copy.
+     * @param destinationFiles list of files to copy to.
+     * @param isCut defines is operation cut or copy.
+     * @return list of pairs described above.
+     */
     fun getDestinationSourceFilePairs(
       sourceFiles: List<VirtualFile>,
       destinationFiles: List<VirtualFile>,
@@ -270,12 +369,22 @@ class FileExplorerView(
         }
     }
 
+    /**
+     * Returns paste provider for explorer.
+     * @see ExplorerPasteProvider
+     * @return ExplorerPasteProvider instance.
+     */
     override fun getPasteProvider(): PasteProvider {
       return ExplorerPasteProvider()
     }
   }
 
+  /**
+   * Explorer delete provider. Provides possibility of files deletion.
+   * @author Viktar Mushtsin.
+   */
   private val deleteProvider = object : DeleteProvider {
+    /** Deletes files corresponding to the selected nodes data. */
     override fun deleteElement(dataContext: DataContext) {
       val selected = mySelectedNodesData
       selected.map { it.node }.filterIsInstance<FilesWorkingSetNode>()
@@ -347,25 +456,26 @@ class FileExplorerView(
             title = "Deletion of ${files.size} file(s)",
             project = project,
             cancellable = true
-          ) {
-            it.isIndeterminate = false
+          ) { indicator ->
+            indicator.isIndeterminate = false
             ignoreVFileDeleteEvents.compareAndSet(false, true)
             files.map { DeleteOperation(it, dataOpsManager) }
               .forEach { op ->
-                it.text = "Deleting file ${op.file.name}"
+                indicator.text = "Deleting file ${op.file.name}"
                 runCatching {
-                  dataOpsManager.performOperation(op, it)
+                  dataOpsManager.performOperation(op, indicator)
                 }.onFailure { explorer.reportThrowable(it, project) }
-                it.fraction = it.fraction + 1.0 / files.size
+                indicator.fraction = indicator.fraction + 1.0 / files.size
               }
             nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
-              .forEach { it.cleanCache(true) }
+              .forEach { it.cleanCache(cleanBatchedQuery = true) }
           }
         }
       }
     }
 
+    /** Checks if files corresponding to the selected nodes data can be deleted. */
     override fun canDeleteElement(dataContext: DataContext): Boolean {
       val selected = mySelectedNodesData
       val deleteOperations = selected.mapNotNull {
@@ -380,6 +490,19 @@ class FileExplorerView(
     }
   }
 
+  /**
+   * Provides data in data context. Intellij understands the context
+   * from which the action was triggered and some data can be extracted
+   * in this action by data keys from this context.
+   * @param dataId key of the data to extract. File Explorer provides data for:
+   *               1) NAVIGATABLE_ARRAY - array of selected nodes;
+   *               2) COPY_PROVIDER - copy provider;
+   *               3) CUT_PROVIDER - cut provider;
+   *               4) PASTE_PROVIDER - paste provider;
+   *               5) DELETE_ELEMENT_PROVIDER - delete provider;
+   *               6) FILE_EXPLORER_VIEW - current instance of the FileExplorerView.
+   * @return data corresponding to specified dataId or null if no data linked with passed dataId.
+   */
   override fun getData(dataId: String): Any? {
     return when {
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.filter {
@@ -402,11 +525,16 @@ class FileExplorerView(
 
 }
 
+/**
+ * Class containing together node, corresponding file and its attributes.
+ * @author Viktar Mushtsin.
+ */
 data class NodeData(
   val node: ExplorerTreeNode<*>,
   val file: MFVirtualFile?,
   val attributes: FileAttributes?
 )
 
+/** Type alias for fetch node with any possible generic types. */
 typealias FetchNode = FileFetchNode<*, *, *, *, *>
 
