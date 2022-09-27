@@ -37,7 +37,7 @@ class RemoteJobAttributesServiceFactory : AttributesServiceFactory {
  * @author Valiantsin Krus
  */
 class RemoteJobAttributesService(
-  val dataOpsManager: DataOpsManager
+  dataOpsManager: DataOpsManager
 ) : MFRemoteAttributesServiceBase<RemoteJobAttributes>(dataOpsManager) {
   override val attributesClass = RemoteJobAttributes::class.java
   override val subFolderName = JOBS_FOLDER_NAME
@@ -90,12 +90,11 @@ class RemoteJobAttributesService(
    */
   override fun reassignAttributesAfterUrlFolderRenaming(
     file: MFVirtualFile,
-    urlFolder: MFVirtualFile,
     oldAttributes: RemoteJobAttributes,
     newAttributes: RemoteJobAttributes
   ) {
     if (oldAttributes.name != newAttributes.name) {
-      fsModel.renameFile(this, file, newAttributes.name);
+      fsModel.renameFile(this, file, newAttributes.name)
       fsModel.setWritable(file, false)
     }
   }

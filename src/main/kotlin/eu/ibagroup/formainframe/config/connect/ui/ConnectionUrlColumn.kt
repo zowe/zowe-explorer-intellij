@@ -12,14 +12,23 @@ package eu.ibagroup.formainframe.config.connect.ui
 
 import com.intellij.util.ui.ColumnInfo
 
-// TODO: doc
+/**
+ * Class represents a connection url column in connection table model.
+ * It extends ColumnInfo abstract class and overloads getter and setter methods as values for this column.
+ */
 @Suppress("DialogTitleCapitalization")
 class ConnectionUrlColumn : ColumnInfo<ConnectionDialogState, String>("z/OSMF URL") {
 
+  /**
+   * Overloaded getter method of ColumnInfo abstract class.
+   */
   override fun valueOf(item: ConnectionDialogState): String {
     return item.connectionUrl
   }
 
+  /**
+   * Overloaded setter method of ColumnInfo abstract class.
+   */
   override fun setValue(item: ConnectionDialogState, value: String) {
     item.connectionUrl = value
   }

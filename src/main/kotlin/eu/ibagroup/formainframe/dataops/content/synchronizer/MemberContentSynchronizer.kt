@@ -26,7 +26,6 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 
-// TODO: doc
 class MemberContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return MemberContentSynchronizer(dataOpsManager)
@@ -35,6 +34,11 @@ class MemberContentSynchronizerFactory : ContentSynchronizerFactory {
 
 private val log = log<MemberContentSynchronizer>()
 
+/**
+ * Member content synchronizer.
+ * Provides dataset member content synchronization actions
+ * @param dataOpsManager the data ops manager to get dataset attributes service
+ */
 class MemberContentSynchronizer(
   dataOpsManager: DataOpsManager
 ) : RemoteAttributedContentSynchronizer<RemoteMemberAttributes>(dataOpsManager) {
@@ -48,6 +52,12 @@ class MemberContentSynchronizer(
 
   override val entityName = "members"
 
+  /**
+   * Fetch remote content bytes for the dataset member
+   * @param attributes the member attributes to get a parent file and the member name
+   * @param progressIndicator a progress indicator for the operation
+   * @return fetched member bytes array
+   */
   override fun fetchRemoteContentBytes(
     attributes: RemoteMemberAttributes,
     progressIndicator: ProgressIndicator?
@@ -86,6 +96,12 @@ class MemberContentSynchronizer(
     return content ?: throw throwable
   }
 
+  /**
+   * Upload new content of the member to the mainframe
+   * @param attributes the member attributes to get a parent file, content mode and the member name
+   * @param newContentBytes new content bytes of the member to upload
+   * @param progressIndicator a progress indicator for the operation
+   */
   override fun uploadNewContent(
     attributes: RemoteMemberAttributes,
     newContentBytes: ByteArray,

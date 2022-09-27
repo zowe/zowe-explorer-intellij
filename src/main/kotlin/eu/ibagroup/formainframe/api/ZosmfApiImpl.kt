@@ -28,21 +28,46 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
-// TODO: doc
+/**
+ * Class that implements z/OSMF API for sending requests.
+ */
 class ZosmfApiImpl : ZosmfApi {
 
+  /**
+   * Data class to describe z/OSMF URL address.
+   */
   private data class ZosmfUrl(val url: String, val isAllowSelfSigned: Boolean)
 
   private var apis = hashMapOf<Class<out Any>, Pair<MutableMap<ZosmfUrl, Any>, MutableMap<ZosmfUrl, Any>>>()
 
+  /**
+   * Method for getting API by connection config.
+   * @param apiClass class to represent API.
+   * @param connectionConfig connection configuration to specify the system to work with.
+   * @return API class object.
+   */
   override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
     return getApi(apiClass, connectionConfig.url, connectionConfig.isAllowSelfSigned)
   }
 
+  /**
+   * Method for getting API with bytes converter by connection config.
+   * @param apiClass class to represent API.
+   * @param connectionConfig connection configuration to specify the system to work with.
+   * @return API class object with bytes converter.
+   */
   override fun <Api : Any> getApiWithBytesConverter(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
     return getApi(apiClass, connectionConfig.url, connectionConfig.isAllowSelfSigned, true)
   }
 
+  /**
+   * Common method for getting API.
+   * @param apiClass class to represent API.
+   * @param url url address of the remote system.
+   * @param isAllowSelfSigned whether to allow self-signed certificates.
+   * @param useBytesConverter whether to use a byte converter.
+   * @return prepared API class object.
+   */
   @Suppress("UNCHECKED_CAST")
   override fun <Api : Any> getApi(
     apiClass: Class<out Api>,
@@ -75,6 +100,9 @@ class ZosmfApiImpl : ZosmfApi {
 private val gsonFactory = GsonConverterFactory.create(GsonBuilder().create())
 private val scalarsConverterFactory = ScalarsConverterFactory.create()
 
+/**
+ * Connection pool is initialized and the connection parameters are set.
+ */
 private fun OkHttpClient.Builder.addThreadPool(): OkHttpClient.Builder {
   readTimeout(5, TimeUnit.MINUTES)
   connectTimeout(5, TimeUnit.MINUTES)
@@ -93,6 +121,9 @@ val safeOkHttpClient: OkHttpClient by lazy {
     .build()
 }
 
+/**
+ * Setups http client. Adds the necessary headers. Configures connection specs.
+ */
 private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
   return addThreadPool()
     .addInterceptor {
@@ -102,6 +133,11 @@ private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
     }.connectionSpecs(mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
 }
 
+/**
+ * Returns [OkHttpClient] depending on whether self-signed certificates are allowed or not.
+ * @param isAllowSelfSigned whether to allow self-signed certificates.
+ * @return safe or unsafe [OkHttpClient] object.
+ */
 private fun getOkHttpClient(isAllowSelfSigned: Boolean): OkHttpClient {
   return if (isAllowSelfSigned) {
     unsafeOkHttpClient
@@ -110,6 +146,11 @@ private fun getOkHttpClient(isAllowSelfSigned: Boolean): OkHttpClient {
   }
 }
 
+/**
+ * Method for building an unsafe http client that allows the use of self-signed certificates.
+ * @throws RuntimeException if timeout is exceeded.
+ * @return unsafe [OkHttpClient] object.
+ */
 private fun buildUnsafeClient(): OkHttpClient {
   return try {
     val trustAllCerts: Array<TrustManager> = arrayOf(

@@ -17,7 +17,17 @@ import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.explorer.Explorer
 
-// TODO: doc
+/**
+ * Class which represents move or copy operation.
+ * @param source virtual file to be moved or copied (source file).
+ * @param sourceAttributes attributes of the source virtual file.
+ * @param destination virtual file to which source will be moved or copied (destination file).
+ * @param destinationAttributes attributes of the destination virtual file.
+ * @param isMove file move flag.
+ * @param forceOverwriting force file overwrite flag.
+ * @param newName a new name of the source file.
+ * @param explorer represents explorer object.
+ */
 class MoveCopyOperation(
   val source: VirtualFile,
   val sourceAttributes: FileAttributes?,
@@ -48,6 +58,12 @@ class MoveCopyOperation(
   )
 }
 
+/**
+ * Check if the source file and destination file use the same connection config by their attributes.
+ * If the files have the same connection configs, then a non-empty collection is returned.
+ * @param dataOpsManager instance of DataOpsManager service.
+ * @return collection that contains pairs of requester and connection config values.
+ */
 @Suppress("UNCHECKED_CAST")
 fun MoveCopyOperation.commonUrls(dataOpsManager: DataOpsManager): Collection<Pair<Requester, ConnectionConfig>> {
   val sourceAttributesPrepared = if (sourceAttributes is RemoteMemberAttributes) {

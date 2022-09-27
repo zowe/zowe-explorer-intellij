@@ -264,7 +264,6 @@ inline fun <T> validReadLock(vararg files: MFVirtualFile, default: T, block: () 
   return genericVarargLockOr(files, files.map { it.readLock() }.toTypedArray(), { { default } }, block)
 }
 
-// TODO: doc
 inline fun <T> validReadLock(
   vararg files: MFVirtualFile,
   exception: (MFVirtualFile) -> Exception = { InvalidFileException(it) },
@@ -288,7 +287,6 @@ inline fun <reified T> validWriteLock(vararg files: MFVirtualFile, default: T, b
   return genericVarargLockOr(files, files.map { it.writeLock() }.toTypedArray(), { { default } }, block)
 }
 
-// TODO: doc
 inline fun <T> validWriteLock(
   vararg files: MFVirtualFile,
   exception: (MFVirtualFile) -> Exception = { InvalidFileException(it) },
@@ -308,7 +306,13 @@ inline fun <T> validWriteLock(
   )
 }
 
-// TODO: doc
+/**
+ * Run the block of code with the specified generic lock for the file or for the list of files
+ * @param files the files to get the lock for
+ * @param locks the locks for the files
+ * @param default the default action to be handled if the file is not valid
+ * @param block the block of code to be handled with the lock
+ */
 @PublishedApi
 internal inline fun <T> genericVarargLockOr(
   files: Array<out MFVirtualFile>, locks: Array<Lock>, default: (MFVirtualFile?) -> () -> T, block: () -> T
@@ -332,7 +336,12 @@ internal inline fun <T> genericVarargLockOr(
   }
 }
 
-// TODO: doc
+/**
+ * Run the block of code with the specified generic lock for the file
+ * @param lock the lock for the file
+ * @param default the default action to be handled if the file is not valid
+ * @param block the block of code to be handled with the lock
+ */
 @PublishedApi
 internal inline fun <T> MFVirtualFile.genericLockOr(
   lock: Lock, default: () -> T, block: () -> T

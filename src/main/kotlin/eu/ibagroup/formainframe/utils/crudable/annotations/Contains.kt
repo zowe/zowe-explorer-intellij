@@ -7,17 +7,19 @@
  *
  * Copyright IBA Group 2020
  */
+package eu.ibagroup.formainframe.utils.crudable.annotations
 
-package eu.ibagroup.formainframe.utils.crudable.annotations;
-
-import java.lang.annotation.*;
+import java.lang.annotation.Inherited
+import kotlin.reflect.KClass
 
 /**
  * Interface to describe the element that contains the entries, provided by the "entities" method
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target(
+  AnnotationTarget.FIELD,
+  AnnotationTarget.FUNCTION,
+  AnnotationTarget.PROPERTY_GETTER,
+  AnnotationTarget.PROPERTY_SETTER
+)
 @Inherited
-public @interface Contains {
-  Class<?>[] entities();
-}
+annotation class Contains(val entities: Array<KClass<*>>)

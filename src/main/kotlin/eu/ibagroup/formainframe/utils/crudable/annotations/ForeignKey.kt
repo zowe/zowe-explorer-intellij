@@ -7,17 +7,14 @@
  *
  * Copyright IBA Group 2020
  */
+package eu.ibagroup.formainframe.utils.crudable.annotations
 
-package eu.ibagroup.formainframe.utils.crudable.annotations;
-
-import java.lang.annotation.*;
+import java.lang.annotation.Inherited
+import kotlin.reflect.KClass
 
 /**
  * Interface to describe the foreign key class assigned to the property
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target(AnnotationTarget.FIELD)
 @Inherited
-public @interface ForeignKey {
-  Class<?> foreignClass();
-}
+annotation class ForeignKey(val foreignClass: KClass<*>)

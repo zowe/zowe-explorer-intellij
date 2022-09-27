@@ -20,7 +20,9 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.text.JTextComponent
 
-// TODO: doc
+/**
+ * Gets an UI icon according to what validation info returned
+ */
 fun ValidationInfo?.getIcon(): Icon? {
   return this?.let {
     if (it.warning) {
@@ -31,6 +33,11 @@ fun ValidationInfo?.getIcon(): Icon? {
   }
 }
 
+/**
+ * Class for building validator for specified Jcomponent
+ * @param component - component for which validator is being built
+ * @param disposable - disposable for component
+ */
 class ComponentValidatorBuilder(
   private val component: JComponent,
   disposable: Disposable
@@ -46,11 +53,21 @@ class ComponentValidatorBuilder(
     }
   }
 
+  /**
+   * Method to setup validator for component
+   * @param block - validation function to be performed
+   * @return this component validator builder
+   */
   fun setup(block: ComponentValidator.() -> Unit): ComponentValidatorBuilder {
     componentValidator.block()
     return this
   }
 
+  /**
+   * Method to stop validator on component
+   * @param block - function block
+   * @return an instance of component validator
+   */
   fun finish(block: ComponentValidator.() -> Unit): ComponentValidator {
     if (componentValidatorWasNull) {
       componentValidator.block()

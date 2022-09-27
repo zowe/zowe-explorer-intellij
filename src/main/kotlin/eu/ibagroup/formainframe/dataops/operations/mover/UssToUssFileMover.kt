@@ -28,13 +28,19 @@ import eu.ibagroup.r2z.MoveUssFile
 import retrofit2.Call
 import retrofit2.Response
 
-// TODO: doc
+/**
+ * Factory for registering UssToUssFileMover in Intellij IoC container
+ * @see UssToUssFileMover
+ */
 class UssToUssFileMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return UssToUssFileMover(dataOpsManager)
   }
 }
 
+/**
+ * Implements copying of uss file to uss directory inside 1 system
+ */
 class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFileMover() {
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.sourceAttributes is RemoteUssAttributes
@@ -44,6 +50,12 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
             && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
+  /**
+   * Proceeds move/copy of uss file to uss directory
+   * @param connectionConfig connection configuration of system inside which to copy file
+   * @param operation requested operation
+   * @param progressIndicator indicator that will show progress of copying/moving in UI
+   */
   private fun makeCall(
     connectionConfig: ConnectionConfig,
     operation: MoveCopyOperation,
@@ -82,6 +94,11 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     return Triple(call.cancelByIndicator(progressIndicator), from, to)
   }
 
+  /**
+   * Starts operation execution. Throws throwable if something went wrong
+   * @throws Throwable
+   * @see OperationRunner.run
+   */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {

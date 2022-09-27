@@ -29,9 +29,13 @@ import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-// TODO: doc
+/** Class that represents "Add member" action */
 class AddMemberAction : AnAction() {
 
+  /**
+   * Create a new member in the dataset library
+   * @param e an action event to get the file explorer view and the project
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     var currentNode = view.mySelectedNodesData[0].node
@@ -99,6 +103,10 @@ class AddMemberAction : AnAction() {
     return true
   }
 
+  /**
+   * Show the action only for those places, where a member creation is possible
+   * @param e an action event to get the presentation so show and the file explorer view
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

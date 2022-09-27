@@ -22,7 +22,12 @@ import javax.swing.JTable
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellRenderer
 
-// TODO: doc
+/**
+ * Error checking class for table cell renderer
+ * @param errorMessage error message to send
+ * @param renderer [DefaultTableCellRenderer] instance describes cell renderer
+ * @param hasError boolean parameter for check error in cell
+ */
 class ErrorableTableCellRenderer(
   private val errorMessage: String,
   private val renderer: DefaultTableCellRenderer = DefaultTableCellRenderer(),
@@ -50,6 +55,14 @@ class ErrorableTableCellRenderer(
     }
   }
 
+  /**
+   * Get table cell renderer component and check if a field of component has error.
+   * If so, it creates a validation error message associated with the component
+   * @param table the table to assign validators on columns of it
+   * @param row the row number to find the cell to assign the validator to
+   * @param column the column number to find the cell to assign the validator to
+   * @return the updated renderer component
+   */
   override fun getTableCellRendererComponent(
     table: JTable?,
     value: Any?,

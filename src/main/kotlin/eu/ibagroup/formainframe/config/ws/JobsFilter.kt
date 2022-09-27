@@ -12,7 +12,7 @@ package eu.ibagroup.formainframe.config.ws
 
 import java.util.*
 
-// TODO: doc
+/** Class that represents jobs filter */
 class JobsFilter {
 
   var owner: String = ""

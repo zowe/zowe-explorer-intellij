@@ -19,20 +19,35 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.*
 
-// TODO: doc
+/**
+ * Class which represents factory for dataset allocator operation runner. Defined in plugin.xml
+ */
 class DatasetAllocatorFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): Allocator<*> {
     return DatasetAllocator()
   }
 }
 
+/**
+ * Data class which represents dataset allocation operation object
+ */
 data class DatasetAllocationOperation(
   override val request: DatasetAllocationParams,
   override val connectionConfig: ConnectionConfig,
 ) : RemoteUnitOperation<DatasetAllocationParams>
 
+/**
+ * Class which represents dataset allocator operation runner
+ */
 class DatasetAllocator : Allocator<DatasetAllocationOperation> {
 
+  /**
+   * Runs a dataset allocation operation
+   * @param operation - dataset allocation operation to be run
+   * @param progressIndicator - progress indicator object
+   * @throws CallException if request is nor successful
+   * @return Void
+   */
   override fun run(
     operation: DatasetAllocationOperation,
     progressIndicator: ProgressIndicator
@@ -55,6 +70,12 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
 
 }
 
+/**
+ * Data class which represents input parameters for dataset allocation operation
+ * @param datasetName - dataset name
+ * @param errorMessage - error message
+ * @param allocationParameters - instance of CreateDataset object with allocation parameters
+ */
 data class DatasetAllocationParams(
   var datasetName: String = "",
   var errorMessage: String = "",

@@ -26,13 +26,16 @@ import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 
-// TODO: doc
+/**
+ * Factory for registering UssFileContentSynchronizer in Intellij IoC container
+ */
 class UssFileContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return UssFileContentSynchronizer(dataOpsManager)
   }
 }
 
+/** Content synchronizer class for uss files */
 class UssFileContentSynchronizer(
   dataOpsManager: DataOpsManager
 ) : RemoteAttributedContentSynchronizer<RemoteUssAttributes>(dataOpsManager) {
@@ -43,6 +46,12 @@ class UssFileContentSynchronizer(
 
   override val entityName = "uss"
 
+  /**
+   * Fetch remote content bytes for the uss file
+   * @param attributes the attributes of the uss file to get requesters, path to the uss file and the content mode
+   * @param progressIndicator a progress indicator for the operation
+   * @return content bytes after the operation is completed
+   */
   override fun fetchRemoteContentBytes(
     attributes: RemoteUssAttributes,
     progressIndicator: ProgressIndicator?
@@ -76,6 +85,12 @@ class UssFileContentSynchronizer(
     }.findAnyNullable() ?: throw throwable
   }
 
+  /**
+   * Upload new content bytes of the uss file to the mainframe
+   * @param attributes the attributes of the uss file to get requesters and the name of the dataset
+   * @param newContentBytes the new content bytes to upload
+   * @param progressIndicator a progress indicator for the operation
+   */
   override fun uploadNewContent(
     attributes: RemoteUssAttributes,
     newContentBytes: ByteArray,

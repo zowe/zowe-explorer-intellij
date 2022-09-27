@@ -29,7 +29,10 @@ import kotlin.collections.set
 import kotlin.concurrent.withLock
 import kotlin.streams.toList
 
-// TODO: doc
+/**
+ * Abstract class that represents a base fetch provider for fetching remote files.
+ * @param dataOpsManager instance of DataOpsManager service.
+ */
 abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File : VirtualFile>(
   private val dataOpsManager: DataOpsManager
 ) : FileFetchProvider<Request, RemoteQuery<Request, Unit>, File> {
@@ -44,18 +47,39 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
   private val cacheState = mutableMapOf<RemoteQuery<Request, Unit>, CacheState>()
   protected var errorMessages = mutableMapOf<RemoteQuery<Request, Unit>, String>()
 
+  /**
+   * Returns successfully cached files.
+   * @param query query that identifies the cache.
+   * @return collection of cached files.
+   */
   override fun getCached(query: RemoteQuery<Request, Unit>): Collection<File>? {
     return lock.withLock { (cacheState[query] == CacheState.FETCHED).runIfTrue { cache[query] } }
   }
 
+  /**
+   * Checks if the cache is valid. Cache must not contain errors.
+   * @param query query that identifies the cache.
+   * @return true if valid, false if not.
+   */
   override fun isCacheValid(query: RemoteQuery<Request, Unit>): Boolean {
     return lock.withLock { cacheState[query] != CacheState.ERROR }
   }
 
+  /**
+   * Returns fetching errors stored in the cache.
+   * @param query query that identifies the cache.
+   * @return string error message if it exists.
+   */
   override fun getFetchedErrorMessage(query: RemoteQuery<Request, Unit>): String? {
     return lock.withLock { cacheState[query] == CacheState.ERROR }.runIfTrue { errorMessages[query] }
   }
 
+  /**
+   * Fetches remote files based on information in query.
+   * @param query query with all necessary information to send request.
+   * @param progressIndicator progress indicator to display progress of fetching items in UI.
+   * @return collection of responses.
+   */
   protected abstract fun fetchResponse(
     query: RemoteQuery<Request, Unit>,
     progressIndicator: ProgressIndicator
@@ -65,10 +89,21 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
 
   protected abstract fun cleanupUnusedFile(file: File, query: RemoteQuery<Request, Unit>)
 
+  /**
+   * Compares the old and new file by their paths.
+   * @param oldFile old file.
+   * @param newFile new file.
+   * @return true if it matches, false if it doesn't match.
+   */
   open fun compareOldAndNewFile(oldFile: File, newFile: File): Boolean {
     return oldFile.path == newFile.path
   }
 
+  /**
+   * Method for reloading remote files. The files are fetched again, the old cache is cleared, the new cache is loaded.
+   * @param query query with all necessary information to send request.
+   * @param progressIndicator progress indicator to display progress of fetching items in UI.
+   */
   override fun reload(
     query: RemoteQuery<Request, Unit>,
     progressIndicator: ProgressIndicator
@@ -124,6 +159,10 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     }
   }
 
+  /**
+   * Clears the cache with sending the cache change topic.
+   * @param query query that identifies the cache.
+   */
   override fun cleanCache(query: RemoteQuery<Request, Unit>) {
     cleanCacheInternal(query, true)
   }
@@ -134,6 +173,11 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     return cache.keys.find { it == query }.castOrNull(queryClass)
   }
 
+  /**
+   * Clears the cache and sends a cache change topic if the flag is set.
+   * @param query query that identifies the cache.
+   * @param sendTopic topic send flag.
+   */
   private fun cleanCacheInternal(query: RemoteQuery<Request, Unit>, sendTopic: Boolean) {
     cacheState.remove(query)
     if (sendTopic) {

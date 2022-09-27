@@ -15,7 +15,9 @@ import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
 
-// TODO: doc
+/**
+ * Configuration class for Working Sets
+ */
 open class WorkingSetConfig : EntityWithUuid {
   @Column
   var name: String = ""

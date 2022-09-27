@@ -28,7 +28,12 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
-// TODO: doc
+/**
+ * Promises to process nodes in the specified tree.
+ * @param node node for processing.
+ * @param tree working tree.
+ * @return promise that will be succeeded when process is finished.
+ */
 fun <S : AbstractTreeStructure> StructureTreeModel<S>.promisePath(
   node: Any,
   tree: JTree,
@@ -38,6 +43,12 @@ fun <S : AbstractTreeStructure> StructureTreeModel<S>.promisePath(
   }
 }
 
+/**
+ * Makes node data from a tree path.
+ * @param explorer represents explorer object.
+ * @param treePath path to a node in the tree.
+ * @return node data [NodeData].
+ */
 fun makeNodeDataFromTreePath(explorer: Explorer<*>, treePath: TreePath?): NodeData {
   val descriptor = (treePath?.lastPathComponent as DefaultMutableTreeNode).userObject as ExplorerTreeNode<*>
   val file = descriptor.virtualFile
@@ -47,6 +58,9 @@ fun makeNodeDataFromTreePath(explorer: Explorer<*>, treePath: TreePath?): NodeDa
   return NodeData(descriptor, file, attributes)
 }
 
+/**
+ * Returns virtual file from tree path object.
+ */
 fun TreePath.getVirtualFile(): VirtualFile? {
   val treeNode = (lastPathComponent as DefaultMutableTreeNode).userObject as ProjectViewNode<*>
   return if (treeNode is PsiFileNode) treeNode.virtualFile else if (treeNode is PsiDirectoryNode) treeNode.virtualFile else null

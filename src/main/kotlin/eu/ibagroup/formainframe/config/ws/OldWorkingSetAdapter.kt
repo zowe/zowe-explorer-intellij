@@ -51,7 +51,7 @@ class OldWorkingSetAdapter(private val document: Document) : OldConfigAdapter<Fi
       .getApplicationOption("workingSets")
       ?.get("list")
       ?.firstOrNull()
-      ?.get("WorkingSetConfig")
+      ?.get("FilesWorkingSetConfig")
       ?: emptyList()
   }
 

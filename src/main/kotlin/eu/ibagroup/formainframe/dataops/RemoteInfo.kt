@@ -12,7 +12,9 @@ package eu.ibagroup.formainframe.dataops
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 
-// TODO: doc
+/**
+ * Interface which represents remote info and holds connection config object almost for every remote query
+ */
 interface RemoteInfo {
 
   val connectionConfig: ConnectionConfig

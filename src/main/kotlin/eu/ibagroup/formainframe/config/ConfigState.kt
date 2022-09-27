@@ -20,7 +20,7 @@ import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
  */
 data class ConfigState(
   var connections: MutableList<ConnectionConfig> = mutableListOf(),
-  var workingSets: MutableList<FilesWorkingSetConfig> = mutableListOf(),
+  var filesWorkingSets: MutableList<FilesWorkingSetConfig> = mutableListOf(),
   var jobsWorkingSets: MutableList<JobsWorkingSetConfig> = mutableListOf(),
   var settings: SettingsState = SettingsState()
 )

@@ -28,7 +28,6 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import java.io.IOException
 
-// TODO: doc
 class SeqDatasetContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return SeqDatasetContentSynchronizer(dataOpsManager)
@@ -37,6 +36,7 @@ class SeqDatasetContentSynchronizerFactory : ContentSynchronizerFactory {
 
 private val log = log<SeqDatasetContentSynchronizer>()
 
+/** Content synchronizer class for sequential datasets */
 class SeqDatasetContentSynchronizer(
   dataOpsManager: DataOpsManager
 ) : RemoteAttributedContentSynchronizer<RemoteDatasetAttributes>(dataOpsManager) {
@@ -46,6 +46,12 @@ class SeqDatasetContentSynchronizer(
 
   override val entityName = "seq_datasets"
 
+  /**
+   * Fetch remote content bytes for the sequential dataset
+   * @param attributes the attributes of the dataset to get requesters, the name of the dataset and the content mode
+   * @param progressIndicator a progress indicator for the operation
+   * @return content bytes after the operation is completed
+   */
   override fun fetchRemoteContentBytes(
     attributes: RemoteDatasetAttributes,
     progressIndicator: ProgressIndicator?
@@ -80,7 +86,16 @@ class SeqDatasetContentSynchronizer(
     }.findAnyNullable() ?: throw throwable
   }
 
-  private fun makeFetchCall(connectionConfig: ConnectionConfig, attributes: RemoteDatasetAttributes): Call<ResponseBody> {
+  /**
+   * Make the fetch call to retrieve the dataset content
+   * @param connectionConfig the connection config to make the call with
+   * @param attributes the dataset attributes to get VOLSER, name and content mode
+   * @return the call instance to track the result
+   */
+  private fun makeFetchCall(
+    connectionConfig: ConnectionConfig,
+    attributes: RemoteDatasetAttributes
+  ): Call<ResponseBody> {
     val volser = attributes.volser
     val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
     return if (volser != null) {
@@ -99,6 +114,13 @@ class SeqDatasetContentSynchronizer(
     }
   }
 
+  /**
+   * Make the upload call to upload the dataset content to the mainframe
+   * @param connectionConfig the connection config to make the call with
+   * @param attributes the dataset attributes to get VOLSER, name and content mode
+   * @param content the dataset content bytes to upload to the mainframe
+   * @return the call instance to track the result
+   */
   private fun makeUploadCall(
     connectionConfig: ConnectionConfig,
     attributes: RemoteDatasetAttributes,
@@ -125,6 +147,12 @@ class SeqDatasetContentSynchronizer(
     }
   }
 
+  /**
+   * Upload new content bytes of the dataset to the mainframe
+   * @param attributes the attributes of the dataset to get requesters and the name of the dataset
+   * @param newContentBytes the new content bytes to upload
+   * @param progressIndicator a progress indicator for the operation
+   */
   override fun uploadNewContent(
     attributes: RemoteDatasetAttributes,
     newContentBytes: ByteArray,
@@ -157,6 +185,11 @@ class SeqDatasetContentSynchronizer(
     }
   }
 
+  /**
+   * Check if the content synchronizer accepts the provided file
+   * @param file the file to check
+   * @return true if the file is not migrated and the dataset organization parameter is not VS
+   */
   override fun accepts(file: VirtualFile): Boolean {
     return super.accepts(file) &&
             dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {

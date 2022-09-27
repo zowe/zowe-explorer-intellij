@@ -18,13 +18,21 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
 import eu.ibagroup.r2z.XIBMDataType
 
-// TODO: doc
+
+/**
+ * Factory class which builds remote uss attributes service instance. Defined in plugin.xml.
+ */
 class RemoteUssAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteUssAttributesService(dataOpsManager)
   }
 }
 
+/**
+ * Implementation of attributes service for working with uss files.
+ * @see AttributesService
+ * @see MFRemoteAttributesServiceBase
+ */
 class RemoteUssAttributesService(
   dataOpsManager: DataOpsManager
 ) : MFRemoteAttributesServiceBase<RemoteUssAttributes>(dataOpsManager) {
@@ -33,6 +41,11 @@ class RemoteUssAttributesService(
 
   override val subFolderName = "USS"
 
+  /**
+   * Method to build unique attributes for a uss files.
+   * @param attributes - attributes from which to build unique remote attributes.
+   * @return a new instance of RemoteUssAttributes.
+   */
   override fun buildUniqueAttributes(attributes: RemoteUssAttributes): RemoteUssAttributes {
     return RemoteUssAttributes(
       path = attributes.path,
@@ -49,6 +62,12 @@ class RemoteUssAttributesService(
     )
   }
 
+  /**
+   * Method to build a new remote uss attributes by merging them with old attributes (by mask requester).
+   * @param oldAttributes - old attributes from which to merge.
+   * @param newAttributes - new attributes to be merged.
+   * @return a new instance of RemoteUssAttributes.
+   */
   override fun mergeAttributes(
     oldAttributes: RemoteUssAttributes,
     newAttributes: RemoteUssAttributes
@@ -69,9 +88,12 @@ class RemoteUssAttributesService(
     )
   }
 
+  /**
+   * Reassign the attributes of the file after a URL folder renaming.
+   * @see MFRemoteAttributesServiceBase.reassignAttributesAfterUrlFolderRenaming
+   */
   override fun reassignAttributesAfterUrlFolderRenaming(
     file: MFVirtualFile,
-    urlFolder: MFVirtualFile,
     oldAttributes: RemoteUssAttributes,
     newAttributes: RemoteUssAttributes
   ) {
@@ -89,6 +111,12 @@ class RemoteUssAttributesService(
     }
   }
 
+  /**
+   * Updates the value of the writable flag to false after file content changed,
+   * if the content mode is binary.
+   * @param vFile virtual file for flag update.
+   * @param attributes uss file attributes [RemoteUssAttributes].
+   */
   fun updateWritableFlagAfterContentChanged(vFile: VirtualFile, attributes: RemoteUssAttributes) {
     if (attributes.contentMode.type == XIBMDataType.Type.BINARY) {
       vFile.isWritable = false
@@ -97,6 +125,11 @@ class RemoteUssAttributesService(
     }
   }
 
+  /**
+   * Method to build a list of paths elements from given attributes.
+   * @param attributes - attributes to build a path element chain.
+   * @return list of path element seed.
+   */
   override fun continuePathChain(attributes: RemoteUssAttributes): List<PathElementSeed> {
     return if (attributes.path != "/") {
       val pathTokens = attributes.path.substring(1).split("/")

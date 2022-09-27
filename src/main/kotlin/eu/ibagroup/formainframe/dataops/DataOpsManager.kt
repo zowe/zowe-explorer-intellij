@@ -27,7 +27,6 @@ import eu.ibagroup.formainframe.dataops.log.LogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
 import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
 
-// TODO: doc
 interface DataOpsManager : Disposable {
 
   companion object {
