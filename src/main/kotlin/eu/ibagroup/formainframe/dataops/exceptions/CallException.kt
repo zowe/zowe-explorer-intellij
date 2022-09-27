@@ -14,7 +14,13 @@ import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.gson
 import retrofit2.Response
 
-// TODO: doc
+/**
+ * Generating an exception message string.
+ * @param code exception code.
+ * @param message exception message.
+ * @param errorParams additional exception information.
+ * @return prepared exception message.
+ */
 private fun formatMessage(code: Int, message: String, errorParams: Map<*, *>?): String {
   val result = "$message\nCode: $code"
   return if (errorParams != null) {
@@ -28,6 +34,13 @@ private fun formatMessage(code: Int, message: String, errorParams: Map<*, *>?): 
   }
 }
 
+/**
+ * Class which represents exceptions with own handling implementation.
+ * @param code exception code.
+ * @param headMessage head exception message.
+ * @param errorParams additional exception information.
+ * @param cause thrown exception.
+ */
 class CallException(
   val code: Int,
   headMessage: String,
@@ -35,6 +48,12 @@ class CallException(
   override val cause: Throwable? = null
 ) : Exception(formatMessage(code, headMessage, errorParams))
 
+/**
+ * Generating an exception [CallException] from the response.
+ * @param response api request response.
+ * @param headMessage head exception message.
+ * @return generated exception [CallException].
+ */
 fun CallException(response: Response<*>, headMessage: String): CallException {
   return try {
     CallException(

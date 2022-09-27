@@ -91,6 +91,13 @@ class MFVirtualFileSystemModel {
 
   fun getProtocol() = MFVirtualFileSystem.PROTOCOL
 
+  /**
+   * Find or create the child in directory by its name
+   * @param requestor the class to describe event requester
+   * @param vDir the virtual directory to search in
+   * @param name the name of the child
+   * @param attributes the attributes to create the child if it is not found
+   */
   @Throws(IOException::class)
   fun findOrCreate(
     requestor: Any?, vDir: MFVirtualFile, name: String, attributes: FileAttributes
@@ -289,7 +296,7 @@ class MFVirtualFileSystemModel {
 
   /**
    * Create child virtual file with provided attributes
-   * @param requestor requester class for further processing
+   * @param requestor class to describe the event requester
    * @param vDir virtual directory to create the virtual file in
    * @param name virtual file name
    * @param attributes attributes to create virtual file with

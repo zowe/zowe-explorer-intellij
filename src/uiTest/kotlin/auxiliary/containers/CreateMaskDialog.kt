@@ -55,7 +55,7 @@ open class CreateMaskDialog(
 }
 
 /**
- * Finds the AddConnectionDialog and modifies fixtureStack.
+ * Finds the CreateMaskDialog and modifies fixtureStack.
  */
 fun ContainerFixture.createMaskDialog(
     fixtureStack: MutableList<Locator>,

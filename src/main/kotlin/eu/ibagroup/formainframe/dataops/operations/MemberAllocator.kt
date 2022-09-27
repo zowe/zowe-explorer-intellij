@@ -19,22 +19,37 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.r2z.DataAPI
 
-// TODO: doc
+/**
+ * Class which represents factory for member allocator operation runner. Defined in plugin.xml
+ */
 class MemberAllocatorFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): Allocator<*> {
     return MemberAllocator()
   }
 }
 
+/**
+ * Data class which represents member allocation operation object
+ */
 data class MemberAllocationOperation(
   override val request: MemberAllocationParams,
   override val connectionConfig: ConnectionConfig,
 ) : RemoteUnitOperation<MemberAllocationParams>
 
+/**
+ * Class which represents member allocator operation runner
+ */
 class MemberAllocator : Allocator<MemberAllocationOperation> {
 
   override val operationClass = MemberAllocationOperation::class.java
 
+  /**
+   * Runs a member allocation operation
+   * @param operation member allocation operation to be run
+   * @param progressIndicator progress indicator object
+   * @throws Throwable if request is nor successful
+   * @return Void
+   */
   override fun run(
     operation: MemberAllocationOperation,
     progressIndicator: ProgressIndicator
@@ -56,4 +71,7 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
   }
 }
 
+/**
+ * Data class which represents input parameters for uss allocation operation
+ */
 data class MemberAllocationParams(val datasetName: String, var memberName: String = "")

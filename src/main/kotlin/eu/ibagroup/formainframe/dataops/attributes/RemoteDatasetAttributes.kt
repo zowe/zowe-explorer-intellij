@@ -16,13 +16,24 @@ import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.HasMigrated
 import eu.ibagroup.r2z.XIBMDataType
 
-// TODO: doc
+/**
+ * Attributes containing information about the dataset
+ * @param datasetInfo information about the dataset that was received from zosmf
+ * @param url resource URL based on original HTTP request
+ * @param requesters list of information objects with query mask and connection configuration inside
+ * @see MaskedRequester
+ */
 data class RemoteDatasetAttributes(
   val datasetInfo: Dataset,
   override val url: String,
   override val requesters: MutableList<MaskedRequester>
 ) : MFRemoteFileAttributes<MaskedRequester> {
 
+  /**
+   * Clones current instance of dataset attributes.
+   * @see FileAttributes.clone
+   * @return cloned object
+   */
   override fun clone(): RemoteDatasetAttributes {
     return RemoteDatasetAttributes(datasetInfo.clone(), url, requesters.map {
       MaskedRequester(it.connectionConfig, it.queryMask)

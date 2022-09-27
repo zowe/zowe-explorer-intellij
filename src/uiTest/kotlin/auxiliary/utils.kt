@@ -35,6 +35,12 @@ const val CONNECTION_URL = "changeme"
 const val ENTER_VALID_DS_MASK_MESSAGE = "Enter valid dataset mask"
 const val IDENTICAL_MASKS_MESSAGE = "You cannot add several identical masks to table"
 const val EMPTY_DATASET_MESSAGE = "You are going to create a Working Set that doesn't fetch anything"
+const val TEXT_FIELD_LENGTH_MESSAGE = "Text field must not exceed 8 characters."
+const val JOB_ID_LENGTH_MESSAGE = "Job ID length must be 8 characters."
+const val TEXT_FIELD_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z, 0-9, *, %."
+const val JOBID_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z, 0-9"
+const val PREFIX_OWNER_JOBID_MESSAGE = "You must provide either an owner and a prefix or a job ID."
+const val IDENTICAL_FILTERS_MESSAGE = "You cannot add several identical job filters to table"
 
 val maskWithLength44 =
     "$ZOS_USERID." + "A2345678.".repeat((44 - (ZOS_USERID.length + 1)) / 9) + "A".repeat((44 - (ZOS_USERID.length + 1)) % 9)
@@ -57,6 +63,33 @@ val validZOSMasks = listOf(
 )
 
 val validUSSMasks = listOf("/u", "/etc/ssh", "/u/$ZOS_USERID")
+
+val validJobsFilters = listOf(
+    Triple("*", ZOS_USERID, ""),
+    Triple("TEST1", ZOS_USERID, ""),
+    Triple("", "", "JOB01234"),
+    Triple("TEST*", ZOS_USERID, ""),
+    Triple("TEST**", ZOS_USERID, ""),
+    Triple("TEST***", ZOS_USERID, ""),
+    Triple("TEST1", "$ZOS_USERID*", ""),
+    Triple("TEST1", "$ZOS_USERID**", ""),
+    Triple("TEST1", "$ZOS_USERID***", ""),
+    Triple("TEST***", "$ZOS_USERID***", "")
+)
+
+val invalidJobsFiltersMap = mapOf(
+    Pair(Triple("123456789", ZOS_USERID, ""), 1) to TEXT_FIELD_LENGTH_MESSAGE,
+    Pair(Triple("123456789", "A23456789", ""), 1) to TEXT_FIELD_LENGTH_MESSAGE,
+    Pair(Triple("*", "A23456789", ""), 2) to TEXT_FIELD_LENGTH_MESSAGE,
+    Pair(Triple("", "", "A23456789"), 3) to JOB_ID_LENGTH_MESSAGE,
+    Pair(Triple("", "", "A2"), 3) to JOB_ID_LENGTH_MESSAGE,
+    Pair(Triple("@", ZOS_USERID, ""), 1) to TEXT_FIELD_CONTAIN_MESSAGE,
+    Pair(Triple("*", "@", ""), 2) to TEXT_FIELD_CONTAIN_MESSAGE,
+    Pair(Triple("", "", "@@@@@@@@"), 3) to JOBID_CONTAIN_MESSAGE,
+    Pair(Triple("*", ZOS_USERID, "JOB45678"), 1) to PREFIX_OWNER_JOBID_MESSAGE,
+    Pair(Triple("*", "", "JOB45678"), 1) to PREFIX_OWNER_JOBID_MESSAGE,
+    Pair(Triple("", ZOS_USERID, "JOB45678"), 2) to PREFIX_OWNER_JOBID_MESSAGE
+)
 
 val viewTree = byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")
 
@@ -165,6 +198,41 @@ fun ContainerFixture.deleteWSFromContextMenu(wsName: String) {
     }
     actionMenuItem(remoteRobot, "Delete").click()
     find<ComponentFixture>(byXpath("//div[@class='MyDialog' and @title='Deletion of Working Set $wsName']"))
+}
+
+/**
+ * Creates a jobs working set via context menu from explorer.
+ */
+fun ContainerFixture.createJWSFromContextMenu(
+    fixtureStack: MutableList<Locator>,
+    closableFixtureCollector: ClosableFixtureCollector
+) {
+    explorer {
+        jesExplorer.click()
+        find<ComponentFixture>(viewTree).rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenu(remoteRobot, "New").click()
+    actionMenuItem(remoteRobot, "Jobs Working Set").click()
+    closableFixtureCollector.add(AddJobsWorkingSetDialog.xPath(), fixtureStack)
+}
+
+/**
+ * Creates a jobs filter in the jobs working set via context menu from explorer.
+ */
+fun ContainerFixture.createJobsFilter(
+    jwsName: String, fixtureStack: MutableList<Locator>,
+    closableFixtureCollector: ClosableFixtureCollector
+) {
+    explorer {
+        jesExplorer.click()
+        find<ComponentFixture>(viewTree).findText(jwsName)
+            .rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenu(remoteRobot, "New").click()
+    actionMenuItem(remoteRobot, "Jobs Filter").click()
+    closableFixtureCollector.add(CreateJobsFilterDialog.xPath(), fixtureStack)
 }
 
 /**
@@ -317,6 +385,52 @@ fun openMaskInExplorer(
     }
 
 /**
+ * Double-clicks on the job filter in explorer to open it and checks the message if required.
+ */
+fun openJobFilterInExplorer(
+    filter: Triple<String, String, String>, expectedError: String, projectName: String,
+    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    val textToFind = if (filter.third == "") {
+        "PREFIX=${filter.first} OWNER=${filter.second}"
+    } else {
+        "JobID=${filter.third}"
+    }
+    ideFrameImpl(projectName, fixtureStack) {
+        explorer {
+            find<ComponentFixture>(viewTree).findText(textToFind).doubleClick()
+            Thread.sleep(2000)
+            waitFor(Duration.ofSeconds(20)) { find<ComponentFixture>(viewTree).hasText("loading…").not() }
+            if (expectedError.isEmpty().not()) {
+                find<ComponentFixture>(viewTree).findText(expectedError)
+            } else {
+                find<ComponentFixture>(viewTree).findAllText().shouldNotContain("Error")
+            }
+        }
+    }
+}
+
+/**
+ * Double-clicks on job filter to close it in explorer.
+ */
+fun closeFilterInExplorer(
+    filter: Triple<String, String, String>, projectName: String,
+    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
+) =
+    with(remoteRobot) {
+        val textToFind = if (filter.third == "") {
+            "PREFIX=${filter.first} OWNER=${filter.second}"
+        } else {
+            "JobID=${filter.third}"
+        }
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                find<ComponentFixture>(viewTree).findText(textToFind).doubleClick()
+            }
+        }
+    }
+
+/**
  * Double-clicks on mask to close it in explorer.
  */
 fun closeMaskInExplorer(
@@ -347,3 +461,23 @@ fun checkItemWasDeletedWSRefreshed(
     }
 }
 
+/**
+ * Checks that the jo filter is not displayed in explorer.
+ */
+fun checkFilterWasDeletedJWSRefreshed(
+    deletedFilter: Triple<String, String, String>, projectName: String,
+    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    val textToFind = if (deletedFilter.third == "") {
+        "PREFIX=${deletedFilter.first} OWNER=${deletedFilter.second}"
+    } else {
+        "JobID=${deletedFilter.third}"
+    }
+    ideFrameImpl(projectName, fixtureStack) {
+        explorer {
+            shouldThrow<NoSuchElementException> {
+                find<ComponentFixture>(viewTree).findText(textToFind)
+            }
+        }
+    }
+}

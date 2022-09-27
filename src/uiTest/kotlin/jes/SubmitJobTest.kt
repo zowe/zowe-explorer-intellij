@@ -1,3 +1,13 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
 package jes
 
 import auxiliary.*
@@ -88,6 +98,60 @@ class SubmitJobTest {
     @Order(3)
     fun testSubmitJobWithAbend(remoteRobot: RemoteRobot) {
         doSubmitJobTest("TEST3", "job_abend_s806.txt", "ABEND S806", remoteRobot)
+    }
+
+    /**
+     * Tests to open and close jobs outputs in explorer.
+     */
+    @Test
+    @Order(4)
+    fun testOpenAndCloseJobsOutputsInExplorer(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val jwsName = "JWS1"
+        val jobName = "TEST1"
+        val filter = Triple(jobName, ZOS_USERID, "")
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                jesExplorer.click()
+                settings(closableFixtureCollector, fixtureStack)
+            }
+            settingsDialog(fixtureStack) {
+                configurableEditor {
+                    jobsWorkingSetsTab.click()
+                    addJWS(closableFixtureCollector, fixtureStack)
+                }
+                addJobsWorkingSetDialog(fixtureStack) {
+                    addJobsWorkingSet(jwsName, connectionName, filter)
+                    clickButton("OK")
+                    Thread.sleep(5000)
+                }
+                closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+        }
+        Thread.sleep(20000)
+        openJobsOutputs(jobName, remoteRobot)
+    }
+
+
+    /**
+     * Opens and closes the jobs outputs.
+     */
+    private fun openJobsOutputs(jobName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val fileList = listOf("JESMSGLG", "JESJCL", "JESYSMSG", "SYSUT2", "SYSPRINT")
+        ideFrameImpl(projectName, fixtureStack) {
+            find<ComponentFixture>(viewTree).findAllText { it.text.startsWith(jobName) }.first().doubleClick()
+            Thread.sleep(10000)
+            fileList.forEach { fileName ->
+                find<ComponentFixture>(viewTree).findAllText { it.text.startsWith(fileName) }.first().doubleClick()
+                with(textEditor()) {
+                    keyboard {
+                        Thread.sleep(3000)
+                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -279,6 +343,7 @@ class SubmitJobTest {
     private fun deleteDataset(datasetName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
+                fileExplorer.click()
                 find<ComponentFixture>(viewTree).findAllText(datasetName).last().rightClick()
             }
             actionMenuItem(remoteRobot, "Delete").click()

@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.Query
 
-// TODO: doc
+/** Interface that represents the file fetch provider and operations available for it */
 interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
 
   companion object {

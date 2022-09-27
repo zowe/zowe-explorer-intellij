@@ -76,6 +76,27 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     }
 
     /**
+     * Clicks on the add action and adds the Add Jobs Working Set Dialog to the list of fixtures needed to close.
+     */
+    fun addJWS(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
+        clickActionButton(byXpath("//div[@accessiblename='Add' and @class='ActionButton' and @myaction='Add (Add)']"))
+        closableFixtureCollector.add(AddJobsWorkingSetDialog.xPath(), fixtureStack)
+    }
+
+    /**
+     * Clicks on the edit action and adds the Edit Jobs Working Set Dialog to the list of fixtures needed to close.
+     */
+    fun editJobsWorkingSet(
+        jobsWorkingSetName: String,
+        closableFixtureCollector: ClosableFixtureCollector,
+        fixtureStack: List<Locator>
+    ) {
+        findText(jobsWorkingSetName).click()
+        clickActionButton(byXpath("//div[@accessiblename='Edit' and @class='ActionButton' and @myaction='Edit (Edit)']"))
+        closableFixtureCollector.add(EditJobsWorkingSetDialog.xPath(), fixtureStack)
+    }
+
+    /**
      * Clicks on the remove action and deletes the item from config table.
      */
     fun deleteItem(itemName: String) {

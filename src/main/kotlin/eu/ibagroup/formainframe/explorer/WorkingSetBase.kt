@@ -56,7 +56,7 @@ abstract class WorkingSetBase<MaskType, WS : WorkingSet<*>, WSConfig : WorkingSe
     get() = lock.withLock {
       workingSetConfig
         ?.let {
-          return@withLock configCrudable.getByForeignKey(it, ConnectionConfig::class.java).orNull()
+          return@withLock configCrudable.getByForeignKey(it, ConnectionConfig::class.java)?.orNull()
         }
     }
 

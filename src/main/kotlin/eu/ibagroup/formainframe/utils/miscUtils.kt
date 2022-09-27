@@ -98,6 +98,10 @@ val gson by lazy { Gson() }
 
 inline fun <reified T : Any> T.clone() = clone(T::class.java)
 
+/**
+ * Clone the object deeply
+ * @param clazz the class to cast the object to after the clone operation
+ */
 fun <T : Any> T.clone(clazz: Class<out T>): T {
   return with(gson) {
     fromJson(toJson(this@clone), clazz)
@@ -195,7 +199,10 @@ fun <T> T.getAncestorNodes(childrenGetter: T.() -> Iterable<T>): List<T> {
   return result
 }
 
-// TODO: doc
+/**
+ * Get the list of minimal common parents of the two elements in the list
+ * @param parentGetter the parent getter to get the parents chains of each component
+ */
 fun <T> Iterable<T>.getMinimalCommonParents(parentGetter: T.() -> T?): Collection<T> {
   val parentsCache = mutableMapOf<T, List<T>>()
   val comparisonCache = mutableMapOf<Pair<List<T>, List<T>>, Boolean>()

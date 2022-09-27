@@ -26,7 +26,10 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-// TODO: doc
+/**
+ * Add a slash to the end of the USS path if it is needed
+ * @param ussPath the path to modify
+ */
 private fun withSlashIfNeeded(ussPath: UssPath): String {
   return if (ussPath.path == "/") {
     ussPath.path
@@ -68,6 +71,7 @@ class UssDirNode(
     get() = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteUssAttributes, MFVirtualFile>()
 
+  /** Transform the collection of mainframe virtual files to the list of USS children nodes */
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
     return find { attributesService.getAttributes(it)?.path == value.path }
       ?.also {
@@ -97,6 +101,10 @@ class UssDirNode(
     return "Fetching USS listings for ${query.request.path}"
   }
 
+  /**
+   * Update the USS node icon with the appropriate one
+   * @param presentation the node presentation to set a new icon
+   */
   override fun update(presentation: PresentationData) {
     val icon = when {
       isRootNode -> {

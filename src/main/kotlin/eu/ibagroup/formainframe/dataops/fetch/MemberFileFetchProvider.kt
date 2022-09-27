@@ -30,10 +30,20 @@ import eu.ibagroup.r2z.MembersList
 import eu.ibagroup.r2z.XIBMAttr
 import retrofit2.Response
 
-// TODO: doc
+/**
+ * Data class which represents request,
+ * contains info about object on mainframe
+ */
 data class LibraryQuery(val library: MFVirtualFile)
 
+/**
+ * Class which represents factory for member file fetch provider
+ */
 class MemberFileFetchProviderFactory : FileFetchProviderFactory {
+
+  /**
+   * Creates instance of file fetch provider
+   */
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
     return MemberFileFetchProvider(dataOpsManager)
   }
@@ -65,14 +75,22 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
 
   private val configService = service<ConfigService>()
 
-  // TODO: doc
+  /**
+   * Clears or updates attributes of unused dataset member file if needed
+   * @param file object which need to clear/update
+   * @param query request which need to be performed
+   */
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<LibraryQuery, Unit>) {
     log.info("About to clean-up file=$file, query=$query")
     attributesService.clearAttributes(file)
     file.delete(this)
   }
 
-  // TODO: doc
+  /**
+   * Fetches response of member fetching request
+   * @param query body of fetch request
+   * @param progressIndicator indicator to reflect fetching process status
+   */
   override fun fetchResponse(
     query: RemoteQuery<LibraryQuery, Unit>,
     progressIndicator: ProgressIndicator

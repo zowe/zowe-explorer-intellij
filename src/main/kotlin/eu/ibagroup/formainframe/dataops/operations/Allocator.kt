@@ -12,10 +12,17 @@ package eu.ibagroup.formainframe.dataops.operations
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
-// TODO: doc
+/**
+ * Interface which represents objects that allocates/creates objects on remote system
+ */
 @Suppress("UNCHECKED_CAST")
 interface Allocator<Q : Query<*, Unit>> : OperationRunner<Q, Unit> {
 
+  /**
+   * Checks if process can be executed
+   * @param operation operation object
+   * @return is operation can be run
+   */
   override fun canRun(operation: Q): Boolean {
     return true
   }

@@ -28,7 +28,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-// TODO: doc
+/**
+ * Abstract class to represent a tree node in explorer
+ */
 /** Another unnecessary abstraction (?) to represent tree node */
 abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit>(
   value: Value,
@@ -51,6 +53,9 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   private val loadingNode by lazy { LoadingNode(notNullProject, this, explorer, treeStructure) }
 
+  /**
+   * Method to build a list of error nodes with specified error text
+   */
   private fun errorNode(text: String): List<ErrorNode> {
     return listOf(ErrorNode(notNullProject, this, explorer, treeStructure, text = text))
   }
@@ -59,6 +64,11 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   private val connectionError = "Error: Check connection"
 
+  /**
+   * Method which is called when tree node is expanded or refresh is pressed on tree node.
+   * It fetches the children nodes if no cached nodes are present / displays "loading..." during fetch / displays any Error if an error happened during fetch
+   * @return collection of children tree nodes
+   */
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return lock.withLock {
       val childrenNodes = cachedChildren
@@ -103,6 +113,10 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
     }.toMutableSmartList()
   }
 
+  /**
+   * Displays the leaf state
+   * @return leaf state object instance
+   */
   override fun getLeafState(): LeafState {
     return if (needsToShowPlus) {
       LeafState.NEVER
@@ -118,6 +132,11 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   private var cachedChildren: List<AbstractTreeNode<*>>? by locked(null, lock)
 
+  /**
+   * Method which is called to clean a cache during refresh or reload of the tree node
+   * @param recursively - determines if all children nodes should clean the cache
+   * @return Void
+   */
   fun cleanCache(recursively: Boolean = true, cleanFetchProviderCache: Boolean = true, cleanBatchedQuery: Boolean = false) {
     val children = cachedChildren
     if (!hasError.compareAndSet(true, false)) {
@@ -150,6 +169,10 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
 }
 
+/**
+ * Method to call cleanCache() of desired instance of the tree node. Tree node should be an instance of FileFetchNode
+ * @return Void
+ */
 fun ExplorerTreeNode<*>.cleanCacheIfPossible() {
   if (this is FileFetchNode<*, *, *, *, *>) {
     cleanCache(cleanBatchedQuery = true)

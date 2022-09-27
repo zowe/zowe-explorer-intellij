@@ -24,11 +24,16 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.SymlinkMode
 
-// TODO: doc
+/**
+ * Query with uss file to fetch children
+ */
 data class UssQuery(val path: String)
 
 private const val UPPER_DIR_NAME = ".."
 
+/**
+ * Factory for registering UssFileFetchProvider in Intellij IoC container
+ */
 class UssFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
     return UssFileFetchProvider(dataOpsManager)
@@ -37,6 +42,9 @@ class UssFileFetchProviderFactory : FileFetchProviderFactory {
 
 private val log = log<UssFileFetchProvider>()
 
+/**
+ * Fetch provider for requesting uss files list
+ */
 class UssFileFetchProvider(
   dataOpsManager: DataOpsManager
 ) : RemoteAttributedFileFetchBase<UssQuery, RemoteUssAttributes, MFVirtualFile>(dataOpsManager) {
@@ -45,6 +53,10 @@ class UssFileFetchProvider(
 
   override val vFileClass = MFVirtualFile::class.java
 
+  /**
+   * Fetches uss files relying on information in query
+   * @see RemoteAttributedFileFetchBase.fetchResponse
+   */
   override fun fetchResponse(
     query: RemoteQuery<UssQuery, Unit>,
     progressIndicator: ProgressIndicator
@@ -90,6 +102,10 @@ class UssFileFetchProvider(
 
   override val responseClass = RemoteUssAttributes::class.java
 
+  /**
+   * Clears attributes of unused uss file
+   * @see RemoteAttributedFileFetchBase.cleanupUnusedFile
+   */
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<UssQuery, Unit>) {
     log.info("About to clean-up file=$file, query=$query")
     attributesService.clearAttributes(file)
