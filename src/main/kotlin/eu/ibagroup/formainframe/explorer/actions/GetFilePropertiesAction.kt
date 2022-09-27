@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.ChangeMode
 
@@ -41,27 +42,26 @@ class GetFilePropertiesAction : AnAction() {
           }
           is RemoteUssAttributes -> {
             val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes))
-            val initOwner = attributes.fileMode?.owner
-            val initGroup = attributes.fileMode?.group
-            val initAll = attributes.fileMode?.all
-            dialog.showAndGet()
-            if (dialog.state.ussAttributes.fileMode?.owner != initOwner || dialog.state.ussAttributes.fileMode?.group != initGroup || dialog.state.ussAttributes.fileMode?.all != initAll) {
-              runBackgroundableTask(
-                title = "Changing file mode on ${attributes.path}",
-                project = e.project,
-                cancellable = true
-              ) {
-                if (attributes.fileMode != null) {
-                  runCatching {
-                    dataOpsManager.performOperation(
-                      operation = UssChangeModeOperation(
-                        request = UssChangeModeParams(ChangeMode(mode = attributes.fileMode), attributes.path),
-                        connectionConfig = connectionConfig
-                      ),
-                      progressIndicator = it
-                    )
-                  }.onFailure { t ->
-                    view.explorer.reportThrowable(t, e.project)
+            val initFileMode = attributes.fileMode?.clone()
+            if (dialog.showAndGet()) {
+              if (attributes.fileMode?.owner != initFileMode?.owner || attributes.fileMode?.group != initFileMode?.group || attributes.fileMode?.all != initFileMode?.all) {
+                runBackgroundableTask(
+                  title = "Changing file mode on ${attributes.path}",
+                  project = e.project,
+                  cancellable = true
+                ) {
+                  if (attributes.fileMode != null) {
+                    runCatching {
+                      dataOpsManager.performOperation(
+                        operation = UssChangeModeOperation(
+                          request = UssChangeModeParams(ChangeMode(mode = attributes.fileMode), attributes.path),
+                          connectionConfig = connectionConfig
+                        ),
+                        progressIndicator = it
+                      )
+                    }.onFailure { t ->
+                      view.explorer.reportThrowable(t, e.project)
+                    }
                   }
                 }
               }
