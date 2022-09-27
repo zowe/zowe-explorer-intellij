@@ -59,6 +59,8 @@ class GetFilePropertiesAction : AnAction() {
                         ),
                         progressIndicator = it
                       )
+                    }.onSuccess {
+                      node.parent?.cleanCacheIfPossible()
                     }.onFailure { t ->
                       view.explorer.reportThrowable(t, e.project)
                     }
