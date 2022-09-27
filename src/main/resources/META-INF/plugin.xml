@@ -171,6 +171,8 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssChangeModeFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteMemberOperationRunnerFactory"/>
 
         <operationRunner

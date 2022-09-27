@@ -11,8 +11,10 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -27,133 +29,154 @@ import javax.swing.JComponent
 class UssFilePropertiesDialog(project: Project?, override var state: UssFileState) : DialogWrapper(project),
   StatefulComponent<UssFileState> {
 
+  private val tabbedPanel = JBTabbedPane()
+  private val sameWidthGroup = "USS_FILE_PROPERTIES_DIALOG_LABELS_WIDTH_GROUP"
+  private lateinit var generalTab: DialogPanel
+  private lateinit var permissionTab: DialogPanel
   var fileTypeName: String = "File"
+
+  private val fileModeValues =
+    listOf(
+      FileModeValue.NONE,
+      FileModeValue.EXECUTE,
+      FileModeValue.WRITE,
+      FileModeValue.WRITE_EXECUTE,
+      FileModeValue.READ,
+      FileModeValue.READ_EXECUTE,
+      FileModeValue.READ_WRITE,
+      FileModeValue.READ_WRITE_EXECUTE
+    )
 
   init {
 
     if (state.ussAttributes.isDirectory)
       fileTypeName = "Directory"
     title = "$fileTypeName Properties"
+    initTabs()
     init()
   }
 
+  override fun doOKAction() {
+    permissionTab.apply()
+    super.doOKAction()
+  }
+
   override fun createCenterPanel(): JComponent {
-    val tabbedPanel = JBTabbedPane()
-    val sameWidthGroup = "USS_FILE_PROPERTIES_DIALOG_LABELS_WIDTH_GROUP"
-
-    tabbedPanel.add(
-      "General",
-      panel {
-        row {
-          label("$fileTypeName name: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.name)
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        row {
-          label("Location: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.parentDirPath)
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        row {
-          label("Path: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.path)
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        row {
-          label("$fileTypeName size: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text("${state.ussAttributes.length} bytes")
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        row {
-          label("Last modified: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.modificationTime ?: "")
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        if (state.ussAttributes.isSymlink) {
-          row {
-            label("Symlink to: ")
-              .widthGroup(sameWidthGroup)
-            textField()
-              .text(state.ussAttributes.symlinkTarget ?: "")
-              .applyToComponent { isEditable = false }
-              .horizontalAlign(HorizontalAlign.FILL)
-          }
-        }
-      }
-    )
-
-    tabbedPanel.add(
-      "Permissions",
-      panel {
-        row {
-          label("Owner: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.owner ?: "")
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        row {
-          label("Group: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.groupId ?: "")
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        row {
-          label("The numeric group ID (GID): ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.gid?.toString() ?: "")
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        row {
-          label("Owner permissions: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.fileMode?.owner?.toFileModeValue().toString())
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        row {
-          label("Group permissions: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.fileMode?.group?.toFileModeValue().toString())
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-        row {
-          label("Permissions for all users: ")
-            .widthGroup(sameWidthGroup)
-          textField()
-            .text(state.ussAttributes.fileMode?.all?.toFileModeValue().toString())
-            .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
-      }
-    )
     return tabbedPanel
   }
 
-
+  private fun initTabs() {
+    generalTab = panel {
+      row {
+        label("$fileTypeName name: ")
+          .widthGroup(sameWidthGroup)
+        textField()
+          .text(state.ussAttributes.name)
+          .applyToComponent { isEditable = false }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("Location: ")
+          .widthGroup(sameWidthGroup)
+        textField()
+          .text(state.ussAttributes.parentDirPath)
+          .applyToComponent { isEditable = false }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("Path: ")
+          .widthGroup(sameWidthGroup)
+        textField()
+          .text(state.ussAttributes.path)
+          .applyToComponent { isEditable = false }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("$fileTypeName size: ")
+          .widthGroup(sameWidthGroup)
+        textField()
+          .text("${state.ussAttributes.length} bytes")
+          .applyToComponent { isEditable = false }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("Last modified: ")
+          .widthGroup(sameWidthGroup)
+        textField()
+          .text(state.ussAttributes.modificationTime ?: "")
+          .applyToComponent { isEditable = false }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      if (state.ussAttributes.isSymlink) {
+        row {
+          label("Symlink to: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(state.ussAttributes.symlinkTarget ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+      }
+    }
+    permissionTab = panel {
+      row {
+        label("Owner: ")
+          .widthGroup(sameWidthGroup)
+        textField()
+          .text(state.ussAttributes.owner ?: "")
+          .applyToComponent { isEditable = false }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("Group: ")
+          .widthGroup(sameWidthGroup)
+        textField()
+          .text(state.ussAttributes.groupId ?: "")
+          .applyToComponent { isEditable = false }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("The numeric group ID (GID): ")
+          .widthGroup(sameWidthGroup)
+        textField()
+          .text(state.ussAttributes.gid?.toString() ?: "")
+          .applyToComponent { isEditable = false }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("Owner permissions: ")
+          .widthGroup(sameWidthGroup)
+        comboBox(fileModeValues)
+          .bindItem(
+            { state.ussAttributes.fileMode?.owner?.toFileModeValue() },
+            { state.ussAttributes.fileMode?.owner = it?.mode ?:0 }
+          )
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("Group permissions: ")
+          .widthGroup(sameWidthGroup)
+        comboBox(fileModeValues)
+          .bindItem(
+            { state.ussAttributes.fileMode?.group?.toFileModeValue() },
+            { state.ussAttributes.fileMode?.group = it?.mode ?: 0 }
+          )
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+      row {
+        label("Permissions for all users: ")
+          .widthGroup(sameWidthGroup)
+        comboBox(fileModeValues)
+          .bindItem(
+            { state.ussAttributes.fileMode?.all?.toFileModeValue() },
+            { state.ussAttributes.fileMode?.all = it?.mode ?: 0 }
+          )
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+    }
+    tabbedPanel.add("General", generalTab)
+    tabbedPanel.add("Permissions", permissionTab)
+  }
 }
 
 
