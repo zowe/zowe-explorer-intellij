@@ -35,7 +35,17 @@ class JobProcessInfo(
   val jobId: String?,
   val jobName: String?,
   override val connectionConfig: ConnectionConfig
-): MFProcessInfo
+): MFProcessInfo {
+
+  override fun equals(other: Any?): Boolean {
+    other as JobProcessInfo
+    return this.jobId == other.jobId && this.jobName == other.jobName && this.connectionConfig == other.connectionConfig
+  }
+
+  override fun hashCode(): Int {
+    return this.connectionConfig.uuid.hashCode()
+  }
+}
 
 /**
  * Implementation of LogFetcher class to work with mainframe job logs.
@@ -150,6 +160,19 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
    */
   override fun fetchLog(mfProcessInfo: JobProcessInfo): Array<String> {
     return fetchSpoolFiles(mfProcessInfo)
+      .associateWith { fetchSpoolLog(mfProcessInfo, it.id) }
+      .also { cachedLog = it }
+      .map { it.value }
+      .toTypedArray()
+  }
+
+  /**
+   * Fetches job log by spoolId.
+   * @param mfProcessInfo job process information.
+   * @return log of spool files wrapped in array. Join this array to get full log.
+   */
+  fun fetchLogsBySpoolId(mfProcessInfo: JobProcessInfo, spoolID: Int): Array<String> {
+    return fetchSpoolFiles(mfProcessInfo).take(spoolID)
       .associateWith { fetchSpoolLog(mfProcessInfo, it.id) }
       .also { cachedLog = it }
       .map { it.value }
