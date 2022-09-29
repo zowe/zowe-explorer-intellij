@@ -457,6 +457,11 @@ Example of how to see the output:<br/>
                 text="Edit"
                 use-shortcut-of="RenameElement"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"
+                text="Edit"
+                use-shortcut-of="RenameElement"/>
+
         <group id="eu.ibagroup.formainframe.actions">
             <action id="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo"
                     class="eu.ibagroup.formainframe.explorer.actions.ShowWsInfo" text="Show Working Set Info"/>
@@ -506,6 +511,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
             <separator/>
