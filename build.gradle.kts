@@ -24,7 +24,6 @@ group = "eu.ibagroup"
 version = "0.7.0"
 val remoteRobotVersion = "0.11.14"
 
-
 repositories {
   mavenCentral()
   maven {
