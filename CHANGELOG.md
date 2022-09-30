@@ -4,7 +4,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## `0.3.0 (2022-01-01)`
 
-[comment]: <> (* Feature: test (#2554) ([f3aeafa](https://github.com/zowe/api-layer/commit/f3aeafa)), closes [#2554](https://github.com/zowe/api-layer/issues/2554))
+<!--* Feature: test (#2554) ([f3aeafa](https://github.com/zowe/api-layer/commit/f3aeafa)), closes [#2554](https://github.com/zowe/api-layer/issues/2554)-->
 * Feature: Configurable batch size to load filter smoothly 
 * Feature: Job Purge operation
 * Feature: Job Edit operation
@@ -18,7 +18,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Feature: Move the file attribute conversion to a separate thread
 * Feature: Source code documentation added
 
-[comment]: <> (* Bugfix: snakeyml update, scheme validation fix (#2577) ([ae48669](https://github.com/zowe/api-layer/commit/ae48669)), closes [#2577](https://github.com/zowe/api-layer/issues/2577))
+<!--* Bugfix: snakeyml update, scheme validation fix (#2577) ([ae48669](https://github.com/zowe/api-layer/commit/ae48669)), closes [#2577](https://github.com/zowe/api-layer/issues/2577)-->
 * Bugfix: File cache conflict if open JCL to edit it in JES explorer second time
 * Bugfix: GitHub issue #86: Incorrect error message if mask length > 44
 * Bugfix: GitHub issue #87: Masks type autodetection does not work in Add/Edit Working Set dialogs
