@@ -151,14 +151,19 @@ class RenameAction : AnAction() {
       return
     }
     val selectedNodes = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1 && selectedNodes[0].node !is FilesWorkingSetNode) {
-      val file = selectedNodes[0].file
-      var isMigrated = false
-      if (file != null) {
-        val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
-        isMigrated = attributes?.isMigrated ?: false
+    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1) {
+      val node = selectedNodes[0].node
+      if (node is FilesWorkingSetNode || node is LoadingNode || node is LoadMoreNode) {
+        false
+      } else {
+        val file = selectedNodes[0].file
+        var isMigrated = false
+        if (file != null) {
+          val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
+          isMigrated = attributes?.isMigrated ?: false
+        }
+        !isMigrated
       }
-      !isMigrated
     } else {
       false
     }
