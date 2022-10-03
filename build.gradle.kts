@@ -122,6 +122,7 @@ tasks {
         <li>GitHub issue #54: Accumulation of errors in WS that breaks WS</li>
         <li>USS file cannot be deleted in</li>
         <li>z/OS version specified in connection information doesn't match the z/OS version returned from z/OSMF</li>
+        <li>GitHub issue #16: Error creating zOSMF connection</li>
       </ul>"""
     )
   }
