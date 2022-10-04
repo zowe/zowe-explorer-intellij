@@ -22,7 +22,7 @@ import java.util.stream.Stream
 class ConcurrentCrudable(
   val wrappingCrudable: Crudable,
   private val locksManager: LocksManager
-) : Crudable by wrappingCrudable {
+) : Crudable {
 
   /**
    * Add a row of the row class to the crudable
