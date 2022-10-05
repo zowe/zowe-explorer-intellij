@@ -156,6 +156,12 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val zoweUrl = "${protocol}://${domain}${basePath}"
     val isAllowSelfSigned = !(rejectUnauthorized ?: false)
     val codePage = codePage
+    val user = this.user
+    val password = this.password
+
+    if (user != null && password != null) {
+      CredentialService.instance.setCredentials(uuid, user, password)
+    }
 
     return ConnectionConfig(
       uuid,
