@@ -58,6 +58,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           .bindText(state::datasetName)
           .apply { focused() }
           .also { datasetNameField = it.component }
+          .onApply { state.datasetName = state.datasetName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
       }
       row {
