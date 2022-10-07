@@ -12,4 +12,7 @@ package org.zowe.explorer.dataops.content.adapters
 
 import org.zowe.explorer.dataops.DataOpsComponentFactory
 
+/**
+ * Base factory for registering content adapters in Intellij IoC container.
+ */
 interface MFContentAdapterFactory : DataOpsComponentFactory<MFContentAdapter>

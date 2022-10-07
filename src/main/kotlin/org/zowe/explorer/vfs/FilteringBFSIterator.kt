@@ -13,6 +13,7 @@ package org.zowe.explorer.vfs
 import org.jgrapht.Graph
 import org.jgrapht.traverse.BreadthFirstIterator
 
+/** Class for filtering BFS iterator. Needed for file system to find specified file using BFS */
 open class FilteringBFSIterator<Vertex, Edge>(
   g: Graph<Vertex, Edge>,
   startVertices: MutableIterable<Vertex>?,

@@ -12,12 +12,16 @@ package org.zowe.explorer.config.ws.ui.jobs
 
 import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.common.ui.DialogMode
-import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 import org.zowe.explorer.config.sandboxCrudable
+import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 import org.zowe.explorer.config.ws.ui.AbstractWsConfigurable
 import org.zowe.explorer.config.ws.ui.JobsWorkingSetDialogState
 import org.zowe.explorer.utils.crudable.Crudable
 
+/**
+ * Implementation of AbstractWsConfigurable class for modifying Jobs Working Set configurations.
+ * @see AbstractWsConfigurable
+ */
 class JobsWsConfigurable
   : AbstractWsConfigurable<JobsWorkingSetConfig, JobsWsTableModel, JobsWorkingSetDialogState>("Jobs Working Sets") {
   override val wsConfigClass = JobsWorkingSetConfig::class.java
@@ -25,8 +29,16 @@ class JobsWsConfigurable
 
   override fun emptyConfig() = JobsWorkingSetConfig()
 
-  override fun JobsWorkingSetConfig.toDialogStateAbstract(): JobsWorkingSetDialogState = this.toDialogState()
+  /**
+   * Creates JobsWorkingSetDialogState based on data of JobsWorkingSetConfig.
+   */
+  override fun JobsWorkingSetConfig.toDialogStateAbstract() = this.toDialogState()
 
+  /**
+   * Creates and shows dialog for adding Jobs Working Set.
+   * @param crudable crudable to modify after applying dialog.
+   * @param state state of dialog.
+   */
   override fun createAddDialog(crudable: Crudable, state: JobsWorkingSetDialogState) {
     JobsWsDialog(sandboxCrudable, state)
       .apply {
@@ -37,6 +49,11 @@ class JobsWsConfigurable
       }
   }
 
+  /**
+   * Creates and shows dialog for editing Jobs Working Set.
+   * @param crudable crudable to modify after applying dialog.
+   * @param state state of dialog.
+   */
   override fun createEditDialog(selected: JobsWorkingSetDialogState) {
     JobsWsDialog(
       sandboxCrudable,
@@ -53,6 +70,9 @@ class JobsWsConfigurable
 
 }
 
+/**
+ * Creates JobsWorkingSetDialogState based on data of JobsWorkingSetConfig.
+ */
 fun JobsWorkingSetConfig.toDialogState(): JobsWorkingSetDialogState {
   return JobsWorkingSetDialogState(
     uuid = this.uuid,

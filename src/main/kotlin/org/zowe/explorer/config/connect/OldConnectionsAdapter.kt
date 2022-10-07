@@ -13,14 +13,13 @@ package org.zowe.explorer.config.connect
 import org.zowe.explorer.config.*
 import org.zowe.kotlinsdk.CodePage
 import org.zowe.kotlinsdk.annotations.ZVersion
-import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Document
 
 /**
  * Factory for creating adapter for old connections.
  * @author Valentine Krus
  */
-class OldConnectionsAdapterFactory: OldConfigAdapterFactory {
+class OldConnectionsAdapterFactory : OldConfigAdapterFactory {
   override fun buildAdapter(document: Document): OldConfigAdapter<*> {
     return OldConnectionsAdapter(document)
   }
@@ -33,8 +32,7 @@ class OldConnectionsAdapterFactory: OldConfigAdapterFactory {
  * 2) UrlConnection removed.
  * @author Valentine Krus
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "0.6")
-class OldConnectionsAdapter(private val document: Document): OldConfigAdapter<ConnectionConfig> {
+class OldConnectionsAdapter(private val document: Document) : OldConfigAdapter<ConnectionConfig> {
 
   /**
    * @see OldConfigAdapter.configClass
@@ -65,7 +63,8 @@ class OldConnectionsAdapter(private val document: Document): OldConfigAdapter<Co
       .getApplicationOption("urls")?.get("list")?.firstOrNull() ?: return emptyList()
 
     val urlElements = urlsList["UrlConnection"]
-    val oldConnectionElements = connectionsList["ConnectionConfig"].filter { it.getOptionValue("urlConnectionUuid") != "" }
+    val oldConnectionElements =
+      connectionsList["ConnectionConfig"].filter { it.getOptionValue("urlConnectionUuid") != "" }
 
     return oldConnectionElements.mapNotNull { connElement ->
       val oldUrlUuid = connElement.getOptionValue("urlConnectionUuid")

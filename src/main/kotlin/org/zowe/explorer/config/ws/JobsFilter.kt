@@ -12,7 +12,7 @@ package org.zowe.explorer.config.ws
 
 import java.util.*
 
-
+/** Class that represents jobs filter */
 class JobsFilter {
 
   var owner: String = ""

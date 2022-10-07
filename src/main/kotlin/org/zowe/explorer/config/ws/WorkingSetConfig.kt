@@ -15,6 +15,9 @@ import org.zowe.explorer.utils.crudable.EntityWithUuid
 import org.zowe.explorer.utils.crudable.annotations.Column
 import org.zowe.explorer.utils.crudable.annotations.ForeignKey
 
+/**
+ * Configuration class for Working Sets
+ */
 open class WorkingSetConfig : EntityWithUuid {
   @Column
   var name: String = ""

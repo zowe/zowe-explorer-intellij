@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.dataops.Query
 
+/** Interface that represents the file fetch provider and operations available for it */
 interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
 
   companion object {
@@ -36,6 +37,15 @@ interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
   fun cleanCache(query: Q)
 
   fun reload(query: Q, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE)
+
+  /**
+   * File fetch provider contains all list of queries inside.
+   * If the query was created with default parameters - it will find query with real parameters.
+   * It was made firstly for BatchedRemoteQuery.
+   * @param query supposed query.
+   * @return real query instance or null if it was not found.
+   */
+  fun <Q: Query<R, Unit>> getRealQueryInstance(query: Q?): Q?
 
   val requestClass: Class<out R>
 

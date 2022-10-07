@@ -18,9 +18,17 @@ import com.intellij.openapi.project.VetoableProjectManagerListener
 //private val log = log<FileEditorEventsListener>()
 
 // TODO: implement as soon as the syncronizer will be rewritten
+/**
+ * Project close event listener.
+ * Handle files which are not synchronized before the close
+ */
 class ProjectCloseListener : ProjectManagerListener {
   init {
     val projListener = object : VetoableProjectManagerListener {
+      /**
+       * Check whether all the files of the project are synchronized
+       * @param project the project to check the files
+       */
       override fun canClose(project: Project): Boolean {
 //        val configService = service<ConfigService>()
 //        if (!configService.isAutoSyncEnabled.get() && ApplicationManager.getApplication().isActive) {

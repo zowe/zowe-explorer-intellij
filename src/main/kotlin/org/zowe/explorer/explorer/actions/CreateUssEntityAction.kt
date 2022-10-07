@@ -25,11 +25,26 @@ import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.FileType
 
+/**
+ * Abstract action for creating Uss Entity (file or directory) through context menu.
+ */
 abstract class CreateUssEntityAction : AnAction() {
 
+  /**
+   * Uss file state which contains parameters for creating.
+   */
   abstract val fileType: CreateFileDialogState
+
+  /**
+   * Uss file type (file or directory).
+   */
   abstract val ussFileType: String
 
+  /**
+   * Called when create uss entity is chosen from context menu.
+   * Parameters for creation are initialized depending on the entity type.
+   * Runs uss allocation operation.
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val selected = view.mySelectedNodesData[0]
@@ -92,6 +107,9 @@ abstract class CreateUssEntityAction : AnAction() {
     return true
   }
 
+  /**
+   * Makes action visible only if one node (uss file or uss directory) is selected.
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

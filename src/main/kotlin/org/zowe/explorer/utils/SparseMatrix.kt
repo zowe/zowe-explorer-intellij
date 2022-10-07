@@ -10,22 +10,23 @@
 
 package org.zowe.explorer.utils
 
+/** Class to handle values as the sparse matrix (it supports null values inside the matrix) */
 class SparseMatrix<T>(
   private val defaultValue: T? = null,
-) : ObjectMatrix<T> {
+) {
 
   private val map = mutableMapOf<Pair<Int, Int>, T?>()
 
-  override fun get(i: Int, j: Int): T? {
+  operator fun get(i: Int, j: Int): T? {
     return map[Pair(i, j)] ?: defaultValue
   }
 
-  override fun set(i: Int, j: Int, value: T?) {
+  operator fun set(i: Int, j: Int, value: T?) {
     map[Pair(i, j)] = value
   }
 
   fun removeByRow(i: Int) {
-    map.filter { it.key.first == i }.forEach{ map.remove(it.key) }
+    map.filter { it.key.first == i }.forEach { map.remove(it.key) }
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -36,6 +37,10 @@ class SparseMatrix<T>(
     asMap.forEach {
       map[it.key] = defaultValue
     }
+  }
+
+  fun clear() {
+    map.clear()
   }
 
 }

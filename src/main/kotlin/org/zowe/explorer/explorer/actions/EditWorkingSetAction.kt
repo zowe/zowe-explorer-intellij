@@ -22,30 +22,39 @@ import org.zowe.explorer.explorer.ui.FilesWorkingSetNode
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 
-
+/**
+ * Action class for edit working set act
+ */
 class EditWorkingSetAction : AnAction() {
+
+  /**
+   * Called when edit working set option is chosen from context menu,
+   * runs the edit working set operation
+   */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
+    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData[0].node
     if (node is FilesWorkingSetNode) {
-      var selected = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(node.value.uuid)?.clone() as FilesWorkingSetConfig
-      WorkingSetDialog(configCrudable, selected.toDialogState().apply { mode = DialogMode.UPDATE }).apply {
-        if (showAndGet()) {
-          selected = state.workingSetConfig
-          configCrudable.update(selected)
-        }
+      val workingSetConfig =
+        configCrudable.getByUniqueKey<FilesWorkingSetConfig>(node.value.uuid)?.clone() as FilesWorkingSetConfig
+      val dialog = WorkingSetDialog(configCrudable, workingSetConfig.toDialogState().apply { mode = DialogMode.UPDATE })
+      if (dialog.showAndGet()) {
+        val state = dialog.state
+        configCrudable.update(state.workingSetConfig)
       }
     }
-
   }
 
+  /**
+   * This method is needed for interface implementation
+   */
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Determines which objects are working sets and therefore can be edited
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

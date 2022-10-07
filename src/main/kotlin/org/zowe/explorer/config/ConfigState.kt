@@ -11,11 +11,25 @@
 package org.zowe.explorer.config
 
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 
+/**
+ * State of all configs for plugin. It includes lists of connections, working sets and masks, other settings.
+ * @author Viktar Mushtsin, Kiril Branavitski, Valiantsin Krus
+ */
 data class ConfigState(
   var connections: MutableList<ConnectionConfig> = mutableListOf(),
-  var workingSets: MutableList<FilesWorkingSetConfig> = mutableListOf(),
-  var jobsWorkingSets: MutableList<JobsWorkingSetConfig> = mutableListOf()
+  var filesWorkingSets: MutableList<FilesWorkingSetConfig> = mutableListOf(),
+  var jobsWorkingSets: MutableList<JobsWorkingSetConfig> = mutableListOf(),
+  var settings: SettingsState = SettingsState()
+)
+
+/**
+ * State for other additional settings.
+ * @author Valiantsin Krus
+ */
+data class SettingsState(
+  var isAutoSyncEnabled: Boolean = false,
+  var batchSize: Int = 100
 )

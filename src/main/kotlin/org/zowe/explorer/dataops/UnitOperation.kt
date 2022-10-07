@@ -12,6 +12,9 @@ package org.zowe.explorer.dataops
 
 import org.zowe.explorer.utils.UNIT_CLASS
 
+/**
+ * Interface to describe unit operation (e.g. file operation).
+ */
 interface UnitOperation : Operation<Unit> {
 
   override val resultClass: Class<out Unit>

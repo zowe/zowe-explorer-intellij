@@ -13,23 +13,30 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.config.ws.DSMask
+import org.zowe.explorer.config.ws.MaskStateWithWS
 import org.zowe.explorer.config.ws.UssPath
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.WorkingSet
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.AddMaskDialog
+import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
+import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.utils.MaskType
 
+/** Action to add USS or z/OS mask */
 class AddMaskAction : AnAction() {
+
+  /** Add mask when the dialog is fulfilled    */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
 
     val ws = getUnits(view).firstOrNull() ?: return
-    val initialState = MaskState(ws)
+    val initialState = MaskStateWithWS(ws)
     val dialog = AddMaskDialog(e.project, initialState)
     if (dialog.showAndGet()) {
       val state = dialog.state
       when (state.type) {
-        MaskState.ZOS -> ws.addMask(DSMask(state.mask.toUpperCase(), mutableListOf(), "", state.isSingle))
-        MaskState.USS -> ws.addUssPath(UssPath(state.mask))
+        MaskType.ZOS -> ws.addMask(DSMask(state.mask.uppercase(), mutableListOf(), ""))
+        MaskType.USS -> ws.addUssPath(UssPath(state.mask))
       }
     }
   }
@@ -38,6 +45,7 @@ class AddMaskAction : AnAction() {
     return true
   }
 
+  // TODO: doc, why getUnits.size == 1?
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -46,8 +54,10 @@ class AddMaskAction : AnAction() {
     e.presentation.isEnabledAndVisible = getUnits(view).size == 1
   }
 
-  private fun getUnits(view: GlobalFileExplorerView): List<FilesWorkingSet> {
-    return view.mySelectedNodesData.map { it.node }
+  // TODO: doc
+  private fun getUnits(view: FileExplorerView): List<FilesWorkingSet> {
+    return view.mySelectedNodesData
+      .map { it.node }
       .filterIsInstance<ExplorerUnitTreeNodeBase<*, FilesWorkingSet>>()
       .map { it.unit }
       .distinct()

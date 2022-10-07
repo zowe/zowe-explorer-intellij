@@ -14,14 +14,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.EventHandler
 import org.zowe.explorer.utils.crudable.annotations.Contains
 import org.zowe.explorer.utils.sendTopic
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicBoolean
 
 fun sendConfigServiceTopic(): EventHandler = sendTopic(CONFIGS_CHANGED)
 
@@ -31,6 +30,7 @@ val CONFIGS_CHANGED = Topic.create("configsChanged", EventHandler::class.java)
 @JvmField
 val CONFIGS_LOADED = Topic.create("configsLoaded", Runnable::class.java)
 
+/** Interface to represent the config service */
 interface ConfigService : PersistentStateComponent<ConfigState> {
 
   companion object {
@@ -52,13 +52,12 @@ interface ConfigService : PersistentStateComponent<ConfigState> {
 
   val autoSaveDelay: Duration
 
-  var isAutoSyncEnabled: AtomicBoolean
+  /** Identifies if the auto sync is used to save file content. */
+  var isAutoSyncEnabled: Boolean
 
+  /** Identifies size of the files batch to fetch in a single request. */
+  var batchSize: Int
 }
-
-class CredentialsNotFoundForConnection(val connectionConfig: ConnectionConfig) : Exception(
-  "No username or password found for $connectionConfig"
-)
 
 val configCrudable: Crudable
   get() = ConfigService.instance.crudable

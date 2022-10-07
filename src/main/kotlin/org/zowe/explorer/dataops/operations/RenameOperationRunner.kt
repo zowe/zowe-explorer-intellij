@@ -25,24 +25,41 @@ import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.MoveUssFile
 import org.zowe.kotlinsdk.RenameData
 
+/**
+ * Class which represents factory for rename operation runner. Defined in plugin.xml
+ */
 class RenameOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return RenameOperationRunner(dataOpsManager)
   }
 }
 
+/**
+ * Class which represents rename operation runner
+ */
 class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : OperationRunner<RenameOperation, Unit> {
 
   override val operationClass = RenameOperation::class.java
 
   override val resultClass = Unit::class.java
 
+  /**
+   * Determined if operation can be run on selected object
+   * @param operation - specifies a rename operation object
+   */
   override fun canRun(operation: RenameOperation): Boolean {
     return with(operation.attributes) {
       this is RemoteMemberAttributes || this is RemoteDatasetAttributes || this is RemoteUssAttributes
     }
   }
 
+  /**
+   * Runs a rename operation
+   * @param operation - rename operation to be run
+   * @param progressIndicator - progress indicator object
+   * @throws CallException if request is not successful
+   * @return Void
+   */
   override fun run(
     operation: RenameOperation,
     progressIndicator: ProgressIndicator
@@ -67,7 +84,11 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               throw CallException(response, "Unable to rename the selected dataset")
             }
           } catch (e: Throwable) {
-            if (e is CallException) { throw e } else { throw RuntimeException(e) }
+            if (e is CallException) {
+              throw e
+            } else {
+              throw RuntimeException(e)
+            }
           }
         }
       }
@@ -93,7 +114,11 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               throw CallException(response, "Unable to rename the selected member")
             }
           } catch (e: Throwable) {
-            if (e is CallException) { throw e } else { throw RuntimeException(e) }
+            if (e is CallException) {
+              throw e
+            } else {
+              throw RuntimeException(e)
+            }
           }
         }
       }
@@ -115,7 +140,11 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               throw CallException(response, "Unable to rename the selected file or directory")
             }
           } catch (e: Throwable) {
-            if (e is CallException) { throw e } else { throw RuntimeException(e) }
+            if (e is CallException) {
+              throw e
+            } else {
+              throw RuntimeException(e)
+            }
           }
         }
       }

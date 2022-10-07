@@ -7,15 +7,22 @@
  *
  * Copyright IBA Group 2020
  */
-
 package org.zowe.explorer.dataops.operations
 
 import org.zowe.explorer.dataops.Query
 import org.zowe.explorer.utils.UNIT_CLASS
 
+/**
+ * Interface which represents objects that allocates/creates objects on remote system
+ */
 @Suppress("UNCHECKED_CAST")
-interface Allocator<Q: Query<*, Unit>> : OperationRunner<Q, Unit> {
+interface Allocator<Q : Query<*, Unit>> : OperationRunner<Q, Unit> {
 
+  /**
+   * Checks if process can be executed
+   * @param operation operation object
+   * @return is operation can be run
+   */
   override fun canRun(operation: Q): Boolean {
     return true
   }

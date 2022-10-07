@@ -14,6 +14,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import java.awt.Component
 
+/**
+ * Abstract stateful dialog class.
+ * Represents the dialog that could be created with a specified state
+ * @param project the project where the dialog is created
+ * @param parentComponent the parent component for the dialog. Used mostly for dispose purposes
+ */
 abstract class StatefulDialog<T : Any>(
   project: Project? = null,
   parentComponent: Component? = null,
@@ -28,6 +34,13 @@ abstract class StatefulDialog<T : Any>(
   createSouth
 ), StatefulComponent<T>
 
+/**
+ * Show dialog until the associated process is finished or cancel is clicked
+ * @param initialState the state to initialize the dialog
+ * @param factory the factory to create the dialog
+ * @param test the associated process to be handled when the dialog is open
+ * @return state to initialize the dialog or null when the dialog is closed
+ */
 fun <T : Any> showUntilDone(
   initialState: T,
   factory: (state: T) -> StatefulDialog<T>,

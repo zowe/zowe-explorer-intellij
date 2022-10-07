@@ -12,7 +12,19 @@ package org.zowe.explorer.dataops.services
 
 import java.util.*
 
+/**
+ * Implementation for ErrorSeparatorService.
+ * @see ErrorSeparatorService
+ * @author Valiantsin Krus
+ */
 class ErrorSeparatorServiceImpl : ErrorSeparatorService {
+
+  /**
+   * Parses error message from z/OS.
+   * @param errorMessage error message received from z/OS.
+   * @return properties containing error code, error postfix, error description
+   *         in properties error.code, error.description, error.postfix respectively.
+   */
   override fun separateErrorMessage(errorMessage: String): Properties {
     val errorProperties = Properties()
     try {
@@ -20,7 +32,7 @@ class ErrorSeparatorServiceImpl : ErrorSeparatorService {
       val indOfErrorPostfix = errorMessage.lastIndexOf('(')
 
       val errorCode = errorMessage.subSequence(0, indOfErrorCodeDelimiter)
-      val description = errorMessage.subSequence(indOfErrorCodeDelimiter + 1, indOfErrorPostfix-1);
+      val description = errorMessage.subSequence(indOfErrorCodeDelimiter + 1, indOfErrorPostfix - 1);
       val errorPostfix = errorMessage.subSequence(indOfErrorPostfix, errorMessage.length)
 
       errorProperties["error.code"] = errorCode

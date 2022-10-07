@@ -12,6 +12,10 @@ package org.zowe.explorer.dataops.attributes
 
 import org.zowe.explorer.config.connect.ConnectionConfig
 
+/**
+ * Information object with connection configuration inside to send request for a list of uss files to zosmf
+ * @param connectionConfig connection configuration to specify the system to work with
+ */
 data class UssRequester(
   override val connectionConfig: ConnectionConfig
 ) : Requester

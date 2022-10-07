@@ -12,15 +12,27 @@ package org.zowe.explorer.config
 
 import com.intellij.util.messages.Topic
 
+/**
+ * Interface which serves as an object for sending sandboxListener topics
+ */
 interface SandboxListener {
 
+  /**
+   * Static topic to be sent
+   */
   companion object {
     @JvmField
     val TOPIC = Topic.create("sandboxListener", SandboxListener::class.java)
   }
 
+  /**
+   * Abstract method to update rows in specified configurable
+   */
   fun <E : Any> update(clazz: Class<out E>)
 
+  /**
+   * Abstract method to reload rows in specified configurable
+   */
   fun <E : Any> reload(clazz: Class<out E>)
 
 }

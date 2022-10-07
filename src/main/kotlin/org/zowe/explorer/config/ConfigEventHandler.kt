@@ -12,6 +12,9 @@ package org.zowe.explorer.config
 
 import org.zowe.explorer.utils.crudable.EventHandler
 
+/**
+ * Class that implements possible event handlers
+ */
 class ConfigEventHandler : EventHandler {
 
   override fun <E : Any> onAdd(rowClass: Class<out E>, added: E) {

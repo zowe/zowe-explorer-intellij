@@ -17,15 +17,20 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.utils.`is`
 import org.zowe.explorer.utils.debounce
+import org.zowe.explorer.utils.`is`
 import org.zowe.explorer.utils.runWriteActionInEdt
 import org.zowe.explorer.vfs.MFVirtualFile
 
-class ChangeContentAction: TypedHandlerDelegate() {
+/**
+ * Action for adapting text to mainframe and displaying results right after user typed any char sequence.
+ * @author Valiantsin Krus
+ */
+class ChangeContentAction : TypedHandlerDelegate() {
   private val dataOpsManager = service<DataOpsManager>()
   private var adaptContentFunc: (() -> Unit)? = null
 
+  /** Finds content adapter for mf files and performs its adapting. */
   override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
 
     val vFile = file.virtualFile

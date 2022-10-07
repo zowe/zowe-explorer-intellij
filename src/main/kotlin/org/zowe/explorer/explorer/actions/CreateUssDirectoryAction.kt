@@ -13,6 +13,7 @@ package org.zowe.explorer.explorer.actions
 import org.zowe.explorer.explorer.ui.CreateFileDialogState
 import org.zowe.explorer.explorer.ui.emptyDirState
 
+/** Action to create USS directory. Directory will be empty when created */
 class CreateUssDirectoryAction : CreateUssEntityAction() {
 
   override val fileType: CreateFileDialogState

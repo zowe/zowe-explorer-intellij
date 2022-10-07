@@ -10,6 +10,10 @@
 
 package org.zowe.explorer.dataops
 
+/**
+ * Interface which represents query that should be executed on remote server,
+ * contains body request
+ */
 interface Query<Request, Result> : Operation<Result> {
 
   val request: Request

@@ -13,8 +13,9 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.DialogState
 import org.zowe.explorer.common.ui.StatefulComponent
@@ -32,96 +33,179 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
   override fun createCenterPanel(): JComponent {
     val member = state.memberAttributes.info
     val tabbedPanel = JBTabbedPane()
+    val sameWidthGroup = "MEMBER_PROPERTIES_DIALOG_LABELS_WIDTH_GROUP"
 
-    tabbedPanel.add("General", panel {
-      row {
-        label("Member name: ")
-        JBTextField(member.name).apply { isEditable = false }()
-      }
-      row {
-        label("Version.Modification: ")
-        if (member.versionNumber != null && member.modificationLevel != null)
-          JBTextField("${member.versionNumber}.${member.modificationLevel}").apply { isEditable = false }()
-        else
-          JBTextField("").apply { isEditable = false }()
-      }
-      row {
-        label("Create Date: ")
-        JBTextField(member.creationDate ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Modification Date: ")
-        JBTextField(member.modificationDate ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Modification Time: ")
-        JBTextField(member.lastChangeTime ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Userid that Created/Modified: ")
-        JBTextField(member.user ?: "").apply { isEditable = false }()
-      }
-    })
-
-    tabbedPanel.add("Data", panel {
-      row {
-        label("Current number of records: ")
-        JBTextField(member.currentNumberOfRecords?.toString() ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Beginning number of records: ")
-        JBTextField(member.beginningNumberOfRecords?.toString() ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Number of changed records: ")
-        JBTextField(member.numberOfChangedRecords?.toString() ?: "").apply { isEditable = false }()
-      }
-      row {
-        if ("Y".equals(member.sclm)) {
-          label("Last update was made through SCLM")
-        } else {
-          label("Last update was made through ISPF")
+    tabbedPanel.add(
+      "General",
+      panel {
+        row {
+          label("Member name: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.name)
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Version.Modification: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(
+              if (member.versionNumber != null && member.modificationLevel != null) {
+                "${member.versionNumber}.${member.modificationLevel}"
+              } else {
+                ""
+              }
+            )
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Create Date: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.creationDate ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Modification Date: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.modificationDate ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Modification Time: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.lastChangeTime ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Userid that Created/Modified: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.user ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
         }
       }
-    })
+    )
 
-    tabbedPanel.add("Extended", panel {
-      row {
-        label("<html><b>Load Module Properties</b><br>(empty if member is not a load module)</html>")
+    tabbedPanel.add(
+      "Data",
+      panel {
+        row {
+          label("Current number of records: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.currentNumberOfRecords?.toString() ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Beginning number of records: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.beginningNumberOfRecords?.toString() ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Number of changed records: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.numberOfChangedRecords?.toString() ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          val updatePlace = if ("Y" == member.sclm) {
+            "SCLM"
+          } else {
+            "ISPF"
+          }
+          label("Last update was made through $updatePlace")
+            .widthGroup(sameWidthGroup)
+        }
       }
-      row {
-        label("Authorization code: ")
-        JBTextField(member.authorizationCode ?: "").apply { isEditable = false }()
+    )
+
+    tabbedPanel.add(
+      "Extended",
+      panel {
+        row {
+          label("<html><b>Load Module Properties</b><br>(empty if member is not a load module)</html>")
+        }
+        row {
+          label("Authorization code: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.authorizationCode ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Current Member is alias of: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.aliasOf ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Load module attributes: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.loadModuleAttributes ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Member AMODE: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.amode ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Member RMODE: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.rmode ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Size: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.size ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("Member TTR: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.ttr ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          label("SSI information for a load module: ")
+            .widthGroup(sameWidthGroup)
+          textField()
+            .text(member.ssi ?: "")
+            .applyToComponent { isEditable = false }
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
       }
-      row {
-        label("Current Member is alias of: ")
-        JBTextField(member.aliasOf ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Load module attributes: ")
-        JBTextField(member.loadModuleAttributes ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Member AMODE: ")
-        JBTextField(member.amode ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Member RMODE: ")
-        JBTextField(member.rmode ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Size: ")
-        JBTextField(member.size ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("Member TTR: ")
-        JBTextField(member.ttr ?: "").apply { isEditable = false }()
-      }
-      row {
-        label("SSI information for a load module: ")
-        JBTextField(member.ssi ?: "").apply { isEditable = false }()
-      }
-    })
+    )
 
     return tabbedPanel
   }

@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.explorer.Explorer
 
+/** Node that is displayed when no content is loaded yet */
 class LoadingNode(
   project: Project,
   parent: ExplorerTreeNode<*>,

@@ -20,7 +20,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanel
@@ -43,7 +46,7 @@ const val JOBS_LOG_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.ExplorerN
  * @param jobLogInfo job process information necessary to get log and status.
  * @param consoleView console to log
  * @param dataOpsManager instance of dataOpsManager
- * @param workingDir working directory (in most cases path to submitted file)
+ * @param workingDir working directory (in most cases, path to submitted file)
  * @param project project instance
  * @author Valentine Krus
  */
@@ -54,7 +57,7 @@ class JobBuildTreeView(
   dataOpsManager: DataOpsManager,
   workingDir: String = "",
   project: Project
-): ExecutionConsole, DataProvider, JBPanel<JobBuildTreeView>() {
+) : ExecutionConsole, DataProvider, JBPanel<JobBuildTreeView>() {
 
   private val buildId = jobLogInfo.jobId ?: "UNKNOWN JOB ID"
   private val jobNameNotNull = jobLogInfo.jobName ?: "UNKNOWN JOB"
@@ -104,7 +107,7 @@ class JobBuildTreeView(
       cachedSpoolLog
         .forEach {
           val prevLog = spoolFileToLogMap[it.key] ?: ""
-          val logToDisplay = it.value.substring(prevLog.length)
+          val logToDisplay = if (it.value.length >= prevLog.length) it.value.substring(prevLog.length) else prevLog
           treeConsoleView.onEvent(buildId, OutputBuildEventImpl(it.key.id, logToDisplay, true))
           spoolFileToLogMap[it.key] = it.value
         }
@@ -116,7 +119,7 @@ class JobBuildTreeView(
           .logFetcher
           .getCachedJobStatus()
           ?.returnedCode
-          ?.uppercase(Locale.getDefault())
+          ?.uppercase()
           ?.contains("ERR") == true
       ) FailureResultImpl() else SuccessResultImpl()
       jobLogger.logFetcher.getCachedLog()
@@ -135,7 +138,7 @@ class JobBuildTreeView(
   }
 
   /**
-   * Stops requesting logs to mainframe.
+   * Stops requesting logs from mainframe.
    */
   fun stop() {
     jobLogger.stopLogging()

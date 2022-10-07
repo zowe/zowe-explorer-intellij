@@ -15,13 +15,20 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.AttributesService
 import org.zowe.explorer.dataops.attributes.FileAttributes
 
+/**
+ * Common abstract class which represents attributed virtual file in VFS.
+ * Every virtual file object with attributes in explorer(WS, JES) extends this class
+ */
 abstract class RemoteAttributedFileFetchBase<Request : Any, Response : FileAttributes, File : VirtualFile>(
   dataOpsManager: DataOpsManager
 ) : RemoteFileFetchProviderBase<Request, Response, File>(dataOpsManager) {
 
   protected val attributesService: AttributesService<Response, File>
-      by lazy { dataOpsManager.getAttributesService(responseClass, vFileClass) }
+          by lazy { dataOpsManager.getAttributesService(responseClass, vFileClass) }
 
+  /**
+   * Overloaded method to create a virtual file with attributes in VFS from given response
+   */
   override fun convertResponseToFile(response: Response): File? {
     return attributesService.getOrCreateVirtualFile(response)
   }

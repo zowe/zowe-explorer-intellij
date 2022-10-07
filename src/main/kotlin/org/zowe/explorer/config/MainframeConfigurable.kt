@@ -13,13 +13,19 @@ package org.zowe.explorer.config
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
 import org.zowe.explorer.config.connect.ui.ConnectionConfigurable
+import org.zowe.explorer.config.settings.ui.SettingsConfigurable
 import org.zowe.explorer.config.ws.ui.files.WSConfigurable
 import org.zowe.explorer.config.ws.ui.jobs.JobsWsConfigurable
-import org.zowe.explorer.ui.configs.SettingsConfigurable
 
+/**
+ * Main UI class to build configurables for project and set them to appropriate place
+ */
 class MainframeConfigurable : TabbedConfigurable() {
   var preferredConfigurableClass: Class<*>? = null
 
+  /**
+   * Method which is called to display project name in Intellij
+   */
   override fun getDisplayName(): String {
     return "Zowe Explorer"
   }
@@ -29,6 +35,10 @@ class MainframeConfigurable : TabbedConfigurable() {
   private lateinit var jobsWsConfigurable: JobsWsConfigurable
   private lateinit var settingsConfigurable: SettingsConfigurable
 
+  /**
+   * Method to create all existed configurables and initialize them
+   * @return List of configurable items
+   */
   override fun createConfigurables(): MutableList<Configurable> {
     return mutableListOf(
       ConnectionConfigurable().also { connectionConfigurable = it },
@@ -38,20 +48,32 @@ class MainframeConfigurable : TabbedConfigurable() {
     )
   }
 
+  /**
+   * @see com.intellij.openapi.options.UnnamedConfigurable.apply
+   */
   override fun apply() {
     super.apply()
     ConfigSandbox.instance.updateState()
   }
 
+  /**
+   * @see com.intellij.openapi.options.UnnamedConfigurable.reset
+   */
   override fun reset() {
     ConfigSandbox.instance.fetch()
     super.reset()
   }
 
+  /**
+   * @see com.intellij.openapi.options.UnnamedConfigurable.cancel
+   */
   override fun cancel() {
     configurables.forEach { it.cancel() }
   }
 
+  /**
+   * Method to create configurable tabs and add(represent) them in UI
+   */
   override fun createConfigurableTabs() {
     super.createConfigurableTabs().also {
       myTabbedPane.selectedIndex = when (preferredConfigurableClass) {

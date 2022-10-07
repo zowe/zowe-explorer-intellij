@@ -13,21 +13,19 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.layout.CellBuilder
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.StatefulComponent
-import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.utils.validateDatasetMask
-import org.zowe.explorer.utils.validateForBlank
-import org.zowe.explorer.utils.validateUssMask
-import org.zowe.explorer.utils.validateWorkingSetMaskName
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import org.zowe.explorer.config.ws.MaskStateWithWS
+import org.zowe.explorer.utils.*
+import java.awt.Dimension
 import javax.swing.JComponent
 
-class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWrapper(project),
-  StatefulComponent<MaskState> {
+class AddMaskDialog(project: Project?, override var state: MaskStateWithWS) : DialogWrapper(project),
+  StatefulComponent<MaskStateWithWS> {
 
   init {
     title = "Create Mask"
@@ -35,63 +33,66 @@ class AddMaskDialog(project: Project?, override var state: MaskState) : DialogWr
   }
 
   override fun createCenterPanel(): JComponent {
-
     return panel {
-      lateinit var comboBox: CellBuilder<ComboBox<String>>
-      var maskTypeIsSelected = false
+      lateinit var comboBox: Cell<ComboBox<String>>
+      val sameWidthGroup = "ADD_MASK_DIALOG_LABELS_WIDTH_GROUP"
+
       row {
         label("Working Set: ")
+          .widthGroup(sameWidthGroup)
         label(state.ws.name)
       }
       row {
-        label("File System: ")
-        comboBox = ComboBox(CollectionComboBoxModel(listOf(MaskState.ZOS, MaskState.USS))).apply {
-          addActionListener {
-            state.type = selectedItem as String
-          }
-          addMouseListener(object : MouseAdapter() {
-            override fun mouseEntered(e: MouseEvent?) {
-              maskTypeIsSelected = true
+        label("File system: ")
+          .widthGroup(sameWidthGroup)
+        comboBox = comboBox(listOf(MaskType.ZOS.stringType, MaskType.USS.stringType))
+          .bindItem(
+            { state.type.stringType },
+            { selectedType ->
+              state.type = selectedType?.let { selectedTypeStr ->
+                MaskType.values().find { it.stringType == selectedTypeStr }
+              } ?: state.type
             }
-          })
-        }()
+          )
+          .applyToComponent {
+            addActionListener {
+              if (!state.isTypeSelectedAutomatically) {
+                state.isTypeSelectedManually = true
+              } else {
+                state.isTypeSelectedAutomatically = false
+              }
+              state.type = MaskType.values().find { it.stringType == selectedItem as String } ?: state.type
+            }
+          }
       }
       row {
         label("Mask: ")
-
-        textField(state::mask).withValidationOnInput {
-          if (!maskTypeIsSelected) {
-            if (it.text.contains("/")) {
-              comboBox.component.item = MaskState.USS
-            } else {
-              comboBox.component.item = MaskState.ZOS
+          .widthGroup(sameWidthGroup)
+        textField()
+          .bindText(state::mask)
+          .validationOnInput {
+            if (!state.isTypeSelectedManually) {
+              state.type = if (it.text.contains("/")) MaskType.USS else MaskType.ZOS
+              state.isTypeSelectedAutomatically = true
+              comboBox.component.item = state.type.stringType
             }
+            validateWorkingSetMaskName(it, state.ws)
           }
-          validateWorkingSetMaskName(it, state.ws)
-        }.withValidationOnApply {
-          validateForBlank(it.text, it) ?: if (state.type == MaskState.ZOS)
-            validateDatasetMask(it.text, component)
-          else
-            validateUssMask(it.text, it)
-        }.apply {
-          focused()
-        }
-
+          .validationOnApply {
+            validateForBlank(it.text, it)
+              ?: if (state.type == MaskType.ZOS)
+                validateDatasetMask(it.text, component)
+              else
+                validateUssMask(it.text, it)
+          }
+          .apply { focused() }
+          .apply {
+            component.minimumSize = Dimension(10, component.height)
+          }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
     }
   }
 
 
-}
-
-class MaskState(
-  var ws: FilesWorkingSet,
-  var mask: String = "",
-  var type: String = "z/OS",
-  var isSingle: Boolean = false,
-){
-  companion object {
-    const val ZOS = "z/OS"
-    const val USS = "USS"
-  }
 }

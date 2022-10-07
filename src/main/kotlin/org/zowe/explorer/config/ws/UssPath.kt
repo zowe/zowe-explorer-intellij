@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.config.ws
 
+/** Data class that encapsulates USS path field */
 data class UssPath(
   var path: String = ""
 )

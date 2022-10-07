@@ -20,29 +20,51 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.kotlinsdk.*
+import org.zowe.kotlinsdk.HoldJobRequest
+import org.zowe.kotlinsdk.HoldJobRequestBody
+import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
 
+/**
+ * Class which represents factory for hold job operation runner. Defined in plugin.xml
+ */
 class HoldJobOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return HoldJobOperationRunner()
   }
 }
 
+/**
+ * Class which represents hold job operation runner
+ */
 class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest> {
 
   override val operationClass = HoldJobOperation::class.java
 
   override val resultClass = HoldJobRequest::class.java
 
+  /**
+   * Determines if an operation can be run on selected object
+   * @param operation specifies a hold job operation object [HoldJobOperation]
+   */
   override fun canRun(operation: HoldJobOperation): Boolean {
     return true
   }
 
+  /**
+   * Runs a job hold operation
+   *
+   * Sends a request to mainframe and checks response
+   * @param operation specifies a hold job operation object [HoldJobOperation]
+   * @param progressIndicator interrupts operation if the computation is canceled
+   * @throws Exception if method with the requested parameters is not found
+   * @throws CallException if request is not successful or no response body
+   * @return [HoldJobRequest] body of response
+   */
   override fun run(operation: HoldJobOperation, progressIndicator: ProgressIndicator): HoldJobRequest {
     progressIndicator.checkCanceled()
 
-    val response : Response<HoldJobRequest> = when (operation.request) {
+    val response: Response<HoldJobRequest> = when (operation.request) {
       is BasicHoldJobParams -> {
         api<JESApi>(operation.connectionConfig).holdJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
@@ -71,12 +93,28 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
   }
 }
 
+/**
+ * Base class which contains parameters for hold job operation
+ *
+ * Class is the parent of [BasicHoldJobParams] and [CorrelatorHoldJobParams]
+ */
 open class HoldJobOperationParams
 
-class BasicHoldJobParams(val jobName: String, val jobId: String)  : HoldJobOperationParams()
+/**
+ * Class which contains parameters job name and job id for hold job operation
+ */
+class BasicHoldJobParams(val jobName: String, val jobId: String) : HoldJobOperationParams()
 
+/**
+ * Class which contains parameter job correlator for hold job operation
+ */
 class CorrelatorHoldJobParams(val correlator: String) : HoldJobOperationParams()
 
+/**
+ * Data class that represents all information needed to send hold job request
+ * @property request parameters for holding a job [HoldJobOperationParams]
+ * @property connectionConfig credentials for connection to mainframe [ConnectionConfig]
+ */
 data class HoldJobOperation(
   override val request: HoldJobOperationParams,
   override val connectionConfig: ConnectionConfig

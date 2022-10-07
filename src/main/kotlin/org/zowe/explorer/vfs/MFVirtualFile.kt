@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 
+/** Class that represents mainframe files in a virtual file system */
 class MFVirtualFile internal constructor(
   private val fileId: Int,
   name: String,
@@ -75,6 +76,7 @@ class MFVirtualFile internal constructor(
 
   override fun getFileSystem() = fs
 
+  /** Get file path if the file is valid */
   @Suppress("RecursivePropertyAccessor")
   override fun getPath(): String {
     return if (isValid) {
@@ -99,6 +101,7 @@ class MFVirtualFile internal constructor(
 
   override fun isDirectory() = initialAttributes.isDirectory
 
+  /** Get virtual file if it is the symbolic link */
   override fun getCanonicalFile(): VirtualFile? {
     return if (fs.isSymLink(this)) {
       fs.model.resolveAndGetSymlink(this)
@@ -109,8 +112,13 @@ class MFVirtualFile internal constructor(
 
   override fun getParent() = fs.model.getParent(this)
 
+  /** Get children of the virtual directory */
   override fun getChildren() = isDirectory.runIfTrue { fs.model.getChildren(this) }
 
+  /**
+   * Find child in the virtual directory
+   * @param name child name to search for
+   */
   override fun findChild(name: String): MFVirtualFile? = isDirectory.runIfTrue {
     children?.firstOrNull { it.nameEquals(name) }
   }
@@ -156,30 +164,7 @@ class MFVirtualFile internal constructor(
 
   override fun getId() = fileId
 
-  fun refreshAndFindChild(name: String) = findChild(name)
-
-  fun findChildIfCached(name: String) = findChild(name)
-
-  @Volatile
-  private var markedAsDirty = false
-
-  fun markDirty() {
-    markedAsDirty = true
-  }
-
-  fun markDirtyRecursively() {
-    markDirty()
-    parent?.markDirtyRecursively()
-  }
-
-  fun isDirty(): Boolean {
-    return markedAsDirty
-  }
-
-  fun markClean() {
-    markedAsDirty = false
-  }
-
+  /** Get file extension */
   override fun getExtension(): String {
     return if (name.contains('.')) {
       name.split(".").last()
@@ -188,6 +173,7 @@ class MFVirtualFile internal constructor(
     }
   }
 
+  /** Get file type */
   override fun getFileType(): FileType {
     return if (this.name == this.extension) {
       PlainTextFileType.INSTANCE
@@ -201,6 +187,7 @@ class MFVirtualFile internal constructor(
     }
   }
 
+  /** Get file name without its extension */
   override fun getNameWithoutExtension(): String {
     return name.split(".").dropLast(1).joinToString(separator = ".")
   }
@@ -209,8 +196,10 @@ class MFVirtualFile internal constructor(
   val cachedChildren
     get() = fs.model.getChildrenList(this)
 
-  fun iterInDbChildren() = cachedChildren
-
+  /**
+   * Check if two files equal
+   * @param other the second file to check
+   */
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -317,6 +306,13 @@ inline fun <T> validWriteLock(
   )
 }
 
+/**
+ * Run the block of code with the specified generic lock for the file or for the list of files
+ * @param files the files to get the lock for
+ * @param locks the locks for the files
+ * @param default the default action to be handled if the file is not valid
+ * @param block the block of code to be handled with the lock
+ */
 @PublishedApi
 internal inline fun <T> genericVarargLockOr(
   files: Array<out MFVirtualFile>, locks: Array<Lock>, default: (MFVirtualFile?) -> () -> T, block: () -> T
@@ -340,6 +336,12 @@ internal inline fun <T> genericVarargLockOr(
   }
 }
 
+/**
+ * Run the block of code with the specified generic lock for the file
+ * @param lock the lock for the file
+ * @param default the default action to be handled if the file is not valid
+ * @param block the block of code to be handled with the lock
+ */
 @PublishedApi
 internal inline fun <T> MFVirtualFile.genericLockOr(
   lock: Lock, default: () -> T, block: () -> T

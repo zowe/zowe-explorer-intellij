@@ -11,12 +11,19 @@
 package org.zowe.explorer.dataops.operations.migration
 
 import org.zowe.explorer.dataops.Query
-import org.zowe.explorer.dataops.operations.*
+import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.utils.UNIT_CLASS
 
+/**
+ * Interface which represents migration runner class
+ */
 @Suppress("UNCHECKED_CAST")
 interface MigrationRunner<Q : Query<*, Unit>> : OperationRunner<Q, Unit> {
 
+  /**
+   * Method determines if migration operation can run or not
+   * @param operation - a typed operation instance
+   */
   override fun canRun(operation: Q): Boolean {
     return true
   }

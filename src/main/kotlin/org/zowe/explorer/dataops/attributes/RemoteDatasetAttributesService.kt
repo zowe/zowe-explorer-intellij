@@ -20,12 +20,18 @@ import org.zowe.kotlinsdk.Dataset
 const val MIGRATED = "Migrated"
 const val DATASETS_SUBFOLDER_NAME = "Data Sets"
 
+/**
+ * Factory class which builds remote dataset attributes service instance. Defined in plugin.xml
+ */
 class RemoteDatasetAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteDatasetAttributesService(dataOpsManager)
   }
 }
 
+/**
+ * Service class to work and manipulate with remote dataset attributes
+ */
 class RemoteDatasetAttributesService(
   dataOpsManager: DataOpsManager
 ) : MFRemoteAttributesServiceBase<RemoteDatasetAttributes>(dataOpsManager) {
@@ -34,6 +40,11 @@ class RemoteDatasetAttributesService(
 
   override val subFolderName = DATASETS_SUBFOLDER_NAME
 
+  /**
+   * Method to build unique attributes for a dataset
+   * @param attributes - attributes from which to build unique remote attributes
+   * @return a new instance of RemoteDatasetAttributes
+   */
   override fun buildUniqueAttributes(attributes: RemoteDatasetAttributes): RemoteDatasetAttributes {
     return RemoteDatasetAttributes(
       Dataset(
@@ -45,6 +56,11 @@ class RemoteDatasetAttributesService(
     )
   }
 
+  /**
+   * Method to build a new remote dataset attributes by merging them with old attributes (by mask requester)
+   * @param oldAttributes - old attributes from which to merge
+   * @param newAttributes - new attributes to be merged
+   */
   override fun mergeAttributes(
     oldAttributes: RemoteDatasetAttributes,
     newAttributes: RemoteDatasetAttributes
@@ -56,6 +72,10 @@ class RemoteDatasetAttributesService(
     )
   }
 
+  /**
+   * Method to build a list of paths elements from given attributes
+   * @param attributes - attributes to build a path element chain
+   */
   override fun continuePathChain(attributes: RemoteDatasetAttributes): List<PathElementSeed> {
     return listOf(
       PathElementSeed(attributes.volser ?: MIGRATED, createAttributes(directory = true)),
@@ -63,9 +83,15 @@ class RemoteDatasetAttributesService(
     )
   }
 
+  /**
+   * Method to reassign attributes when original path(folder) is being renamed
+   * @param file - virtual file to be renamed
+   * @param oldAttributes - old attributes of the virtual file
+   * @param newAttributes - new attributes of the virtual file after folder renaming
+   * @return Void
+   */
   override fun reassignAttributesAfterUrlFolderRenaming(
     file: MFVirtualFile,
-    urlFolder: MFVirtualFile,
     oldAttributes: RemoteDatasetAttributes,
     newAttributes: RemoteDatasetAttributes
   ) {

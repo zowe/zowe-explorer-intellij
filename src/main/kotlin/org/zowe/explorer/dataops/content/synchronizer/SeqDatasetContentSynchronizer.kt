@@ -13,6 +13,7 @@ package org.zowe.explorer.dataops.content.synchronizer
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.api.api
+import org.zowe.explorer.api.apiWithBytesConverter
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
@@ -20,12 +21,14 @@ import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.vfs.MFVirtualFile
-import org.zowe.kotlinsdk.DataAPI
-import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.explorer.DataAPI
+import org.zowe.explorer.DatasetOrganization
+import org.zowe.explorer.XIBMDataType
+import okhttp3.ResponseBody
 import retrofit2.Call
 import java.io.IOException
 
-class SeqDatasetContentSynchronizerFactory: ContentSynchronizerFactory {
+class SeqDatasetContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return SeqDatasetContentSynchronizer(dataOpsManager)
   }
@@ -33,15 +36,22 @@ class SeqDatasetContentSynchronizerFactory: ContentSynchronizerFactory {
 
 private val log = log<SeqDatasetContentSynchronizer>()
 
+/** Content synchronizer class for sequential datasets */
 class SeqDatasetContentSynchronizer(
   dataOpsManager: DataOpsManager
-): RemoteAttributedContentSynchronizer<RemoteDatasetAttributes>(dataOpsManager) {
+) : RemoteAttributedContentSynchronizer<RemoteDatasetAttributes>(dataOpsManager) {
   override val vFileClass = MFVirtualFile::class.java
 
   override val attributesClass = RemoteDatasetAttributes::class.java
 
   override val entityName = "seq_datasets"
 
+  /**
+   * Fetch remote content bytes for the sequential dataset
+   * @param attributes the attributes of the dataset to get requesters, the name of the dataset and the content mode
+   * @param progressIndicator a progress indicator for the operation
+   * @return content bytes after the operation is completed
+   */
   override fun fetchRemoteContentBytes(
     attributes: RemoteDatasetAttributes,
     progressIndicator: ProgressIndicator?
@@ -59,7 +69,13 @@ class SeqDatasetContentSynchronizer(
         }.execute()
         if (response.isSuccessful) {
           log.info("Content has been fetched successfully")
-          content = response.body()?.removeLastNewLine()?.toByteArray()
+
+          content = if (attributes.contentMode.type == XIBMDataType.Type.BINARY) {
+            response.body()?.bytes()?.removeLastNewLine()
+          } else {
+            response.body()?.bytes()
+          }
+
         } else {
           throwable = CallException(response, "Cannot fetch data from ${attributes.name}")
         }
@@ -70,7 +86,16 @@ class SeqDatasetContentSynchronizer(
     }.findAnyNullable() ?: throw throwable
   }
 
-  private fun makeFetchCall(connectionConfig: ConnectionConfig, attributes: RemoteDatasetAttributes): Call<String> {
+  /**
+   * Make the fetch call to retrieve the dataset content
+   * @param connectionConfig the connection config to make the call with
+   * @param attributes the dataset attributes to get VOLSER, name and content mode
+   * @return the call instance to track the result
+   */
+  private fun makeFetchCall(
+    connectionConfig: ConnectionConfig,
+    attributes: RemoteDatasetAttributes
+  ): Call<ResponseBody> {
     val volser = attributes.volser
     val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
     return if (volser != null) {
@@ -89,6 +114,13 @@ class SeqDatasetContentSynchronizer(
     }
   }
 
+  /**
+   * Make the upload call to upload the dataset content to the mainframe
+   * @param connectionConfig the connection config to make the call with
+   * @param attributes the dataset attributes to get VOLSER, name and content mode
+   * @param content the dataset content bytes to upload to the mainframe
+   * @return the call instance to track the result
+   */
   private fun makeUploadCall(
     connectionConfig: ConnectionConfig,
     attributes: RemoteDatasetAttributes,
@@ -97,23 +129,30 @@ class SeqDatasetContentSynchronizer(
     val volser = attributes.volser
     val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
     return if (volser != null) {
-      api<DataAPI>(connectionConfig).writeToDataset(
+      val newContent = if (xIBMDataType.type === XIBMDataType.Type.BINARY) content else content.addNewLine()
+      apiWithBytesConverter<DataAPI>(connectionConfig).writeToDataset(
         authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
         volser = volser,
-        content = String(content).addNewLine(),
+        content = newContent,
         xIBMDataType = xIBMDataType
       )
     } else {
-      api<DataAPI>(connectionConfig).writeToDataset(
+      apiWithBytesConverter<DataAPI>(connectionConfig).writeToDataset(
         authorizationToken = connectionConfig.authToken,
         datasetName = attributes.name,
-        content = String(content),
+        content = content,
         xIBMDataType = xIBMDataType
       )
     }
   }
 
+  /**
+   * Upload new content bytes of the dataset to the mainframe
+   * @param attributes the attributes of the dataset to get requesters and the name of the dataset
+   * @param newContentBytes the new content bytes to upload
+   * @param progressIndicator a progress indicator for the operation
+   */
   override fun uploadNewContent(
     attributes: RemoteDatasetAttributes,
     newContentBytes: ByteArray,
@@ -146,11 +185,16 @@ class SeqDatasetContentSynchronizer(
     }
   }
 
+  /**
+   * Check if the content synchronizer accepts the provided file
+   * @param file the file to check
+   * @return true if the file is not migrated and the dataset organization parameter is not VS
+   */
   override fun accepts(file: VirtualFile): Boolean {
     return super.accepts(file) &&
-      dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {
-        !it.isMigrated && it.datasetInfo.datasetOrganization != DatasetOrganization.VS
-      } == true
+            dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {
+              !it.isMigrated && it.datasetInfo.datasetOrganization != DatasetOrganization.VS
+            } == true
   }
 
 }

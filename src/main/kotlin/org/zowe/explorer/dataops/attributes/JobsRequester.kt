@@ -13,6 +13,12 @@ package org.zowe.explorer.dataops.attributes
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JobsFilter
 
+/**
+ * Information object with jobs filter and connection configuration inside to send request for a list of jobs to zosmf.
+ * @param connectionConfig connection configuration to specify the system to work with.
+ * @param jobsFilter filter of the jobs (prefix, owner, jobId).
+ * @author Valiantsin Krus
+ */
 class JobsRequester(
   override val connectionConfig: ConnectionConfig,
   val jobsFilter: JobsFilter

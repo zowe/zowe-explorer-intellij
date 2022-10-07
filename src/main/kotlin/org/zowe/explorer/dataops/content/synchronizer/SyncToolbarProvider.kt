@@ -14,6 +14,9 @@ import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvi
 
 private const val ACTION_GROUP = "org.zowe.explorer.dataops.content.synchronizer.SyncActionGroup"
 
+/**
+ * Class which serves as extension point for editor floating toolbar provider. Defined in plugin.xml
+ */
 class SyncToolbarProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
   override val autoHideable = true
   override val priority = 1

@@ -15,11 +15,17 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.utils.*
-import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.explorer.utils.ContentStorage
+import org.zowe.explorer.utils.runReadActionInEdtAndWait
+import org.zowe.explorer.utils.runWriteActionInEdt
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.kotlinsdk.XIBMDataType
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.contentEquals
+import kotlin.collections.firstOrNull
+import kotlin.collections.getOrPut
+import kotlin.collections.set
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
 private val log = logger<RemoteAttributedContentSynchronizer<*>>()
@@ -29,9 +35,9 @@ private val log = logger<RemoteAttributedContentSynchronizer<*>>()
  * Works with filesystem and file document but not interact with mainframe.
  * @author Valentine Krus
  */
-abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
+abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>(
   val dataOpsManager: DataOpsManager
-): ContentSynchronizer {
+) : ContentSynchronizer {
 
   /**
    * [FileAttributes] implementation class
@@ -69,7 +75,11 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
    * @param progressIndicator indicator to reflect uploading process status.
    */
   @Throws(Throwable::class)
-  protected abstract fun uploadNewContent(attributes: FAttributes, newContentBytes: ByteArray, progressIndicator: ProgressIndicator?)
+  protected abstract fun uploadNewContent(
+    attributes: FAttributes,
+    newContentBytes: ByteArray,
+    progressIndicator: ProgressIndicator?
+  )
 
   /**
    * Base implementation of [ContentSynchronizer.accepts] method for each content synchronizer.
@@ -99,7 +109,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
 
-      if(!isContentModeText(attributes)) {
+      if (!isContentModeText(attributes)) {
         idToBinaryFileMap[recordId] = syncProvider.file
       }
 
@@ -138,7 +148,10 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
           log.info("Content loaded from mainframe")
           successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
           runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
-          if(isContentModeText(attributes)) { idToBinaryFileMap.remove(recordId) } else { /*do nothing*/ }
+          if (isContentModeText(attributes)) {
+            idToBinaryFileMap.remove(recordId)
+          } else { /*do nothing*/
+          }
         }
       }
     }.onFailure {
@@ -147,7 +160,12 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
     }
   }
 
-  private fun isContentModeText (attributes: FileAttributes) : Boolean {
+  /**
+   * Determines if the current virtual file content is text
+   * @param attributes represents the current virtual file attributes
+   * @return True if the current file content is text. False otherwise
+   */
+  private fun isContentModeText(attributes: FileAttributes): Boolean {
     return attributes.contentMode.type == XIBMDataType.Type.TEXT
   }
 

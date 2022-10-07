@@ -22,15 +22,27 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.utils.log
-import org.zowe.explorer.utils.runWriteActionInEdt
 import org.zowe.explorer.vfs.MFVirtualFile
 
 private val log = log<FileEditorEventsListener>()
 
+/**
+ * File editor events listener.
+ * Needed to handle file close event
+ */
 class FileEditorEventsListener : FileEditorManagerListener.Before {
+
+  /**
+   * Handle synchronize before close if the file is not synchronized
+   * @param source the source file editor manager to get the project where the file is being edited
+   * @param file the file to be checked and synchronized
+   */
   override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
     val configService = service<ConfigService>()
-    if (file is MFVirtualFile && !configService.isAutoSyncEnabled.get() && file.isWritable) {
+    val dataOpsManager = service<DataOpsManager>()
+    val attributes = dataOpsManager.tryToGetAttributes(file)
+    if (file is MFVirtualFile && !configService.isAutoSyncEnabled && file.isWritable &&
+      attributes != null) {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: let {
         log.info("Document cannot be used here")
         return

@@ -18,6 +18,7 @@ import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.explorer.JesWorkingSet
 
+/** JES working set node representation */
 class JobsWsNode(
   workingSet: JesWorkingSet,
   project: Project,

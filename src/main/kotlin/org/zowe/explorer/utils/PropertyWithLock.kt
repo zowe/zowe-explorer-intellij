@@ -18,6 +18,10 @@ import kotlin.concurrent.withLock
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+/**
+ * Class to specify property with lock handling.
+ * This lock is intended to be as the read and write lock at the same time on each operation
+ */
 class PropertyWithLock<V>(
   private var value: V,
   private val lock: Lock
@@ -32,6 +36,7 @@ class PropertyWithLock<V>(
   }
 }
 
+/** Class to specify property with RW lock handling */
 class PropertyWithRWLock<V>(
   private var value: V,
   private val lock: ReadWriteLock
@@ -46,27 +51,8 @@ class PropertyWithRWLock<V>(
   }
 }
 
-class LazyPropertyWithRWLock<V: Any>(
-  private val valueProvider: () -> V,
-  private val lock: ReadWriteLock
-) : ReadWriteProperty<Any?, V> {
-
-  private val setted = false
-  private lateinit var value: V
-
-  override fun getValue(thisRef: Any?, property: KProperty<*>): V = lock.read {
-    if (setted) value else valueProvider().also { value = it }
-  }
-
-  override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) = lock.write{
-    if (setted) {
-      this.value = value
-    }
-  }
-
-}
-
+/** Make a property with a generic lock handling */
 fun <V> locked(value: V, lock: Lock = ReentrantLock()) = PropertyWithLock(value, lock)
+
+/** Make a property with a read/write lock handling */
 fun <V> rwLocked(value: V, lock: ReadWriteLock = ReentrantReadWriteLock()) = PropertyWithRWLock(value, lock)
-fun <V: Any> lazyRwLocked(valueProvider: () -> V, lock: ReadWriteLock = ReentrantReadWriteLock()) =
-  LazyPropertyWithRWLock(valueProvider, lock)

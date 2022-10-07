@@ -12,6 +12,7 @@ package org.zowe.explorer.explorer
 
 import org.zowe.explorer.config.connect.ConnectionConfig
 
+/** Interface to represent base unit in explorer */
 interface ExplorerUnit {
 
   val name: String

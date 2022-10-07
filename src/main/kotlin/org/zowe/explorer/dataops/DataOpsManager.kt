@@ -20,12 +20,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.dataops.attributes.AttributesService
 import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.dataops.fetch.FileFetchProvider
-import org.zowe.explorer.dataops.log.MFProcessInfo
-import org.zowe.explorer.dataops.log.LogFetcher
-import org.zowe.explorer.dataops.log.MFLogger
 import org.zowe.explorer.dataops.content.adapters.MFContentAdapter
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
+import org.zowe.explorer.dataops.fetch.FileFetchProvider
+import org.zowe.explorer.dataops.log.LogFetcher
+import org.zowe.explorer.dataops.log.MFLogger
+import org.zowe.explorer.dataops.log.MFProcessInfo
 
 interface DataOpsManager : Disposable {
 

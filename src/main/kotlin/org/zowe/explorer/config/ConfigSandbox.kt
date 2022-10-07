@@ -12,11 +12,28 @@ package org.zowe.explorer.config
 
 import com.intellij.openapi.application.ApplicationManager
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.annotations.Contains
 
+/**
+ * Apply the sandbox state to the config if it is modified
+ * @param clazz the config class to get the configs to apply the state to
+ */
+fun <T : Any> applySandbox(clazz: Class<out T>) {
+  ConfigSandbox.instance.apply(clazz)
+}
+
+/**
+ * Apply the sandbox state to the config if it is modified
+ * @param clazz the config class to get the configs to apply the state to
+ */
+inline fun <reified T : Any> applySandbox() {
+  applySandbox(T::class.java)
+}
+
+/** Interface to describe the config sandbox and possible ways to work with its state */
 interface ConfigSandbox {
 
   companion object {
@@ -47,11 +64,3 @@ interface ConfigSandbox {
 }
 
 val sandboxCrudable get() = ConfigSandbox.instance.crudable
-
-fun <T: Any> applySandbox(clazz: Class<out T>) {
-  ConfigSandbox.instance.apply(clazz)
-}
-
-inline fun <reified T : Any> applySandbox() {
-  applySandbox(T::class.java)
-}

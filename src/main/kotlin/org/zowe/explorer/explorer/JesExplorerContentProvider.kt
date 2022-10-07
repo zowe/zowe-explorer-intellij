@@ -25,6 +25,7 @@ class JesExplorerContentProviderFactory : ExplorerContentProviderFactory<JesExpl
   override fun buildComponent(): ExplorerContentProvider<JesExplorer> = JesExplorerContentProvider()
 }
 
+/** Class to provide content for JES Explorer */
 class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>() {
 
   override val explorer: JesExplorer = UIComponentManager.INSTANCE.getExplorer(JesExplorer::class.java)
@@ -33,10 +34,20 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>() {
   override val actionGroup: ActionGroup = ActionManager.getInstance().getAction("org.zowe.explorer.actions.JESActionBarGroup") as ActionGroup
   override val place: String = "JES Explorer"
 
+  /**
+   * Build the JES explorer content vertical panel
+   * @param parentDisposable the parent disposable to register the component to be disposed
+   * @param project the project where to build the panel
+   */
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
-    return JesExplorerView(explorer as Explorer<GlobalJesWorkingSet>, project, parentDisposable, contextMenu, { e, p, t ->
-      JesExplorerRootNode(e, p, t)
-    }) {
+    return JesExplorerView(
+      explorer as Explorer<JesWorkingSetImpl>,
+      project,
+      parentDisposable,
+      contextMenu,
+      { e, p, t ->
+        JesExplorerRootNode(e, p, t)
+      }) {
       lock.withLock {
         val previousState = filesToCut.toList()
         filesToCut = it

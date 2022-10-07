@@ -10,8 +10,8 @@
 
 package org.zowe.explorer.dataops.fetch
 
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
+import io.ktor.util.collections.*
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.config.ws.JobsFilter
@@ -24,10 +24,14 @@ import org.zowe.explorer.utils.asMutableList
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.kotlinsdk.ExecData
 import org.zowe.kotlinsdk.JESApi
-import org.zowe.kotlinsdk.JobStatus
-import retrofit2.Response
+import org.zowe.kotlinsdk.annotations.ZVersion
 
+/**
+ * Factory to register JobFetchProvider in Intellij IoC container.
+ * @author Valiantsin Krus
+ */
 class JobFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
     return JobFetchProvider(dataOpsManager)
@@ -36,6 +40,10 @@ class JobFileFetchProviderFactory : FileFetchProviderFactory {
 
 private val log = log<JobFetchProvider>()
 
+/**
+ * Provider for fetching list of jobs by the corresponding filter (e.g. owner, job name, job id).
+ * @author Valiantsin Krus
+ */
 class JobFetchProvider(dataOpsManager: DataOpsManager) :
   RemoteAttributedFileFetchBase<JobsFilter, RemoteJobAttributes, MFVirtualFile>(dataOpsManager) {
 
@@ -45,6 +53,10 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val responseClass = RemoteJobAttributes::class.java
 
+  /**
+   * Fetches jobs from zosmf. Creates and registers file attributes for them.
+   * @see RemoteFileFetchProviderBase.fetchResponse
+   */
   override fun fetchResponse(
     query: RemoteQuery<JobsFilter, Unit>,
     progressIndicator: ProgressIndicator
@@ -56,14 +68,16 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
     val response = if (query.request.jobId.isNotEmpty()) {
       api<JESApi>(query.connectionConfig).getFilteredJobs(
         basicCredentials = query.connectionConfig.authToken,
-        jobId = query.request.jobId
+        jobId = query.request.jobId,
+        execData = ExecData.YES
       ).cancelByIndicator(progressIndicator).execute()
     } else {
       api<JESApi>(query.connectionConfig).getFilteredJobs(
         basicCredentials = query.connectionConfig.authToken,
         owner = query.request.owner,
         prefix = query.request.prefix,
-        userCorrelator = query.request.userCorrelatorFilter
+        userCorrelator = query.request.userCorrelatorFilter,
+        execData = ExecData.YES
       ).cancelByIndicator(progressIndicator).execute()
     }
 
@@ -76,9 +90,33 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
         )
       }
       log.info("${query.request} returned ${attributes?.size ?: 0} entities")
-//      log.debug {
-//        attributes?.joinToString("\n") ?: ""
-//      }
+      log.info("Getting job timestamps and return code for returned jobs list...")
+      if(attributes!!.isNotEmpty()) {
+        val firstJobInfo = attributes[0].jobInfo
+        if(firstJobInfo.execStarted == null && firstJobInfo.execEnded == null && firstJobInfo.execSubmitted == null) {
+          log.info("Try to get jobs timestamps and return code through log fetcher due to z/OS version < ${ZVersion.ZOS_2_4}")
+          val updatedJobAttributes = mutableListOf<RemoteJobAttributes>()
+          val jobFetchHelperList = ConcurrentList<JobFetchHelper>()
+          for (attr in attributes) {
+            val jobFetchHelper = JobFetchHelper(query, attr)
+            jobFetchHelperList.add(jobFetchHelper)
+            jobFetchHelper.start()
+          }
+          while (jobFetchHelperList.size != 0) {
+            for(jobFetchHelper in jobFetchHelperList) {
+              if (!jobFetchHelper.isAlive) {
+                updatedJobAttributes.add(jobFetchHelper.getUpdatedJobAttributes())
+                jobFetchHelperList.remove(jobFetchHelper)
+              }
+            }
+          }
+          return updatedJobAttributes
+        } else {
+          log.info("jobs attributes already have timestamps and return code assigned")
+        }
+      } else {
+        log.info("No jobs returned for query $query. Skipping")
+      }
     } else {
       exception = CallException(response, "Cannot retrieve Job files list")
     }
@@ -90,6 +128,10 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
     return attributes ?: emptyList()
   }
 
+  /**
+   * Clears or update attributes of unused job file if needed.
+   * @see RemoteFileFetchProviderBase.cleanupUnusedFile
+   */
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<JobsFilter, Unit>) {
     val deletingFileAttributes = attributesService.getAttributes(file)
     log.info("Cleaning-up file attributes $deletingFileAttributes")

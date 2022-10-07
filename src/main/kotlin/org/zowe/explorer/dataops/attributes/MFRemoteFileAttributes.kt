@@ -10,10 +10,9 @@
 
 package org.zowe.explorer.dataops.attributes
 
-import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.utils.crudable.getByForeignKey
 
+/** Interface to describe possible mainframe remote file attributes and interactions with them */
 interface MFRemoteFileAttributes<R : Requester> : FileAttributes {
 
   val url: String
@@ -26,8 +25,12 @@ interface Requester {
   val connectionConfig: ConnectionConfig
 }
 
+/**
+ * Check if two files are used with the same connection config by their attributes
+ * @param other the other's file attributes to compare with the source one attributes
+ */
 inline fun <reified R : Requester> MFRemoteFileAttributes<R>.findCommonUrlConnections(other: MFRemoteFileAttributes<R>)
-  : Collection<Pair<R, ConnectionConfig>> {
+        : Collection<Pair<R, ConnectionConfig>> {
   val thisRequestersWithUrlConnection = requesters.map {
     Pair(it, it.connectionConfig)
   }

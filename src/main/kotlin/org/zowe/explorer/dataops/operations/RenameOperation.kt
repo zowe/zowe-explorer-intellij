@@ -14,6 +14,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.UnitOperation
 import org.zowe.explorer.dataops.attributes.FileAttributes
 
+/**
+ * Data class which represents a rename operation.
+ * @param file represents a virtual file on which rename will be performed.
+ * @param attributes represents a file attributes of the given virtual file.
+ * @param newName a new name of the file in VFS.
+ */
 data class RenameOperation(
   val file: VirtualFile,
   val attributes: FileAttributes,

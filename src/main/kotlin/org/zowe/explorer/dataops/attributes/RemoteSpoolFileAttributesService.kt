@@ -16,15 +16,27 @@ import org.zowe.explorer.vfs.MFVirtualFileSystem
 import org.zowe.kotlinsdk.SpoolFile
 import org.zowe.kotlinsdk.XIBMDataType
 
-class RemoteSpoolFileAttributesServiceFactory : AttributesServiceFactory{
+/**
+ * Factory for registering RemoteSpoolFileAttributesService.
+ * @author Valiantsin Krus
+ */
+class RemoteSpoolFileAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteSpoolFileAttributesService(dataOpsManager)
   }
 }
 
+/**
+ * Implementation of attributes service for working with spool files of the job.
+ * @see AttributesService
+ * @see DependentFileAttributesService
+ * @author Valiantsin Krus
+ */
 class RemoteSpoolFileAttributesService(
   val dataOpsManager: DataOpsManager
-) : DependentFileAttributesService<RemoteSpoolFileAttributes, SpoolFile, RemoteJobAttributes, MFVirtualFile>(dataOpsManager) {
+) : DependentFileAttributesService<RemoteSpoolFileAttributes, SpoolFile, RemoteJobAttributes, MFVirtualFile>(
+  dataOpsManager
+) {
 
   companion object {
     private val fsModel = MFVirtualFileSystem.instance.model
@@ -34,6 +46,11 @@ class RemoteSpoolFileAttributesService(
   override val vFileClass = MFVirtualFile::class.java
   override val parentAttributesClass = RemoteJobAttributes::class.java
 
+  /**
+   * Initialize attributes for spool file.
+   * @see RemoteSpoolFileAttributes
+   * @see DependentFileAttributesService.buildAttributes
+   */
   override fun buildAttributes(
     info: SpoolFile,
     file: MFVirtualFile,

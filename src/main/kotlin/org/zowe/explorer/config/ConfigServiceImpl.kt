@@ -25,9 +25,20 @@ import org.zowe.explorer.utils.crudable.*
 import org.zowe.explorer.utils.runIfTrue
 import java.nio.file.Paths
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.parsers.DocumentBuilderFactory
 
+/**
+ * Configure crudable object to work with. Will create a new CrudableLists, wrapped by the ConcurrentCrudable
+ * @param block the callback to initialize events handlers
+ */
+internal inline fun Crudable.configureCrudable(block: CrudableLists.() -> Unit): Crudable {
+  this.castOrNull<ConcurrentCrudable>()?.apply {
+    wrappingCrudable.castOrNull<CrudableLists>()?.apply(block)
+  }
+  return this
+}
+
+/** Config service state class. Describes all the interactions with the plugin configs */
 @State(
   name = "org.zowe.explorer.config.ConfigService",
   storages = [Storage(value = "zowe_explorer_intellij_config.xml", exportable = true)]
@@ -36,13 +47,16 @@ class ConfigServiceImpl : ConfigService {
 
   companion object {
     private val myState = ConfigState()
-    private val loaded = AtomicBoolean(false)
   }
 
   override fun getState(): ConfigState {
     return myState
   }
 
+  /**
+   * Load current config state
+   * @param state the state to load
+   */
   override fun loadState(state: ConfigState) {
     XmlSerializerUtil.copyBean(state, myState)
     acceptOldConfigs()
@@ -57,15 +71,26 @@ class ConfigServiceImpl : ConfigService {
       eventHandler = this@ConfigServiceImpl.eventHandler
     }
 
-  override var isAutoSyncEnabled = AtomicBoolean(false)
+  override var isAutoSyncEnabled: Boolean
+    get() = state.settings.isAutoSyncEnabled
+    set(value) {
+      state.settings.isAutoSyncEnabled = value
+    }
+
+  override var batchSize: Int
+    get() = state.settings.batchSize
+    set(value) {
+      state.settings.batchSize = value
+    }
 
   /**
-   * Adapt all configs in old style to the new one and updates config file.
+   * Adapt all configs in old style to the new one and update config file.
+   * Notice: update of the file happens only when the config is changed by user (e.g.: mask change, job filter change, mask add)
    */
   private fun acceptOldConfigs() {
     myState.connections = myState.connections.toMutableList()
     myState.jobsWorkingSets = myState.jobsWorkingSets.toMutableList()
-    myState.workingSets = myState.workingSets.toMutableList()
+    myState.filesWorkingSets = myState.filesWorkingSets.toMutableList()
 
     val configLocation =
       Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, "zowe_explorer_intellij_config.xml")
@@ -79,45 +104,27 @@ class ConfigServiceImpl : ConfigService {
   }
 }
 
-internal abstract class ClassCaseSwitcher<R> {
-
-  abstract fun onConnectionConfig(): R
-
-  abstract fun onWorkingSetConfig(): R
-
-  abstract fun onJobsWorkingSetConfig(): R
-
-  open fun onCredentials(): R {
-    return onElse()
-  }
-
-  abstract fun onElse(): R
-
-  operator fun invoke(clazz: Class<*>): R {
-    return when (clazz) {
-      ConnectionConfig::class.java -> onConnectionConfig()
-      FilesWorkingSetConfig::class.java -> onWorkingSetConfig()
-      JobsWorkingSetConfig::class.java -> onJobsWorkingSetConfig()
-      Credentials::class.java -> onCredentials()
-      else -> onElse()
-    }
-  }
-
-}
-
-private class FilterSwitcher(
+/**
+ * Filter decider class, that provides the count of rows by a specific column value, provided by the row parameter
+ * @param crudable the crudable object to get the rows from
+ * @param row the row parameter with the column value to get rows by
+ */
+private class FilterDecider(
   private val crudable: Crudable,
   private val row: Any
-) : ClassCaseSwitcher<Long>() {
+) : ConfigClassActionDecider<Long>() {
+
+  /** Get the count of the ConnectionConfig rows by the filtering row name */
   override fun onConnectionConfig(): Long {
     return crudable.getByColumnLambda(row as ConnectionConfig) { it.name }.count()
   }
 
-
-  override fun onWorkingSetConfig(): Long {
+  /** Get the count of the FilesWorkingSetConfig rows by the filtering row name */
+  override fun onFilesWorkingSetConfig(): Long {
     return crudable.getByColumnLambda(row as FilesWorkingSetConfig) { it.name }.count()
   }
 
+  /** Get the count of the JobsWorkingSetConfig rows by the filtering row UUID */
   override fun onJobsWorkingSetConfig(): Long {
     return crudable.getByColumnLambda(row as JobsWorkingSetConfig) { it.uuid }.count()
   }
@@ -131,26 +138,51 @@ private class FilterSwitcher(
   }
 }
 
-private class UpdateFilterSwitcher(
+/**
+ * Update filter decider to check whether the row can be updated, corresponding to the conditions for the specific class
+ * @param crudable the crudable object to get rows from
+ * @param currentRow the row to update
+ * @param updatingRow the row object with the updates
+ */
+private class UpdateFilterDecider(
   crudable: Crudable,
   private val currentRow: Any,
   private val updatingRow: Any
-) : ClassCaseSwitcher<Boolean>() {
-  private val filterSwitcher = FilterSwitcher(crudable, updatingRow)
+) : ConfigClassActionDecider<Boolean>() {
+  private val filterSwitcher = FilterDecider(crudable, updatingRow)
 
+  /**
+   * Check if the ConnectionConfig row update can be proceeded.
+   * The update is possible either when any of the properties are equal to the same current row property,
+   * or if there is no any rows in the config
+   */
   override fun onConnectionConfig(): Boolean {
     return if (currentRow is ConnectionConfig && updatingRow is ConnectionConfig) {
-      filterSwitcher.onConnectionConfig() == 0L || updatingRow.name == currentRow.name || updatingRow.zVersion == currentRow.zVersion || updatingRow.url == currentRow.url || updatingRow.codePage == currentRow.codePage || updatingRow.isAllowSelfSigned == updatingRow.isAllowSelfSigned
+      filterSwitcher.onConnectionConfig() == 0L
+        || updatingRow.name == currentRow.name
+        || updatingRow.zVersion == currentRow.zVersion
+        || updatingRow.url == currentRow.url
+        || updatingRow.codePage == currentRow.codePage
+        || updatingRow.isAllowSelfSigned == currentRow.isAllowSelfSigned
     } else false
   }
 
-
-  override fun onWorkingSetConfig(): Boolean {
+  /**
+   * Check if the FilesWorkingSetConfig row update can be proceeded.
+   * The update is possible either when names of the updating row and the current row are the same,
+   * or if there is no any rows in the config
+   */
+  override fun onFilesWorkingSetConfig(): Boolean {
     return if (currentRow is FilesWorkingSetConfig && updatingRow is FilesWorkingSetConfig) {
-      filterSwitcher.onWorkingSetConfig() == 0L || updatingRow.name == currentRow.name
+      filterSwitcher.onFilesWorkingSetConfig() == 0L || updatingRow.name == currentRow.name
     } else false
   }
 
+  /**
+   * Check if the JobsWorkingSetConfig row update can be proceeded.
+   * The update is possible either when UUIDs of the updating row and the current row are the same,
+   * or if there is no any rows in the config
+   */
   override fun onJobsWorkingSetConfig(): Boolean {
     return if (currentRow is JobsWorkingSetConfig && updatingRow is JobsWorkingSetConfig) {
       filterSwitcher.onJobsWorkingSetConfig() == 0L || updatingRow.uuid == currentRow.uuid
@@ -167,19 +199,26 @@ private class UpdateFilterSwitcher(
 
 }
 
+/**
+ * Make the raw crudable for the config service, that will give all the configs by the state getter.
+ * Also, "add" and "update" filters are initialized along with the next UUID provider
+ * @param withCredentials the value to check whether the crudable should work with the credentials config or not
+ * @param credentialsGetter the credential getter callback. Returns empty list by default
+ * @param stateGetter the current config state getter. Returns config state to work with
+ */
 internal fun makeCrudableWithoutListeners(
   withCredentials: Boolean,
   credentialsGetter: () -> MutableList<Credentials> = { mutableListOf() },
   stateGetter: () -> ConfigState,
 ): Crudable {
   return CrudableListsBuilder {
-    object : ClassCaseSwitcher<MutableList<*>?>() {
+    object : ConfigClassActionDecider<MutableList<*>?>() {
       override fun onConnectionConfig(): MutableList<*> {
         return stateGetter().connections
       }
 
-      override fun onWorkingSetConfig(): MutableList<*> {
-        return stateGetter().workingSets
+      override fun onFilesWorkingSetConfig(): MutableList<*> {
+        return stateGetter().filesWorkingSets
       }
 
       override fun onCredentials(): MutableList<*>? {
@@ -196,45 +235,15 @@ internal fun makeCrudableWithoutListeners(
         return null
       }
     }(it)
-  }.withNextUuidProvider {
-    UUID.randomUUID().toString()
-  }.apply crudable@{
-    addFilter = AddFilter { rowClass, row ->
-      FilterSwitcher(this, row)(rowClass) == 0L
-    }
-    updateFilter = UpdateFilter { clazz, currentRow, updatingRow ->
-      UpdateFilterSwitcher(this, currentRow, updatingRow)(clazz)
-    }
-  }.let {
-    ConcurrentCrudable(it, SimpleReadWriteAdapter())
   }
-}
-
-internal inline fun Crudable.configureCrudable(block: CrudableLists.() -> Unit): Crudable {
-  this.castOrNull<ConcurrentCrudable>()?.apply {
-    wrappingCrudable.castOrNull<CrudableLists>()?.apply(block)
-  }
-  return this
-}
-
-@Suppress("UNCHECKED_CAST")
-internal fun <T> classToList(clazz: Class<out T>, state: ConfigState): MutableList<T>? {
-  return object : ClassCaseSwitcher<MutableList<T>?>() {
-    override fun onConnectionConfig(): MutableList<T> {
-      return state.connections as MutableList<T>
+    .withNextUuidProvider { UUID.randomUUID().toString() }
+    .apply crudable@{
+      addFilter = AddFilter { rowClass, row ->
+        FilterDecider(this, row)(rowClass) == 0L
+      }
+      updateFilter = UpdateFilter { clazz, currentRow, updatingRow ->
+        UpdateFilterDecider(this, currentRow, updatingRow)(clazz)
+      }
     }
-
-    override fun onWorkingSetConfig(): MutableList<T> {
-      return state.workingSets as MutableList<T>
-    }
-
-    override fun onJobsWorkingSetConfig(): MutableList<T> {
-      return state.jobsWorkingSets as MutableList<T>
-    }
-
-    override fun onElse(): MutableList<T>? {
-      return null
-    }
-
-  }(clazz as Class<*>)
+    .let { ConcurrentCrudable(it, SimpleReadWriteAdapter()) }
 }

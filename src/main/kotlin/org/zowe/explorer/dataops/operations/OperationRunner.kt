@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.dataops.Operation
 
+/** Base interface to represent operation runner. */
 interface OperationRunner<O : Operation<R>, R : Any> {
 
   companion object {
@@ -26,8 +27,10 @@ interface OperationRunner<O : Operation<R>, R : Any> {
 
   val resultClass: Class<out R>
 
+  /** Determines if an operation can be run on selected object. */
   fun canRun(operation: O): Boolean
 
+  /** Runs operation. */
   fun run(operation: O, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE): R
 
 }

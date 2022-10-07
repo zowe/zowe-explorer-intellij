@@ -18,6 +18,7 @@ import com.intellij.util.IconUtil
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.vfs.MFVirtualFile
 
+/** USS file representation in the explorer tree */
 class UssFileNode(
   file: MFVirtualFile,
   project: Project,

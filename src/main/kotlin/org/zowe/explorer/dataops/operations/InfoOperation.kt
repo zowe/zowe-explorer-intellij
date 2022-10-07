@@ -12,8 +12,13 @@ package org.zowe.explorer.dataops.operations
 
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.Operation
+import org.zowe.kotlinsdk.InfoResponse
 import org.zowe.kotlinsdk.SystemsResponse
 
+/**
+ * Base class which represents an operation to be performed against systems info defined to z/OSMF particular instance
+ * @param connectionConfig represents a connection config object
+ */
 class InfoOperation(var connectionConfig: ConnectionConfig) : Operation<SystemsResponse> {
   override val resultClass = SystemsResponse::class.java
 }

@@ -14,26 +14,26 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.explorer.ui.FileExplorerTreeNodeRoot
-import org.zowe.explorer.explorer.ui.GlobalFileExplorerView
+import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.utils.sendTopic
 import javax.swing.JComponent
 import kotlin.concurrent.withLock
 
-class FileExplorerContentProviderFactory : ExplorerContentProviderFactory<GlobalExplorer>() {
-  override fun buildComponent(): ExplorerContentProvider<GlobalExplorer> = FileExplorerContentProvider.getInstance()
+class FileExplorerContentProviderFactory : ExplorerContentProviderFactory<FileExplorer>() {
+  override fun buildComponent(): ExplorerContentProvider<FileExplorer> = FileExplorerContentProvider.getInstance()
 }
 
-class FileExplorerContentProvider private constructor() : ExplorerContentProviderBase<GlobalExplorer>() {
+/** Class to provide content for File Explorer */
+class FileExplorerContentProvider private constructor() : ExplorerContentProviderBase<FileExplorer>() {
 
-  override val explorer: GlobalExplorer = UIComponentManager.INSTANCE.getExplorer(GlobalExplorer::class.java)
+  override val explorer: FileExplorer = UIComponentManager.INSTANCE.getExplorer(FileExplorer::class.java)
   override val displayName: String = "File Explorer"
   override val isLockable: Boolean = false
   override val actionGroup: ActionGroup =
     ActionManager.getInstance().getAction("org.zowe.explorer.actions.FilesActionBarGroup") as ActionGroup
   override val place: String = "File Explorer"
-  private val globalFileExplorerViews = mutableMapOf<Project, GlobalFileExplorerView>()
+  private val fileExplorerViews = mutableMapOf<Project, FileExplorerView>()
 
 
   companion object {
@@ -43,15 +43,25 @@ class FileExplorerContentProvider private constructor() : ExplorerContentProvide
     }
   }
 
-  fun getExplorerView (project: Project): GlobalFileExplorerView? {
-    return globalFileExplorerViews[project]
+  fun getExplorerView(project: Project): FileExplorerView? {
+    return fileExplorerViews[project]
   }
 
+  /**
+   * Build the file explorer content vertical panel
+   * @param parentDisposable the parent disposable to register the component to be disposed
+   * @param project the project where to build the panel
+   */
   @Suppress("UNCHECKED_CAST")
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
-    return GlobalFileExplorerView(explorer as Explorer<FilesWorkingSet>, project, parentDisposable, contextMenu, { e, p, t ->
-      FileExplorerTreeNodeRoot(e, p, t)
-    }) {
+    return FileExplorerView(
+      explorer as Explorer<FilesWorkingSet>,
+      project,
+      parentDisposable,
+      contextMenu,
+      { e, p, t ->
+        FileExplorerTreeNodeRoot(e, p, t)
+      }) {
       lock.withLock {
         val previousState = filesToCut.toList()
         filesToCut = it
@@ -59,7 +69,7 @@ class FileExplorerContentProvider private constructor() : ExplorerContentProvide
           .onUpdate(previousState, it)
       }
     }.also {
-      globalFileExplorerViews[project] = it
+      fileExplorerViews[project] = it
     }
   }
 

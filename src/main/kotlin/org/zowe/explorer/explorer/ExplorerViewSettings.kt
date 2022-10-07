@@ -12,6 +12,7 @@ package org.zowe.explorer.explorer
 
 import com.intellij.ide.projectView.ViewSettings
 
+/** Interface to represent the view settings for the explorer */
 interface ExplorerViewSettings : ViewSettings {
 
   val showVolser

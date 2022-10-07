@@ -21,15 +21,28 @@ import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
 import org.zowe.explorer.explorer.ui.JES_EXPLORER_VIEW
 import org.zowe.explorer.utils.crudable.Crudable
 
+/**
+ * Implementation of AddWsActionBase for files working sets.
+ * @see AddWsActionBase
+ * @author Valiantsin Krus
+ */
 class AddWorkingSetAction : AddWsActionBase() {
   override val explorerView = FILE_EXPLORER_VIEW
   override val presentationTextInExplorer = "Working Set"
   override val defaultPresentationText = "Create Working Set"
 
+  /**
+   * Creates dialog for Files Working Set.
+   * @see AddWsActionBase.createDialog
+   */
   override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
     return WorkingSetDialog(configCrudable, WorkingSetDialogState().initEmptyUuids(configCrudable))
   }
 
+  /**
+   * Does the same as the super method but disable action for JES Explorer.
+   * @see AddWsActionBase.update
+   */
   override fun update(e: AnActionEvent) {
     super.update(e)
     if (e.getData(JES_EXPLORER_VIEW) != null) {

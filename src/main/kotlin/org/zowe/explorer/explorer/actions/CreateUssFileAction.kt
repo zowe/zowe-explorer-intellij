@@ -13,6 +13,7 @@ package org.zowe.explorer.explorer.actions
 import org.zowe.explorer.explorer.ui.CreateFileDialogState
 import org.zowe.explorer.explorer.ui.emptyFileState
 
+/** Action to create USS file. The file will be empty when created */
 class CreateUssFileAction : CreateUssEntityAction() {
 
   override val fileType: CreateFileDialogState

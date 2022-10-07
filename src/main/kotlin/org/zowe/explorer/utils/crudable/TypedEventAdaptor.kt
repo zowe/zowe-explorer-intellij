@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.utils.crudable
 
+/** Abstract class to handle typed events */
 abstract class TypedEventAdaptor<Row>(
   private val clazz: Class<out Row>,
 ) : EventHandler {
@@ -42,6 +43,7 @@ abstract class TypedEventAdaptor<Row>(
   }
 }
 
+/** Class to provide default typed event handling methods */
 class TypedEventAdaptorBuilder<Row> {
 
   private lateinit var myOnAdd: (Row) -> Unit
@@ -76,7 +78,13 @@ class TypedEventAdaptorBuilder<Row> {
 
 }
 
-fun <Row> eventAdapter(rowClass: Class<Row>, init: TypedEventAdaptorBuilder<Row>.() -> Unit): TypedEventAdaptor<Row>{
+/**
+ * Make an event adapter for the provided initializer.
+ * Non-initialized event handlers will be handled by the default event handler
+ * @param rowClass the row class for CRUDable processing
+ * @param init the event handlers initializer
+ */
+fun <Row> eventAdapter(rowClass: Class<Row>, init: TypedEventAdaptorBuilder<Row>.() -> Unit): TypedEventAdaptor<Row> {
   val proxy = TypedEventAdaptorBuilder<Row>().apply(init)
   return object : TypedEventAdaptor<Row>(rowClass) {
     override fun onOurRowAdd(added: Row) {
@@ -93,10 +101,10 @@ fun <Row> eventAdapter(rowClass: Class<Row>, init: TypedEventAdaptorBuilder<Row>
   }
 }
 
-inline fun <reified Row> eventAdaptor(noinline init: TypedEventAdaptorBuilder<Row>.() -> Unit): TypedEventAdaptor<Row> {
-  return eventAdapter(Row::class.java, init)
-}
-
+/**
+ * Provide a generic event adapter for the events
+ * @param block the block of code to run on every event triggered
+ */
 inline fun <reified Row> anyEventAdaptor(crossinline block: (Row) -> Unit): TypedEventAdaptor<Row> {
   return object : TypedEventAdaptor<Row>(Row::class.java) {
     override fun onOurRowAdd(added: Row) {

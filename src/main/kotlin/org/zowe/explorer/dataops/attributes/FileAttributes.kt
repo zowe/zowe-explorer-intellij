@@ -14,6 +14,7 @@ import org.zowe.explorer.utils.Copyable
 import org.zowe.explorer.utils.PasteAcceptor
 import org.zowe.kotlinsdk.XIBMDataType
 
+/** Interface to describe possible file attributes and interactions with them */
 interface FileAttributes : Cloneable, Copyable, PasteAcceptor {
 
   val name: String

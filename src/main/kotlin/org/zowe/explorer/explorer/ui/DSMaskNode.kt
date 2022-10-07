@@ -10,20 +10,22 @@
 
 package org.zowe.explorer.explorer.ui
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.config.ws.DSMask
+import org.zowe.explorer.dataops.BatchedRemoteQuery
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.UnitRemoteQueryImpl
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
+/**
+ * File Explorer dataset mask representation.
+ */
 class DSMaskNode(
   dsMask: DSMask,
   project: Project,
@@ -44,10 +46,13 @@ class DSMaskNode(
     get() {
       val connectionConfig = unit.connectionConfig
       return if (connectionConfig != null) {
-        UnitRemoteQueryImpl(value, connectionConfig)
+        BatchedRemoteQuery(value, connectionConfig)
       } else null
     }
 
+  /**
+   * Returns map of children nodes (datasets and uss files).
+   */
   override fun Collection<MFVirtualFile>.toChildrenNodes(): MutableList<AbstractTreeNode<*>> {
     return map {
       if (it.isDirectory) {
@@ -60,9 +65,11 @@ class DSMaskNode(
 
   override val requestClass = DSMask::class.java
 
+  /**
+   * Makes and returns title for fetch task.
+   */
   override fun makeFetchTaskTitle(query: RemoteQuery<DSMask, Unit>): String {
     return "Fetching listings for ${query.request.mask}"
   }
-
 
 }

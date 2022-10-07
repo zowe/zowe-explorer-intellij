@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import java.io.IOException
 
+/** Interface to provide the basic description of possible actions on attributes */
 interface AttributesService<Attributes : FileAttributes, VFile : VirtualFile> {
 
   companion object {
@@ -68,6 +69,10 @@ interface AttributesService<Attributes : FileAttributes, VFile : VirtualFile> {
 
 }
 
+/**
+ * Clone attributes and apply them on the file
+ * @param attributes the attributes to clone and apply
+ */
 @Suppress("UNCHECKED_CAST")
 fun <Attributes : FileAttributes> (Attributes.() -> Unit).cloneAndApply(attributes: Attributes): Attributes {
   val cloned = attributes.clone() as Attributes

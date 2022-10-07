@@ -10,7 +10,7 @@
 
 package org.zowe.explorer.explorer
 
-
+/** UI component manager service implementation. Is used to work with the UI components through it */
 class UIComponentManagerImpl : UIComponentManager {
 
   private val explorerList by lazy {

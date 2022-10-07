@@ -13,6 +13,7 @@ package org.zowe.explorer.vfs
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.FileNotFoundException
 
+/** Class for invalid file exception. Raises when the file is not found in the file system */
 class InvalidFileException(file: VirtualFile) : FileNotFoundException(
   "${file.name} not found on fs ${file.fileSystem}"
 )

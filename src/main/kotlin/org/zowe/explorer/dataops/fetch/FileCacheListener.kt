@@ -13,14 +13,21 @@ package org.zowe.explorer.dataops.fetch
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.Query
 
+/**
+ * Interface for describing listener for events with file cache.
+ */
 interface FileCacheListener {
 
+  /** File cache update event. */
   fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> onCacheUpdated(query: Q, files: Collection<File>) {}
 
+  /** Fetch failure event. */
   fun <R : Any, Q : Query<R, Unit>> onFetchFailure(query: Q, throwable: Throwable) {}
 
+  /** Cancelled fetch event. */
   fun <R : Any, Q : Query<R, Unit>> onFetchCancelled(query: Q) {}
 
+  /** File cache clean event. */
   fun <R : Any, Q : Query<R, Unit>> onCacheCleaned(query: Q) {}
 
 }

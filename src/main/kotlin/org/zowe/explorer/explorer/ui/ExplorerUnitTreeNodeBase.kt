@@ -13,6 +13,10 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.explorer.ExplorerUnit
 
+/**
+ * Additional class to the ExplorerTreeNode to indicate explorer unit
+ * @see ExplorerTreeNode
+ */
 abstract class ExplorerUnitTreeNodeBase<Value : Any, U : ExplorerUnit>(
   value: Value,
   project: Project,

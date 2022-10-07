@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.common.ui
 
+/** Interface to represent dialog state */
 interface DialogState {
   var mode: DialogMode
 }

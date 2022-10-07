@@ -12,5 +12,9 @@ package org.zowe.explorer.dataops.operations
 
 import org.zowe.explorer.dataops.DataOpsComponentFactory
 
+/**
+ * Interface which represents factory for operations runner
+ * which creates instances for operation
+ */
 interface OperationRunnerFactory : DataOpsComponentFactory<OperationRunner<*, *>> {
 }

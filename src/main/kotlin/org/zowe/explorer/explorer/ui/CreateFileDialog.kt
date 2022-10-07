@@ -11,9 +11,10 @@
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.layout.PropertyBinding
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.dataops.operations.UssAllocationParams
 import org.zowe.explorer.utils.validateForBlank
@@ -25,29 +26,26 @@ import org.zowe.kotlinsdk.FileType
 import javax.swing.JComponent
 
 val dummyState: CreateFileDialogState
-get() = CreateFileDialogState(
-  parameters = CreateUssFile(FileType.FILE, FileMode(7,7,7))
-)
+  get() = CreateFileDialogState(
+    parameters = CreateUssFile(FileType.FILE, FileMode(7, 7, 7))
+  )
 
 class CreateFileDialog(project: Project?, override var state: CreateFileDialogState = dummyState, filePath: String) :
   StatefulDialog<CreateFileDialogState>(project = project) {
 
   override fun createCenterPanel(): JComponent {
 
-    val modelTemplateFactory = {
-      CollectionComboBoxModel(
-        listOf(
-          FileModeValue.NONE,
-          FileModeValue.READ,
-          FileModeValue.WRITE,
-          FileModeValue.READ_WRITE,
-          FileModeValue.EXECUTE,
-          FileModeValue.READ_EXECUTE,
-          FileModeValue.READ_WRITE,
-          FileModeValue.READ_WRITE_EXECUTE
-        )
+    val fileModeValues =
+      listOf(
+        FileModeValue.NONE,
+        FileModeValue.READ,
+        FileModeValue.WRITE,
+        FileModeValue.READ_WRITE,
+        FileModeValue.EXECUTE,
+        FileModeValue.READ_EXECUTE,
+        FileModeValue.READ_WRITE,
+        FileModeValue.READ_WRITE_EXECUTE
       )
-    }
 
     fun Int.toFileModeValue(): FileModeValue {
       return when (this) {
@@ -63,56 +61,51 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
       }
     }
 
+    val sameWidthLabelsGroup = "USS_CREATE_FILE_DIALOG_LABELS_WIDTH_GROUP"
+    val sameWidthComboBoxGroup = "USS_CREATE_FILE_DIALOG_COMBO_BOX_WIDTH_GROUP"
 
     return panel {
       row {
-        label("Name")
-        textField(state::fileName).withValidationOnInput {
-          validateUssFileName(it)
-        }.withValidationOnApply {
-          validateForBlank(it)
-        }.apply {
-          focused()
-        }
+        label("Name: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(state::fileName)
+          .validationOnInput { validateUssFileName(it) }
+          .validationOnApply { validateForBlank(it) }
+          .horizontalAlign(HorizontalAlign.FILL)
+          .focused()
       }
       row {
-        label("Owner")
-        comboBox(
-          model = modelTemplateFactory(),
-          modelBinding = PropertyBinding(
-            get = { state.parameters.mode.owner.toFileModeValue() },
-            set = {
-              state.parameters.mode.owner = it?.mode ?: 0
-            }
+        label("Owner: ")
+          .widthGroup(sameWidthLabelsGroup)
+        comboBox(fileModeValues)
+          .bindItem(
+            { state.parameters.mode.owner.toFileModeValue() },
+            { state.parameters.mode.owner = it?.mode ?: 0 }
           )
-        )
+          .widthGroup(sameWidthComboBoxGroup)
       }
       row {
-        label("Group")
-        comboBox(
-          model = modelTemplateFactory(),
-          modelBinding = PropertyBinding(
-            get = { state.parameters.mode.group.toFileModeValue() },
-            set = {
-              state.parameters.mode.group = it?.mode ?: 0
-            }
+        label("Group: ")
+          .widthGroup(sameWidthLabelsGroup)
+        comboBox(fileModeValues)
+          .bindItem(
+            { state.parameters.mode.group.toFileModeValue() },
+            { state.parameters.mode.owner = it?.mode ?: 0 }
           )
-        )
+          .widthGroup(sameWidthComboBoxGroup)
       }
       row {
-        label("All")
-        comboBox(
-          model = modelTemplateFactory(),
-          modelBinding = PropertyBinding(
-            get = { state.parameters.mode.all.toFileModeValue() },
-            set = {
-              state.parameters.mode.all = it?.mode ?: 0
-            }
+        label("All: ")
+          .widthGroup(sameWidthLabelsGroup)
+        comboBox(fileModeValues)
+          .bindItem(
+            { state.parameters.mode.group.toFileModeValue() },
+            { state.parameters.mode.owner = it?.mode ?: 0 }
           )
-        )
+          .widthGroup(sameWidthComboBoxGroup)
       }
     }
-
   }
 
   init {

@@ -12,13 +12,22 @@ package org.zowe.explorer.config.connect.ui
 
 import com.intellij.util.ui.ColumnInfo
 
-
+/**
+ * Class represents a connection name column in connection table model.
+ * It extends ColumnInfo abstract class and overloads getter and setter methods as values for this column
+ */
 class ConnectionNameColumn : ColumnInfo<ConnectionDialogState, String>("Name") {
 
+  /**
+   * overloaded getter method of ColumnInfo abstract class
+   */
   override fun valueOf(item: ConnectionDialogState): String {
     return item.connectionName
   }
 
+  /**
+   * overloaded setter method of ColumnInfo abstract class
+   */
   override fun setValue(item: ConnectionDialogState, value: String) {
     item.connectionName = value
   }

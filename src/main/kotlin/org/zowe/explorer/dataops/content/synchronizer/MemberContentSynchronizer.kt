@@ -12,6 +12,7 @@ package org.zowe.explorer.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
+import org.zowe.explorer.api.apiWithBytesConverter
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
@@ -22,9 +23,10 @@ import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.XIBMDataType
 import java.io.IOException
 
-class MemberContentSynchronizerFactory: ContentSynchronizerFactory {
+class MemberContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return MemberContentSynchronizer(dataOpsManager)
   }
@@ -32,9 +34,14 @@ class MemberContentSynchronizerFactory: ContentSynchronizerFactory {
 
 private val log = log<MemberContentSynchronizer>()
 
+/**
+ * Member content synchronizer.
+ * Provides dataset member content synchronization actions
+ * @param dataOpsManager the data ops manager to get dataset attributes service
+ */
 class MemberContentSynchronizer(
   dataOpsManager: DataOpsManager
-): RemoteAttributedContentSynchronizer<RemoteMemberAttributes>(dataOpsManager) {
+) : RemoteAttributedContentSynchronizer<RemoteMemberAttributes>(dataOpsManager) {
 
   override val vFileClass = MFVirtualFile::class.java
 
@@ -45,6 +52,12 @@ class MemberContentSynchronizer(
 
   override val entityName = "members"
 
+  /**
+   * Fetch remote content bytes for the dataset member
+   * @param attributes the member attributes to get a parent file and the member name
+   * @param progressIndicator a progress indicator for the operation
+   * @return fetched member bytes array
+   */
   override fun fetchRemoteContentBytes(
     attributes: RemoteMemberAttributes,
     progressIndicator: ProgressIndicator?
@@ -83,6 +96,12 @@ class MemberContentSynchronizer(
     return content ?: throw throwable
   }
 
+  /**
+   * Upload new content of the member to the mainframe
+   * @param attributes the member attributes to get a parent file, content mode and the member name
+   * @param newContentBytes new content bytes of the member to upload
+   * @param progressIndicator a progress indicator for the operation
+   */
   override fun uploadNewContent(
     attributes: RemoteMemberAttributes,
     newContentBytes: ByteArray,
@@ -99,11 +118,13 @@ class MemberContentSynchronizer(
         log.info("Trying to execute a call using $requester")
         val connectionConfig = requester.connectionConfig
         val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
-        val response = api<DataAPI>(connectionConfig).writeToDatasetMember(
+        val newContent =
+          if (xIBMDataType.type == XIBMDataType.Type.BINARY) newContentBytes else newContentBytes.addNewLine()
+        val response = apiWithBytesConverter<DataAPI>(connectionConfig).writeToDatasetMember(
           authorizationToken = connectionConfig.authToken,
           datasetName = libAttributes.name,
           memberName = attributes.name,
-          content = String(newContentBytes).addNewLine(),
+          content = newContent,
           xIBMDataType = xIBMDataType
         ).applyIfNotNull(progressIndicator) { indicator ->
           cancelByIndicator(indicator)

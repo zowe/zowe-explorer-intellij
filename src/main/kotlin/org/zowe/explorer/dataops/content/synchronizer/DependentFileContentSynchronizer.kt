@@ -20,13 +20,13 @@ import org.zowe.explorer.dataops.attributes.Requester
 import org.zowe.explorer.dataops.exceptions.CallException
 import java.io.IOException
 
-// TODO: doc
+/** Abstract content synchronizer class for the files that are dependent for others */
 abstract class DependentFileContentSynchronizer<
-    VFile : VirtualFile,
-    InfoType, R : Requester,
-    Attributes : DependentFileAttributes<InfoType, VFile>,
-    ParentAttributes : MFRemoteFileAttributes<R>
-    >(dataOpsManager: DataOpsManager, private val log: Logger) :
+        VFile : VirtualFile,
+        InfoType, R : Requester,
+        Attributes : DependentFileAttributes<InfoType, VFile>,
+        ParentAttributes : MFRemoteFileAttributes<R>
+        >(dataOpsManager: DataOpsManager, private val log: Logger) :
   RemoteAttributedContentSynchronizer<Attributes>(dataOpsManager) {
 
   abstract val parentAttributesClass: Class<out ParentAttributes>
@@ -35,11 +35,17 @@ abstract class DependentFileContentSynchronizer<
 
   open val parentFileType: String = "File"
 
+  /**
+   * Fetch remote content bytes for the dependent file
+   * @param attributes the attributes of the file to get the parent file and the name of the file
+   * @param progressIndicator a progress indicator for the operation
+   * @return content bytes after the operation is completed
+   */
   override fun fetchRemoteContentBytes(attributes: Attributes, progressIndicator: ProgressIndicator?): ByteArray {
     log.info("Fetch remote content for $attributes")
     val parentLib = attributes.parentFile
     val parentAttributes = parentAttributesService.getAttributes(parentLib)
-      ?: throw IOException("Cannot find parent ${parentFileType.toLowerCase()} attributes for ${parentFileType.toLowerCase()} ${parentLib.path}")
+      ?: throw IOException("Cannot find parent ${parentFileType.lowercase()} attributes for ${parentFileType.lowercase()} ${parentLib.path}")
     log.info("$parentFileType attributes are $parentAttributes")
     var throwable = Throwable("Unknown")
     var content: ByteArray? = null
@@ -61,17 +67,29 @@ abstract class DependentFileContentSynchronizer<
     return content ?: throw throwable
   }
 
-  override fun uploadNewContent(attributes: Attributes, newContentBytes: ByteArray, progressIndicator: ProgressIndicator?) {
+  /**
+   * Upload new content bytes of the dependent file to the mainframe
+   * @param attributes the attributes of the file to get the parent file and the name of the file
+   * @param newContentBytes the new content bytes to upload
+   * @param progressIndicator a progress indicator for the operation
+   */
+  override fun uploadNewContent(
+    attributes: Attributes,
+    newContentBytes: ByteArray,
+    progressIndicator: ProgressIndicator?
+  ) {
     log.info("Upload remote content for $attributes")
     val parentLib = attributes.parentFile
     val parentAttributes = parentAttributesService.getAttributes(parentLib)
-      ?: throw IOException("Cannot find parent ${parentFileType.toLowerCase()} attributes for ${parentFileType.toLowerCase()} ${parentLib.path}")
+      ?: throw IOException("Cannot find parent ${parentFileType.lowercase()} attributes for ${parentFileType.lowercase()} ${parentLib.path}")
     log.info("$parentFileType attributes are $parentAttributes")
     var throwable: Throwable? = null
     for (requester in parentAttributes.requesters) {
       try {
         log.info("Trying to execute a call using $requester")
-        val response = executePutContentRequest(attributes, parentAttributes, requester, newContentBytes, progressIndicator) ?: return
+        val response =
+          executePutContentRequest(attributes, parentAttributes, requester, newContentBytes, progressIndicator)
+            ?: return
         if (response.isSuccessful) {
           log.info("Content has been uploaded successfully")
           throwable = null
@@ -105,6 +123,7 @@ abstract class DependentFileContentSynchronizer<
 
 }
 
+/** Convert the retrofit response to byte array */
 private fun retrofit2.Response<*>.toBytes(): ByteArray? {
   return when (val b = body()) {
     is ByteArray -> b

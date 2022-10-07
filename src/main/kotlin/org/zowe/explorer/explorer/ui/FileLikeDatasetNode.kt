@@ -11,18 +11,14 @@
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.AllIcons.Actions.Pause
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileTypes.impl.FileTypeRenderer
 import com.intellij.openapi.project.Project
-import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.MFRemoteFileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.getAttributesService
@@ -30,11 +26,10 @@ import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import icons.ForMainframeIcons
-import javax.swing.SwingConstants
 
 private val migratedIcon = AllIcons.FileTypes.Any_type
 
-
+/** Datasets and USS files representation as file node in the explorer tree view */
 class FileLikeDatasetNode(
   file: MFVirtualFile,
   project: Project,
@@ -53,7 +48,12 @@ class FileLikeDatasetNode(
     val attributes = service<DataOpsManager>().tryToGetAttributes(value)
     when (attributes) {
       is RemoteDatasetAttributes -> {
-        presentation.setIcon(if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(AllIcons.FileTypes.Any_type, "DS"))
+        presentation.setIcon(
+          if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(
+            AllIcons.FileTypes.Any_type,
+            "DS"
+          )
+        )
       }
       is RemoteMemberAttributes -> {
         presentation.setIcon(ForMainframeIcons.MemberIcon)

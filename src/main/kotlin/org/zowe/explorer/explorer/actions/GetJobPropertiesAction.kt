@@ -18,8 +18,10 @@ import org.zowe.explorer.dataops.attributes.RemoteSpoolFileAttributes
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.service
 
+/** Action to get job or spool file properties*/
 class GetJobPropertiesAction : AnAction() {
 
+  /** Create properties dialog depending on received attributes*/
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
@@ -46,6 +48,7 @@ class GetJobPropertiesAction : AnAction() {
     return true
   }
 
+  /** Make action visible only for JES explorer*/
   override fun update(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -54,7 +57,7 @@ class GetJobPropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-      && (node is JobNode
-          || node is SpoolFileNode)
+            && (node is JobNode
+            || node is SpoolFileNode)
   }
 }

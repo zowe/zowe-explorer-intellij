@@ -138,29 +138,55 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.DeleteRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.MemberToPdsFileMoverFactory"/>
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.DeleteMemberOperationRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.PdsToUssFolderMoverFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.MemberToPdsMoverFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.UssToUssFileMoverFactory"/>
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.mover.PdsToUssFolderMoverFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.UssFileToPdsMoverFactory"/>
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.mover.UssToUssFileMoverFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.SequentialToPdsMoverFactory"/>
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.mover.UssFileToPdsMoverFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.SequentialToUssFolderFileMoverFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.SequentialToPdsMoverFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.MemberToUssFileMoverFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.SequentialToUssFolderFileMoverFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.RemoteToLocalFileMoverFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.MemberToUssFileMoverFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.RemoteToLocalDirectoryMoverFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.RemoteToLocalFileMoverFactory"/>
+
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.RemoteToLocalDirectoryMoverFactory"/>
+
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
+
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssFileToUssDirMoverFactory"/>
+
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>
+
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssDirMoverFactory"/>
+
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemPdsToUssDirMoverFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.RenameOperationRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.ForceRenameOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.mover.ForceRenameOperationRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.InfoOperationRunnerFactory"/>
+
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.ZOSInfoOperationRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.migration.RecallOperationFactory"/>
 
@@ -169,11 +195,19 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.SubmitJobOperationFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.CancelJobOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.jobs.CancelJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.ReleaseJobOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.jobs.ReleaseJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.HoldJobOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.jobs.HoldJobOperationRunnerFactory"/>
+
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
+
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
         <logFetcher implementation="org.zowe.explorer.dataops.log.JobLogFetcherFactory"/>
 
@@ -181,7 +215,11 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <oldConfigAdapter implementation="org.zowe.explorer.config.ws.OldWorkingSetAdapterFactory"/>
 
-        <explorer implementation="org.zowe.explorer.explorer.GlobalExplorerFactory"/>
+        <oldConfigAdapter implementation="org.zowe.explorer.config.connect.OldUsernameAdapterFactory"/>
+
+        <oldConfigAdapter implementation="org.zowe.explorer.config.ws.OldJobsWorkingSetAdapterFactory"/>
+
+        <explorer implementation="org.zowe.explorer.explorer.FileExplorerFactory"/>
         <explorer implementation="org.zowe.explorer.explorer.JesExplorerFactory"/>
 
         <explorerContentProvider index="0"
@@ -209,6 +247,8 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <editorFloatingToolbarProvider
                 implementation="org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider"/>
+
+        <editorFloatingToolbarProvider implementation="org.zowe.explorer.editor.SubmitJobToolbarProvider"/>
 
         <notificationGroup displayType="STICKY_BALLOON"
                            id="org.zowe.explorer.explorer.ExplorerNotificationGroup"/>
@@ -365,8 +405,31 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
                 text="Cancel Job"
                 icon="AllIcons.Actions.Suspend"/>
 
+        <action id="org.zowe.explorer.explorer.actions.PurgeJobAction"
+                class="org.zowe.explorer.explorer.actions.PurgeJobAction"
+                text="Purge Job"
+                icon="AllIcons.Actions.GC"/>
+
+        <action id="org.zowe.explorer.explorer.actions.EditJclAction"
+                class="org.zowe.explorer.explorer.actions.EditJclAction"
+                text="Edit JCL"/>
+
+        <action id="org.zowe.explorer.explorer.actions.SubmitJobToolbarAction"
+                class="org.zowe.explorer.explorer.actions.SubmitJobToolbarAction"
+                text="Submit Job"
+                icon="AllIcons.Actions.Execute"/>
+
+        <group id="org.zowe.explorer.explorer.actions.SubmitJobToolbarActionGroup" popup="true">
+            <reference id="org.zowe.explorer.explorer.actions.SubmitJobToolbarAction"/>
+        </group>
+
         <action id="org.zowe.explorer.explorer.actions.EditWorkingSetAction"
                 class="org.zowe.explorer.explorer.actions.EditWorkingSetAction"
+                text="Edit"
+                use-shortcut-of="RenameElement"/>
+
+        <action id="org.zowe.explorer.explorer.actions.EditJobsWorkingSetAction"
+                class="org.zowe.explorer.explorer.actions.EditJobsWorkingSetAction"
                 text="Edit"
                 use-shortcut-of="RenameElement"/>
 
@@ -404,6 +467,7 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
         <group id="org.zowe.explorer.actions.ContextMenuGroup">
             <reference id="org.zowe.explorer.actions.NewItemGroup"/>
             <reference id="org.zowe.explorer.explorer.actions.ViewJobAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.EditJclAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.AllocateLikeAction"/>
             <separator/>
@@ -418,12 +482,14 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
             <reference id="org.zowe.explorer.explorer.actions.RecallAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.EditWorkingSetAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.EditJobsWorkingSetAction"/>
             <reference id="org.zowe.explorer.explorer.actions.RenameAction"/>
             <reference id="org.zowe.explorer.explorer.actions.ForceRenameAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.ChangeContentModeAction"/>
             <separator/>
             <reference id="$Delete"/>
+            <reference id="org.zowe.explorer.explorer.actions.PurgeJobAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.GetFilePropertiesAction"/>
             <reference id="org.zowe.explorer.explorer.actions.GetJobPropertiesAction"/>
@@ -451,6 +517,7 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
             <reference id="org.zowe.explorer.explorer.actions.ReleaseJobAction"/>
             <reference id="org.zowe.explorer.explorer.actions.HoldJobAction"/>
             <reference id="org.zowe.explorer.explorer.actions.CancelJobAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.PurgeJobAction"/>
         </group>
 
     </actions>

@@ -14,9 +14,20 @@ import org.zowe.explorer.common.ui.CrudableTableModel
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.WorkingSetConfig
-import org.zowe.explorer.utils.crudable.*
+import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.crudable.MergedCollections
+import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.toMutableList
 
+/**
+ * Abstract table model for table in configurations
+ * for Working Sets (e.g. Jobs Working Set, Files Working Set).
+ * @param WSConfig WorkingSetConfig implementation class.
+ * @see org.zowe.explorer.config.ws.FilesWorkingSetConfig
+ * @see org.zowe.explorer.config.ws.JobsWorkingSetConfig
+ * @param crudable Crudable instance to change data.
+ * @author Valiantsin Krus
+ */
 abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
   crudable: Crudable
 ) : CrudableTableModel<WSConfig>(crudable) {
@@ -42,7 +53,7 @@ abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
   }
 
   override fun onUpdate(crudable: Crudable, value: WSConfig): Boolean {
-    return crudable.update(value).isPresent
+    return crudable.update(value)?.isPresent ?: false
   }
 
   override fun onDelete(crudable: Crudable, value: WSConfig) {
@@ -50,7 +61,7 @@ abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
   }
 
   override fun onAdd(crudable: Crudable, value: WSConfig): Boolean {
-    return crudable.add(value).isPresent
+    return crudable.add(value)?.isPresent ?: false
   }
 
   override fun onApplyingMergedCollection(crudable: Crudable, merged: MergedCollections<WSConfig>) {

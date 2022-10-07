@@ -24,6 +24,7 @@ abstract class ExplorerContentProviderFactory<E : Explorer<*>> {
   open var index: Int = 0
 }
 
+/** Explorer content provider interface to represent the basic fields needed to be initialized */
 interface ExplorerContentProvider<E : Explorer<*>> {
 
   companion object {
@@ -34,6 +35,7 @@ interface ExplorerContentProvider<E : Explorer<*>> {
 
   val explorer: E
 
+  // TODO: move to FileExplorerContentProvider?
   fun isFileInCutBuffer(virtualFile: VirtualFile): Boolean
 
   fun buildExplorerContent(parentDisposable: Disposable, project: Project): JComponent

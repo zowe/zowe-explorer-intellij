@@ -11,7 +11,6 @@
 package org.zowe.explorer.config.ws
 
 import org.zowe.explorer.config.*
-import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 
@@ -32,7 +31,6 @@ class OldWorkingSetAdapterFactory : OldConfigAdapterFactory {
  * @see OldConfigAdapter
  * @author Valentine Krus
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "0.6")
 class OldWorkingSetAdapter(private val document: Document) : OldConfigAdapter<FilesWorkingSetConfig> {
 
   /**
@@ -53,7 +51,7 @@ class OldWorkingSetAdapter(private val document: Document) : OldConfigAdapter<Fi
       .getApplicationOption("workingSets")
       ?.get("list")
       ?.firstOrNull()
-      ?.get("WorkingSetConfig")
+      ?.get("FilesWorkingSetConfig")
       ?: emptyList()
   }
 

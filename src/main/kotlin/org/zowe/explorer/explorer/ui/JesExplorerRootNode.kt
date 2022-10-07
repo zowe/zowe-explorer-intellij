@@ -14,8 +14,9 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.explorer.Explorer
-import org.zowe.explorer.explorer.GlobalJesWorkingSet
+import org.zowe.explorer.explorer.JesWorkingSetImpl
 
+/** JES Explorer root node, where the information about the connection is situated */
 class JesExplorerRootNode(
   value: Explorer<*>, project: Project,
   treeStructure: ExplorerTreeStructureBase
@@ -29,7 +30,7 @@ class JesExplorerRootNode(
   }
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
-    return explorer.units.filterIsInstance<GlobalJesWorkingSet>().map {
+    return explorer.units.filterIsInstance<JesWorkingSetImpl>().map {
       JobsWsNode(it, notNullProject, this, treeStructure)
     }.toMutableList()
   }

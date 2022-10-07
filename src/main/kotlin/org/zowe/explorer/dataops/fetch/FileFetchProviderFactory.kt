@@ -12,4 +12,5 @@ package org.zowe.explorer.dataops.fetch
 
 import org.zowe.explorer.dataops.DataOpsComponentFactory
 
+/** Interface to represent factory for various file fetch provider. */
 interface FileFetchProviderFactory : DataOpsComponentFactory<FileFetchProvider<*, *, *>>

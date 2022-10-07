@@ -12,6 +12,7 @@ package org.zowe.explorer.utils.crudable
 
 import java.util.concurrent.locks.Lock
 
+/** Abstract class that conforms all the lock to the read/write locks */
 abstract class ReadWriteLocksAdapter : LocksManager {
 
   abstract fun <E : Any> getReadLock(rowClass: Class<out E>): Lock?

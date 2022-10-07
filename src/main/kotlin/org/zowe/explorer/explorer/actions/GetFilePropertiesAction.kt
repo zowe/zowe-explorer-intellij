@@ -19,8 +19,13 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.service
 
+/**
+ * Action for displaying properties of files on UI in dialog by clicking item in explorer context menu.
+ * @author Valiantsin Krus.
+ */
 class GetFilePropertiesAction : AnAction() {
 
+  /** Shows dialog with properties depending on type of the file selected by user. */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
@@ -47,10 +52,12 @@ class GetFilePropertiesAction : AnAction() {
 
   }
 
+  /** Action is available in all time and not only after indexing process will finish. */
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /** Shows action only for datasets (sequential and pds), for uss files and for uss directories. */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -59,9 +66,9 @@ class GetFilePropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-      && (node is UssFileNode
-      || node is FileLikeDatasetNode
-      || node is LibraryNode
-      || node is UssDirNode)
+            && (node is UssFileNode
+            || node is FileLikeDatasetNode
+            || node is LibraryNode
+            || node is UssDirNode)
   }
 }

@@ -21,18 +21,21 @@ import org.zowe.kotlinsdk.CodePage
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.util.*
 
+/**
+ * Data class which represents state for connection dialog
+ */
 data class ConnectionDialogState(
-    var connectionUuid: String = "",
-    var connectionName: String = "",
-    var connectionUrl: String = "",
-    /*var apiMeditationLayer: String = "",*/
-    var username: String = "",
-    var password: String = "",
-    var isAllowSsl: Boolean = false,
-    var codePage: CodePage = CodePage.IBM_1047,
-    var zVersion: ZVersion = ZVersion.ZOS_2_1,
-    var zoweConfigPath: String? = null,
-    override var mode: DialogMode = DialogMode.CREATE
+  var connectionUuid: String = "",
+  var connectionName: String = "",
+  var connectionUrl: String = "",
+  /*var apiMeditationLayer: String = "",*/
+  var username: String = "",
+  var password: String = "",
+  var isAllowSsl: Boolean = false,
+  var codePage: CodePage = CodePage.IBM_1047,
+  var zVersion: ZVersion = ZVersion.ZOS_2_1,
+  var zoweConfigPath: String? = null,
+  override var mode: DialogMode = DialogMode.CREATE
 ) : DialogState, Cloneable {
 
   var connectionConfig
@@ -71,13 +74,13 @@ data class ConnectionDialogState(
 
   public override fun clone(): ConnectionDialogState {
     return ConnectionDialogState(
-        connectionUuid = connectionUuid,
-        connectionName = connectionName,
-        connectionUrl = connectionUrl,
-        username = username,
-        password = password,
-        isAllowSsl = isAllowSsl,
-        zoweConfigPath = zoweConfigPath
+      connectionUuid = connectionUuid,
+      connectionName = connectionName,
+      connectionUrl = connectionUrl,
+      username = username,
+      password = password,
+      isAllowSsl = isAllowSsl,
+      zoweConfigPath = zoweConfigPath
     )
   }
 }

@@ -19,9 +19,12 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.ui.SimpleTextAttributes
+import org.zowe.explorer.analytics.AnalyticsService
+import org.zowe.explorer.analytics.events.FileAction
+import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.UIComponentManager
 import org.zowe.explorer.utils.isBeingEditingNow
@@ -29,6 +32,7 @@ import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
+/** Base class to implement the basic interactions with an explorer node */
 abstract class ExplorerTreeNode<Value : Any>(
   value: Value,
   project: Project,
@@ -41,6 +45,7 @@ abstract class ExplorerTreeNode<Value : Any>(
     @Suppress("LeakingThis")
     treeStructure.registerNode(this)
   }
+
   init {
     @Suppress("LeakingThis")
     init()

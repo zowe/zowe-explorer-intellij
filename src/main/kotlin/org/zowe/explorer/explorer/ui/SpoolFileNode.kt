@@ -23,6 +23,7 @@ import org.zowe.explorer.vfs.MFVirtualFile
 
 private val spoolFileIcon = AllIcons.FileTypes.Text
 
+/** Representation of a spool file in JES Explorer */
 class SpoolFileNode(
   file: MFVirtualFile,
   project: Project,

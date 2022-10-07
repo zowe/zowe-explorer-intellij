@@ -15,30 +15,30 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.showOkCancelDialog
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.ValidatingTableView
-import org.zowe.explorer.common.ui.toolbarTable
+import org.zowe.explorer.common.ui.tableWithToolbar
 import org.zowe.explorer.config.*
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
-import org.zowe.explorer.utils.runWriteActionOnWriteThread
 import org.zowe.explorer.utils.toMutableList
-import org.zowe.kotlinsdk.zowe.config.ZoweConfig
-import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.net.URI
 
+/** Create and manage Connections tab in settings */
 @Suppress("DialogTitleCapitalization")
 class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {
 
   var openAddDialog = false
 
+  /**
+   * Dialog that shows the connection attempt
+   * @param initialState the initial state of the dialog
+   */
   private fun showAndTestConnection(initialState: ConnectionDialogState = ConnectionDialogState()): ConnectionDialogState? {
     return ConnectionDialog.showAndTestConnection(
       crudable = sandboxCrudable,
@@ -47,6 +47,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     )
   }
 
+  /** Dialog to add connection. Triggers the dialog and adds the new row to the Connections table in case the new connection is added */
   private fun addConnection() {
     showAndTestConnection()?.let { connectionsTableModel?.addRow(it) }
   }
@@ -93,6 +94,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
 
   private val zoweConfigStates = mutableListOf<ConnectionDialogState>()
 
+  /** Dialog to edit existing connection. Triggers the dialog and, after the changes, tests the connection and adds the changes */
   private fun editConnection() {
     val idx = connectionsTable?.selectedRow
     if (idx != null && connectionsTableModel != null) {
@@ -108,6 +110,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     }
   }
 
+  /** Delete selected connections from Connections table */
   private fun removeSelectedConnections() {
     val indices = connectionsTable?.selectedRows
     indices?.forEachIndexed { i, idx ->
@@ -115,6 +118,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     }
   }
 
+  /** Remove connections with the warning before they are deleted */
   private fun removeConnectionsWithWarning(selectedConfigs: List<ConnectionDialogState>) {
     val workingSets = sandboxCrudable.getAll<FilesWorkingSetConfig>().toMutableList()
     val wsUsages = workingSets.filter { wsConfig ->
@@ -150,13 +154,15 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
 
   private var panel: DialogPanel? = null
 
+  /** Create Connections panel in settings */
   override fun createPanel(): DialogPanel {
     val tableModel = ConnectionsTableModel(sandboxCrudable)
 
     connectionsTableModel = tableModel
-    val table = ValidatingTableView(tableModel, disposable!!).apply {
-      rowHeight = DEFAULT_ROW_HEIGHT
-    }
+    val table = ValidatingTableView(tableModel, disposable!!)
+      .apply {
+        rowHeight = DEFAULT_ROW_HEIGHT
+      }
 
     connectionsTable = table
 
@@ -175,9 +181,9 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
       })
 
     return panel {
-      row {
-        cell(isFullWidth = true) {
-          toolbarTable("Connections", table) {
+      group("Connections", false) {
+        row {
+          tableWithToolbar(table) {
             configureDecorator {
               disableUpDownActions()
               setAddAction {
@@ -197,19 +203,23 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
             }
           }
         }
+          .resizableRow()
       }
-    }.also {
-      panel = it
-      panel?.updateUI()
-      if (openAddDialog) {
-        invokeLater {
-          addConnection()
-          openAddDialog = false
+        .resizableRow()
+    }
+      .also {
+        panel = it
+        panel?.updateUI()
+        if (openAddDialog) {
+          invokeLater {
+            addConnection()
+            openAddDialog = false
+          }
         }
       }
-    }
   }
 
+  /** Apply the Connections table changes. Updates UI when the changes were introduced */
   override fun apply() {
     val wasModified = isModified
     applySandbox<Credentials>()
@@ -220,6 +230,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     }
   }
 
+  /** Reset the Connections table changes. Updates UI when the changes were introduced */
   override fun reset() {
     val wasModified = isModified
     rollbackSandbox<Credentials>()
@@ -229,14 +240,14 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     }
   }
 
+  /** Check are the Credentials and Connections sandboxes modified */
   override fun isModified(): Boolean {
     return isSandboxModified<Credentials>()
-        || isSandboxModified<ConnectionConfig>()
+            || isSandboxModified<ConnectionConfig>()
   }
 
   override fun cancel() {
     reset()
   }
-
 
 }

@@ -13,6 +13,7 @@ package org.zowe.explorer.dataops.operations
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.utils.UNIT_CLASS
 
+/** Interface to represent a remote operation, the result of that operation is Unit */
 interface RemoteUnitOperation<Request> : RemoteQuery<Request, Unit> {
   override val resultClass
     get() = UNIT_CLASS

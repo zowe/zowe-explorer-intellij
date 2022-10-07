@@ -15,18 +15,15 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.RemoteQuery
-import org.zowe.explorer.dataops.UnitRemoteQueryImpl
+import org.zowe.explorer.dataops.*
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.fetch.LibraryQuery
-import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
+/** Dataset node presentation implementation */
 class LibraryNode(
   library: MFVirtualFile,
   project: Project,
@@ -42,7 +39,7 @@ class LibraryNode(
       val connectionConfig = unit.connectionConfig
 
       return if (connectionConfig != null) {
-        UnitRemoteQueryImpl(LibraryQuery(value), connectionConfig)
+        BatchedRemoteQuery(LibraryQuery(value), connectionConfig)
       } else null
     }
 

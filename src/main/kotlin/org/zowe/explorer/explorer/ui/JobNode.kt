@@ -15,7 +15,9 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SimpleTextAttributes.STYLE_BOLD
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.UnitRemoteQueryImpl
@@ -23,9 +25,13 @@ import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.fetch.JobQuery
 import org.zowe.explorer.explorer.JesWorkingSet
 import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.kotlinsdk.Job
+import org.zowe.kotlinsdk.annotations.ZVersion
+import kotlin.math.roundToInt
 
 private val jobIcon = AllIcons.Nodes.Folder
 
+/** JES Explorer job node representation */
 class JobNode(
   library: MFVirtualFile,
   project: Project,
@@ -38,6 +44,8 @@ class JobNode(
   override fun makeFetchTaskTitle(query: RemoteQuery<JobQuery, Unit>): String {
     return "Fetching members for ${query.request.library.name}"
   }
+
+  private val jobJclNotAvailable = "JCL NOT AVAILABLE"
 
   override val query: RemoteQuery<JobQuery, Unit>?
     get() {
@@ -60,11 +68,108 @@ class JobNode(
     val job = attributes?.jobInfo
     val jobIdText = if (job == null) "" else "(${job.jobId})"
     presentation.addText("${job?.jobName ?: ""} $jobIdText ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
-    presentation.addText(job?.status?.value ?: "", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+
+    if ((job?.execEnded == null || job.execEnded?.trim().equals("")) && job?.returnedCode == null && job?.execStarted != null) {
+      if (job.status != Job.Status.INPUT) {
+        if (job.execStarted?.trim().equals("")) {
+          presentation.addText(
+            "JOB IN PROGRESS", SimpleTextAttributes(STYLE_BOLD, JBColor.BLUE))
+        } else {
+          presentation.addText(
+            "STARTED AT: " +
+                if (job.execStarted == null) {
+                  parseJobTimestampValueToDisplay(job.execSubmitted)
+                } else {
+                  parseJobTimestampValueToDisplay(job.execStarted)
+                },
+            SimpleTextAttributes(STYLE_BOLD, JBColor.BLUE)
+          )
+        }
+      } else {
+        presentation.addText(
+          "PENDING INPUT: " +
+              if(job.execStarted == null) { parseJobTimestampValueToDisplay(job.execSubmitted) }
+              else { parseJobTimestampValueToDisplay(job.execStarted) },
+          SimpleTextAttributes(STYLE_BOLD, JBColor.YELLOW)
+        )
+      }
+    } else {
+      if (job?.returnedCode == null && (job?.execEnded == null || job.execEnded?.trim().equals(jobJclNotAvailable))) {
+        presentation.addText(
+          jobJclNotAvailable, SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
+        )
+      } else if ((job.execEnded == null || job.execEnded?.trim().equals("")) && (job.execStarted == null || job.execStarted?.trim().equals(""))) {
+        presentation.addText(
+          if (job.execSubmitted == null) {
+            "JOB ENDED. RC = ${job.returnedCode}"
+          } else { "ENDED AT: " + parseJobTimestampValueToDisplay(job.execSubmitted) + ". RC = ${job.returnedCode}" },
+          if (isErrorReturnCode(job.returnedCode)) {
+            SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
+          } else {
+            SimpleTextAttributes(STYLE_BOLD, JBColor.GREEN)
+          }
+        )
+      } else {
+        presentation.addText(
+          "ENDED AT: " +
+              if (job.execEnded == null || job.execEnded?.trim().equals("")) {
+                parseJobTimestampValueToDisplay(job.execSubmitted) ?: parseJobTimestampValueToDisplay(job.execStarted)
+              } else {
+                parseJobTimestampValueToDisplay(job.execEnded)
+              } + ". RC = ${job.returnedCode}",
+          if (isErrorReturnCode(job.returnedCode)) {
+            SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
+          } else {
+            SimpleTextAttributes(STYLE_BOLD, JBColor.GREEN)
+          }
+        )
+      }
+    }
     presentation.setIcon(jobIcon)
   }
 
   override fun getVirtualFile(): MFVirtualFile? {
     return value
+  }
+
+  /**
+   * Formatter method for job executions timestamps to be displayed in JES Explorer tree
+   * @param timestamp - timestamp to be formatted
+   * @return Formatted timestamp value to be displayed
+   */
+  private fun parseJobTimestampValueToDisplay(timestamp: String?) : String? {
+    // Means we got timestamps from FetchHelper. We do not need to parse it
+    if(query!!.connectionConfig.zVersion < ZVersion.ZOS_2_4) {
+      return timestamp
+    } else {
+      // Means we got timestamps from fetch query already. Need to parse it before return to caller
+      return if (timestamp != null) {
+        val date = timestamp.substringBefore("T")
+        val time = (timestamp.substringAfter("T")).replace("Z", "", true)
+        val timeWithoutRoundSeconds = time.substringBeforeLast(":")
+        val roundSeconds = time.substringAfterLast(":").toDouble().roundToInt()
+        val formattedRoundSeconds: String = if (roundSeconds < 10) {
+          "0$roundSeconds"
+        } else {
+          roundSeconds.toString()
+        }
+        "$date $timeWithoutRoundSeconds:$formattedRoundSeconds"
+      } else {
+        ""
+      }
+    }
+  }
+
+  /**
+   * Function to parse return code after job completion
+   * @param returnCode - return code to parse
+   * @return true if return code is kind of Error. False otherwise
+   */
+  private fun isErrorReturnCode(returnCode : String?) : Boolean {
+    return if( returnCode != null) {
+      returnCode.startsWith("ABEND") || returnCode.startsWith("JCL ERROR") || returnCode.split(" ")[1].toInt() > 0
+    } else {
+      true
+    }
   }
 }

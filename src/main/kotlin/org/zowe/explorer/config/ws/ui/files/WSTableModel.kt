@@ -11,9 +11,15 @@
 package org.zowe.explorer.config.ws.ui.files
 
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.config.ws.ui.*
-import org.zowe.explorer.utils.crudable.*
+import org.zowe.explorer.config.ws.ui.AbstractWsTableModel
+import org.zowe.explorer.utils.crudable.Crudable
 
+/**
+ * Table model for Files Working Set configuration table.
+ * @see AbstractWsTableModel
+ * @author Valiantsin Krus
+ * @author Viktar Mushtsin
+ */
 class WSTableModel(crudable: Crudable) : AbstractWsTableModel<FilesWorkingSetConfig>(crudable) {
 
   override val clazz = FilesWorkingSetConfig::class.java

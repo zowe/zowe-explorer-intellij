@@ -11,6 +11,9 @@ package org.zowe.explorer.dataops
 
 import org.zowe.explorer.config.connect.ConnectionConfig
 
+/**
+ * Interface which represents remote info and holds connection config object almost for every remote query
+ */
 interface RemoteInfo {
 
   val connectionConfig: ConnectionConfig

@@ -11,29 +11,33 @@
 package org.zowe.explorer.common.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.table.TableView
 import org.zowe.explorer.utils.castOrNull
 import java.awt.Dimension
 import javax.swing.DefaultCellEditor
-import javax.swing.JComponent
 import javax.swing.table.TableCellRenderer
 
+/** Validating table view class. Provides the functionality to handle table view with validators on the model */
 class ValidatingTableView<Item>(
   model: ValidatingListTableModel<Item>,
   val disposable: Disposable
 ) : TableView<Item>(model) {
 
+  /**
+   * Get cell renderer with the changed cell size for the cells with default cell editor
+   * @param row the row number to get the cell at
+   * @param column the column number to get the cell at
+   * @return cell renderer with the changed cell sizes
+   */
   override fun getCellRenderer(row: Int, column: Int): TableCellRenderer? {
     return super.getCellRenderer(row, column)?.apply {
-        val editor = getCellEditor(row, column)
-        if (editor is DefaultCellEditor) {
-          preferredSize = with(preferredSize) {
-            Dimension(this.width, this.height.coerceAtLeast(editor.component.preferredSize.height))
-          }
+      val editor = getCellEditor(row, column)
+      if (editor is DefaultCellEditor) {
+        preferredSize = with(preferredSize) {
+          Dimension(this.width, this.height.coerceAtLeast(editor.component.preferredSize.height))
         }
       }
+    }
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -41,28 +45,10 @@ class ValidatingTableView<Item>(
     return super.getModel() as ValidatingListTableModel<Item>
   }
 
-  private val validationInfos
-    get() = listTableModel.validationInfos
-
-  fun <Component : JComponent> getValidationCallback(): ValidationInfoBuilder.(Component) -> ValidationInfo? {
-    return { component ->
-      val validationInfoComponentPair = validationInfos
-        .asMap
-        .entries
-        .minByOrNull { if (it.value.warning) 1 else 0 }
-      if (validationInfoComponentPair != null) {
-        val validationInfo = validationInfoComponentPair.value
-        val cell = validationInfoComponentPair.key
-        editCellAt(cell.first, cell.second)
-        if (validationInfo.warning) {
-          ValidationInfoBuilder(validationInfo.component ?: component).warning(validationInfo.message)
-        } else {
-          ValidationInfoBuilder(validationInfo.component ?: component).error(validationInfo.message)
-        }
-      } else null
-    }
-  }
-
+  /**
+   * Get cell validator by the column number
+   * @param column the column number to get the validator by
+   */
   fun getCellValidator(column: Int): ValidatingColumnInfo<Item>? {
     return listTableModel.columnInfos[convertColumnIndexToModel(column)].castOrNull()
   }

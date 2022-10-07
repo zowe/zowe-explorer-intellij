@@ -12,21 +12,55 @@ package org.zowe.explorer.config.connect
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.messages.Topic
-import org.zowe.explorer.config.CredentialsNotFoundForConnection
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnection
 import okhttp3.Credentials
 
+/**
+ * Interface which represents objects that track changes in credentials
+ */
 fun interface CredentialsListener {
+  /**
+   * Does something when credentials were changed
+   * @param connectionConfigUuid id of connection config
+   */
   fun onChanged(connectionConfigUuid: String)
 }
 
 @JvmField
 val CREDENTIALS_CHANGED = Topic.create("credentialChanges", CredentialsListener::class.java)
 
+/**
+ * Interface which represents objects which perform action on credentials
+ * stored in connection config
+ */
 interface CredentialService {
 
+  /**
+   * Returns username of particular connection
+   * @param connectionConfigUuid id of connection config
+   * @return username of config
+   */
   fun getUsernameByKey(connectionConfigUuid: String): String?
+
+  /**
+   * Returns password of particular connection
+   * @param connectionConfigUuid id of connection config
+   * @return password of config
+   */
   fun getPasswordByKey(connectionConfigUuid: String): String?
+
+  /**
+   * Sets user and password for particular connection config
+   * @param connectionConfigUuid id of connection config
+   * @param username username to set in config
+   * @param password password to set in config
+   */
   fun setCredentials(connectionConfigUuid: String, username: String, password: String)
+
+  /**
+   * Resets user and password in particular connection config
+   * @param connectionConfigUuid id of connection config
+   */
   fun clearCredentials(connectionConfigUuid: String)
 
   companion object {
@@ -37,14 +71,28 @@ interface CredentialService {
 
 }
 
+/**
+ * Returns instance of credentials service
+ * which perform actions on credentials stored in connection config
+ */
 fun getInstance(): CredentialService = ApplicationManager.getApplication().getService(CredentialService::class.java)
 
+/**
+ * Returns username of particular connection config
+ * @param connectionConfig id of connection config
+ * @return username of connection config
+ */
 fun username(connectionConfig: ConnectionConfig): String {
   return CredentialService.instance.getUsernameByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
     connectionConfig
   )
 }
 
+/**
+ * Returns password of particular connection config
+ * @param connectionConfig id of connection config
+ * @return password of particular connection config
+ */
 fun password(connectionConfig: ConnectionConfig): String {
   return CredentialService.instance.getPasswordByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
     connectionConfig

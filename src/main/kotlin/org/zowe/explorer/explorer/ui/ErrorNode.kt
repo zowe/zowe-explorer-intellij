@@ -23,7 +23,6 @@ class ErrorNode(
   override var text: String = message("title.error")
 ) : InfoNodeBase(project, parent, explorer, treeStructure) {
 
-
   override val textAttributes: SimpleTextAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES
 
 }

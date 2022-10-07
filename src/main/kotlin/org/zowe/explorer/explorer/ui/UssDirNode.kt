@@ -14,7 +14,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import org.zowe.explorer.config.ws.UssPath
 import org.zowe.explorer.dataops.DataOpsManager
@@ -24,10 +23,13 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.fetch.UssQuery
 import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 
+/**
+ * Add a slash to the end of the USS path if it is needed
+ * @param ussPath the path to modify
+ */
 private fun withSlashIfNeeded(ussPath: UssPath): String {
   return if (ussPath.path == "/") {
     ussPath.path
@@ -36,6 +38,7 @@ private fun withSlashIfNeeded(ussPath: UssPath): String {
   }
 }
 
+/** USS directory representation in the explorer tree */
 class UssDirNode(
   ussPath: UssPath,
   project: Project,
@@ -49,6 +52,7 @@ class UssDirNode(
 ), UssNode, RefreshableNode {
 
   override fun init() {}
+
   init {
     super.init()
   }
@@ -67,6 +71,7 @@ class UssDirNode(
     get() = explorer.componentManager.service<DataOpsManager>()
       .getAttributesService<RemoteUssAttributes, MFVirtualFile>()
 
+  /** Transform the collection of mainframe virtual files to the list of USS children nodes */
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
     return find { attributesService.getAttributes(it)?.path == value.path }
       ?.also {
@@ -96,6 +101,10 @@ class UssDirNode(
     return "Fetching USS listings for ${query.request.path}"
   }
 
+  /**
+   * Update the USS node icon with the appropriate one
+   * @param presentation the node presentation to set a new icon
+   */
   override fun update(presentation: PresentationData) {
     val icon = when {
       isRootNode -> {

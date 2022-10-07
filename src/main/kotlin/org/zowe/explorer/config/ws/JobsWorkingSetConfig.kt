@@ -13,16 +13,25 @@ package org.zowe.explorer.config.ws
 import org.zowe.explorer.utils.crudable.annotations.Column
 import org.zowe.explorer.utils.isTheSameAs
 
-class JobsWorkingSetConfig: WorkingSetConfig {
+/**
+ * Configuration class for Jobs Working Sets. Instances of these
+ * class will be saved and can be reloaded after Intellij closed.
+ * @author Valiantsin Krus
+ */
+class JobsWorkingSetConfig : WorkingSetConfig {
 
   @Column
   var jobsFilters: MutableCollection<JobsFilter> = mutableListOf()
 
   constructor() : super()
 
-  constructor(name: String, connectionConfigUuid: String, jobsFilters: MutableCollection<JobsFilter>) : super(name, connectionConfigUuid) {
+  constructor(name: String, connectionConfigUuid: String, jobsFilters: MutableCollection<JobsFilter>) : super(
+    name,
+    connectionConfigUuid
+  ) {
     this.jobsFilters = jobsFilters
   }
+
   constructor(
     uuid: String,
     name: String,

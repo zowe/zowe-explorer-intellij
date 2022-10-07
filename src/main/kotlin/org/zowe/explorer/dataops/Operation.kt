@@ -10,6 +10,9 @@
 
 package org.zowe.explorer.dataops
 
+/**
+ * Interface to describe an operation
+ */
 interface Operation<Result> {
 
   val resultClass: Class<out Result>

@@ -16,16 +16,22 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.operations.jobs.*
+import org.zowe.explorer.dataops.operations.jobs.BasicReleaseJobParams
+import org.zowe.explorer.dataops.operations.jobs.ReleaseJobOperation
 import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
-import org.zowe.kotlinsdk.JobStatus
+import org.zowe.kotlinsdk.Job
 
+/** Action to release a holding job in the Jobs Tool Window */
 class ReleaseJobAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Release a job on button click
+   * After completion shows a notification
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -48,21 +54,32 @@ class ReleaseJobAction : AnAction() {
             progressIndicator = it
           )
         }.onFailure {
-          view.showNotification("Error releasing ${jobStatus.jobName}: ${jobStatus.jobId}", "${it.message}", e.project, NotificationType.ERROR)
+          view.showNotification(
+            "Error releasing ${jobStatus.jobName}: ${jobStatus.jobId}",
+            "${it.message}",
+            e.project,
+            NotificationType.ERROR
+          )
         }.onSuccess {
-          view.showNotification("${jobStatus.jobName}: ${jobStatus.jobId} has been released", "${it}", e.project, NotificationType.INFORMATION)
+          view.showNotification(
+            "${jobStatus.jobName}: ${jobStatus.jobId} has been released",
+            "${it}",
+            e.project,
+            NotificationType.INFORMATION
+          )
         }
       }
     }
   }
 
+  /** A job can be released if its status is "Input" */
   override fun update(e: AnActionEvent) {
     val view = e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
-    if(jobStatus == JobStatus.Status.OUTPUT || jobStatus == JobStatus.Status.ACTIVE) {
+    if (jobStatus == Job.Status.OUTPUT || jobStatus == Job.Status.ACTIVE || jobStatus == null) {
       e.presentation.isEnabled = false
     }
   }

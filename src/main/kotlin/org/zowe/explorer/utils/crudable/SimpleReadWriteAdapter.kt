@@ -13,6 +13,10 @@ package org.zowe.explorer.utils.crudable
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
+/**
+ * Class that implements abstract read/write lock adapter class.
+ * Triggers reentrant read/write lock on read or write lock
+ */
 class SimpleReadWriteAdapter : ReadWriteLocksAdapter() {
 
   private val lock = ReentrantReadWriteLock()

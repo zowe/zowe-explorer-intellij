@@ -33,25 +33,62 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialsListener
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.*
-import org.zowe.explorer.utils.crudable.*
+import org.zowe.explorer.utils.crudable.EntityWithUuid
+import org.zowe.explorer.utils.crudable.anyEventAdaptor
+import org.zowe.explorer.utils.crudable.eventAdapter
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-
+/**
+ * Listener for reactive display of performed changes with units.
+ * @author Kiril Branavitski
+ * @author Viktar Mushtsin
+ */
 interface ExplorerListener {
+  /**
+   * Handler for update event for units.
+   * @param explorer explorer units of which was updated.
+   * @param unit unit that was updated.
+   */
   fun onChanged(explorer: Explorer<*>, unit: ExplorerUnit)
+
+  /**
+   * Handler for create event for units.
+   * @param explorer explorer units of which was created.
+   * @param unit unit that was created.
+   */
   fun onAdded(explorer: Explorer<*>, unit: ExplorerUnit)
+
+  /**
+   * Handler for delete event for units.
+   * @param explorer explorer units of which was deleted.
+   * @param unit unit that was deleted.
+   */
   fun onDeleted(explorer: Explorer<*>, unit: ExplorerUnit)
 }
 
-interface ExplorerFactory<U: WorkingSet<*>, E : Explorer<U>> {
-  fun buildComponent() : E
+/**
+ * Factory for registering explorer in intellij platform.
+ * @author Kiril Branavitski
+ * @author Viktar Mushtsin
+ */
+interface ExplorerFactory<U : WorkingSet<*>, E : Explorer<U>> {
+  fun buildComponent(): E
 }
+
+/**
+ * Intellij topic for explorer listener
+ * @see ExplorerListener
+ */
 @JvmField
 val UNITS_CHANGED = Topic.create("unitsChanged", ExplorerListener::class.java)
 
-interface Explorer<U: WorkingSet<*>> {
+/**
+ * Abstract class for working with explorer logical representation.
+ * @author Viktar Mushtsin
+ */
+interface Explorer<U : WorkingSet<*>> {
 
   companion object {
     @JvmField
@@ -70,8 +107,20 @@ interface Explorer<U: WorkingSet<*>> {
   val nullableProject: Project?
     get() = componentManager.castOrNull()
 
+  /**
+   * Shows error notification.
+   * @param t throwable from which to get title and text of notification message.
+   * @param project project for which to show notification.
+   */
   fun reportThrowable(t: Throwable, project: Project?)
 
+  /**
+   * Shows any type of notification.
+   * @param title title of the notification message.
+   * @param content text of notification content.
+   * @param type notification type (information, error, warning).
+   * @param project project for which to show notification.
+   */
   fun showNotification(
     title: String,
     content: String,
@@ -79,10 +128,22 @@ interface Explorer<U: WorkingSet<*>> {
     project: Project?
   )
 
+  /**
+   * Does exactly the same, as report throwable but can use additional info of the unit.
+   * @param t throwable from which to get title and text of notification message.
+   * @param unit unit which can be used for showing additional information in notification.
+   * @param project project for which to show notification.
+   */
   fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?)
 }
 
-abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid>: Explorer<U>, Disposable {
+/**
+ * Base explorer implementation.
+ * @author Viktar Mushtsin
+ * @author Kiril Branavitski
+ * @author Valiantsin Krus
+ */
+abstract class AbstractExplorerBase<U : WorkingSet<*>, UnitConfig : EntityWithUuid> : Explorer<U>, Disposable {
 
   val lock = ReentrantReadWriteLock()
 
@@ -95,17 +156,27 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
   override val componentManager: Application
     get() = ApplicationManager.getApplication()
 
+  /**
+   * Removes unit from configuration crudable.
+   * @param unit unit to remove.
+   */
   override fun disposeUnit(unit: U) {
     configCrudable.getByUniqueKey(unitConfigClass, unit.uuid).nullable?.let {
       configCrudable.delete(it)
     }
   }
 
+  /**
+   * Checks if explorer has specified unit.
+   * @param unit unit to find.
+   * @return true if unit was found and false otherwise.
+   */
   override fun isUnitPresented(unit: ExplorerUnit): Boolean {
     return unit.`is`(unitClass) && units.contains(unit)
   }
 
 
+  /** @see Explorer.showNotification */
   override fun showNotification(title: String, content: String, type: NotificationType, project: Project?) {
     Notification(
       EXPLORER_NOTIFICATION_GROUP_ID,
@@ -117,6 +188,7 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
     }
   }
 
+  /** @see Explorer.reportThrowable */
   override fun reportThrowable(t: Throwable, project: Project?) {
     if (t is ProcessCanceledException) {
       return
@@ -131,20 +203,28 @@ abstract class AbstractExplorerBase<U: WorkingSet<*>, UnitConfig: EntityWithUuid
     }
   }
 
+  /** Function to open a slack channel of plugin support. */
   private val reportInSlackAction = object : DumbAwareAction("Report In Slack") {
     override fun actionPerformed(e: AnActionEvent) {
       BrowserUtil.browse("https://join.slack.com/t/openmainframeproject/shared_invite/zt-u2nc4hv8-js4clxu87h5UMb~KCfAPuQ")
     }
   }
 
+  /** @see Explorer.reportThrowable */
   override fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?) {
     reportThrowable(t, project)
   }
 
+  /** Disposes the explorer. */
   override fun dispose() {
     Disposer.dispose(disposable)
   }
 
+  /**
+   * Function for initializing explorer.
+   * Initialization includes registering disposable and subscribing on CONFIGS_CHANGED
+   * for reactive processing of data updates on UI.
+   */
   fun doInit() {
     Disposer.register(service<DataOpsManager>(), disposable)
     subscribe(CONFIGS_CHANGED, disposable, eventAdapter(unitConfigClass) {
