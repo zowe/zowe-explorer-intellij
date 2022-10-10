@@ -18,16 +18,16 @@ import org.zowe.explorer.dataops.attributes.Requester
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
 ========
-package eu.ibagroup.formainframe.dataops.operations.mover
+package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.Requester
-import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
-import eu.ibagroup.formainframe.dataops.operations.OperationRunner
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.findAnyNullable
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.Requester
+import org.zowe.explorer.dataops.operations.DeleteOperation
+import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.findAnyNullable
 >>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/DefaultFileMover.kt
 import retrofit2.Call
 import java.io.IOException

@@ -7,7 +7,7 @@
  *
  * Copyright IBA Group 2020
  */
-package eu.ibagroup.formainframe.dataops.operations.mover
+package org.zowe.explorer.dataops.operations.mover
 
 <<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/SequentialToUssFolderMover.kt
 package org.zowe.explorer.dataops.operations
@@ -28,20 +28,20 @@ import org.zowe.kotlinsdk.CopyDataUSS
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 ========
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.attributes.Requester
-import eu.ibagroup.formainframe.dataops.attributes.USS_DELIMITER
-import eu.ibagroup.formainframe.dataops.operations.OperationRunner
-import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataUSS
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
+import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.authToken
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.attributes.Requester
+import org.zowe.explorer.dataops.attributes.USS_DELIMITER
+import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.utils.getParentsChain
+import org.zowe.kotlinsdk.CopyDataUSS
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 >>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/SequentialToUssFolderMover.kt
 import retrofit2.Call
 

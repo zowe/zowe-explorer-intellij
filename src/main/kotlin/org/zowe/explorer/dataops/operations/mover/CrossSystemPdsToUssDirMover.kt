@@ -7,25 +7,25 @@
  *
  * Copyright IBA Group 2020
  */
-package eu.ibagroup.formainframe.dataops.operations.mover
+package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
-import eu.ibagroup.formainframe.api.apiWithBytesConverter
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
-import eu.ibagroup.formainframe.dataops.operations.OperationRunner
-import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
+import org.zowe.explorer.api.apiWithBytesConverter
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.authToken
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.utils.applyIfNotNull
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 import retrofit2.Response
 
 /**

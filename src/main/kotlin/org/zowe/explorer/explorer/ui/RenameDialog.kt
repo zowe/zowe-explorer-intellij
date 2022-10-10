@@ -16,11 +16,11 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.actions.RenameAction
-import eu.ibagroup.formainframe.utils.*
+import org.zowe.explorer.common.ui.StatefulComponent
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.explorer.actions.RenameAction
+import org.zowe.explorer.utils.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 

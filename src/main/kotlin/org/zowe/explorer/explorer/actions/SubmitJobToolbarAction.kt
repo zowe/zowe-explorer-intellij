@@ -8,19 +8,19 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.explorer.actions
+package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
-import eu.ibagroup.formainframe.dataops.operations.jobs.*
-import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
-import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
-import eu.ibagroup.formainframe.utils.sendTopic
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
+import org.zowe.explorer.dataops.operations.jobs.*
+import org.zowe.explorer.explorer.FileExplorerContentProvider
+import org.zowe.explorer.ui.build.jobs.JOB_ADDED_TOPIC
+import org.zowe.explorer.utils.sendTopic
 
 /**
  * Action to submit job using the button in editor when edit JCL

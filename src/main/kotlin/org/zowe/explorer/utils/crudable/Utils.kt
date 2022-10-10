@@ -7,10 +7,10 @@
  *
  * Copyright IBA Group 2020
  */
-package eu.ibagroup.formainframe.utils.crudable
+package org.zowe.explorer.utils.crudable
 
-import eu.ibagroup.formainframe.utils.crudable.annotations.Column
-import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
+import org.zowe.explorer.utils.crudable.annotations.Column
+import org.zowe.explorer.utils.crudable.annotations.ForeignKey
 import java.lang.reflect.Field
 import java.util.*
 import java.util.function.Predicate

@@ -1,20 +1,20 @@
-package eu.ibagroup.formainframe.dataops.operations.mover
+package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
-import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.authToken
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.RemoteQuery
+import org.zowe.explorer.dataops.UnitRemoteQueryImpl
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.fetch.LibraryQuery
+import org.zowe.explorer.dataops.operations.DeleteOperation
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.kotlinsdk.*
 import retrofit2.Response
 
 /**

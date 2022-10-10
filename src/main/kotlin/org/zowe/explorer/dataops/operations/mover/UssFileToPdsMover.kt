@@ -23,24 +23,24 @@ import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.getParentsChain
 import org.zowe.kotlinsdk.*
 ========
-package eu.ibagroup.formainframe.dataops.operations.mover
+package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.operations.OperationRunner
-import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataZOS
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.XIBMBpxkAutoCvt
-import eu.ibagroup.r2z.XIBMOption
+import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.authToken
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.getParentsChain
+import org.zowe.kotlinsdk.CopyDataZOS
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.XIBMBpxkAutoCvt
+import org.zowe.kotlinsdk.XIBMOption
 >>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/UssFileToPdsMover.kt
 
 /**

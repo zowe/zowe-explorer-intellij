@@ -1,17 +1,17 @@
-package eu.ibagroup.formainframe.dataops.operations.jobs
+package org.zowe.explorer.dataops.operations.jobs
 
 import com.intellij.openapi.progress.ProgressIndicator
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.operations.OperationRunner
-import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.CancelJobPurgeOutRequest
-import eu.ibagroup.r2z.JESApi
+import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.authToken
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.RemoteQuery
+import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.kotlinsdk.CancelJobPurgeOutRequest
+import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
 
 /** Factory for purge job operation runner */

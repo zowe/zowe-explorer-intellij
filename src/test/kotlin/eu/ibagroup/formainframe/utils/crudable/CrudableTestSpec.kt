@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.utils.crudable
+package org.zowe.explorer.utils.crudable
 
 import io.kotest.core.spec.style.ShouldSpec
 

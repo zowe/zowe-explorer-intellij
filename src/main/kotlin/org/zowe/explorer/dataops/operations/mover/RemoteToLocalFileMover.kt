@@ -7,7 +7,7 @@
  *
  * Copyright IBA Group 2020
  */
-package eu.ibagroup.formainframe.dataops.operations.mover
+package org.zowe.explorer.dataops.operations.mover
 
 <<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/RemoteToLocalFileMover.kt
 package org.zowe.explorer.dataops.operations
@@ -24,15 +24,15 @@ import org.zowe.kotlinsdk.XIBMDataType
 ========
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
-import eu.ibagroup.formainframe.dataops.operations.OperationRunner
-import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.utils.runReadActionInEdtAndWait
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.kotlinsdk.XIBMDataType
 import java.nio.file.Paths
 >>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/RemoteToLocalFileMover.kt
 

@@ -8,11 +8,11 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.editor
+package org.zowe.explorer.editor
 
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 
-private const val ACTION_GROUP = "eu.ibagroup.formainframe.explorer.actions.SubmitJobToolbarActionGroup"
+private const val ACTION_GROUP = "org.zowe.explorer.explorer.actions.SubmitJobToolbarActionGroup"
 
 /**
  * Class for displaying the submit button when edit JCL in editor

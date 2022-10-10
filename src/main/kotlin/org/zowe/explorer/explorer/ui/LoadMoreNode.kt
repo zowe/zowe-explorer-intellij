@@ -8,14 +8,14 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.explorer.ui
+package org.zowe.explorer.explorer.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
-import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
-import eu.ibagroup.formainframe.utils.castOrNull
+import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
+import org.zowe.explorer.explorer.Explorer
+import org.zowe.explorer.explorer.FileExplorerContentProvider
+import org.zowe.explorer.utils.castOrNull
 
 /**
  * Node for fetching next batch of files.

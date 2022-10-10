@@ -17,10 +17,10 @@ import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 ========
-import eu.ibagroup.formainframe.config.configCrudable
-import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.rwLocked
+import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.utils.crudable.getByUniqueKey
+import org.zowe.explorer.utils.rwLocked
 >>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/explorer/FileExplorer.kt
 import java.util.stream.Collectors
 

@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.dataops
+package org.zowe.explorer.dataops
 
 import io.kotest.core.spec.style.ShouldSpec
 

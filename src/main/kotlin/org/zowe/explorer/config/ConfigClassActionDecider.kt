@@ -1,9 +1,9 @@
-package eu.ibagroup.formainframe.config
+package org.zowe.explorer.config
 
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.Credentials
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.JobsWorkingSetConfig
 
 /** Class to handle an action according to the class that is provided with the "invoke" operator */
 internal abstract class ConfigClassActionDecider<R> {

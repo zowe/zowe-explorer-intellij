@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.explorer.ui
+package org.zowe.explorer.explorer.ui
 
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
@@ -24,10 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
-import eu.ibagroup.formainframe.common.ui.getVirtualFile
-import eu.ibagroup.formainframe.common.ui.makeNodeDataFromTreePath
-import eu.ibagroup.formainframe.dataops.attributes.*
-import eu.ibagroup.formainframe.explorer.Explorer
+import org.zowe.explorer.common.ui.getVirtualFile
+import org.zowe.explorer.common.ui.makeNodeDataFromTreePath
+import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.explorer.Explorer
 import groovy.lang.Tuple4
 import java.awt.Rectangle
 import javax.swing.JTree

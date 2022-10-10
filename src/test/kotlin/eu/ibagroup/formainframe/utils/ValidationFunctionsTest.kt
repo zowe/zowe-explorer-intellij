@@ -8,14 +8,14 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.utils
+package org.zowe.explorer.utils
 
 import com.intellij.openapi.ui.ValidationInfo
-import eu.ibagroup.formainframe.UnitTestCase
-import eu.ibagroup.formainframe.config.ConfigSandboxImpl
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionsTableModel
-import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.UnitTestCase
+import org.zowe.explorer.config.ConfigSandboxImpl
+import org.zowe.explorer.config.connect.ui.ConnectionDialogState
+import org.zowe.explorer.config.connect.ui.ConnectionsTableModel
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test

@@ -8,19 +8,19 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.explorer.actions
+package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.config.configCrudable
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsDialog
-import eu.ibagroup.formainframe.config.ws.ui.jobs.toDialogState
-import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
-import eu.ibagroup.formainframe.explorer.ui.JobsWsNode
-import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import org.zowe.explorer.common.ui.DialogMode
+import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.ws.JobsWorkingSetConfig
+import org.zowe.explorer.config.ws.ui.jobs.JobsWsDialog
+import org.zowe.explorer.config.ws.ui.jobs.toDialogState
+import org.zowe.explorer.explorer.ui.JES_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.JobsWsNode
+import org.zowe.explorer.utils.clone
+import org.zowe.explorer.utils.crudable.getByUniqueKey
 
 /**
  * Action class for edit jobs working set act

@@ -1,6 +1,6 @@
-package eu.ibagroup.formainframe.dataops.exceptions
+package org.zowe.explorer.dataops.exceptions
 
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfig
 
 /** Raises when no credentials found for connection */
 class CredentialsNotFoundForConnection(val connectionConfig: ConnectionConfig) : Exception(

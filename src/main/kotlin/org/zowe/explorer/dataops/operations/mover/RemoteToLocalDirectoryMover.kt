@@ -11,7 +11,7 @@
 
 package org.zowe.explorer.dataops.operations
 ========
-package eu.ibagroup.formainframe.dataops.operations.mover
+package org.zowe.explorer.dataops.operations.mover
 >>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/RemoteToLocalDirectoryMover.kt
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -30,19 +30,19 @@ import org.zowe.explorer.dataops.fetch.UssQuery
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 ========
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
-import eu.ibagroup.formainframe.dataops.attributes.MFRemoteFileAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
-import eu.ibagroup.formainframe.dataops.fetch.UssQuery
-import eu.ibagroup.formainframe.dataops.operations.OperationRunner
-import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.RemoteQuery
+import org.zowe.explorer.dataops.UnitRemoteQueryImpl
+import org.zowe.explorer.dataops.attributes.MFRemoteFileAttributes
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.fetch.LibraryQuery
+import org.zowe.explorer.dataops.fetch.UssQuery
+import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.vfs.MFVirtualFile
 >>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/RemoteToLocalDirectoryMover.kt
 
 /**

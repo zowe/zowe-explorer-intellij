@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.settings.ui
+package org.zowe.explorer.config.settings.ui
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.util.whenTextChanged
@@ -17,8 +17,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bindIntText
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import eu.ibagroup.formainframe.config.ConfigService
-import eu.ibagroup.formainframe.utils.validateBatchSize
+import org.zowe.explorer.config.ConfigService
+import org.zowe.explorer.utils.validateBatchSize
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JLabel

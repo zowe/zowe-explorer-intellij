@@ -8,17 +8,17 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.utils
+package org.zowe.explorer.utils
 
 import com.intellij.openapi.ui.ValidationInfo
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.config.*
-import eu.ibagroup.r2z.annotations.ZVersion
-import eu.ibagroup.r2z.CodePage
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.ws.WorkingSetConfig
+import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.config.ws.DSMask
+import org.zowe.explorer.config.ws.UssPath
+import org.zowe.explorer.config.*
+import org.zowe.kotlinsdk.annotations.ZVersion
+import org.zowe.kotlinsdk.CodePage
 import java.util.stream.Stream
 import javax.swing.JTextField
 import io.kotest.core.spec.style.ShouldSpec

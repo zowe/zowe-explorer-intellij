@@ -19,14 +19,14 @@ import org.zowe.explorer.dataops.attributes.*
 import org.zowe.explorer.explorer.Explorer
 
 ========
-package eu.ibagroup.formainframe.dataops.operations.mover
+package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.UnitOperation
-import eu.ibagroup.formainframe.dataops.attributes.*
-import eu.ibagroup.formainframe.explorer.Explorer
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.UnitOperation
+import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.explorer.Explorer
 
 /**
  * Class which represents move or copy operation.

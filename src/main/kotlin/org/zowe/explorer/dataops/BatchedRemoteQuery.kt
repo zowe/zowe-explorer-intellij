@@ -8,10 +8,10 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.dataops
+package org.zowe.explorer.dataops
 
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.utils.UNIT_CLASS
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.utils.UNIT_CLASS
 
 /**
  * Query for fetching files batch by batch (first 100 -> load more -> next 100).

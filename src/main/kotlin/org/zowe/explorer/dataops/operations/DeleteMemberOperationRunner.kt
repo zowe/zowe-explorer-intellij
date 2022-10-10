@@ -8,16 +8,16 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.dataops.operations
+package org.zowe.explorer.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.DataAPI
+import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.authToken
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.kotlinsdk.DataAPI
 
 /**
  * Class which represents factory for dataset member delete operation runner. Defined in plugin.xml.

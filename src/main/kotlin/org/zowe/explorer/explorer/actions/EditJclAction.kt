@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.explorer.actions
+package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -16,14 +16,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
-import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
-import eu.ibagroup.formainframe.dataops.operations.jobs.*
-import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
+import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
+import org.zowe.explorer.dataops.operations.jobs.*
+import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * Action to edit job JCL through the editor in JES explorer

@@ -1,12 +1,12 @@
-package eu.ibagroup.formainframe.dataops.operations
+package org.zowe.explorer.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.InfoAPI
-import eu.ibagroup.r2z.InfoResponse
+import org.zowe.explorer.api.api
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.kotlinsdk.InfoAPI
+import org.zowe.kotlinsdk.InfoResponse
 
 /**
  * Factory class to build an instance of system info operation runner. Defined in plugin.xml

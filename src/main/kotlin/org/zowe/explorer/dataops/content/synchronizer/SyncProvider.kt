@@ -12,7 +12,7 @@ package org.zowe.explorer.dataops.content.synchronizer
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import org.zowe.explorer.vfs.MFVirtualFile
 import java.io.IOException
 
 const val SYNC_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.SyncNotificationGroupId"

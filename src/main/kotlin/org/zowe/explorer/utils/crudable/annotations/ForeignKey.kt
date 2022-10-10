@@ -7,7 +7,7 @@
  *
  * Copyright IBA Group 2020
  */
-package eu.ibagroup.formainframe.utils.crudable.annotations
+package org.zowe.explorer.utils.crudable.annotations
 
 <<<<<<<< HEAD:src/main/java/org/zowe/explorer/utils/crudable/annotations/Contains.java
 package org.zowe.explorer.utils.crudable.annotations;

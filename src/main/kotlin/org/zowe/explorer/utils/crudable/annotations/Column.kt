@@ -7,7 +7,7 @@
  *
  * Copyright IBA Group 2020
  */
-package eu.ibagroup.formainframe.utils.crudable.annotations
+package org.zowe.explorer.utils.crudable.annotations
 
 import java.lang.annotation.Inherited
 

@@ -8,10 +8,10 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.ws
+package org.zowe.explorer.config.ws
 
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.utils.MaskType
+import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.utils.MaskType
 
 /**
  * Class to represent a mask state

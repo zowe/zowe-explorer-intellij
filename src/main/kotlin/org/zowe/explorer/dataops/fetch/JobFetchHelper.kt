@@ -8,16 +8,16 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.dataops.fetch
+package org.zowe.explorer.dataops.fetch
 
-import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
-import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
-import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
-import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
-import eu.ibagroup.formainframe.utils.asMutableList
-import eu.ibagroup.r2z.Job
+import org.zowe.explorer.config.ws.JobsFilter
+import org.zowe.explorer.dataops.RemoteQuery
+import org.zowe.explorer.dataops.attributes.JobsRequester
+import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
+import org.zowe.explorer.dataops.log.JobLogFetcher
+import org.zowe.explorer.dataops.log.JobProcessInfo
+import org.zowe.explorer.utils.asMutableList
+import org.zowe.kotlinsdk.Job
 
 /**
  * Helper runner class for getting job execution timestamps

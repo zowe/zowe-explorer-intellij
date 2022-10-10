@@ -8,11 +8,11 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.connect
+package org.zowe.explorer.config.connect
 
-import eu.ibagroup.formainframe.config.*
-import eu.ibagroup.r2z.CodePage
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.explorer.config.*
+import org.zowe.kotlinsdk.CodePage
+import org.zowe.kotlinsdk.annotations.ZVersion
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 

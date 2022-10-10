@@ -1,8 +1,8 @@
-package eu.ibagroup.formainframe.dataops.operations
+package org.zowe.explorer.dataops.operations
 
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.dataops.Operation
-import eu.ibagroup.r2z.InfoResponse
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.Operation
+import org.zowe.kotlinsdk.InfoResponse
 
 /**
  * Base class which represents an operation to be performed against system where z/OSMF instance is running

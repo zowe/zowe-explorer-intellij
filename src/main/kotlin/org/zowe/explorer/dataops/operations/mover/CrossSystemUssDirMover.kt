@@ -7,27 +7,27 @@
  *
  * Copyright IBA Group 2020
  */
-package eu.ibagroup.formainframe.dataops.operations.mover
+package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.api.api
-import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.fetch.UssQuery
-import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
-import eu.ibagroup.formainframe.dataops.operations.OperationRunner
-import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.authToken
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.RemoteQuery
+import org.zowe.explorer.dataops.UnitRemoteQueryImpl
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.fetch.UssQuery
+import org.zowe.explorer.dataops.operations.DeleteOperation
+import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.utils.applyIfNotNull
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.kotlinsdk.*
 
 /**
  * Factory for registering CrossSystemUssDirMover in Intellij IoC container.

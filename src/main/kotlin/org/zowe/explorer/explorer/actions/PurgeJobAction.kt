@@ -1,20 +1,20 @@
-package eu.ibagroup.formainframe.explorer.actions
+package org.zowe.explorer.explorer.actions
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
-import eu.ibagroup.formainframe.dataops.operations.jobs.BasicPurgeJobParams
-import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
-import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
-import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
-import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.r2z.Job
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
+import org.zowe.explorer.dataops.operations.jobs.BasicPurgeJobParams
+import org.zowe.explorer.dataops.operations.jobs.PurgeJobOperation
+import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
+import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
+import org.zowe.explorer.utils.service
+import org.zowe.kotlinsdk.Job
 
 /** An action to purge a job */
 class PurgeJobAction : AnAction() {

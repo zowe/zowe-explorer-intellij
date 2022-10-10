@@ -8,9 +8,9 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.ws
+package org.zowe.explorer.config.ws
 
-import eu.ibagroup.formainframe.config.*
+import org.zowe.explorer.config.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 
