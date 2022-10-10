@@ -11,17 +11,10 @@
 package org.zowe.explorer.explorer
 
 import com.intellij.openapi.Disposable
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/explorer/GlobalExplorer.kt
-import org.zowe.explorer.config.configCrudable
-import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.utils.*
-import org.zowe.explorer.utils.crudable.getByUniqueKey
-========
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.rwLocked
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/explorer/FileExplorer.kt
 import java.util.stream.Collectors
 
 const val EXPLORER_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.ExplorerNotificationGroup"

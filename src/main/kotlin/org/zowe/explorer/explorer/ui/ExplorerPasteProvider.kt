@@ -21,9 +21,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes

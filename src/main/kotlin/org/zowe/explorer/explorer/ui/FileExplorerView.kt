@@ -26,42 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/explorer/ui/GlobalFileExplorerView.kt
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.tree.AsyncTreeModel
-import com.intellij.ui.tree.StructureTreeModel
-import com.intellij.ui.treeStructure.Tree
-import org.zowe.explorer.common.ui.DoubleClickTreeMouseListener
-import org.zowe.explorer.common.ui.makeNodeDataFromTreePath
-import org.zowe.explorer.common.ui.promisePath
-import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Query
-import org.zowe.explorer.dataops.attributes.AttributesService
-import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.attributesListener
-import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
-import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
-import org.zowe.explorer.dataops.fetch.FileCacheListener
-import org.zowe.explorer.dataops.fetch.FileFetchProvider
-import org.zowe.explorer.dataops.operations.DeleteOperation
-import org.zowe.explorer.dataops.operations.MoveCopyOperation
-import org.zowe.explorer.explorer.*
-import org.zowe.explorer.utils.*
-import org.zowe.explorer.utils.crudable.EntityWithUuid
-import org.zowe.explorer.vfs.MFVirtualFile
-import java.awt.*
-========
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.FileAction
-import org.zowe.explorer.analytics.events.FileEvent
 import org.zowe.explorer.common.ui.makeNodeDataFromTreePath
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
@@ -75,7 +39,6 @@ import org.zowe.explorer.utils.getMinimalCommonParents
 import org.zowe.explorer.utils.getParentsChain
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/explorer/ui/FileExplorerView.kt
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
@@ -199,7 +162,6 @@ class FileExplorerView(
       val nodes = dataContext.getData(ExplorerDataKeys.NODE_DATA_ARRAY)?.toList() ?: mySelectedNodesData
       this@FileExplorerView.isCut.set(isCut)
       bufferLock.withLock {
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/explorer/ui/GlobalFileExplorerView.kt
         val buffer = nodes
           .filter(cutCopyPredicate)
           .apply {
@@ -207,21 +169,7 @@ class FileExplorerView(
               mapNotNull { it.file }.also(cutProviderUpdater)
             } else {
               cutProviderUpdater(emptyList())
-========
-        val buffer = nodes.filter(cutCopyPredicate).apply {
-          if (isCut) {
-            mapNotNull { it.file }.also(cutProviderUpdater)
-          } else {
-            cutProviderUpdater(emptyList())
-          }
-          forEach {
-            it.file?.let { file ->
-              service<DataOpsManager>().tryToGetAttributes(file)?.let { attrs ->
-                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attrs, FileAction.COPY))
-              }
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/explorer/ui/FileExplorerView.kt
             }
-          }
           .let { LinkedList(it) }
         copyPasteBuffer = buffer
       }
@@ -248,7 +196,6 @@ class FileExplorerView(
       /** @see ExplorerCopyPasteSupport.performCopyCut */
       override fun performCut(dataContext: DataContext) {
         performCopyCut(true, dataContext)
-        //TODO("add analytics")
       }
 
       /** @see ExplorerCopyPasteSupport.isCopyCutEnabledAndVisible */
@@ -283,7 +230,6 @@ class FileExplorerView(
         /** @see ExplorerCopyPasteSupport.performCopyCut */
         override fun performCopy(dataContext: DataContext) {
           performCopyCut(false, dataContext)
-          //TODO("add analytics")
         }
 
         /** @see ExplorerCopyPasteSupport.isCopyCutEnabledAndVisible */

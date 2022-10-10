@@ -7,17 +7,7 @@
  *
  * Copyright IBA Group 2020
  */
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/DefaultFileMover.kt
 
-package org.zowe.explorer.dataops.operations
-
-import com.intellij.openapi.progress.ProgressIndicator
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.Requester
-import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.explorer.utils.findAnyNullable
-========
 package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -28,7 +18,6 @@ import org.zowe.explorer.dataops.operations.DeleteOperation
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/DefaultFileMover.kt
 import retrofit2.Call
 import java.io.IOException
 

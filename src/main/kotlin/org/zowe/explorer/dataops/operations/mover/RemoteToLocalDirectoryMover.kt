@@ -7,29 +7,12 @@
  *
  * Copyright IBA Group 2020
  */
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/RemoteToLocalDirectoryMover.kt
 
-package org.zowe.explorer.dataops.operations
-========
 package org.zowe.explorer.dataops.operations.mover
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/RemoteToLocalDirectoryMover.kt
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/RemoteToLocalDirectoryMover.kt
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.RemoteQuery
-import org.zowe.explorer.dataops.UnitRemoteQueryImpl
-import org.zowe.explorer.dataops.attributes.MFRemoteFileAttributes
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.dataops.fetch.LibraryQuery
-import org.zowe.explorer.dataops.fetch.UssQuery
-import org.zowe.explorer.utils.runWriteActionInEdtAndWait
-import org.zowe.explorer.vfs.MFVirtualFile
-========
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
@@ -43,7 +26,6 @@ import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/RemoteToLocalDirectoryMover.kt
 
 /**
  * Factory for registering RemoteToLocalDirectoryMover in Intellij IoC container.

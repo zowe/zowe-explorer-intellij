@@ -8,17 +8,6 @@
  * Copyright IBA Group 2020
  */
 
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/MoveCopyOperation.kt
-package org.zowe.explorer.dataops.operations
-
-import com.intellij.openapi.vfs.VirtualFile
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.UnitOperation
-import org.zowe.explorer.dataops.attributes.*
-import org.zowe.explorer.explorer.Explorer
-
-========
 package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.vfs.VirtualFile
@@ -39,7 +28,6 @@ import org.zowe.explorer.explorer.Explorer
  * @param newName a new name of the source file.
  * @param explorer represents explorer object.
  */
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/MoveCopyOperation.kt
 class MoveCopyOperation(
   val source: VirtualFile,
   val sourceAttributes: FileAttributes?,

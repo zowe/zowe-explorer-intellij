@@ -26,28 +26,12 @@ import javax.swing.JLabel
 /** Class that represents Settings tab in preferences */
 class SettingsConfigurable : BoundSearchableConfigurable("Settings", "mainframe") {
   private val configService = service<ConfigService>()
-  private val agreed = "you have agreed to the collection and processing of data"
-  private val notAgreed = "you haven't agreed to the collection and processing of data"
-  private var agreementLabelComponent: JLabel? = null
   private var panel: DialogPanel? = null
   private var isAutoSyncEnabled = AtomicBoolean(configService.isAutoSyncEnabled)
   private var isAutoSyncEnabledInitial = AtomicBoolean(isAutoSyncEnabled.get())
 
   private var batchSize = AtomicInteger(configService.batchSize)
-  private var batchSizeInitial = AtomicInteger(batchSize.get())
-
-  /**
-   * Check whether user is agreed or disagreed on analytics process
-   * @param isAnalyticsEnabled value that represents is user agreed or disagreed on analytics process
-   * @return label depending on user choice
-   */
-  private fun agreedOrDisagreed(isAnalyticsEnabled: Boolean): String {
-    return if (isAnalyticsEnabled) {
-      agreed
-    } else {
-      notAgreed
-    }
-  }
+  private var batchSizeInitial = AtomicInteger(batchSize.get()
 
   /** Settings panel description */
   override fun createPanel(): DialogPanel {

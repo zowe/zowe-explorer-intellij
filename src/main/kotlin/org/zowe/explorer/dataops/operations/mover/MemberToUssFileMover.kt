@@ -8,20 +8,6 @@
  * Copyright IBA Group 2020
  */
 
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/MemberToUssFileMover.kt
-package org.zowe.explorer.dataops.operations
-
-import org.zowe.explorer.api.api
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.authToken
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.*
-import org.zowe.explorer.utils.getParentsChain
-import org.zowe.kotlinsdk.CopyDataUSS
-import org.zowe.kotlinsdk.CopyDataZOS
-import org.zowe.kotlinsdk.DataAPI
-import org.zowe.kotlinsdk.FilePath
-========
 package org.zowe.explorer.dataops.operations.mover
 
 import org.zowe.explorer.api.api
@@ -35,7 +21,6 @@ import org.zowe.explorer.utils.getParentsChain
 import org.zowe.kotlinsdk.CopyDataUSS
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/MemberToUssFileMover.kt
 import retrofit2.Call
 
 /**

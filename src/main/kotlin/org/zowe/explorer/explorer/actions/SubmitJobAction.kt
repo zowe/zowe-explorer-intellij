@@ -14,9 +14,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.JobAction
-import org.zowe.explorer.analytics.events.JobEvent
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider

@@ -9,22 +9,6 @@
  */
 package org.zowe.explorer.dataops.operations.mover
 
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/SequentialToPdsMover.kt
-package org.zowe.explorer.dataops.operations
-
-import com.intellij.openapi.progress.ProgressIndicator
-import org.zowe.explorer.api.api
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.authToken
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.Requester
-import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.explorer.utils.findAnyNullable
-import org.zowe.explorer.utils.getParentsChain
-import org.zowe.kotlinsdk.CopyDataZOS
-import org.zowe.kotlinsdk.DataAPI
-========
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
@@ -36,7 +20,6 @@ import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.getParentsChain
 import org.zowe.kotlinsdk.CopyDataZOS
 import org.zowe.kotlinsdk.DataAPI
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/SequentialToPdsMover.kt
 import retrofit2.Call
 
 /**

@@ -10,14 +10,7 @@
 
 package org.zowe.explorer.utils
 
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/utils/Child.kt
-interface Child {
-
-  val parent: Child?
-
-========
 /** Enum class that represents the file mask types */
 enum class MaskType(val stringType: String) {
   ZOS("z/OS"), USS("USS")
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/utils/MaskType.kt
 }

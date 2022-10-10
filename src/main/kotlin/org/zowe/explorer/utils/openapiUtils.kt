@@ -23,13 +23,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
-import org.zowe.kotlinsdk.dataops.attributes.FileAttributes
-import org.zowe.kotlinsdk.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.kotlinsdk.dataops.attributes.RemoteMemberAttributes
-import org.zowe.kotlinsdk.dataops.attributes.RemoteUssAttributes
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.zowe.explorer.dataops.attributes.FileAttributes
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock

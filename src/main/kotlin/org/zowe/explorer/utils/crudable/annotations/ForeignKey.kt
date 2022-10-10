@@ -9,12 +9,8 @@
  */
 package org.zowe.explorer.utils.crudable.annotations
 
-<<<<<<<< HEAD:src/main/java/org/zowe/explorer/utils/crudable/annotations/Contains.java
-package org.zowe.explorer.utils.crudable.annotations;
-========
 import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/utils/crudable/annotations/ForeignKey.kt
 
 /**
  * Interface to describe the foreign key class assigned to the property

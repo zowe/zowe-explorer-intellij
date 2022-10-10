@@ -8,20 +8,6 @@
  * Copyright IBA Group 2020
  */
 
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/ForceRenameOperationRunner.kt
-package org.zowe.explorer.dataops.operations
-
-import com.intellij.openapi.progress.ProgressIndicator
-import org.zowe.explorer.api.api
-import org.zowe.explorer.config.connect.authToken
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.dataops.exceptions.CallException
-import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.explorer.vfs.MFVirtualFile
-import org.zowe.explorer.vfs.sendVfsChangesTopic
-import org.zowe.kotlinsdk.DataAPI
-========
 package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -37,7 +23,6 @@ import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.sendVfsChangesTopic
 import org.zowe.kotlinsdk.DataAPI
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/ForceRenameOperationRunner.kt
 
 /**
  * Factory class for building an instance of the runner class on runtime. Defined in plugin.xml

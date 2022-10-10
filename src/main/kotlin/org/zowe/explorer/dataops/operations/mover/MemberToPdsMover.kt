@@ -8,21 +8,6 @@
  * Copyright IBA Group 2020
  */
 
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/MemberToPdsFileMover.kt
-package org.zowe.explorer.dataops.operations
-
-import com.intellij.openapi.progress.ProgressIndicator
-import org.zowe.explorer.api.api
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.authToken
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.*
-import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.explorer.utils.findAnyNullable
-import org.zowe.explorer.utils.getParentsChain
-import org.zowe.kotlinsdk.CopyDataZOS
-import org.zowe.kotlinsdk.DataAPI
-========
 package org.zowe.explorer.dataops.operations.mover
 
 import org.zowe.explorer.api.api
@@ -37,7 +22,6 @@ import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.getParentsChain
 import org.zowe.kotlinsdk.CopyDataZOS
 import org.zowe.kotlinsdk.DataAPI
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/MemberToPdsMover.kt
 import retrofit2.Call
 import java.io.FileNotFoundException
 

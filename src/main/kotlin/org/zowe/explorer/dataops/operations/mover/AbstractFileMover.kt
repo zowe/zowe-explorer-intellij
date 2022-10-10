@@ -9,11 +9,7 @@
  */
 package org.zowe.explorer.dataops.operations.mover
 
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/AbstractFileMover.kt
-package org.zowe.explorer.dataops.operations
-========
 import org.zowe.explorer.dataops.operations.OperationRunner
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/AbstractFileMover.kt
 
 /** Class to represent a file mover abstraction */
 abstract class AbstractFileMover : OperationRunner<MoveCopyOperation, Unit> {

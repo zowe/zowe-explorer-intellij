@@ -9,19 +9,6 @@
  */
 package org.zowe.explorer.dataops.operations.mover
 
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/RemoteToLocalFileMover.kt
-package org.zowe.explorer.dataops.operations
-
-import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
-import org.zowe.explorer.utils.runWriteActionInEdtAndWait
-import org.zowe.explorer.vfs.MFVirtualFile
-import org.zowe.kotlinsdk.XIBMDataType
-========
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import org.zowe.explorer.dataops.DataOpsManager
@@ -34,7 +21,6 @@ import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.XIBMDataType
 import java.nio.file.Paths
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/RemoteToLocalFileMover.kt
 
 /**
  * Factory for registering RemoteToLocalFileMover in Intellij IoC container.

@@ -7,25 +7,7 @@
  *
  * Copyright IBA Group 2020
  */
-<<<<<<<< HEAD:src/main/kotlin/org/zowe/explorer/dataops/operations/UssToUssFileMover.kt
 
-package org.zowe.explorer.dataops.operations
-
-import com.intellij.openapi.progress.ProgressIndicator
-import org.zowe.explorer.api.api
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.authToken
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.dataops.attributes.USS_DELIMITER
-import org.zowe.explorer.dataops.exceptions.CallException
-import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.explorer.utils.getParentsChain
-import org.zowe.kotlinsdk.CopyDataUSS
-import org.zowe.kotlinsdk.DataAPI
-import org.zowe.kotlinsdk.FilePath
-import org.zowe.kotlinsdk.MoveUssFile
-========
 package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -44,7 +26,6 @@ import org.zowe.kotlinsdk.CopyDataUSS
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.MoveUssFile
->>>>>>>> release/v0.7.0:src/main/kotlin/org/zowe/explorer/dataops/operations/mover/UssToUssFileMover.kt
 import retrofit2.Call
 import retrofit2.Response
 

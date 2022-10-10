@@ -10,9 +10,6 @@
 
 package org.zowe.explorer.utils.crudable
 
-import org.zowe.explorer.analytics.AnalyticsService
-import org.zowe.explorer.analytics.events.ActionType
-import org.zowe.explorer.analytics.events.ConnectionEvent
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.utils.crudable.Utils.castToColumnOrNull
 import org.zowe.explorer.utils.nullable
@@ -118,9 +115,6 @@ interface Crudable {
     mergedCollections.toUpdate.forEach { e: E -> update(rowClass, e) }
     mergedCollections.toAdd.forEach { e: E ->
       add(rowClass, e)
-      if (e is ConnectionConfig) {
-        AnalyticsService.instance.trackAnalyticsEvent(ConnectionEvent(ActionType.CREATE))
-      }
     }
   }
 
