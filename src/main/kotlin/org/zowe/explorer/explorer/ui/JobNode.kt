@@ -167,9 +167,12 @@ class JobNode(
    */
   private fun isErrorReturnCode(returnCode : String?) : Boolean {
     return if( returnCode != null) {
-      returnCode.startsWith("ABEND") || returnCode.startsWith("JCL ERROR") || returnCode.split(" ")[1].toInt() > 0
+      returnCode.startsWith("ABEND") ||
+          returnCode.startsWith("JCL ERROR") ||
+          returnCode.startsWith("CANCELED") ||
+          returnCode.split(" ")[1].toInt() > 0
     } else {
-      true
+      false
     }
   }
 }
