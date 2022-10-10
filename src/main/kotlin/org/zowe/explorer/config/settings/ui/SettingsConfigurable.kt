@@ -21,7 +21,6 @@ import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.utils.validateBatchSize
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import javax.swing.JLabel
 
 /** Class that represents Settings tab in preferences */
 class SettingsConfigurable : BoundSearchableConfigurable("Settings", "mainframe") {
@@ -31,7 +30,7 @@ class SettingsConfigurable : BoundSearchableConfigurable("Settings", "mainframe"
   private var isAutoSyncEnabledInitial = AtomicBoolean(isAutoSyncEnabled.get())
 
   private var batchSize = AtomicInteger(configService.batchSize)
-  private var batchSizeInitial = AtomicInteger(batchSize.get()
+  private var batchSizeInitial = AtomicInteger(batchSize.get())
 
   /** Settings panel description */
   override fun createPanel(): DialogPanel {

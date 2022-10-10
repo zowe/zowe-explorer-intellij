@@ -170,10 +170,15 @@ class FileExplorerView(
             } else {
               cutProviderUpdater(emptyList())
             }
+            forEach {
+              it.file?.let { file -> service<DataOpsManager>().tryToGetAttributes(file) }
+            }
+          }
           .let { LinkedList(it) }
         copyPasteBuffer = buffer
       }
     }
+
 
     /**
      * Extracts virtual files from clipboard.
@@ -473,9 +478,9 @@ class FileExplorerView(
       }
       return selected.any {
         it.node is FilesWorkingSetNode
-                || it.node is DSMaskNode
-                || (it.node is UssDirNode && it.node.isConfigUssPath)
-                || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
+          || it.node is DSMaskNode
+          || (it.node is UssDirNode && it.node.isConfigUssPath)
+          || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
       }
     }
   }
@@ -504,6 +509,7 @@ class FileExplorerView(
         }
         true
       }.map { it.node }.toTypedArray()
+
       PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> copyPasteSupport.copyProvider
       PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> copyPasteSupport.cutProvider
       PlatformDataKeys.PASTE_PROVIDER.`is`(dataId) -> copyPasteSupport.pasteProvider

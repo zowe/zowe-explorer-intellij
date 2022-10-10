@@ -15,6 +15,8 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkCancelDialog
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.dsl.builder.panel
 import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
 import org.zowe.explorer.common.ui.DialogMode
@@ -26,7 +28,10 @@ import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
+import org.zowe.explorer.utils.runWriteActionOnWriteThread
 import org.zowe.explorer.utils.toMutableList
+import org.zowe.kotlinsdk.zowe.config.ZoweConfig
+import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.net.URI
 
 /** Create and manage Connections tab in settings */
@@ -52,7 +57,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     showAndTestConnection()?.let { connectionsTableModel?.addRow(it) }
   }
 
-  private fun ZoweConfig.updateFromState (state: ConnectionDialogState) {
+  private fun ZoweConfig.updateFromState(state: ConnectionDialogState) {
     val uri = URI(state.connectionUrl)
     host = uri.host
     port = uri.port.toLong()
@@ -68,7 +73,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
    * @param state - state of connection config that will be saved in crudable.
    * @return Nothing.
    */
-  private fun updateZoweConfigIfNeeded (state: ConnectionDialogState?) {
+  private fun updateZoweConfigIfNeeded(state: ConnectionDialogState?) {
     val res = showOkCancelDialog(
       title = "Zowe Config Update",
       message = "Update zowe config file?\n${state?.zoweConfigPath}",
@@ -77,10 +82,11 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     )
     if (res == Messages.OK) {
       val zoweConfigPath = state?.zoweConfigPath ?: return
-      val configFile = VirtualFileManager.getInstance().findFileByNioPath(java.nio.file.Path.of(zoweConfigPath)) ?: let {
-        Messages.showErrorDialog("Zowe config file not found", "Zowe Config")
-        return
-      }
+      val configFile =
+        VirtualFileManager.getInstance().findFileByNioPath(java.nio.file.Path.of(zoweConfigPath)) ?: let {
+          Messages.showErrorDialog("Zowe config file not found", "Zowe Config")
+          return
+        }
 
       val zoweConfig = parseConfigJson(configFile.inputStream)
       zoweConfig.extractSecureProperties(configFile.path.split("/").toTypedArray())
@@ -101,7 +107,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
       val state = showAndTestConnection(connectionsTableModel!![idx].apply {
         mode = DialogMode.UPDATE
       })
-      if (state?.zoweConfigPath != null){
+      if (state?.zoweConfigPath != null) {
         zoweConfigStates.add(state)
       }
       if (state != null) {
@@ -243,7 +249,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
   /** Check are the Credentials and Connections sandboxes modified */
   override fun isModified(): Boolean {
     return isSandboxModified<Credentials>()
-            || isSandboxModified<ConnectionConfig>()
+      || isSandboxModified<ConnectionConfig>()
   }
 
   override fun cancel() {

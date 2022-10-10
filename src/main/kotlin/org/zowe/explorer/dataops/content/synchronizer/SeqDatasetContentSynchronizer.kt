@@ -12,6 +12,7 @@ package org.zowe.explorer.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import okhttp3.ResponseBody
 import org.zowe.explorer.api.api
 import org.zowe.explorer.api.apiWithBytesConverter
 import org.zowe.explorer.config.connect.ConnectionConfig
@@ -21,10 +22,9 @@ import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.vfs.MFVirtualFile
-import org.zowe.explorer.DataAPI
-import org.zowe.explorer.DatasetOrganization
-import org.zowe.explorer.XIBMDataType
-import okhttp3.ResponseBody
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.XIBMDataType
 import retrofit2.Call
 import java.io.IOException
 
@@ -192,9 +192,9 @@ class SeqDatasetContentSynchronizer(
    */
   override fun accepts(file: VirtualFile): Boolean {
     return super.accepts(file) &&
-            dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {
-              !it.isMigrated && it.datasetInfo.datasetOrganization != DatasetOrganization.VS
-            } == true
+      dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {
+        !it.isMigrated && it.datasetInfo.datasetOrganization != DatasetOrganization.VS
+      } == true
   }
 
 }
