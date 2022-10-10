@@ -30,7 +30,7 @@ repositories {
     dirs("libs")
   }
   maven {
-    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     metadataSources {
       mavenPom()
       artifact()
