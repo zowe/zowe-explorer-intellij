@@ -60,6 +60,7 @@ dependencies {
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("eu.ibagroup:r2z:1.2.0-rc.1")
   implementation("com.segment.analytics.java:analytics:+")
+  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.12.4")
   testImplementation("org.mock-server:mockserver-netty:5.13.2")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")

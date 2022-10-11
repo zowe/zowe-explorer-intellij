@@ -12,12 +12,14 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.username
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import eu.ibagroup.formainframe.utils.Copyable
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.FileMode
 import eu.ibagroup.r2z.FileModeValue
 import eu.ibagroup.r2z.UssFile
 import eu.ibagroup.r2z.XIBMDataType
+import java.nio.charset.Charset
 
 private const val CURRENT_DIR_NAME = "."
 
@@ -158,7 +160,13 @@ data class RemoteUssAttributes(
               || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
-  override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT)
+  var ussFileEncoding: Charset = DEFAULT_BINARY_CHARSET
+
+  var encodingChanged: Boolean = false
+
+  var contentEncodingMode: ContentEncodingMode? = null
+
+  override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.BINARY)
 
   override val isCopyPossible: Boolean
     get() = true
@@ -166,4 +174,9 @@ data class RemoteUssAttributes(
   override val isPastePossible: Boolean
     get() = isDirectory && isWritable
 
+}
+
+enum class ContentEncodingMode(val value: String) {
+  CONVERT("CONVERT"),
+  RELOAD("RELOAD")
 }

@@ -10,12 +10,21 @@
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.XIBMDataType
 import eu.ibagroup.r2z.annotations.ZVersion
+import java.nio.charset.Charset
 
 private const val NEW_LINE = "\n"
+
+val DEFAULT_TEXT_CHARSET: Charset = Charset.forName("ISO8859_1")
+
+val DEFAULT_BINARY_CHARSET: Charset = Charset.forName("IBM-1047")
 
 /** Passes codePage in XIBMDataType if version of zos > 2.4 */
 fun updateDataTypeWithEncoding(connectionConfig: ConnectionConfig, oldDataType: XIBMDataType): XIBMDataType {
@@ -46,4 +55,57 @@ fun ByteArray.removeLastNewLine(): ByteArray {
 /** Add new blank line to the string */
 fun ByteArray.addNewLine(): ByteArray {
   return this.plus(NEW_LINE.toByteArray())
+}
+
+/**
+ * Dialog for selecting content encoding mode (reload, convert or cancel).
+ * @param fileName name of the file.
+ * @param encodingName name of the file encoding.
+ * @param project the project to show dialog.
+ * @return content encoding mode [ContentEncodingMode] or null.
+ */
+fun showReloadConvertCancelDialog(fileName: String, encodingName: String, project: Project?): ContentEncodingMode? {
+  val result = Messages.showDialog(
+    project,
+    "The encoding you've chosen ('${encodingName}') may change the contents of '${fileName}'.<br>"
+        + "Do you want to<br>"
+        + "1. <b>Reload</b> the file from remote in the new encoding '${encodingName}' and overwrite contents " +
+        "(may not display correctly) or<br>"
+        + "2. <b>Convert</b> the text and overwrite file in the new encoding?<br>",
+    "${fileName}: Reload or Convert to ${encodingName}",
+    arrayOf("Reload", "Convert", "Cancel"),
+    2,
+    AllIcons.General.QuestionDialog,
+    null
+  )
+  return when (result) {
+    0 -> ContentEncodingMode.RELOAD
+    1 -> ContentEncodingMode.CONVERT
+    else -> null
+  }
+}
+
+/**
+ * Dialog for selecting content encoding mode (reload or cancel).
+ * @param fileName name of the file.
+ * @param encodingName name of the file encoding.
+ * @param project the project to show dialog.
+ * @return content encoding mode [ContentEncodingMode] or null.
+ */
+fun showReloadCancelDialog(fileName: String, encodingName: String, project: Project?): ContentEncodingMode? {
+  val result = Messages.showDialog(
+    project,
+    "The encoding you've chosen ('${encodingName}') may change the contents of '${fileName}'.<br>"
+        + "Do you want to <b>Reload</b> the file from remote in the new encoding '${encodingName}' and overwrite contents " +
+        "(may not display correctly).<br>",
+    "${fileName}: Reload to ${encodingName}",
+    arrayOf("Reload", "Cancel"),
+    1,
+    AllIcons.General.QuestionDialog,
+    null
+  )
+  return when (result) {
+    0 -> ContentEncodingMode.RELOAD
+    else -> null
+  }
 }

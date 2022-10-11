@@ -10,62 +10,69 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
+import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.r2z.FileModeValue
 import javax.swing.JComponent
+import com.intellij.ui.dsl.builder.*
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
+import eu.ibagroup.r2z.*
+import java.nio.charset.Charset
 
 /** Class for USS file properties dialog */
 class UssFilePropertiesDialog(project: Project?, override var state: UssFileState) : DialogWrapper(project),
   StatefulComponent<UssFileState> {
 
-  private val tabbedPanel = JBTabbedPane()
   private val sameWidthGroup = "USS_FILE_PROPERTIES_DIALOG_LABELS_WIDTH_GROUP"
+
   private lateinit var generalTab: DialogPanel
+
   private lateinit var permissionTab: DialogPanel
+
+  private lateinit var comboBox: Cell<ComboBox<Charset>>
+
   var fileTypeName: String = "File"
 
-  private val fileModeValues =
-    listOf(
-      FileModeValue.NONE,
-      FileModeValue.EXECUTE,
-      FileModeValue.WRITE,
-      FileModeValue.WRITE_EXECUTE,
-      FileModeValue.READ,
-      FileModeValue.READ_EXECUTE,
-      FileModeValue.READ_WRITE,
-      FileModeValue.READ_WRITE_EXECUTE
-    )
+  private val fileModeValues = listOf(
+    FileModeValue.NONE,
+    FileModeValue.EXECUTE,
+    FileModeValue.WRITE,
+    FileModeValue.WRITE_EXECUTE,
+    FileModeValue.READ,
+    FileModeValue.READ_EXECUTE,
+    FileModeValue.READ_WRITE,
+    FileModeValue.READ_WRITE_EXECUTE
+  )
+
+  private val availableCharsets = listOf(
+    Charset.forName("IBM1047"),
+    Charset.forName("IBM1025"),
+    Charset.forName("ISO-8859-1"),
+    Charset.forName("UTF-8"),
+    Charset.forName("US-ASCII"),
+    Charset.forName("windows-1251"),
+  )
 
   init {
 
     if (state.ussAttributes.isDirectory)
       fileTypeName = "Directory"
     title = "$fileTypeName Properties"
-    initTabs()
     init()
   }
 
-  override fun doOKAction() {
-    permissionTab.apply()
-    super.doOKAction()
-  }
-
   override fun createCenterPanel(): JComponent {
-    return tabbedPanel
-  }
+    val tabbedPanel = JBTabbedPane()
 
-  private fun initTabs() {
     generalTab = panel {
       row {
         label("$fileTypeName name: ")
@@ -107,6 +114,24 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
+      if (!state.ussAttributes.isDirectory && state.fileIsBeingEditingNow) {
+        row {
+          label("File encoding:").widthGroup(sameWidthGroup)
+          comboBox = comboBox(availableCharsets)
+            .bindItem(state.ussAttributes::ussFileEncoding.toNullableProperty())
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+        row {
+          button("Reset Default Encoding", EmptyAction()) //TODO: EmptyAction()?
+            .widthGroup(sameWidthGroup)
+            .applyToComponent {
+              addActionListener {
+                state.ussAttributes.ussFileEncoding = DEFAULT_BINARY_CHARSET
+                comboBox.component.item = DEFAULT_BINARY_CHARSET
+              }
+            }
+        }
+      }
       if (state.ussAttributes.isSymlink) {
         row {
           label("Symlink to: ")
@@ -118,6 +143,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         }
       }
     }
+
     permissionTab = panel {
       row {
         label("Owner: ")
@@ -149,7 +175,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         comboBox(fileModeValues)
           .bindItem(
             { state.ussAttributes.fileMode?.owner?.toFileModeValue() },
-            { state.ussAttributes.fileMode?.owner = it?.mode ?:0 }
+            { state.ussAttributes.fileMode?.owner = it?.mode ?: 0 }
           )
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -174,14 +200,22 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
           .horizontalAlign(HorizontalAlign.FILL)
       }
     }
+
     tabbedPanel.add("General", generalTab)
     tabbedPanel.add("Permissions", permissionTab)
+
+    return tabbedPanel
   }
+
+  override fun doOKAction() {
+    generalTab.apply()
+    permissionTab.apply()
+    super.doOKAction()
+  }
+
 }
 
-
-class UssFileState(var ussAttributes: RemoteUssAttributes, override var mode: DialogMode = DialogMode.READ) :
-  DialogState
+class UssFileState(var ussAttributes: RemoteUssAttributes, val fileIsBeingEditingNow: Boolean)
 
 //class MemberState(var member: Member, override var mode: DialogMode = DialogMode.CREATE) : PropertiesState(mode)
 

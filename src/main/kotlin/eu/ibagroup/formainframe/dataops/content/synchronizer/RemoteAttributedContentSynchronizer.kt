@@ -14,18 +14,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
-import eu.ibagroup.formainframe.utils.ContentStorage
-import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.runWriteActionInEdt
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.r2z.XIBMDataType
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.utils.*
 import java.io.IOException
+import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.contentEquals
 import kotlin.collections.firstOrNull
 import kotlin.collections.getOrPut
-import kotlin.collections.set
+import kotlin.io.use
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
 private val log = logger<RemoteAttributedContentSynchronizer<*>>()
@@ -56,6 +55,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   private val handlerToStorageIdMap = ConcurrentHashMap<SyncProvider, Int>()
   private val idToBinaryFileMap = ConcurrentHashMap<Int, VirtualFile>()
   private val fetchedAtLeastOnce = ConcurrentHashMap.newKeySet<SyncProvider>()
+  private val idToPreviousEncoding = ConcurrentHashMap<Int, Charset>()
 
   /**
    * Abstract method for fetching content from mainframe.
@@ -109,49 +109,60 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
 
-      if (!isContentModeText(attributes)) {
-        idToBinaryFileMap[recordId] = syncProvider.file
+      val ussAttributes = attributes.castOrNull<RemoteUssAttributes>()
+      ussAttributes?.let {
+        if (!wasFetchedBefore(syncProvider)) {
+          checkUssFileTag(it)
+        }
       }
 
       val fetchedRemoteContentBytes = fetchRemoteContentBytes(attributes, progressIndicator)
       val contentAdapter = dataOpsManager.getMFContentAdapter(syncProvider.file)
       val adaptedFetchedBytes = contentAdapter.adaptContentFromMainframe(fetchedRemoteContentBytes, syncProvider.file)
 
-      if (!wasFetchedBefore(syncProvider)) {
+      if (!wasFetchedBefore(syncProvider) || !syncProvider.file.isWritable) {
         log.info("Setting initial content for file ${syncProvider.file.name}")
         runWriteActionInEdtAndWait { syncProvider.putInitialContent(adaptedFetchedBytes) }
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
         fetchedAtLeastOnce.add(syncProvider)
+        ussAttributes?.let { idToPreviousEncoding[recordId] = it.ussFileEncoding }
       } else {
-        if (!idToBinaryFileMap.containsKey(recordId)) {
-          val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
-          if (fileContent contentEquals adaptedFetchedBytes) {
-            return
-          }
 
-          val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
-          val doUploadContent = syncProvider.saveStrategy
-            .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
+        val requiredCharset =
+          getRequiredCharset(ussAttributes, syncProvider.file.isBeingEditingNow(), idToPreviousEncoding[recordId])
 
-          if (doUploadContent) {
-            log.info("Save strategy decided to forcefully update file content on mainframe.")
-            val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
-            runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
-            uploadNewContent(attributes, newContentPrepared, progressIndicator)
-            successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
-          } else {
-            log.info("Save strategy decided to accept remote file content.")
-            successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
-            runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
-          }
+        val encodingNotChanged = !(ussAttributes != null
+            && ussAttributes.ussFileEncoding != idToPreviousEncoding[recordId])
+
+        val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent(requiredCharset) }
+        if (fileContent contentEquals adaptedFetchedBytes && encodingNotChanged) {
+          return
+        }
+
+        val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
+        val doUploadContent = if (ussAttributes?.contentEncodingMode == ContentEncodingMode.RELOAD) {
+          false
         } else {
-          log.info("Content loaded from mainframe")
+            syncProvider.saveStrategy
+              .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
+        }
+
+        if (doUploadContent) {
+          log.info("Save strategy decided to forcefully update file content on mainframe.")
+          val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
+          runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
+          uploadNewContent(attributes, newContentPrepared, progressIndicator)
+          successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
+        } else {
+          log.info("Save strategy decided to accept remote file content.")
           successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
           runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
-          if (isContentModeText(attributes)) {
-            idToBinaryFileMap.remove(recordId)
-          } else { /*do nothing*/
-          }
+        }
+
+        ussAttributes?.let {
+          idToPreviousEncoding[recordId] = it.ussFileEncoding
+          it.encodingChanged = false
+          it.contentEncodingMode = null
         }
       }
     }.onFailure {
@@ -161,12 +172,25 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   }
 
   /**
-   * Determines if the current virtual file content is text
-   * @param attributes represents the current virtual file attributes
-   * @return True if the current file content is text. False otherwise
+   * Get the required charset for synchronization.
+   * Depending on whether the uss file is fetched from the mainframe or uploaded to the mainframe.
+   * @param ussAttributes uss file attributes.
+   * @param fileIsEditingNow is the file editing now.
+   * @param previousEncoding previous encoding of uss file.
+   * @return required charset for uss files or [DEFAULT_TEXT_CHARSET] for other files.
    */
-  private fun isContentModeText(attributes: FileAttributes): Boolean {
-    return attributes.contentMode.type == XIBMDataType.Type.TEXT
+  private fun getRequiredCharset(
+    ussAttributes: RemoteUssAttributes?,
+    fileIsEditingNow: Boolean,
+    previousEncoding: Charset?
+  ): Charset {
+    ussAttributes?.let {
+      return if (fileIsEditingNow) {
+        ussAttributes.ussFileEncoding
+      } else {
+        previousEncoding ?: DEFAULT_BINARY_CHARSET
+      }
+    }
+    return DEFAULT_TEXT_CHARSET
   }
-
 }
