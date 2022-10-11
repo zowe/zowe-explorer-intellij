@@ -124,12 +124,15 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     zoweConfig ?: return null
     val username = zoweConfig.user ?: return null
     val password = zoweConfig.password ?: return null
-    val zoweConnection = zoweConfig.toConnectionConfig()
+    val zoweConnection = findExistingConnection()?.let {
+      zoweConfig.toConnectionConfig(it.uuid, it.zVersion)
+    } ?: zoweConfig.toConnectionConfig(UUID.randomUUID().toString())
+    CredentialService.instance.setCredentials(zoweConnection.uuid, username, password)
 
     if (checkConnection) {
       val res = runTask("Testing Connection to ${zoweConnection.url}", myProject) {
         runCatching {
-          service<DataOpsManager>().performOperation(InfoOperation(zoweConfig.toConnectionConfig()), it)
+          service<DataOpsManager>().performOperation(InfoOperation(zoweConnection), it)
         }
       }
       if (res.isFailure) {
@@ -150,7 +153,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @param uuid - uuid returned connection.
    * @return converted ConnectionConfig.
    */
-  fun ZoweConfig.toConnectionConfig(uuid: String): ConnectionConfig {
+  fun ZoweConfig.toConnectionConfig(uuid: String, zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig {
     val basePath = if (basePath.last() == '/') basePath.dropLast(1) else basePath
     val domain = if (port == null) host else "${host}:${port}"
     val zoweUrl = "${protocol}://${domain}${basePath}"
@@ -163,7 +166,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       zoweUrl,
       isAllowSelfSigned,
       codePage,
-      ZVersion.ZOS_2_1,
+      zVersion,
       "${myProject.basePath}/${ZOWE_CONFIG_NAME}"
     )
   }
@@ -173,7 +176,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * related to zowe config or generates a new one.
    * @return converted ConnectionConfig.
    */
-  fun ZoweConfig.toConnectionConfig(): ConnectionConfig = toConnectionConfig(getOrCreateUuid())
+  fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig = toConnectionConfig(getOrCreateUuid(), zVersion)
 
   /**
    * @see ZoweConfigService.getZoweConfigState
@@ -184,7 +187,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     }
     val zoweConfig = zoweConfig ?: return ZoweConfigState.NOT_EXISTS
     val existingConnection = findExistingConnection() ?: return ZoweConfigState.NEED_TO_ADD
-    val newConnection = zoweConfig.toConnectionConfig(existingConnection.uuid)
+    val newConnection = zoweConfig.toConnectionConfig(existingConnection.uuid, existingConnection.zVersion)
 
     val zoweUsername = zoweConfig.user ?: return ZoweConfigState.ERROR
     val zowePassword = zoweConfig.password ?: return ZoweConfigState.ERROR
