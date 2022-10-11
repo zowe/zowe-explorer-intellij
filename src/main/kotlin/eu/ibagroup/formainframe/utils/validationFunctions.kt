@@ -201,6 +201,8 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
     ValidationInfo("Enter valid dataset mask", component)
   } else if (text.contains(Regex(asteriskRegex))) {
     ValidationInfo("Invalid asterisks in the qualifier", component)
+  } else if (text.matches(Regex("(\\.?\\*{1,2}\\.?)+"))) {
+    ValidationInfo("Dataset mask that contains only asterisks is invalid. You must specify at least one partial qualifier.", component)
   } else {
     null
   }
