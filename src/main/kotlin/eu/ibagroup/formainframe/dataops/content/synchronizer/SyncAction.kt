@@ -69,9 +69,9 @@ class SyncAction : DumbAwareAction() {
       project = e.project,
       cancellable = true
     ) { indicator ->
-      service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
       runWriteActionInEdtAndWait {
         FileDocumentManager.getInstance().saveDocument(editor.document)
+        service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
       }
     }
   }
@@ -98,8 +98,9 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
-    e.presentation.isEnabledAndVisible = !service<ConfigService>().isAutoSyncEnabled
-            && !(editor.document.text.toByteArray() contentEquals file.contentsToByteArray())
+    e.presentation.isEnabledAndVisible = file.isWritable
+        && !service<ConfigService>().isAutoSyncEnabled
+        && !(editor.document.text.toByteArray(file.charset) contentEquals file.contentsToByteArray())
   }
 
 }

@@ -109,6 +109,9 @@ Example of how to see the output:<br/>
         <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
 
+        <listener class="eu.ibagroup.formainframe.editor.FileSelectionChangeListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+
         <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
                   topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     </applicationListeners>
@@ -244,6 +247,9 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
+
         <logFetcher implementation="eu.ibagroup.formainframe.dataops.log.JobLogFetcherFactory"/>
 
         <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldConnectionsAdapterFactory"/>
@@ -276,7 +282,7 @@ Example of how to see the output:<br/>
 
         <editorFloatingToolbarProvider
                 implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncToolbarProvider"/>
-        
+
         <editorFloatingToolbarProvider implementation="eu.ibagroup.formainframe.editor.SubmitJobToolbarProvider"/>
 
         <notificationGroup displayType="STICKY_BALLOON"
@@ -414,10 +420,6 @@ Example of how to see the output:<br/>
                 icon="ForMainframeIcons.JclDirectory"
                 text="Jobs Filter"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
-                class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
-                text="Use Binary Mode"/>
-
         <action id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
                 class="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
                 text="Submit Job"
@@ -518,8 +520,6 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
-            <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
             <separator/>
             <reference id="$Delete"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"/>

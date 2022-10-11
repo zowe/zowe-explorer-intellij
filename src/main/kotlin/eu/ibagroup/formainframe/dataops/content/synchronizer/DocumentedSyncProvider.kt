@@ -13,12 +13,16 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -58,6 +62,15 @@ class DocumentedSyncProvider(
     return FileDocumentManager.getInstance().getDocument(file)
   }
 
+  /**
+   * Saves document in FileDocumentManager if it was found.
+   * @see FileDocumentManager
+   * @see SyncProvider.saveDocument
+   */
+  override fun saveDocument() {
+    getDocument()?.let { FileDocumentManager.getInstance().saveDocument(it) }
+  }
+
   override val vFileClass = MFVirtualFile::class.java
 
   private val isInitialContentSet = AtomicBoolean(false)
@@ -81,10 +94,11 @@ class DocumentedSyncProvider(
         if (wasReadOnly) {
           document?.setReadOnly(false)
         }
-        document?.setText(String(content))
+        document?.setText(String(content, getCurrentCharset()))
         if (wasReadOnly) {
           document?.setReadOnly(true)
         }
+        saveDocument()
       }.onFailure {
         isInitialContentSet.set(false)
       }
@@ -96,15 +110,15 @@ class DocumentedSyncProvider(
    * @see SyncProvider.loadNewContent
    */
   override fun loadNewContent(content: ByteArray) {
-    getDocument()?.setText(String(content))
+    getDocument()?.setText(String(content, getCurrentCharset()))
   }
 
   /**
    * Extracts content from the file document.
    * @see SyncProvider.retrieveCurrentContent
    */
-  override fun retrieveCurrentContent(): ByteArray {
-    return getDocument()?.text?.toByteArray() ?: ByteArray(0)
+  override fun retrieveCurrentContent(charset: Charset): ByteArray {
+    return getDocument()?.text?.toByteArray(charset) ?: ByteArray(0)
   }
 
   override fun onThrowable(t: Throwable) {
@@ -124,4 +138,13 @@ class DocumentedSyncProvider(
     return file.hashCode()
   }
 
+  /**
+   * Get the current file charset.
+   * For uss files this is [RemoteUssAttributes.ussFileEncoding], for other files - [DEFAULT_TEXT_CHARSET].
+   * @return charset of the file.
+   */
+  private fun getCurrentCharset(): Charset {
+    val ussAttributes = service<DataOpsManager>().tryToGetAttributes(file).castOrNull<RemoteUssAttributes>()
+    return ussAttributes?.ussFileEncoding ?: DEFAULT_TEXT_CHARSET
+  }
 }

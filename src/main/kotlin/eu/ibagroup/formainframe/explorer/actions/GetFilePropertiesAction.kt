@@ -14,15 +14,18 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
+import eu.ibagroup.formainframe.dataops.content.synchronizer.*
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.r2z.ChangeMode
+import eu.ibagroup.formainframe.utils.*
 
 /**
  * Action for displaying properties of files on UI in dialog by clicking item in explorer context menu.
@@ -39,14 +42,15 @@ class GetFilePropertiesAction : AnAction() {
       val connectionConfig = node.unit.connectionConfig ?: return
       if (virtualFile != null) {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
-        when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone()) {
+        when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)) {
           is RemoteDatasetAttributes -> {
             val dialog = DatasetPropertiesDialog(e.project, DatasetState(attributes))
             dialog.showAndGet()
           }
           is RemoteUssAttributes -> {
-            val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes))
+            val oldUssFileEncoding = attributes.ussFileEncoding
             val initFileMode = attributes.fileMode?.clone()
+            val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes, virtualFile.isBeingEditingNow()))
             if (dialog.showAndGet()) {
               if (attributes.fileMode?.owner != initFileMode?.owner || attributes.fileMode?.group != initFileMode?.group || attributes.fileMode?.all != initFileMode?.all) {
                 runBackgroundableTask(
@@ -69,6 +73,25 @@ class GetFilePropertiesAction : AnAction() {
                       view.explorer.reportThrowable(t, e.project)
                     }
                   }
+                }
+              }
+              if (!virtualFile.isDirectory && oldUssFileEncoding != dialog.state.ussAttributes.ussFileEncoding) {
+                val newAttributes = dialog.state.ussAttributes
+                attributes.contentEncodingMode = if (!virtualFile.isWritable) {
+                  showReloadCancelDialog(virtualFile.name, newAttributes.ussFileEncoding.name(), e.project)
+                } else {
+                  showReloadConvertCancelDialog(virtualFile.name, newAttributes.ussFileEncoding.name(), e.project)
+                }
+                if (attributes.contentEncodingMode == null) {
+                  attributes.ussFileEncoding = oldUssFileEncoding
+                } else {
+                  attributes.encodingChanged = true
+                  updateFileTag(newAttributes)
+                }
+                if (attributes.contentEncodingMode == ContentEncodingMode.RELOAD) {
+                  val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.default(e.project))
+                  val contentSynchronizer = dataOpsManager.getContentSynchronizer(virtualFile)
+                  contentSynchronizer?.synchronizeWithRemote(syncProvider)
                 }
               }
             }

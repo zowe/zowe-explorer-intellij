@@ -16,8 +16,6 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.InfoAPI
-import eu.ibagroup.r2z.InfoResponse
 import eu.ibagroup.r2z.SystemsApi
 import eu.ibagroup.r2z.SystemsResponse
 
