@@ -17,8 +17,10 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
@@ -29,9 +31,12 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
+import eu.ibagroup.formainframe.utils.runWriteActionInEdt
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
+import kotlin.concurrent.thread
 
 /** Base class to implement the basic interactions with an explorer node */
 abstract class ExplorerTreeNode<Value : Any>(
@@ -41,6 +46,8 @@ abstract class ExplorerTreeNode<Value : Any>(
   val explorer: Explorer<*>,
   protected val treeStructure: ExplorerTreeStructureBase
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
+
+  var navigating: Boolean = false
 
   open fun init() {
     @Suppress("LeakingThis")
@@ -91,16 +98,26 @@ abstract class ExplorerTreeNode<Value : Any>(
           project = project,
           icon = AllIcons.General.WarningDialog
         )
-        if (doSync) {
-          val syncProvider = DocumentedSyncProvider(file = file, saveStrategy = SaveStrategy.default(project))
-          if (!file.isBeingEditingNow()) {
-            contentSynchronizer.synchronizeWithRemote(syncProvider)
+        runBackgroundableTask("Navigating to ${file.name}") { indicator ->
+          this.navigating = true
+          this.update()
+
+          if (doSync) {
+            val syncProvider = DocumentedSyncProvider(file = file, saveStrategy = SaveStrategy.default(project))
+            if (!file.isBeingEditingNow()) {
+              contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
+            }
           }
+          indicator.text = "Navigating to ${file.name}"
+          dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
+            service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
+          }
+          runWriteActionInEdtAndWait {
+            it.navigate(requestFocus)
+          }
+          this.navigating = false
         }
-        dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
-          service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
-        }
-        it.navigate(requestFocus)
+
       }
     }
   }
