@@ -88,17 +88,7 @@ class DocumentedSyncProvider(
         file.getOutputStream(null).use {
           it.write(content)
         }
-        val document = getDocument()
-        document.castOrNull<DocumentImpl>()?.setAcceptSlashR(true)
-        val wasReadOnly = isReadOnly
-        if (wasReadOnly) {
-          document?.setReadOnly(false)
-        }
-        document?.setText(String(content, getCurrentCharset()))
-        if (wasReadOnly) {
-          document?.setReadOnly(true)
-        }
-        saveDocument()
+        loadNewContent(content)
       }.onFailure {
         isInitialContentSet.set(false)
       }
@@ -110,7 +100,16 @@ class DocumentedSyncProvider(
    * @see SyncProvider.loadNewContent
    */
   override fun loadNewContent(content: ByteArray) {
-    getDocument()?.setText(String(content, getCurrentCharset()))
+    val document = getDocument()
+    document.castOrNull<DocumentImpl>()?.setAcceptSlashR(true)
+    val wasReadOnly = isReadOnly
+    if (wasReadOnly) {
+      document?.setReadOnly(false)
+    }
+    document?.setText(String(content, getCurrentCharset()))
+    if (wasReadOnly) {
+      document?.setReadOnly(true)
+    }
   }
 
   /**
