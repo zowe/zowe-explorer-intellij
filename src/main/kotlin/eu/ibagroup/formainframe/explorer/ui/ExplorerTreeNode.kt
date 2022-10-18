@@ -79,6 +79,11 @@ abstract class ExplorerTreeNode<Value : Any>(
     presentationData.addText(text, textAttributes)
   }
 
+  /**
+   * Open the specified node in IDE editor.
+   * Makes initial file synchronization if the autosync option selected
+   * @param requestFocus parameter to request focus when it is needed
+   */
   override fun navigate(requestFocus: Boolean) {
     val file = virtualFile ?: return
     descriptor?.let {
@@ -92,7 +97,7 @@ abstract class ExplorerTreeNode<Value : Any>(
           icon = AllIcons.General.WarningDialog
         )
         if (doSync) {
-          val syncProvider = DocumentedSyncProvider(file = file, saveStrategy = SaveStrategy.default(project))
+          val syncProvider = DocumentedSyncProvider(file = file, saveStrategy = SaveStrategy.syncOnOpen(project))
           if (!file.isBeingEditingNow()) {
             contentSynchronizer.synchronizeWithRemote(syncProvider)
           }

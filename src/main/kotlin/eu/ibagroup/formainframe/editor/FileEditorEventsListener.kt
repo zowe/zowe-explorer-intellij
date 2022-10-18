@@ -41,16 +41,18 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
     val configService = service<ConfigService>()
     val dataOpsManager = service<DataOpsManager>()
     val attributes = dataOpsManager.tryToGetAttributes(file)
-    if (file is MFVirtualFile && !configService.isAutoSyncEnabled && file.isWritable &&
-      attributes != null) {
+    if (
+      file is MFVirtualFile
+      && !configService.isAutoSyncEnabled
+      && file.isWritable
+      && attributes != null
+    ) {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: let {
         log.info("Document cannot be used here")
         return
       }
-      if (
-        !(document.text.toByteArray() contentEquals file.contentsToByteArray()) &&
-        showSyncOnCloseDialog(file.name, source.project)
-      ) {
+      val isContentChanged = !(document.text.toByteArray() contentEquals file.contentsToByteArray())
+      if (isContentChanged && showSyncOnCloseDialog(file.name, source.project)) {
         runModalTask(
           title = "Syncing ${file.name}",
           project = source.project,
