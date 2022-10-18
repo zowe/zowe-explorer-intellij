@@ -86,7 +86,7 @@ abstract class ExplorerTreeNode<Value : Any>(
   }
 
   /**
-   * Synchronizes file content and opens it in editor.
+   * Synchronizes file content in background and opens it after synchronization in editor.
    * @see AbstractTreeNode.navigate
    */
   override fun navigate(requestFocus: Boolean) {
