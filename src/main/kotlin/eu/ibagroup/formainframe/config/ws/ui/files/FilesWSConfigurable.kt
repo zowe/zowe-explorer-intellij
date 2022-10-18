@@ -16,7 +16,7 @@ import eu.ibagroup.formainframe.config.sandboxCrudable
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.MaskState
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsConfigurable
-import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
+import eu.ibagroup.formainframe.config.ws.ui.FilesWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
@@ -24,8 +24,8 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  * Implementation of AbstractWsConfigurable class for modifying Files Working Set configurations.
  * @see AbstractWsConfigurable
  */
-class WSConfigurable :
-  AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel, WorkingSetDialogState>("Working Sets") {
+class FilesWSConfigurable :
+  AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel, FilesWorkingSetDialogState>("Working Sets") {
   override val wsConfigClass = FilesWorkingSetConfig::class.java
   override val wsTableModel = WSTableModel(sandboxCrudable)
 
@@ -41,8 +41,8 @@ class WSConfigurable :
    * @param crudable crudable to modify after applying dialog.
    * @param state state of dialog.
    */
-  override fun createAddDialog(crudable: Crudable, state: WorkingSetDialogState) {
-    WorkingSetDialog(sandboxCrudable, state)
+  override fun createAddDialog(crudable: Crudable, state: FilesWorkingSetDialogState) {
+    FilesWorkingSetDialog(sandboxCrudable, state)
       .apply {
         if (showAndGet()) {
           wsTableModel.addRow(state.workingSetConfig)
@@ -55,8 +55,8 @@ class WSConfigurable :
    * Creates and shows dialog for editing Files Working Set.
    * @param selected dialog state of selected working set to edit
    */
-  override fun createEditDialog(selected: WorkingSetDialogState) {
-    WorkingSetDialog(
+  override fun createEditDialog(selected: FilesWorkingSetDialogState) {
+    FilesWorkingSetDialog(
       sandboxCrudable,
       selected.apply { mode = DialogMode.UPDATE })
       .apply {
@@ -73,8 +73,8 @@ class WSConfigurable :
 /**
  * Creates FilesWorkingSetDialogState based on data of FilesWorkingSetConfig.
  */
-fun FilesWorkingSetConfig.toDialogState(): WorkingSetDialogState {
-  return WorkingSetDialogState(
+fun FilesWorkingSetConfig.toDialogState(): FilesWorkingSetDialogState {
+  return FilesWorkingSetDialogState(
     uuid = this.uuid,
     connectionUuid = this.connectionConfigUuid,
     workingSetName = this.name,

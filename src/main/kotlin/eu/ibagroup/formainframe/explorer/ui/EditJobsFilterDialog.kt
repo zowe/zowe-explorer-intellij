@@ -18,16 +18,19 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.utils.validateJobFilter
 import javax.swing.JComponent
 
-class AddJobsFilterDialog(
+// TODO: JobsFilterDialogAbstraction
+/** Edit jobs filter action dialog. Provides dialog view to change job filter values */
+class EditJobsFilterDialog(
   project: Project?,
   override var state: JobFilterStateWithWS
 ) : DialogWrapper(project), StatefulComponent<JobFilterStateWithWS> {
 
   init {
-    title = "Create Jobs Filter"
+    title = "Edit Jobs Filter"
     init()
   }
 
@@ -35,9 +38,11 @@ class AddJobsFilterDialog(
     lateinit var prefixField: JBTextField
     lateinit var ownerField: JBTextField
     lateinit var jobIdField: JBTextField
-    val sameWidthGroup = "ADD_JOB_FILTER_DIALOG_LABELS_WIDTH_GROUP"
+    val initJobFilter = JobsFilter(state.owner, state.prefix, state.jobId)
 
     return panel {
+      val sameWidthGroup = "EDIT_JOBS_FILTER_DIALOG_LABELS_WIDTH_GROUP"
+
       row {
         label("JES working set: ")
           .widthGroup(sameWidthGroup)
@@ -50,7 +55,7 @@ class AddJobsFilterDialog(
           .bindText(state::prefix)
           .also { prefixField = it.component }
           .validationOnApply {
-            validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws.masks, it, false)
+            validateJobFilter(initJobFilter, it.text, ownerField.text, jobIdField.text, state.ws.masks, it, false)
           }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -61,7 +66,7 @@ class AddJobsFilterDialog(
           .bindText(state::owner)
           .also { ownerField = it.component }
           .validationOnApply {
-            validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws.masks, it, false)
+            validateJobFilter(initJobFilter, prefixField.text, it.text, jobIdField.text, state.ws.masks, it, false)
           }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -72,10 +77,11 @@ class AddJobsFilterDialog(
           .bindText(state::jobId)
           .also { jobIdField = it.component }
           .validationOnApply {
-            validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws.masks, it, true)
+            validateJobFilter(initJobFilter, prefixField.text, ownerField.text, it.text, state.ws.masks, it, true)
           }
           .horizontalAlign(HorizontalAlign.FILL)
       }
     }
   }
+
 }

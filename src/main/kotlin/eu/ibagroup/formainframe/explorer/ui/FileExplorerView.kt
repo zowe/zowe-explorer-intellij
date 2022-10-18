@@ -352,9 +352,9 @@ class FileExplorerView(
       }
 
       return destinationFiles
-        .map { destFile ->
-          filteredSourceFiles.map { Pair(destFile, it) }
-        }.flatten().filter {
+        .map { destFile -> filteredSourceFiles.map { Pair(destFile, it) } }
+        .flatten()
+        .filter {
           dataOpsManager.isOperationSupported(
             operation = MoveCopyOperation(
               source = it.second,
@@ -389,7 +389,8 @@ class FileExplorerView(
       val selected = mySelectedNodesData
       selected.map { it.node }.filterIsInstance<FilesWorkingSetNode>()
         .forEach {
-          if (showYesNoDialog(
+          if (
+            showYesNoDialog(
               title = "Deletion of Working Set ${it.unit.name}",
               message = "Do you want to delete this Working Set from configs? Note: all data under it will be untouched",
               project = project,
@@ -402,7 +403,8 @@ class FileExplorerView(
       selected.map { it.node }.filterIsInstance<DSMaskNode>()
         .filter { explorer.isUnitPresented(it.unit) }
         .forEach {
-          if (showYesNoDialog(
+          if (
+            showYesNoDialog(
               title = "Deletion of DS Mask ${it.value.mask}",
               message = "Do you want to delete this mask from configs? Note: all data sets under it will be untouched",
               project = project,
@@ -483,9 +485,9 @@ class FileExplorerView(
       }
       return selected.any {
         it.node is FilesWorkingSetNode
-                || it.node is DSMaskNode
-                || (it.node is UssDirNode && it.node.isConfigUssPath)
-                || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
+          || it.node is DSMaskNode
+          || (it.node is UssDirNode && it.node.isConfigUssPath)
+          || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
       }
     }
   }
@@ -514,6 +516,7 @@ class FileExplorerView(
         }
         true
       }.map { it.node }.toTypedArray()
+
       PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> copyPasteSupport.copyProvider
       PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> copyPasteSupport.cutProvider
       PlatformDataKeys.PASTE_PROVIDER.`is`(dataId) -> copyPasteSupport.pasteProvider

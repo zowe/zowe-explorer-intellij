@@ -14,8 +14,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
-import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
-import eu.ibagroup.formainframe.config.ws.ui.files.WorkingSetDialog
+import eu.ibagroup.formainframe.config.ws.ui.FilesWorkingSetDialogState
+import eu.ibagroup.formainframe.config.ws.ui.files.FilesWorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
@@ -36,7 +36,7 @@ class AddWorkingSetAction : AddWsActionBase() {
    * @see AddWsActionBase.createDialog
    */
   override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
-    return WorkingSetDialog(configCrudable, WorkingSetDialogState().initEmptyUuids(configCrudable))
+    return FilesWorkingSetDialog(configCrudable, FilesWorkingSetDialogState().initEmptyUuids(configCrudable))
   }
 
   /**

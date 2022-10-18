@@ -13,9 +13,9 @@ package eu.ibagroup.formainframe.utils
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
@@ -39,10 +39,10 @@ private val segmentLengthErrorText = "Each name segment (qualifier) is 1 to 8 ch
 private val charactersLengthExceededErrorText = "Dataset name cannot exceed 44 characters"
 private val segmentCharsErrorText =
   "$segmentLengthErrorText," +
-          "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
-          "\nThe remaining seven characters are either alphabetic," +
-          "\nnumeric (0 - 9), national, a hyphen (-)." +
-          "\nName segments are separated by a period (.)"
+    "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
+    "\nThe remaining seven characters are either alphabetic," +
+    "\nnumeric (0 - 9), national, a hyphen (-)." +
+    "\nName segments are separated by a period (.)"
 private val jobIdRegex = Regex("[A-Za-z0-9]+")
 private val volserRegex = Regex("[A-Za-z0-9]{1,6}")
 private val firstLetterRegex = Regex("[A-Z@\$#a-z]")
@@ -116,12 +116,12 @@ fun <WSConfig : WorkingSetConfig> validateWorkingSetName(
  */
 fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
   val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.uppercase())
-          || ws.ussPaths.map { it.path }.contains(component.text)
+    || ws.ussPaths.map { it.path }.contains(component.text)
 
   return if (maskAlreadyExists) {
     ValidationInfo(
       "You must provide unique mask in working set. Working Set " +
-              "\"${ws.name}\" already has mask - ${component.text}", component
+        "\"${ws.name}\" already has mask - ${component.text}", component
     )
   } else {
     null
@@ -202,7 +202,10 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
   } else if (text.contains(Regex(asteriskRegex))) {
     ValidationInfo("Invalid asterisks in the qualifier", component)
   } else if (text.matches(Regex("(\\.?\\*{1,2}\\.?)+"))) {
-    ValidationInfo("Dataset mask that contains only asterisks is invalid. You must specify at least one partial qualifier.", component)
+    ValidationInfo(
+      "Dataset mask that contains only asterisks is invalid. You must specify at least one partial qualifier.",
+      component
+    )
   } else {
     null
   }
@@ -236,32 +239,39 @@ fun validateUssFileName(component: JTextField): ValidationInfo? {
 }
 
 /**
- * Validate job filter to match the specified rules
- * @param prefix the prefix for the job filter
- * @param owner the owner name for the job filter
- * @param jobId the job ID for the job filter
- * @param ws the working set to check the existing masks
- * @param component the component to show the warning
- * @param isJobId value to check the job ID if it is "true"
+ * Validate the job ID
+ * @param component the job ID component to validate the text in and show the warning for
  */
-fun validateJobFilter(
-  prefix: String,
-  owner: String,
-  jobId: String,
-  ws: JesWorkingSet,
-  component: JBTextField,
-  isJobId: Boolean
-): ValidationInfo? {
-  val baseValidation = validateJobFilter(prefix, owner, jobId, component, isJobId)
-  if (baseValidation != null) {
-    return baseValidation
+fun validateJobId(component: JTextField): ValidationInfo? {
+  return if (component.text.isNotBlank()) {
+    if (component.text.length != 8) {
+      ValidationInfo("Job ID length must be 8 characters.", component)
+    } else if (!component.text.matches(jobIdRegex)) {
+      ValidationInfo("Text field should contain only A-Z, a-z, 0-9", component)
+    } else {
+      null
+    }
+  } else {
+    null
   }
-  val newOwner = owner.ifBlank { "" }.uppercase()
-  val newPrefix = prefix.ifBlank { "" }.uppercase()
-  val newJobId = jobId.ifBlank { "" }.uppercase()
-  return if (ws.masks.any { it.owner == newOwner && it.prefix == newPrefix && it.jobId == newJobId }) {
-    ValidationInfo("Job Filter with provided data already exists.", component)
-  } else null
+}
+
+/**
+ * Validate prefix and owner
+ * @param component the current active component to check the owner or prefix and show the warning for
+ */
+fun validatePrefixAndOwner(component: JTextField): ValidationInfo? {
+  return if (component.text.isNotBlank()) {
+    if (component.text.length > 8) {
+      ValidationInfo("Text field must not exceed 8 characters.", component)
+    } else if (!component.text.matches(prefixAndOwnerRegex)) {
+      ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %.", component)
+    } else {
+      null
+    }
+  } else {
+    null
+  }
 }
 
 /**
@@ -297,39 +307,58 @@ fun validateJobFilter(
 }
 
 /**
- * Validate prefix and owner
- * @param component the current active component to check the owner or prefix and show the warning for
+ * Validate job filter to match the specified rules
+ * @param prefix the prefix for the job filter
+ * @param owner the owner name for the job filter
+ * @param jobId the job ID for the job filter
+ * @param existentJobFilters the existing job filters to check whether the provided info is already inserted
+ * @param component the component to show the warning
+ * @param isJobId value to check the job ID if it is "true"
  */
-fun validatePrefixAndOwner(component: JTextField): ValidationInfo? {
-  return if (component.text.isNotBlank()) {
-    if (component.text.length > 8) {
-      ValidationInfo("Text field must not exceed 8 characters.", component)
-    } else if (!component.text.matches(prefixAndOwnerRegex)) {
-      ValidationInfo("Text field should contain only A-Z, a-z, 0-9, *, %.", component)
-    } else {
-      null
-    }
-  } else {
-    null
+fun validateJobFilter(
+  prefix: String,
+  owner: String,
+  jobId: String,
+  existentJobFilters: Collection<JobsFilter>,
+  component: JBTextField,
+  isJobId: Boolean
+): ValidationInfo? {
+  val baseValidation = validateJobFilter(prefix, owner, jobId, component, isJobId)
+  if (baseValidation != null) {
+    return baseValidation
   }
+  val newOwner = owner.ifBlank { "" }.uppercase()
+  val newPrefix = prefix.ifBlank { "" }.uppercase()
+  val newJobId = jobId.ifBlank { "" }.uppercase()
+  val isAlreadyExist = existentJobFilters.any { it.owner == newOwner && it.prefix == newPrefix && it.jobId == newJobId }
+  return if (isAlreadyExist) {
+    ValidationInfo("Job Filter with provided data already exists.", component)
+  } else null
 }
 
 /**
- * Validate the job ID
- * @param component the job ID component to validate the text in and show the warning for
+ * Validate job filter to match the specified rules.
+ * Filters out the initial job filter from existent filters to skip check of the initial values left on Edit Job Filter
+ * @param initJobFilter the initial jobs filter to skip validation of the same one in existing, when the validation is happening in Edit Job Filter dialog
+ * @param prefix the prefix for the job filter
+ * @param owner the owner name for the job filter
+ * @param jobId the job ID for the job filter
+ * @param existentJobFilters the existing job filters to check whether the provided info is already inserted
+ * @param component the component to show the warning
+ * @param isJobId value to check the job ID if it is "true"
  */
-fun validateJobId(component: JTextField): ValidationInfo? {
-  return if (component.text.isNotBlank()) {
-    if (component.text.length != 8) {
-      ValidationInfo("Job ID length must be 8 characters.", component)
-    } else if (!component.text.matches(jobIdRegex)) {
-      ValidationInfo("Text field should contain only A-Z, a-z, 0-9", component)
-    } else {
-      null
-    }
-  } else {
-    null
-  }
+fun validateJobFilter(
+  initJobFilter: JobsFilter,
+  prefix: String,
+  owner: String,
+  jobId: String,
+  existentJobFilters: Collection<JobsFilter>,
+  component: JBTextField,
+  isJobId: Boolean
+): ValidationInfo? {
+  val existentJobFiltersWithoutInit = existentJobFilters
+    .filter { it.owner != initJobFilter.owner || it.prefix != initJobFilter.prefix || it.jobId != initJobFilter.jobId }
+  return validateJobFilter(prefix, owner, jobId, existentJobFiltersWithoutInit, component, isJobId)
 }
 
 /**
@@ -348,6 +377,7 @@ fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeDa
         }
       }
     }
+
     is UssDirNode -> {
       childrenNodesFromParent?.forEach {
         if (it is UssDirNode && text == it.value.path.split("/").last()) {
@@ -470,6 +500,7 @@ fun validateMemberName(component: JTextField): ValidationInfo? {
  */
 fun validateBatchSize(component: JTextField): ValidationInfo? {
   return if (component.text.toIntOrNull() == 0)
-    ValidationInfo("Setting 0 may lead to performance issues due to elements long fetch processing.").asWarning().withOKEnabled()
+    ValidationInfo("Setting 0 may lead to performance issues due to elements long fetch processing.").asWarning()
+      .withOKEnabled()
   else null
 }
