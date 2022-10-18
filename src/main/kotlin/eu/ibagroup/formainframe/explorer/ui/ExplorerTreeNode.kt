@@ -85,6 +85,10 @@ abstract class ExplorerTreeNode<Value : Any>(
     presentationData.addText(text, textAttributes)
   }
 
+  /**
+   * Synchronizes file content and opens it in editor.
+   * @see AbstractTreeNode.navigate
+   */
   override fun navigate(requestFocus: Boolean) {
     val file = virtualFile ?: return
     descriptor?.let {
