@@ -508,7 +508,7 @@ class WorkingSetViaContextMenuTest {
     fun testRenameMaskToAlreadyExistsViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "first ws"
         renameMaskFromContextMenu(wsName, "$ZOS_USERID.*", "$ZOS_USERID.**", false, "Rename Dataset Mask", remoteRobot)
-        renameMaskFromContextMenu(wsName, "/u", "/etc/ssh", false, "Rename Directory", remoteRobot)
+        renameMaskFromContextMenu(wsName, "/u", "/etc/ssh", false, "Rename USS Mask", remoteRobot)
     }
 
     /**
