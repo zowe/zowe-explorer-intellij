@@ -23,7 +23,6 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  * @see WorkingSetConfig
  * @see FilesWorkingSetConfig
  * @see JobsWorkingSetConfig
- * @param TableRow
  * @author Valiantsin Krus
  */
 abstract class AbstractWsDialogState<WSConfig : WorkingSetConfig, TableRow>(
@@ -49,7 +48,7 @@ fun <WSConfig : Any, T : AbstractWsDialogState<WSConfig, *>> T.initEmptyUuids(cr
  * Dialog state for Files Working Set configuration dialog.
  * @see AbstractWsDialogState
  */
-class WorkingSetDialogState(
+class FilesWorkingSetDialogState(
   uuid: String = "",
   connectionUuid: String = "",
   workingSetName: String = "",
@@ -83,21 +82,15 @@ class JobsWorkingSetDialogState(
   uuid: String = "",
   connectionUuid: String = "",
   workingSetName: String = "",
-  maskRow: MutableList<TableRow> = mutableListOf(),
+  maskRow: MutableList<JobFilterState> = mutableListOf(),
   mode: DialogMode = DialogMode.CREATE
-) : AbstractWsDialogState<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow>(
+) : AbstractWsDialogState<JobsWorkingSetConfig, JobFilterState>(
   uuid,
   connectionUuid,
   workingSetName,
   maskRow,
   mode
 ) {
-
-  class TableRow(
-    var prefix: String = "",
-    var owner: String = "",
-    var jobId: String = ""
-  )
 
   override fun workingSetConfigClass() = JobsWorkingSetConfig::class.java
   override val workingSetConfig: JobsWorkingSetConfig

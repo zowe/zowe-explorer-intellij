@@ -11,22 +11,25 @@
 package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.components.JBTextField
+import eu.ibagroup.formainframe.config.ConfigState
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.makeCrudableWithoutListeners
+import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.config.ws.JobsFilter
+import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.config.*
-import eu.ibagroup.r2z.annotations.ZVersion
 import eu.ibagroup.r2z.CodePage
-import java.util.stream.Stream
-import javax.swing.JTextField
-import io.kotest.core.spec.style.ShouldSpec
+import eu.ibagroup.r2z.annotations.ZVersion
 import io.kotest.assertions.assertSoftly
+import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
+import java.util.stream.Stream
+import javax.swing.JTextField
 
 class UtilsTestSpec : ShouldSpec({
   context("utils module: validationFunctions") {
@@ -92,10 +95,14 @@ class UtilsTestSpec : ShouldSpec({
         val initialConName = "b"
 
         every { mockCrud.getAll(ConnectionConfig::class.java) } returns Stream.of(
-          ConnectionConfig(uuid = "con", name = "a", url = "https://found.com",
-            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1),
-          ConnectionConfig(uuid = "con1", name = "a1", url = "https://found1.com",
-            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1)
+          ConnectionConfig(
+            uuid = "con", name = "a", url = "https://found.com",
+            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1
+          ),
+          ConnectionConfig(
+            uuid = "con1", name = "a1", url = "https://found1.com",
+            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1
+          )
         )
 
         val actual = validateConnectionName(jTextField, initialConName, mockCrud)
@@ -110,10 +117,14 @@ class UtilsTestSpec : ShouldSpec({
         val initialConName = null
 
         every { mockCrud.getAll(ConnectionConfig::class.java) } returns Stream.of(
-          ConnectionConfig(uuid = "con", name = "a", url = "https://found.com",
-            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1),
-          ConnectionConfig(uuid = "con1", name = "a1", url = "https://found1.com",
-            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1)
+          ConnectionConfig(
+            uuid = "con", name = "a", url = "https://found.com",
+            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1
+          ),
+          ConnectionConfig(
+            uuid = "con1", name = "a1", url = "https://found1.com",
+            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1
+          )
         )
 
         val actual = validateConnectionName(jTextField, initialConName, mockCrud)
@@ -200,7 +211,7 @@ class UtilsTestSpec : ShouldSpec({
       should("validate working set mask name when there are other working set masks and the mask is unique") {
         jTextField.text = "MASK.MASK"
 
-        every { mockWs.ussPaths } returns listOf(UssPath("/path1"),UssPath("/path2"))
+        every { mockWs.ussPaths } returns listOf(UssPath("/path1"), UssPath("/path2"))
         every { mockWs.masks } returns listOf(DSMask("MASK1", mutableListOf<String>()))
 
         val actual = validateWorkingSetMaskName(jTextField, mockWs)
@@ -213,15 +224,132 @@ class UtilsTestSpec : ShouldSpec({
       should("validate working set mask name when there are other working set masks and the mask is not unique") {
         jTextField.text = "/path1"
 
-        every { mockWs.ussPaths } returns listOf(UssPath("/path1"),UssPath("/path2"))
+        every { mockWs.ussPaths } returns listOf(UssPath("/path1"), UssPath("/path2"))
         every { mockWs.masks } returns listOf(DSMask("MASK.MASK", mutableListOf<String>()))
         every { mockWs.name } returns "Ws name"
 
         val actual = validateWorkingSetMaskName(jTextField, mockWs)
         val expected = ValidationInfo(
           "You must provide unique mask in working set. Working Set " +
-                  "\"${mockWs.name}\" already has mask - ${jTextField.text}", jTextField
+            "\"${mockWs.name}\" already has mask - ${jTextField.text}", jTextField
         )
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
+    // validatePrefixAndOwner
+    should("validate that the job owner and prefix are provided and the fields does not match the regular expression") {}
+    should("validate that the job owner and prefix are provided and the fields are exceed the 8 characters rule") {}
+    should("validate that the job owner and prefix are provided and they are valid") {}
+    // validateJobId
+    should("validate that the job ID is provided and it exceeds the 8 characters length") {}
+    should("validate that the job ID is provided and it does not match the regular expression") {}
+    should("validate that the job ID is provided and it is valid") {}
+    context("validateJobFilter") {
+      val component = JBTextField()
+
+      should("validate that the job filter does not provide owner but provides prefix") {
+        val actual = validateJobFilter("TEST", "", "", component, false)
+        val expected = ValidationInfo("You must provide either an owner and a prefix or a job ID.", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the job filter does not provide prefix but provides owner") {
+        val actual = validateJobFilter("", "TEST", "", component, false)
+        val expected = ValidationInfo("You must provide either an owner and a prefix or a job ID.", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the job filter provide prefix and owner") {
+        val actual = validateJobFilter("TEST", "TEST", "", component, false)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the job filter provides only job ID") {
+        val actual = validateJobFilter("", "", "TEST", component, true)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the job filter provides all fields") {
+        val actual = validateJobFilter("TEST", "TEST", "TEST", component, true)
+        val expected = ValidationInfo("You must provide either an owner and a prefix or a job ID.", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the job filter provides only the blank fields") {
+        val actual = validateJobFilter("", "", "", component, false)
+        val expected = ValidationInfo("You must provide either an owner and a prefix or a job ID.", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the job filter is already exist") {
+        val prefix = "EXIST"
+        val owner = "EXIST"
+        val jobId = ""
+        val isJobId = false
+        val jobFilters =
+          listOf(
+            JobsFilter(owner, prefix, jobId),
+            JobsFilter("DIFFRNT", "*", "")
+          )
+
+        val actual = validateJobFilter(prefix, owner, jobId, jobFilters, component, isJobId)
+        val expected = ValidationInfo("Job Filter with provided data already exists.", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the job filter is already exist and there were no changes to the existing filter") {
+        val prefix = "EXIST"
+        val owner = "EXIST"
+        val jobId = ""
+        val initJobFilter = JobsFilter(prefix, owner, jobId)
+        val isJobId = false
+        val jobFilters =
+          listOf(
+            JobsFilter(owner, prefix, jobId),
+            JobsFilter("DIFFRNT", "*", "")
+          )
+
+        val actual = validateJobFilter(initJobFilter, prefix, owner, jobId, jobFilters, component, isJobId)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the job filter is changed") {
+        val prefix = "EXIST"
+        val owner = "EXIST"
+        val jobId = ""
+        val initJobFilter = JobsFilter(prefix, owner, jobId)
+        val isJobId = false
+        val jobFilters =
+          listOf(
+            JobsFilter(owner, prefix, jobId),
+            JobsFilter("DIFFRNT", "*", "")
+          )
+        val newPrefix = "NEXIST"
+
+        val actual = validateJobFilter(initJobFilter, newPrefix, owner, jobId, jobFilters, component, isJobId)
+        val expected = null
 
         assertSoftly {
           actual shouldBe expected
@@ -250,22 +378,6 @@ class UtilsTestSpec : ShouldSpec({
     should("validate that USS file name when it is valid") {}
     should("validate that USS path when it exceeds the 255 characters long rule") {}
     should("validate that USS path when it contains the forbidden symbol") {}
-    // validateJobFilter(prefix: String, owner: String, jobId: String, ws: JesWorkingSet, component: JBTextField, isJobId: Boolean)
-    should("validate that the job filter is already exist") {}
-    should("validate that the job filter is already exist") {}
-    // validateJobFilter(prefix: String, owner: String, jobId: String, component: JBTextField, isJobId: Boolean)
-    should("validate that the job filter does not provide owner but provides prefix") {}
-    should("validate that the job filter does not provide prefix but provides owner") {}
-    should("validate that the job filter does not provide prefix but provides owner") {}
-    should("validate that the job filter provides only the blank fields") {}
-    // validatePrefixAndOwner
-    should("validate that the job owner and prefix are provided and the fields does not match the regular expression") {}
-    should("validate that the job owner and prefix are provided and the fields are exceed the 8 characters rule") {}
-    should("validate that the job owner and prefix are provided and they are valid") {}
-    // validateJobId
-    should("validate that the job ID is provided and it exceeds the 8 characters length") {}
-    should("validate that the job ID is provided and it does not match the regular expression") {}
-    should("validate that the job ID is provided and it is valid") {}
     // validateUssFileNameAlreadyExists
     should("validate that the USS file name is not already exist") {}
     should("validate that the USS file name is already exist") {}
@@ -279,8 +391,8 @@ class UtilsTestSpec : ShouldSpec({
     should("validate that the dataset name does not match the regular expression") {}
     should("validate the dataset name is blank") {}
     // validateVolser
-    should("validate the VOLSER does not match the regular expression"){}
-    should("check the VOLSER is valid"){}
+    should("validate the VOLSER does not match the regular expression") {}
+    should("check the VOLSER is valid") {}
     // validateForGreaterValue
     should("validate that the number is greater than the provided one") {}
     should("validate that the number is not greater than the provided one") {}

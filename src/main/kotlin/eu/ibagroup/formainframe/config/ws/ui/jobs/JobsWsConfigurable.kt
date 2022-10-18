@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.config.ws.ui.jobs
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.config.sandboxCrudable
+import eu.ibagroup.formainframe.config.ws.JobFilterState
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
@@ -51,8 +52,7 @@ class JobsWsConfigurable
 
   /**
    * Creates and shows dialog for editing Jobs Working Set.
-   * @param crudable crudable to modify after applying dialog.
-   * @param state state of dialog.
+   * @param selected selected working set dialog state
    */
   override fun createEditDialog(selected: JobsWorkingSetDialogState) {
     JobsWsDialog(
@@ -78,7 +78,7 @@ fun JobsWorkingSetConfig.toDialogState(): JobsWorkingSetDialogState {
     uuid = this.uuid,
     connectionUuid = this.connectionConfigUuid,
     workingSetName = this.name,
-    maskRow = this.jobsFilters.map { JobsWorkingSetDialogState.TableRow(it.prefix, it.owner, it.jobId) }
+    maskRow = this.jobsFilters.map { JobFilterState(it.prefix, it.owner, it.jobId) }
       .toMutableSmartList()
   )
 }

@@ -18,7 +18,7 @@ import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.MaskState
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
-import eu.ibagroup.formainframe.config.ws.ui.WorkingSetDialogState
+import eu.ibagroup.formainframe.config.ws.ui.FilesWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.validateDatasetMask
@@ -35,12 +35,12 @@ import javax.swing.table.TableCellEditor
  * @author Valiantsin Krus
  * @author Viktar Mushtsin
  */
-class WorkingSetDialog(
+class FilesWorkingSetDialog(
   crudable: Crudable,
-  state: WorkingSetDialogState
-) : AbstractWsDialog<FilesWorkingSetConfig, MaskState, WorkingSetDialogState>(
+  state: FilesWorkingSetDialogState
+) : AbstractWsDialog<FilesWorkingSetConfig, MaskState, FilesWorkingSetDialogState>(
   crudable,
-  WorkingSetDialogState::class.java,
+  FilesWorkingSetDialogState::class.java,
   state
 ) {
 
@@ -210,12 +210,15 @@ class WorkingSetDialog(
       masksTable.listTableModel.validationInfos.asMap.isNotEmpty() -> {
         ValidationInfo("Fix errors in the table and try again", component)
       }
+
       masksTable.listTableModel.rowCount == 0 -> {
         validationBuilder.warning("You are going to create a Working Set that doesn't fetch anything")
       }
+
       hasDuplicatesInTable(masksTable.items) -> {
         ValidationInfo("You cannot add several identical masks to table")
       }
+
       else -> null
     }
   }

@@ -58,8 +58,7 @@ class ViewJobAction : AnAction() {
     }
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
-    e.presentation.isVisible = selected.size == 1
-            && node is JobNode
+    e.presentation.isVisible = selected.size == 1 && node is JobNode
   }
 
 }

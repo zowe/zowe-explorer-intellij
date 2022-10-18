@@ -15,7 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.ui.files.WorkingSetDialog
+import eu.ibagroup.formainframe.config.ws.ui.files.FilesWorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.files.toDialogState
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.FilesWorkingSetNode
@@ -25,22 +25,29 @@ import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 /**
  * Action class for edit working set act
  */
-class EditWorkingSetAction : AnAction() {
+class EditFilesWorkingSetAction : AnAction() {
 
   /**
-   * Called when edit working set option is chosen from context menu,
-   * runs the edit working set operation
+   * Called when edit working set option is chosen from context menu
+   * Opens the working set table with elements to edit
    */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
-    val node = view.mySelectedNodesData[0].node
-    if (node is FilesWorkingSetNode) {
-      val workingSetConfig =
-        configCrudable.getByUniqueKey<FilesWorkingSetConfig>(node.value.uuid)?.clone() as FilesWorkingSetConfig
-      val dialog = WorkingSetDialog(configCrudable, workingSetConfig.toDialogState().apply { mode = DialogMode.UPDATE })
-      if (dialog.showAndGet()) {
-        val state = dialog.state
-        configCrudable.update(state.workingSetConfig)
+    when (val node = view.mySelectedNodesData[0].node) {
+      is FilesWorkingSetNode -> {
+        val workingSetConfig =
+          configCrudable.getByUniqueKey<FilesWorkingSetConfig>(node.value.uuid)?.clone() as FilesWorkingSetConfig
+        FilesWorkingSetDialog(configCrudable, workingSetConfig.toDialogState().apply { mode = DialogMode.UPDATE })
+          .apply {
+            if (showAndGet()) {
+              val dialogState = state
+              configCrudable.update(dialogState.workingSetConfig)
+            }
+          }
+      }
+
+      else -> {
+        return
       }
     }
   }
@@ -61,6 +68,7 @@ class EditWorkingSetAction : AnAction() {
       return
     }
     val selected = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = selected.size == 1 && (selected[0].node is FilesWorkingSetNode)
+    e.presentation.isEnabledAndVisible =
+      selected.size == 1 && (selected[0].node is FilesWorkingSetNode)
   }
 }

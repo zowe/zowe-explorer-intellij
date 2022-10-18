@@ -10,17 +10,27 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.explorer.JesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
+import eu.ibagroup.formainframe.explorer.ui.AddJobsFilterDialog
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.JobsWsNode
 
 /**
  * Action for adding Job Filter from UI.
  * @author Valiantsin Krus
  */
-class AddJobsFilerAction : AnAction() {
+class AddJobsFilterAction : JobsFilterAction() {
+
+  /**
+   * Is node conforms to the JesFilterNode and the JobsWsNode types
+   * @param node the node to check
+   */
+  override fun isNodeConformsToType(node: ExplorerTreeNode<*>?): Boolean {
+    return super.isNodeConformsToType(node) || node is JobsWsNode
+  }
 
   /** Opens AddJobsFilterDialog and saves result. */
   override fun actionPerformed(e: AnActionEvent) {
@@ -28,28 +38,11 @@ class AddJobsFilerAction : AnAction() {
 
     val ws = getUnits(view).firstOrNull() ?: return
     val owner = ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""
-    val initialState = JobsFilterState(ws, "*", owner)
+    val initialState = JobFilterStateWithWS(ws = ws, owner = owner)
     val dialog = AddJobsFilterDialog(e.project, initialState)
     if (dialog.showAndGet()) {
       ws.addMask(dialog.state.toJobsFilter())
     }
-  }
-
-  /** Decides to show action or not. */
-  override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-    e.presentation.isEnabledAndVisible = getUnits(view).size == 1
-  }
-
-  /** Finds units for selected nodes in explorer. */
-  private fun getUnits(view: JesExplorerView): List<JesWorkingSet> {
-    return view.mySelectedNodesData.map { it.node }
-      .filterIsInstance<ExplorerUnitTreeNodeBase<*, JesWorkingSet>>()
-      .map { it.unit }
-      .distinct()
   }
 
 }
