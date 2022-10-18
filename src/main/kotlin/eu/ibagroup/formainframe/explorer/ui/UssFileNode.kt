@@ -30,12 +30,11 @@ class UssFileNode(
   file, project, parent, unit, treeStructure
 ), UssNode {
 
-  private val animatedIcon = AnimatedIcon.Default()
   override fun update(presentation: PresentationData) {
     updateMainTitleUsingCutBuffer(value.presentableName, presentation)
     val icon = IconUtil.computeFileIcon(value, Iconable.ICON_FLAG_READ_STATUS, explorer.nullableProject)
     if (this.navigating) {
-      presentation.setIcon(animatedIcon)
+      presentation.setIcon(AnimatedIcon.Default())
     } else {
       presentation.setIcon(icon)
     }

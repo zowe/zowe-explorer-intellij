@@ -16,11 +16,14 @@ import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
@@ -31,12 +34,10 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
-import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
-import kotlin.concurrent.thread
 
 /** Base class to implement the basic interactions with an explorer node */
 abstract class ExplorerTreeNode<Value : Any>(
@@ -105,7 +106,12 @@ abstract class ExplorerTreeNode<Value : Any>(
           if (doSync) {
             val syncProvider = DocumentedSyncProvider(file = file, saveStrategy = SaveStrategy.default(project))
             if (!file.isBeingEditingNow()) {
-              contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
+              runCatching {
+                contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
+              }.also {
+                this.navigating = false
+                this.update()
+              }
             }
           }
           indicator.text = "Navigating to ${file.name}"
@@ -115,9 +121,7 @@ abstract class ExplorerTreeNode<Value : Any>(
           runWriteActionInEdtAndWait {
             it.navigate(requestFocus)
           }
-          this.navigating = false
         }
-
       }
     }
   }

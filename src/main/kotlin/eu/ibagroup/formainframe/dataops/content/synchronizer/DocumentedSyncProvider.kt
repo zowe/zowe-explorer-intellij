@@ -98,7 +98,7 @@ class DocumentedSyncProvider(
         if (wasReadOnly) {
           document?.setReadOnly(true)
         }
-        saveDocument()
+//        saveDocument()
       }.onFailure {
         isInitialContentSet.set(false)
       }
