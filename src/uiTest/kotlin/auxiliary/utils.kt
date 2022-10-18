@@ -258,7 +258,7 @@ fun createConnection(
                     addConnection(connectionName, "${CONNECTION_URL}1", ZOS_USERID, ZOS_PWD, true)
                 }
                 clickButton("OK")
-                Thread.sleep(5000)
+                Thread.sleep(10000)
             }
             closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
             if (isValidConnection.not()) {

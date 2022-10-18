@@ -130,17 +130,16 @@ class SubmitJobTest {
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
         Thread.sleep(20000)
-        openJobsOutputs(jobName, remoteRobot)
+        openJobsOutputs(remoteRobot)
     }
 
 
     /**
      * Opens and closes the jobs outputs.
      */
-    private fun openJobsOutputs(jobName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
+    private fun openJobsOutputs(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val fileList = listOf("JESMSGLG", "JESJCL", "JESYSMSG", "SYSUT2", "SYSPRINT")
         ideFrameImpl(projectName, fixtureStack) {
-            find<ComponentFixture>(viewTree).findAllText { it.text.startsWith(jobName) }.first().doubleClick()
             Thread.sleep(10000)
             fileList.forEach { fileName ->
                 find<ComponentFixture>(viewTree).findAllText { it.text.startsWith(fileName) }.first().doubleClick()
