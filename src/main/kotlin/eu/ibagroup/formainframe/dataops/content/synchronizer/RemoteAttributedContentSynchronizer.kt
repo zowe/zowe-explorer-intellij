@@ -22,9 +22,6 @@ import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.contentEquals
-import kotlin.collections.firstOrNull
-import kotlin.collections.getOrPut
 import kotlin.collections.set
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
