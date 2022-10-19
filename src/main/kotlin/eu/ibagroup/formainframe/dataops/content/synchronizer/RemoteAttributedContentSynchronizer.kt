@@ -120,7 +120,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       val contentAdapter = dataOpsManager.getMFContentAdapter(syncProvider.file)
       val adaptedFetchedBytes = contentAdapter.adaptContentFromMainframe(fetchedRemoteContentBytes, syncProvider.file)
 
-      if (!wasFetchedBefore(syncProvider) || !syncProvider.file.isWritable) {
+      if (!wasFetchedBefore(syncProvider)) {
         log.info("Setting initial content for file ${syncProvider.file.name}")
         runWriteActionInEdtAndWait { syncProvider.putInitialContent(adaptedFetchedBytes) }
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
