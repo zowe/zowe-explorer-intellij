@@ -151,10 +151,13 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
           }
         }
       }
-    }.onFailure {
-      log.error(it)
-      syncProvider.onThrowable(it)
     }
+      .onSuccess {
+        syncProvider.onSyncSuccess()
+      }
+      .onFailure {
+        syncProvider.onThrowable(it)
+      }
   }
 
   /**
