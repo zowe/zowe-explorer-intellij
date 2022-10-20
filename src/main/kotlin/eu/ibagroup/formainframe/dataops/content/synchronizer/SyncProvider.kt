@@ -73,4 +73,7 @@ interface SyncProvider {
    */
   fun onThrowable(t: Throwable)
 
+  /** Function that will be invoked if the sync action is completed successfully */
+  fun onSyncSuccess()
+
 }

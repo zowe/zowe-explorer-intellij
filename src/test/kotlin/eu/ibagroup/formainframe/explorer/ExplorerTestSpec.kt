@@ -35,6 +35,44 @@ class ExplorerTestSpec : ShouldSpec({
     should("perform paste accepting conflicts") {}
     should("perform paste declining conflicts") {}
   }
+  context("explorer module: ui/UssFileNode") {
+    context("navigate") {
+//      val requestFocus = true
+//
+//      mockkObject(MFVirtualFileSystem)
+//      every { MFVirtualFileSystem.instance } returns mockk()
+//
+//      val fileMock = mockk<MFVirtualFile>()
+//
+//      val projectMock = mockk<Project>()
+//
+//      val treeStructureMock = mockk<ExplorerTreeStructureBase>()
+//      every { treeStructureMock.registerNode(any()) } returns mockk()
+//
+//      mockkStatic(TreeAnchorizer::class)
+//      every { TreeAnchorizer.getService().createAnchor(any()) } returns mockk()
+//      mockkObject(UIComponentManager)
+//      every { UIComponentManager.INSTANCE.getExplorerContentProvider<Explorer<WorkingSet<UssFileNode>>>(any()) } returns mockk()
+//      val explorerTreeNodeMock = mockk<ExplorerTreeNode<*>>()
+//
+//      val explorerUnitMock = mockk<ExplorerUnit>()
+//      every { explorerUnitMock.explorer } returns mockk()
+//
+//      val ussFileNode = UssFileNode(
+//        fileMock,
+//        projectMock,
+//        explorerTreeNodeMock,
+//        explorerUnitMock,
+//        treeStructureMock
+//      )
+//
+//      should("perform navigate on file") {
+//        ussFileNode.navigate(requestFocus)
+//      }
+      should("perform navigate on file with failure due to permission denied") {}
+      should("perform navigate on file with failure due to error") {}
+    }
+  }
   context("explorer module: actions/RenameAction") {
     // actionPerformed
     should("perform rename on dataset") {}
