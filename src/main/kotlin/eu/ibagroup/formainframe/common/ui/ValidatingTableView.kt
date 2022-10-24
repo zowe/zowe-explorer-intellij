@@ -13,9 +13,6 @@ package eu.ibagroup.formainframe.common.ui
 import com.intellij.openapi.Disposable
 import com.intellij.ui.table.TableView
 import eu.ibagroup.formainframe.utils.castOrNull
-import java.awt.Dimension
-import javax.swing.DefaultCellEditor
-import javax.swing.table.TableCellRenderer
 
 /** Validating table view class. Provides the functionality to handle table view with validators on the model */
 class ValidatingTableView<Item>(
@@ -23,22 +20,22 @@ class ValidatingTableView<Item>(
   val disposable: Disposable
 ) : TableView<Item>(model) {
 
-  /**
-   * Get cell renderer with the changed cell size for the cells with default cell editor
-   * @param row the row number to get the cell at
-   * @param column the column number to get the cell at
-   * @return cell renderer with the changed cell sizes
-   */
-  override fun getCellRenderer(row: Int, column: Int): TableCellRenderer? {
-    return super.getCellRenderer(row, column)?.apply {
-      val editor = getCellEditor(row, column)
-      if (editor is DefaultCellEditor) {
-        preferredSize = with(preferredSize) {
-          Dimension(this.width, this.height.coerceAtLeast(editor.component.preferredSize.height))
-        }
-      }
-    }
-  }
+//  /**
+//   * Get cell renderer with the changed cell size for the cells with default cell editor
+//   * @param row the row number to get the cell at
+//   * @param column the column number to get the cell at
+//   * @return cell renderer with the changed cell sizes
+//   */
+//  override fun getCellRenderer(row: Int, column: Int): TableCellRenderer? {
+//    return super.getCellRenderer(row, column)?.apply {
+//      val editor = getCellEditor(row, column)
+//      if (editor is DefaultCellEditor) {
+//        preferredSize = with(preferredSize) {
+//          Dimension(this.width, this.height.coerceAtLeast(editor.component.preferredSize.height))
+//        }
+//      }
+//    }
+//  }
 
   @Suppress("UNCHECKED_CAST")
   override fun getListTableModel(): ValidatingListTableModel<Item> {
