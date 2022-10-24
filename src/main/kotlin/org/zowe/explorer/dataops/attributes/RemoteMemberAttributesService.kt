@@ -42,7 +42,7 @@ class RemoteMemberAttributesService(
     private val fsModel = MFVirtualFileSystem.instance.model
   }
 
-  override val findOrCreateFileInVFSModel = fsModel::findOrCreate
+  override val findOrCreateFileInVFSModel = fsModel::findOrCreateDependentFile
   override val moveFileAndReplaceInVFSModel = fsModel::moveFileAndReplace
 
   /**

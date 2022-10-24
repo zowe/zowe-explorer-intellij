@@ -22,9 +22,6 @@ import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.kotlinsdk.XIBMDataType
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.contentEquals
-import kotlin.collections.firstOrNull
-import kotlin.collections.getOrPut
 import kotlin.collections.set
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
@@ -154,10 +151,13 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
           }
         }
       }
-    }.onFailure {
-      log.error(it)
-      syncProvider.onThrowable(it)
     }
+      .onSuccess {
+        syncProvider.onSyncSuccess()
+      }
+      .onFailure {
+        syncProvider.onThrowable(it)
+      }
   }
 
   /**

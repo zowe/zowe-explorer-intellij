@@ -12,9 +12,11 @@ package org.zowe.explorer.dataops.content.synchronizer
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.config.ConfigService
 
 /**
  * Functional interface to decide if file content can be uploaded or should be updated from mainframe.
@@ -24,29 +26,64 @@ import com.intellij.openapi.vfs.VirtualFile
 fun interface SaveStrategy {
 
   companion object {
+
     /**
-     * Creates a default save strategy with "yes/no" dialog
-     * @param project project instance to show dialog in.
+     * Request user permission when the remote content is different from the last fetched content bytes.
+     * Should return true when user wants to save the content from file to the mainframe
+     * @param project the project to issue dialog in
+     * @param file the file to display its name
+     * @param shouldUpload is the current bytes should be uploaded to the mainframe in case if the last fetched bytes are the same as the remote bytes
+     * @param remoteLastSame is the last fetched bytes are the same as the remote bytes
+     * @return boolean that indicates, should the current local file bytes be uploaded to the mainframe
+     */
+    private fun requestPermissionToUploadOnDiff(
+      project: Project?,
+      file: VirtualFile,
+      shouldUpload: Boolean = true,
+      remoteLastSame: Boolean
+    ): Boolean {
+      return if (!remoteLastSame) {
+        invokeAndWaitIfNeeded {
+          showYesNoDialog(
+            title = "Remote Conflict in File ${file.name}",
+            message = "The file you are currently editing was changed on remote. Do you want to accept remote changes and discard local ones, or overwrite content on the mainframe by local version?",
+            noText = "Accept Remote",
+            yesText = "Overwrite Content on the Mainframe",
+            project = project,
+            icon = AllIcons.General.WarningDialog
+          )
+        }
+      } else {
+        shouldUpload
+      }
+    }
+
+    /**
+     * Creates a default save strategy with "yes/no" dialog when the last fetched bytes are different from the remote bytes.
+     * It uploads changes in case the current bytes are different from the remote bytes
+     * @param project project instance to show dialog in
      * @return instance of default [SaveStrategy]
      */
     fun default(project: Project? = null): SaveStrategy {
       return SaveStrategy { f, lastSuccessfulState, remoteBytes ->
-        (lastSuccessfulState contentEquals remoteBytes).let decision@{ result ->
-          return@decision if (!result) {
-            invokeAndWaitIfNeeded {
-              showYesNoDialog(
-                title = "Remote Conflict in File ${f.name}",
-                message = "The file you are currently editing was changed on remote. Do you want to accept remote changes and discard local ones, or overwrite content on the mainframe by local version?",
-                noText = "Accept Remote",
-                yesText = "Overwrite Content on the Mainframe",
-                project = project,
-                icon = AllIcons.General.WarningDialog
-              )
-            }
-          } else {
-            true
-          }
-        }
+        requestPermissionToUploadOnDiff(project, f, true, (lastSuccessfulState contentEquals remoteBytes))
+      }
+    }
+
+    /**
+     * Creates a default save strategy with "yes/no" dialog when the last fetched bytes are different from the remote bytes.
+     * It uploads changes in case the current bytes are different from the remote bytes and autosync is enabled
+     * @param project project instance to show dialog in
+     * @return instance of default [SaveStrategy]
+     */
+    fun syncOnOpen(project: Project? = null): SaveStrategy {
+      return SaveStrategy { f, lastSuccessfulState, remoteBytes ->
+        requestPermissionToUploadOnDiff(
+          project,
+          f,
+          service<ConfigService>().isAutoSyncEnabled,
+          (lastSuccessfulState contentEquals remoteBytes)
+        )
       }
     }
   }

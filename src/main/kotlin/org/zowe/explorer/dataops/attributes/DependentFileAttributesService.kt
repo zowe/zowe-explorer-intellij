@@ -57,10 +57,10 @@ abstract class DependentFileAttributesService<Attributes : DependentFileAttribut
 
   /**
    * Method of file system model that finds (or creates if not exist) file.
-   * @see MFVirtualFileSystemModel.findOrCreate
+   * @see MFVirtualFileSystemModel.findOrCreateDependentFile
    */
   protected abstract val findOrCreateFileInVFSModel:
-            (Any?, VFile, String, com.intellij.openapi.util.io.FileAttributes) -> VFile
+            (Any?, VFile, FileAttributes, com.intellij.openapi.util.io.FileAttributes) -> VFile
 
   /**
    * Method of file system model that moves and replaces file.
@@ -87,7 +87,7 @@ abstract class DependentFileAttributesService<Attributes : DependentFileAttribut
   override fun getOrCreateVirtualFile(attributes: Attributes): VFile {
     val parent = annulParentIfNoAttributesFound(attributes.parentFile)
     return if (parent != null && parent.isDirectory) {
-      findOrCreateFileInVFSModel(this, parent, attributes.name, createAttributes(directory = false)).also {
+      findOrCreateFileInVFSModel(this, parent, attributes, createAttributes(directory = false)).also {
         fileToInfoMap[it] = attributes.info
         fileToContentTypeMap[it] = attributes.contentMode
         sendTopic(

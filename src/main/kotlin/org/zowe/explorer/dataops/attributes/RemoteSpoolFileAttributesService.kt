@@ -59,6 +59,6 @@ class RemoteSpoolFileAttributesService(
     return RemoteSpoolFileAttributes(info, file, contentMode ?: XIBMDataType(XIBMDataType.Type.TEXT))
   }
 
-  override val findOrCreateFileInVFSModel = fsModel::findOrCreate
+  override val findOrCreateFileInVFSModel = fsModel::findOrCreateDependentFile
   override val moveFileAndReplaceInVFSModel = fsModel::moveFileAndReplace
 }

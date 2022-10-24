@@ -17,6 +17,7 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.dataops.DataOpsManager
@@ -39,7 +40,6 @@ abstract class ExplorerTreeNode<Value : Any>(
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
 
   open fun init() {
-    @Suppress("LeakingThis")
     treeStructure.registerNode(this)
   }
 
@@ -75,9 +75,14 @@ abstract class ExplorerTreeNode<Value : Any>(
     presentationData.addText(text, textAttributes)
   }
 
+  /**
+   * Open the specified node in IDE editor when it could be open, error dialog instead.
+   * Makes initial file synchronization if the autosync option selected.
+   * @param requestFocus parameter to request focus when it is needed
+   */
   override fun navigate(requestFocus: Boolean) {
     val file = virtualFile ?: return
-    descriptor?.let {
+    descriptor?.let { fileDescriptor ->
       if (!file.isDirectory) {
         val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
         val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
@@ -88,13 +93,38 @@ abstract class ExplorerTreeNode<Value : Any>(
           icon = AllIcons.General.WarningDialog
         )
         if (doSync) {
-          val syncProvider = DocumentedSyncProvider(file = file, saveStrategy = SaveStrategy.default(project))
+          val onThrowableHandler: (Throwable) -> Unit = {
+            if (it.message?.contains("Client is not authorized for file access") == true) {
+              Messages.showDialog(
+                project,
+                "You do not have permissions to read this file",
+                "Error While Opening File ${file.name}",
+                arrayOf("Ok"),
+                0,
+                AllIcons.General.ErrorDialog,
+                null
+              )
+            } else {
+              DocumentedSyncProvider.defaultOnThrowableHandler(file, it)
+            }
+          }
+          val onSyncSuccessHandler: () -> Unit = {
+            dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
+              service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
+            }
+            fileDescriptor.navigate(requestFocus)
+          }
+          val syncProvider =
+            DocumentedSyncProvider(
+              file = file,
+              saveStrategy = SaveStrategy.syncOnOpen(project),
+              onThrowableHandler = onThrowableHandler,
+              onSyncSuccessHandler = onSyncSuccessHandler
+            )
           if (!file.isBeingEditingNow()) {
             contentSynchronizer.synchronizeWithRemote(syncProvider)
           }
         }
-        dataOpsManager.tryToGetAttributes(file)?.let { }
-        it.navigate(requestFocus)
       }
     }
   }

@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.vfs
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileAttributes
@@ -18,6 +19,8 @@ import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.jetbrains.rd.util.ConcurrentHashMap
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteSpoolFileAttributes
 import org.zowe.explorer.utils.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -102,7 +105,30 @@ class MFVirtualFileSystemModel {
   fun findOrCreate(
     requestor: Any?, vDir: MFVirtualFile, name: String, attributes: FileAttributes
   ): MFVirtualFile {
-    return vDir.findChild(name) ?: createChildWithAttributes(requestor, vDir, name, attributes)
+    return vDir.findChild(name) ?: createChildWithAttributes(requestor, vDir, name, attributes, false)
+  }
+
+  /**
+   * Find or create the dependent file in directory (member or spool file)
+   * by its name for member and by its name and id for spool file
+   * @param requestor the class to describe event requester
+   * @param vDir the virtual directory to search in
+   * @param remoteAttributes attributes from the remote for the file to be found or created
+   * @param attributes the attributes to create the child if it is not found
+   */
+  fun findOrCreateDependentFile(
+    requestor: Any?, vDir: MFVirtualFile, remoteAttributes: eu.ibagroup.formainframe.dataops.attributes.FileAttributes, attributes: FileAttributes
+  ): MFVirtualFile {
+    return vDir.findChild(remoteAttributes.name)?.let { vFile ->
+      remoteAttributes.castOrNull<RemoteSpoolFileAttributes>()?.let {
+        val existingAttributes = service<DataOpsManager>().tryToGetAttributes(vFile) as RemoteSpoolFileAttributes
+        if (existingAttributes.info.id != it.info.id) {
+          createChildWithAttributes(requestor, vDir, remoteAttributes.name, attributes, true)
+        } else {
+          vFile
+        }
+      } ?: vFile
+    } ?: createChildWithAttributes(requestor, vDir, remoteAttributes.name, attributes, false)
   }
 
   /**
@@ -303,7 +329,7 @@ class MFVirtualFileSystemModel {
    */
   @Throws(IOException::class)
   fun createChildWithAttributes(
-    requestor: Any?, vDir: MFVirtualFile, name: String, attributes: FileAttributes
+    requestor: Any?, vDir: MFVirtualFile, name: String, attributes: FileAttributes, sameNamesAllowed: Boolean
   ): MFVirtualFile {
     if (attributes.isSymLink) {
       throw IOException("Cannot create symlink without destination")
@@ -315,7 +341,7 @@ class MFVirtualFileSystemModel {
       if (!vDir.isDirectory) {
         throw NotDirectoryException(vDir.path)
       }
-      if (list(vDir).any { it == name }) {
+      if (list(vDir).any { it == name } && !sameNamesAllowed) {
         throw FileAlreadyExistsException(vDir.path + MFVirtualFileSystem.SEPARATOR + name)
       }
       MFVirtualFile(
@@ -352,7 +378,8 @@ class MFVirtualFileSystemModel {
         length = 0,
         lastModified = System.nanoTime(),
         writable = true
-      )
+      ),
+      false
     )
   }
 
