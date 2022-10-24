@@ -40,7 +40,7 @@ class AddJobsFilterDialog(
 
     return panel {
       row {
-        label("Jobs Working Set: ")
+        label("Jes Working Set: ")
           .widthGroup(sameWidthGroup)
         label(state.ws.name)
       }

@@ -8,34 +8,34 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.ws.ui.jobs
+package eu.ibagroup.formainframe.config.ws.ui.jes
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
-import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
+import eu.ibagroup.formainframe.config.ws.ui.JesWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.validateJobFilter
 import javax.swing.JComponent
 import javax.swing.JTextField
 
 /**
- * Dialog of Jobs Working Set configurations.
+ * Dialog of Jes Working Set configurations.
  * @param crudable Crudable instance to change data in after dialog applied.
- * @param state state of Jobs Working Set configuration data.
+ * @param state state of Jes Working Set configuration data.
  */
-class JobsWsDialog(
+class JesWsDialog(
   crudable: Crudable,
-  state: JobsWorkingSetDialogState
-) : AbstractWsDialog<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow, JobsWorkingSetDialogState>(
+  state: JesWorkingSetDialogState
+) : AbstractWsDialog<JesWorkingSetConfig, JesWorkingSetDialogState.TableRow, JesWorkingSetDialogState>(
   crudable,
-  JobsWorkingSetDialogState::class.java,
+  JesWorkingSetDialogState::class.java,
   state
 ) {
-  override val wsConfigClass = JobsWorkingSetConfig::class.java
+  override val wsConfigClass = JesWorkingSetConfig::class.java
 
   /**
    * TableView with Job Prefix, Owner, JobId columns for representation of jobs filters.
@@ -52,12 +52,12 @@ class JobsWsDialog(
 
   override val tableTitle = "Job Filters included in Working Set"
 
-  override val wsNameLabel = "Jobs Working Set Name"
+  override val wsNameLabel = "Jes Working Set Name"
 
   override fun init() {
     title = when (state.mode) {
-      DialogMode.CREATE -> "Add Jobs Working Set"
-      else -> "Edit Jobs Working Set"
+      DialogMode.CREATE -> "Add Jes Working Set"
+      else -> "Edit Jes Working Set"
     }
     super.init()
   }
@@ -67,8 +67,8 @@ class JobsWsDialog(
   }
 
   private fun fixBlankFieldsInState(
-    state: JobsWorkingSetDialogState.TableRow
-  ): JobsWorkingSetDialogState.TableRow {
+    state: JesWorkingSetDialogState.TableRow
+  ): JesWorkingSetDialogState.TableRow {
     state.prefix = state.prefix.ifBlank { "" }
     state.owner = state.owner.ifBlank { "" }
     state.jobId = state.jobId.ifBlank { "" }
@@ -80,19 +80,19 @@ class JobsWsDialog(
    * @param state state modified through dialog.
    * @return applied state.
    */
-  override fun onWSApplied(state: JobsWorkingSetDialogState): JobsWorkingSetDialogState {
+  override fun onWSApplied(state: JesWorkingSetDialogState): JesWorkingSetDialogState {
     state.maskRow = state.maskRow.map { fixBlankFieldsInState(it) }
-      .distinctBy { "pre:" + it.prefix + "owr:" + it.owner + "jid:" + it.jobId } as MutableList<JobsWorkingSetDialogState.TableRow>
+      .distinctBy { "pre:" + it.prefix + "owr:" + it.owner + "jid:" + it.jobId } as MutableList<JesWorkingSetDialogState.TableRow>
     return super.onWSApplied(state)
   }
 
-  override fun emptyTableRow(): JobsWorkingSetDialogState.TableRow = JobsWorkingSetDialogState.TableRow(
+  override fun emptyTableRow(): JesWorkingSetDialogState.TableRow = JesWorkingSetDialogState.TableRow(
     prefix = "*",
     owner = CredentialService.instance.getUsernameByKey(state.connectionUuid) ?: ""
   )
 
   /**
-   * Validates data in Jobs Working Set dialog table.
+   * Validates data in Jes Working Set dialog table.
    * @param validationBuilder Builder that passed through Intellij Platform to build ValidationInfo.
    * @param component requestor component.
    * @return info with validation warnings and errors to display inside.
@@ -112,85 +112,85 @@ class JobsWsDialog(
     }
   }
 
-  private fun hasDuplicatesInTable(tableElements: MutableList<JobsWorkingSetDialogState.TableRow>): Boolean {
+  private fun hasDuplicatesInTable(tableElements: MutableList<JesWorkingSetDialogState.TableRow>): Boolean {
     return tableElements.size != tableElements.map {
       "pre:" + it.prefix.ifBlank { "" } + "owr:" + it.owner.ifBlank { "" } + "jid:" + it.jobId.ifBlank { "" }
     }.distinct().size
   }
 
   /**
-   * Class for representation Job Prefix column in Job Working Set table.
+   * Class for representation Job Prefix column in Jes Working Set table.
    * @see ValidatingColumnInfo
    */
-  object PrefixColumn : ValidatingColumnInfo<JobsWorkingSetDialogState.TableRow>("Prefix") {
+  object PrefixColumn : ValidatingColumnInfo<JesWorkingSetDialogState.TableRow>("Prefix") {
 
-    override fun valueOf(item: JobsWorkingSetDialogState.TableRow?): String? = item?.prefix
+    override fun valueOf(item: JesWorkingSetDialogState.TableRow?): String? = item?.prefix
 
     override fun validateOnInput(
-      oldItem: JobsWorkingSetDialogState.TableRow,
+      oldItem: JesWorkingSetDialogState.TableRow,
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
       return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue), false)
     }
 
-    override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
+    override fun validateEntered(item: JesWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
       return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.prefix), false)
     }
 
-    override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
+    override fun isCellEditable(item: JesWorkingSetDialogState.TableRow?): Boolean = true
 
-    override fun setValue(item: JobsWorkingSetDialogState.TableRow, value: String) {
+    override fun setValue(item: JesWorkingSetDialogState.TableRow, value: String) {
       item.prefix = value.uppercase()
     }
   }
 
   /**
-   * Class for representation Owner column in Job Working Set table.
+   * Class for representation Owner column in Jes Working Set table.
    * @see ValidatingColumnInfo
    */
-  object OwnerColumn : ValidatingColumnInfo<JobsWorkingSetDialogState.TableRow>("Owner") {
-    override fun valueOf(item: JobsWorkingSetDialogState.TableRow?): String? = item?.owner
+  object OwnerColumn : ValidatingColumnInfo<JesWorkingSetDialogState.TableRow>("Owner") {
+    override fun valueOf(item: JesWorkingSetDialogState.TableRow?): String? = item?.owner
     override fun validateOnInput(
-      oldItem: JobsWorkingSetDialogState.TableRow,
+      oldItem: JesWorkingSetDialogState.TableRow,
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
       return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue), false)
     }
 
-    override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
+    override fun validateEntered(item: JesWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
       return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.owner), false)
     }
 
-    override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
+    override fun isCellEditable(item: JesWorkingSetDialogState.TableRow?): Boolean = true
 
-    override fun setValue(item: JobsWorkingSetDialogState.TableRow, value: String) {
+    override fun setValue(item: JesWorkingSetDialogState.TableRow, value: String) {
       item.owner = value.uppercase()
     }
   }
 
   /**
-   * Class for representation Job Id column in Job Working Set table.
+   * Class for representation Job Id column in Jes Working Set table.
    * @see ValidatingColumnInfo
    */
-  object JobIdColumn : ValidatingColumnInfo<JobsWorkingSetDialogState.TableRow>("Job ID") {
-    override fun valueOf(item: JobsWorkingSetDialogState.TableRow?): String? = item?.jobId
+  object JobIdColumn : ValidatingColumnInfo<JesWorkingSetDialogState.TableRow>("Job ID") {
+    override fun valueOf(item: JesWorkingSetDialogState.TableRow?): String? = item?.jobId
     override fun validateOnInput(
-      oldItem: JobsWorkingSetDialogState.TableRow,
+      oldItem: JesWorkingSetDialogState.TableRow,
       newValue: String,
       component: JComponent
     ): ValidationInfo? {
       return validateJobFilter(newValue, oldItem.owner, oldItem.jobId, JTextField(newValue), true)
     }
 
-    override fun validateEntered(item: JobsWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
+    override fun validateEntered(item: JesWorkingSetDialogState.TableRow, component: JComponent): ValidationInfo? {
       return validateJobFilter(item.prefix, item.owner, item.jobId, JTextField(item.jobId), true)
     }
 
-    override fun isCellEditable(item: JobsWorkingSetDialogState.TableRow?): Boolean = true
+    override fun isCellEditable(item: JesWorkingSetDialogState.TableRow?): Boolean = true
 
-    override fun setValue(item: JobsWorkingSetDialogState.TableRow, value: String) {
+    override fun setValue(item: JesWorkingSetDialogState.TableRow, value: String) {
       item.jobId = value.uppercase()
     }
   }

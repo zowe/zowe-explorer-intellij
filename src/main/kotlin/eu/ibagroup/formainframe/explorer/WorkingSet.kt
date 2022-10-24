@@ -36,6 +36,6 @@ interface FilesWorkingSet : WorkingSet<DSMask> {
 
 }
 
-/** Interface to represent the jobs working set */
+/** Interface to represent the jes working set */
 interface JesWorkingSet : WorkingSet<JobsFilter> {}
 

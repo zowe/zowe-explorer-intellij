@@ -42,9 +42,9 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     val workingSetsTab = tabLabel(remoteRobot, "Working Sets")
 
     /**
-     * The Jobs Working Sets table
+     * The Jes Working Sets table
      */
-    val jobsWorkingSetsTab = tabLabel(remoteRobot, "Jobs Working Sets")
+    val jesWorkingSetsTab = tabLabel(remoteRobot, "Jes Working Sets")
 
     /**
      * Clicks on the add action and adds the Add Connection Dialog to the list of fixtures needed to close.
@@ -76,24 +76,24 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     }
 
     /**
-     * Clicks on the add action and adds the Add Jobs Working Set Dialog to the list of fixtures needed to close.
+     * Clicks on the add action and adds the Add Jes Working Set Dialog to the list of fixtures needed to close.
      */
     fun addJWS(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
         clickActionButton(byXpath("//div[@accessiblename='Add' and @class='ActionButton' and @myaction='Add (Add)']"))
-        closableFixtureCollector.add(AddJobsWorkingSetDialog.xPath(), fixtureStack)
+        closableFixtureCollector.add(AddJesWorkingSetDialog.xPath(), fixtureStack)
     }
 
     /**
-     * Clicks on the edit action and adds the Edit Jobs Working Set Dialog to the list of fixtures needed to close.
+     * Clicks on the edit action and adds the Edit Jes Working Set Dialog to the list of fixtures needed to close.
      */
-    fun editJobsWorkingSet(
-        jobsWorkingSetName: String,
+    fun editJesWorkingSet(
+        jesWorkingSetName: String,
         closableFixtureCollector: ClosableFixtureCollector,
         fixtureStack: List<Locator>
     ) {
-        findText(jobsWorkingSetName).click()
+        findText(jesWorkingSetName).click()
         clickActionButton(byXpath("//div[@accessiblename='Edit' and @class='ActionButton' and @myaction='Edit (Edit)']"))
-        closableFixtureCollector.add(EditJobsWorkingSetDialog.xPath(), fixtureStack)
+        closableFixtureCollector.add(EditJesWorkingSetDialog.xPath(), fixtureStack)
     }
 
     /**

@@ -13,7 +13,7 @@ package eu.ibagroup.formainframe.config
 import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
 
@@ -56,7 +56,7 @@ interface ConfigSandbox {
     entities = [
       FilesWorkingSetConfig::class,
       ConnectionConfig::class,
-      JobsWorkingSetConfig::class
+      JesWorkingSetConfig::class
     ]
   )
   val crudable: Crudable

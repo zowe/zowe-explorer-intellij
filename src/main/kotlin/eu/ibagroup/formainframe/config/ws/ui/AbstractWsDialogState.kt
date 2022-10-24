@@ -18,11 +18,11 @@ import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
- * Abstract class for Working Sets state in configuration dialogs (e.g. Files Working Set, Jobs Working Sets)
+ * Abstract class for Working Sets state in configuration dialogs (e.g. Files Working Set, Jes Working Sets)
  * @param WSConfig WorkingSetConfig implementation class.
  * @see WorkingSetConfig
  * @see FilesWorkingSetConfig
- * @see JobsWorkingSetConfig
+ * @see JesWorkingSetConfig
  * @param TableRow
  * @author Valiantsin Krus
  */
@@ -76,16 +76,16 @@ class WorkingSetDialogState(
 }
 
 /**
- * Dialog state for Jobs Working Set configuration dialog.
+ * Dialog state for Jes Working Set configuration dialog.
  * @see AbstractWsDialogState
  */
-class JobsWorkingSetDialogState(
+class JesWorkingSetDialogState(
   uuid: String = "",
   connectionUuid: String = "",
   workingSetName: String = "",
   maskRow: MutableList<TableRow> = mutableListOf(),
   mode: DialogMode = DialogMode.CREATE
-) : AbstractWsDialogState<JobsWorkingSetConfig, JobsWorkingSetDialogState.TableRow>(
+) : AbstractWsDialogState<JesWorkingSetConfig, JesWorkingSetDialogState.TableRow>(
   uuid,
   connectionUuid,
   workingSetName,
@@ -99,9 +99,9 @@ class JobsWorkingSetDialogState(
     var jobId: String = ""
   )
 
-  override fun workingSetConfigClass() = JobsWorkingSetConfig::class.java
-  override val workingSetConfig: JobsWorkingSetConfig
-    get() = JobsWorkingSetConfig(
+  override fun workingSetConfigClass() = JesWorkingSetConfig::class.java
+  override val workingSetConfig: JesWorkingSetConfig
+    get() = JesWorkingSetConfig(
       this.uuid,
       this.workingSetName,
       this.connectionUuid,

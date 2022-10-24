@@ -15,7 +15,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.ReloadableEventHandler
@@ -47,8 +47,8 @@ internal fun <T> classToList(clazz: Class<out T>, state: SandboxState): MutableL
       return state.configState.filesWorkingSets as MutableList<T>
     }
 
-    override fun onJobsWorkingSetConfig(): MutableList<T> {
-      return state.configState.jobsWorkingSets as MutableList<T>
+    override fun onJesWorkingSetConfig(): MutableList<T> {
+      return state.configState.jesWorkingSets as MutableList<T>
     }
 
     override fun onCredentials(): MutableList<T> {
@@ -185,7 +185,7 @@ class ConfigSandboxImpl : ConfigSandbox {
     synchronized(stateLock) {
       rollbackSandbox<ConnectionConfig>()
       rollbackSandbox<FilesWorkingSetConfig>()
-      rollbackSandbox<JobsWorkingSetConfig>()
+      rollbackSandbox<JesWorkingSetConfig>()
       rollbackSandbox<Credentials>()
     }
   }

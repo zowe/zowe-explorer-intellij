@@ -24,43 +24,43 @@ import java.awt.event.KeyEvent
 import java.time.Duration
 
 /**
- * Class representing the Add Jobs Working Set Dialog.
+ * Class representing the Add Jes Working Set Dialog.
  */
-@FixtureName("Add Jobs Working Set Dialog")
-open class AddJobsWorkingSetDialog(
+@FixtureName("Add Jes Working Set Dialog")
+open class AddJesWorkingSetDialog(
     remoteRobot: RemoteRobot,
     remoteComponent: RemoteComponent
 ) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
 
     /**
-     * Fills in the jobs working set name and connection name for adding a new empty jobs working set.
+     * Fills in the jes working set name and connection name for adding a new empty jes working set.
      */
-    fun addJobsWorkingSet(jobsWorkingSetName: String, connectionName: String) {
-        specifyJWSNameAndConnection(jobsWorkingSetName, connectionName)
+    fun addJesWorkingSet(jesWorkingSetName: String, connectionName: String) {
+        specifyJWSNameAndConnection(jesWorkingSetName, connectionName)
     }
 
     /**
-     * Fills in the jobs working set name, connection name and filter for adding a new jobs working set.
+     * Fills in the jes working set name, connection name and filter for adding a new jes working set.
      */
-    fun addJobsWorkingSet(jobsWorkingSetName: String, connectionName: String, filter: Triple<String, String, String>) {
-        specifyJWSNameAndConnection(jobsWorkingSetName, connectionName)
+    fun addJesWorkingSet(jesWorkingSetName: String, connectionName: String, filter: Triple<String, String, String>) {
+        specifyJWSNameAndConnection(jesWorkingSetName, connectionName)
         addFilter(filter)
     }
 
     /**
-     * Fills in the jobs working set name, connection name and list of filters for adding a new jobs working set.
+     * Fills in the jes working set name, connection name and list of filters for adding a new jes working set.
      */
-    fun addJobsWorkingSet(
-        jobsWorkingSetName: String,
+    fun addJesWorkingSet(
+        jesWorkingSetName: String,
         connectionName: String,
         filters: List<Triple<String, String, String>>
     ) {
-        specifyJWSNameAndConnection(jobsWorkingSetName, connectionName)
+        specifyJWSNameAndConnection(jesWorkingSetName, connectionName)
         filters.forEach { addFilter(it) }
     }
 
     /**
-     * Adds the filter to jobs working set.
+     * Adds the filter to jes working set.
      */
     fun addFilter(filter: Triple<String, String, String>) {
         clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[contains(@myaction.key, 'button.add.a')]"))
@@ -77,7 +77,7 @@ open class AddJobsWorkingSetDialog(
     }
 
     /**
-     * Deletes the filter from jobs working set.
+     * Deletes the filter from jes working set.
      */
     fun deleteFilter(filter: Triple<String, String, String>) {
         val textToFind = filter.third.ifEmpty { filter.first }
@@ -86,14 +86,14 @@ open class AddJobsWorkingSetDialog(
     }
 
     /**
-     * Deletes the list of filters from jobs working set.
+     * Deletes the list of filters from jes working set.
      */
     fun deleteFilters(filters: List<Triple<String, String, String>>) {
         filters.forEach { deleteFilter(it) }
     }
 
     /**
-     * Deletes all filters from jobs working set.
+     * Deletes all filters from jes working set.
      */
     fun deleteAllFilters() {
         find<ComponentFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Prefix || Owner || Job ID']]")).click()
@@ -104,10 +104,10 @@ open class AddJobsWorkingSetDialog(
     }
 
     /**
-     * Fills in the jobs working set name and connection name.
+     * Fills in the jes working set name and connection name.
      */
-    private fun specifyJWSNameAndConnection(jobsWorkingSetName: String, connectionName: String) {
-        find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = jobsWorkingSetName
+    private fun specifyJWSNameAndConnection(jesWorkingSetName: String, connectionName: String) {
+        find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = jesWorkingSetName
         if (connectionName.isEmpty().not()) {
             find<ComboBoxFixture>(byXpath("//div[@class='ComboBox']")).selectItem(connectionName)
         }
@@ -121,26 +121,26 @@ open class AddJobsWorkingSetDialog(
     }
 
     companion object {
-        const val name = "Add Jobs Working Set Dialog"
+        const val name = "Add Jes Working Set Dialog"
 
         /**
-         * Returns the xPath of the Add Jobs Working Set Dialog.
+         * Returns the xPath of the Add Jes Working Set Dialog.
          */
         @JvmStatic
-        fun xPath() = byXpath(name, "//div[@accessiblename='Add Jobs Working Set' and @class='MyDialog']")
+        fun xPath() = byXpath(name, "//div[@accessiblename='Add Jes Working Set' and @class='MyDialog']")
     }
 }
 
 /**
- * Finds the AddJobsWorkingSetDialog and modifies fixtureStack.
+ * Finds the AddJesWorkingSetDialog and modifies fixtureStack.
  */
-fun ContainerFixture.addJobsWorkingSetDialog(
+fun ContainerFixture.addJesWorkingSetDialog(
     fixtureStack: MutableList<Locator>,
     timeout: Duration = Duration.ofSeconds(60),
-    function: AddJobsWorkingSetDialog.() -> Unit = {}
+    function: AddJesWorkingSetDialog.() -> Unit = {}
 ) {
-    find<AddJobsWorkingSetDialog>(AddJobsWorkingSetDialog.xPath(), timeout).apply {
-        fixtureStack.add(AddJobsWorkingSetDialog.xPath())
+    find<AddJesWorkingSetDialog>(AddJesWorkingSetDialog.xPath(), timeout).apply {
+        fixtureStack.add(AddJesWorkingSetDialog.xPath())
         function()
         fixtureStack.removeLast()
     }

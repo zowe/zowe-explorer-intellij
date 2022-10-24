@@ -14,11 +14,11 @@ import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.isTheSameAs
 
 /**
- * Configuration class for Jobs Working Sets. Instances of these
+ * Configuration class for Jes Working Sets. Instances of these
  * class will be saved and can be reloaded after Intellij closed.
  * @author Valiantsin Krus
  */
-class JobsWorkingSetConfig : WorkingSetConfig {
+class JesWorkingSetConfig : WorkingSetConfig {
 
   @Column
   var jobsFilters: MutableCollection<JobsFilter> = mutableListOf()
@@ -46,7 +46,7 @@ class JobsWorkingSetConfig : WorkingSetConfig {
     if (javaClass != other?.javaClass) return false
     if (!super.equals(other)) return false
 
-    other as JobsWorkingSetConfig
+    other as JesWorkingSetConfig
 
     if (name != other.name) return false
     if (connectionConfigUuid != other.connectionConfigUuid) return false
@@ -64,6 +64,6 @@ class JobsWorkingSetConfig : WorkingSetConfig {
   }
 
   override fun toString(): String {
-    return "JobsWorkingSetConfig(name='$name', connectionConfigUuid='$connectionConfigUuid', jobsFilters=$jobsFilters)"
+    return "JesWorkingSetConfig(name='$name', connectionConfigUuid='$connectionConfigUuid', jobsFilters=$jobsFilters)"
   }
 }

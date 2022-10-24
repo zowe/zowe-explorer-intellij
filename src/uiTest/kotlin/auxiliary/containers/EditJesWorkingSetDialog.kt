@@ -20,23 +20,23 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
- * Class representing the Edit Jobs Working Set Dialog. It is a child of AddJobsWorkingSetDialog, since
+ * Class representing the Edit Jes Working Set Dialog. It is a child of AddJesWorkingSetDialog, since
  * it is the same dialog, just with a different name.
  */
-class EditJobsWorkingSetDialog(
+class EditJesWorkingSetDialog(
     remoteRobot: RemoteRobot,
     remoteComponent: RemoteComponent
-) : AddJobsWorkingSetDialog(remoteRobot, remoteComponent) {
+) : AddJesWorkingSetDialog(remoteRobot, remoteComponent) {
 
     /**
-     * Renames the jobs working set.
+     * Renames the jes working set.
      */
-    fun renameJobsWorkingSet(newName: String) {
+    fun renameJesWorkingSet(newName: String) {
         find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = newName
     }
 
     /**
-     * Changes the connection for jobs working set.
+     * Changes the connection for jes working set.
      */
     fun changeConnection(newConnectionName: String) {
         if (newConnectionName.isEmpty().not()) {
@@ -45,26 +45,26 @@ class EditJobsWorkingSetDialog(
     }
 
     companion object {
-        const val name = "Edit Jobs Working Set Dialog"
+        const val name = "Edit Jes Working Set Dialog"
 
         /**
-         * Returns the xPath of the Edit Jobs Working Set Dialog.
+         * Returns the xPath of the Edit Jes Working Set Dialog.
          */
         @JvmStatic
-        fun xPath() = byXpath(name, "//div[@accessiblename='Edit Jobs Working Set' and @class='MyDialog']")
+        fun xPath() = byXpath(name, "//div[@accessiblename='Edit Jes Working Set' and @class='MyDialog']")
     }
 }
 
 /**
- * Finds the Edit Jobs Working Set Dialog and modifies the fixtureStack.
+ * Finds the Edit Jes Working Set Dialog and modifies the fixtureStack.
  */
-fun ContainerFixture.editJobsWorkingSetDialog(
+fun ContainerFixture.editJesWorkingSetDialog(
     fixtureStack: MutableList<Locator>,
     timeout: Duration = Duration.ofSeconds(60),
-    function: EditJobsWorkingSetDialog.() -> Unit = {}
+    function: EditJesWorkingSetDialog.() -> Unit = {}
 ) {
-    find<EditJobsWorkingSetDialog>(EditJobsWorkingSetDialog.xPath(), timeout).apply {
-        fixtureStack.add(EditJobsWorkingSetDialog.xPath())
+    find<EditJesWorkingSetDialog>(EditJesWorkingSetDialog.xPath(), timeout).apply {
+        fixtureStack.add(EditJesWorkingSetDialog.xPath())
         function()
         fixtureStack.removeLast()
     }

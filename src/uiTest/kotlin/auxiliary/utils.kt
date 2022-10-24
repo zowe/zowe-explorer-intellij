@@ -201,7 +201,7 @@ fun ContainerFixture.deleteWSFromContextMenu(wsName: String) {
 }
 
 /**
- * Creates a jobs working set via context menu from explorer.
+ * Creates a jes working set via context menu from explorer.
  */
 fun ContainerFixture.createJWSFromContextMenu(
     fixtureStack: MutableList<Locator>,
@@ -213,12 +213,12 @@ fun ContainerFixture.createJWSFromContextMenu(
         Thread.sleep(3000)
     }
     actionMenu(remoteRobot, "New").click()
-    actionMenuItem(remoteRobot, "Jobs Working Set").click()
-    closableFixtureCollector.add(AddJobsWorkingSetDialog.xPath(), fixtureStack)
+    actionMenuItem(remoteRobot, "Jes Working Set").click()
+    closableFixtureCollector.add(AddJesWorkingSetDialog.xPath(), fixtureStack)
 }
 
 /**
- * Creates a jobs filter in the jobs working set via context menu from explorer.
+ * Creates a jobs filter in the jes working set via context menu from explorer.
  */
 fun ContainerFixture.createJobsFilter(
     jwsName: String, fixtureStack: MutableList<Locator>,
@@ -274,7 +274,7 @@ fun createConnection(
 }
 
 /**
- * Deletes all jobs working sets, working sets and connections. To be used in BeforeAll and AfterAll tests methods.
+ * Deletes all jes working sets, working sets and connections. To be used in BeforeAll and AfterAll tests methods.
  */
 fun clearEnvironment(
     projectName: String,
@@ -290,7 +290,7 @@ fun clearEnvironment(
             configurableEditor {
                 workingSetsTab.click()
                 deleteAllItems()
-                jobsWorkingSetsTab.click()
+                jesWorkingSetsTab.click()
                 deleteAllItems()
                 conTab.click()
                 deleteAllItems()

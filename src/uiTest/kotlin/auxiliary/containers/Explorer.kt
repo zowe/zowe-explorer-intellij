@@ -49,11 +49,11 @@ class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
     }
 
     /**
-     * Clicks on the creating jobs working set action and adds the Add Jobs Working Set Dialog to the list of fixtures needed to close.
+     * Clicks on the creating jes working set action and adds the Add Jes Working Set Dialog to the list of fixtures needed to close.
      */
-    fun createJobsWorkingSet(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
-        clickActionButton(byXpath("//div[@class='ActionButton' and @myaction='Jobs Working Set ()']"))
-        closableFixtureCollector.add(AddJobsWorkingSetDialog.xPath(), fixtureStack)
+    fun createJesWorkingSet(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
+        clickActionButton(byXpath("//div[@class='ActionButton' and @myaction='Jes Working Set ()']"))
+        closableFixtureCollector.add(AddJesWorkingSetDialog.xPath(), fixtureStack)
     }
 
     companion object {

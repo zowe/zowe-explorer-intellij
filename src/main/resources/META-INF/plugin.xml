@@ -252,7 +252,7 @@ Example of how to see the output:<br/>
 
         <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldUsernameAdapterFactory"/>
 
-        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldJobsWorkingSetAdapterFactory"/>
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldJesWorkingSetAdapterFactory"/>
 
         <explorer implementation="eu.ibagroup.formainframe.explorer.FileExplorerFactory"/>
         <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory"/>
@@ -353,9 +353,9 @@ Example of how to see the output:<br/>
                 text="Working Set"
                 icon="AllIcons.Nodes.Project"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"
-                class="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"
-                text="Jobs Working Set"
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"
+                text="Jes Working Set"
                 icon="AllIcons.Nodes.Project"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
@@ -461,8 +461,8 @@ Example of how to see the output:<br/>
                 text="Edit"
                 use-shortcut-of="RenameElement"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"
-                class="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditJesWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditJesWorkingSetAction"
                 text="Edit"
                 use-shortcut-of="RenameElement"/>
 
@@ -484,7 +484,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
@@ -493,7 +493,7 @@ Example of how to see the output:<br/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.JESActionBarGroup">
-            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
         </group>
 
@@ -515,7 +515,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJesWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
             <separator/>

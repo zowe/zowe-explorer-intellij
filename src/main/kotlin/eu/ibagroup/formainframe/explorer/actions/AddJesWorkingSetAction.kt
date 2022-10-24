@@ -14,29 +14,29 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
-import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
+import eu.ibagroup.formainframe.config.ws.ui.JesWorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
-import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsDialog
+import eu.ibagroup.formainframe.config.ws.ui.jes.JesWsDialog
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
- * Implementation of AddWsActionBase for jobs working sets.
+ * Implementation of AddWsActionBase for jes working sets.
  * @see AddWsActionBase
  * @author Valiantsin Krus
  */
-class AddJobsWorkingSetAction : AddWsActionBase() {
+class AddJesWorkingSetAction : AddWsActionBase() {
   override val explorerView = JES_EXPLORER_VIEW
-  override val presentationTextInExplorer = "Jobs Working Set"
-  override val defaultPresentationText = "Create Jobs Working Set"
+  override val presentationTextInExplorer = "Jes Working Set"
+  override val defaultPresentationText = "Create Jes Working Set"
 
   /**
-   * Creates dialog for Jobs Working Set.
+   * Creates dialog for Jes Working Set.
    * @see AddWsActionBase.createDialog
    */
   override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
-    return JobsWsDialog(configCrudable, JobsWorkingSetDialogState().initEmptyUuids(configCrudable))
+    return JesWsDialog(configCrudable, JesWorkingSetDialogState().initEmptyUuids(configCrudable))
   }
 
   /**
