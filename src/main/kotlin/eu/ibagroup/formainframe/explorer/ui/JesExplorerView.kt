@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
 
@@ -46,7 +46,7 @@ class JesExplorerView(
   contextMenu: ActionGroup,
   rootNodeProvider: (Explorer<*>, Project, ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
   cutProviderUpdater: (List<VirtualFile>) -> Unit
-) : ExplorerTreeView<JesWorkingSetImpl, JobsWorkingSetConfig>(
+) : ExplorerTreeView<JesWorkingSetImpl, JesWorkingSetConfig>(
   explorer,
   project,
   parentDisposable,

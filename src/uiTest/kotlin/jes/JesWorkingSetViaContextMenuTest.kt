@@ -27,16 +27,16 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Duration
 
 /**
- * Tests creating jobs working sets and jobs filters from context menu.
+ * Tests creating JES working sets and jobs filters from context menu.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class JobsWorkingSetViaContextMenuTest {
+class JesWorkingSetViaContextMenuTest {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf(
-        "Add Jobs Working Set Dialog", "Edit Jobs Working Set Dialog"
+        "Add JES Working Set Dialog", "Edit JES Working Set Dialog"
     )
     private val projectName = "untitled"
     private val connectionName = "valid connection"
@@ -70,11 +70,11 @@ class JobsWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jobs working set without connection, checks that correct message is returned.
+     * Tests to add new JES working set without connection, checks that correct message is returned.
      */
     @Test
     @Order(1)
-    fun testAddJobsWorkingSetWithoutConnectionViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddJesWorkingSetWithoutConnectionViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "first jws"
         ideFrameImpl(projectName, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
@@ -83,8 +83,8 @@ class JobsWorkingSetViaContextMenuTest {
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
-            addJobsWorkingSetDialog(fixtureStack) {
-                addJobsWorkingSet(jwsName, connectionName)
+            addJesWorkingSetDialog(fixtureStack) {
+                addJesWorkingSet(jwsName, connectionName)
                 clickButton("OK")
                 Thread.sleep(3000)
                 find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
@@ -93,41 +93,41 @@ class JobsWorkingSetViaContextMenuTest {
                 clickButton("OK")
                 Thread.sleep(3000)
             }
-            closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+            closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
     }
 
     /**
-     * Tests to add new empty jobs working sets with different names, checks that correct message is returned.
+     * Tests to add new empty JES working sets with different names, checks that correct message is returned.
      */
     @Test
     @Order(2)
-    fun testAddEmptyJobsWorkingSetsWithDifferentNamesViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddEmptyJesWorkingSetsWithDifferentNamesViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         createJWS("A".repeat(200), true, remoteRobot)
         createJWS("B12#$%^&*", true, remoteRobot)
     }
 
     /**
-     * Tests to add new jobs working set with one valid jobs filter.
+     * Tests to add new JES working set with one valid jobs filter.
      */
     @Test
     @Order(3)
-    fun testAddJobsWorkingSetWithOneValidFilterViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddJesWorkingSetWithOneValidFilterViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS1"
         val filter = Triple("*", ZOS_USERID, "")
         ideFrameImpl(projectName, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
-            addJobsWorkingSetDialog(fixtureStack) {
-                addJobsWorkingSet(jwsName, connectionName, filter)
+            addJesWorkingSetDialog(fixtureStack) {
+                addJesWorkingSet(jwsName, connectionName, filter)
                 clickButton("OK")
                 Thread.sleep(3000)
             }
-            closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+            closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
     }
 
     /**
-     * Tests to add new jobs working set with already existing name, checks that correct message is returned.
+     * Tests to add new JES working set with already existing name, checks that correct message is returned.
      */
     @Test
     @Order(4)
@@ -136,7 +136,7 @@ class JobsWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jobs working set with invalid jobs filters, checks that correct messages are returned.
+     * Tests to add new JES working set with invalid jobs filters, checks that correct messages are returned.
      */
     @Test
     @Order(5)
@@ -144,8 +144,8 @@ class JobsWorkingSetViaContextMenuTest {
         val jwsName = "JWS2"
         ideFrameImpl(projectName, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
-            addJobsWorkingSetDialog(fixtureStack) {
-                addJobsWorkingSet(jwsName, connectionName)
+            addJesWorkingSetDialog(fixtureStack) {
+                addJesWorkingSet(jwsName, connectionName)
                 invalidJobsFiltersMap.forEach {
                     addFilter(it.key.first)
                     if (button("OK").isEnabled()) {
@@ -171,12 +171,12 @@ class JobsWorkingSetViaContextMenuTest {
                 clickButton("Cancel")
                 Thread.sleep(5000)
             }
-            closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+            closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
     }
 
     /**
-     * Tests to add new jobs working set with several valid jobs filters, opens filters in explorer.
+     * Tests to add new JES working set with several valid jobs filters, opens filters in explorer.
      */
     @Test
     @Order(6)
@@ -184,12 +184,12 @@ class JobsWorkingSetViaContextMenuTest {
         val jwsName = "JWS2"
         ideFrameImpl(projectName, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
-            addJobsWorkingSetDialog(fixtureStack) {
-                addJobsWorkingSet(jwsName, connectionName, validJobsFilters)
+            addJesWorkingSetDialog(fixtureStack) {
+                addJesWorkingSet(jwsName, connectionName, validJobsFilters)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
-            closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+            closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
         openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
         validJobsFilters.forEach {
@@ -200,7 +200,7 @@ class JobsWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jobs working set with invalid connection, checks that correct message is returned.
+     * Tests to add new JES working set with invalid connection, checks that correct message is returned.
      */
     @Test
     @Order(7)
@@ -209,12 +209,12 @@ class JobsWorkingSetViaContextMenuTest {
         createConnection(projectName, fixtureStack, closableFixtureCollector, "invalid_connection", false, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
-            addJobsWorkingSetDialog(fixtureStack) {
-                addJobsWorkingSet(jwsName, "invalid_connection", Triple("*", ZOS_USERID, ""))
+            addJesWorkingSetDialog(fixtureStack) {
+                addJesWorkingSet(jwsName, "invalid_connection", Triple("*", ZOS_USERID, ""))
                 clickButton("OK")
                 Thread.sleep(5000)
             }
-            closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+            closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
         openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
         findAll<ComponentFixture>(byXpath("//div[@class='MyComponent'][.//div[@accessiblename='Invalid URL port: \"104431\"' and @class='JEditorPane']]")).forEach {
@@ -227,7 +227,7 @@ class JobsWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jobs working set with the same jobs filters, checks that correct message is returned.
+     * Tests to add new JES working set with the same jobs filters, checks that correct message is returned.
      */
     @Test
     @Order(8)
@@ -235,9 +235,9 @@ class JobsWorkingSetViaContextMenuTest {
         val jwsName = "JWS4"
         ideFrameImpl(projectName, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
-            addJobsWorkingSetDialog(fixtureStack) {
-                addJobsWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
-                addJobsWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
+            addJesWorkingSetDialog(fixtureStack) {
+                addJesWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
+                addJesWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
                 clickButton("OK")
                 find<HeavyWeightWindowFixture>(
                     byXpath("//div[@class='HeavyWeightWindow']"),
@@ -246,7 +246,7 @@ class JobsWorkingSetViaContextMenuTest {
                 assertFalse(button("OK").isEnabled())
                 clickButton("Cancel")
             }
-            closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+            closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
     }
 
@@ -303,7 +303,7 @@ class JobsWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to create already exists jobs filter in jobs working set, checks that correct message is returned.
+     * Tests to create already exists jobs filter in JES working set, checks that correct message is returned.
      */
     @Test
     @Order(11)
@@ -339,13 +339,13 @@ class JobsWorkingSetViaContextMenuTest {
       fun testDeleteAllJWSViaContextMenu(){}*/
 
     /**
-     * Creates empty jobs working set from context menu.
+     * Creates empty JES working set from context menu.
      */
     private fun createJWS(jwsName: String, isUniqueName: Boolean, remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
-            addJobsWorkingSetDialog(fixtureStack) {
-                addJobsWorkingSet(jwsName, connectionName)
+            addJesWorkingSetDialog(fixtureStack) {
+                addJesWorkingSet(jwsName, connectionName)
                 if (isUniqueName) {
                     clickButton("OK")
                     Thread.sleep(5000)
@@ -364,12 +364,12 @@ class JobsWorkingSetViaContextMenuTest {
                     clickButton("Cancel")
                 }
             }
-            closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+            closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
     }
 
     /**
-     * Creates jobs filter in the jobs working set from context menu.
+     * Creates jobs filter in the JES working set from context menu.
      */
     private fun createFilterFromContextMenu(
         jwsName: String,

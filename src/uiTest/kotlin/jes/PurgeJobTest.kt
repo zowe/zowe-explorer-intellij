@@ -116,14 +116,14 @@ class PurgeJobTest {
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 jesExplorer.click()
-                createJobsWorkingSet(closableFixtureCollector, fixtureStack)
+                createJesWorkingSet(closableFixtureCollector, fixtureStack)
             }
-            addJobsWorkingSetDialog(fixtureStack) {
-                addJobsWorkingSet(jwsName, connectionName, filters)
+            addJesWorkingSetDialog(fixtureStack) {
+                addJesWorkingSet(jwsName, connectionName, filters)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
-            closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+            closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
     }
 

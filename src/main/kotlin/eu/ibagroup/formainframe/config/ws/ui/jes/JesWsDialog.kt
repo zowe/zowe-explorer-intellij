@@ -8,16 +8,16 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.ws.ui.jobs
+package eu.ibagroup.formainframe.config.ws.ui.jes
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.JobFilterState
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
-import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
+import eu.ibagroup.formainframe.config.ws.ui.JesWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.validateJobFilter
 import javax.swing.JComponent
@@ -28,15 +28,15 @@ import javax.swing.JTextField
  * @param crudable Crudable instance to change data in after dialog applied.
  * @param state state of Jobs Working Set configuration data.
  */
-class JobsWsDialog(
+class JesWsDialog(
   crudable: Crudable,
-  state: JobsWorkingSetDialogState
-) : AbstractWsDialog<JobsWorkingSetConfig, JobFilterState, JobsWorkingSetDialogState>(
+  state: JesWorkingSetDialogState
+) : AbstractWsDialog<JesWorkingSetConfig, JobFilterState, JesWorkingSetDialogState>(
   crudable,
-  JobsWorkingSetDialogState::class.java,
+  JesWorkingSetDialogState::class.java,
   state
 ) {
-  override val wsConfigClass = JobsWorkingSetConfig::class.java
+  override val wsConfigClass = JesWorkingSetConfig::class.java
 
   /**
    * TableView with Job Prefix, Owner, JobId columns for representation of jobs filters.
@@ -53,12 +53,12 @@ class JobsWsDialog(
 
   override val tableTitle = "Job Filters included in Working Set"
 
-  override val wsNameLabel = "Jobs Working Set Name"
+  override val wsNameLabel = "JES Working Set Name"
 
   override fun init() {
     title = when (state.mode) {
-      DialogMode.CREATE -> "Add Jobs Working Set"
-      else -> "Edit Jobs Working Set"
+      DialogMode.CREATE -> "Add JES Working Set"
+      else -> "Edit JES Working Set"
     }
     super.init()
   }
@@ -81,7 +81,7 @@ class JobsWsDialog(
    * @param state state modified through dialog.
    * @return applied state.
    */
-  override fun onWSApplied(state: JobsWorkingSetDialogState): JobsWorkingSetDialogState {
+  override fun onWSApplied(state: JesWorkingSetDialogState): JesWorkingSetDialogState {
     state.maskRow = state.maskRow.map { fixBlankFieldsInState(it) }
       .distinctBy { "pre:" + it.prefix + "owr:" + it.owner + "jid:" + it.jobId } as MutableList<JobFilterState>
     return super.onWSApplied(state)
@@ -93,7 +93,7 @@ class JobsWsDialog(
   )
 
   /**
-   * Validates data in Jobs Working Set dialog table.
+   * Validates data in JES Working Set dialog table.
    * @param validationBuilder Builder that passed through Intellij Platform to build ValidationInfo.
    * @param component requestor component.
    * @return info with validation warnings and errors to display inside.
@@ -123,7 +123,7 @@ class JobsWsDialog(
   }
 
   /**
-   * Class for representation Job Prefix column in Job Working Set table.
+   * Class for representation Job Prefix column in JES Working Set table.
    * @see ValidatingColumnInfo
    */
   object PrefixColumn : ValidatingColumnInfo<JobFilterState>("Prefix") {
@@ -150,7 +150,7 @@ class JobsWsDialog(
   }
 
   /**
-   * Class for representation Owner column in Job Working Set table.
+   * Class for representation Owner column in JES Working Set table.
    * @see ValidatingColumnInfo
    */
   object OwnerColumn : ValidatingColumnInfo<JobFilterState>("Owner") {
@@ -175,7 +175,7 @@ class JobsWsDialog(
   }
 
   /**
-   * Class for representation Job Id column in Job Working Set table.
+   * Class for representation Job Id column in JES Working Set table.
    * @see ValidatingColumnInfo
    */
   object JobIdColumn : ValidatingColumnInfo<JobFilterState>("Job ID") {

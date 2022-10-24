@@ -8,40 +8,40 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.ws.ui.jobs
+package eu.ibagroup.formainframe.config.ws.ui.jes
 
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.config.sandboxCrudable
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JobFilterState
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsConfigurable
-import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
+import eu.ibagroup.formainframe.config.ws.ui.JesWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
- * Implementation of AbstractWsConfigurable class for modifying Jobs Working Set configurations.
+ * Implementation of AbstractWsConfigurable class for modifying JES Working Set configurations.
  * @see AbstractWsConfigurable
  */
-class JobsWsConfigurable
-  : AbstractWsConfigurable<JobsWorkingSetConfig, JobsWsTableModel, JobsWorkingSetDialogState>("Jobs Working Sets") {
-  override val wsConfigClass = JobsWorkingSetConfig::class.java
-  override val wsTableModel = JobsWsTableModel(sandboxCrudable)
+class JesWsConfigurable
+  : AbstractWsConfigurable<JesWorkingSetConfig, JesWsTableModel, JesWorkingSetDialogState>("JES Working Sets") {
+  override val wsConfigClass = JesWorkingSetConfig::class.java
+  override val wsTableModel = JesWsTableModel(sandboxCrudable)
 
-  override fun emptyConfig() = JobsWorkingSetConfig()
+  override fun emptyConfig() = JesWorkingSetConfig()
 
   /**
-   * Creates JobsWorkingSetDialogState based on data of JobsWorkingSetConfig.
+   * Creates JesWorkingSetDialogState based on data of JesWorkingSetConfig.
    */
-  override fun JobsWorkingSetConfig.toDialogStateAbstract() = this.toDialogState()
+  override fun JesWorkingSetConfig.toDialogStateAbstract() = this.toDialogState()
 
   /**
-   * Creates and shows dialog for adding Jobs Working Set.
+   * Creates and shows dialog for adding JES Working Set.
    * @param crudable crudable to modify after applying dialog.
    * @param state state of dialog.
    */
-  override fun createAddDialog(crudable: Crudable, state: JobsWorkingSetDialogState) {
-    JobsWsDialog(sandboxCrudable, state)
+  override fun createAddDialog(crudable: Crudable, state: JesWorkingSetDialogState) {
+    JesWsDialog(sandboxCrudable, state)
       .apply {
         if (showAndGet()) {
           wsTableModel.addRow(state.workingSetConfig)
@@ -54,8 +54,8 @@ class JobsWsConfigurable
    * Creates and shows dialog for editing Jobs Working Set.
    * @param selected selected working set dialog state
    */
-  override fun createEditDialog(selected: JobsWorkingSetDialogState) {
-    JobsWsDialog(
+  override fun createEditDialog(selected: JesWorkingSetDialogState) {
+    JesWsDialog(
       sandboxCrudable,
       selected.apply { mode = DialogMode.UPDATE }).apply {
       if (showAndGet()) {
@@ -71,10 +71,10 @@ class JobsWsConfigurable
 }
 
 /**
- * Creates JobsWorkingSetDialogState based on data of JobsWorkingSetConfig.
+ * Creates JesWorkingSetDialogState based on data of JesWorkingSetConfig.
  */
-fun JobsWorkingSetConfig.toDialogState(): JobsWorkingSetDialogState {
-  return JobsWorkingSetDialogState(
+fun JesWorkingSetConfig.toDialogState(): JesWorkingSetDialogState {
+  return JesWorkingSetDialogState(
     uuid = this.uuid,
     connectionUuid = this.connectionConfigUuid,
     workingSetName = this.name,
