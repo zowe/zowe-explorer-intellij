@@ -2,9 +2,9 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## `0.3.0 (2022-01-01)`
+## `0.7.0 (2022-10-25)`
 
-<!--* Feature: test (#2554) ([f3aeafa](https://github.com/zowe/api-layer/commit/f3aeafa)), closes [#2554](https://github.com/zowe/api-layer/issues/2554)-->
+<!--* Feature: test ([f3aeafa](https://github.com/zowe/api-layer/commit/f3aeafa)), closes [#2554](https://github.com/zowe/api-layer/issues/2554)-->
 * Feature: Configurable batch size to load filter smoothly 
 * Feature: Job Purge operation
 * Feature: Job Edit operation

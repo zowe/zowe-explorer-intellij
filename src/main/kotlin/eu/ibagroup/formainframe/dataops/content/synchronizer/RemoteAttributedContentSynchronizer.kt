@@ -25,6 +25,7 @@ import kotlin.collections.contentEquals
 import kotlin.collections.firstOrNull
 import kotlin.collections.getOrPut
 import kotlin.io.use
+import kotlin.collections.set
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
 private val log = logger<RemoteAttributedContentSynchronizer<*>>()
@@ -165,10 +166,13 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
           it.contentEncodingMode = null
         }
       }
-    }.onFailure {
-      log.error(it)
-      syncProvider.onThrowable(it)
     }
+      .onSuccess {
+        syncProvider.onSyncSuccess()
+      }
+      .onFailure {
+        syncProvider.onThrowable(it)
+      }
   }
 
   /**

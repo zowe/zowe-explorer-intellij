@@ -37,10 +37,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 class DocumentedSyncProvider(
   override val file: VirtualFile,
   override val saveStrategy: SaveStrategy = SaveStrategy.default(),
-  val onThrowableHandler: (Throwable) -> Unit = { defaultOnThrowableHandler(file, it) }
+  val onThrowableHandler: (Throwable) -> Unit = { defaultOnThrowableHandler(file, it) },
+  val onSyncSuccessHandler: () -> Unit = { defaultOnSyncSuccessHandler() }
 ) : SyncProvider {
 
   companion object {
+    /**
+     * Default throwable handler to show error notification that the file cannot be synchronized due to some error appeared
+     * param file - the file to get the name to display
+     * param th - the throwable to show the error message
+     */
     val defaultOnThrowableHandler: (VirtualFile, Throwable) -> Unit = { file, th ->
       Notifications.Bus.notify(
         Notification(
@@ -51,6 +57,9 @@ class DocumentedSyncProvider(
         )
       )
     }
+
+    /** Default sync success handler. Won't do anything after the sync action is completed until redefined */
+    val defaultOnSyncSuccessHandler: () -> Unit = {}
   }
 
   /**
@@ -122,6 +131,10 @@ class DocumentedSyncProvider(
 
   override fun onThrowable(t: Throwable) {
     onThrowableHandler(t)
+  }
+
+  override fun onSyncSuccess() {
+    onSyncSuccessHandler()
   }
 
   override fun equals(other: Any?): Boolean {
