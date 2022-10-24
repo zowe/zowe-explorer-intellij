@@ -109,9 +109,6 @@ abstract class ExplorerTreeNode<Value : Any>(
             }
           }
           val onSyncSuccessHandler: () -> Unit = {
-            dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
-              service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
-            }
             fileDescriptor.navigate(requestFocus)
           }
           val syncProvider =

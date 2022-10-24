@@ -117,7 +117,7 @@ class MFVirtualFileSystemModel {
    * @param attributes the attributes to create the child if it is not found
    */
   fun findOrCreateDependentFile(
-    requestor: Any?, vDir: MFVirtualFile, remoteAttributes: eu.ibagroup.formainframe.dataops.attributes.FileAttributes, attributes: FileAttributes
+    requestor: Any?, vDir: MFVirtualFile, remoteAttributes: org.zowe.explorer.dataops.attributes.FileAttributes, attributes: FileAttributes
   ): MFVirtualFile {
     return vDir.findChild(remoteAttributes.name)?.let { vFile ->
       remoteAttributes.castOrNull<RemoteSpoolFileAttributes>()?.let {
