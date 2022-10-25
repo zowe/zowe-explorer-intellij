@@ -20,7 +20,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: File cache conflict if open JCL to edit it in JES explorer second time ([b3962de](https://github.com/zowe/zowe-explorer-intellij/commit/b3962de))
 * Bugfix: GitHub issue #86: Incorrect error message if mask length > 44 ([cfb4ab6](https://github.com/zowe/zowe-explorer-intellij/commit/cfb4ab6))
 * Bugfix: GitHub issue #87: Masks type autodetection does not work in Add/Edit Working Set dialogs ([49fc53a](https://github.com/zowe/zowe-explorer-intellij/commit/49fc53a))
-* Bugfix: Problem with automatic refresh after creating new members/deleting members from dataset ([9e0ec70](https://github.com/zowe/zowe-explorer-intellij/commit/9e0ec70))
+* Bugfix: Problem with automatic refresh after creating new members/deleting members from dataset ([928baba](https://github.com/zowe/zowe-explorer-intellij/commit/928baba))
 * Bugfix: Confusing dialog title 'Rename Directory' when renaming USS mask from context menu ([1e1a147](https://github.com/zowe/zowe-explorer-intellij/commit/1e1a147))
 * Bugfix: GitHub issue #81: There is no difference between upper and lower cases when create USS masks from context menu ([f8ea3e9](https://github.com/zowe/zowe-explorer-intellij/commit/f8ea3e9))
 * Bugfix: GitHub issue #88: Lower case is not changed to upper case during Job Filter creation ([c2f5b01](https://github.com/zowe/zowe-explorer-intellij/commit/c2f5b01))
@@ -28,7 +28,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #30: Create new member in dataset that does not have enough space creates empty member despite of warning ([7a649e6](https://github.com/zowe/zowe-explorer-intellij/commit/7a649e6))
 * Bugfix: GitHub issue #54: Accumulation of errors in WS that breaks WS ([8648da2](https://github.com/zowe/zowe-explorer-intellij/commit/8648da2))
 * Bugfix: USS file cannot be deleted in development branch ([8886770](https://github.com/zowe/zowe-explorer-intellij/commit/8886770))
-* Bugfix: z/OS version specified in connection information doesn't match the z/OS version returned from z/OSMF ([c0989ec](https://github.com/zowe/zowe-explorer-intellij/commit/c0989ec))
+* Bugfix: z/OS version specified in connection information doesn't match the z/OS version returned from z/OSMF ([1148e10](https://github.com/zowe/zowe-explorer-intellij/commit/1148e10))
 * Bugfix: GitHub issue #16: Error creating zOSMF connection
 * Bugfix: IDE error with ReadOnlyModificationException when set 'use binary mode' for read only uss-file ([c2ebf6a](https://github.com/zowe/zowe-explorer-intellij/commit/c2ebf6a))
 * Bugfix: GitHub issue #94: SYSPRINT I looked at first always opens in JES explorer for a job with multiple steps ([301012a](https://github.com/zowe/zowe-explorer-intellij/commit/301012a))
