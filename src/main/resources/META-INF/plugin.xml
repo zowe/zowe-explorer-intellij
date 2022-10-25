@@ -538,6 +538,8 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
             <separator/>
             <reference id="$Delete"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.JESContextMenuGroup">
