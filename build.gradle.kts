@@ -120,7 +120,6 @@ tasks {
         <li>GitHub issue #54: Accumulation of errors in WS that breaks WS</li>
         <li>USS file cannot be deleted in development branch</li>
         <li>z/OS version specified in connection information doesn't match the z/OS version returned from z/OSMF</li>
-        <li>GitHub issue #16: Error creating zOSMF connection</li>
         <li>Zowe config connection test always failed</li>
         <li>IDE error with ReadOnlyModificationException when set 'use binary mode' for read only uss-file</li>
         <li>GitHub issue #94: SYSPRINT I looked at first always opens in JES explorer for a job with multiple steps</li>
@@ -128,6 +127,8 @@ tasks {
         <li>The content of sequential dataset/member is changed anyway even if you choose do not sync data with mainframe</li>
         <li>IDE error while retrieving job list in JES Explorer</li>
         <li>Extra item 'Rename' is active in the context menu if click on 'loading...'/'load more' in file explorer</li>
+        <li>GitHub issue #16: Error creating zOSMF connection</li>
+        <li>GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF connection with very long name is added</li>
       </ul>"""
     )
   }

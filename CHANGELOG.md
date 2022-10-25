@@ -29,10 +29,11 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #54: Accumulation of errors in WS that breaks WS ([8648da2](https://github.com/zowe/zowe-explorer-intellij/commit/8648da2))
 * Bugfix: USS file cannot be deleted in development branch ([8886770](https://github.com/zowe/zowe-explorer-intellij/commit/8886770))
 * Bugfix: z/OS version specified in connection information doesn't match the z/OS version returned from z/OSMF ([1148e10](https://github.com/zowe/zowe-explorer-intellij/commit/1148e10))
-* Bugfix: GitHub issue #16: Error creating zOSMF connection
 * Bugfix: IDE error with ReadOnlyModificationException when set 'use binary mode' for read only uss-file ([c2ebf6a](https://github.com/zowe/zowe-explorer-intellij/commit/c2ebf6a))
 * Bugfix: GitHub issue #94: SYSPRINT I looked at first always opens in JES explorer for a job with multiple steps ([301012a](https://github.com/zowe/zowe-explorer-intellij/commit/301012a))
 * Bugfix: IDE error with CallException when try to open uss-file to which you have no access ([78650b9](https://github.com/zowe/zowe-explorer-intellij/commit/78650b9))
 * Bugfix: The content of sequential dataset/member is changed anyway even if you choose do not sync data with mainframe ([559b05e](https://github.com/zowe/zowe-explorer-intellij/commit/559b05e))
 * Bugfix: IDE error while retrieving job list in JES Explorer ([e3dfe93](https://github.com/zowe/zowe-explorer-intellij/commit/e3dfe93))
 * Bugfix: Extra item 'Rename' is active in the context menu if click on 'loading...'/'load more' in file explorer ([78ab43f](https://github.com/zowe/zowe-explorer-intellij/commit/78ab43f)) 
+* Bugfix: GitHub issue #16: Error creating zOSMF connection
+* Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF connection with very long name is added
