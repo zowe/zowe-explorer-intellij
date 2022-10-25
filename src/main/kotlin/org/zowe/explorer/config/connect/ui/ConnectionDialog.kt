@@ -190,11 +190,10 @@ class ConnectionDialog(
         )
           .bindText(state::username)
           .validationOnApply {
-            it.text = it.text.trim()
-            validateForBlank(it)
+            validateForBlank(it.text.trim(), it)
           }
           .onApply {
-            state.username = state.username.uppercase()
+            state.username = state.username.trim().uppercase()
           }
           .horizontalAlign(HorizontalAlign.FILL)
       }
