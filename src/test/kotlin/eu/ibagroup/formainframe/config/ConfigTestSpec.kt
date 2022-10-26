@@ -34,7 +34,7 @@ class ConfigTestSpec : ShouldSpec({
     // jes/JesWsDialog.validateOnApply
     should("check that there are no errors for job filters") {}
     should("check that the error appears on any errors for job filters") {}
-    should("check that the error appears on empty jes working set") {}
+    should("check that the error appears on empty JES working set") {}
     should("check that the error appears on adding the same job filter again") {}
     // files/WorkingSetDialog.validateOnApply
     should("check that there are no errors for file masks") {}

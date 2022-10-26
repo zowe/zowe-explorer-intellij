@@ -51,7 +51,7 @@ class JesWsConfigurable
   }
 
   /**
-   * Creates and shows dialog for editing Jobs Working Set.
+   * Creates and shows dialog for editing JES Working Set.
    * @param selected selected working set dialog state
    */
   override fun createEditDialog(selected: JesWorkingSetDialogState) {

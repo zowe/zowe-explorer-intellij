@@ -51,7 +51,7 @@ class EditJesWorkingSetDialog(
          * Returns the xPath of the Edit JES Working Set Dialog.
          */
         @JvmStatic
-        fun xPath() = byXpath(name, "//div[@accessiblename='Edit Jes Working Set' and @class='MyDialog']")
+        fun xPath() = byXpath(name, "//div[@accessiblename='Edit JES Working Set' and @class='MyDialog']")
     }
 }
 

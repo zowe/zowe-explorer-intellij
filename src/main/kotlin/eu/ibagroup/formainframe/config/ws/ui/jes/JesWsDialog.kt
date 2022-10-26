@@ -24,9 +24,9 @@ import javax.swing.JComponent
 import javax.swing.JTextField
 
 /**
- * Dialog of Jobs Working Set configurations.
+ * Dialog of JES Working Set configurations.
  * @param crudable Crudable instance to change data in after dialog applied.
- * @param state state of Jobs Working Set configuration data.
+ * @param state state of JES Working Set configuration data.
  */
 class JesWsDialog(
   crudable: Crudable,
