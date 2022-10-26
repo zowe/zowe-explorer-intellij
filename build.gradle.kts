@@ -58,7 +58,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.2.0-rc.1")
+  implementation("eu.ibagroup:r2z:1.2.0")
   implementation("com.segment.analytics.java:analytics:+")
   testImplementation("io.mockk:mockk:1.12.4")
   testImplementation("org.mock-server:mockserver-netty:5.13.2")
