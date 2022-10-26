@@ -4,6 +4,7 @@ gradle
 build
 
 libs
+verifier-all.jar
 
 # Windows thumbnail cache files
 Thumbs.db
