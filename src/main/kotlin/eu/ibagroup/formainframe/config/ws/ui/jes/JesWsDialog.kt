@@ -23,9 +23,9 @@ import javax.swing.JComponent
 import javax.swing.JTextField
 
 /**
- * Dialog of Jes Working Set configurations.
+ * Dialog of JES Working Set configurations.
  * @param crudable Crudable instance to change data in after dialog applied.
- * @param state state of Jes Working Set configuration data.
+ * @param state state of JES Working Set configuration data.
  */
 class JesWsDialog(
   crudable: Crudable,
@@ -52,12 +52,12 @@ class JesWsDialog(
 
   override val tableTitle = "Job Filters included in Working Set"
 
-  override val wsNameLabel = "Jes Working Set Name"
+  override val wsNameLabel = "JES Working Set Name"
 
   override fun init() {
     title = when (state.mode) {
-      DialogMode.CREATE -> "Add Jes Working Set"
-      else -> "Edit Jes Working Set"
+      DialogMode.CREATE -> "Add JES Working Set"
+      else -> "Edit JES Working Set"
     }
     super.init()
   }
@@ -92,7 +92,7 @@ class JesWsDialog(
   )
 
   /**
-   * Validates data in Jes Working Set dialog table.
+   * Validates data in JES Working Set dialog table.
    * @param validationBuilder Builder that passed through Intellij Platform to build ValidationInfo.
    * @param component requestor component.
    * @return info with validation warnings and errors to display inside.
@@ -119,7 +119,7 @@ class JesWsDialog(
   }
 
   /**
-   * Class for representation Job Prefix column in Jes Working Set table.
+   * Class for representation Job Prefix column in JES Working Set table.
    * @see ValidatingColumnInfo
    */
   object PrefixColumn : ValidatingColumnInfo<JesWorkingSetDialogState.TableRow>("Prefix") {
@@ -146,7 +146,7 @@ class JesWsDialog(
   }
 
   /**
-   * Class for representation Owner column in Jes Working Set table.
+   * Class for representation Owner column in JES Working Set table.
    * @see ValidatingColumnInfo
    */
   object OwnerColumn : ValidatingColumnInfo<JesWorkingSetDialogState.TableRow>("Owner") {
@@ -171,7 +171,7 @@ class JesWsDialog(
   }
 
   /**
-   * Class for representation Job Id column in Jes Working Set table.
+   * Class for representation Job Id column in JES Working Set table.
    * @see ValidatingColumnInfo
    */
   object JobIdColumn : ValidatingColumnInfo<JesWorkingSetDialogState.TableRow>("Job ID") {

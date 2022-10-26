@@ -24,23 +24,23 @@ import java.awt.event.KeyEvent
 import java.time.Duration
 
 /**
- * Class representing the Add Jes Working Set Dialog.
+ * Class representing the Add JES Working Set Dialog.
  */
-@FixtureName("Add Jes Working Set Dialog")
+@FixtureName("Add JES Working Set Dialog")
 open class AddJesWorkingSetDialog(
     remoteRobot: RemoteRobot,
     remoteComponent: RemoteComponent
 ) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
 
     /**
-     * Fills in the jes working set name and connection name for adding a new empty jes working set.
+     * Fills in the JES working set name and connection name for adding a new empty JES working set.
      */
     fun addJesWorkingSet(jesWorkingSetName: String, connectionName: String) {
         specifyJWSNameAndConnection(jesWorkingSetName, connectionName)
     }
 
     /**
-     * Fills in the jes working set name, connection name and filter for adding a new jes working set.
+     * Fills in the JES working set name, connection name and filter for adding a new JES working set.
      */
     fun addJesWorkingSet(jesWorkingSetName: String, connectionName: String, filter: Triple<String, String, String>) {
         specifyJWSNameAndConnection(jesWorkingSetName, connectionName)
@@ -48,7 +48,7 @@ open class AddJesWorkingSetDialog(
     }
 
     /**
-     * Fills in the jes working set name, connection name and list of filters for adding a new jes working set.
+     * Fills in the JES working set name, connection name and list of filters for adding a new JES working set.
      */
     fun addJesWorkingSet(
         jesWorkingSetName: String,
@@ -60,7 +60,7 @@ open class AddJesWorkingSetDialog(
     }
 
     /**
-     * Adds the filter to jes working set.
+     * Adds the filter to JES working set.
      */
     fun addFilter(filter: Triple<String, String, String>) {
         clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[contains(@myaction.key, 'button.add.a')]"))
@@ -77,7 +77,7 @@ open class AddJesWorkingSetDialog(
     }
 
     /**
-     * Deletes the filter from jes working set.
+     * Deletes the filter from JES working set.
      */
     fun deleteFilter(filter: Triple<String, String, String>) {
         val textToFind = filter.third.ifEmpty { filter.first }
@@ -86,14 +86,14 @@ open class AddJesWorkingSetDialog(
     }
 
     /**
-     * Deletes the list of filters from jes working set.
+     * Deletes the list of filters from JES working set.
      */
     fun deleteFilters(filters: List<Triple<String, String, String>>) {
         filters.forEach { deleteFilter(it) }
     }
 
     /**
-     * Deletes all filters from jes working set.
+     * Deletes all filters from JES working set.
      */
     fun deleteAllFilters() {
         find<ComponentFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@visible_text='Prefix || Owner || Job ID']]")).click()
@@ -104,7 +104,7 @@ open class AddJesWorkingSetDialog(
     }
 
     /**
-     * Fills in the jes working set name and connection name.
+     * Fills in the JES working set name and connection name.
      */
     private fun specifyJWSNameAndConnection(jesWorkingSetName: String, connectionName: String) {
         find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = jesWorkingSetName
@@ -121,13 +121,13 @@ open class AddJesWorkingSetDialog(
     }
 
     companion object {
-        const val name = "Add Jes Working Set Dialog"
+        const val name = "Add JES Working Set Dialog"
 
         /**
-         * Returns the xPath of the Add Jes Working Set Dialog.
+         * Returns the xPath of the Add JES Working Set Dialog.
          */
         @JvmStatic
-        fun xPath() = byXpath(name, "//div[@accessiblename='Add Jes Working Set' and @class='MyDialog']")
+        fun xPath() = byXpath(name, "//div[@accessiblename='Add JES Working Set' and @class='MyDialog']")
     }
 }
 

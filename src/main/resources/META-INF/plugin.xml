@@ -355,7 +355,7 @@ Example of how to see the output:<br/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"
-                text="Jes Working Set"
+                text="JES Working Set"
                 icon="AllIcons.Nodes.Project"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"

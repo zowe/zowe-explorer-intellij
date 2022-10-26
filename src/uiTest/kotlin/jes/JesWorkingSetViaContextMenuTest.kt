@@ -27,7 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Duration
 
 /**
- * Tests creating jes working sets and jobs filters from context menu.
+ * Tests creating JES working sets and jobs filters from context menu.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -36,7 +36,7 @@ class JesWorkingSetViaContextMenuTest {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf(
-        "Add Jes Working Set Dialog", "Edit Jes Working Set Dialog"
+        "Add JES Working Set Dialog", "Edit JES Working Set Dialog"
     )
     private val projectName = "untitled"
     private val connectionName = "valid connection"
@@ -70,7 +70,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jes working set without connection, checks that correct message is returned.
+     * Tests to add new JES working set without connection, checks that correct message is returned.
      */
     @Test
     @Order(1)
@@ -98,7 +98,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new empty jes working sets with different names, checks that correct message is returned.
+     * Tests to add new empty JES working sets with different names, checks that correct message is returned.
      */
     @Test
     @Order(2)
@@ -108,7 +108,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jes working set with one valid jobs filter.
+     * Tests to add new JES working set with one valid jobs filter.
      */
     @Test
     @Order(3)
@@ -127,7 +127,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jes working set with already existing name, checks that correct message is returned.
+     * Tests to add new JES working set with already existing name, checks that correct message is returned.
      */
     @Test
     @Order(4)
@@ -136,7 +136,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jes working set with invalid jobs filters, checks that correct messages are returned.
+     * Tests to add new JES working set with invalid jobs filters, checks that correct messages are returned.
      */
     @Test
     @Order(5)
@@ -176,7 +176,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jes working set with several valid jobs filters, opens filters in explorer.
+     * Tests to add new JES working set with several valid jobs filters, opens filters in explorer.
      */
     @Test
     @Order(6)
@@ -200,7 +200,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jes working set with invalid connection, checks that correct message is returned.
+     * Tests to add new JES working set with invalid connection, checks that correct message is returned.
      */
     @Test
     @Order(7)
@@ -227,7 +227,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to add new jes working set with the same jobs filters, checks that correct message is returned.
+     * Tests to add new JES working set with the same jobs filters, checks that correct message is returned.
      */
     @Test
     @Order(8)
@@ -303,7 +303,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to create already exists jobs filter in jes working set, checks that correct message is returned.
+     * Tests to create already exists jobs filter in JES working set, checks that correct message is returned.
      */
     @Test
     @Order(11)
@@ -339,7 +339,7 @@ class JesWorkingSetViaContextMenuTest {
       fun testDeleteAllJWSViaContextMenu(){}*/
 
     /**
-     * Creates empty jes working set from context menu.
+     * Creates empty JES working set from context menu.
      */
     private fun createJWS(jwsName: String, isUniqueName: Boolean, remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
@@ -369,7 +369,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Creates jobs filter in the jes working set from context menu.
+     * Creates jobs filter in the JES working set from context menu.
      */
     private fun createFilterFromContextMenu(
         jwsName: String,

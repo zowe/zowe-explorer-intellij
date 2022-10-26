@@ -15,7 +15,7 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 
 /**
- * Factory for creating adapter for old jes working set configs.
+ * Factory for creating adapter for old JES working set configs.
  */
 class OldJesWorkingSetAdapterFactory : OldConfigAdapterFactory {
   override fun buildAdapter(document: Document): OldConfigAdapter<*> {
@@ -24,7 +24,7 @@ class OldJesWorkingSetAdapterFactory : OldConfigAdapterFactory {
 }
 
 /**
- * Implementation of OldConfigAdapter for jes working set.
+ * Implementation of OldConfigAdapter for JES working set.
  * Changes the jobs filters from lowercase to uppercase.
  */
 class OldJesWorkingSetAdapter(private val document: Document) : OldConfigAdapter<JesWorkingSetConfig> {
@@ -37,7 +37,7 @@ class OldJesWorkingSetAdapter(private val document: Document) : OldConfigAdapter
   /**
    * Jobs filters can be stored in lower case.
    * That's why it is necessary to find all tags with such jobs filters.
-   * @return list of jes working set elements in old config format.
+   * @return list of JES working set elements in old config format.
    */
   private fun getOldJesWsElements(): List<Element> {
     return document
@@ -58,8 +58,8 @@ class OldJesWorkingSetAdapter(private val document: Document) : OldConfigAdapter
   }
 
   /**
-   * Get list of all jobs filters for jes working set.
-   * @param jesWsElement jes working set element.
+   * Get list of all jobs filters for JES working set.
+   * @param jesWsElement JES working set element.
    * @return list of jobs filters elements.
    */
   private fun getJobsFiltersElements(jesWsElement: Element): List<Element> {

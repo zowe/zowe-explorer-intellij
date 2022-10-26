@@ -22,17 +22,17 @@ import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
- * Implementation of AddWsActionBase for jes working sets.
+ * Implementation of AddWsActionBase for JES working sets.
  * @see AddWsActionBase
  * @author Valiantsin Krus
  */
 class AddJesWorkingSetAction : AddWsActionBase() {
   override val explorerView = JES_EXPLORER_VIEW
-  override val presentationTextInExplorer = "Jes Working Set"
-  override val defaultPresentationText = "Create Jes Working Set"
+  override val presentationTextInExplorer = "JES Working Set"
+  override val defaultPresentationText = "Create JES Working Set"
 
   /**
-   * Creates dialog for Jes Working Set.
+   * Creates dialog for JES Working Set.
    * @see AddWsActionBase.createDialog
    */
   override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {

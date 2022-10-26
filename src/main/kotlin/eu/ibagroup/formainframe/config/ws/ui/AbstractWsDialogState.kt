@@ -18,7 +18,7 @@ import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
- * Abstract class for Working Sets state in configuration dialogs (e.g. Files Working Set, Jes Working Sets)
+ * Abstract class for Working Sets state in configuration dialogs (e.g. Files Working Set, JES Working Sets)
  * @param WSConfig WorkingSetConfig implementation class.
  * @see WorkingSetConfig
  * @see FilesWorkingSetConfig
@@ -76,7 +76,7 @@ class WorkingSetDialogState(
 }
 
 /**
- * Dialog state for Jes Working Set configuration dialog.
+ * Dialog state for JES Working Set configuration dialog.
  * @see AbstractWsDialogState
  */
 class JesWorkingSetDialogState(

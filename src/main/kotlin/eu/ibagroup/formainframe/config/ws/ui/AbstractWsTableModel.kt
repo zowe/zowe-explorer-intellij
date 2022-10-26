@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.utils.toMutableList
 
 /**
  * Abstract table model for table in configurations
- * for Working Sets (e.g. Jes Working Set, Files Working Set).
+ * for Working Sets (e.g. JES Working Set, Files Working Set).
  * @param WSConfig WorkingSetConfig implementation class.
  * @see eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
  * @see eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig

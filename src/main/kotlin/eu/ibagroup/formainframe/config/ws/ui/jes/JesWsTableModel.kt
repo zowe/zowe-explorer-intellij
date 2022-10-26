@@ -15,7 +15,7 @@ import eu.ibagroup.formainframe.config.ws.ui.AbstractWsTableModel
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
- * Table model for Jes Working Set configuration table.
+ * Table model for JES Working Set configuration table.
  * @see AbstractWsTableModel
  * @author Valiantsin Krus
  */

@@ -23,13 +23,13 @@ import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 
 /**
- * Action class for edit jes working set act
+ * Action class for edit JES working set act
  */
 class EditJesWorkingSetAction: AnAction() {
 
   /**
-   * Called when edit jes working set option is chosen from context menu,
-   * runs the edit jes working set operation
+   * Called when edit JES working set option is chosen from context menu,
+   * runs the edit JES working set operation
    */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: return
@@ -53,7 +53,7 @@ class EditJesWorkingSetAction: AnAction() {
   }
 
   /**
-   * Determines which objects are jes working sets and therefore can be edited
+   * Determines which objects are JES working sets and therefore can be edited
    */
   override fun update(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: let {

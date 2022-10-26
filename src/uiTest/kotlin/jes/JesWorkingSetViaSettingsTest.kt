@@ -26,7 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Duration
 
 /**
- * Tests creating jes working sets and jobs filters via settings.
+ * Tests creating JES working sets and jobs filters via settings.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -35,7 +35,7 @@ class JesWorkingSetViaSettingsTest {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf(
-        "Settings Dialog", "Add Jes Working Set Dialog", "Edit Jes Working Set Dialog"
+        "Settings Dialog", "Add JES Working Set Dialog", "Edit JES Working Set Dialog"
     )
     private val projectName = "untitled"
     private val connectionName = "valid connection"
@@ -69,7 +69,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jes working set without connection, checks that correct message is returned.
+     * Tests to add new JES working set without connection, checks that correct message is returned.
      */
     @Test
     @Order(1)
@@ -99,7 +99,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new empty jes working sets with different names, checks that correct message is returned.
+     * Tests to add new empty JES working sets with different names, checks that correct message is returned.
      */
     @Test
     @Order(2)
@@ -110,7 +110,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jes working set with one valid jobs filter.
+     * Tests to add new JES working set with one valid jobs filter.
      */
     @Test
     @Order(3)
@@ -139,7 +139,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jes working set with already existing name, checks that correct message is returned.
+     * Tests to add new JES working set with already existing name, checks that correct message is returned.
      */
     @Test
     @Order(4)
@@ -148,7 +148,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jes working set with invalid jobs filters, checks that correct messages are returned.
+     * Tests to add new JES working set with invalid jobs filters, checks that correct messages are returned.
      */
     @Test
     @Order(5)
@@ -199,7 +199,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jes working set with several valid jobs filters, opens filters in explorer.
+     * Tests to add new JES working set with several valid jobs filters, opens filters in explorer.
      */
     @Test
     @Order(6)
@@ -234,7 +234,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jes working set with invalid connection, checks that correct message is returned.
+     * Tests to add new JES working set with invalid connection, checks that correct message is returned.
      */
     @Test
     @Order(7)
@@ -271,7 +271,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jes working set with the same jobs filters, checks that correct message is returned.
+     * Tests to add new JES working set with the same jobs filters, checks that correct message is returned.
      */
     @Test
     @Order(8)
@@ -305,7 +305,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to edit jes working set by adding one job filter, checks that jws is refreshed, opens new filter.
+     * Tests to edit JES working set by adding one job filter, checks that jws is refreshed, opens new filter.
      */
     @Test
     @Order(9)
@@ -338,7 +338,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to edit jes working set by deleting several filters, checks that jws is refreshed and filters were deleted.
+     * Tests to edit JES working set by deleting several filters, checks that jws is refreshed and filters were deleted.
      */
     @Test
     @Order(10)
@@ -371,7 +371,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to edit jes working set by deleting all filters, checks that jws is refreshed and filters were deleted.
+     * Tests to edit JES working set by deleting all filters, checks that jws is refreshed and filters were deleted.
      */
     @Test
     @Order(11)
@@ -415,7 +415,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to edit jes working set by changing connection to invalid, checks that correct message is returned.
+     * Tests to edit JES working set by changing connection to invalid, checks that correct message is returned.
      */
     @Test
     @Order(12)
@@ -457,7 +457,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to edit jes working set by changing connection from invalid to valid, checks that jws is refreshed in explorer and error message disappeared.
+     * Tests to edit JES working set by changing connection from invalid to valid, checks that jws is refreshed in explorer and error message disappeared.
      */
     @Test
     @Order(13)
@@ -489,7 +489,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to edit jes working set by renaming it, checks that jws is refreshed in explorer.
+     * Tests to edit JES working set by renaming it, checks that jws is refreshed in explorer.
      */
     @Test
     @Order(14)
@@ -528,7 +528,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to delete jes working set, checks that explorer info is refreshed.
+     * Tests to delete JES working set, checks that explorer info is refreshed.
      */
     @Test
     @Order(15)
@@ -551,7 +551,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to delete all jes working sets, checks that explorer info is refreshed.
+     * Tests to delete all JES working sets, checks that explorer info is refreshed.
      */
     @Test
     @Order(16)
@@ -573,7 +573,7 @@ class JesWorkingSetViaSettingsTest {
     }
 
     /**
-     * Creates empty jes working set via settings.
+     * Creates empty JES working set via settings.
      */
     private fun createJWS(jwsName: String, isUniqueName: Boolean, remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {

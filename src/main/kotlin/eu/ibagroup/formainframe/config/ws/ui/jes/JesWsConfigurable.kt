@@ -19,11 +19,11 @@ import eu.ibagroup.formainframe.config.ws.ui.JesWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
- * Implementation of AbstractWsConfigurable class for modifying Jes Working Set configurations.
+ * Implementation of AbstractWsConfigurable class for modifying JES Working Set configurations.
  * @see AbstractWsConfigurable
  */
 class JesWsConfigurable
-  : AbstractWsConfigurable<JesWorkingSetConfig, JesWsTableModel, JesWorkingSetDialogState>("Jes Working Sets") {
+  : AbstractWsConfigurable<JesWorkingSetConfig, JesWsTableModel, JesWorkingSetDialogState>("JES Working Sets") {
   override val wsConfigClass = JesWorkingSetConfig::class.java
   override val wsTableModel = JesWsTableModel(sandboxCrudable)
 
@@ -35,7 +35,7 @@ class JesWsConfigurable
   override fun JesWorkingSetConfig.toDialogStateAbstract() = this.toDialogState()
 
   /**
-   * Creates and shows dialog for adding Jes Working Set.
+   * Creates and shows dialog for adding JES Working Set.
    * @param crudable crudable to modify after applying dialog.
    * @param state state of dialog.
    */
@@ -50,7 +50,7 @@ class JesWsConfigurable
   }
 
   /**
-   * Creates and shows dialog for editing Jes Working Set.
+   * Creates and shows dialog for editing JES Working Set.
    * @param crudable crudable to modify after applying dialog.
    * @param state state of dialog.
    */

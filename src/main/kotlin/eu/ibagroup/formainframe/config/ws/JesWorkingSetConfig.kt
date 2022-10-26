@@ -14,7 +14,7 @@ import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.isTheSameAs
 
 /**
- * Configuration class for Jes Working Sets. Instances of these
+ * Configuration class for JES Working Sets. Instances of these
  * class will be saved and can be reloaded after Intellij closed.
  * @author Valiantsin Krus
  */

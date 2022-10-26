@@ -26,7 +26,7 @@ import java.time.Duration
 
 
 /**
- * Tests creating jes working sets and filters via action button.
+ * Tests creating JES working sets and filters via action button.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -34,7 +34,7 @@ import java.time.Duration
 class JesWorkingSetViaActionButtonTest {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
-    private var wantToClose = mutableListOf("Add Jes Working Set Dialog")
+    private var wantToClose = mutableListOf("Add JES Working Set Dialog")
 
     private val projectName = "untitled"
     private val connectionName = "valid connection"
@@ -67,7 +67,7 @@ class JesWorkingSetViaActionButtonTest {
     }
 
     /**
-     * Tests to add new jes working set without connection, checks that correct message is returned.
+     * Tests to add new JES working set without connection, checks that correct message is returned.
      */
     @Test
     @Order(1)
@@ -98,7 +98,7 @@ class JesWorkingSetViaActionButtonTest {
     }
 
     /**
-     * Tests to add new empty jes working set with very long name, checks that correct message is returned.
+     * Tests to add new empty JES working set with very long name, checks that correct message is returned.
      */
     @Test
     @Order(2)
@@ -124,7 +124,7 @@ class JesWorkingSetViaActionButtonTest {
     }
 
     /**
-     * Tests to add new jes working set with one valid filter.
+     * Tests to add new JES working set with one valid filter.
      */
     @Test
     @Order(3)
@@ -146,7 +146,7 @@ class JesWorkingSetViaActionButtonTest {
     }
 
     /**
-     * Tests to add new jes working set with several valid filters, opens filters in explorer.
+     * Tests to add new JES working set with several valid filters, opens filters in explorer.
      */
     @Test
     @Order(4)
@@ -174,7 +174,7 @@ class JesWorkingSetViaActionButtonTest {
 
 
     /**
-     * Tests to add new jes working set with invalid filters, checks that correct messages are returned.
+     * Tests to add new JES working set with invalid filters, checks that correct messages are returned.
      */
     @Test
     @Order(5)
@@ -217,7 +217,7 @@ class JesWorkingSetViaActionButtonTest {
     }
 
     /**
-     * Tests to add jes working set with the same filters, checks that correct message is returned.
+     * Tests to add JES working set with the same filters, checks that correct message is returned.
      */
     @Test
     @Order(6)
@@ -244,7 +244,7 @@ class JesWorkingSetViaActionButtonTest {
     }
 
     /**
-     * Tests to add jes working set with invalid connection, checks that correct message is returned.
+     * Tests to add JES working set with invalid connection, checks that correct message is returned.
      */
     @Test
     @Order(7)

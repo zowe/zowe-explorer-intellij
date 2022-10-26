@@ -20,7 +20,7 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
- * Class representing the Edit Jes Working Set Dialog. It is a child of AddJesWorkingSetDialog, since
+ * Class representing the Edit JES Working Set Dialog. It is a child of AddJesWorkingSetDialog, since
  * it is the same dialog, just with a different name.
  */
 class EditJesWorkingSetDialog(
@@ -29,14 +29,14 @@ class EditJesWorkingSetDialog(
 ) : AddJesWorkingSetDialog(remoteRobot, remoteComponent) {
 
     /**
-     * Renames the jes working set.
+     * Renames the JES working set.
      */
     fun renameJesWorkingSet(newName: String) {
         find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = newName
     }
 
     /**
-     * Changes the connection for jes working set.
+     * Changes the connection for JES working set.
      */
     fun changeConnection(newConnectionName: String) {
         if (newConnectionName.isEmpty().not()) {
@@ -45,18 +45,18 @@ class EditJesWorkingSetDialog(
     }
 
     companion object {
-        const val name = "Edit Jes Working Set Dialog"
+        const val name = "Edit JES Working Set Dialog"
 
         /**
-         * Returns the xPath of the Edit Jes Working Set Dialog.
+         * Returns the xPath of the Edit JES Working Set Dialog.
          */
         @JvmStatic
-        fun xPath() = byXpath(name, "//div[@accessiblename='Edit Jes Working Set' and @class='MyDialog']")
+        fun xPath() = byXpath(name, "//div[@accessiblename='Edit JES Working Set' and @class='MyDialog']")
     }
 }
 
 /**
- * Finds the Edit Jes Working Set Dialog and modifies the fixtureStack.
+ * Finds the Edit JES Working Set Dialog and modifies the fixtureStack.
  */
 fun ContainerFixture.editJesWorkingSetDialog(
     fixtureStack: MutableList<Locator>,

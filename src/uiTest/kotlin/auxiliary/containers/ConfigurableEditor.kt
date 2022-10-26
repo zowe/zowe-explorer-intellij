@@ -42,9 +42,9 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     val workingSetsTab = tabLabel(remoteRobot, "Working Sets")
 
     /**
-     * The Jes Working Sets table
+     * The JES Working Sets table
      */
-    val jesWorkingSetsTab = tabLabel(remoteRobot, "Jes Working Sets")
+    val jesWorkingSetsTab = tabLabel(remoteRobot, "JES Working Sets")
 
     /**
      * Clicks on the add action and adds the Add Connection Dialog to the list of fixtures needed to close.
@@ -76,7 +76,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     }
 
     /**
-     * Clicks on the add action and adds the Add Jes Working Set Dialog to the list of fixtures needed to close.
+     * Clicks on the add action and adds the Add JES Working Set Dialog to the list of fixtures needed to close.
      */
     fun addJWS(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
         clickActionButton(byXpath("//div[@accessiblename='Add' and @class='ActionButton' and @myaction='Add (Add)']"))
@@ -84,7 +84,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     }
 
     /**
-     * Clicks on the edit action and adds the Edit Jes Working Set Dialog to the list of fixtures needed to close.
+     * Clicks on the edit action and adds the Edit JES Working Set Dialog to the list of fixtures needed to close.
      */
     fun editJesWorkingSet(
         jesWorkingSetName: String,

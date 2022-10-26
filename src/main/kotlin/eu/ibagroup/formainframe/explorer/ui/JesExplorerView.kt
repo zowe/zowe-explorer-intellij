@@ -29,7 +29,7 @@ val JES_EXPLORER_VIEW = DataKey.create<JesExplorerView>("jesExplorerView")
 const val JES_EXPLORER_CONTEXT_MENU = "JES Explorer"
 
 /**
- * Jes Explorer tree view implementation.
+ * JES Explorer tree view implementation.
  * @param explorer instance of units explorer (logical representation of explorer view data).
  * @param project current project.
  * @param parentDisposable parent disposable.
@@ -59,7 +59,7 @@ class JesExplorerView(
    * Provides data in data context. Intellij understands the context
    * from which the action was triggered and some data can be extracted
    * in this action by data keys from this context.
-   * @param dataId key of the data to extract. Jes Explorer provides data for:
+   * @param dataId key of the data to extract. JES Explorer provides data for:
    *               1) NAVIGATABLE - first selected node if something is selected or null otherwise;
    *               2) NAVIGATABLE_ARRAY - array of selected nodes;
    *               3) JES_EXPLORER_VIEW - current instance of the JesExplorerView.
