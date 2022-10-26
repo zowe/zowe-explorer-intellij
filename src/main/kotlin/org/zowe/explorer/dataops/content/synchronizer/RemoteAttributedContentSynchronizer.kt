@@ -122,24 +122,23 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       } else {
         if (!idToBinaryFileMap.containsKey(recordId)) {
           val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
-          if (fileContent contentEquals adaptedFetchedBytes) {
-            return
-          }
+          if (!(fileContent contentEquals adaptedFetchedBytes)) {
+            val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
+            val doUploadContent = syncProvider.saveStrategy
+              .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
 
-          val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
-          val doUploadContent = syncProvider.saveStrategy
-            .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
-
-          if (doUploadContent) {
-            log.info("Save strategy decided to forcefully update file content on mainframe.")
-            val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
-            runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
-            uploadNewContent(attributes, newContentPrepared, progressIndicator)
-            successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
-          } else {
-            log.info("Save strategy decided to accept remote file content.")
-            successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
-            runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
+            if (doUploadContent) {
+              log.info("Save strategy decided to forcefully update file content on mainframe.")
+              val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
+              runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
+              uploadNewContent(attributes, newContentPrepared, progressIndicator)
+              successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
+            } else {
+              log.info("Save strategy decided to accept remote file content.")
+              successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
+              runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
+            }
+          } else { /*do nothing*/
           }
         } else {
           log.info("Content loaded from mainframe")
