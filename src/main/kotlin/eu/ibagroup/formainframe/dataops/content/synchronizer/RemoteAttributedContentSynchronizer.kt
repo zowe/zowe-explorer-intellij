@@ -128,42 +128,40 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
         fetchedAtLeastOnce.add(syncProvider)
         ussAttributes?.let { idToPreviousEncoding[recordId] = it.ussFileEncoding }
       } else {
-
         val requiredCharset =
           getRequiredCharset(ussAttributes, syncProvider.file.isBeingEditingNow(), idToPreviousEncoding[recordId])
 
         val encodingNotChanged = !(ussAttributes != null
-            && ussAttributes.ussFileEncoding != idToPreviousEncoding[recordId])
+          && ussAttributes.ussFileEncoding != idToPreviousEncoding[recordId])
 
         val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent(requiredCharset) }
-        if (fileContent contentEquals adaptedFetchedBytes && encodingNotChanged) {
-          return
-        }
 
-        val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
-        val doUploadContent = if (ussAttributes?.contentEncodingMode == ContentEncodingMode.RELOAD) {
-          false
-        } else {
+        if (!(fileContent contentEquals adaptedFetchedBytes && encodingNotChanged)) {
+          val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
+          val doUploadContent = if (ussAttributes?.contentEncodingMode == ContentEncodingMode.RELOAD) {
+            false
+          } else {
             syncProvider.saveStrategy
               .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
-        }
+          }
+          if (doUploadContent) {
+            log.info("Save strategy decided to forcefully update file content on mainframe.")
+            val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
+            runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
+            uploadNewContent(attributes, newContentPrepared, progressIndicator)
+            successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
+          } else {
+            log.info("Save strategy decided to accept remote file content.")
+            successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
+            runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
+          }
 
-        if (doUploadContent) {
-          log.info("Save strategy decided to forcefully update file content on mainframe.")
-          val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
-          runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
-          uploadNewContent(attributes, newContentPrepared, progressIndicator)
-          successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
-        } else {
-          log.info("Save strategy decided to accept remote file content.")
-          successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
-          runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
-        }
-
-        ussAttributes?.let {
-          idToPreviousEncoding[recordId] = it.ussFileEncoding
-          it.encodingChanged = false
-          it.contentEncodingMode = null
+          ussAttributes?.let {
+            idToPreviousEncoding[recordId] = it.ussFileEncoding
+            it.encodingChanged = false
+            it.contentEncodingMode = null
+          }
+        } else { /*do nothing*/
         }
       }
     }
