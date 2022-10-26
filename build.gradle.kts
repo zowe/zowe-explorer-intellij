@@ -129,6 +129,8 @@ tasks {
         <li>Extra item 'Rename' is active in the context menu if click on 'loading...'/'load more' in file explorer</li>
         <li>GitHub issue #16: Error creating zOSMF connection</li>
         <li>GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF connection with very long name is added</li>
+        <li>Impossible to open any file/dataset second time</li>
+        <li>The job is marked with green icon as passed despite it finished with abend</li>
       </ul>"""
     )
   }
