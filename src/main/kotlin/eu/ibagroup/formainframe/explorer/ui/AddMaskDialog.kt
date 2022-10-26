@@ -38,7 +38,7 @@ class AddMaskDialog(project: Project?, override var state: MaskStateWithWS) : Di
       val sameWidthGroup = "ADD_MASK_DIALOG_LABELS_WIDTH_GROUP"
 
       row {
-        label("Working Set: ")
+        label("Files working set: ")
           .widthGroup(sameWidthGroup)
         label(state.ws.name)
       }

@@ -29,7 +29,7 @@ val JES_EXPLORER_VIEW = DataKey.create<JesExplorerView>("jesExplorerView")
 const val JES_EXPLORER_CONTEXT_MENU = "JES Explorer"
 
 /**
- * Jes Explorer tree view implementation.
+ * JES Explorer tree view implementation.
  * @param explorer instance of units explorer (logical representation of explorer view data).
  * @param project current project.
  * @param parentDisposable parent disposable.

@@ -20,13 +20,14 @@ import eu.ibagroup.formainframe.utils.sendTopic
 import javax.swing.JComponent
 import kotlin.concurrent.withLock
 
-
 class JesExplorerContentProviderFactory : ExplorerContentProviderFactory<JesExplorer>() {
   override fun buildComponent(): ExplorerContentProvider<JesExplorer> = JesExplorerContentProvider()
 }
 
 /** Class to provide content for JES Explorer */
-class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>() {
+class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>(
+  contextMenu = ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.JESContextMenuGroup") as ActionGroup
+) {
 
   override val explorer: JesExplorer = UIComponentManager.INSTANCE.getExplorer(JesExplorer::class.java)
   override val displayName: String = "JES Explorer"

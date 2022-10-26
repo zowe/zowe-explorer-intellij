@@ -174,7 +174,8 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteMemberOperationRunnerFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.DeleteMemberOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssChangeModeFactory"/>
 
@@ -245,7 +246,8 @@ Example of how to see the output:<br/>
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
@@ -403,20 +405,34 @@ Example of how to see the output:<br/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
                 class="eu.ibagroup.formainframe.explorer.actions.RenameAction"
-                text="Rename"
-                use-shortcut-of="RenameElement"/>
+                text="Rename">
+            <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
+        </action>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
-                class="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction" text="Force Rename"
-                use-shortcut-of="ForceRefresh"/>
+                class="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
+                text="Force Rename"
+                use-shortcut-of="ForceRefresh">
+            <keyboard-shortcut first-keystroke="shift F2" keymap="$default"/>
+        </action>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditJobsFilterAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditJobsFilterAction"
+                text="Edit"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.DeleteJesNodeAction"
+                class="eu.ibagroup.formainframe.explorer.actions.DeleteJesNodeAction"
+                text="Delete">
+            <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+        </action>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 icon="ForMainframeIcons.DatasetMask"
                 text="Mask"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
-                class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"
                 icon="ForMainframeIcons.JclDirectory"
                 text="Jobs Filter"/>
 
@@ -443,7 +459,9 @@ Example of how to see the output:<br/>
         <action id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"
                 class="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"
                 text="Purge Job"
-                icon="AllIcons.Actions.GC"/>
+                icon="AllIcons.Actions.GC">
+            <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+        </action>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.EditJclAction"
                 class="eu.ibagroup.formainframe.explorer.actions.EditJclAction"
@@ -458,8 +476,8 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobToolbarAction"/>
         </group>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
-                class="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"
                 text="Edit"
                 use-shortcut-of="RenameElement"/>
 
@@ -483,7 +501,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
@@ -501,10 +519,10 @@ Example of how to see the output:<br/>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJclAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"/>
             <separator/>
@@ -512,19 +530,31 @@ Example of how to see the output:<br/>
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
             <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
             <separator/>
             <reference id="$Delete"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.JESContextMenuGroup">
+            <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJclAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJobsFilterAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.DeleteJesNodeAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"/>
+            <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"/>
         </group>
 

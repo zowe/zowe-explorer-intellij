@@ -20,7 +20,9 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.analytics.AnalyticsService
@@ -32,6 +34,7 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -49,7 +52,6 @@ abstract class ExplorerTreeNode<Value : Any>(
   var navigating: Boolean = false
 
   open fun init() {
-    @Suppress("LeakingThis")
     treeStructure.registerNode(this)
   }
 
@@ -85,13 +87,9 @@ abstract class ExplorerTreeNode<Value : Any>(
     presentationData.addText(text, textAttributes)
   }
 
-  /**
-   * Synchronizes file content in background and opens it after synchronization in editor.
-   * @see AbstractTreeNode.navigate
-   */
   override fun navigate(requestFocus: Boolean) {
     val file = virtualFile ?: return
-    descriptor?.let {
+    descriptor?.let { fileDescriptor ->
       if (!file.isDirectory) {
         val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
         val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
@@ -106,7 +104,36 @@ abstract class ExplorerTreeNode<Value : Any>(
           this.update()
 
           if (doSync) {
-            val syncProvider = DocumentedSyncProvider(file = file, saveStrategy = SaveStrategy.default(project))
+            val onThrowableHandler: (Throwable) -> Unit = {
+              if (it.message?.contains("Client is not authorized for file access") == true) {
+                Messages.showDialog(
+                  project,
+                  "You do not have permissions to read this file",
+                  "Error While Opening File ${file.name}",
+                  arrayOf("Ok"),
+                  0,
+                  AllIcons.General.ErrorDialog,
+                  null
+                )
+              } else {
+                DocumentedSyncProvider.defaultOnThrowableHandler(file, it)
+              }
+            }
+            val onSyncSuccessHandler: () -> Unit = {
+              dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
+                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
+              }
+              runWriteActionInEdtAndWait {
+                fileDescriptor.navigate(requestFocus)
+              }
+            }
+            val syncProvider =
+              DocumentedSyncProvider(
+                file = file,
+                saveStrategy = SaveStrategy.syncOnOpen(project),
+                onThrowableHandler = onThrowableHandler,
+                onSyncSuccessHandler = onSyncSuccessHandler
+              )
             if (!file.isBeingEditingNow()) {
               runCatching {
                 contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
@@ -115,13 +142,6 @@ abstract class ExplorerTreeNode<Value : Any>(
                 this.update()
               }
             }
-          }
-          indicator.text = "Navigating to ${file.name}"
-          dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
-            service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
-          }
-          runWriteActionInEdtAndWait {
-            it.navigate(requestFocus)
           }
         }
       }
