@@ -72,7 +72,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.2")
+  version.set("2022.1")
 }
 
 tasks {
@@ -84,10 +84,11 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set("203.5981")
+    sinceBuild.set("221.5080")
     untilBuild.set("222.*")
     changeNotes.set(
       """
+      <b>WARNING: </b> version 0.7 introduces breaking change. You won't be able to use the plugin with IntelliJ version < 2022.1
       <b>New features:</b>
       <ul>
         <li>Configurable batch size to load filter smoothly</li>
