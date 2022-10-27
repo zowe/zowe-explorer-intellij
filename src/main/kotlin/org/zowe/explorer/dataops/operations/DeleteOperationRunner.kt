@@ -22,6 +22,7 @@ import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
 import org.zowe.explorer.utils.runWriteActionInEdt
 import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.XIBMOption
 
 class DeleteRunnerFactory : OperationRunnerFactory {
@@ -74,6 +75,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
           }
         }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
       }
+
       is RemoteMemberAttributes -> {
 
         operation.file.isWritable = false
@@ -102,6 +104,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
           }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
         }
       }
+
       is RemoteUssAttributes -> {
 
         if (operation.file.isDirectory) {
@@ -115,7 +118,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).deleteUssFile(
               authorizationToken = it.connectionConfig.authToken,
-              filePath = attr.path.substring(1),
+              filePath = FilePath(attr.path),
               xIBMOption = XIBMOption.RECURSIVE
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {

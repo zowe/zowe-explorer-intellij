@@ -23,6 +23,7 @@ import org.zowe.explorer.utils.findAnyNullable
 import org.zowe.explorer.utils.mapNotNull
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.XIBMDataType
 import java.io.IOException
 
@@ -64,7 +65,7 @@ class UssFileContentSynchronizer(
         val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
         val response = api<DataAPI>(connectionConfig).retrieveUssFileContent(
           authorizationToken = connectionConfig.authToken,
-          filePath = attributes.path.substring(1),
+          filePath = FilePath(attributes.path),
           xIBMDataType = xIBMDataType
         ).applyIfNotNull(progressIndicator) { indicator ->
           cancelByIndicator(indicator)
@@ -108,7 +109,7 @@ class UssFileContentSynchronizer(
 
         val response = apiWithBytesConverter<DataAPI>(connectionConfig).writeToUssFile(
           authorizationToken = connectionConfig.authToken,
-          filePath = attributes.path.substring(1),
+          filePath = FilePath(attributes.path),
           body = newContent,
           xIBMDataType = xIBMDataType
         ).applyIfNotNull(progressIndicator) { indicator ->

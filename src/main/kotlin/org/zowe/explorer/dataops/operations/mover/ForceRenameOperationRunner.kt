@@ -23,6 +23,7 @@ import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.sendVfsChangesTopic
 import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 
 /**
  * Factory class for building an instance of the runner class on runtime. Defined in plugin.xml
@@ -89,7 +90,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
               if (it.children?.size == 0) {
                 val resp = api<DataAPI>(requester.connectionConfig).deleteUssFile(
                   authorizationToken = requester.connectionConfig.authToken,
-                  filePath = "$parentDirPath/${operation.newName}"
+                  filePath = FilePath("$parentDirPath/${operation.newName}")
                 ).cancelByIndicator(progressIndicator).execute()
                 if (!resp.isSuccessful) {
                   throw CallException(

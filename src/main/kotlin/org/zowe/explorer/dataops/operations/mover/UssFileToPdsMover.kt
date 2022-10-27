@@ -22,10 +22,7 @@ import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.getParentsChain
-import org.zowe.kotlinsdk.CopyDataZOS
-import org.zowe.kotlinsdk.DataAPI
-import org.zowe.kotlinsdk.XIBMBpxkAutoCvt
-import org.zowe.kotlinsdk.XIBMOption
+import org.zowe.kotlinsdk.*
 
 /**
  * Factory for registering UssFileToPdsMover in Intellij IoC container.
@@ -51,11 +48,11 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.sourceAttributes is RemoteUssAttributes
-            && !operation.sourceAttributes.isDirectory
-            && operation.destinationAttributes is RemoteDatasetAttributes
-            && operation.destinationAttributes.isDirectory
-            && operation.commonUrls(dataOpsManager).isNotEmpty()
-            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+      && !operation.sourceAttributes.isDirectory
+      && operation.destinationAttributes is RemoteDatasetAttributes
+      && operation.destinationAttributes.isDirectory
+      && operation.commonUrls(dataOpsManager).isNotEmpty()
+      && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
   /**
@@ -101,7 +98,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     if (operation.isMove) {
       val deleteResponse = api.deleteUssFile(
         authorizationToken = connectionConfig.authToken,
-        filePath = from.substring(1),
+        filePath = FilePath(from),
         xIBMOption = XIBMOption.RECURSIVE
       ).execute()
       if (!deleteResponse.isSuccessful) {

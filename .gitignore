@@ -3,6 +3,8 @@
 gradle
 build
 
+verifier-all.jar
+
 # Windows thumbnail cache files
 Thumbs.db
 Thumbs.db:encryptable

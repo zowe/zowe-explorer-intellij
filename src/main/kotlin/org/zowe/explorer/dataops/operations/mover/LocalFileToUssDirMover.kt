@@ -52,10 +52,10 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source is VirtualFileSystemEntry &&
-            !operation.source.isDirectory &&
-            operation.destination.isDirectory &&
-            operation.destination is MFVirtualFile &&
-            dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
+      !operation.source.isDirectory &&
+      operation.destination.isDirectory &&
+      operation.destination is MFVirtualFile &&
+      dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
   }
 
   /**
@@ -85,7 +85,7 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(
       authorizationToken = destConnectionConfig.authToken,
-      filePath = FilePath(pathToFile).toString(),
+      filePath = FilePath(pathToFile),
       body = contentToUpload.toByteArray(),
       xIBMDataType = xIBMDataType
     ).applyIfNotNull(progressIndicator) { indicator ->

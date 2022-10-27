@@ -75,7 +75,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
     progressIndicator.text = "Attempt to rollback"
     val responseRollback = api<DataAPI>(connectionConfig).deleteUssFile(
       connectionConfig.authToken,
-      destinationPath.substring(1),
+      FilePath(destinationPath),
       XIBMOption.RECURSIVE
     ).execute()
 
@@ -123,7 +123,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
       if (operation.forceOverwriting) {
         val response = api<DataAPI>(destConnectionConfig).deleteUssFile(
           authorizationToken = destConnectionConfig.authToken,
-          filePath = destinationPath.substring(1),
+          filePath = FilePath(destinationPath),
           xIBMOption = XIBMOption.RECURSIVE
         ).cancelByIndicator(progressIndicator).execute()
         if (!response.isSuccessful) {
