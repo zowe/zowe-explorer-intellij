@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.ide.projectView.ViewSettings
 
+/** Interface to represent the view settings for the explorer */
 interface ExplorerViewSettings : ViewSettings {
 
   val showVolser

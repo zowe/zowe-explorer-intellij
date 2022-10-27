@@ -14,6 +14,12 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.utils.nullIfBlank
 
+/**
+ * Information object with query mask and connection configuration inside
+ * to send request for a list of datasets to zosmf.
+ * @param connectionConfig connection configuration to specify the system to work with.
+ * @param queryMask datasets mask.
+ */
 data class MaskedRequester(
   override val connectionConfig: ConnectionConfig,
   val queryMask: DSMask,

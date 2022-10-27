@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.UssPath
 
+/** Interface to represent the working set base */
 interface WorkingSet<Mask> : ExplorerUnit, Disposable {
 
   val masks: Collection<Mask>
@@ -25,6 +26,7 @@ interface WorkingSet<Mask> : ExplorerUnit, Disposable {
 
 }
 
+/** Interface to represent the files working set */
 interface FilesWorkingSet : WorkingSet<DSMask> {
   val ussPaths: Collection<UssPath>
 
@@ -34,4 +36,5 @@ interface FilesWorkingSet : WorkingSet<DSMask> {
 
 }
 
+/** Interface to represent the jobs working set */
 interface JesWorkingSet : WorkingSet<JobsFilter> {}

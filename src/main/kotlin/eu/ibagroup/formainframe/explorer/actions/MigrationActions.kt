@@ -30,8 +30,12 @@ import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-
+/**
+ * Get data for explorer node
+ * @return Pair of [MFVirtualFile] and [ConnectionConfig]
+ */
 fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, ConnectionConfig>? {
   return if (node is ExplorerUnitTreeNodeBase<*, *> && node.unit is FilesWorkingSet) {
     val file = node.virtualFile
@@ -45,13 +49,24 @@ fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, Connecti
   }
 }
 
+/**
+ * Clean cache for explorer nodes
+ * @see ExplorerTreeNode
+ */
 private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*>>) {
   val uniqueParentNodes = nodes.map { it.parent }.distinct()
   uniqueParentNodes.forEach { it?.cleanCacheIfPossible() }
 }
 
+/**
+ * Action class for recall a migrated dataset
+ * @see MigrateAction
+ */
 class RecallAction : DumbAwareAction() {
 
+  /**
+   * Runs recall operation
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW)
     if (view != null) {
@@ -81,6 +96,9 @@ class RecallAction : DumbAwareAction() {
 
   }
 
+  /**
+   * Determines if recall operation is possible for chosen object
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -97,8 +115,14 @@ class RecallAction : DumbAwareAction() {
 
 }
 
+/**
+ * Action class for dataset migration
+ */
 class MigrateAction : DumbAwareAction() {
 
+  /**
+   * Runs migrate operation
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW)
     if (view != null) {
@@ -127,7 +151,9 @@ class MigrateAction : DumbAwareAction() {
     }
   }
 
-
+  /**
+   * Determines if migrate operation is possible for chosen object
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

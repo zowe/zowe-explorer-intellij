@@ -11,12 +11,19 @@
 package eu.ibagroup.formainframe.dataops.operations.migration
 
 import eu.ibagroup.formainframe.dataops.Query
-import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
+/**
+ * Interface which represents migration runner class
+ */
 @Suppress("UNCHECKED_CAST")
 interface MigrationRunner<Q : Query<*, Unit>> : OperationRunner<Q, Unit> {
 
+  /**
+   * Method determines if migration operation can run or not
+   * @param operation - a typed operation instance
+   */
   override fun canRun(operation: Q): Boolean {
     return true
   }

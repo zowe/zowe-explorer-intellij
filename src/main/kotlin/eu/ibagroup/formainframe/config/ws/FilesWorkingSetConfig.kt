@@ -13,6 +13,11 @@ package eu.ibagroup.formainframe.config.ws
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.isTheSameAs
 
+/**
+ * Configuration class for Files Working Sets. Instances of these
+ * class will be saved and can be reloaded after Intellij closed.
+ * @author Valiantsin Krus
+ */
 class FilesWorkingSetConfig : WorkingSetConfig {
 
   @Column
@@ -53,8 +58,8 @@ class FilesWorkingSetConfig : WorkingSetConfig {
 
     if (name != other.name) return false
     if (connectionConfigUuid != other.connectionConfigUuid) return false
-    if (!(dsMasks isTheSameAs  other.dsMasks)) return false
-    if (!(ussPaths isTheSameAs  other.ussPaths)) return false
+    if (!(dsMasks isTheSameAs other.dsMasks)) return false
+    if (!(ussPaths isTheSameAs other.ussPaths)) return false
 
     return true
   }
@@ -69,7 +74,7 @@ class FilesWorkingSetConfig : WorkingSetConfig {
   }
 
   override fun toString(): String {
-    return "WorkingSetConfig(name='$name', connectionConfigUuid='$connectionConfigUuid', dsMasks=$dsMasks, ussPaths=$ussPaths)"
+    return "FilesWorkingSetConfig(name='$name', connectionConfigUuid='$connectionConfigUuid', dsMasks=$dsMasks, ussPaths=$ussPaths)"
   }
 
 }

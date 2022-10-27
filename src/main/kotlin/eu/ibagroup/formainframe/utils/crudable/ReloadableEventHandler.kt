@@ -10,6 +10,10 @@
 
 package eu.ibagroup.formainframe.utils.crudable
 
+/**
+ * Interface to trigger onEvent handler on each event, providing row class and an element of the event on each of them.
+ * Specifies additional onReload event handler to be defined
+ */
 interface ReloadableEventHandler : EventHandler {
 
   fun onEvent(rowClass: Class<*>, row: Any)

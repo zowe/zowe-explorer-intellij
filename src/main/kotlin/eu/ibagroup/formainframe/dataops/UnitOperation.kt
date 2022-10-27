@@ -12,6 +12,9 @@ package eu.ibagroup.formainframe.dataops
 
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
+/**
+ * Interface to describe unit operation (e.g. file operation).
+ */
 interface UnitOperation : Operation<Unit> {
 
   override val resultClass: Class<out Unit>

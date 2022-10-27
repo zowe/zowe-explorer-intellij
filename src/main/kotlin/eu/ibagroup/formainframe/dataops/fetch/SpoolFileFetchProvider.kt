@@ -25,8 +25,16 @@ import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.JESApi
 
+/**
+ * Query with file to fetch children.
+ * @author Valiantsin Krus
+ */
 data class JobQuery(val library: MFVirtualFile)
 
+/**
+ * Factory for registering SpoolFileFetchProvider in Intellij IoC container.
+ * @author Valiantsin Krus
+ */
 class SpoolFileFetchProviderFactory : FileFetchProviderFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): FileFetchProvider<*, *, *> {
     return SpoolFileFetchProvider(dataOpsManager)
@@ -35,6 +43,10 @@ class SpoolFileFetchProviderFactory : FileFetchProviderFactory {
 
 private val log = log<SpoolFileFetchProvider>()
 
+/**
+ * Fetch provider for requesting spool files list of the job from zosmf.
+ * @author Valiantsin Krus
+ */
 class SpoolFileFetchProvider(dataOpsManager: DataOpsManager) :
   RemoteAttributedFileFetchBase<JobQuery, RemoteSpoolFileAttributes, MFVirtualFile>(dataOpsManager) {
 
@@ -49,6 +61,10 @@ class SpoolFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val responseClass = RemoteSpoolFileAttributes::class.java
 
+  /**
+   * Fetches spool files relying on information in query.
+   * @see RemoteAttributedFileFetchBase.fetchResponse
+   */
   override fun fetchResponse(
     query: RemoteQuery<JobQuery, Unit>,
     progressIndicator: ProgressIndicator
@@ -83,6 +99,10 @@ class SpoolFileFetchProvider(dataOpsManager: DataOpsManager) :
     } else throw IllegalArgumentException("Virtual file is not a Job")
   }
 
+  /**
+   * Clears attributes of unused job file.
+   * @see RemoteAttributedFileFetchBase.cleanupUnusedFile
+   */
   override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<JobQuery, Unit>) {
     log.info("About to clean-up file=$file, query=$query")
     attributesService.clearAttributes(file)

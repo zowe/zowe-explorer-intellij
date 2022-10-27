@@ -25,12 +25,14 @@ import eu.ibagroup.r2z.ReleaseJobRequest
 import eu.ibagroup.r2z.ReleaseJobRequestBody
 import retrofit2.Response
 
+/** Factory for release job operation runner */
 class ReleaseJobOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return ReleaseJobOperationRunner()
   }
 }
 
+/** Release operation runner */
 class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJobRequest> {
 
   override val operationClass = ReleaseJobOperation::class.java
@@ -41,10 +43,16 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
     return true
   }
 
+  /**
+   * Method that sends release request to mf
+   * @param operation describes the parameters to be sent and the connection configuration
+   * @param progressIndicator to interrupt if the computation is canceled
+   * @return [ReleaseJobRequest] body
+   */
   override fun run(operation: ReleaseJobOperation, progressIndicator: ProgressIndicator): ReleaseJobRequest {
     progressIndicator.checkCanceled()
 
-    val response : Response<ReleaseJobRequest> = when (operation.request) {
+    val response: Response<ReleaseJobRequest> = when (operation.request) {
       is BasicReleaseJobParams -> {
         api<JESApi>(operation.connectionConfig).releaseJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
@@ -75,10 +83,13 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
 
 open class ReleaseJobOperationParams
 
+/** Job Name and Job Id are used */
 class BasicReleaseJobParams(val jobName: String, val jobId: String) : ReleaseJobOperationParams()
 
+/** Correlator is used */
 class CorrelatorReleaseJobParams(val correlator: String) : ReleaseJobOperationParams()
 
+/** Class for release job operation */
 data class ReleaseJobOperation(
   override val request: ReleaseJobOperationParams,
   override val connectionConfig: ConnectionConfig

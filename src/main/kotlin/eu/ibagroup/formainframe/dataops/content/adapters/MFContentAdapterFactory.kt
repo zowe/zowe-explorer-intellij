@@ -12,4 +12,7 @@ package eu.ibagroup.formainframe.dataops.content.adapters
 
 import eu.ibagroup.formainframe.dataops.DataOpsComponentFactory
 
+/**
+ * Base factory for registering content adapters in Intellij IoC container.
+ */
 interface MFContentAdapterFactory : DataOpsComponentFactory<MFContentAdapter>

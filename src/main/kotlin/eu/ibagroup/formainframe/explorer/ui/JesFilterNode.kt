@@ -24,6 +24,7 @@ import icons.ForMainframeIcons
 
 private val jesFilterIcon = ForMainframeIcons.JclDirectory
 
+/** JES Explorer filter representation */
 class JesFilterNode(
   jobsFilter: JobsFilter,
   project: Project,

@@ -16,16 +16,22 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.operations.jobs.*
+import eu.ibagroup.formainframe.dataops.operations.jobs.BasicHoldJobParams
+import eu.ibagroup.formainframe.dataops.operations.jobs.HoldJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 
+/** Action to hold a running job in the Jobs Tool Window */
 class HoldJobAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Hold a job on button click
+   * After completion shows a notification
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -48,21 +54,32 @@ class HoldJobAction : AnAction() {
             progressIndicator = it
           )
         }.onFailure {
-          view.showNotification("Error holding ${jobStatus.jobName}: ${jobStatus.jobId}", "${it.message}", e.project, NotificationType.ERROR)
+          view.showNotification(
+            "Error holding ${jobStatus.jobName}: ${jobStatus.jobId}",
+            "${it.message}",
+            e.project,
+            NotificationType.ERROR
+          )
         }.onSuccess {
-          view.showNotification("${jobStatus.jobName}: ${jobStatus.jobId} has been held", "${it}", e.project, NotificationType.INFORMATION)
+          view.showNotification(
+            "${jobStatus.jobName}: ${jobStatus.jobId} has been held",
+            "${it}",
+            e.project,
+            NotificationType.INFORMATION
+          )
         }
       }
     }
   }
 
+  /** A job can be held if its status is "Input" */
   override fun update(e: AnActionEvent) {
     val view = e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
     val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
-    if(jobStatus == JobStatus.Status.OUTPUT || jobStatus == JobStatus.Status.ACTIVE) {
+    if (jobStatus == Job.Status.OUTPUT || jobStatus == Job.Status.ACTIVE || jobStatus == null) {
       e.presentation.isEnabled = false
     }
   }

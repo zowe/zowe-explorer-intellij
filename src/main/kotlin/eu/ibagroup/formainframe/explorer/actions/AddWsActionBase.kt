@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.util.containers.isEmpty
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
@@ -28,8 +29,14 @@ import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
 
-abstract class AddWsActionBase: AnAction() {
+/**
+ * Abstract action for adding Working Set (for files or for jobs) through UI.
+ */
+abstract class AddWsActionBase : AnAction() {
+
   abstract val explorerView: DataKey<out ExplorerTreeView<*, *>>
+
+  /** Shows dialog if connections list is empty and shows WS dialog after connection creation. */
   override fun actionPerformed(e: AnActionEvent) {
     if (configCrudable.getAll<ConnectionConfig>().isEmpty()) {
       val state = ConnectionDialog.showAndTestConnection(
@@ -53,15 +60,25 @@ abstract class AddWsActionBase: AnAction() {
     }
   }
 
+  /** Presentation text in explorer context menu */
   abstract val presentationTextInExplorer: String
+
+  /** Default presentation text. */
   abstract val defaultPresentationText: String
 
+  /**
+   * Implementation should create working set dialog for specific working set type.
+   * @param configCrudable crudable from ConfigService.
+   * @see Crudable
+   * @see ConfigService
+   */
   abstract fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>>
 
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /** Updates text and icon regarding the context from which action should be triggered. */
   override fun update(e: AnActionEvent) {
     if (e.getData(explorerView) != null) {
       e.presentation.text = presentationTextInExplorer

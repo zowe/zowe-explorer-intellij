@@ -16,7 +16,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 import eu.ibagroup.r2z.SpoolFile
 
 class JobLogFetcherFactory: LogFetcherFactory {
@@ -35,7 +35,17 @@ class JobProcessInfo(
   val jobId: String?,
   val jobName: String?,
   override val connectionConfig: ConnectionConfig
-): MFProcessInfo
+): MFProcessInfo {
+
+  override fun equals(other: Any?): Boolean {
+    other as JobProcessInfo
+    return this.jobId == other.jobId && this.jobName == other.jobName && this.connectionConfig == other.connectionConfig
+  }
+
+  override fun hashCode(): Int {
+    return this.connectionConfig.uuid.hashCode()
+  }
+}
 
 /**
  * Implementation of LogFetcher class to work with mainframe job logs.
@@ -52,7 +62,7 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
   /**
    * Mainframe job status that was saved after last request to mainframe.
    */
-  private var cachedJobStatus: JobStatus? = null
+  private var cachedJobStatus: Job? = null
 
   /**
    * Extracts list of job spool files without creating any virtual files.
@@ -101,12 +111,12 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
    * @param jobInfo job process information.
    * @return statis of requested job.
    */
-  private fun getJobStatus (jobInfo: JobProcessInfo): JobStatus? {
-    var result: JobStatus? = null
+  private fun getJobStatus (jobInfo: JobProcessInfo): Job? {
+    var result: Job? = null
     val jobIdNotNull = jobInfo.jobId ?: return null
     val jobNameNotNull = jobInfo.jobName ?: return null
 
-    val response = api<JESApi>(jobInfo.connectionConfig).getJobStatus(
+    val response = api<JESApi>(jobInfo.connectionConfig).getJob(
       basicCredentials = jobInfo.connectionConfig.authToken,
       jobName = jobNameNotNull,
       jobId = jobIdNotNull
@@ -125,7 +135,7 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
    * @return true if job finished and false otherwise.
    */
   override fun isLogFinished(mfProcessInfo: JobProcessInfo): Boolean {
-    return getJobStatus(mfProcessInfo)?.status == JobStatus.Status.OUTPUT
+    return getJobStatus(mfProcessInfo)?.status == Job.Status.OUTPUT || getJobStatus(mfProcessInfo)?.status == null
   }
 
   /**
@@ -157,6 +167,19 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
   }
 
   /**
+   * Fetches job log by spoolId.
+   * @param mfProcessInfo job process information.
+   * @return log of spool files wrapped in array. Join this array to get full log.
+   */
+  fun fetchLogsBySpoolId(mfProcessInfo: JobProcessInfo, spoolID: Int): Array<String> {
+    return fetchSpoolFiles(mfProcessInfo).take(spoolID)
+      .associateWith { fetchSpoolLog(mfProcessInfo, it.id) }
+      .also { cachedLog = it }
+      .map { it.value }
+      .toTypedArray()
+  }
+
+  /**
    * Getter for cached log
    * @see JobLogFetcher.cachedLog
    */
@@ -168,7 +191,7 @@ class JobLogFetcher: LogFetcher<JobProcessInfo> {
    * Getter for job status
    * @see JobLogFetcher.cachedJobStatus
    */
-  fun getCachedJobStatus(): JobStatus? {
+  fun getCachedJobStatus(): Job? {
     return cachedJobStatus
   }
 

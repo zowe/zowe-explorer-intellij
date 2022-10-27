@@ -16,22 +16,40 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.r2z.InfoAPI
+import eu.ibagroup.r2z.InfoResponse
 import eu.ibagroup.r2z.SystemsApi
 import eu.ibagroup.r2z.SystemsResponse
-import okhttp3.Credentials
 
+/**
+ * Class which represents factory for info operation runner. Defined in plugin.xml
+ */
 class InfoOperationRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
     return InfoOperationRunner()
   }
 }
 
+/**
+ * Class which represents info operation runner
+ */
 class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
   override val operationClass = InfoOperation::class.java
   override val resultClass = SystemsResponse::class.java
 
+  /**
+   * Determined if operation can be run on selected object
+   * @param operation - specifies an info operation object
+   */
   override fun canRun(operation: InfoOperation) = true
 
+  /**
+   * Runs an info operation
+   * @param operation - info operation to be run
+   * @param progressIndicator - progress indicator object
+   * @throws CallException if request is not successful or no response body
+   * @return SystemsResponse serialized object (body of the request)
+   */
   override fun run(operation: InfoOperation, progressIndicator: ProgressIndicator): SystemsResponse {
     val response = api<SystemsApi>(connectionConfig = operation.connectionConfig)
       .getSystems(operation.connectionConfig.authToken)
@@ -40,7 +58,7 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
     if (!response.isSuccessful) {
       throw CallException(response, "Credentials are not valid")
     }
-    return response?.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
+    return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
   }
 
 }

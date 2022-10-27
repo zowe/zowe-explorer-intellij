@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops.operations
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
+/** Interface to represent a remote operation, the result of that operation is Unit */
 interface RemoteUnitOperation<Request> : RemoteQuery<Request, Unit> {
   override val resultClass
     get() = UNIT_CLASS

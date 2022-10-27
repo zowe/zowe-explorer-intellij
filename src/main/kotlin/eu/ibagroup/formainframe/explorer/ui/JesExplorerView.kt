@@ -18,19 +18,35 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.GlobalJesWorkingSet
+import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
 
+/**
+ * Data key for extracting current instance of JesExplorerView.
+ * @see JesExplorerView
+ */
 val JES_EXPLORER_VIEW = DataKey.create<JesExplorerView>("jesExplorerView")
-const val JES_EXPLORER_CONTEXT_MENU = "Jes Explorer"
 
+const val JES_EXPLORER_CONTEXT_MENU = "JES Explorer"
+
+/**
+ * Jes Explorer tree view implementation.
+ * @param explorer instance of units explorer (logical representation of explorer view data).
+ * @param project current project.
+ * @param parentDisposable parent disposable.
+ * @param contextMenu action group for context menu (with items New, Delete, Refresh and etc.).
+ * @param rootNodeProvider function to get root node of the tree.
+ * @param cutProviderUpdater function that will be triggered after each cut action.
+ *
+ * @author Valiantsin Krus
+ */
 class JesExplorerView(
-  explorer: Explorer<GlobalJesWorkingSet>,
+  explorer: Explorer<JesWorkingSetImpl>,
   project: Project,
   parentDisposable: Disposable,
   contextMenu: ActionGroup,
   rootNodeProvider: (Explorer<*>, Project, ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
   cutProviderUpdater: (List<VirtualFile>) -> Unit
-) : ExplorerTreeView<GlobalJesWorkingSet, JobsWorkingSetConfig>(
+) : ExplorerTreeView<JesWorkingSetImpl, JobsWorkingSetConfig>(
   explorer,
   project,
   parentDisposable,
@@ -39,7 +55,16 @@ class JesExplorerView(
   cutProviderUpdater
 ) {
 
-
+  /**
+   * Provides data in data context. Intellij understands the context
+   * from which the action was triggered and some data can be extracted
+   * in this action by data keys from this context.
+   * @param dataId key of the data to extract. Jes Explorer provides data for:
+   *               1) NAVIGATABLE - first selected node if something is selected or null otherwise;
+   *               2) NAVIGATABLE_ARRAY - array of selected nodes;
+   *               3) JES_EXPLORER_VIEW - current instance of the JesExplorerView.
+   * @return data corresponding to specified dataId or null if no data linked with passed dataId.
+   */
   override fun getData(dataId: String): Any? {
     return when {
       CommonDataKeys.NAVIGATABLE.`is`(dataId) -> if (mySelectedNodesData.isNotEmpty()) mySelectedNodesData[0].node else null
@@ -49,7 +74,5 @@ class JesExplorerView(
     }
   }
 
-  override fun dispose() {
-
-  }
+  override fun dispose() {}
 }

@@ -14,12 +14,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 
+/** Action class to represent the action that will show a working set contents on the action is performed */
 class ShowWsInfo : ToggleAction() {
 
+  /**
+   * Is the working set contents are shown
+   * @param e an action event to get the file explorer view to check whether the working set contents are shown
+   * @return true if the working set contents are shown
+   */
   override fun isSelected(e: AnActionEvent): Boolean {
     return e.getData(FILE_EXPLORER_VIEW)?.myFsTreeStructure?.showWorkingSetInfo == true
   }
 
+  /**
+   * Update the file explorer view to show the working set contents on the action selected
+   * @param e an action event to get the view to update
+   * @param state a variable to represent the toggle selection action
+   */
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -31,6 +42,7 @@ class ShowWsInfo : ToggleAction() {
     }
   }
 
+  /** Show the action until there is a file explorer view present */
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.getData(FILE_EXPLORER_VIEW) != null

@@ -15,21 +15,80 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 
+/** Sync action event. It will handle the manual sync button action when it is clicked */
 class SyncAction : DumbAwareAction() {
 
+  /**
+   * Get a virtual file on which the event was triggered
+   * @param e the event to get the virtual file
+   */
+  private fun getVirtualFile(e: AnActionEvent): VirtualFile? {
+    return e.getData(CommonDataKeys.VIRTUAL_FILE)
+  }
+
+  /**
+   * Get a virtual file with the sync support on which the event was triggered
+   * @param e the event to get the virtual file
+   */
+  private fun getSupportedVirtualFile(e: AnActionEvent): VirtualFile? {
+    return getVirtualFile(e)?.let {
+      if (service<DataOpsManager>().isSyncSupported(it)) {
+        it
+      } else {
+        null
+      }
+    }
+  }
+
+  /**
+   * Get an editor on which the event was triggered
+   * @param e the event to get the editor
+   */
+  private fun getEditor(e: AnActionEvent): Editor? {
+    return e.getData(CommonDataKeys.EDITOR)
+  }
+
+  /**
+   * Perform the manual sync action. The action will be performed as a backgroundable task.
+   * After the content of the file is synced with the mainframe, the document of the file will be saved
+   * @param e the event instance to get the virtual file, the editor and the project where it was triggered
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val vFile = getSupportedVirtualFile(e) ?: return
     val editor = getEditor(e) ?: return
     val syncProvider = DocumentedSyncProvider(vFile, SaveStrategy.default(e.project))
-    service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider)
-    FileDocumentManager.getInstance().saveDocument(editor.document)
+    runBackgroundableTask(
+      title = "Synchronizing ${vFile.name}...",
+      project = e.project,
+      cancellable = true
+    ) { indicator ->
+      service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
+      runWriteActionInEdtAndWait {
+        FileDocumentManager.getInstance().saveDocument(editor.document)
+      }
+    }
   }
 
+  /**
+   * Make the sync action button disabled
+   * @param e the action event to get the presentation of the button
+   */
+  private fun makeDisabled(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = false
+  }
+
+  /**
+   * Disable or enable the sync action button according to the current editor and remote bytes' equality.
+   * The button will be disabled also when the auto sync is enabled
+   * @param e the action event to get additional data to check and disable the button
+   */
   override fun update(e: AnActionEvent) {
     val file = getSupportedVirtualFile(e) ?: let {
       makeDisabled(e)
@@ -39,30 +98,8 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
-    e.presentation.isEnabledAndVisible = !(editor.document.text.toByteArray() contentEquals file.contentsToByteArray())
-        && !service<ConfigService>().isAutoSyncEnabled.get()
-  }
-
-  private fun makeDisabled(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = false
-  }
-
-  private fun getEditor(e: AnActionEvent): Editor? {
-    return e.getData(CommonDataKeys.EDITOR)
-  }
-
-  private fun getVirtualFile(e: AnActionEvent): VirtualFile? {
-    return e.getData(CommonDataKeys.VIRTUAL_FILE)
-  }
-
-  private fun getSupportedVirtualFile(e: AnActionEvent): VirtualFile? {
-    return getVirtualFile(e)?.let {
-      if (service<DataOpsManager>().isSyncSupported(it)) {
-        it
-      } else {
-        null
-      }
-    }
+    e.presentation.isEnabledAndVisible = !service<ConfigService>().isAutoSyncEnabled
+            && !(editor.document.text.toByteArray() contentEquals file.contentsToByteArray())
   }
 
 }

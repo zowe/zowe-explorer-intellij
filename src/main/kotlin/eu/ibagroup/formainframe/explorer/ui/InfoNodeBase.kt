@@ -19,6 +19,10 @@ import eu.ibagroup.formainframe.explorer.Explorer
 private val singletonList = mutableListOf<AbstractTreeNode<*>>()
 private val any = Any()
 
+/**
+ * Specific information node, that is not related to any mainframe nodes.
+ * Represents the basic interactions with it, when there is a warning, error or some other information appears in the explorer tree
+ */
 abstract class InfoNodeBase(
   project: Project,
   parent: ExplorerTreeNode<*>,

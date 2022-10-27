@@ -21,6 +21,13 @@ import eu.ibagroup.r2z.XIBMDataType
 
 private const val CURRENT_DIR_NAME = "."
 
+/**
+ * Constructs path to file/folder depending on if object is file or folder
+ * and if object is located in root directory or deeper in file hierarchy
+ * @param rootPath path to object without object name itself
+ * @param ussFile chosen file/folder
+ * @return processed path to file/folder
+ */
 private fun constructPath(rootPath: String, ussFile: UssFile): String {
   return when {
     ussFile.name.isEmpty() || ussFile.name == CURRENT_DIR_NAME -> {
@@ -37,6 +44,21 @@ private fun constructPath(rootPath: String, ussFile: UssFile): String {
 
 const val USS_DELIMITER = "/"
 
+/**
+ * Data class which represents attributes of USS file/folder
+ * @param path path to file/folder
+ * @param isDirectory is object folder or not
+ * @param fileMode all access modes of file/folder
+ * @param url url to file/folder
+ * @param requesters list of requesters
+ * @param length size of file/folder
+ * @param uid uid which identifies unique user number in system
+ * @param owner owner of file/folder
+ * @param gid gid which identifies unique group number in system
+ * @param groupId group of file/folder
+ * @param modificationTime last modification time
+ * @param symlinkTarget link to file/folder, for link file type
+ */
 data class RemoteUssAttributes(
   val path: String,
   val isDirectory: Boolean,
@@ -52,6 +74,13 @@ data class RemoteUssAttributes(
   val symlinkTarget: String? = null
 ) : MFRemoteFileAttributes<UssRequester>, Copyable {
 
+  /**
+   * Constructor for creating uss attributes object
+   * @param rootPath path to file/folder
+   * @param ussFile object representing file/folder
+   * @param url url to file/folder
+   * @param connectionConfig object which contains info about configuration to mainframe
+   */
   constructor(rootPath: String, ussFile: UssFile, url: String, connectionConfig: ConnectionConfig) : this(
     path = constructPath(rootPath, ussFile),
     isDirectory = ussFile.isDirectory,
@@ -67,6 +96,9 @@ data class RemoteUssAttributes(
     symlinkTarget = ussFile.target
   )
 
+  /**
+   * Clones uss attributes objects and returns copy of it
+   */
   override fun clone(): FileAttributes {
     return this.clone(RemoteUssAttributes::class.java)
   }
@@ -91,9 +123,9 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.WRITE.mode
-        || mode == FileModeValue.WRITE_EXECUTE.mode
-        || mode == FileModeValue.READ_WRITE.mode
-        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+              || mode == FileModeValue.WRITE_EXECUTE.mode
+              || mode == FileModeValue.READ_WRITE.mode
+              || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
   val isReadable: Boolean
@@ -107,9 +139,9 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.READ.mode
-        || mode == FileModeValue.READ_WRITE.mode
-        || mode == FileModeValue.READ_EXECUTE.mode
-        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+              || mode == FileModeValue.READ_WRITE.mode
+              || mode == FileModeValue.READ_EXECUTE.mode
+              || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
   val isExecutable: Boolean
@@ -121,12 +153,12 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.EXECUTE.mode
-        || mode == FileModeValue.READ_EXECUTE.mode
-        || mode == FileModeValue.WRITE_EXECUTE.mode
-        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+              || mode == FileModeValue.READ_EXECUTE.mode
+              || mode == FileModeValue.WRITE_EXECUTE.mode
+              || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
-  override var contentMode: XIBMDataType= XIBMDataType(XIBMDataType.Type.TEXT)
+  override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT)
 
   override val isCopyPossible: Boolean
     get() = true

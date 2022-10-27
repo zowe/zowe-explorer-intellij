@@ -25,6 +25,7 @@ private val errorIconElement = AllIcons.Nodes.ErrorMark
 private val grayscaleIcon = IconUtil.desaturate(regularIcon)
 private val errorIcon = LayeredIcon(grayscaleIcon, errorIconElement)
 
+/** Base implementation of working set tree node */
 abstract class WorkingSetNode<MaskType>(
   workingSet: WorkingSet<MaskType>,
   project: Project,
@@ -42,11 +43,19 @@ abstract class WorkingSetNode<MaskType>(
     return true
   }
 
+  /**
+   * Set up default representation of a working set
+   * @param presentation the presentation, which icon and tooltip will be assigned to
+   */
   protected fun regular(presentation: PresentationData) {
     presentation.setIcon(regularIcon)
     presentation.tooltip = "Working set"
   }
 
+  /**
+   * Set up the presentation when there is no connection set
+   * @param presentation the presentation, which icon, text and tooltip will be assigned to
+   */
   protected fun connectionIsNotSet(presentation: PresentationData) {
     presentation.setIcon(errorIcon)
     presentation.addText(" ", SimpleTextAttributes.ERROR_ATTRIBUTES)
@@ -54,11 +63,19 @@ abstract class WorkingSetNode<MaskType>(
     presentation.tooltip = "Check connection for this working set"
   }
 
+  /**
+   * Set up the presentation for the empty working set
+   * @param presentation the presentation, which icon and tooltip will be assigned to
+   */
   protected fun destinationsAreEmpty(presentation: PresentationData) {
     presentation.setIcon(grayscaleIcon)
     presentation.tooltip = "Empty working set"
   }
 
+  /**
+   * Add info about the connection of the working set
+   * @param presentation the presentation, which explanatory text will be assigned to
+   */
   protected fun addInfo(presentation: PresentationData) {
     val connectionConfig = value.connectionConfig ?: return
     val url = value.connectionConfig?.url ?: return

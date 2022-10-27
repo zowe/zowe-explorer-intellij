@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.openapi.vfs.VirtualFile
 
+/** Attributes listener interface that provides the basic info for attributes listener handlers */
 interface AttributesListener {
 
   fun onCreate(attributes: FileAttributes, file: VirtualFile)
@@ -25,6 +26,11 @@ interface AttributesListener {
 typealias AttributesCallback<A, F> = (attributes: A, file: F) -> Unit
 typealias UpdateAttributesCallback<A, F> = (oldAttributes: A, newAttributes: A, file: F) -> Unit
 
+/**
+ * Class to adapt attribute event handlers
+ * @param attributesClass the attributes class to cast the attributes being manipulated to the appropriate class
+ * @param fileClass virtual file class to cast the file where the attributes are manipulated to the appropriate class
+ */
 class AttributesAdapter<Attributes : FileAttributes, VFile : VirtualFile> @PublishedApi internal constructor(
   private val attributesClass: Class<out Attributes>,
   private val fileClass: Class<out VFile>
@@ -46,22 +52,14 @@ class AttributesAdapter<Attributes : FileAttributes, VFile : VirtualFile> @Publi
     onDeleteCallback = callback
   }
 
-  private fun performIfOurInstances(
-    attributes: FileAttributes,
-    file: VirtualFile,
-    callback: AttributesCallback<Attributes, VFile>
-  ) {
-    if (attributesClass.isAssignableFrom(attributes::class.java) && fileClass.isAssignableFrom(file::class.java)
-    ) {
-      val ourAttributes = attributesClass.cast(attributes)
-      val ourFile = fileClass.cast(file)
-      callback(ourAttributes, ourFile)
-    }
-  }
-
   @PublishedApi
   internal val listener
     get() = object : AttributesListener {
+      /**
+       * Handle onCreate callback when the attributes and the file have the appropriate classes to cast to
+       * @param attributes the attributes to cast and use in callback
+       * @param file the file to cast and use in callback
+       */
       override fun onCreate(attributes: FileAttributes, file: VirtualFile) {
         if (attributesClass.isAssignableFrom(attributes::class.java) && fileClass.isAssignableFrom(file::class.java)) {
           val ourAttributes = attributesClass.cast(attributes)
@@ -70,6 +68,12 @@ class AttributesAdapter<Attributes : FileAttributes, VFile : VirtualFile> @Publi
         }
       }
 
+      /**
+       * Handle onUpdate callback when the attributes and the file have the appropriate classes to cast to
+       * @param oldAttributes the old attributes to cast and use in callback
+       * @param newAttributes the new attributes to cast and use in callback
+       * @param file the file to cast and use in callback
+       */
       override fun onUpdate(oldAttributes: FileAttributes, newAttributes: FileAttributes, file: VirtualFile) {
         if (attributesClass.isAssignableFrom(oldAttributes::class.java)
           && attributesClass.isAssignableFrom(newAttributes::class.java)
@@ -82,6 +86,11 @@ class AttributesAdapter<Attributes : FileAttributes, VFile : VirtualFile> @Publi
         }
       }
 
+      /**
+       * Handle onDelete callback when the attributes and the file have the appropriate classes to cast to
+       * @param attributes the attributes to cast and use in callback
+       * @param file the file to cast and use in callback
+       */
       override fun onDelete(attributes: FileAttributes, file: VirtualFile) {
         if (attributesClass.isAssignableFrom(attributes::class.java) && fileClass.isAssignableFrom(file::class.java)) {
           val ourAttributes = attributesClass.cast(attributes)
@@ -92,6 +101,10 @@ class AttributesAdapter<Attributes : FileAttributes, VFile : VirtualFile> @Publi
     }
 }
 
+/**
+ * Make attributes adapter with the predefined handlers. Default ones will be picked if there are no custom attributes handlers
+ * @param init the custom attribute adapters to initiate the handlers from
+ */
 inline fun <reified Attributes : FileAttributes, reified VFile : VirtualFile> attributesListener(
   init: AttributesAdapter<Attributes, VFile>.() -> Unit
 ): AttributesListener {

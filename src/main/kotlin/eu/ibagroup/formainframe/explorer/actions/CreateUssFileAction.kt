@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.explorer.actions
 import eu.ibagroup.formainframe.explorer.ui.CreateFileDialogState
 import eu.ibagroup.formainframe.explorer.ui.emptyFileState
 
+/** Action to create USS file. The file will be empty when created */
 class CreateUssFileAction : CreateUssEntityAction() {
 
   override val fileType: CreateFileDialogState

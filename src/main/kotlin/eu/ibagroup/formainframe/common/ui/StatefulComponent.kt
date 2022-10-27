@@ -10,6 +10,10 @@
 
 package eu.ibagroup.formainframe.common.ui
 
+/**
+ * Interface which represents objects that have particular state
+ * that should be tracked over period of time
+ */
 interface StatefulComponent<T : Any> {
 
   var state: T

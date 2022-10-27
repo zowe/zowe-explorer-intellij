@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
@@ -27,7 +28,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.operations.MoveCopyOperation
+import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -37,11 +38,29 @@ object ExplorerDataKeys {
   val NODE_DATA_ARRAY = DataKey.create<Array<NodeData>>("NodeDataArrayKey")
 }
 
-class ExplorerPasteProvider: PasteProvider {
+/**
+ * Implementation of Intellij PasteProvider.
+ * Used to perform paste of files (in MF File Explorer and in Local File Explorer).
+ * @author Valiantsin Krus
+ * @author Viktar Mushtsin
+ */
+class ExplorerPasteProvider : PasteProvider {
   private val dataOpsManager = service<DataOpsManager>()
   private val pastePredicate: (NodeData) -> Boolean = {
     it.attributes?.isPastePossible ?: true
   }
+
+  /**
+   * Performs paste from ForMainframe buffer and from clipboard buffer of local file system.
+   * ForMainframe buffer is just a list of NodeData to copy or cut.
+   * @param dataContext Current context. This method can use the list of context keys below:
+   *                    1) PROJECT {Project} - opened project.
+   *                    2) IS_DRAG_AND_DROP_KEY {boolean} - identifies if the copying performed from drag&drop.
+   *                    3) VIRTUAL_FILE_ARRAY {list} - list of destination files (can be empty if all destinations
+   *                                                   are MF files, in this case destinations fetched from NodeData)
+   *                    4) DRAGGED_FROM_PROJECT_FILES_ARRAY {list} - list of files that was dragged from project files
+   *                                                                 tree (empty if operation is not drag&drop)
+   */
   override fun performPaste(dataContext: DataContext) {
     val isDragAndDrop = dataContext.getData(IS_DRAG_AND_DROP_KEY) ?: false
 
@@ -57,7 +76,8 @@ class ExplorerPasteProvider: PasteProvider {
     copyPasteSupport.bufferLock.withLock {
       val sourceFilesRaw = copyPasteSupport.copyPasteBuffer
         .mapNotNull { it.file }
-        .plus(copyPasteSupport.dragAndDropCopyPasteBuffer.mapNotNull { it.file })
+        .plus(dataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) ?: emptyList())
+        .plus(copyPasteSupport.getSourceFilesFromClipboard())
 
       val skipDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
       val overwriteDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
@@ -72,13 +92,25 @@ class ExplorerPasteProvider: PasteProvider {
       val sourceFiles = destinationSourceFilePairs.map { it.second }.toSet().toList()
 
       if (explorerView.isCut.get()) {
-        val hasLocalFilesInDestinations = pasteDestinations.any { it is MFVirtualFile }
-        val dialogTitlePrefix = if (hasLocalFilesInDestinations) "Moving" else "Downloading"
-        val dialogActionMessage = if (hasLocalFilesInDestinations) "move" else "download"
+        val hasRemoteFilesInDestinations = pasteDestinations.any { it is MFVirtualFile }
+        val hasLocalFilesInSources = sourceFiles.any { it !is MFVirtualFile }
+
+        val dialogTitlePrefix = if (!hasLocalFilesInSources && hasRemoteFilesInDestinations) "Moving"
+        else if (hasLocalFilesInSources && hasRemoteFilesInDestinations) "Uploading"
+        else "Downloading"
+
+        val dialogActionMessage = if (!hasLocalFilesInSources && hasRemoteFilesInDestinations) "move"
+        else if (hasLocalFilesInSources && hasRemoteFilesInDestinations) "upload"
+        else "download"
+
+        val dialogMessagePrefix = if (dialogTitlePrefix == "Moving") ""
+        else "$dialogTitlePrefix files can violate security rules of customer who owns this system.\n\n"
+
         showYesNoDialog(
           title = "$dialogTitlePrefix of ${sourceFiles.size} file(s)",
-          message = "Do you want to $dialogActionMessage these files?",
-          project = project
+          message = "${dialogMessagePrefix}Do you want to $dialogActionMessage these files?",
+          project = project,
+          icon = if (dialogTitlePrefix == "Moving") null else AllIcons.General.WarningDialog
         ).let {
           if (!it) {
             copyPasteSupport.removeFromBuffer { nodeData ->
@@ -98,9 +130,9 @@ class ExplorerPasteProvider: PasteProvider {
                 val destAttributes = dataOpsManager.tryToGetAttributes(destChild)
                 if (
                   destAttributes is RemoteMemberAttributes &&
-                  sourceAttributes is RemoteUssAttributes
+                  (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
                 ) {
-                  val memberName = sourceAttributes.name.filter { it.isLetterOrDigit() }.take(8).toUpperCase()
+                  val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).uppercase()
                   if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
                 } else if (
                   destAttributes is RemoteMemberAttributes &&
@@ -142,7 +174,7 @@ class ExplorerPasteProvider: PasteProvider {
         else {
           val sourceUssAttributes = sourceFiles.filter { sourceFile ->
             val sourceAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
-            sourceAttributes is RemoteUssAttributes
+            sourceAttributes is RemoteUssAttributes || sourceFile is VirtualFileImpl
           }
           sourceUssAttributes.map { Pair(destFile, it) }.ifEmpty { null }
         }
@@ -182,11 +214,15 @@ class ExplorerPasteProvider: PasteProvider {
       }.flatten()
 
       val filesToMoveTotal = operations.size
+      val hasLocalFilesInOperationsSources = operations.any { it.source !is MFVirtualFile }
+      val hasRemoteFilesInOperationsDestinations = operations.any { it.destination is MFVirtualFile }
       val titlePrefix = if (explorerView.isCut.get()) {
-        if (operations.any { it.destination is MFVirtualFile }) {
+        if (!hasLocalFilesInOperationsSources && hasRemoteFilesInOperationsDestinations) {
           "Moving"
-        } else {
+        } else if (!hasLocalFilesInOperationsSources) {
           "Downloading"
+        } else {
+          "Uploading"
         }
       } else {
         "Copying"
@@ -219,8 +255,10 @@ class ExplorerPasteProvider: PasteProvider {
           }.onFailure {
             explorerView.explorer.reportThrowable(it, project)
             if (isDragAndDrop) {
-              copyPasteSupport.removeFromBuffer { it.file == op.source && operations.minus(op)
-                .none { operation -> operation.source == op.source } }
+              copyPasteSupport.removeFromBuffer {
+                it.file == op.source && operations.minus(op)
+                  .none { operation -> operation.source == op.source }
+              }
             }
           }
           it.fraction = it.fraction + 1.0 / filesToMoveTotal
@@ -273,17 +311,33 @@ class ExplorerPasteProvider: PasteProvider {
     }
   }
 
-  internal fun isPastePossibleAndEnabled (dataContext: DataContext): Boolean {
+  /**
+   * Checks if the paste possible and enabled.
+   * @param dataContext Current context. This method can use the list of context keys below:
+   *                    1) PROJECT {Project} - opened project.
+   *                    2) VIRTUAL_FILE_ARRAY {list} - list of destination files (can be empty if all destinations
+   *                                                   are MF files, in this case destinations fetched from NodeData)
+   */
+  internal fun isPastePossibleAndEnabled(dataContext: DataContext): Boolean {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return false
     val destinationFiles = dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
     val explorerView = FileExplorerContentProvider.getInstance().getExplorerView(project) ?: return false
     return explorerView.copyPasteSupport.isPastePossibleAndEnabled(destinationFiles)
   }
 
+  /**
+   * Does the same as isPastePossibleAndEnabled.
+   * @see ExplorerPasteProvider.isPastePossibleAndEnabled
+   */
   override fun isPastePossible(dataContext: DataContext): Boolean {
     return isPastePossibleAndEnabled(dataContext)
   }
 
+
+  /**
+   * Does the same as isPastePossibleAndEnabled.
+   * @see ExplorerPasteProvider.isPastePossibleAndEnabled
+   */
   override fun isPasteEnabled(dataContext: DataContext): Boolean {
     return isPastePossibleAndEnabled(dataContext)
   }

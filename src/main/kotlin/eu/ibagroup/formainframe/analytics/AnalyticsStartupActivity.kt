@@ -13,9 +13,16 @@ package eu.ibagroup.formainframe.analytics
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import eu.ibagroup.formainframe.ui.analytics.AnalyticsPolicyDialog
+import eu.ibagroup.formainframe.analytics.ui.AnalyticsPolicyDialog
 
+/**
+ * Class for registering startup action for achieving user agreement with analytics policy.
+ * It shows the analytics policy dialog before starting events tracking.
+ * @author Valiantsin Krus.
+ */
 class AnalyticsStartupActivity : StartupActivity {
+
+  /** Shows analytics policy dialog if user was not aware of it. */
   override fun runActivity(project: Project) {
     val analyticsService = service<AnalyticsService>()
     val policyProvider = service<PolicyProvider>()

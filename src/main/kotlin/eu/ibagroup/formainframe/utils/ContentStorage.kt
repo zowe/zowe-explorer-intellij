@@ -13,19 +13,35 @@ package eu.ibagroup.formainframe.utils
 import com.intellij.util.io.storage.CapacityAllocationPolicy
 import com.intellij.util.io.storage.Storage
 
+/**
+ * Class to represent and handle content storage
+ * @param name the storage name
+ */
 class ContentStorage(name: String) : Storage(
   cachesDir.absoluteFile.resolve("$name.dat").toPath(),
   CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH
 ) {
 
+  /**
+   * Get content storage record bytes length
+   * @param record record ID in storage
+   */
   fun getLength(record: Int): Long {
     return withReadLock<Long, Throwable> { readBytes(record).size.toLong() }
   }
 
+  /**
+   * Get content storage record bytes
+   * @param record record ID in storage
+   */
   fun getBytes(record: Int): ByteArray {
     return withReadLock<ByteArray, Throwable> { readBytes(record) }
   }
 
+  /**
+   * Check if the record exist in content storage
+   * @param record record ID to search for
+   */
   fun hasRecord(record: Int): Boolean {
     return withReadLock<Boolean, Throwable> {
       myRecordsTable.getAddress(record) >= 0

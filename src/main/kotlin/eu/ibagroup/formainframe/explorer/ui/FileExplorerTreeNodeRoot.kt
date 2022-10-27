@@ -16,7 +16,15 @@ import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 
-class FileExplorerTreeNodeRoot(explorer: Explorer<FilesWorkingSet>, project: Project, treeStructure: ExplorerTreeStructureBase) :
+/**
+ * File Explorer root node, where the information about the connection is situated.
+ * Provides interaction with the root node
+ */
+class FileExplorerTreeNodeRoot(
+  explorer: Explorer<FilesWorkingSet>,
+  project: Project,
+  treeStructure: ExplorerTreeStructureBase
+) :
   ExplorerTreeNode<Explorer<FilesWorkingSet>>(explorer, project, null, explorer, treeStructure) {
 
   override fun isAlwaysExpand(): Boolean {
@@ -26,6 +34,7 @@ class FileExplorerTreeNodeRoot(explorer: Explorer<FilesWorkingSet>, project: Pro
   override fun update(presentation: PresentationData) {
   }
 
+  /** Get the root node's files working set children */
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return explorer.units.filterIsInstance<FilesWorkingSet>()
       .map { FilesWorkingSetNode(it, notNullProject, this, treeStructure) }.toMutableList()

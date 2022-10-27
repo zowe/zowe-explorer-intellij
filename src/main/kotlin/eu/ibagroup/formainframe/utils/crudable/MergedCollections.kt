@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.utils.crudable
 
+/** Data class with the elements to be fulfilled on merge of some collections */
 data class MergedCollections<E>(
   val toAdd: Collection<E>,
   val toUpdate: Collection<E>,

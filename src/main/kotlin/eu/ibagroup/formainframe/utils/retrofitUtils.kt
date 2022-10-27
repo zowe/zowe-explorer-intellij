@@ -19,6 +19,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+/** Internal class to wrap the retrofit2 call */
 @PublishedApi
 internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by call {
   override fun clone() = WrappedCancellableCall(call.clone())
@@ -34,7 +35,7 @@ internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by
   override fun execute(): Response<T> {
     return try {
       call.execute()
-    } catch (e : Throwable) {
+    } catch (e: Throwable) {
       throw buildException(e)
     }
   }
@@ -52,6 +53,10 @@ internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by
   }
 }
 
+/**
+ * Set up the call cancellation on the progress indicator finish
+ * @param progressIndicator the progress indicator to cancel by
+ */
 inline fun <reified T : Any> Call<T>.cancelByIndicator(progressIndicator: ProgressIndicator): Call<T> {
   val call = this
   return if (progressIndicator is ProgressIndicatorEx) {

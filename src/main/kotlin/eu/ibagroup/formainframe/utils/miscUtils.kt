@@ -13,8 +13,6 @@ package eu.ibagroup.formainframe.utils
 import com.google.gson.Gson
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
-import kotlinx.coroutines.delay
-import org.apache.xerces.impl.dv.xs.BooleanDV
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
@@ -24,12 +22,15 @@ import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 import kotlin.streams.toList
 
+/** Transform the stream to the mutable list */
 fun <E> Stream<E>.toMutableList(): MutableList<E> {
   return this.toList().toMutableList()
 }
 
+/** Transform the value to the specified class or return null if the cast is not possible */
 inline fun <reified T> Any?.castOrNull(): T? = (this is T).runIfTrue { this as T }
 
+/** Transform the value to the specified class or return null if the cast is not possible */
 @Suppress("UNCHECKED_CAST")
 fun <T> Any?.castOrNull(clazz: Class<T>): T? =
   if (this != null && clazz.isAssignableFrom(this::class.java)) this as T else null
@@ -55,6 +56,10 @@ inline fun <T, R> runIfPresent(optional: Optional<out T>, block: (T) -> R): R? {
 val <E : Any> E?.optional: Optional<E>
   inline get() = Optional.ofNullable(this)
 
+/**
+ * Get index of an element that matches the specified predicate
+ * @param predicate the predicate to search an index of the element
+ */
 inline fun <E : Any?> List<E>.indexOf(predicate: (E) -> Boolean): Int? {
   for (i in this.indices) {
     if (predicate(this[i])) {
@@ -93,6 +98,10 @@ val gson by lazy { Gson() }
 
 inline fun <reified T : Any> T.clone() = clone(T::class.java)
 
+/**
+ * Clone the object deeply
+ * @param clazz the class to cast the object to after the clone operation
+ */
 fun <T : Any> T.clone(clazz: Class<out T>): T {
   return with(gson) {
     fromJson(toJson(this@clone), clazz)
@@ -136,16 +145,6 @@ fun <T, R> Stream<T>.mapNotNull(mapper: (T) -> R): Stream<R> {
 
 infix fun <T> Collection<T>.isTheSameAs(other: Collection<T>): Boolean {
   return this.size == other.size && (this.isEmpty() || this.containsAll(other))
-}
-
-infix fun <T> Collection<T>.isNotTheSameAs(other: Collection<T>): Boolean {
-  return !(this isTheSameAs other)
-}
-
-fun <T> Collection<T>.withoutElementsOf(other: Collection<T>): Collection<T> {
-  return this.filter { thisElement ->
-    other.find { otherElement -> otherElement == thisElement } == null
-  }
 }
 
 fun <T> Iterator<T>.stream(): Stream<T> {
@@ -200,6 +199,10 @@ fun <T> T.getAncestorNodes(childrenGetter: T.() -> Iterable<T>): List<T> {
   return result
 }
 
+/**
+ * Get the list of minimal common parents of the two elements in the list
+ * @param parentGetter the parent getter to get the parents chains of each component
+ */
 fun <T> Iterable<T>.getMinimalCommonParents(parentGetter: T.() -> T?): Collection<T> {
   val parentsCache = mutableMapOf<T, List<T>>()
   val comparisonCache = mutableMapOf<Pair<List<T>, List<T>>, Boolean>()
@@ -224,19 +227,11 @@ fun <T> Iterable<T>.getMinimalCommonParents(parentGetter: T.() -> T?): Collectio
   }
 }
 
-var t: Thread? = null
-fun debounceOld(delayInterval: Long, block: () -> Unit) {
-  if (t?.isAlive == true) {
-    t?.interrupt()
-  }
-  t = thread {
-    runCatching {
-      Thread.sleep(delayInterval)
-      block()
-    }
-  }
-}
-
+/**
+ * Make a debounce action thread and then run the block of the provided code
+ * @param delayInterval the delay interval to run the block after
+ * @param block the block of the code to run after the debounce action finished
+ */
 fun debounce(delayInterval: Long, block: () -> Unit): () -> Unit {
   var t: Thread? = null
   return {

@@ -13,6 +13,10 @@ package eu.ibagroup.formainframe.dataops.services
 import com.intellij.openapi.application.ApplicationManager
 import java.util.*
 
+/**
+ * Service for parsing error messages from zos.
+ * @author Valiantsin Krus
+ */
 interface ErrorSeparatorService {
   companion object {
     @JvmStatic
@@ -20,5 +24,10 @@ interface ErrorSeparatorService {
       get() = ApplicationManager.getApplication().getService(ErrorSeparatorService::class.java)
   }
 
+  /**
+   * Parses error message from z/OS.
+   * @param errorMessage error message received from z/OS.
+   * @return properties containing error code, error postfix, error description.
+   */
   fun separateErrorMessage(errorMessage: String): Properties
 }

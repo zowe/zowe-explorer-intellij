@@ -24,12 +24,12 @@ import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
 import eu.ibagroup.formainframe.utils.subscribe
-import eu.ibagroup.r2z.JobStatus
+import eu.ibagroup.r2z.Job
 import eu.ibagroup.r2z.SubmitJobRequest
 
 interface JobHandler {
   fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest)
-  fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: JobStatus)
+  fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: Job)
 }
 
 @JvmField
@@ -100,7 +100,7 @@ class JobsWindowFactory: ToolWindowFactory {
         override fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest) {
           addJobBuildContentTab(project, toolWindow, connectionConfig, mfFilePath, jobRequest.jobid, jobRequest.jobname)
         }
-        override fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: JobStatus) {
+        override fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: Job) {
           addJobBuildContentTab(project, toolWindow, connectionConfig, mfFileName, jobStatus.jobId, jobStatus.jobName)
         }
       }

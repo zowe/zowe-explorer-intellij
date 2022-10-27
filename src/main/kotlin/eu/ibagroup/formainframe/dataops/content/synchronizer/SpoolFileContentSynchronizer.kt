@@ -26,12 +26,16 @@ import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SpoolFile
 import retrofit2.Response
 
+/**
+ * Factory for registering SpoolFileContentSynchronizer in Intellij IoC container
+ */
 class SpoolFileContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
     return SpoolFileContentSynchronizer(dataOpsManager)
   }
 }
 
+/** Content synchronizer class for spool files */
 class SpoolFileContentSynchronizer(
   dataOpsManager: DataOpsManager
 ) :
@@ -47,6 +51,13 @@ class SpoolFileContentSynchronizer(
 
   override val parentAttributesClass = RemoteJobAttributes::class.java
 
+  /**
+   * Get content of the spool file
+   * @param attributes spool file attributes to get its id
+   * @param parentAttributes attributes of the job containing the spool file
+   * @param requester instance to get connection configuration
+   * @param progressIndicator a progress indicator for the operation
+   */
   override fun executeGetContentRequest(
     attributes: RemoteSpoolFileAttributes,
     parentAttributes: RemoteJobAttributes,

@@ -11,9 +11,15 @@
 package eu.ibagroup.formainframe.config.ws.ui.files
 
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.ui.*
-import eu.ibagroup.formainframe.utils.crudable.*
+import eu.ibagroup.formainframe.config.ws.ui.AbstractWsTableModel
+import eu.ibagroup.formainframe.utils.crudable.Crudable
 
+/**
+ * Table model for Files Working Set configuration table.
+ * @see AbstractWsTableModel
+ * @author Valiantsin Krus
+ * @author Viktar Mushtsin
+ */
 class WSTableModel(crudable: Crudable) : AbstractWsTableModel<FilesWorkingSetConfig>(crudable) {
 
   override val clazz = FilesWorkingSetConfig::class.java

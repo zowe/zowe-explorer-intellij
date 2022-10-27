@@ -10,7 +10,6 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -19,6 +18,7 @@ import com.intellij.ui.content.ContentFactory
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
 
+/** Explorer window. This is the main class to represent the plugin */
 class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun isApplicable(project: Project): Boolean {

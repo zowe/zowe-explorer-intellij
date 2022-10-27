@@ -13,6 +13,10 @@ package eu.ibagroup.formainframe.config.connect
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
 
+/**
+ * Class which represents credentials.
+ * Instances of these class will be saved and can be reloaded after Intellij closed
+ */
 class Credentials {
   @Column(unique = true)
   @ForeignKey(foreignClass = ConnectionConfig::class)
@@ -49,9 +53,9 @@ class Credentials {
 
   override fun toString(): String {
     return "Credentials{" +
-        "connectionConfigUuid='" + connectionConfigUuid + '\'' +
-        ", username='" + username + '\'' +
-        ", password='" + password + '\'' +
-        '}'
+            "connectionConfigUuid='" + connectionConfigUuid + '\'' +
+            ", username='" + username + '\'' +
+            ", password='" + password + '\'' +
+            '}'
   }
 }

@@ -13,14 +13,20 @@ package eu.ibagroup.formainframe.config.ws.ui
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
-import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.*
+import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
-abstract class AbstractWsDialogState<WSConfig, TableRow>(
+/**
+ * Abstract class for Working Sets state in configuration dialogs (e.g. Files Working Set, Jobs Working Sets)
+ * @param WSConfig WorkingSetConfig implementation class.
+ * @see WorkingSetConfig
+ * @see FilesWorkingSetConfig
+ * @see JobsWorkingSetConfig
+ * @param TableRow
+ * @author Valiantsin Krus
+ */
+abstract class AbstractWsDialogState<WSConfig : WorkingSetConfig, TableRow>(
   var uuid: String = "",
   var connectionUuid: String = "",
   var workingSetName: String = "",
@@ -33,35 +39,29 @@ abstract class AbstractWsDialogState<WSConfig, TableRow>(
   abstract val workingSetConfig: WSConfig
 }
 
-fun <WSConfig, T : AbstractWsDialogState<WSConfig, *>> T.initEmptyUuids(crudable: Crudable): T {
+fun <WSConfig : Any, T : AbstractWsDialogState<WSConfig, *>> T.initEmptyUuids(crudable: Crudable): T {
   return this.apply {
-    uuid = crudable.nextUniqueValue<WSConfig, String>(workingSetConfigClass())
+    uuid = crudable.nextUniqueValue(workingSetConfigClass())
   }
 }
 
+/**
+ * Dialog state for Files Working Set configuration dialog.
+ * @see AbstractWsDialogState
+ */
 class WorkingSetDialogState(
   uuid: String = "",
   connectionUuid: String = "",
   workingSetName: String = "",
-  maskRow: MutableList<TableRow> = mutableListOf(),
+  maskRow: MutableList<MaskState> = mutableListOf(),
   mode: DialogMode = DialogMode.CREATE
-) : AbstractWsDialogState<FilesWorkingSetConfig, WorkingSetDialogState.TableRow>(
+) : AbstractWsDialogState<FilesWorkingSetConfig, MaskState>(
   uuid,
   connectionUuid,
   workingSetName,
   maskRow,
   mode
 ) {
-  class TableRow(
-    var mask: String = "",
-    var type: String = "z/OS",
-    var isSingle: Boolean = false
-  ) {
-    companion object {
-      const val ZOS = "z/OS"
-      const val USS = "USS"
-    }
-  }
 
   override fun workingSetConfigClass() = FilesWorkingSetConfig::class.java
   override val workingSetConfig: FilesWorkingSetConfig
@@ -69,12 +69,16 @@ class WorkingSetDialogState(
       this.uuid,
       this.workingSetName,
       this.connectionUuid,
-      this.maskRow.filter { it.type == TableRow.ZOS }.map { DSMask(it.mask, mutableListOf()) }.toMutableSmartList(),
-      this.maskRow.filter { it.type == TableRow.USS }.map { UssPath(it.mask) }.toMutableSmartList()
+      this.maskRow.filter { it.type == MaskType.ZOS }.map { DSMask(it.mask, mutableListOf()) }.toMutableSmartList(),
+      this.maskRow.filter { it.type == MaskType.USS }.map { UssPath(it.mask) }.toMutableSmartList()
     )
 
 }
 
+/**
+ * Dialog state for Jobs Working Set configuration dialog.
+ * @see AbstractWsDialogState
+ */
 class JobsWorkingSetDialogState(
   uuid: String = "",
   connectionUuid: String = "",
@@ -93,12 +97,7 @@ class JobsWorkingSetDialogState(
     var prefix: String = "",
     var owner: String = "",
     var jobId: String = ""
-  ) {
-    companion object {
-      const val ZOS = "z/OS"
-      const val USS = "USS"
-    }
-  }
+  )
 
   override fun workingSetConfigClass() = JobsWorkingSetConfig::class.java
   override val workingSetConfig: JobsWorkingSetConfig

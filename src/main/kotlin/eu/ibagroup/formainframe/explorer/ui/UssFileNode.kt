@@ -18,6 +18,7 @@ import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
+/** USS file representation in the explorer tree */
 class UssFileNode(
   file: MFVirtualFile,
   project: Project,

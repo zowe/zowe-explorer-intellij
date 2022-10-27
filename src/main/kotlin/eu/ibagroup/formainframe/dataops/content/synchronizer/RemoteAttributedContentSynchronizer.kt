@@ -15,11 +15,14 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
-import eu.ibagroup.formainframe.utils.*
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.formainframe.utils.ContentStorage
+import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.runWriteActionInEdt
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.set
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
 private val log = logger<RemoteAttributedContentSynchronizer<*>>()
@@ -29,9 +32,9 @@ private val log = logger<RemoteAttributedContentSynchronizer<*>>()
  * Works with filesystem and file document but not interact with mainframe.
  * @author Valentine Krus
  */
-abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
+abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>(
   val dataOpsManager: DataOpsManager
-): ContentSynchronizer {
+) : ContentSynchronizer {
 
   /**
    * [FileAttributes] implementation class
@@ -69,7 +72,11 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
    * @param progressIndicator indicator to reflect uploading process status.
    */
   @Throws(Throwable::class)
-  protected abstract fun uploadNewContent(attributes: FAttributes, newContentBytes: ByteArray, progressIndicator: ProgressIndicator?)
+  protected abstract fun uploadNewContent(
+    attributes: FAttributes,
+    newContentBytes: ByteArray,
+    progressIndicator: ProgressIndicator?
+  )
 
   /**
    * Base implementation of [ContentSynchronizer.accepts] method for each content synchronizer.
@@ -99,7 +106,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
 
-      if(!isContentModeText(attributes)) {
+      if (!isContentModeText(attributes)) {
         idToBinaryFileMap[recordId] = syncProvider.file
       }
 
@@ -115,39 +122,49 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes: FileAttributes>(
       } else {
         if (!idToBinaryFileMap.containsKey(recordId)) {
           val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
-          if (fileContent contentEquals adaptedFetchedBytes) {
-            return
-          }
+          if (!(fileContent contentEquals adaptedFetchedBytes)) {
+            val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
+            val doUploadContent = syncProvider.saveStrategy
+              .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
 
-          val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
-          val doUploadContent = syncProvider.saveStrategy
-            .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
-
-          if (doUploadContent) {
-            log.info("Save strategy decided to forcefully update file content on mainframe.")
-            val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
-            runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
-            uploadNewContent(attributes, newContentPrepared, progressIndicator)
-            successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
-          } else {
-            log.info("Save strategy decided to accept remote file content.")
-            successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
-            runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
+            if (doUploadContent) {
+              log.info("Save strategy decided to forcefully update file content on mainframe.")
+              val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
+              runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
+              uploadNewContent(attributes, newContentPrepared, progressIndicator)
+              successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
+            } else {
+              log.info("Save strategy decided to accept remote file content.")
+              successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
+              runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
+            }
+          } else { /*do nothing*/
           }
         } else {
           log.info("Content loaded from mainframe")
           successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
           runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
-          if(isContentModeText(attributes)) { idToBinaryFileMap.remove(recordId) } else { /*do nothing*/ }
+          if (isContentModeText(attributes)) {
+            idToBinaryFileMap.remove(recordId)
+          } else { /*do nothing*/
+          }
         }
       }
-    }.onFailure {
-      log.error(it)
-      syncProvider.onThrowable(it)
     }
+      .onSuccess {
+        syncProvider.onSyncSuccess()
+      }
+      .onFailure {
+        syncProvider.onThrowable(it)
+      }
   }
 
-  private fun isContentModeText (attributes: FileAttributes) : Boolean {
+  /**
+   * Determines if the current virtual file content is text
+   * @param attributes represents the current virtual file attributes
+   * @return True if the current file content is text. False otherwise
+   */
+  private fun isContentModeText(attributes: FileAttributes): Boolean {
     return attributes.contentMode.type == XIBMDataType.Type.TEXT
   }
 

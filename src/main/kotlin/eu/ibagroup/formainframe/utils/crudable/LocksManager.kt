@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.utils.crudable
 
 import java.util.concurrent.locks.Lock
 
+/** Interface that describes the management of locks */
 interface LocksManager {
 
   fun <E : Any> getLockForAdding(rowClass: Class<out E>): Lock?

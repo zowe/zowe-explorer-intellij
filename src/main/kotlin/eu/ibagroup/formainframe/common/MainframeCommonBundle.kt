@@ -16,6 +16,9 @@ import java.util.function.Supplier
 
 const val BUNDLE = "messages.CommonBundle"
 
+/**
+ * Class that provides an instance for getting string messages from a common bundle.
+ */
 class MainframeCommonBundle private constructor() : DynamicBundle(BUNDLE) {
   companion object {
     @JvmStatic
@@ -23,12 +26,29 @@ class MainframeCommonBundle private constructor() : DynamicBundle(BUNDLE) {
   }
 }
 
-fun message(@PropertyKey(resourceBundle = BUNDLE) key: String,
-            vararg params: Any): String {
+/**
+ * Method that returns a string message by a special key. Keys and values defined in CommonBundle.properties.
+ * @param key special unique key.
+ * @param params additional parameters for setting the message format.
+ * @return final string message.
+ */
+fun message(
+  @PropertyKey(resourceBundle = BUNDLE) key: String,
+  vararg params: Any
+): String {
   return MainframeCommonBundle.instance.getMessage(key, *params)
 }
 
-fun lazyMessage(@PropertyKey(resourceBundle = BUNDLE) key: String,
-                vararg params: Any): Supplier<String> {
+/**
+ * Method that returns a wrapped string message by a special key with lazy initialization.
+ * Keys and values defined in CommonBundle.properties.
+ * @param key special unique key.
+ * @param params additional parameters for setting the message format.
+ * @return final wrapped string message.
+ */
+fun lazyMessage(
+  @PropertyKey(resourceBundle = BUNDLE) key: String,
+  vararg params: Any
+): Supplier<String> {
   return MainframeCommonBundle.instance.getLazyMessage(key, *params)
 }

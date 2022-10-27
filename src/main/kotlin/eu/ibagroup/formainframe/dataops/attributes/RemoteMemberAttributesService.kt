@@ -16,12 +16,23 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.r2z.Member
 import eu.ibagroup.r2z.XIBMDataType
 
+/**
+ * Factory for registering RemoteMemberAttributesService
+ * @author Viktar Mushtsin
+ */
 class RemoteMemberAttributesServiceFactory : AttributesServiceFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): AttributesService<*, *> {
     return RemoteMemberAttributesService(dataOpsManager)
   }
 }
 
+/**
+ * Implementation of attributes service for working with members of the dataset.
+ * @see AttributesService
+ * @see DependentFileAttributesService
+ * @author Viktar Mushtsin
+ * @author Valiantsin Krus
+ */
 class RemoteMemberAttributesService(
   val dataOpsManager: DataOpsManager
 ) :
@@ -31,10 +42,14 @@ class RemoteMemberAttributesService(
     private val fsModel = MFVirtualFileSystem.instance.model
   }
 
-  override val findOrCreateFileInVFSModel = fsModel::findOrCreate
+  override val findOrCreateFileInVFSModel = fsModel::findOrCreateDependentFile
   override val moveFileAndReplaceInVFSModel = fsModel::moveFileAndReplace
 
-
+  /**
+   * Initialize attributes for member.
+   * @see RemoteMemberAttributes
+   * @see DependentFileAttributesService.buildAttributes
+   */
   override fun buildAttributes(
     info: Member, file: MFVirtualFile, contentMode: XIBMDataType?
   ): RemoteMemberAttributes {

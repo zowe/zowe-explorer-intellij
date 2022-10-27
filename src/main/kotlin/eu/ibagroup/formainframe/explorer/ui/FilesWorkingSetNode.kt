@@ -17,6 +17,7 @@ import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 
+/** File Explorer working set representation */
 class FilesWorkingSetNode(
   workingSet: FilesWorkingSet,
   project: Project,
@@ -42,7 +43,16 @@ class FilesWorkingSetNode(
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return valueForFilesWS.masks.map { DSMaskNode(it, notNullProject, this, valueForFilesWS, treeStructure) }.plus(
-      valueForFilesWS.ussPaths.map { UssDirNode(it, notNullProject, this, valueForFilesWS, treeStructure, isRootNode = true) }
+      valueForFilesWS.ussPaths.map {
+        UssDirNode(
+          it,
+          notNullProject,
+          this,
+          valueForFilesWS,
+          treeStructure,
+          isRootNode = true
+        )
+      }
     ).toMutableList().also { cachedChildrenInternal = it }
   }
 }

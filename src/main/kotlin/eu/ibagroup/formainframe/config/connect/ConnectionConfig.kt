@@ -15,7 +15,12 @@ import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 
+/**
+ * Class which represents connection config.
+ * Instances of these class will be saved and can be reloaded after Intellij closed.
+ */
 class ConnectionConfig : EntityWithUuid {
+
   @Column
   var name = ""
 
@@ -77,6 +82,5 @@ class ConnectionConfig : EntityWithUuid {
   override fun toString(): String {
     return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, codePage=$codePage, zVersion=$zVersion)"
   }
-
 
 }

@@ -10,12 +10,17 @@
 
 package eu.ibagroup.formainframe.common.ui
 
+import com.intellij.ide.projectView.ProjectViewNode
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.util.ui.tree.TreeUtil
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.utils.service
 import org.jetbrains.concurrency.Promise
@@ -23,6 +28,12 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
+/**
+ * Promises to process nodes in the specified tree.
+ * @param node node for processing.
+ * @param tree working tree.
+ * @return promise that will be succeeded when process is finished.
+ */
 fun <S : AbstractTreeStructure> StructureTreeModel<S>.promisePath(
   node: Any,
   tree: JTree,
@@ -32,11 +43,44 @@ fun <S : AbstractTreeStructure> StructureTreeModel<S>.promisePath(
   }
 }
 
-fun makeNodeDataFromTreePath (explorer: Explorer<*>, treePath: TreePath?): NodeData {
+/**
+ * Makes node data from a tree path.
+ * @param explorer represents explorer object.
+ * @param treePath path to a node in the tree.
+ * @return node data [NodeData].
+ */
+fun makeNodeDataFromTreePath(explorer: Explorer<*>, treePath: TreePath?): NodeData {
   val descriptor = (treePath?.lastPathComponent as DefaultMutableTreeNode).userObject as ExplorerTreeNode<*>
   val file = descriptor.virtualFile
   val attributes = if (file != null) {
     explorer.componentManager.service<DataOpsManager>().tryToGetAttributes(file)
   } else null
   return NodeData(descriptor, file, attributes)
+}
+
+/**
+ * Returns virtual file from tree path object.
+ */
+fun TreePath.getVirtualFile(): VirtualFile? {
+  val treeNode = (lastPathComponent as DefaultMutableTreeNode).userObject as ProjectViewNode<*>
+  return if (treeNode is PsiFileNode) treeNode.virtualFile else if (treeNode is PsiDirectoryNode) treeNode.virtualFile else null
+}
+
+/**
+ * Removes node from "invalidateOnExpand" collection of explorer view.
+ * @param node node to remove.
+ * @param view explorer view from wich to return node.
+ */
+fun cleanInvalidateOnExpand(
+  node: ExplorerTreeNode<*>,
+  view: ExplorerTreeView<*, *>
+) {
+  view.myStructure.promisePath(node, view.myTree).onSuccess {
+    val lastNode = it.lastPathComponent
+    if (view.myNodesToInvalidateOnExpand.contains(lastNode)) {
+      synchronized(view.myNodesToInvalidateOnExpand) {
+        view.myNodesToInvalidateOnExpand.remove(lastNode)
+      }
+    }
+  }
 }

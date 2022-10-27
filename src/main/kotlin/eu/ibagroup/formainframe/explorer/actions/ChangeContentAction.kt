@@ -17,15 +17,20 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.utils.`is`
 import eu.ibagroup.formainframe.utils.debounce
+import eu.ibagroup.formainframe.utils.`is`
 import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-class ChangeContentAction: TypedHandlerDelegate() {
+/**
+ * Action for adapting text to mainframe and displaying results right after user typed any char sequence.
+ * @author Valiantsin Krus
+ */
+class ChangeContentAction : TypedHandlerDelegate() {
   private val dataOpsManager = service<DataOpsManager>()
   private var adaptContentFunc: (() -> Unit)? = null
 
+  /** Finds content adapter for mf files and performs its adapting. */
   override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
 
     val vFile = file.virtualFile

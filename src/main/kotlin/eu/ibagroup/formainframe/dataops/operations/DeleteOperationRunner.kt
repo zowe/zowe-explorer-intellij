@@ -26,8 +26,8 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.FilePath
 import eu.ibagroup.r2z.XIBMOption
-
 
 class DeleteRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
@@ -39,6 +39,13 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   OperationRunner<DeleteOperation, Unit> {
   override val operationClass = DeleteOperation::class.java
 
+  /**
+   * Run "Delete" operation.
+   * Runs the action depending on the type of the element to remove.
+   * After the element is removed, removes it from the mainframe virtual file system
+   * @param operation the operation instance to get the file, attributes and requesters to delete the file
+   * @param progressIndicator the progress indicatior for the operation
+   */
   override fun run(
     operation: DeleteOperation,
     progressIndicator: ProgressIndicator
@@ -64,7 +71,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
               runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
               true
             } else {
-              throwable =  CallException(response, "Cannot delete data set")
+              throwable = CallException(response, "Cannot delete data set")
               false
             }
           } catch (t: Throwable) {
@@ -73,6 +80,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
           }
         }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
       }
+
       is RemoteMemberAttributes -> {
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
@@ -92,7 +100,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
                 runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
                 true
               } else {
-                throwable =  CallException(response, "Cannot delete data set member")
+                throwable = CallException(response, "Cannot delete data set member")
                 false
               }
             } catch (t: Throwable) {
@@ -102,10 +110,11 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
           }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
         }
       }
+
       is RemoteUssAttributes -> {
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
-        if(operation.file.isDirectory) {
+        if (operation.file.isDirectory) {
           operation.file.children.forEach { it.isWritable = false }
         } else {
           operation.file.isWritable = false
@@ -116,7 +125,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).deleteUssFile(
               authorizationToken = it.connectionConfig.authToken,
-              filePath = attr.path.substring(1),
+              filePath = FilePath(attr.path),
               xIBMOption = XIBMOption.RECURSIVE
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {

@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.config.ws
 
+/** Data class that encapsulates USS path field */
 data class UssPath(
   var path: String = ""
 )

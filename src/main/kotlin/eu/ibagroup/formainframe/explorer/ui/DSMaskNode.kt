@@ -10,20 +10,22 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
+/**
+ * File Explorer dataset mask representation.
+ */
 class DSMaskNode(
   dsMask: DSMask,
   project: Project,
@@ -44,10 +46,13 @@ class DSMaskNode(
     get() {
       val connectionConfig = unit.connectionConfig
       return if (connectionConfig != null) {
-        UnitRemoteQueryImpl(value, connectionConfig)
+        BatchedRemoteQuery(value, connectionConfig)
       } else null
     }
 
+  /**
+   * Returns map of children nodes (datasets and uss files).
+   */
   override fun Collection<MFVirtualFile>.toChildrenNodes(): MutableList<AbstractTreeNode<*>> {
     return map {
       if (it.isDirectory) {
@@ -60,9 +65,11 @@ class DSMaskNode(
 
   override val requestClass = DSMask::class.java
 
+  /**
+   * Makes and returns title for fetch task.
+   */
   override fun makeFetchTaskTitle(query: RemoteQuery<DSMask, Unit>): String {
     return "Fetching listings for ${query.request.mask}"
   }
-
 
 }

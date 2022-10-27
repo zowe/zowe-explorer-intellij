@@ -23,6 +23,9 @@ import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.toMutableList
 import javax.swing.table.TableCellEditor
 
+/**
+ * Class which represents working set connection name column in working set table model
+ */
 class WSConnectionNameColumn<WSConfig : WorkingSetConfig>(private val crudable: Crudable) :
   ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.connection.name")) {
 

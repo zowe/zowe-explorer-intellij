@@ -18,6 +18,7 @@ import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 
+/** JES working set node representation */
 class JobsWsNode(
   workingSet: JesWorkingSet,
   project: Project,

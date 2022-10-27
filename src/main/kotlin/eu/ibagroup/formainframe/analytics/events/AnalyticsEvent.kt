@@ -10,21 +10,41 @@
 
 package eu.ibagroup.formainframe.analytics.events
 
+/**
+ * Abstraction for creating analytics events.
+ * @author Valiantsin Krus
+ */
 abstract class AnalyticsEvent(
   open var eventName: String
 ) {
+  /**
+   * Gives properties of an action.
+   * @return map of properties.
+   */
   abstract fun getProps(): Map<String, String>
 }
 
+/**
+ * Analytics event for tracking CRUD (create, read, update, delete) operations.
+ * @param eventName name of the event.
+ * @param actionType type of the crud action (create, read, update, delete).
+ * @author Valiantsin Krus
+ */
 open class CrudAnalyticsEvent(
   override var eventName: String,
   open var actionType: ActionType
-) : AnalyticsEvent(eventName){
+) : AnalyticsEvent(eventName) {
+
+  /** Returns type of the crud action in property action_type. */
   override fun getProps(): Map<String, String> {
     return mutableMapOf(Pair("action_type", actionType.toString()))
   }
 }
 
+/**
+ * Class for enumeration CRUD possible action types.
+ * @author Valiantsin Krus
+ */
 enum class ActionType(val value: String) {
   CREATE("CREATE"),
   EDIT("EDIT"),

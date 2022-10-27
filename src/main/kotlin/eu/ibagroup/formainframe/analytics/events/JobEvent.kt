@@ -10,6 +10,12 @@
 
 package eu.ibagroup.formainframe.analytics.events
 
+/**
+ * Class for processing analytics events with jobs (e.g. submit, purge, hold and etc).
+ * @param fileType type of the file the action was done on.
+ * @param fileAction action that was done on the file.
+ * @author Valiantsin Krus
+ */
 class JobEvent(
   private val jobAction: JobAction
 ) : AnalyticsEvent("jobs") {
@@ -18,7 +24,11 @@ class JobEvent(
   }
 }
 
-
+/**
+ * Actions on the jobs that can be tracked in analytics.
+ * @see JobEvent
+ * @author Valiantsin Krus
+ */
 enum class JobAction(val value: String) {
   SUBMIT("SUBMIT"),
   PURGE("PURGE"),

@@ -12,25 +12,17 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import eu.ibagroup.formainframe.common.ui.promisePath
+import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.explorer.ui.*
 
+/**
+ * Class which represents a refresh node action
+ */
 class RefreshNodeAction : AnAction() {
 
-  private fun cleanInvalidateOnExpand(
-    node: ExplorerTreeNode<*>,
-    view: ExplorerTreeView<*,*>
-  ) {
-    view.myStructure.promisePath(node, view.myTree).onSuccess {
-      val lastNode = it.lastPathComponent
-      if (view.myNodesToInvalidateOnExpand.contains(lastNode)) {
-        synchronized(view.myNodesToInvalidateOnExpand) {
-          view.myNodesToInvalidateOnExpand.remove(lastNode)
-        }
-      }
-    }
-  }
-
+  /**
+   * Overloaded method of AnAction abstract class. Tells what to do if an action was submitted
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: e.getData(JES_EXPLORER_VIEW)
     view ?: return
@@ -41,14 +33,14 @@ class RefreshNodeAction : AnAction() {
       when (val node = data.node) {
         is FetchNode -> {
           cleanInvalidateOnExpand(node, view)
-          node.cleanCache()
+          node.cleanCache(cleanBatchedQuery = true)
           val query = node.query ?: return@forEach
           view.getNodesByQueryAndInvalidate(query)
         }
         is WorkingSetNode<*> -> {
           node.cachedChildren.filterIsInstance<FetchNode>()
             .forEach {
-              it.cleanCache()
+              it.cleanCache(cleanBatchedQuery = true)
               cleanInvalidateOnExpand(it, view)
             }
           view.myFsTreeStructure.findByValue(node.value).forEach {
@@ -60,6 +52,9 @@ class RefreshNodeAction : AnAction() {
 
   }
 
+  /**
+   * Method determines if an action is visible for particular virtual file in VFS
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: e.getData(JES_EXPLORER_VIEW)
 
@@ -73,6 +68,9 @@ class RefreshNodeAction : AnAction() {
     }
   }
 
+  /**
+   * Determines if an action is dumb aware
+   */
   override fun isDumbAware(): Boolean {
     return true
   }

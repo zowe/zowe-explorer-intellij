@@ -26,37 +26,44 @@ import eu.ibagroup.formainframe.dataops.operations.ForceRenameOperation
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.validateUssFileName
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
+/**
+ * Base class implementation of the force rename action
+ */
 class ForceRenameAction : AnAction() {
 
+  /**
+   * Called when force rename is chosen from context menu
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val selectedNode = view.mySelectedNodesData[0]
     if (selectedNode.node is UssDirNode || selectedNode.node is UssFileNode) {
       val attributes = selectedNode.attributes as RemoteUssAttributes
       val file = selectedNode.file as MFVirtualFile
-      val renameDialog = RenameDialog(e.project, if (attributes.isDirectory) "Directory" else "File", attributes.name)
-        .withValidationOnInput { validateUssFileName(it) }
-        .withValidationForBlankOnApply()
-      if (renameDialog.showAndGet() && file != null) {
+      val type = if (attributes.isDirectory) { "Directory" } else { "File" }
+      val renameDialog = RenameDialog(e.project, type, selectedNode, this, attributes.name)
+      if (renameDialog.showAndGet()) {
         val confirmDialog = showConfirmDialogIfNecessary(renameDialog.state, selectedNode)
         if (confirmDialog == Messages.OK) {
           runRenameOperation(e.project, view.explorer, file, attributes, renameDialog.state, selectedNode.node, true)
           service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.FORCE_RENAME))
+        } else if (confirmDialog != Messages.CANCEL) {
+          runRenameOperation(e.project, view.explorer, file, attributes, renameDialog.state, selectedNode.node, false)
+          service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
         } else {
-          if (confirmDialog != Messages.CANCEL && confirmDialog != Messages.OK) {
-            runRenameOperation(e.project, view.explorer, file, attributes, renameDialog.state, selectedNode.node, false)
-            service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
-          } else {
-            return
-          }
+          return
         }
       }
     }
   }
 
+  /**
+   * Determines if a confirmation dialog should be displayed before sending a request to mainframe
+   * @param text represents an existing file name in VFS with name conflict
+   * @param selectedNode represents a virtual file object in VFS
+   */
   private fun showConfirmDialogIfNecessary(text: String, selectedNode: NodeData): Int {
     val childrenNodesFromParent = selectedNode.node.parent?.children
     val virtualFilePath = selectedNode.node.virtualFile?.canonicalPath
@@ -66,8 +73,8 @@ class ForceRenameAction : AnAction() {
           if (it is UssFileNode && it.value.filenameInternal == text) {
             val confirmTemplate =
               "You are going to rename file $virtualFilePath \n" +
-                  "into existing one. This operation cannot be undone. \n" +
-                  "Would you like to proceed?"
+                      "into existing one. This operation cannot be undone. \n" +
+                      "Would you like to proceed?"
             return Messages.showOkCancelDialog(
               confirmTemplate,
               "Warning",
@@ -98,6 +105,16 @@ class ForceRenameAction : AnAction() {
     return Messages.NO
   }
 
+  /**
+   * Base method for running rename operation
+   * @param project represents the current project
+   * @param explorer represents explorer object
+   * @param file represents a virtual file which is going to be renamed
+   * @param attributes represents a current file attributes
+   * @param newName a new name for the virtual file
+   * @param node represents a current node object in explorer view
+   * @param override responsible for the file override behavior in VFS
+   */
   private fun runRenameOperation(
     project: Project?,
     explorer: Explorer<*>,
@@ -142,6 +159,9 @@ class ForceRenameAction : AnAction() {
     }
   }
 
+  /**
+   * Determines for which nodes the force rename action is visible in the context menu
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -159,6 +179,9 @@ class ForceRenameAction : AnAction() {
     }
   }
 
+  /**
+   * This method is needed for interface implementation
+   */
   override fun isDumbAware(): Boolean {
     return true
   }
