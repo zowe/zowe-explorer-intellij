@@ -51,11 +51,11 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
-            operation.destination.isDirectory &&
-            operation.destinationAttributes is RemoteUssAttributes &&
-            operation.source is MFVirtualFile &&
-            operation.destination is MFVirtualFile &&
-            operation.commonUrls(dataOpsManager).isEmpty()
+      operation.destination.isDirectory &&
+      operation.destinationAttributes is RemoteUssAttributes &&
+      operation.source is MFVirtualFile &&
+      operation.destination is MFVirtualFile &&
+      operation.commonUrls(dataOpsManager).isEmpty()
   }
 
   /**
@@ -82,7 +82,7 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
     if (sourceAttributes.isSymlink) {
       return IllegalArgumentException(
         "Impossible to move symlink. ${op.source.name} is symlink to ${sourceAttributes.symlinkTarget}." +
-                " Please, move ${sourceAttributes.symlinkTarget} directly."
+          " Please, move ${sourceAttributes.symlinkTarget} directly."
       )
     }
 
@@ -97,7 +97,7 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
     progressIndicator.text = "Uploading file '$pathToFile'"
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(
       authorizationToken = destConnectionConfig.authToken,
-      filePath = FilePath(pathToFile).toString(),
+      filePath = FilePath(pathToFile),
       body = op.source.contentsToByteArray(),
       xIBMDataType = contentMode
     ).applyIfNotNull(progressIndicator) { indicator ->

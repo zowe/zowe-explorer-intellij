@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.mapNotNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.FilePath
 import eu.ibagroup.r2z.XIBMDataType
 import java.io.IOException
 
@@ -64,7 +65,7 @@ class UssFileContentSynchronizer(
         val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
         val response = api<DataAPI>(connectionConfig).retrieveUssFileContent(
           authorizationToken = connectionConfig.authToken,
-          filePath = attributes.path.substring(1),
+          filePath = FilePath(attributes.path),
           xIBMDataType = xIBMDataType
         ).applyIfNotNull(progressIndicator) { indicator ->
           cancelByIndicator(indicator)
@@ -108,7 +109,7 @@ class UssFileContentSynchronizer(
 
         val response = apiWithBytesConverter<DataAPI>(connectionConfig).writeToUssFile(
           authorizationToken = connectionConfig.authToken,
-          filePath = attributes.path.substring(1),
+          filePath = FilePath(attributes.path),
           body = newContent,
           xIBMDataType = xIBMDataType
         ).applyIfNotNull(progressIndicator) { indicator ->

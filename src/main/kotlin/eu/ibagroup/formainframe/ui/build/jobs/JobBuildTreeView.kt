@@ -121,7 +121,7 @@ class JobBuildTreeView(
           .getCachedJobStatus()
           ?.returnedCode
           ?.uppercase()
-          ?.contains("ERR") == true
+          ?.contains(Regex("ERR|ABEND|CANCEL")) == true
       ) FailureResultImpl() else SuccessResultImpl()
       jobLogger.logFetcher.getCachedLog()
         .forEach {
@@ -130,7 +130,11 @@ class JobBuildTreeView(
       runCatching {
         val buildNode = (treeConsoleView.tree.model.root as DefaultMutableTreeNode).firstChild
         val buildExecutionNode = (buildNode as DefaultMutableTreeNode).userObject as ExecutionNode
-        buildExecutionNode.setIconProvider { AllIcons.General.InspectionsOK }
+        if (result is FailureResultImpl) {
+          buildExecutionNode.setIconProvider { AllIcons.General.BalloonError }
+        } else {
+          buildExecutionNode.setIconProvider { AllIcons.General.InspectionsOK }
+        }
       }
       treeConsoleView.onEvent(buildId, FinishBuildEventImpl(buildId, buildId, Date().time, buildId, result))
     }

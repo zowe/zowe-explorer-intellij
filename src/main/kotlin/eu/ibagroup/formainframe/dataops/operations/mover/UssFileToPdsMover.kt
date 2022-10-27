@@ -21,10 +21,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataZOS
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.XIBMBpxkAutoCvt
-import eu.ibagroup.r2z.XIBMOption
+import eu.ibagroup.r2z.*
 
 /**
  * Factory for registering UssFileToPdsMover in Intellij IoC container.
@@ -50,11 +47,11 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.sourceAttributes is RemoteUssAttributes
-            && !operation.sourceAttributes.isDirectory
-            && operation.destinationAttributes is RemoteDatasetAttributes
-            && operation.destinationAttributes.isDirectory
-            && operation.commonUrls(dataOpsManager).isNotEmpty()
-            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+      && !operation.sourceAttributes.isDirectory
+      && operation.destinationAttributes is RemoteDatasetAttributes
+      && operation.destinationAttributes.isDirectory
+      && operation.commonUrls(dataOpsManager).isNotEmpty()
+      && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
   /**
@@ -100,7 +97,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     if (operation.isMove) {
       val deleteResponse = api.deleteUssFile(
         authorizationToken = connectionConfig.authToken,
-        filePath = from.substring(1),
+        filePath = FilePath(from),
         xIBMOption = XIBMOption.RECURSIVE
       ).execute()
       if (!deleteResponse.isSuccessful) {

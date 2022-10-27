@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
 import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.FilePath
 
 /**
  * Factory class for building an instance of the runner class on runtime. Defined in plugin.xml
@@ -89,7 +90,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
               if (it.children?.size == 0) {
                 val resp = api<DataAPI>(requester.connectionConfig).deleteUssFile(
                   authorizationToken = requester.connectionConfig.authToken,
-                  filePath = "$parentDirPath/${operation.newName}"
+                  filePath = FilePath("$parentDirPath/${operation.newName}")
                 ).cancelByIndicator(progressIndicator).execute()
                 if (!resp.isSuccessful) {
                   throw CallException(

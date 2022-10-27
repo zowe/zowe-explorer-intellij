@@ -58,7 +58,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.2.0-rc.1")
+  implementation("eu.ibagroup:r2z:1.2.2")
   implementation("com.segment.analytics.java:analytics:+")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.12.4")
@@ -73,7 +73,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.2")
+  version.set("2022.1")
 }
 
 tasks {
@@ -85,10 +85,11 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set("203.5981")
+    sinceBuild.set("221.5080")
     untilBuild.set("222.*")
     changeNotes.set(
       """
+      <b>WARNING: </b> version 0.7 introduces breaking change. You won't be able to use the plugin with IntelliJ version < 2022.1
       <b>New features:</b>
       <ul>
         <li>Configurable batch size to load filter smoothly</li>
@@ -130,6 +131,8 @@ tasks {
         <li>Extra item 'Rename' is active in the context menu if click on 'loading...'/'load more' in file explorer</li>
         <li>GitHub issue #16: Error creating zOSMF connection</li>
         <li>GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF connection with very long name is added</li>
+        <li>Impossible to open any file/dataset second time</li>
+        <li>The job is marked with green icon as passed despite it finished with abend</li>
       </ul>"""
     )
   }

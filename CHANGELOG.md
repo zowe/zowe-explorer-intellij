@@ -2,7 +2,9 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## `0.7.0 (2022-10-25)`
+## `0.7.0 (2022-10-31)`
+
+* Breaking: Kotlin DSL v2 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.1
 
 * Feature: Configurable batch size to load filter smoothly ([928baba](https://github.com/zowe/zowe-explorer-intellij/commit/928baba))
 * Feature: Job Purge operation ([95bf7eb](https://github.com/zowe/zowe-explorer-intellij/commit/95bf7eb))
@@ -36,5 +38,6 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: IDE error while retrieving job list in JES Explorer ([e3dfe93](https://github.com/zowe/zowe-explorer-intellij/commit/e3dfe93))
 * Bugfix: Extra item 'Rename' is active in the context menu if click on 'loading...'/'load more' in file explorer ([78ab43f](https://github.com/zowe/zowe-explorer-intellij/commit/78ab43f)) 
 * Bugfix: Impossible to open any file/dataset second time ([9dc62ef](https://github.com/zowe/zowe-explorer-intellij/commit/9dc62ef))
+* Bugfix: The job is marked with green icon as passed despite it finished with abend ([773a252](https://github.com/zowe/zowe-explorer-intellij/commit/773a252))
 * Bugfix: GitHub issue #16: Error creating zOSMF connection
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF connection with very long name is added

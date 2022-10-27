@@ -51,12 +51,12 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
-            operation.destination.isDirectory &&
-            operation.destinationAttributes is RemoteUssAttributes &&
-            operation.sourceAttributes is RemoteDatasetAttributes &&
-            operation.source is MFVirtualFile &&
-            operation.destination is MFVirtualFile &&
-            operation.commonUrls(dataOpsManager).isEmpty()
+      operation.destination.isDirectory &&
+      operation.destinationAttributes is RemoteUssAttributes &&
+      operation.sourceAttributes is RemoteDatasetAttributes &&
+      operation.source is MFVirtualFile &&
+      operation.destination is MFVirtualFile &&
+      operation.commonUrls(dataOpsManager).isEmpty()
   }
 
   /**
@@ -85,7 +85,7 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
 
     return apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(
       authorizationToken = destConnectionConfig.authToken,
-      filePath = FilePath("$destinationPath/$memberName").toString(),
+      filePath = FilePath("$destinationPath/$memberName"),
       body = memberFile.contentsToByteArray(),
       xIBMDataType = memberAttributes.contentMode
     ).applyIfNotNull(progressIndicator) { indicator ->
