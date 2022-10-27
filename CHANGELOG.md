@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## `0.7.0 (2022-10-25)`
+## `0.7.0 (2022-10-31)`
 
 * Breaking: Kotlin DSL v2 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.1
 

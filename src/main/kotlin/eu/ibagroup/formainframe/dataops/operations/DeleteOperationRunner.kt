@@ -26,6 +26,7 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.r2z.DataAPI
+import eu.ibagroup.r2z.FilePath
 import eu.ibagroup.r2z.XIBMOption
 
 class DeleteRunnerFactory : OperationRunnerFactory {
@@ -79,6 +80,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
           }
         }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
       }
+
       is RemoteMemberAttributes -> {
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
@@ -108,6 +110,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
           }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
         }
       }
+
       is RemoteUssAttributes -> {
         service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
@@ -122,7 +125,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).deleteUssFile(
               authorizationToken = it.connectionConfig.authToken,
-              filePath = attr.path.substring(1),
+              filePath = FilePath(attr.path),
               xIBMOption = XIBMOption.RECURSIVE
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
