@@ -2,7 +2,7 @@
 "Zowe Explorer" brings support for browsing, editing and creating data on z/OS via 
 <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.
 
-Plugin in Marketplace: (([https://plugins.jetbrains.com/plugin/18688-zowe-explorer])JetBrains Marketplace)
+Plugin in Marketplace: [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/18688-zowe-explorer)
 
 Using our plugin you will be able to:
 * Start working with z/OS easily with no complex configurations.
