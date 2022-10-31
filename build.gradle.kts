@@ -89,6 +89,7 @@ tasks {
     changeNotes.set(
       """
       <b>WARNING: </b> version 0.7 introduces breaking change. You won't be able to use the plugin with IntelliJ version < 2022.1
+      <br>
       <b>New features:</b>
       <ul>
         <li>Configurable batch size to load filter smoothly</li>
@@ -100,6 +101,7 @@ tasks {
         <li>GitHub issue #70: Add date and time to JES Explorer</li>
         <li>GitHub issue #41: Transfer USS files from any encoding, not just from EBCDIC</li>
       </ul>
+      <br>
       <b>Minor changes:</b>
       <ul>
         <li>Copy remote to local: clarify warning</li>
@@ -107,6 +109,7 @@ tasks {
         <li>Move the file attribute conversion to a separate thread</li>
         <li>Source code documentation added</li>
       </ul>
+      <br>
       <b>Fixed bugs:</b>
       <ul>
         <li>File cache conflict if open JCL to edit it in JES explorer second time</li>
