@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import retrofit2.Call
+import retrofit2.Response
 import java.io.IOException
 
 /**
