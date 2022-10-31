@@ -27,7 +27,7 @@ import javax.swing.JTextField
 
 private val urlRegex = Regex("^(https?|http)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")
 private val maskRegex = Regex("^[A-Za-z\\$\\*%@#][A-Za-z0-9\\-\\$\\*%@#]{0,7}")
-private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
+private val ussPathRegex = Regex("^/$|^(/[^/]+)+$")
 private val forbiddenSymbol = "/"
 private val warningSymbols = "^[^>|:& ]*$"
 private val prefixAndOwnerRegex = Regex("[A-Za-z0-9*%]+")
@@ -39,10 +39,10 @@ private val segmentLengthErrorText = "Each name segment (qualifier) is 1 to 8 ch
 private val charactersLengthExceededErrorText = "Dataset name cannot exceed 44 characters"
 private val segmentCharsErrorText =
   "$segmentLengthErrorText," +
-          "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
-          "\nThe remaining seven characters are either alphabetic," +
-          "\nnumeric (0 - 9), national, a hyphen (-)." +
-          "\nName segments are separated by a period (.)"
+    "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
+    "\nThe remaining seven characters are either alphabetic," +
+    "\nnumeric (0 - 9), national, a hyphen (-)." +
+    "\nName segments are separated by a period (.)"
 private val jobIdRegex = Regex("[A-Za-z0-9]+")
 private val volserRegex = Regex("[A-Za-z0-9]{1,6}")
 private val firstLetterRegex = Regex("[A-Z@\$#a-z]")
@@ -116,12 +116,12 @@ fun <WSConfig : WorkingSetConfig> validateWorkingSetName(
  */
 fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
   val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.uppercase())
-          || ws.ussPaths.map { it.path }.contains(component.text)
+    || ws.ussPaths.map { it.path }.contains(component.text)
 
   return if (maskAlreadyExists) {
     ValidationInfo(
       "You must provide unique mask in working set. Working Set " +
-              "\"${ws.name}\" already has mask - ${component.text}", component
+        "\"${ws.name}\" already has mask - ${component.text}", component
     )
   } else {
     null
@@ -346,6 +346,7 @@ fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeDa
         }
       }
     }
+
     is UssDirNode -> {
       childrenNodesFromParent?.forEach {
         if (it is UssDirNode && text == it.value.path.split("/").last()) {
@@ -468,6 +469,7 @@ fun validateMemberName(component: JTextField): ValidationInfo? {
  */
 fun validateBatchSize(component: JTextField): ValidationInfo? {
   return if (component.text.toIntOrNull() == 0)
-    ValidationInfo("Setting 0 may lead to performance issues due to elements long fetch processing.").asWarning().withOKEnabled()
+    ValidationInfo("Setting 0 may lead to performance issues due to elements long fetch processing.").asWarning()
+      .withOKEnabled()
   else null
 }
