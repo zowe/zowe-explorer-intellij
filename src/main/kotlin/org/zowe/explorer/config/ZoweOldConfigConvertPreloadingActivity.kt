@@ -27,7 +27,7 @@ import kotlin.io.path.pathString
  * @version 0.2
  * @since 2021-06-21
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "0.3")
+@ApiStatus.ScheduledForRemoval(inVersion = "1.0.0")
 class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
 
   /**
