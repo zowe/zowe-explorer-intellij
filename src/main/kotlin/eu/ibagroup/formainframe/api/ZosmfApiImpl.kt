@@ -174,7 +174,7 @@ private fun buildUnsafeClient(): OkHttpClient {
         }
       }
     )
-    val sslContext = SSLContext.getInstance("SSL")
+    val sslContext = SSLContext.getInstance("TLSv1.2")
     sslContext.init(null, trustAllCerts, SecureRandom())
     val sslSocketFactory = sslContext.socketFactory
     val builder = OkHttpClient.Builder()
