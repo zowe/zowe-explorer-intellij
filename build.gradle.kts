@@ -93,7 +93,6 @@ tasks {
         <li>Copy remote to remote</li>
         <li>GitHub issue #10: Edit Working sets directly from Tool Window</li>
         <li>GitHub issue #70: Add date and time to JES Explorer</li>
-        <li>GitHub issue #41: Transfer USS files from any encoding, not just from EBCDIC</li>
       </ul>
       <br>
       <b>Minor changes:</b>
