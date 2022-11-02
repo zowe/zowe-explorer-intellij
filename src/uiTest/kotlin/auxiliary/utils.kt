@@ -13,18 +13,22 @@ package auxiliary
 import auxiliary.closable.ClosableFixtureCollector
 import auxiliary.components.actionMenu
 import auxiliary.components.actionMenuItem
+import auxiliary.components.stripeButton
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.CommonContainerFixture
 import com.intellij.remoterobot.fixtures.ComponentFixture
 import com.intellij.remoterobot.fixtures.ContainerFixture
+import com.intellij.remoterobot.fixtures.JTextFieldFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
+import com.intellij.remoterobot.utils.keyboard
 import com.intellij.remoterobot.utils.waitFor
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.string.shouldContain
+import java.awt.event.KeyEvent
 import java.time.Duration
 
 //Change ZOS_USERID, ZOS_PWD, CONNECTION_URL with valid values before UI tests execution
@@ -244,6 +248,7 @@ fun createConnection(
 ) = with(remoteRobot) {
     ideFrameImpl(projectName, fixtureStack) {
         explorer {
+            fileExplorer.click()
             settings(closableFixtureCollector, fixtureStack)
         }
         settingsDialog(fixtureStack) {
@@ -284,6 +289,7 @@ fun clearEnvironment(
 ) = with(remoteRobot) {
     ideFrameImpl(projectName, fixtureStack) {
         explorer {
+            fileExplorer.click()
             settings(closableFixtureCollector, fixtureStack)
         }
         settingsDialog(fixtureStack) {
@@ -322,6 +328,8 @@ fun setUpTestEnvironment(
             }
         } catch (e: WaitForConditionTimeoutException) {
             e.message.shouldContain("Failed to find 'Dialog' by 'title For Mainframe Plugin Privacy Policy and Terms and Conditions'")
+            stripeButton(byXpath("//div[@accessiblename='Project' and @class='StripeButton' and @text='Project']"))
+                .click()
         }
         forMainframe()
     }
@@ -338,6 +346,7 @@ fun openWSOpenMaskInExplorer(
     with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
+                fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
                 Thread.sleep(3000)
                 find<ComponentFixture>(viewTree).findText(maskName).doubleClick()
@@ -357,6 +366,7 @@ fun openOrCloseWorkingSetInExplorer(
 ) = with(remoteRobot) {
     ideFrameImpl(projectName, fixtureStack) {
         explorer {
+            fileExplorer.click()
             find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
             Thread.sleep(3000)
         }
@@ -373,6 +383,7 @@ fun openMaskInExplorer(
     with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
+                fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(maskName).doubleClick()
                 Thread.sleep(20000)
                 if (expectedError.isEmpty().not()) {
@@ -398,6 +409,7 @@ fun openJobFilterInExplorer(
     }
     ideFrameImpl(projectName, fixtureStack) {
         explorer {
+            jesExplorer.click()
             find<ComponentFixture>(viewTree).findText(textToFind).doubleClick()
             Thread.sleep(2000)
             waitFor(Duration.ofSeconds(20)) { find<ComponentFixture>(viewTree).hasText("loading…").not() }
@@ -425,6 +437,7 @@ fun closeFilterInExplorer(
         }
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
+                jesExplorer.click()
                 find<ComponentFixture>(viewTree).findText(textToFind).doubleClick()
             }
         }
@@ -440,6 +453,7 @@ fun closeMaskInExplorer(
     with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
+                fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(maskName).doubleClick()
             }
         }
@@ -462,7 +476,7 @@ fun checkItemWasDeletedWSRefreshed(
 }
 
 /**
- * Checks that the jo filter is not displayed in explorer.
+ * Checks that the job filter is not displayed in explorer.
  */
 fun checkFilterWasDeletedJWSRefreshed(
     deletedFilter: Triple<String, String, String>, projectName: String,
@@ -475,9 +489,142 @@ fun checkFilterWasDeletedJWSRefreshed(
     }
     ideFrameImpl(projectName, fixtureStack) {
         explorer {
+            jesExplorer.click()
             shouldThrow<NoSuchElementException> {
                 find<ComponentFixture>(viewTree).findText(textToFind)
             }
         }
     }
 }
+
+/**
+ * Deletes dataset via context menu.
+ */
+fun deleteDataset(
+    datasetName: String, projectName: String,
+    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        explorer {
+            fileExplorer.click()
+            find<ComponentFixture>(viewTree).findAllText(datasetName).last().rightClick()
+        }
+        actionMenuItem(remoteRobot, "Delete").click()
+        dialog("Confirm Files Deletion") {
+            clickButton("Yes")
+        }
+        Thread.sleep(10000)
+    }
+}
+
+/**
+ * Opens the file and copies it's content.
+ */
+fun openLocalFileAndCopyContent(
+    filePath: String, projectName: String,
+    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        actionMenu(remoteRobot, "File").click()
+        runJs(
+            """
+            const point = new java.awt.Point(${locationOnScreen.x}, ${locationOnScreen.y});
+            robot.moveMouse(component, point);
+        """
+        )
+        actionMenuItem(remoteRobot, "Open...").click()
+        Thread.sleep(3000)
+        dialog("Open File or Project") {
+            textField(byXpath("//div[@class='BorderlessTextField']")).text =
+                filePath
+            Thread.sleep(5000)
+            clickButton("OK")
+        }
+        with(textEditor()) {
+            keyboard {
+                hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_A)
+                hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_C)
+                hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
+            }
+        }
+    }
+}
+
+/**
+ * Submits the job via context menu.
+ */
+fun submitJob(
+    jobName: String, projectName: String,
+    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        explorer {
+            fileExplorer.click()
+            find<ComponentFixture>(viewTree).findText(jobName).rightClick()
+        }
+        actionMenuItem(remoteRobot, "Submit Job").click()
+    }
+}
+
+/**
+ * Creates a member in the dataset and pastes content to the member.
+ */
+fun createMemberAndPasteContent(
+    datasetName: String,
+    memberName: String, projectName: String,
+    fixtureStack: MutableList<Locator>,
+    remoteRobot: RemoteRobot
+) =
+    with(remoteRobot) {
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                fileExplorer.click()
+                find<ComponentFixture>(viewTree).findAllText(datasetName).last().rightClick()
+            }
+            actionMenu(remoteRobot, "New").click()
+            actionMenuItem(remoteRobot, "Member").click()
+            dialog("Create Member") {
+                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberName
+            }
+            clickButton("OK")
+            Thread.sleep(10000)
+            explorer {
+                find<ComponentFixture>(viewTree).findAllText(memberName).last().doubleClick()
+            }
+            with(textEditor()) {
+                keyboard {
+                    hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_V)
+                    Thread.sleep(10000)
+                    hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_S)
+                    Thread.sleep(10000)
+                    hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
+                }
+            }
+        }
+    }
+
+/**
+ * Allocates a dataset and creates a mask for it.
+ */
+fun allocatePDSAndCreateMask(
+    wsName: String, datasetName: String, projectName: String,
+    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
+) =
+    with(remoteRobot) {
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                fileExplorer.click()
+                find<ComponentFixture>(viewTree).findText(wsName).rightClick()
+            }
+            actionMenu(remoteRobot, "New").click()
+            actionMenuItem(remoteRobot, "Dataset").click()
+            allocateDatasetDialog(fixtureStack) {
+                allocateDataset(datasetName, "PO", "TRK", 10, 1, 1, "VB", 255, 6120)
+                clickButton("OK")
+                Thread.sleep(10000)
+            }
+            find<ContainerFixture>(byXpath("//div[@class='MyDialog']")).findText("Dataset $datasetName Has Been Created")
+            clickButton("Yes")
+        }
+        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+    }
