@@ -172,7 +172,7 @@ data class RemoteUssAttributes(
     get() = true
 
   override val isPastePossible: Boolean
-    get() = isDirectory && isWritable
+    get() = isDirectory
 
 }
 

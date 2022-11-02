@@ -27,7 +27,7 @@ import javax.swing.JTextField
 
 private val urlRegex = Regex("^(https?|http)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")
 private val maskRegex = Regex("^[A-Za-z\\$\\*%@#][A-Za-z0-9\\-\\$\\*%@#]{0,7}")
-private val ussPathRegex = Regex("^/|(/[^/]+)+\$")
+private val ussPathRegex = Regex("^/$|^(/[^/]+)+$")
 private val forbiddenSymbol = "/"
 private val warningSymbols = "^[^>|:& ]*$"
 private val prefixAndOwnerRegex = Regex("[A-Za-z0-9*%]+")

@@ -211,9 +211,7 @@ class FileExplorerViewDropTarget(
     //    val pasteEnabled = false
     val isCopiedFromRemote = event.attachedObject is FileExplorerViewDragSource.ExplorerTransferableWrapper
     // TODO: remove when the support of IntelliJ <= 213 is closed
-    val pasteEnabled = if (sourcesTargetBounds.fourth == myTree)
-      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
-    else if (isCopiedFromRemote && sourcesTargetBounds.fourth === getProjectTree()) {
+    val pasteEnabled = if (isCopiedFromRemote && sourcesTargetBounds.fourth === getProjectTree()) {
       val vFile = sourcesTargetBounds.second.getVirtualFile()
       if (vFile == null) {
         false
@@ -227,6 +225,8 @@ class FileExplorerViewDropTarget(
         // TODO: remove when the support of IntelliJ <= 213 is closed
         makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file?.let { listOf(it) } ?: emptyList()
       copyPasteSupport.isPastePossibleForFiles(target, sourceFiles)
+    } else if (sourcesTargetBounds.fourth == myTree) {
+      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
     } else false
 
     event.isDropPossible = pasteEnabled

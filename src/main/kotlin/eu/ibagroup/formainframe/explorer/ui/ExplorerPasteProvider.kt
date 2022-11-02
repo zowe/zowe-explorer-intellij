@@ -73,11 +73,14 @@ class ExplorerPasteProvider : PasteProvider {
     val pasteDestinationFiles = dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
       ?: pasteDestinationsNodesData.mapNotNull { it.file }
 
+    val draggedBuffer = dataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) ?: emptyList()
+    val clipboardBuffer = copyPasteSupport.getSourceFilesFromClipboard()
     copyPasteSupport.bufferLock.withLock {
-      val sourceFilesRaw = copyPasteSupport.copyPasteBuffer
-        .mapNotNull { it.file }
-        .plus(dataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) ?: emptyList())
-        .plus(copyPasteSupport.getSourceFilesFromClipboard())
+      val sourceFilesRaw = clipboardBuffer.ifEmpty {
+        copyPasteSupport.copyPasteBuffer
+          .mapNotNull { it.file }
+          .plus(draggedBuffer)
+      }
 
       val skipDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
       val overwriteDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
