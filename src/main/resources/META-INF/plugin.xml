@@ -249,6 +249,8 @@ Example of how to see the output:<br/>
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.TsoOperationRunnerFactory"/>
+
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
 
@@ -302,6 +304,12 @@ Example of how to see the output:<br/>
                     factoryClass="eu.ibagroup.formainframe.ui.build.jobs.JobsWindowFactory"
                     canCloseContents="true"
                     doNotActivateOnStart="true"/>
+
+        <toolWindow id="TSO CLI" anchor="bottom"
+                    factoryClass="eu.ibagroup.formainframe.ui.build.tso.TSOWindowFactory"
+                    canCloseContents="true"
+                    doNotActivateOnStart="true"/>
+
 
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
@@ -390,6 +398,11 @@ Example of how to see the output:<br/>
         <action class="eu.ibagroup.formainframe.explorer.actions.SettingAction"
                 id="eu.ibagroup.formainframe.explorer.actions.SettingAction"
                 icon="AllIcons.General.Settings"/>
+
+        <action class="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"
+                id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"
+                icon="AllIcons.Debugger.Console"/>
+
 
         <action class="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
                 id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
@@ -510,11 +523,13 @@ Example of how to see the output:<br/>
         <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.JESActionBarGroup">
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
