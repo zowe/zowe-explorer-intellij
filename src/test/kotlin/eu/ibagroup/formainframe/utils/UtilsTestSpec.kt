@@ -390,16 +390,83 @@ class UtilsTestSpec : ShouldSpec({
     should("validate that the dataset name exceeds the 8 characters per HLQ rule") {}
     should("validate that the dataset name does not match the regular expression") {}
     should("validate the dataset name is blank") {}
-    // validateVolser
-    should("validate the VOLSER does not match the regular expression") {}
-    should("check the VOLSER is valid") {}
-    // validateForGreaterValue
-    should("validate that the number is greater than the provided one") {}
-    should("validate that the number is not greater than the provided one") {}
-    // validateMemberName
-    should("validate that the dataset member name exceeds the 8 character length rule") {}
-    should("validate that the dataset member name does not match the dataset member name first letter regular expression") {}
-    should("validate that the dataset member name does not match the dataset member name regular expression") {}
+    context("validateVolser") {
+      val component = JTextField()
+
+      should("validate the VOLSER does not match the regular expression") {
+        component.text = "zmf04^"
+        val actual = validateVolser(component)
+        val expected = ValidationInfo("Enter a valid volume serial", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("check the VOLSER is valid") {
+        component.text = "zmf046"
+        val actual = validateVolser(component)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
+    context("validateForGreaterValue") {
+      val component = JTextField()
+
+      should("validate that the number is greater than the provided one") {
+        component.text = "15"
+        val value = 10
+        val actual = validateForGreaterValue(component, value)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the number is not greater than the provided one") {
+        component.text = "5"
+        val value = 10
+        val actual = validateForGreaterValue(component, value)
+        val expected = ValidationInfo("Enter a number grater than $value", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
+    context("validateMemberName") {
+      val component = JTextField()
+
+      should("validate that the dataset member name exceeds the 8 character length rule") {
+        component.text = "MEMBERNAME"
+        val actual = validateMemberName(component)
+        val expected = ValidationInfo("Member name must not exceed 8 characters.", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the dataset member name does not match the dataset member name first letter regular expression") {
+        component.text = "1MEMBER"
+        val actual = validateMemberName(component)
+        val expected = ValidationInfo("Member name should start with A-Z a-z or national characters", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the dataset member name does not match the dataset member name regular expression") {
+        component.text = "MEMBER^"
+        val actual = validateMemberName(component)
+        val expected = ValidationInfo("Member name should contain only A-Z a-z 0-9 or national characters", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
   }
   context("utils module: retrofitUtils") {
     // cancelByIndicator

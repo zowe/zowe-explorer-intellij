@@ -6,6 +6,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 * Breaking: Kotlin DSL v2 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.1
 
+
 * Feature: Configurable batch size to load filter smoothly ([928baba](https://github.com/zowe/zowe-explorer-intellij/commit/928baba))
 * Feature: Job Purge operation ([95bf7eb](https://github.com/zowe/zowe-explorer-intellij/commit/95bf7eb))
 * Feature: Job Edit operation  ([b3962de](https://github.com/zowe/zowe-explorer-intellij/commit/b3962de))
