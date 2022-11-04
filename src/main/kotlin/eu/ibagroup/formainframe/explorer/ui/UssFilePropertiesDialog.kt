@@ -25,6 +25,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import javax.swing.JComponent
 import com.intellij.ui.dsl.builder.*
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
+import eu.ibagroup.formainframe.utils.getSupportedEncodings
 import eu.ibagroup.r2z.*
 import java.nio.charset.Charset
 
@@ -51,15 +52,6 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
     FileModeValue.READ_EXECUTE,
     FileModeValue.READ_WRITE,
     FileModeValue.READ_WRITE_EXECUTE
-  )
-
-  private val availableCharsets = listOf(
-    Charset.forName("IBM1047"),
-    Charset.forName("IBM1025"),
-    Charset.forName("ISO-8859-1"),
-    Charset.forName("UTF-8"),
-    Charset.forName("US-ASCII"),
-    Charset.forName("windows-1251"),
   )
 
   init {
@@ -117,7 +109,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
       if (!state.ussAttributes.isDirectory && state.fileIsBeingEditingNow) {
         row {
           label("File encoding:").widthGroup(sameWidthGroup)
-          comboBox = comboBox(availableCharsets)
+          comboBox = comboBox(getSupportedEncodings())
             .bindItem(state.ussAttributes::ussFileEncoding.toNullableProperty())
             .horizontalAlign(HorizontalAlign.FILL)
         }
