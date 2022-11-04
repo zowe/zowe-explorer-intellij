@@ -26,3 +26,5 @@ $RECYCLE.BIN/
 # VS Code files
 bin
 .vscode
+
+gradle/wrapper/gradle-wrapper.jar
