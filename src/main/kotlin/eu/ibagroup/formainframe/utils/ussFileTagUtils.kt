@@ -102,10 +102,16 @@ fun listUssFileTag(attributes: RemoteUssAttributes): ResponseBody? {
 
 /**
  * Sets the file tag to the current uss file encoding.
+ * If the encoding name starts with 'x-IBM', then the 'x-' is truncated from the name
+ * (this is necessary to match between encoding names).
  * @param attributes uss file attributes.
  */
 fun setUssFileTag(attributes: RemoteUssAttributes) {
-  val ccsid = CCSID.getCCSID(attributes.ussFileEncoding.name())
+  var encoding = attributes.ussFileEncoding.name()
+  if (encoding.contains("x-IBM")) {
+    encoding = encoding.substring(2)
+  }
+  val ccsid = CCSID.getCCSID(encoding)
   val codeSet = ccsid.toString()
 
   runCatching {
@@ -161,4 +167,24 @@ private fun notifyError(th: Throwable, title: String) {
       NotificationType.ERROR
     )
   )
+}
+
+private val unsupportedEncodings = listOf(
+  "GBK"
+)
+
+/**
+ * Returns a list of supported encodings to set in a file tag.
+ */
+fun getSupportedEncodings(): List<Charset> {
+  val ccsids = CCSID.getCCSIDs().toList()
+  val encodings = ccsids.mapNotNull {
+    runCatching {
+      val codepage = CCSID.getCodepage(it as Int)
+      Charset.forName(codepage)
+    }.getOrNull()
+  }.distinct().filter {
+    !unsupportedEncodings.contains(it.name())
+  }
+  return encodings
 }
