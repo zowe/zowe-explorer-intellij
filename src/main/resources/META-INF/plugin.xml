@@ -9,7 +9,7 @@
 -->
 <idea-plugin>
     <id>eu.ibagroup.formainframe</id>
-    <resource-bundle>messages.CommonBundle</resource-bundle>
+    <resource-bundle>messages.FMBundle</resource-bundle>
     <name>For Mainframe</name>
     <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y
     </vendor>
@@ -322,7 +322,8 @@ Example of how to see the output:<br/>
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
 
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
-                            serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestAnalyticsServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
                             serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"/>
@@ -332,7 +333,8 @@ Example of how to see the output:<br/>
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager" preload="true"
-                            serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
                             serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"/>

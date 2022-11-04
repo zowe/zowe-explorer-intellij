@@ -14,7 +14,7 @@ import com.intellij.DynamicBundle
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-const val BUNDLE = "messages.CommonBundle"
+const val BUNDLE = "messages.FMBundle"
 
 /**
  * Class that provides an instance for getting string messages from a common bundle.
@@ -27,7 +27,7 @@ class MainframeCommonBundle private constructor() : DynamicBundle(BUNDLE) {
 }
 
 /**
- * Method that returns a string message by a special key. Keys and values defined in CommonBundle.properties.
+ * Method that returns a string message by a special key. Keys and values defined in FMBundle.properties.
  * @param key special unique key.
  * @param params additional parameters for setting the message format.
  * @return final string message.
@@ -41,7 +41,7 @@ fun message(
 
 /**
  * Method that returns a wrapped string message by a special key with lazy initialization.
- * Keys and values defined in CommonBundle.properties.
+ * Keys and values defined in FMBundle.properties.
  * @param key special unique key.
  * @param params additional parameters for setting the message format.
  * @return final wrapped string message.

@@ -114,7 +114,8 @@ class UtilsTestSpec : ShouldSpec({
       }
       should("validate connection name when there are other connections and the name is not unique") {
         jTextField.text = "a"
-        val initialConName = null
+        val existingName = "aaaa"
+        val initialConName = "initialName"
 
         every { mockCrud.getAll(ConnectionConfig::class.java) } returns Stream.of(
           ConnectionConfig(
