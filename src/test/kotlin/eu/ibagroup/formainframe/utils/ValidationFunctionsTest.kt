@@ -11,7 +11,6 @@
 package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.ui.ValidationInfo
-import eu.ibagroup.formainframe.UnitTestCase
 import eu.ibagroup.formainframe.config.ConfigSandboxImpl
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionsTableModel
@@ -21,7 +20,8 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import javax.swing.JTextField
 
-class ValidationFunctionsTest : UnitTestCase() {
+// TODO: transform to ShouldSpec
+class ValidationFunctionsTest {
   val sandbox = ConfigSandboxImpl()
   val conTab = ConnectionsTableModel(sandbox.crudable)
   val connectionDialogStateA = ConnectionDialogState(

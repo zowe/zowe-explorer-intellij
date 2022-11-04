@@ -14,6 +14,7 @@ import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 
+// TODO: transform to ShouldSpec
 /**
  * Test class, which does not need any plugin component to unit test
  */

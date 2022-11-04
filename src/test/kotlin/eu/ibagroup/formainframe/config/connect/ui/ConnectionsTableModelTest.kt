@@ -10,16 +10,16 @@
 
 package eu.ibagroup.formainframe.config.connect.ui
 
-import eu.ibagroup.formainframe.UnitTestCase
 import eu.ibagroup.formainframe.config.ConfigSandboxImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 
+// TODO: transform to ShouldSpec
 /**
  * Testing a class, which only needs the existence of an Application to function properly
  */
-class ConnectionsTableModelTest : UnitTestCase() {
+class ConnectionsTableModelTest {
   val sandbox = ConfigSandboxImpl()
   val conTab = ConnectionsTableModel(sandbox.crudable)
   val connectionDialogStateA = ConnectionDialogState(
