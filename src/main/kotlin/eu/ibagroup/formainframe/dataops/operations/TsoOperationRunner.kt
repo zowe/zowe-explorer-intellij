@@ -18,7 +18,10 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.*
+import eu.ibagroup.r2z.MessageType
+import eu.ibagroup.r2z.TsoApi
+import eu.ibagroup.r2z.TsoData
+import eu.ibagroup.r2z.TsoResponse
 import io.ktor.util.*
 import retrofit2.Response
 import java.nio.charset.Charset
@@ -62,7 +65,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
             state.connectionConfig.authToken,
             proc = state.logonproc.toUpperCasePreservingASCIIRules(),
             chset = state.charset,
-            cpage = state.codepage,
+            cpage = state.codepage.toString(),
             rows = state.rows.toInt(),
             cols = state.cols.toInt(),
             acct = state.acct.toUpperCasePreservingASCIIRules(),
@@ -72,6 +75,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
           .cancelByIndicator(progressIndicator)
           .execute()
       }
+
       TsoOperationMode.SEND_MESSAGE -> {
         val state = operation.state as TSOConfigWrapper
         val servletKey = state.getTSOResponse().servletKey
@@ -91,6 +95,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
             .execute()
         }
       }
+
       TsoOperationMode.GET_MESSAGES -> {
         val state = operation.state as TSOConfigWrapper
         val servletKey = state.getTSOResponse().servletKey
@@ -104,6 +109,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
             .execute()
         }
       }
+
       TsoOperationMode.STOP -> {
         val state = operation.state as TSOConfigWrapper
         val servletKey = state.getTSOResponse().servletKey
@@ -136,7 +142,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
    * Method is used to generate default Application ID needed for TSO request
    * @return random byte string for application ID
    */
-  private fun generateDefaultAppId() : String {
+  private fun generateDefaultAppId(): String {
     val array = ByteArray(8)
     Random().nextBytes(array)
     return String(array, Charset.defaultCharset())
