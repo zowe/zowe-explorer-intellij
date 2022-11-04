@@ -12,11 +12,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript {
   dependencies {
-    classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.1.1'
+    classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.1.1")
   }
 }
-
-
 
 plugins {
   id("org.sonarqube") version "3.3"
@@ -30,7 +28,7 @@ val sonarLinksCi: String by project
 
 apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
-apply(from = 'gradle/sonar.gradle')
+apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
 version = "0.3.0"
@@ -49,17 +47,6 @@ repositories {
       ignoreGradleMetadataRedirection()
     }
   }
-}
-
-
-sonarqube {
-    properties {
-        property("sonar.links.ci", sonarLinksCi)
-        property("sonar.projectName", projectTitle)
-        property("sonar.links.scm", "https://github.com/SonarSource/sonar-kotlin")
-        property("sonar.links.issue", "https://jira.sonarsource.com/browse/SONARKT")
-        property("sonar.exclusions", "**/build/**/*")
-    }
 }
 
 java {
