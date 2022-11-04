@@ -21,7 +21,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Build Project
-        run: ./gradlew build -x signArchives
+        run: ./gradlew build
       - name: Run Tests
         run: ./gradlew test
       - name: Code coverage and publish results
