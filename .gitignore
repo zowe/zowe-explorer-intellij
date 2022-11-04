@@ -1,6 +1,6 @@
 .gradle
 .idea
-gradle
+
 build
 
 verifier-all.jar

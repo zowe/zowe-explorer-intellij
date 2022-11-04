@@ -1,0 +1,37 @@
+name: Containers - Build, Test
+
+on:
+    push:
+        branches: [ main, user/markackert/sonar-scans ]
+    pull_request:
+        branches: [ main ]
+    workflow_dispatch:
+
+jobs:
+
+  RunSonar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      -  uses: actions/checkout@v2
+         with:
+          ref: ${{ github.head_ref }}
+
+      - uses: ./.github/actions/setup
+
+      - name: Build Project
+        run: ./graldew build -x signArchives
+      - name: Run Tests
+        run: ./gradlew test
+      - name: Code coverage and publish results
+        run: >
+            ./gradlew --info coverage sonarqube -Dresults="build/output/results"
+            -Psonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+            -Partifactory_user=$ARTIFACTORY_USERNAME -Partifactory_password=$ARTIFACTORY_PASSWORD
+        env:
+            ARTIFACTORY_USE RNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+            ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+            SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
