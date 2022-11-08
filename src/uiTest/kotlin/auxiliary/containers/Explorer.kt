@@ -36,7 +36,7 @@ class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
      * Clicks on the settings action and adds the Settings Dialog to the list of fixtures needed to close.
      */
     fun settings(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
-        clickActionButton(byXpath("//div[@class='ActionButton' and @myaction=' ()']"))
+        clickActionButton(byXpath("//div[@class='ActionButton' and @myicon='settings.svg' and @myaction=' ()']"))
         closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
     }
 
