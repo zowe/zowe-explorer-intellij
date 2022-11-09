@@ -212,7 +212,7 @@ fun validateDatasetMask(text: String, component: JComponent): ValidationInfo? {
  * @param component the component to show the warning in
  */
 fun validateUssMask(text: String, component: JComponent): ValidationInfo? {
-  return if (text.isBlank() || !text.matches(ussPathRegex)) {
+  return if (text.isNotBlank() && !text.matches(ussPathRegex)) {
     ValidationInfo("Provide a valid USS path", component)
   } else {
     null
