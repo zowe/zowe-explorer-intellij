@@ -12,6 +12,9 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.components.service
+import com.intellij.openapi.wm.IdeFocusManager
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
@@ -37,15 +40,18 @@ class EditFilesWorkingSetAction : AnAction() {
       is FilesWorkingSetNode -> {
         val workingSetConfig =
           configCrudable.getByUniqueKey<FilesWorkingSetConfig>(node.value.uuid)?.clone() as FilesWorkingSetConfig
-        FilesWorkingSetDialog(configCrudable, workingSetConfig.toDialogState().apply { mode = DialogMode.UPDATE })
-          .apply {
-            if (showAndGet()) {
-              val dialogState = state
-              configCrudable.update(dialogState.workingSetConfig)
+        service<IdeFocusManager>().runOnOwnContext(
+          DataContext.EMPTY_CONTEXT
+        ) {
+          FilesWorkingSetDialog(configCrudable, workingSetConfig.toDialogState().apply { mode = DialogMode.UPDATE })
+            .apply {
+              if (showAndGet()) {
+                val dialogState = state
+                configCrudable.update(dialogState.workingSetConfig)
+              }
             }
-          }
+        }
       }
-
       else -> {
         return
       }

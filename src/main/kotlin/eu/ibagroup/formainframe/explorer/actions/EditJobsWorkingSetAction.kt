@@ -12,6 +12,9 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.components.service
+import com.intellij.openapi.wm.IdeFocusManager
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
@@ -37,10 +40,14 @@ class EditJobsWorkingSetAction: AnAction() {
     if (node is JobsWsNode) {
       val workingSetConfig =
         configCrudable.getByUniqueKey<JobsWorkingSetConfig>(node.value.uuid)?.clone() as JobsWorkingSetConfig
-      val dialog = JobsWsDialog(configCrudable, workingSetConfig.toDialogState().apply { mode = DialogMode.UPDATE })
-      if (dialog.showAndGet()) {
-        val state = dialog.state
-        configCrudable.update(state.workingSetConfig)
+      service<IdeFocusManager>().runOnOwnContext(
+        DataContext.EMPTY_CONTEXT
+      ) {
+        val dialog = JobsWsDialog(configCrudable, workingSetConfig.toDialogState().apply { mode = DialogMode.UPDATE })
+        if (dialog.showAndGet()) {
+          val state = dialog.state
+          configCrudable.update(state.workingSetConfig)
+        }
       }
     }
   }
