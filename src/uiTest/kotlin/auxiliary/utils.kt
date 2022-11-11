@@ -587,16 +587,16 @@ fun createMemberAndPasteContent(
                 find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberName
             }
             clickButton("OK")
-            Thread.sleep(10000)
+            Thread.sleep(5000)
             explorer {
                 find<ComponentFixture>(viewTree).findAllText(memberName).last().doubleClick()
             }
             with(textEditor()) {
                 keyboard {
                     hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_V)
-                    Thread.sleep(10000)
+                    Thread.sleep(2000)
                     hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_S)
-                    Thread.sleep(10000)
+                    Thread.sleep(2000)
                     hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
                 }
             }
