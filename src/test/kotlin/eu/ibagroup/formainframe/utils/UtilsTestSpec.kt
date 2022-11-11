@@ -17,8 +17,14 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.config.*
+import eu.ibagroup.formainframe.explorer.ui.NodeData
+import eu.ibagroup.formainframe.explorer.ui.UssDirNode
+import eu.ibagroup.formainframe.explorer.ui.UssFileNode
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.r2z.annotations.ZVersion
 import eu.ibagroup.r2z.CodePage
+import eu.ibagroup.r2z.DatasetOrganization
 import java.util.stream.Stream
 import javax.swing.JTextField
 import io.kotest.core.spec.style.ShouldSpec
@@ -26,6 +32,7 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.spyk
 
 class UtilsTestSpec : ShouldSpec({
@@ -235,43 +242,228 @@ class UtilsTestSpec : ShouldSpec({
     should("validate that text does not exceed the specified length") {}
     should("validate that text exceeds the specified length") {}
     // validateDatasetMask
-    should("validate that long dataset mask matches all the rules") {}
-    should("validate that short dataset mask matches all the rules") {}
-    should("validate that dataset mask does not match the 44 characters long rule") {}
-    should("validate that dataset mask does not match the qualifier 1 to 8 rule") {}
-    should("validate that dataset mask does not match the blank rule") {}
-    should("validate that dataset mask does not match the regular expression rule") {}
-    should("validate that dataset mask does not match the asterisks rule") {}
+    context("validateDatasetMask") {
+      val jTextField = JTextField()
+
+      should("validate that long dataset mask matches all the rules") {
+        val dsMaskName = "LONGDATA.SET1234.**.*NAME*.EXAM%%%%.%%%%PLE%"
+        val actual = validateDatasetMask(dsMaskName, jTextField)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that short dataset mask matches all the rules") {
+        val dsMaskName = "**.*ST.LI*.%%"
+        val actual = validateDatasetMask(dsMaskName, jTextField)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that dataset mask does not match the 44 characters long rule") {
+        val dsMaskName = "A2345678.A2345678.A2345678.A2345678.A23456789"
+        val actual = validateDatasetMask(dsMaskName, jTextField)
+        val expected = ValidationInfo("Dataset mask length must not exceed 44 characters", jTextField)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that dataset mask does not match the qualifier 1 to 8 rule") {
+        val dsMaskName = "A2.A23.A23456789"
+        val actual = validateDatasetMask(dsMaskName, jTextField)
+        val expected = ValidationInfo("Qualifier must be in 1 to 8 characters", jTextField)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that dataset mask does not match the blank rule") {
+        val dsMaskName = "     "
+        val actual = validateDatasetMask(dsMaskName, jTextField)
+        val expected = ValidationInfo("Enter valid dataset mask", jTextField)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that dataset mask does not match the regular expression rule") {
+        val dsMaskName = "A234.A234!"
+        val actual = validateDatasetMask(dsMaskName, jTextField)
+        val expected = ValidationInfo("Enter valid dataset mask", jTextField)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that dataset mask does not match the asterisks rule") {
+        val dsMaskName = "**.A*B*"
+        val actual = validateDatasetMask(dsMaskName, jTextField)
+        val expected = ValidationInfo("Invalid asterisks in the qualifier", jTextField)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
     // validateUssMask
-    should("validate that USS path when it is valid") {}
-    should("validate that USS path when it is blank") {}
-    should("validate that USS path when it does not match the regular expression") {}
+    context("validateUssMask") {
+      val jTextField = JTextField()
+
+      should("validate that USS path when it is valid") {
+        val ussMaskName = "/u/validMask"
+        val actual = validateUssMask(ussMaskName, jTextField)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that USS path when it is blank") {
+        val ussMaskName = "   "
+        val actual = validateUssMask(ussMaskName, jTextField)
+        val expected = ValidationInfo("Provide a valid USS path", jTextField)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that USS path when it does not match the regular expression") {
+        val ussMaskName = "invalidName"
+        val actual = validateUssMask(ussMaskName, jTextField)
+        val expected = ValidationInfo("Provide a valid USS path", jTextField)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
     // validateUssFileName
-    should("validate that USS file name when it is valid") {}
-    should("validate that USS path when it exceeds the 255 characters long rule") {}
-    should("validate that USS path when it contains the forbidden symbol") {}
-    // validateJobFilter(prefix: String, owner: String, jobId: String, ws: JesWorkingSet, component: JBTextField, isJobId: Boolean)
-    should("validate that the job filter is already exist") {}
-    should("validate that the job filter is already exist") {}
-    // validateJobFilter(prefix: String, owner: String, jobId: String, component: JBTextField, isJobId: Boolean)
-    should("validate that the job filter does not provide owner but provides prefix") {}
-    should("validate that the job filter does not provide prefix but provides owner") {}
-    should("validate that the job filter does not provide prefix but provides owner") {}
-    should("validate that the job filter provides only the blank fields") {}
-    // validatePrefixAndOwner
-    should("validate that the job owner and prefix are provided and the fields does not match the regular expression") {}
-    should("validate that the job owner and prefix are provided and the fields are exceed the 8 characters rule") {}
-    should("validate that the job owner and prefix are provided and they are valid") {}
-    // validateJobId
-    should("validate that the job ID is provided and it exceeds the 8 characters length") {}
-    should("validate that the job ID is provided and it does not match the regular expression") {}
-    should("validate that the job ID is provided and it is valid") {}
+    context("validateUssFileName") {
+      val jTextField = JTextField()
+
+      should("validate that USS file name when it is valid") {
+        jTextField.text = "validName"
+        val actual = validateUssFileName(jTextField)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that USS path when it exceeds the 255 characters long rule") {
+        jTextField.text = "invalidName".repeat(24)
+        val actual = validateUssFileName(jTextField)
+        val expected = ValidationInfo("Filename must not exceed 255 characters.", jTextField)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that USS path when it contains the forbidden symbol") {
+        jTextField.text = "/invalidName"
+        val actual = validateUssFileName(jTextField)
+        val expected = ValidationInfo("Filename must not contain reserved '/' symbol.", jTextField)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
     // validateUssFileNameAlreadyExists
-    should("validate that the USS file name is not already exist") {}
-    should("validate that the USS file name is already exist") {}
-    should("validate that the USS directory name is already exist") {}
+    context("validateUssFileNameAlreadyExists") {
+      val jTextField = JTextField()
+      val mockFileNode = mockk<UssFileNode>()
+      val mockDirNode = mockk<UssDirNode>()
+      mockkObject(MFVirtualFileSystem)
+      every { MFVirtualFileSystem.instance } returns mockk()
+      val mockVirtualFile = mockk<MFVirtualFile>()
+
+      should("validate that the USS file name is not already exist") {
+        jTextField.text = "notExist"
+
+        val mockNode = spyk(
+          NodeData(
+          node = mockFileNode,
+          file = mockVirtualFile,
+          attributes = null
+        )
+        )
+
+        every { mockFileNode.parent?.children } returns listOf(mockFileNode)
+        every { mockFileNode.value.filenameInternal } returns "filename"
+
+        val actual = validateUssFileNameAlreadyExists(jTextField, mockNode)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the USS file name is already exist") {
+        jTextField.text = "filename"
+
+        val mockNode = spyk(NodeData(
+          node = mockFileNode,
+          file = mockVirtualFile,
+          attributes = null
+        ))
+
+        every { mockFileNode.parent?.children } returns listOf(mockFileNode)
+        every { mockFileNode.value.filenameInternal } returns "filename"
+
+
+        val actual = validateUssFileNameAlreadyExists(jTextField, mockNode)
+        val expected = ValidationInfo("Filename already exists. Please specify another filename.", jTextField).asWarning()
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the USS directory name is already exist") {
+        jTextField.text = "dirname"
+
+        val mockNode = spyk(NodeData(
+          node = mockDirNode,
+          file = mockVirtualFile,
+          attributes = null
+        ))
+
+        every { mockDirNode.parent?.children } returns listOf(mockDirNode)
+        every { mockDirNode.value.path } returns "dirname"
+
+        val actual = validateUssFileNameAlreadyExists(jTextField, mockNode)
+        val expected = ValidationInfo("Directory name already exists. Please specify another directory name.", jTextField).asWarning()
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
     // validateDataset
-    should("validate that the provided dataset parameters are valid") {}
+    context("validateDataset") {
+      should("validate that the provided dataset parameters are valid") {
+        val datasetName = JTextField("name")
+        val datasetOrganization = DatasetOrganization.PO
+        val primaryAllocation = JTextField("1")
+        val secondaryAllocation = JTextField("5")
+        val directoryBlocks = JTextField("2")
+        val recordLength = JTextField("80")
+        val blockSize = JTextField("400")
+        val averageBlockLength = JTextField("2000")
+        val advancedParameters = JTextField("volser")
+
+        val actual = validateDataset(datasetName, datasetOrganization, primaryAllocation, secondaryAllocation, directoryBlocks, recordLength, blockSize, averageBlockLength, advancedParameters)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
     // validateDatasetNameOnInput
     should("check that the dataset name is valid") {}
     should("validate that the dataset name exceeds the 44 characters length rule") {}
