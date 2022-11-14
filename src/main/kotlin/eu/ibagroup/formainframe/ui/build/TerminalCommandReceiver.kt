@@ -15,6 +15,8 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.terminal.TerminalExecutionConsole
 import com.jediterm.terminal.TerminalKeyEncoder
+import eu.ibagroup.formainframe.ui.build.tso.utils.InputRecognizer
+import eu.ibagroup.formainframe.ui.build.tso.utils.ProgramMessage
 import java.awt.event.KeyEvent
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -30,7 +32,8 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
   private var cursorPosition = 0
   private var needToWaitForCommandInput = false
   private var commandsInQueue: Queue<String> = LinkedList()
-  private var initialized = false
+  private var expectParameters = false
+  var initialized = false
 
   private var onCommandEntered: (String) -> Unit = {}
   private val processInput = object : ByteArrayOutputStream() {
@@ -43,7 +46,8 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
 
     /**
      * Typing listener for every user interaction with the keyboard. It prints the byte array typed by user to console
-     * in case the user interacts with the keyboard
+     * in case the user interacts with the keyboard.
+     * Note: Added possibility to recognize the command to be submitted - TSO ordinary command or execute REXX program command which expects parameters
      */
     override fun write(b: ByteArray) {
       super.write(b)
@@ -54,6 +58,27 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
         processHandler.notifyTextAvailable("\n", ProcessOutputType.STDOUT)
         val enteredCommand = typedCommand
         stopWaitingCommand()
+        val command = inputRecognizer.recognizeMessage(enteredCommand)
+        val currentProgram = inputRecognizer.currentProgram
+        if (inputRecognizer.currentProgram == null && inputRecognizer.isRexxProgram()) {
+          inputRecognizer.currentProgram = command as ProgramMessage
+          command.doParse()
+          expectParameters = command.parameters.isNotEmpty()
+        }
+        if (expectParameters && currentProgram != null) {
+          if (currentProgram.parameters.isNotEmpty()) {
+            currentProgram.parameters.removeAt(0)
+            if (currentProgram.parameters.isEmpty()) {
+              expectParameters = false
+              inputRecognizer.currentProgram = null
+              inputRecognizer.updateProgramFlag(null)
+            }
+          } else {
+            expectParameters = false
+            inputRecognizer.currentProgram = null
+            inputRecognizer.updateProgramFlag(null)
+          }
+        }
         onCommandEntered(enteredCommand)
       } else if (b.contentEquals(backspaceCode)) {
         if (typedCommand == "") return
@@ -106,6 +131,8 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
     }
   }
 
+  lateinit var inputRecognizer: InputRecognizer
+
   val processHandler: ProcessHandler
 
   /**
@@ -157,7 +184,13 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
       this.cleanCommand()
     }
     this.needToWaitForCommandInput = true
-    if(initialized) processHandler.notifyTextAvailable("> ", ProcessOutputType.STDOUT)
+    if(initialized) {
+      if (!expectParameters) {
+        processHandler.notifyTextAvailable("> ", ProcessOutputType.STDOUT)
+      } else {
+        processHandler.notifyTextAvailable("", ProcessOutputType.STDOUT)
+      }
+    }
   }
 
   /**
@@ -168,7 +201,4 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
     this.cleanCommand()
   }
 
-  fun setInitialized(initialized : Boolean) {
-    this.initialized = initialized
-  }
 }
