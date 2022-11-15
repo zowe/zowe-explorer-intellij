@@ -13,7 +13,10 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.components.service
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.containers.isEmpty
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.configCrudable
@@ -52,11 +55,15 @@ abstract class AddWsActionBase : AnAction() {
         return
       }
     }
-    val dialog = createDialog(configCrudable)
-    if (dialog.showAndGet()) {
-      val state = dialog.state
-      val workingSetConfig = state.workingSetConfig
-      configCrudable.add(workingSetConfig)
+    service<IdeFocusManager>().runOnOwnContext(
+      DataContext.EMPTY_CONTEXT
+    ) {
+      val dialog = createDialog(configCrudable)
+      if (dialog.showAndGet()) {
+        val state = dialog.state
+        val workingSetConfig = state.workingSetConfig
+        configCrudable.add(workingSetConfig)
+      }
     }
   }
 
