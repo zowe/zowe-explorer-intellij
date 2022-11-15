@@ -33,10 +33,6 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle
       - name: Build Project
         run: ./gradlew build
-      - name: Some temp checks no.1
-        run: pwd
-      - name: Some temp checks no.2
-        run: ls -la
       - name: Run Tests
         run: ./gradlew test
       - name: Code coverage and publish results
