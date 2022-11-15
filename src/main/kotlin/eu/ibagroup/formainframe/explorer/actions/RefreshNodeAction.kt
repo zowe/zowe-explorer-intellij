@@ -37,6 +37,7 @@ class RefreshNodeAction : AnAction() {
           val query = node.query ?: return@forEach
           view.getNodesByQueryAndInvalidate(query)
         }
+
         is WorkingSetNode<*> -> {
           node.cachedChildren.filterIsInstance<FetchNode>()
             .forEach {

@@ -77,7 +77,8 @@ class DataOpsManagerImpl : DataOpsManager {
    * @return attributes of file/folder
    */
   override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-    return attributesServices.stream()
+    return attributesServices
+      .stream()
       .filter { it.vFileClass.isAssignableFrom(file::class.java) }
       .map { it.getAttributes(file) }
       .filter { it != null }
@@ -116,11 +117,11 @@ class DataOpsManagerImpl : DataOpsManager {
     @Suppress("UNCHECKED_CAST")
     return fileFetchProviders.find {
       it.requestClass.isAssignableFrom(requestClass)
-              && it.queryClass.isAssignableFrom(queryClass)
-              && it.vFileClass.isAssignableFrom(vFileClass)
+        && it.queryClass.isAssignableFrom(queryClass)
+        && it.vFileClass.isAssignableFrom(vFileClass)
     } as FileFetchProvider<R, Q, File>? ?: throw IllegalArgumentException(
       "Cannot find FileFetchProvider for " +
-              "requestClass=${requestClass.name}; queryClass=${queryClass.name}; vFileClass=${vFileClass.name}"
+        "requestClass=${requestClass.name}; queryClass=${queryClass.name}; vFileClass=${vFileClass.name}"
     )
   }
 
