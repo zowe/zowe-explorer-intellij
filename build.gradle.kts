@@ -164,6 +164,9 @@ tasks {
         }
       })
     )
+    reports {
+      xml.enabled true
+    }
   }
 }
 
