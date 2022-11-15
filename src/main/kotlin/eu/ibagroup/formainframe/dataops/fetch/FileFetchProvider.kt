@@ -38,6 +38,9 @@ interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
 
   fun reload(query: Q, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE)
 
+  /** Function for "load more" nodes */
+  fun loadMode(query: Q, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE)
+
   /**
    * File fetch provider contains all list of queries inside.
    * If the query was created with default parameters - it will find query with real parameters.
@@ -45,7 +48,7 @@ interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
    * @param query supposed query.
    * @return real query instance or null if it was not found.
    */
-  fun <Q: Query<R, Unit>> getRealQueryInstance(query: Q?): Q?
+  fun <Q : Query<R, Unit>> getRealQueryInstance(query: Q?): Q?
 
   val requestClass: Class<out R>
 
