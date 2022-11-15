@@ -10,15 +10,25 @@
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+buildscript {
+  dependencies {
+    classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.1.1")
+  }
+}
+
 plugins {
+  id("org.sonarqube") version "3.3"
   id("org.jetbrains.intellij") version "1.9.0"
   kotlin("jvm") version "1.6.21"
   java
   jacoco
 }
 
+val sonarLinksCi: String by project
+
 apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
+apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
 version = "0.3.0"
@@ -154,6 +164,10 @@ tasks {
         }
       })
     )
+    reports {
+      xml.required.set(true)
+      xml.outputLocation.set(File("${buildDir}/reports/jacoco.xml"))
+    }
   }
 }
 

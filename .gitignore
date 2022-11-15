@@ -1,6 +1,6 @@
 .gradle
 .idea
-gradle
+
 build
 
 verifier-all.jar
@@ -26,3 +26,5 @@ $RECYCLE.BIN/
 # VS Code files
 bin
 .vscode
+
+gradle/wrapper/gradle-wrapper.jar

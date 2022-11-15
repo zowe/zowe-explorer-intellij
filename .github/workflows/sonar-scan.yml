@@ -1,0 +1,51 @@
+name: Sonar Scans
+
+on:
+    push:
+        branches: [ main ]
+    pull_request:
+        branches: [ main ]
+    workflow_dispatch:
+
+jobs:
+
+  RunSonar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      -  uses: actions/checkout@v2
+         with:
+          ref: ${{ github.head_ref }}
+
+      - uses: ./.github/actions/setup
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache Gradle packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+      - name: Build Project
+        run: ./gradlew build
+      - name: Run Tests
+        run: ./gradlew test
+      - name: Code coverage and publish results
+        run: >
+            ./gradlew --info sonarqube
+            -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=512m"
+            -Dresults="build/reports/tests/test,build/test-results/test,build/reports/jacoco/test/html"
+            -Psonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+            -Partifactory_user=$ARTIFACTORY_USERNAME -Partifactory_password=$ARTIFACTORY_PASSWORD
+            -Dsonar.coverage.jacoco.xmlReportPaths="build/reports/jacoco.xml"
+        env:
+            ARTIFACTORY_USE RNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+            ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+            SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
