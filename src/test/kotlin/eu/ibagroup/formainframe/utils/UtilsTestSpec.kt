@@ -20,20 +20,14 @@ import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
-import eu.ibagroup.r2z.annotations.ZVersion
 import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.DatasetOrganization
-import java.util.stream.Stream
-import javax.swing.JTextField
-import io.kotest.core.spec.style.ShouldSpec
+import eu.ibagroup.r2z.annotations.ZVersion
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
@@ -521,10 +515,10 @@ class UtilsTestSpec : ShouldSpec({
 
         val mockNode = spyk(
           NodeData(
-          node = mockFileNode,
-          file = mockVirtualFile,
-          attributes = null
-        )
+            node = mockFileNode,
+            file = mockVirtualFile,
+            attributes = null
+          )
         )
 
         every { mockFileNode.parent?.children } returns listOf(mockFileNode)
@@ -540,18 +534,21 @@ class UtilsTestSpec : ShouldSpec({
       should("validate that the USS file name is already exist") {
         jTextField.text = "filename"
 
-        val mockNode = spyk(NodeData(
-          node = mockFileNode,
-          file = mockVirtualFile,
-          attributes = null
-        ))
+        val mockNode = spyk(
+          NodeData(
+            node = mockFileNode,
+            file = mockVirtualFile,
+            attributes = null
+          )
+        )
 
         every { mockFileNode.parent?.children } returns listOf(mockFileNode)
         every { mockFileNode.value.filenameInternal } returns "filename"
 
 
         val actual = validateUssFileNameAlreadyExists(jTextField, mockNode)
-        val expected = ValidationInfo("Filename already exists. Please specify another filename.", jTextField).asWarning()
+        val expected =
+          ValidationInfo("Filename already exists. Please specify another filename.", jTextField).asWarning()
 
         assertSoftly {
           actual shouldBe expected
@@ -560,17 +557,22 @@ class UtilsTestSpec : ShouldSpec({
       should("validate that the USS directory name is already exist") {
         jTextField.text = "dirname"
 
-        val mockNode = spyk(NodeData(
-          node = mockDirNode,
-          file = mockVirtualFile,
-          attributes = null
-        ))
+        val mockNode = spyk(
+          NodeData(
+            node = mockDirNode,
+            file = mockVirtualFile,
+            attributes = null
+          )
+        )
 
         every { mockDirNode.parent?.children } returns listOf(mockDirNode)
         every { mockDirNode.value.path } returns "dirname"
 
         val actual = validateUssFileNameAlreadyExists(jTextField, mockNode)
-        val expected = ValidationInfo("Directory name already exists. Please specify another directory name.", jTextField).asWarning()
+        val expected = ValidationInfo(
+          "Directory name already exists. Please specify another directory name.",
+          jTextField
+        ).asWarning()
 
         assertSoftly {
           actual shouldBe expected
@@ -590,7 +592,17 @@ class UtilsTestSpec : ShouldSpec({
         val averageBlockLength = JTextField("2000")
         val advancedParameters = JTextField("volser")
 
-        val actual = validateDataset(datasetName, datasetOrganization, primaryAllocation, secondaryAllocation, directoryBlocks, recordLength, blockSize, averageBlockLength, advancedParameters)
+        val actual = validateDataset(
+          datasetName,
+          datasetOrganization,
+          primaryAllocation,
+          secondaryAllocation,
+          directoryBlocks,
+          recordLength,
+          blockSize,
+          averageBlockLength,
+          advancedParameters
+        )
         val expected = null
 
         assertSoftly {
