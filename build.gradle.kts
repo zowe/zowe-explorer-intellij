@@ -165,7 +165,7 @@ tasks {
       })
     )
     reports {
-      xml.enabled true
+      xml.enabled = true
     }
   }
 }
