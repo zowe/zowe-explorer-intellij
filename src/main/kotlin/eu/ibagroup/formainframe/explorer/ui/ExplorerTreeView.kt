@@ -40,6 +40,7 @@ import eu.ibagroup.formainframe.utils.getAncestorNodes
 import eu.ibagroup.formainframe.utils.rwLocked
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.utils.subscribe
+import org.jetbrains.concurrency.AsyncPromise
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.event.TreeExpansionEvent
@@ -86,39 +87,48 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
    * @return the nodes found by the query
    */
   internal fun getNodesByQueryAndInvalidate(
-    query: Query<*, *>, collapse: Boolean = false, invalidate: Boolean = true
+    query: Query<*, *>,
+    collapse: Boolean = false,
+    invalidate: Boolean = true
   ): Collection<ExplorerTreeNode<*>> {
-    return myFsTreeStructure.findByPredicate {
-      if (it is FetchNode) {
-        it.query == query
-      } else false
-    }.onEach { foundNode ->
-      fun invalidate() = myStructure.invalidate(foundNode, true)
+    return myFsTreeStructure
+      .findByPredicate {
+        if (it is FetchNode) {
+          it.query == query
+        } else false
+      }
+      .onEach { foundNode ->
 
-      fun collapseIfNeeded(tp: TreePath) {
-        if (collapse) {
-          treeModel.onValidThread {
-            myTree.collapsePath(tp)
-            synchronized(myNodesToInvalidateOnExpand) {
-              val node = tp.lastPathComponent
-              myNodesToInvalidateOnExpand.add(node)
+        fun collapseIfNeeded(tp: TreePath) {
+          if (collapse) {
+            treeModel.onValidThread {
+              myTree.collapsePath(tp)
+              synchronized(myNodesToInvalidateOnExpand) {
+                val node = tp.lastPathComponent
+                myNodesToInvalidateOnExpand.add(node)
+              }
             }
           }
         }
-      }
-      myStructure.promisePath(foundNode, myTree).onSuccess { nodePath ->
-        if (myTree.isVisible(nodePath) && myTree.isCollapsed(nodePath) && mySelectedNodesData.any { it.node == nodePath }) {
-          myTree.expandPath(nodePath)
-        }
-        if (invalidate) {
-          invalidate().onSuccess { tp ->
-            collapseIfNeeded(tp)
+
+        myStructure
+          .promisePath(foundNode, myTree)
+          .thenAsync { nodePath ->
+            if (myTree.isVisible(nodePath) && myTree.isCollapsed(nodePath) && mySelectedNodesData.any { it.node == nodePath }) {
+              myTree.expandPath(nodePath)
+            }
+            if (invalidate) {
+              myStructure
+                .invalidate(foundNode, true)
+                .onSuccess { tp ->
+                  collapseIfNeeded(tp)
+                }
+            } else {
+              collapseIfNeeded(nodePath)
+              AsyncPromise<TreePath>()
+            }
           }
-        } else {
-          collapseIfNeeded(nodePath)
-        }
       }
-    }
   }
 
   /**
@@ -183,26 +193,31 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
       topic = VirtualFileManager.VFS_CHANGES,
       handler = object : BulkFileListener {
         override fun after(events: MutableList<out VFileEvent>) {
-          events.mapNotNull {
-            val nodes = myFsTreeStructure.findByVirtualFile(it.file ?: return@mapNotNull null)
-            when {
-              it is VFileContentChangeEvent || it is VFilePropertyChangeEvent -> {
-                nodes
-              }
-              it is VFileDeleteEvent
-                      && this@ExplorerTreeView
-                .ignoreVFileDeleteEvents
-                .compareAndSet(true, true) -> {
-                null
-              }
-              else -> {
-                nodes.mapNotNull { n -> n.parent }
+          events
+            .mapNotNull {
+              val nodes = myFsTreeStructure.findByVirtualFile(it.file ?: return@mapNotNull null)
+              when {
+                it is VFileContentChangeEvent || it is VFilePropertyChangeEvent -> {
+                  nodes
+                }
+
+                it is VFileDeleteEvent &&
+                  this@ExplorerTreeView
+                    .ignoreVFileDeleteEvents
+                    .compareAndSet(true, true) -> {
+                  null
+                }
+
+                else -> {
+                  nodes.mapNotNull { n -> n.parent }
+                }
               }
             }
-          }.flatten().forEach { fileNode ->
-            fileNode.cleanCacheIfPossible()
-            myStructure.invalidate(fileNode, true)
-          }
+            .flatten()
+            .forEach { fileNode ->
+              fileNode.cleanCacheIfPossible(cleanBatchedQuery = false)
+              myStructure.invalidate(fileNode, true)
+            }
         }
       },
       disposable = this

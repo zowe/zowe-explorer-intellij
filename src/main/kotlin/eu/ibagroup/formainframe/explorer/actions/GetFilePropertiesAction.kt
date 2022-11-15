@@ -21,15 +21,16 @@ import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
+import eu.ibagroup.formainframe.dataops.content.synchronizer.showReloadCancelDialog
+import eu.ibagroup.formainframe.dataops.content.synchronizer.showReloadConvertCancelDialog
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
-import eu.ibagroup.formainframe.dataops.content.synchronizer.*
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.r2z.ChangeMode
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
+import eu.ibagroup.r2z.ChangeMode
 
 /**
  * Action for displaying properties of files on UI in dialog by clicking item in explorer context menu.
@@ -51,6 +52,7 @@ class GetFilePropertiesAction : AnAction() {
             val dialog = DatasetPropertiesDialog(e.project, DatasetState(attributes))
             dialog.showAndGet()
           }
+
           is RemoteUssAttributes -> {
             val oldUssFileEncoding = attributes.ussFileEncoding
             val initFileMode = attributes.fileMode?.clone()
@@ -71,48 +73,51 @@ class GetFilePropertiesAction : AnAction() {
                         ),
                         progressIndicator = it
                       )
-                    }.onSuccess {
-                      node.parent?.cleanCacheIfPossible()
-                    }.onFailure { t ->
-                      view.explorer.reportThrowable(t, e.project)
                     }
+                      .onSuccess {
+                        node.parent?.cleanCacheIfPossible(cleanBatchedQuery = false)
+                      }
+                      .onFailure { t ->
+                        view.explorer.reportThrowable(t, e.project)
+                      }
                   }
                 }
               }
               if (!virtualFile.isDirectory && oldUssFileEncoding != dialog.state.ussAttributes.ussFileEncoding) {
                 val newAttributes = dialog.state.ussAttributes
-                  val event = listOf(
-                    VFileContentChangeEvent(
-                      FileDocumentManagerImpl.getInstance(),
-                      virtualFile,
-                      virtualFile.modificationStamp,
-                      timeStamp.toLong(),
-                      false
-                    )
+                val event = listOf(
+                  VFileContentChangeEvent(
+                    FileDocumentManagerImpl.getInstance(),
+                    virtualFile,
+                    virtualFile.modificationStamp,
+                    timeStamp.toLong(),
+                    false
                   )
-                  attributes.contentEncodingMode = if (!virtualFile.isWritable) {
-                    showReloadCancelDialog(virtualFile.name, newAttributes.ussFileEncoding.name(), e.project)
-                  } else {
-                    showReloadConvertCancelDialog(virtualFile.name, newAttributes.ussFileEncoding.name(), e.project)
-                  }
-                  if (attributes.contentEncodingMode == null) {
-                    attributes.ussFileEncoding = oldUssFileEncoding
-                  } else {
-                    runWriteActionInEdtAndWait { sendVfsChangesTopic().before(event) }
-                    attributes.encodingChanged = true
-                    updateFileTag(newAttributes)
-                  }
-                  if (attributes.contentEncodingMode == ContentEncodingMode.RELOAD) {
-                    val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.default(e.project))
-                    val contentSynchronizer = dataOpsManager.getContentSynchronizer(virtualFile)
-                    contentSynchronizer?.synchronizeWithRemote(syncProvider)
-                  }
-                  if (attributes.contentEncodingMode == ContentEncodingMode.CONVERT) {
-                    runWriteActionInEdtAndWait { sendVfsChangesTopic().after(event) }
-                  }
+                )
+                attributes.contentEncodingMode = if (!virtualFile.isWritable) {
+                  showReloadCancelDialog(virtualFile.name, newAttributes.ussFileEncoding.name(), e.project)
+                } else {
+                  showReloadConvertCancelDialog(virtualFile.name, newAttributes.ussFileEncoding.name(), e.project)
+                }
+                if (attributes.contentEncodingMode == null) {
+                  attributes.ussFileEncoding = oldUssFileEncoding
+                } else {
+                  runWriteActionInEdtAndWait { sendVfsChangesTopic().before(event) }
+                  attributes.encodingChanged = true
+                  updateFileTag(newAttributes)
+                }
+                if (attributes.contentEncodingMode == ContentEncodingMode.RELOAD) {
+                  val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.default(e.project))
+                  val contentSynchronizer = dataOpsManager.getContentSynchronizer(virtualFile)
+                  contentSynchronizer?.synchronizeWithRemote(syncProvider)
+                }
+                if (attributes.contentEncodingMode == ContentEncodingMode.CONVERT) {
+                  runWriteActionInEdtAndWait { sendVfsChangesTopic().after(event) }
+                }
               }
             }
           }
+
           is RemoteMemberAttributes -> {
             val dialog = MemberPropertiesDialog(e.project, MemberState(attributes))
             dialog.showAndGet()
@@ -137,9 +142,6 @@ class GetFilePropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-        && (node is UssFileNode
-        || node is FileLikeDatasetNode
-        || node is LibraryNode
-        || node is UssDirNode)
+      && (node is UssFileNode || node is FileLikeDatasetNode || node is LibraryNode || node is UssDirNode)
   }
 }
