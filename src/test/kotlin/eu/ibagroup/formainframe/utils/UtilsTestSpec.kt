@@ -40,7 +40,6 @@ class UtilsTestSpec : ShouldSpec({
     context("validateForBlank") {
       val jTextField = JTextField()
 
-      // validateForBlank(text: String, component: JComponent)
       should("check that text is not blank") {
         val actual = validateForBlank("text", jTextField)
         val expected = null
@@ -57,7 +56,6 @@ class UtilsTestSpec : ShouldSpec({
           actual shouldBe expected
         }
       }
-      // validateForBlank(component: JTextField)
       should("check that text is not blank in a component") {
         jTextField.text = "text"
         val actual = validateForBlank(jTextField)
@@ -241,7 +239,6 @@ class UtilsTestSpec : ShouldSpec({
     // validateFieldWithLengthRestriction
     should("validate that text does not exceed the specified length") {}
     should("validate that text exceeds the specified length") {}
-    // validateDatasetMask
     context("validateDatasetMask") {
       val jTextField = JTextField()
 
@@ -309,7 +306,6 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
     }
-    // validateUssMask
     context("validateUssMask") {
       val jTextField = JTextField()
 
@@ -341,7 +337,6 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
     }
-    // validateUssFileName
     context("validateUssFileName") {
       val jTextField = JTextField()
 
@@ -373,7 +368,6 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
     }
-    // validateUssFileNameAlreadyExists
     context("validateUssFileNameAlreadyExists") {
       val jTextField = JTextField()
       val mockFileNode = mockk<UssFileNode>()
@@ -443,7 +437,6 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
     }
-    // validateDataset
     context("validateDataset") {
       should("validate that the provided dataset parameters are valid") {
         val datasetName = JTextField("name")
