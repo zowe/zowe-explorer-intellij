@@ -15,39 +15,39 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 
 /**
- * Factory for creating adapter for old jobs working set configs.
+ * Factory for creating adapter for old JES working set configs.
  */
-class OldJobsWorkingSetAdapterFactory : OldConfigAdapterFactory {
+class OldJesWorkingSetAdapterFactory : OldConfigAdapterFactory {
   override fun buildAdapter(document: Document): OldConfigAdapter<*> {
-    return OldJobsWorkingSetAdapter(document)
+    return OldJesWorkingSetAdapter(document)
   }
 }
 
 /**
- * Implementation of OldConfigAdapter for jobs working set.
+ * Implementation of OldConfigAdapter for JES working set.
  * Changes the jobs filters from lowercase to uppercase.
  */
-class OldJobsWorkingSetAdapter(private val document: Document) : OldConfigAdapter<JobsWorkingSetConfig> {
+class OldJesWorkingSetAdapter(private val document: Document) : OldConfigAdapter<JesWorkingSetConfig> {
 
   /**
    * @see OldConfigAdapter.configClass
    */
-  override val configClass = JobsWorkingSetConfig::class.java
+  override val configClass = JesWorkingSetConfig::class.java
 
   /**
    * Jobs filters can be stored in lower case.
    * That's why it is necessary to find all tags with such jobs filters.
-   * @return list of jobs working set elements in old config format.
+   * @return list of JES working set elements in old config format.
    */
-  private fun getOldJobsWsElements(): List<Element> {
+  private fun getOldJesWsElements(): List<Element> {
     return document
       .documentElement
-      .getApplicationOption("jobsWorkingSets")
+      .getApplicationOption("jesWorkingSets")
       ?.get("list")
       ?.firstOrNull()
-      ?.get("JobsWorkingSetConfig")
-      ?.filter { jobsWsElement ->
-        getJobsFiltersElements(jobsWsElement)
+      ?.get("JesWorkingSetConfig")
+      ?.filter { jesWsElement ->
+        getJobsFiltersElements(jesWsElement)
           .any {
             val owner = it.getOptionValue("owner")
             val prefix = it.getOptionValue("prefix")
@@ -58,12 +58,12 @@ class OldJobsWorkingSetAdapter(private val document: Document) : OldConfigAdapte
   }
 
   /**
-   * Get list of all jobs filters for jobs working set.
-   * @param jobsWsElement jobs working set element.
+   * Get list of all jobs filters for JES working set.
+   * @param jesWsElement JES working set element.
    * @return list of jobs filters elements.
    */
-  private fun getJobsFiltersElements(jobsWsElement: Element): List<Element> {
-    return jobsWsElement["option"]
+  private fun getJobsFiltersElements(jesWsElement: Element): List<Element> {
+    return jesWsElement["option"]
       .firstOrNull { it.getAttribute("name") == "jobsFilters" }
       ?.get("list")
       ?.firstOrNull()
@@ -74,19 +74,19 @@ class OldJobsWorkingSetAdapter(private val document: Document) : OldConfigAdapte
    * @see OldConfigAdapter.getOldConfigsIds
    */
   override fun getOldConfigsIds(): List<String> {
-    return getOldJobsWsElements().map { it.getOptionValue("connectionConfigUuid") }
+    return getOldJesWsElements().map { it.getOptionValue("connectionConfigUuid") }
   }
 
   /**
    * @see OldConfigAdapter.castOldConfigs
    */
-  override fun castOldConfigs(): List<JobsWorkingSetConfig> {
-    return getOldJobsWsElements().mapNotNull { jobsWsElement ->
-      val connectionConfigUuid = jobsWsElement.getOptionValue("connectionConfigUuid")
-      val name = jobsWsElement.getOptionValue("name")
-      val uuid = jobsWsElement.getOptionValue("uuid")
+  override fun castOldConfigs(): List<JesWorkingSetConfig> {
+    return getOldJesWsElements().mapNotNull { jesWsElement ->
+      val connectionConfigUuid = jesWsElement.getOptionValue("connectionConfigUuid")
+      val name = jesWsElement.getOptionValue("name")
+      val uuid = jesWsElement.getOptionValue("uuid")
 
-      val jobsFilters = getJobsFiltersElements(jobsWsElement)
+      val jobsFilters = getJobsFiltersElements(jesWsElement)
         .map {
           JobsFilter(
             it.getOptionValue("owner").uppercase(),
@@ -98,7 +98,7 @@ class OldJobsWorkingSetAdapter(private val document: Document) : OldConfigAdapte
       if (connectionConfigUuid.isEmpty() || name.isEmpty()) {
         null
       } else {
-        JobsWorkingSetConfig(uuid, name, connectionConfigUuid, jobsFilters.toMutableList())
+        JesWorkingSetConfig(uuid, name, connectionConfigUuid, jobsFilters.toMutableList())
       }
     }
   }

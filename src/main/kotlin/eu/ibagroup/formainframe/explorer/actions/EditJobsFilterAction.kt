@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
 import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.explorer.ui.EditJobsFilterDialog
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
@@ -40,7 +40,7 @@ class EditJobsFilterAction : JobsFilterAction() {
         val newJobsFilter = dialog.state.toJobsFilter()
         // Is the job filter really changed
         if (prefix != newJobsFilter.prefix || owner != newJobsFilter.owner || jobId != newJobsFilter.jobId) {
-          val wsToUpdate = configCrudable.getByUniqueKey<JobsWorkingSetConfig>(ws.uuid)?.clone()
+          val wsToUpdate = configCrudable.getByUniqueKey<JesWorkingSetConfig>(ws.uuid)?.clone()
           if (wsToUpdate != null) {
             val changedJobFilter: JobsFilter? =
               wsToUpdate.jobsFilters

@@ -24,7 +24,7 @@ import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
@@ -92,7 +92,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
       selectedConfigs.any { state -> filesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
     }
 
-    val jesWorkingSet = sandboxCrudable.getAll<JobsWorkingSetConfig>().toMutableList()
+    val jesWorkingSet = sandboxCrudable.getAll<JesWorkingSetConfig>().toMutableList()
     val jesWsUsages = jesWorkingSet.filter { jesWsConfig ->
       selectedConfigs.any { state -> jesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
     }

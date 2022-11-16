@@ -24,7 +24,7 @@ import eu.ibagroup.formainframe.utils.service
 /** An action to view a process of running job in the Jobs Tool Window */
 class ViewJobAction : AnAction() {
 
-  /** View a process of running job on click in the Jes Explorer */
+  /** View a process of running job on click in the JES Explorer */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
