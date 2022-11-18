@@ -39,11 +39,14 @@ import org.zowe.explorer.utils.getMinimalCommonParents
 import org.zowe.explorer.utils.getParentsChain
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.tree.TreePath
 import kotlin.concurrent.withLock
+
 
 /**
  * Data key for extracting current instance of FileExplorerView.
@@ -177,6 +180,7 @@ class FileExplorerView(
           .let { LinkedList(it) }
         copyPasteBuffer = buffer
       }
+      Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(""), null)
     }
 
 

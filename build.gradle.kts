@@ -63,7 +63,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("com.starxg:java-keytar:1.0.0")
-  implementation("org.zowe:kotlinsdk:0.3.0")
+  implementation("org.zowe:kotlinsdk:0.3.1-rc.1")
   testImplementation("io.mockk:mockk:1.12.4")
   testImplementation("org.mock-server:mockserver-netty:5.13.2")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
