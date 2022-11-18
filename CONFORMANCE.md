@@ -32,6 +32,7 @@ Throughout this document you will find the following terminology being used:
 | 8   | v1  |     |  x  |            | Plug-in should comply with the IntelliJ Platform UI Guidelines                                                                                                                                                         | https://jetbrains.github.io/ui/                       |
 | 9   | v1  |  x  |     |            | If the plug-in accesses the same mainframe service as a Zowe CLI plug-in, the connection information should be shared via Zowe Team Config (zowe.config.json)                                                          |                                                       |
 | 10  | v1  |  x  |     |            | If the plug-in uses and stores sensitive information, it must ensure the safety of such kind of information, normally - with the help of native IntelliJ Platform functions (credentials storage, virtual files, etc.) |                                                       |
+| 11  | v1  |     |  x  |            | It is strongly recommended to use Gradle as a build tool. This is the direct recommendation of the IntelliJ Platform                                                                                                   |                                                       |
 
 ## Distribution
 
