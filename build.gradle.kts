@@ -31,7 +31,7 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "0.3.0"
+version = "0.3.1"
 val remoteRobotVersion = "0.11.14"
 
 repositories {
