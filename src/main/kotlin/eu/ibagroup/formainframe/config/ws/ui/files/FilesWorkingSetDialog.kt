@@ -27,6 +27,7 @@ import eu.ibagroup.formainframe.utils.validateUssMask
 import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.table.TableCellEditor
+import javax.swing.table.TableCellRenderer
 
 /**
  * Dialog of Files Working Set configurations.
@@ -147,6 +148,10 @@ class FilesWorkingSetDialog(
       comboBoxMap[item] = comboBoxItem
       comboBoxMap[item]?.clickCountToStart = 1
       return comboBoxItem
+    }
+
+    override fun getRenderer(item: MaskState): TableCellRenderer {
+      return ValidatingCellRenderer<MaskState>()
     }
 
     override fun setValue(item: MaskState, value: String) {
