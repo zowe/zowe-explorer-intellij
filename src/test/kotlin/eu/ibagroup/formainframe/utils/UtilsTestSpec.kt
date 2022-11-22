@@ -233,12 +233,54 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
     }
-    // validateZosmfUrl
-    should("validate correct URL") {}
-    should("validate wrong URL") {}
-    // validateFieldWithLengthRestriction
-    should("validate that text does not exceed the specified length") {}
-    should("validate that text exceeds the specified length") {}
+    context("validateZosmfUrl") {
+      val component = JTextField()
+
+      should("validate correct URL") {
+        component.text = "https://some.url"
+        val actual = validateZosmfUrl(component)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate wrong URL") {
+        component.text = "wrong url\""
+        val actual = validateZosmfUrl(component)
+        val expected = ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
+    context("validateFieldWithLengthRestriction") {
+      val component = JTextField()
+
+      should("validate that text does not exceed the specified length") {
+        component.text = "ewrtyugifkhuf"
+        val lengthLimit = 10
+        val fieldName = "Test field"
+        val actual = validateFieldWithLengthRestriction(component, lengthLimit, fieldName)
+        val expected = ValidationInfo("$fieldName length must not exceed $lengthLimit characters.")
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that text exceeds the specified length") {
+        component.text = "ewrtyugifkhuf"
+        val lengthLimit = 15
+        val fieldName = "Test field"
+        val actual = validateFieldWithLengthRestriction(component, lengthLimit, fieldName)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
     context("validateDatasetMask") {
       val jTextField = JTextField()
 
