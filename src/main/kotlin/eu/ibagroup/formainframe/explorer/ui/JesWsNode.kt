@@ -19,7 +19,7 @@ import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 
 /** JES working set node representation */
-class JobsWsNode(
+class JesWsNode(
   workingSet: JesWorkingSet,
   project: Project,
   parent: ExplorerTreeNode<*>,

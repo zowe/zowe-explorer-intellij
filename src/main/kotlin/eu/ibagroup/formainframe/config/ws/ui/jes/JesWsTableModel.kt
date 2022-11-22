@@ -8,25 +8,25 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.ws.ui.jobs
+package eu.ibagroup.formainframe.config.ws.ui.jes
 
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsTableModel
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
- * Table model for Jobs Working Set configuration table.
+ * Table model for JES Working Set configuration table.
  * @see AbstractWsTableModel
  * @author Valiantsin Krus
  */
-class JobsWsTableModel(crudable: Crudable) : AbstractWsTableModel<JobsWorkingSetConfig>(crudable) {
+class JesWsTableModel(crudable: Crudable) : AbstractWsTableModel<JesWorkingSetConfig>(crudable) {
 
-  override fun set(row: Int, item: JobsWorkingSetConfig) {
+  override fun set(row: Int, item: JesWorkingSetConfig) {
     get(row).jobsFilters = item.jobsFilters
     super.set(row, item)
   }
 
-  override val clazz = JobsWorkingSetConfig::class.java
+  override val clazz = JesWorkingSetConfig::class.java
 
   init {
     initialize()

@@ -12,7 +12,6 @@ package eu.ibagroup.formainframe.config.connect
 
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
-import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 
 /**
@@ -31,9 +30,6 @@ class ConnectionConfig : EntityWithUuid {
   var isAllowSelfSigned = true
 
   @Column
-  var codePage = CodePage.IBM_1047
-
-  @Column
   var zVersion = ZVersion.ZOS_2_1
 
   constructor() {}
@@ -43,13 +39,11 @@ class ConnectionConfig : EntityWithUuid {
     name: String,
     url: String,
     isAllowSelfSigned: Boolean,
-    codePage: CodePage,
     zVersion: ZVersion
   ) : super(uuid) {
     this.name = name
     this.url = url
     this.isAllowSelfSigned = isAllowSelfSigned
-    this.codePage = codePage
     this.zVersion = zVersion
   }
 
@@ -63,7 +57,6 @@ class ConnectionConfig : EntityWithUuid {
     if (name != other.name) return false
     if (url != other.url) return false
     if (isAllowSelfSigned != other.isAllowSelfSigned) return false
-    if (codePage != other.codePage) return false
     if (zVersion != other.zVersion) return false
 
     return true
@@ -74,13 +67,12 @@ class ConnectionConfig : EntityWithUuid {
     result = 31 * result + name.hashCode()
     result = 31 * result + url.hashCode()
     result = 31 * result + isAllowSelfSigned.hashCode()
-    result = 31 * result + codePage.hashCode()
     result = 31 * result + zVersion.hashCode()
     return result
   }
 
   override fun toString(): String {
-    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, codePage=$codePage, zVersion=$zVersion)"
+    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, zVersion=$zVersion)"
   }
 
 }

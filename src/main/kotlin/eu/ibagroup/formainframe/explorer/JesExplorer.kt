@@ -12,7 +12,7 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
 import eu.ibagroup.formainframe.config.configCrudable
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.rwLocked
 import java.util.stream.Collectors
@@ -23,9 +23,9 @@ class JesExplorerFactory : ExplorerFactory<JesWorkingSetImpl, JesExplorer> {
 }
 
 /** JES Explorer implementation */
-class JesExplorer : AbstractExplorerBase<JesWorkingSetImpl, JobsWorkingSetConfig>() {
+class JesExplorer : AbstractExplorerBase<JesWorkingSetImpl, JesWorkingSetConfig>() {
   override val unitClass = JesWorkingSetImpl::class.java
-  override val unitConfigClass = JobsWorkingSetConfig::class.java
+  override val unitConfigClass = JesWorkingSetConfig::class.java
 
   override val units by rwLocked(
     configCrudable.getAll(unitConfigClass).map { it.toUnit(disposable) }.collect(Collectors.toSet()).toMutableSet(),
@@ -33,12 +33,12 @@ class JesExplorer : AbstractExplorerBase<JesWorkingSetImpl, JobsWorkingSetConfig
   )
 
   /**
-   * Creates a unit class (JesWorkingSetImpl) from config class (JobsWorkingSetConfig).
-   * @see JobsWorkingSetConfig
+   * Creates a unit class (JesWorkingSetImpl) from config class (JesWorkingSetConfig).
+   * @see JesWorkingSetConfig
    * @see JesWorkingSetImpl
    * @param parentDisposable disposable parent.
    */
-  override fun JobsWorkingSetConfig.toUnit(parentDisposable: Disposable): JesWorkingSetImpl {
+  override fun JesWorkingSetConfig.toUnit(parentDisposable: Disposable): JesWorkingSetImpl {
     return JesWorkingSetImpl(
       uuid = uuid,
       jesExplorer = this@JesExplorer,

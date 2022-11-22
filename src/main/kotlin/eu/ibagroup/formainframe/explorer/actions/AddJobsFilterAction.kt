@@ -16,7 +16,7 @@ import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
 import eu.ibagroup.formainframe.explorer.ui.AddJobsFilterDialog
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
-import eu.ibagroup.formainframe.explorer.ui.JobsWsNode
+import eu.ibagroup.formainframe.explorer.ui.JesWsNode
 
 /**
  * Action for adding Job Filter from UI.
@@ -25,11 +25,11 @@ import eu.ibagroup.formainframe.explorer.ui.JobsWsNode
 class AddJobsFilterAction : JobsFilterAction() {
 
   /**
-   * Is node conforms to the JesFilterNode and the JobsWsNode types
+   * Is node conforms to the JesFilterNode and the JesWsNode types
    * @param node the node to check
    */
   override fun isNodeConformsToType(node: ExplorerTreeNode<*>?): Boolean {
-    return super.isNodeConformsToType(node) || node is JobsWsNode
+    return super.isNodeConformsToType(node) || node is JesWsNode
   }
 
   /** Opens AddJobsFilterDialog and saves result. */
