@@ -62,7 +62,7 @@ class UssFileContentSynchronizer(
       var content: ByteArray? = null
       try {
         val connectionConfig = it.connectionConfig
-        val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+        val xIBMDataType = attributes.contentMode
         val response = api<DataAPI>(connectionConfig).retrieveUssFileContent(
           authorizationToken = connectionConfig.authToken,
           filePath = FilePath(attributes.path),
@@ -102,7 +102,7 @@ class UssFileContentSynchronizer(
     for (requester in attributes.requesters) {
       try {
         val connectionConfig = requester.connectionConfig
-        val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+        val xIBMDataType = attributes.contentMode
 
         val newContent =
           if (xIBMDataType.type === XIBMDataType.Type.BINARY) newContentBytes else newContentBytes.addNewLine()

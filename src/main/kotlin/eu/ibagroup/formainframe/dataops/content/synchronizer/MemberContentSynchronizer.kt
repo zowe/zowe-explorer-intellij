@@ -73,7 +73,7 @@ class MemberContentSynchronizer(
       try {
         log.info("Trying to execute a call using $requester")
         val connectionConfig = requester.connectionConfig
-        val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+        val xIBMDataType = attributes.contentMode
         val response = api<DataAPI>(connectionConfig).retrieveMemberContent(
           authorizationToken = connectionConfig.authToken,
           datasetName = libAttributes.name,
@@ -117,7 +117,7 @@ class MemberContentSynchronizer(
       try {
         log.info("Trying to execute a call using $requester")
         val connectionConfig = requester.connectionConfig
-        val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+        val xIBMDataType = attributes.contentMode
         val newContent =
           if (xIBMDataType.type == XIBMDataType.Type.BINARY) newContentBytes else newContentBytes.addNewLine()
         val response = apiWithBytesConverter<DataAPI>(connectionConfig).writeToDatasetMember(

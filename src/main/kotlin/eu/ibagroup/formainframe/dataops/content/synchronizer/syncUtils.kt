@@ -13,11 +13,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
-import eu.ibagroup.r2z.CodePage
-import eu.ibagroup.r2z.XIBMDataType
-import eu.ibagroup.r2z.annotations.ZVersion
 import java.nio.charset.Charset
 
 private const val NEW_LINE = "\n"
@@ -25,15 +21,6 @@ private const val NEW_LINE = "\n"
 val DEFAULT_TEXT_CHARSET: Charset = Charset.forName("ISO8859_1")
 
 val DEFAULT_BINARY_CHARSET: Charset = Charset.forName("IBM-1047")
-
-/** Passes codePage in XIBMDataType if version of zos > 2.4 */
-fun updateDataTypeWithEncoding(connectionConfig: ConnectionConfig, oldDataType: XIBMDataType): XIBMDataType {
-  return if (connectionConfig.zVersion >= ZVersion.ZOS_2_4 && oldDataType.encoding != null && oldDataType.encoding != CodePage.IBM_1047 && oldDataType.type == XIBMDataType.Type.TEXT) {
-    XIBMDataType(oldDataType.type, connectionConfig.codePage)
-  } else {
-    oldDataType
-  }
-}
 
 /** Remove string's last blank line */
 fun String.removeLastNewLine(): String {

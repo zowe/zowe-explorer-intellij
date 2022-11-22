@@ -17,7 +17,6 @@ import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
-import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 
 /**
@@ -31,19 +30,17 @@ data class ConnectionDialogState(
   var username: String = "",
   var password: String = "",
   var isAllowSsl: Boolean = false,
-  var codePage: CodePage = CodePage.IBM_1047,
   var zVersion: ZVersion = ZVersion.ZOS_2_1,
   override var mode: DialogMode = DialogMode.CREATE
 ) : DialogState, Cloneable {
 
   var connectionConfig
-    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, codePage, zVersion)
+    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion)
     set(value) {
       connectionUuid = value.uuid
       connectionName = value.name
       connectionUrl = value.url
       isAllowSsl = value.isAllowSelfSigned
-      codePage = value.codePage
       zVersion = value.zVersion
     }
 
@@ -84,7 +81,6 @@ fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
     username = credentials.username,
     password = credentials.password,
     isAllowSsl = this.isAllowSelfSigned,
-    codePage = this.codePage,
     zVersion = this.zVersion
   )
 }

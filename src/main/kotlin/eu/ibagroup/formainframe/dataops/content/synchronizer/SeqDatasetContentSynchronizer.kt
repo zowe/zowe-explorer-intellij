@@ -97,7 +97,7 @@ class SeqDatasetContentSynchronizer(
     attributes: RemoteDatasetAttributes
   ): Call<ResponseBody> {
     val volser = attributes.volser
-    val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+    val xIBMDataType = attributes.contentMode
     return if (volser != null) {
       api<DataAPI>(connectionConfig).retrieveDatasetContent(
         authorizationToken = connectionConfig.authToken,
@@ -127,7 +127,7 @@ class SeqDatasetContentSynchronizer(
     content: ByteArray
   ): Call<Void> {
     val volser = attributes.volser
-    val xIBMDataType = updateDataTypeWithEncoding(connectionConfig, attributes.contentMode)
+    val xIBMDataType = attributes.contentMode
     return if (volser != null) {
       val newContent = if (xIBMDataType.type === XIBMDataType.Type.BINARY) content else content.addNewLine()
       apiWithBytesConverter<DataAPI>(connectionConfig).writeToDataset(
