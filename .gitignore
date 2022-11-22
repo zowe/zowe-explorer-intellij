@@ -27,3 +27,7 @@ $RECYCLE.BIN/
 # VS Code files
 bin
 .vscode
+
+# Fleet files
+.fleet
+.editorconfig
