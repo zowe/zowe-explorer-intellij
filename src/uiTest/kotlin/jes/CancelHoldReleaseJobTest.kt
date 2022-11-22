@@ -37,7 +37,7 @@ class CancelHoldReleaseJobTest {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf(
-        "Allocate Dataset Dialog", "Add Jobs Working Set Dialog", "Add Working Set Dialog"
+        "Allocate Dataset Dialog", "Add JES Working Set Dialog", "Add Working Set Dialog"
     )
     private val projectName = "untitled"
     private val connectionName = "valid connection"

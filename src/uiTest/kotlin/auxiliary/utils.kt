@@ -205,6 +205,20 @@ fun ContainerFixture.deleteWSFromContextMenu(wsName: String) {
 }
 
 /**
+ * Deletes a JES working set via context menu from explorer.
+ */
+fun ContainerFixture.deleteJWSFromContextMenu(jwsName: String) {
+    explorer {
+        jesExplorer.click()
+        find<ComponentFixture>(viewTree).findText(jwsName)
+            .rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenuItem(remoteRobot, "Delete").click()
+    find<ComponentFixture>(byXpath("//div[@class='MyDialog' and @title='Deletion of JES Working Set $jwsName']"))
+}
+
+/**
  * Creates a JES working set via context menu from explorer.
  */
 fun ContainerFixture.createJWSFromContextMenu(
@@ -237,6 +251,23 @@ fun ContainerFixture.createJobsFilter(
     actionMenu(remoteRobot, "New").click()
     actionMenuItem(remoteRobot, "Jobs Filter").click()
     closableFixtureCollector.add(CreateJobsFilterDialog.xPath(), fixtureStack)
+}
+
+/**
+ * Edites a JES working set via context menu from explorer.
+ */
+fun ContainerFixture.editJWSFromContextMenu(
+    jwsName: String, fixtureStack: MutableList<Locator>,
+    closableFixtureCollector: ClosableFixtureCollector
+) {
+    explorer {
+        jesExplorer.click()
+        find<ComponentFixture>(viewTree).findText(jwsName)
+            .rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenuItem(remoteRobot, "Edit").click()
+    closableFixtureCollector.add(EditJesWorkingSetDialog.xPath(), fixtureStack)
 }
 
 /**
@@ -328,8 +359,13 @@ fun setUpTestEnvironment(
             }
         } catch (e: WaitForConditionTimeoutException) {
             e.message.shouldContain("Failed to find 'Dialog' by 'title For Mainframe Plugin Privacy Policy and Terms and Conditions'")
+        }
+        try {
+            find<ComponentFixture>(byXpath("//div[@class='ProjectViewTree']"))
             stripeButton(byXpath("//div[@accessiblename='Project' and @class='StripeButton' and @text='Project']"))
                 .click()
+        } catch (e: WaitForConditionTimeoutException) {
+            //do nothing if ProjectViewTree is hidden
         }
         forMainframe()
     }
@@ -368,6 +404,22 @@ fun openOrCloseWorkingSetInExplorer(
         explorer {
             fileExplorer.click()
             find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
+            Thread.sleep(3000)
+        }
+    }
+}
+
+/**
+ * Double-clicks on the jes working set to open or close it in explorer.
+ */
+fun openOrCloseJesWorkingSetInExplorer(
+    jwsName: String, projectName: String,
+    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        explorer {
+            jesExplorer.click()
+            find<ComponentFixture>(viewTree).findText(jwsName).doubleClick()
             Thread.sleep(3000)
         }
     }

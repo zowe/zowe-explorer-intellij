@@ -164,12 +164,12 @@ class JesWorkingSetViaActionButtonTest {
             }
             closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
         validJobsFilters.forEach {
             openJobFilterInExplorer(it, "", projectName, fixtureStack, remoteRobot)
             closeFilterInExplorer(it, projectName, fixtureStack, remoteRobot)
         }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
 
@@ -263,13 +263,13 @@ class JesWorkingSetViaActionButtonTest {
             }
             closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
         findAll<ComponentFixture>(byXpath("//div[@class='MyComponent'][.//div[@accessiblename='Invalid URL port: \"104431\"' and @class='JEditorPane']]")).forEach {
             it.click()
             findAll<ActionButtonFixture>(
                 byXpath("//div[@class='ActionButton' and @myicon= 'close.svg']")
             ).first().click()
         }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 }
