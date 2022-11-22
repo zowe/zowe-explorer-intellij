@@ -162,7 +162,6 @@ private class UpdateFilterDecider(
         || updatingRow.name == currentRow.name
         || updatingRow.zVersion == currentRow.zVersion
         || updatingRow.url == currentRow.url
-        || updatingRow.codePage == currentRow.codePage
         || updatingRow.isAllowSelfSigned == currentRow.isAllowSelfSigned
     } else false
   }

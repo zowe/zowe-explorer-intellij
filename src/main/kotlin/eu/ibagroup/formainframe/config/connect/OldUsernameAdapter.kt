@@ -11,7 +11,6 @@
 package eu.ibagroup.formainframe.config.connect
 
 import eu.ibagroup.formainframe.config.*
-import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.annotations.ZVersion
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -81,7 +80,7 @@ class OldUsernameAdapter(private val document: Document) : OldConfigAdapter<Conn
         null
       } else {
         credentialService.setCredentials(uuid, username, password)
-        ConnectionConfig(uuid, name, url, isAllowSelfSign.toBoolean(), CodePage.IBM_1047, ZVersion.ZOS_2_1)
+        ConnectionConfig(uuid, name, url, isAllowSelfSign.toBoolean(), ZVersion.ZOS_2_1)
       }
     }
   }

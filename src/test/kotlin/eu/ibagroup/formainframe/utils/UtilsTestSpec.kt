@@ -25,7 +25,6 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
-import eu.ibagroup.r2z.CodePage
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.annotations.ZVersion
 import io.kotest.assertions.assertSoftly
@@ -104,11 +103,11 @@ class UtilsTestSpec : ShouldSpec({
         every { mockCrud.getAll(ConnectionConfig::class.java) } returns Stream.of(
           ConnectionConfig(
             uuid = "con", name = "a", url = "https://found.com",
-            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1
+            isAllowSelfSigned = false, zVersion = ZVersion.ZOS_2_1
           ),
           ConnectionConfig(
             uuid = "con1", name = "a1", url = "https://found1.com",
-            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1
+            isAllowSelfSigned = false, zVersion = ZVersion.ZOS_2_1
           )
         )
 
@@ -127,11 +126,11 @@ class UtilsTestSpec : ShouldSpec({
         every { mockCrud.getAll(ConnectionConfig::class.java) } returns Stream.of(
           ConnectionConfig(
             uuid = "con", name = "a", url = "https://found.com",
-            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1
+            isAllowSelfSigned = false, zVersion = ZVersion.ZOS_2_1
           ),
           ConnectionConfig(
             uuid = "con1", name = "a1", url = "https://found1.com",
-            isAllowSelfSigned = false, codePage = CodePage.IBM_1047, zVersion = ZVersion.ZOS_2_1
+            isAllowSelfSigned = false, zVersion = ZVersion.ZOS_2_1
           )
         )
 
