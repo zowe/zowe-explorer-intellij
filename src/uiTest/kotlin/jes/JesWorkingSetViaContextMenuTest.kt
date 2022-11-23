@@ -306,7 +306,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to create already exists jobs filter in JES working set, checks that correct message is returned.
+     * Tests to create already existing jobs filter in JES working set, checks that correct message is returned.
      */
     @Test
     @Order(11)
@@ -331,7 +331,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to edit already exists JES working set by adding one jobs filter.
+     * Tests to edit already existing JES working set by adding one jobs filter.
      */
     @Test
     @Order(12)
@@ -353,7 +353,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to edit already exists JES working set by deleting one jobs filter.
+     * Tests to edit already existing JES working set by deleting one jobs filter.
      */
     @Test
     @Order(13)
@@ -376,7 +376,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to edit already exists JES working set by deleting all jobs filter.
+     * Tests to edit already existing JES working set by deleting all jobs filter.
      */
     @Test
     @Order(14)
@@ -412,7 +412,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to edit already exists JES working set by changing connection to invalid, checks that correct message returned.
+     * Tests to edit already existing JES working set by changing connection to invalid, checks that correct message returned.
      */
     @Test
     @Order(15)
@@ -445,7 +445,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to edit already exists JES working set by changing connection to new one.
+     * Tests to edit already existing JES working set by changing connection to new one.
      */
     @Test
     @Order(16)
@@ -467,7 +467,7 @@ class JesWorkingSetViaContextMenuTest {
     }
 
     /**
-     * Tests to edit already exists JES working set by renaming it.
+     * Tests to edit already existing JES working set by renaming it.
      */
     @Test
     @Order(17)
