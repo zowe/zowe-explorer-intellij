@@ -10,11 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
-import com.intellij.ide.dnd.DnDEvent
-import com.intellij.ide.dnd.DnDNativeTarget
-import com.intellij.ide.dnd.DnDTargetChecker
-import com.intellij.ide.dnd.FileCopyPasteUtil
-import com.intellij.ide.dnd.TransferableWrapper
+import com.intellij.ide.dnd.*
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -121,16 +117,13 @@ class FileExplorerViewDropTarget(
   override fun drop(event: DnDEvent) {
     val sourcesTargetBounds = getSourcesTargetAndBounds(event) ?: return
 
-//    val pasteProvider = copyPasteSupport.getPasteProvider(listOf(sourcesTargetBounds.second))
     val pasteProvider = copyPasteSupport.pasteProvider
     val cutProvider = copyPasteSupport.cutProvider
     val copyProvider = copyPasteSupport.copyProvider
-    // TODO: remove when the support of IntelliJ <= 213 is closed
-    val sourceTreePaths = sourcesTargetBounds.first?.toList() ?: listOf()
+    val sourceTreePaths = sourcesTargetBounds.v1?.toList() ?: listOf()
 
     val isCopiedFromRemote = event.attachedObject is FileExplorerViewDragSource.ExplorerTransferableWrapper
-    // TODO: remove when the support of IntelliJ <= 213 is closed
-    val isCopiedToRemote = sourcesTargetBounds.fourth == myTree
+    val isCopiedToRemote = sourcesTargetBounds.v4 == myTree
 
     val copyCutContext = DataContext {
       when (it) {
@@ -141,30 +134,28 @@ class FileExplorerViewDropTarget(
               makeNodeDataFromTreePath(explorer, treePath)
             else null
           }.toTypedArray()
+
         CommonDataKeys.VIRTUAL_FILE_ARRAY.name -> {
-          // TODO: remove when the support of IntelliJ <= 213 is closed
-          if (sourcesTargetBounds.fourth == myTree) {
-            // TODO: remove when the support of IntelliJ <= 213 is closed
-            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file)
+          if (sourcesTargetBounds.v4 == myTree) {
+            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2).file)
           } else {
-            // TODO: remove when the support of IntelliJ <= 213 is closed
-            arrayOf(sourcesTargetBounds.second.getVirtualFile())
+            arrayOf(sourcesTargetBounds.v2.getVirtualFile())
           }
         }
+
         IS_DRAG_AND_DROP_KEY.name -> true
         DRAGGED_FROM_PROJECT_FILES_ARRAY.name -> {
           if (isCopiedFromRemote) {
             emptyList()
           } else {
-            // TODO: remove when the support of IntelliJ <= 213 is closed
-            sourcesTargetBounds.first?.mapNotNull { treePath -> treePath?.getVirtualFile() }
+            sourcesTargetBounds.v1?.mapNotNull { treePath -> treePath?.getVirtualFile() }
           }
         }
+
         else -> null
       }
     }
-    // TODO: remove when the support of IntelliJ <= 213 is closed
-    if (isCopiedFromRemote && isCopiedToRemote && !isCrossSystemCopy(sourceTreePaths, sourcesTargetBounds.second)) {
+    if (isCopiedFromRemote && isCopiedToRemote && !isCrossSystemCopy(sourceTreePaths, sourcesTargetBounds.v2)) {
       if (cutProvider.isCutEnabled(copyCutContext)) {
         cutProvider.performCut(copyCutContext)
       }
@@ -197,43 +188,35 @@ class FileExplorerViewDropTarget(
    */
   override fun update(event: DnDEvent): Boolean {
     val sourcesTargetBounds = getSourcesTargetAndBounds(event) ?: return false
-    // TODO: remove when the support of IntelliJ <= 213 is closed
-    val sources = sourcesTargetBounds.first ?: return false
+    val sources = sourcesTargetBounds.v1 ?: return false
     if (
-      // TODO: remove when the support of IntelliJ <= 213 is closed
-      ArrayUtilRt.find(sources, sourcesTargetBounds.second) != -1
+      ArrayUtilRt.find(sources, sourcesTargetBounds.v2) != -1
       || !FileCopyPasteUtil.isFileListFlavorAvailable(event)
     ) {
       return false
     }
 
-    //    val pasteEnabled = copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
-    //    val pasteEnabled = false
     val isCopiedFromRemote = event.attachedObject is FileExplorerViewDragSource.ExplorerTransferableWrapper
-    // TODO: remove when the support of IntelliJ <= 213 is closed
-    val pasteEnabled = if (isCopiedFromRemote && sourcesTargetBounds.fourth === getProjectTree()) {
-      val vFile = sourcesTargetBounds.second.getVirtualFile()
+    val pasteEnabled = if (isCopiedFromRemote && sourcesTargetBounds.v4 === getProjectTree()) {
+      val vFile = sourcesTargetBounds.v2.getVirtualFile()
       if (vFile == null) {
         false
       } else {
         copyPasteSupport.isPastePossible(listOf(vFile), sources.map { makeNodeDataFromTreePath(explorer, it) })
       }
-    // TODO: remove when the support of IntelliJ <= 213 is closed
-    } else if (!isCopiedFromRemote && sourcesTargetBounds.fourth == myTree) {
+    } else if (!isCopiedFromRemote && sourcesTargetBounds.v4 == myTree) {
       val sourceFiles = sources.mapNotNull { it?.getVirtualFile() }
       val target =
-        // TODO: remove when the support of IntelliJ <= 213 is closed
-        makeNodeDataFromTreePath(explorer, sourcesTargetBounds.second).file?.let { listOf(it) } ?: emptyList()
+        makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2).file?.let { listOf(it) } ?: emptyList()
       copyPasteSupport.isPastePossibleForFiles(target, sourceFiles)
-    } else if (sourcesTargetBounds.fourth == myTree) {
-      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.second), sources.toList())
+    } else if (sourcesTargetBounds.v4 == myTree) {
+      copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.v2), sources.toList())
     } else false
 
     event.isDropPossible = pasteEnabled
     if (pasteEnabled) {
       event.setHighlighting(
-        // TODO: remove when the support of IntelliJ <= 213 is closed
-        RelativeRectangle(sourcesTargetBounds.fourth, sourcesTargetBounds.third),
+        RelativeRectangle(sourcesTargetBounds.v4, sourcesTargetBounds.v3),
         DnDEvent.DropTargetHighlightingType.RECTANGLE
       )
     }
