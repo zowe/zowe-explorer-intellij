@@ -11,7 +11,7 @@
 import groovy.xml.XmlUtil
 
 def jiraSite = 'jira-iba'
-def gitCredentialsId = 'c688480b-ff31-4c6f-8edd-8b38088ab5ec'
+def gitCredentialsId = 'jenkins-gitlab-key'
 //def gitUrl = 'https://code.iby.scdc.io/ijmp/for-mainframe.git'
 def gitUrl = 'git@code.iby.scdc.io:ijmp/for-mainframe.git'
 def resultFileName = ''
