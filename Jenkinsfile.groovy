@@ -12,12 +12,12 @@ import groovy.xml.XmlUtil
 
 def jiraSite = 'jira-iba'
 def gitCredentialsId = 'jenkins-gitlab-key'
-//def gitUrl = 'https://git.icdc.io/ijmp/for-mainframe.git'
-def gitUrl = 'git@git.icdc.io:ijmp/for-mainframe.git'
+//def gitUrl = 'https://code.iby.scdc.io/ijmp/for-mainframe.git'
+def gitUrl = 'git@code.iby.scdc.io:ijmp/for-mainframe.git'
 def resultFileName = ''
 String jiraTicket = ''
 def gitlabBranch = env.BRANCH_NAME
-properties([gitLabConnection('git.icdc.io-connection')])
+properties([gitLabConnection('code.iby.scdc.io-connection')])
 
 
 // @NonCPS
