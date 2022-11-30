@@ -101,6 +101,7 @@ tasks {
         <li>'Skip files' copy files anyway</li>
         <li>Copy DS member to USS folder does not work</li>
         <li>Unknown type of file if copy-delete-copy the same PDS member</li>
+        <li>Ctrl+C/Ctrl+V does not work if copy file from remote to local</li>
       </ul>"""
     )
   }
