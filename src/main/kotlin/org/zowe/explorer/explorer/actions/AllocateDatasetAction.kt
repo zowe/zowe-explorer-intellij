@@ -98,35 +98,38 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
                 ),
                 it
               )
-          }.onSuccess {
-            res = true
-            var p: ExplorerTreeNode<*>? = parentNode
-            while (p !is DSMaskNode) {
-              p = p?.parent ?: break
-            }
-            p?.cleanCacheIfPossible()
-            runInEdt {
-              if (showOkNoDialog(
-                  title = "Dataset ${state.datasetName} Has Been Created",
-                  message = "Would you like to add mask \"${state.datasetName}\" to ${parentNode.unit.name}",
-                  project = e.project,
-                  okText = "Yes",
-                  noText = "No"
-                )
-              ) {
-                val filesWorkingSetConfig =
-                  configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
-                if (filesWorkingSetConfig != null) {
-                  filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
-                  configCrudable.update(filesWorkingSetConfig)
+          }
+            .onSuccess {
+              res = true
+              var p: ExplorerTreeNode<*>? = parentNode
+              while (p !is DSMaskNode) {
+                p = p?.parent ?: break
+              }
+              p?.cleanCacheIfPossible(cleanBatchedQuery = true)
+              runInEdt {
+                if (
+                  showOkNoDialog(
+                    title = "Dataset ${state.datasetName} Has Been Created",
+                    message = "Would you like to add mask \"${state.datasetName}\" to ${parentNode.unit.name}",
+                    project = e.project,
+                    okText = "Yes",
+                    noText = "No"
+                  )
+                ) {
+                  val filesWorkingSetConfig =
+                    configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
+                  if (filesWorkingSetConfig != null) {
+                    filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
+                    configCrudable.update(filesWorkingSetConfig)
+                  }
                 }
               }
+              initialState.errorMessage = ""
             }
-            initialState.errorMessage = ""
-          }.onFailure { t ->
-            parentNode.explorer.reportThrowable(t, e.project)
-            initialState.errorMessage = t.message ?: t.toString()
-          }
+            .onFailure { t ->
+              parentNode.explorer.reportThrowable(t, e.project)
+              initialState.errorMessage = t.message ?: t.toString()
+            }
         }
         res
       }
@@ -228,7 +231,7 @@ class AllocateLikeAction : AnAction() {
     }
     if (spaceUnits == SpaceUnits.BLOCKS) {
       Messages.showWarningDialog(
-            "Allocation unit BLK is not supported. It will be changed to TRK.",
+        "Allocation unit BLK is not supported. It will be changed to TRK.",
         "Allocation Unit Will Be Changed"
       )
     }
@@ -245,8 +248,8 @@ class AllocateLikeAction : AnAction() {
     }
     val selected = view.mySelectedNodesData
     e.presentation.isEnabledAndVisible = selected.size == 1
-            && selected[0].attributes is RemoteDatasetAttributes
-            && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
+      && selected[0].attributes is RemoteDatasetAttributes
+      && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 

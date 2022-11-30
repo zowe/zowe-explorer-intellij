@@ -1,6 +1,10 @@
 .gradle
 .idea
-
+gradle/*
+gradle/wrapper/*
+!gradle/
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.properties
 build
 
 verifier-all.jar

@@ -38,9 +38,20 @@ class LoadMoreNode(
     val parentNode = parent?.castOrNull<FileFetchNode<*, *, *, *, *>>() ?: return
     val query = parentNode.query ?: return
     parentNode.needToLoadMore = true
+
     parentNode.cleanCache(recursively = false, cleanFetchProviderCache = false)
     cleanInvalidateOnExpand(parentNode, view)
-    view.getNodesByQueryAndInvalidate(query)
+    view.myFsTreeStructure
+      .findByPredicate {
+        if (it is FetchNode) {
+          it.query == query
+        } else false
+      }
+      .onEach { foundNode ->
+        synchronized(view.myStructure) {
+          view.myStructure.invalidate(foundNode, true)
+        }
+      }
   }
 
   override fun canNavigate(): Boolean {

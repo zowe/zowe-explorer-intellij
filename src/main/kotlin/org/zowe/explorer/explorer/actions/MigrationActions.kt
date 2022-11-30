@@ -52,7 +52,7 @@ fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, Connecti
  */
 private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*>>) {
   val uniqueParentNodes = nodes.map { it.parent }.distinct()
-  uniqueParentNodes.forEach { it?.cleanCacheIfPossible() }
+  uniqueParentNodes.forEach { it?.cleanCacheIfPossible(cleanBatchedQuery = true) }
 }
 
 /**

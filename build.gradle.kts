@@ -31,7 +31,7 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "0.3.0"
+version = "0.3.1"
 val remoteRobotVersion = "0.11.14"
 
 repositories {
@@ -63,7 +63,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("com.starxg:java-keytar:1.0.0")
-  implementation("org.zowe:kotlinsdk:0.3.0")
+  implementation("org.zowe:kotlinsdk:0.3.1")
   testImplementation("io.mockk:mockk:1.12.4")
   testImplementation("org.mock-server:mockserver-netty:5.13.2")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
@@ -76,7 +76,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.1")
+  version.set("2022.2")
 }
 
 tasks {
@@ -94,50 +94,17 @@ tasks {
       """
       <b>WARNING: </b> version 0.3 introduces breaking change. You won't be able to use the plugin with IntelliJ version < 2022.1
       <br>
-      <b>New features:</b>
-      <ul>
-        <li>Configurable batch size to load filter smoothly</li>
-        <li>Job Purge operation</li>
-        <li>Job Edit operation</li>
-        <li>Copy local to remote</li>
-        <li>Copy remote to remote</li>
-        <li>GitHub issue #10: Edit Working sets directly from Tool Window</li>
-        <li>GitHub issue #70: Add date and time to JES Explorer</li>
-      </ul>
-      <br>
       <b>Minor changes:</b>
       <ul>
-        <li>Copy remote to local: clarify warning</li>
-        <li>GitHub issue #67: Allocate like for datasets with BLK will be with warning</li>
-        <li>Move the file attribute conversion to a separate thread</li>
-        <li>Source code documentation added</li>
+        <li>Added some unit tests for 'utils' module</li>
       </ul>
       <br>
       <b>Fixed bugs:</b>
       <ul>
-        <li>File cache conflict if open JCL to edit it in JES explorer second time</li>
-        <li>GitHub issue #86: Incorrect error message if mask length > 44</li>
-        <li>GitHub issue #87: Masks type autodetection does not work in Add/Edit Working Set dialogs</li>
-        <li>Problem with automatic refresh after creating new members/deleting members from dataset</li>
-        <li>Confusing dialog title 'Rename Directory' when renaming USS mask from context menu</li>
-        <li>GitHub issue #81: There is no difference between upper and lower cases when create USS masks from context menu</li>
-        <li>GitHub issue #88: Lower case is not changed to upper case during Job Filter creation</li>
-        <li>GitHub issue #44: 'Sync data' button does not work properly when multiple changes in USS file</li>
-        <li>GitHub issue #30: Create new member in dataset that does not have enough space creates empty member despite of warning</li>
-        <li>GitHub issue #54: Accumulation of errors in WS that breaks WS</li>
-        <li>USS file cannot be deleted in development branch</li>
-        <li>z/OS version specified in connection information doesn't match the z/OS version returned from z/OSMF</li>
-        <li>Zowe config connection test always failed</li>
-        <li>IDE error with ReadOnlyModificationException when set 'use binary mode' for read only uss-file</li>
-        <li>GitHub issue #94: SYSPRINT I looked at first always opens in JES explorer for a job with multiple steps</li>
-        <li>IDE error with CallException when try to open uss-file to which you have no access</li>
-        <li>The content of sequential dataset/member is changed anyway even if you choose do not sync data with mainframe</li>
-        <li>IDE error while retrieving job list in JES Explorer</li>
-        <li>Extra item 'Rename' is active in the context menu if click on 'loading...'/'load more' in file explorer</li>
-        <li>GitHub issue #16: Error creating zOSMF connection</li>
-        <li>GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF connection with very long name is added</li>
-        <li>Impossible to open any file/dataset second time</li>
-        <li>The job is marked with green icon as passed despite it finished with abend</li>
+        <li>DnD does not work properly</li>
+        <li>Copy DS member to USS folder does not work</li>
+        <li>Unknown type of file if copy-delete-copy the same PDS member</li>
+        <li>Ctrl+C/Ctrl+V does not work if copy file from remote to local</li>
       </ul>"""
     )
   }
