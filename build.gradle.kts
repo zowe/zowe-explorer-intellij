@@ -72,7 +72,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.1")
+  version.set("2022.2")
 }
 
 tasks {
