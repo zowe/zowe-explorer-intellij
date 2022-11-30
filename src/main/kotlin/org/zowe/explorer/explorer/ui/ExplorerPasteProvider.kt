@@ -133,15 +133,6 @@ class ExplorerPasteProvider : PasteProvider {
     ) {
       it.isIndeterminate = false
       operations.forEach { op ->
-        op.sourceAttributes?.let { attr ->
-          service<AnalyticsService>()
-            .trackAnalyticsEvent(
-              FileEvent(
-                attr,
-                if (op.isMove) FileAction.MOVE else FileAction.COPY
-              )
-            )
-        }
         it.text = "${op.source.name} to ${op.destination.name}"
         runCatching {
           dataOpsManager.performOperation(
