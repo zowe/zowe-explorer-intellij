@@ -40,7 +40,9 @@ import org.zowe.explorer.utils.getParentsChain
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import java.awt.Toolkit
-import java.awt.datatransfer.StringSelection
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
+import java.awt.datatransfer.UnsupportedFlavorException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
@@ -180,7 +182,29 @@ class FileExplorerView(
           .let { LinkedList(it) }
         copyPasteBuffer = buffer
       }
-      Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(""), null)
+      clearClipBoard()
+    }
+
+    /**
+     * Sets empty Transferable to clipboards, which will completely clear it.
+     */
+    private fun clearClipBoard() {
+      val emptyTransferable = object : Transferable {
+        override fun getTransferDataFlavors(): Array<DataFlavor> {
+          return arrayOf()
+        }
+
+        override fun isDataFlavorSupported(flavor: DataFlavor?): Boolean {
+          return false
+        }
+
+        override fun getTransferData(flavor: DataFlavor?): Any {
+          throw UnsupportedFlavorException(flavor)
+        }
+
+      }
+      Toolkit.getDefaultToolkit().systemClipboard.setContents(emptyTransferable, null)
+
     }
 
 

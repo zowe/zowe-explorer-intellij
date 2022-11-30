@@ -55,9 +55,11 @@ class FileLikeDatasetNode(
           )
         )
       }
+
       is RemoteMemberAttributes -> {
         presentation.setIcon(ForMainframeIcons.MemberIcon)
       }
+
       else -> {
         presentation.setIcon(AllIcons.FileTypes.Any_type)
       }

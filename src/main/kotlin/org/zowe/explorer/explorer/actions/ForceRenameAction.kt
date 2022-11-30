@@ -39,7 +39,11 @@ class ForceRenameAction : AnAction() {
     if (selectedNode.node is UssDirNode || selectedNode.node is UssFileNode) {
       val attributes = selectedNode.attributes as RemoteUssAttributes
       val file = selectedNode.file as MFVirtualFile
-      val type = if (attributes.isDirectory) { "Directory" } else { "File" }
+      val type = if (attributes.isDirectory) {
+        "Directory"
+      } else {
+        "File"
+      }
       val renameDialog = RenameDialog(e.project, type, selectedNode, this, attributes.name)
       if (renameDialog.showAndGet()) {
         val confirmDialog = showConfirmDialogIfNecessary(renameDialog.state, selectedNode)
@@ -68,8 +72,8 @@ class ForceRenameAction : AnAction() {
           if (it is UssFileNode && it.value.filenameInternal == text) {
             val confirmTemplate =
               "You are going to rename file $virtualFilePath \n" +
-                      "into existing one. This operation cannot be undone. \n" +
-                      "Would you like to proceed?"
+                "into existing one. This operation cannot be undone. \n" +
+                "Would you like to proceed?"
             return Messages.showOkCancelDialog(
               confirmTemplate,
               "Warning",
@@ -80,6 +84,7 @@ class ForceRenameAction : AnAction() {
           }
         }
       }
+
       is UssDirNode -> {
         childrenNodesFromParent?.forEach {
           if (it is UssDirNode && text == it.value.path.split("/").last()) {
@@ -146,11 +151,13 @@ class ForceRenameAction : AnAction() {
             progressIndicator = it
           )
         }
-      }.onSuccess {
-        node.parent?.cleanCacheIfPossible()
-      }.onFailure {
-        node.explorer.reportThrowable(it, project)
       }
+        .onSuccess {
+          node.parent?.cleanCacheIfPossible(cleanBatchedQuery = true)
+        }
+        .onFailure {
+          node.explorer.reportThrowable(it, project)
+        }
     }
   }
 

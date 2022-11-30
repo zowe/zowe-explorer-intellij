@@ -2,6 +2,16 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
+## `0.3.1 (2022-11-30)`
+
+* Feature: Unit tests for utils module ([16fae1fb](https://github.com/zowe/zowe-explorer-intellij/commit/16fae1fb)) ([683185bb](https://github.com/zowe/zowe-explorer-intellij/commit/683185bb))
+
+
+* Bugfix: DnD does not work properly ([e5dfa3a3](https://github.com/zowe/zowe-explorer-intellij/commit/e5dfa3a3))
+* Bugfix: Copy DS member to USS folder does not work ([1e94ec48](https://github.com/zowe/zowe-explorer-intellij/commit/1e94ec48))
+* Bugfix: Unknown type of file if copy-delete-copy the same PDS member ([21651646](https://github.com/zowe/zowe-explorer-intellij/commit/21651646))
+* Bugfix: Ctrl+C/Ctrl+V does not work if copy file from remote to local ([e5601e7f](https://github.com/zowe/zowe-explorer-intellij/commit/e5601e7f))
+
 ## `0.3.0 (2022-11-18)`
 
 * Breaking: Kotlin DSL v2 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.1
