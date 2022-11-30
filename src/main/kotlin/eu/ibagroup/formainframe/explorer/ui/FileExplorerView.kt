@@ -439,6 +439,7 @@ class FileExplorerView(
               icon = AllIcons.General.QuestionDialog
             )
           ) {
+            it.cleanCache(recursively = true, cleanFetchProviderCache = true, cleanBatchedQuery = true, sendTopic = false)
             it.unit.removeMask(it.value)
           }
         }
@@ -453,6 +454,7 @@ class FileExplorerView(
               icon = AllIcons.General.QuestionDialog
             )
           ) {
+            node.cleanCache(recursively = true, cleanFetchProviderCache = true, cleanBatchedQuery = true, sendTopic = false)
             node.unit.removeUssPath(node.value)
           }
         }
@@ -499,7 +501,7 @@ class FileExplorerView(
               }
             nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
-              .forEach { it.cleanCache(cleanBatchedQuery = true) }
+              .forEach { it.cleanCache(recursively = false, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
           }
         }
       }
