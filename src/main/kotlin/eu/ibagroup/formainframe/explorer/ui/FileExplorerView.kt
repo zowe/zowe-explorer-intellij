@@ -42,11 +42,16 @@ import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.getParentsChain
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
+import java.awt.datatransfer.UnsupportedFlavorException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.tree.TreePath
 import kotlin.concurrent.withLock
+
 
 /**
  * Data key for extracting current instance of FileExplorerView.
@@ -181,6 +186,29 @@ class FileExplorerView(
         }.let { LinkedList(it) }
         copyPasteBuffer = buffer
       }
+      clearClipBoard()
+    }
+
+    /**
+     * Sets empty Transferable to clipboards, which will completely clear it.
+     */
+    private fun clearClipBoard() {
+      val emptyTransferable = object : Transferable {
+        override fun getTransferDataFlavors(): Array<DataFlavor> {
+          return arrayOf()
+        }
+
+        override fun isDataFlavorSupported(flavor: DataFlavor?): Boolean {
+          return false
+        }
+
+        override fun getTransferData(flavor: DataFlavor?): Any {
+          throw UnsupportedFlavorException(flavor)
+        }
+
+      }
+      Toolkit.getDefaultToolkit().systemClipboard.setContents(emptyTransferable, null)
+
     }
 
     /**

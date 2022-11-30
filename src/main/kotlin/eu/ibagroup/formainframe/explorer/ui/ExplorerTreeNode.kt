@@ -150,5 +150,4 @@ abstract class ExplorerTreeNode<Value : Any>(
 
   val path: TreePath
     get() = TreePath(pathList.toTypedArray())
-
 }
