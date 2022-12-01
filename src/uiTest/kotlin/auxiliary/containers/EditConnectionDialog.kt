@@ -25,6 +25,19 @@ class EditConnectionDialog(
     remoteRobot: RemoteRobot,
     remoteComponent: RemoteComponent
 ) : AddConnectionDialog(remoteRobot, remoteComponent) {
+
+    /**
+     * Unchecks checkBox for SSL certificates.
+     */
+    fun uncheckSSLBox() {
+        checkBox(
+            byXpath(
+                "//div[@accessiblename='Accept self-signed SSL certificates' " +
+                        "and @class='JBCheckBox' and @text='Accept self-signed SSL certificates']"
+            )
+        ).unselect()
+    }
+
     companion object {
         const val name = "Edit Connection Dialog"
 
@@ -32,7 +45,7 @@ class EditConnectionDialog(
          * Returns the xPath of the Edit Connection Dialog.
          */
         @JvmStatic
-        fun xPath() = byXpath( name,"//div[@accessiblename='Edit Connection' and @class='MyDialog']")
+        fun xPath() = byXpath(name, "//div[@accessiblename='Edit Connection' and @class='MyDialog']")
     }
 }
 
@@ -42,7 +55,8 @@ class EditConnectionDialog(
 fun ContainerFixture.editConnectionDialog(
     fixtureStack: MutableList<Locator>,
     timeout: Duration = Duration.ofSeconds(60),
-    function: EditConnectionDialog.() -> Unit = {}) {
+    function: EditConnectionDialog.() -> Unit = {}
+) {
     find<EditConnectionDialog>(EditConnectionDialog.xPath(), timeout).apply {
         fixtureStack.add(EditConnectionDialog.xPath())
         function()
