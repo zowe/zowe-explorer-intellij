@@ -97,6 +97,19 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     }
 
     /**
+     * Clicks on the edit action and adds the Edit Connection Dialog to the list of fixtures needed to close.
+     */
+    fun editConnection(
+        connectionName: String,
+        closableFixtureCollector: ClosableFixtureCollector,
+        fixtureStack: List<Locator>
+    ) {
+        findText(connectionName).click()
+        clickActionButton(byXpath("//div[@accessiblename='Edit' and @class='ActionButton' and @myaction='Edit (Edit)']"))
+        closableFixtureCollector.add(EditConnectionDialog.xPath(), fixtureStack)
+    }
+
+    /**
      * Clicks on the remove action and deletes the item from config table.
      */
     fun deleteItem(itemName: String) {
