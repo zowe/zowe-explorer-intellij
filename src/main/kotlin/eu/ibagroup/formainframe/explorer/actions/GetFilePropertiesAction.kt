@@ -38,10 +38,12 @@ class GetFilePropertiesAction : AnAction() {
             val dialog = DatasetPropertiesDialog(e.project, DatasetState(attributes))
             dialog.showAndGet()
           }
+
           is RemoteUssAttributes -> {
             val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes))
             dialog.showAndGet()
           }
+
           is RemoteMemberAttributes -> {
             val dialog = MemberPropertiesDialog(e.project, MemberState(attributes))
             dialog.showAndGet()
@@ -66,9 +68,6 @@ class GetFilePropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-            && (node is UssFileNode
-            || node is FileLikeDatasetNode
-            || node is LibraryNode
-            || node is UssDirNode)
+      && (node is UssFileNode || node is FileLikeDatasetNode || node is LibraryNode || node is UssDirNode)
   }
 }
