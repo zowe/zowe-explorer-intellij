@@ -24,7 +24,7 @@ test:
 pages:
   stage: deploy
   script:
-    - jekyll build -d public
+    - bundle jekyll build -d public
   artifacts:
     paths:
       - public
