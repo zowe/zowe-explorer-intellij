@@ -376,6 +376,11 @@ Example of how to see the output:<br/>
                 text="JES Working Set"
                 icon="AllIcons.Nodes.Project"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddConnectionAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddConnectionAction"
+                text="Connection"
+                icon="AllIcons.Javaee.WebService"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
                 text="Dataset"/>
@@ -522,14 +527,23 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
         </group>
 
-        <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
+        <group id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"
+               icon="AllIcons.General.Add"
+               popup="true">
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddConnectionAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
+            <reference id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.JESActionBarGroup">
-            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"/>
         </group>

@@ -17,7 +17,7 @@ import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
 import eu.ibagroup.formainframe.config.ws.ui.JesWorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
 import eu.ibagroup.formainframe.config.ws.ui.jes.JesWsDialog
-import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_CONTEXT_MENU
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
@@ -45,7 +45,7 @@ class AddJesWorkingSetAction : AddWsActionBase() {
    */
   override fun update(e: AnActionEvent) {
     super.update(e)
-    if (e.getData(FILE_EXPLORER_VIEW) != null) {
+    if (e.place.contains(FILE_EXPLORER_CONTEXT_MENU)) {
       e.presentation.isEnabledAndVisible = false
     }
   }
