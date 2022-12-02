@@ -530,22 +530,20 @@ Example of how to see the output:<br/>
         <group id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"
                icon="AllIcons.General.Add"
                popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddConnectionAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
-            <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.AddConnectionAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
             <reference id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.JESActionBarGroup">
             <reference id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
