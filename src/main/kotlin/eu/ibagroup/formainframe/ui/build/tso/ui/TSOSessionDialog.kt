@@ -11,10 +11,11 @@
 package eu.ibagroup.formainframe.ui.build.tso.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -52,85 +53,124 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
    * Represents an UI panel with values
    */
   private val mainPanel by lazy {
+    val defaultWidthLabelsGroup = "DEFAULT_DIALOG_LABELS_WIDTH_GROUP"
     panel {
       row {
         label("Specify z/OSMF connection")
+          .widthGroup(defaultWidthLabelsGroup)
         comboBox(
           model = connectionComboBoxModel,
-          state::connectionConfig,
           renderer = SimpleListCellRenderer.create("") { it?.name }
-          ).also {
+          ).bindItem(state::connectionConfig.toNullableProperty())
+          .also {
             connectionBox = it.component
+            resizableRow()
+            it.verticalAlign(VerticalAlign.FILL)
+            it.horizontalAlign(HorizontalAlign.FILL)
         }
       }
       row {
-        label("Logon Procedure")
-        textField(state::logonproc)
+        label("Logon procedure")
+          .widthGroup(defaultWidthLabelsGroup)
+        textField()
+          .bindText(state::logonproc)
           .apply {
             focused()
           }.also {
             logonProcField = it.component
-          }.withValidationOnInput { validateForBlank(it) }
+            resizableRow()
+            it.verticalAlign(VerticalAlign.FILL)
+            it.horizontalAlign(HorizontalAlign.FILL)
+          }.validationOnInput { validateForBlank(it) }
       }
       row {
-        label("Character Set")
-        textField(
-          state::charset
-        ).also {
+        label("Character set")
+          .widthGroup(defaultWidthLabelsGroup)
+        textField()
+          .bindText(state::charset)
+          .also {
             charsetField = it.component
-          }.withValidationOnInput { validateForBlank(it) }
-          .withValidationOnInput { validateForPositiveInteger(it) }
+            resizableRow()
+            it.verticalAlign(VerticalAlign.FILL)
+            it.horizontalAlign(HorizontalAlign.FILL)
+          }.validationOnInput { validateForBlank(it) ?: validateForPositiveInteger(it) }
       }
       row {
         label("Codepage")
+          .widthGroup(defaultWidthLabelsGroup)
         comboBox(
           model = codepageComboBoxModel,
-          state::codepage,
           renderer = SimpleListCellRenderer.create("") { it?.codePage })
+          .bindItem(state::codepage.toNullableProperty())
           .also {
             codepageField = it.component
+            resizableRow()
+            it.verticalAlign(VerticalAlign.FILL)
+            it.horizontalAlign(HorizontalAlign.FILL)
           }
       }
       row {
-        label("Screen Rows")
-        textField(state::rows)
+        label("Screen rows")
+          .widthGroup(defaultWidthLabelsGroup)
+        textField()
+          .bindText(state::rows)
           .also {
             rowsField = it.component
-          }.withValidationOnInput { validateForBlank(it) }
-          .withValidationOnInput { validateForPositiveInteger(it) }
+            resizableRow()
+            it.verticalAlign(VerticalAlign.FILL)
+            it.horizontalAlign(HorizontalAlign.FILL)
+          }.validationOnInput { validateForBlank(it) ?: validateForPositiveInteger(it) }
       }
       row {
-        label("Screen Columns")
-        textField(state::cols)
+        label("Screen columns")
+          .widthGroup(defaultWidthLabelsGroup)
+        textField()
+          .bindText(state::cols)
           .also {
             colsField = it.component
-          }.withValidationOnInput { validateForBlank(it) }
-          .withValidationOnInput { validateForPositiveInteger(it) }
+            resizableRow()
+            it.verticalAlign(VerticalAlign.FILL)
+            it.horizontalAlign(HorizontalAlign.FILL)
+          }.validationOnInput { validateForBlank(it) ?: validateForPositiveInteger(it) }
       }
       row {
-        label("Account Number")
-        textField(state::acct)
+        label("Account number")
+          .widthGroup(defaultWidthLabelsGroup)
+        textField()
+          .bindText(state::acct)
           .also {
             acctField = it.component
-          }.withValidationOnInput { validateForBlank(it) }
+            resizableRow()
+            it.verticalAlign(VerticalAlign.FILL)
+            it.horizontalAlign(HorizontalAlign.FILL)
+          }.validationOnInput { validateForBlank(it) }
       }
       row {
-        label("User Group")
-        textField(state::usergroup)
+        label("User group")
+          .widthGroup(defaultWidthLabelsGroup)
+        textField()
+          .bindText(state::usergroup)
           .also {
             userGroupField = it.component
-          }.withValidationOnInput { validateForBlank(it) }
+            resizableRow()
+            it.verticalAlign(VerticalAlign.FILL)
+            it.horizontalAlign(HorizontalAlign.FILL)
+          }.validationOnInput { validateForBlank(it) }
       }
       row {
-        label("Region Size")
-        textField(state::region)
+        label("Region size")
+          .widthGroup(defaultWidthLabelsGroup)
+        textField()
+          .bindText(state::region)
           .also {
             regionField = it.component
-          }.withValidationOnInput { validateForBlank(it) }
-          .withValidationOnInput { validateForPositiveInteger(it) }
+            resizableRow()
+            it.verticalAlign(VerticalAlign.FILL)
+            it.horizontalAlign(HorizontalAlign.FILL)
+          }.validationOnInput { validateForBlank(it) ?: validateForPositiveInteger(it) }
       }
       row {
-        button("Reset Default Values", actionListener = {resetToDefault()})
+        button("Reset Default Values", actionListener = { resetToDefault() })
       }
     }.apply {
       minimumSize = Dimension(450, 400)

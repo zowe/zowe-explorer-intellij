@@ -144,16 +144,13 @@ class ConnectionDialog(
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::connectionName)
-          .validationOnInput {
-            validateConnectionName(
+          .validationOnApply {
+            it.text = it.text.trim()
+            validateForBlank(it) ?: validateConnectionName(
               it,
               initialState.connectionName.ifBlank { null },
               crudable
             )
-          }
-          .validationOnApply {
-            it.text = it.text.trim()
-            validateForBlank(it)
           }
           .focused()
           .horizontalAlign(HorizontalAlign.FILL)

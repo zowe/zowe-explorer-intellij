@@ -92,15 +92,14 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
         label(wsNameLabel)
         textField()
           .bindText(state::workingSetName)
-          .validationOnInput {
-            validateWorkingSetName(
+          .validationOnApply {
+            validateForBlank(it) ?: validateWorkingSetName(
               it,
               initialState.workingSetName.ifBlank { null },
               crudable,
               wsConfigClass
             )
           }
-          .validationOnApply { validateForBlank(it) }
       }
       row {
         label("Specify connection")
