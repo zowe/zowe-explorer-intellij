@@ -15,7 +15,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
+import com.intellij.util.containers.isEmpty
 import eu.ibagroup.formainframe.common.ui.showUntilDone
+import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.TsoOperation
 import eu.ibagroup.formainframe.dataops.operations.TsoOperationMode
@@ -23,6 +26,7 @@ import eu.ibagroup.formainframe.ui.build.tso.SESSION_ADDED_TOPIC
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionDialog
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
+import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.utils.sendTopic
 
@@ -79,6 +83,9 @@ class TsoSessionCreateAction : AnAction() {
    * Method to update the UI when any mouse events are performed
    */
   override fun update(e: AnActionEvent) {
-      e.presentation.text = presentationText
+    e.presentation.text = presentationText
+    if (configCrudable.getAll<ConnectionConfig>().isEmpty()) {
+      e.presentation.isEnabled = false
+    }
   }
 }
