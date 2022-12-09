@@ -16,10 +16,7 @@ import auxiliary.components.actionMenuItem
 import auxiliary.components.stripeButton
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
-import com.intellij.remoterobot.fixtures.CommonContainerFixture
-import com.intellij.remoterobot.fixtures.ComponentFixture
-import com.intellij.remoterobot.fixtures.ContainerFixture
-import com.intellij.remoterobot.fixtures.JTextFieldFixture
+import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
@@ -32,14 +29,17 @@ import java.awt.event.KeyEvent
 import java.time.Duration
 
 //Change ZOS_USERID, ZOS_PWD, CONNECTION_URL with valid values before UI tests execution
-const val ZOS_USERID = "changeme"
-const val ZOS_PWD = "changeme"
-const val CONNECTION_URL = "changeme"
+const val ZOS_USERID = "ZOSMFAD"
+const val ZOS_PWD = "ZOSMF"
+const val CONNECTION_URL = "https://172.20.2.69:10443"
 
 const val ENTER_VALID_DS_MASK_MESSAGE = "Enter valid dataset mask"
 const val IDENTICAL_MASKS_MESSAGE = "You cannot add several identical masks to table"
 const val EMPTY_DATASET_MESSAGE = "You are going to create a Working Set that doesn't fetch anything"
 const val TEXT_FIELD_LENGTH_MESSAGE = "Text field must not exceed 8 characters."
+const val MEMBER_NAME_LENGTH_MESSAGE = "Member name must not exceed 8 characters."
+const val INVALID_MEMBER_NAME_MESSAGE = "Member name should contain only A-Z a-z 0-9 or national characters"
+const val INVALID_MEMBER_NAME_BEGINNING_MESSAGE = "Member name should start with A-Z a-z or national characters"
 const val JOB_ID_LENGTH_MESSAGE = "Job ID length must be 8 characters."
 const val TEXT_FIELD_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z, 0-9, *, %."
 const val JOBID_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z, 0-9"
@@ -605,13 +605,26 @@ fun createMemberAndPasteContent(
 
 /**
  * Allocates a dataset and creates a mask for it.
+ * @param maskName when specified, mask will be created with the provided name, otherwise maskName will be equal to datasetName
  */
-fun allocatePDSAndCreateMask(
-    wsName: String, datasetName: String, projectName: String,
-    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
-) =
-    with(remoteRobot) {
+fun allocatePDSAndCreateMask(wsName: String,
+                             datasetName: String,
+                             projectName: String,
+                             fixtureStack: MutableList<Locator>,
+                             closableFixtureCollector: ClosableFixtureCollector,
+                             remoteRobot: RemoteRobot,
+                             maskName: String? = null,
+                             directory: Int = 1) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
+            if (maskName != null){
+                createMask(wsName, fixtureStack, closableFixtureCollector)
+                createMaskDialog(fixtureStack){
+                    createMask(Pair(maskName, "z/OS"))
+                    clickButton("OK")
+                    Thread.sleep(3000)
+                }
+            }
+
             explorer {
                 fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(wsName).rightClick()
@@ -619,12 +632,73 @@ fun allocatePDSAndCreateMask(
             actionMenu(remoteRobot, "New").click()
             actionMenuItem(remoteRobot, "Dataset").click()
             allocateDatasetDialog(fixtureStack) {
-                allocateDataset(datasetName, "PO", "TRK", 10, 1, 1, "VB", 255, 6120)
+                allocateDataset(datasetName, "PO", "TRK", 10, 1, directory, "VB", 255, 6120)
                 clickButton("OK")
                 Thread.sleep(10000)
             }
             find<ContainerFixture>(byXpath("//div[@class='MyDialog']")).findText("Dataset $datasetName Has Been Created")
-            clickButton("Yes")
+
+            if (maskName != null){
+                clickButton("No")
+                Thread.sleep(5000)
+                /*explorer {
+                    fileExplorer.click()
+                    find<ComponentFixture>(viewTree).findText(wsName).rightClick()
+                }
+                actionMenu(remoteRobot, "Refresh").click()*/
+            } else {
+                clickButton("Yes")
+                Thread.sleep(5000)
+            }
         }
         openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
     }
+
+/**
+ * Creates working set without masks.
+ */
+fun createWsWithoutMask(projectName: String,
+                        wsName: String,
+                        connectionName: String,
+                        fixtureStack: MutableList<Locator>,
+                        closableFixtureCollector: ClosableFixtureCollector,
+                        remoteRobot: RemoteRobot) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        createWSFromContextMenu(fixtureStack, closableFixtureCollector)
+        addWorkingSetDialog(fixtureStack) {
+            addWorkingSet(wsName, connectionName)
+            clickButton("OK")
+            Thread.sleep(3000)
+            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
+                EMPTY_DATASET_MESSAGE
+            )
+            clickButton("OK")
+            Thread.sleep(3000)
+        }
+        closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+    }
+}
+
+/**
+ * Allocates member for pds.
+ */
+fun allocateMemberForPDS(datasetName: String,
+                         memberName: String,
+                         projectName: String,
+                         fixtureStack: MutableList<Locator>,
+                         remoteRobot: RemoteRobot) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        explorer {
+            fileExplorer.click()
+            find<ComponentFixture>(viewTree).findText(datasetName).rightClick()
+        }
+
+        actionMenu(remoteRobot, "New").click()
+        actionMenuItem(remoteRobot, "Member").click()
+        allocateMemberDialog(fixtureStack) {
+            allocateMember(memberName)
+            clickButton("OK")
+            Thread.sleep(5000)
+        }
+    }
+}
