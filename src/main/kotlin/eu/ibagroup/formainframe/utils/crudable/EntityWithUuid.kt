@@ -11,9 +11,7 @@ package eu.ibagroup.formainframe.utils.crudable
 
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 
-/**
- * Class that represents the entity with UUID
- */
+/** Class that represents the entity with UUID */
 open class EntityWithUuid {
   @Column(unique = true)
   var uuid = EMPTY_ID
@@ -36,8 +34,8 @@ open class EntityWithUuid {
 
   override fun toString(): String {
     return "EntityWithUuid{" +
-            "uuid='" + uuid + '\'' +
-            '}'
+      "uuid='" + uuid + '\'' +
+      '}'
   }
 
   companion object {

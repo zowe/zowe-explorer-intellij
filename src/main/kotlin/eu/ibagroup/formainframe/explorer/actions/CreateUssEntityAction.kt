@@ -92,9 +92,6 @@ abstract class CreateUssEntityAction : AnAction() {
                 ),
                 progressIndicator = it
               )
-              val analyticsFileType = if (allocationParams.parameters.type == FileType.FILE)
-                eu.ibagroup.formainframe.analytics.events.FileType.USS_FILE
-              else eu.ibagroup.formainframe.analytics.events.FileType.USS_DIR
 
               service<AnalyticsService>().trackAnalyticsEvent(
                 FileEvent(
