@@ -26,23 +26,6 @@ val remoteRobotVersion = "0.11.14"
 
 repositories {
   mavenCentral()
-  maven {
-    url = uri("http://10.221.23.186:8082/repository/internal/")
-    isAllowInsecureProtocol = true
-    credentials {
-      username = "admin"
-      password = "password123"
-    }
-    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
-    flatDir {
-      dir("libs")
-    }
-    metadataSources {
-      mavenPom()
-      artifact()
-      ignoreGradleMetadataRedirection()
-    }
-  }
 }
 
 java {
