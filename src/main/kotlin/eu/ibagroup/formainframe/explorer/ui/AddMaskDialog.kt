@@ -76,11 +76,11 @@ class AddMaskDialog(project: Project?, override var state: MaskStateWithWS) : Di
               state.isTypeSelectedAutomatically = true
               comboBox.component.item = state.type.stringType
             }
-            validateWorkingSetMaskName(it, state.ws)
+            null
           }
           .validationOnApply {
             validateForBlank(it.text, it)
-              ?: if (state.type == MaskType.ZOS)
+              ?: validateWorkingSetMaskName(it, state.ws) ?: if (state.type == MaskType.ZOS)
                 validateDatasetMask(it.text, component)
               else
                 validateUssMask(it.text, it)

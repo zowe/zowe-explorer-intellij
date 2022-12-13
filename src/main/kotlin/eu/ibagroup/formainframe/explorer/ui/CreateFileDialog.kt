@@ -70,8 +70,7 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::fileName)
-          .validationOnInput { validateUssFileName(it) }
-          .validationOnApply { validateForBlank(it) }
+          .validationOnApply { validateForBlank(it) ?: validateUssFileName(it) }
           .horizontalAlign(HorizontalAlign.FILL)
           .focused()
       }
