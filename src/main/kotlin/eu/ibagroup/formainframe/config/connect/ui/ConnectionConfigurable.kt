@@ -114,7 +114,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val ret = Messages.showOkCancelDialog(
       warningMessageBuilder.toString(),
       "Warning",
-      "Ok",
+      "Yes",
       "Cancel",
       Messages.getWarningIcon()
     )
