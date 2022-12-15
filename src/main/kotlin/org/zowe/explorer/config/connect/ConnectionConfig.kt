@@ -17,7 +17,7 @@ import org.zowe.kotlinsdk.annotations.ZVersion
 
 /**
  * Class which represents connection config.
- * Instances of these class will be saved and can be reloaded after Intellij closed.
+ * Instances of this class are saved and can be reloaded after Intellij closed.
  */
 class ConnectionConfig : EntityWithUuid {
 

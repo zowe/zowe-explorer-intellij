@@ -85,12 +85,12 @@ internal object Utils {
    * @return optional value, that should contain the field
    */
   @JvmStatic
-  fun <E : Any, F : Any> getByForeignKeyInternal(
+  fun <RowClass : Any, ForeignRowClass : Any> getByForeignKeyInternal(
     crudable: Crudable,
-    row: E,
+    row: RowClass,
     columnName: String?,
-    foreignRowClass: Class<out F>
-  ): Optional<F>? {
+    foreignRowClass: Class<out ForeignRowClass>
+  ): Optional<ForeignRowClass>? {
     return Stream
       .concat(
         Arrays.stream(row.javaClass.declaredFields),
@@ -105,19 +105,22 @@ internal object Utils {
         val isForeignRowClassAssignableFromForeignKey =
           foreignKey?.foreignClass?.java?.let { foreignRowClass.isAssignableFrom(it) } == true
         isFieldAnnotationAndColumn
-                && isColumnNameNullOrEqualsToFieldName(columnName, column, field)
-                && isForeignRowClassAssignableFromForeignKey
+          && isColumnNameNullOrEqualsToFieldName(columnName, column, field)
+          && isForeignRowClassAssignableFromForeignKey
       }
       .findAny()
       .flatMap { field: Field ->
         field.trySetAccessible()
         try {
           val foreignKey: ForeignKey? = field.castToForeignKeyOrNull()
-          return@flatMap foreignKey?.foreignClass?.let {
-            crudable.getByUniqueKey(it.java, field[row])
-          } as Optional<F>?
+          @Suppress("UNCHECKED_CAST") // Suppressed as there is no chance to check belonging to the ForeignRowClass
+          return@flatMap foreignKey
+            ?.foreignClass
+            ?.let {
+              crudable.getByUniqueKey(it.java, field[row])
+            } as Optional<ForeignRowClass>?
         } catch (e: IllegalAccessException) {
-          return@flatMap Optional.empty<F>()
+          return@flatMap Optional.empty<ForeignRowClass>()
         }
       }
   }

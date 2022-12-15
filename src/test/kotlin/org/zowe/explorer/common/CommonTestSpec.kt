@@ -12,7 +12,7 @@ package org.zowe.explorer.common
 
 import io.kotest.core.spec.style.ShouldSpec
 
-class CommonTestCase : ShouldSpec({
+class CommonTestSpec : ShouldSpec({
   context("common module: ui") {
     // ValidatingCellRenderer.getTableCellRendererComponent
     should("get table cell renderer") {}

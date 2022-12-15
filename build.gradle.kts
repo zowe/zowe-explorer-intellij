@@ -31,7 +31,7 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "0.3.1"
+version = "0.3.2"
 val remoteRobotVersion = "0.11.14"
 
 repositories {
@@ -89,22 +89,18 @@ tasks {
 
   patchPluginXml {
     sinceBuild.set("221.5080")
-    untilBuild.set("222.*")
+    untilBuild.set("223.*")
     changeNotes.set(
       """
       <b>WARNING: </b> version 0.3 introduces breaking change. You won't be able to use the plugin with IntelliJ version < 2022.1
       <br>
       <b>Minor changes:</b>
-      <ul>
-        <li>Added some unit tests for 'utils' module</li>
-      </ul>
-      <br>
+        <ul>
+          <li>Some cosmetics for tech debt burnout</li>
+        </ul>
       <b>Fixed bugs:</b>
       <ul>
-        <li>DnD does not work properly</li>
-        <li>Copy DS member to USS folder does not work</li>
-        <li>Unknown type of file if copy-delete-copy the same PDS member</li>
-        <li>Ctrl+C/Ctrl+V does not work if copy file from remote to local</li>
+        <li>Hotfix for IntelliJ 2022.3 compatibility issue</li>
       </ul>"""
     )
   }
