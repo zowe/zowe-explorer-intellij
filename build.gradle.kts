@@ -21,7 +21,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "0.7.1"
+version = "0.7.2"
 val remoteRobotVersion = "0.11.14"
 
 repositories {
@@ -90,17 +90,9 @@ tasks {
       """
       <b>WARNING: </b> version 0.7 introduces breaking change. You won't be able to use the plugin with IntelliJ version < 2022.1
       <br>
-      <b>Minor changes:</b>
-      <ul>
-        <li>Added some unit tests for 'utils' module</li>
-      </ul>
-      <br>
       <b>Fixed bugs:</b>
       <ul>
-        <li>DnD does not work properly</li>
-        <li>Copy DS member to USS folder does not work</li>
-        <li>Unknown type of file if copy-delete-copy the same PDS member</li>
-        <li>Ctrl+C/Ctrl+V does not work if copy file from remote to local</li>
+        <li>Hotfix for IntelliJ 2022.3 compatibility issue</li>
       </ul>"""
     )
   }
