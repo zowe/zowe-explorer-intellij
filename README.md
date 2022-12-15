@@ -1,4 +1,10 @@
 # Zowe Explorer
+
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/18688-zowe-explorer)](https://plugins.jetbrains.com/plugin/18688-zowe-explorer)
+[![Rating](https://img.shields.io/jetbrains/plugin/r/rating/18688-zowe-explorer)](https://plugins.jetbrains.com/plugin/18688-zowe-explorer)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=zowe_zowe-explorer-intellij&metric=coverage)](https://sonarcloud.io/dashboard?id=zowe_zowe-explorer-intellij)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=zowe_zowe-explorer-intellij&metric=alert_status)](https://sonarcloud.io/dashboard?id=zowe_zowe-explorer-intellij)
+
 "Zowe Explorer" brings support for browsing, editing and creating data on z/OS via 
 <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.
 
@@ -21,61 +27,29 @@ To start using the plugin:
 
 **Note: z/OS 2.1 or higher is required**
 
-# User Guide
+## Where to find the docs
 
-## Introduction
-"Zowe Explorer" is an IntelliJ plugin dedicated to facilitate working with z/OS datasets through providing a possibility to work with them in the IDE.
+[Zowe IntelliJ plug-in FAQ](https://docs.zowe.org/stable/getting-started/zowe_faq#zowe-intellij-plug-in-incubator-faq)
 
-## Getting started
-After installing plugin into your IDE from marketplace, the first thing you need to do is to create a connection and a working set.
-Create, edit and delete a connection.
+[Installing Zowe IntelliJ plug-in](https://docs.zowe.org/stable/user-guide/intellij-install)
 
-### Create, edit and delete a connection
-To create a connection press the "wrench" pictogram on the right side of your screen, or go to "Settings" (CTRL+ALT+S) and select "Zowe Explorer" on the left side of the panel.
+[Configuring Zowe IntelliJ plug-in](https://docs.zowe.org/stable/user-guide/intellij-configure)
 
-In "Settings" switch to "z/OSMF connections" tab and press "+" at the bottom of the panel. A new panel "Add Connection" will appear. 
+[Using Zowe IntelliJ plug-in](https://docs.zowe.org/stable/user-guide/intellij-using)
 
-Enter your desired connection name, connection URL, username and password into corresponding fields. The plugin provides a possibility to accept self-signed SSL-certificates, so check this box if necessary. Press "OK" when you're done. If the connection is created successfully you'll see it in the list in "Settings" and in the list on the right side of your screen after you've closed "Settings".
+[Troubleshooting Zowe IntelliJ plug-in](https://docs.zowe.org/stable/troubleshoot/troubleshoot-intellij)
 
-You can edit the connection in "Settings" by clicking on it and then on the "pencil" pictogram at the bottom of the panel.
+[Contribution Guidelines](https://github.com/zowe/zowe-explorer-intellij/blob/main/CONTRIBUTING.md)
 
-You can delete working sets in "Settings" by clicking on the connection you'd like to delete and pressing "-" at the bottom of the panel.
-### Create, edit and delete a working set
-To add a working set press on the "wrench" pictogram on the right side of your screen, or go to "Settings" (CTRL+ALT+S) and select "Zowe Explorer" on the left side of the panel.
+[Changelog](https://github.com/zowe/zowe-explorer-intellij/blob/main/CONTRIBUTING.md)
 
-In "Settings" switch to "Working Sets" tab and press "+" at the bottom of the panel. A new panel "Add Working Set" will appear. In it you should enter your desired working set name, specify the existing connection, and add one or more data set masks. Press "OK" when you're done. You will see your newly connected working set in the list in "Settings" and on the right side of your screen after you've closed "Settings".
+## Developer guide
 
-You can edit working sets in "Settings" by clicking on the desired set and then on the "pencil" pictogram at the bottom of the panel.
-
-You can delete working sets in "Settings" by clicking on the working set you'd like to delete and pressing "-" at the bottom of the panel.
-
-## Working with data sets
-"Zowe Explorer" provides a number of features for working with z\OS data sets. With the plugin you can create a data set, add a member to a library-type data set, rename a data set or a data set member, view properties of a data set or a data set member, and delete a data set or a data set member.
-
-### Add a data set
-Click with the right mouse button on an existing working set in the working set tree on the right side of your screen. Click "New" → "Dataset". Input the desired parameters in the panel that pops up and press "OK". If the data set was created successfully you will see it in the working set tree on the right side of the screen. Library-type datasets are displayed as folders with their members as files. Other types of data sets are displayed as files.
-
-The plugin doesn't provide a possibility to create PDSE data set.
-
-### Add a member to a library data set
-Click with the right mouse button on an existing library-type data set in the working set tree on the right side of your screen. Click "New" → "Member". Enter the desired member name in the window that pops up and press "OK". You should see your newly created member in the working set set tree under its containing data set.
-
-### Rename a data set/data set member
-Click with the right mouse button on the existing data set or data set member that you want to rename in the working set tree on the right side of your screen. Click "Rename". Enter the new name in the panel that pops up and press "OK". The data set/data set member you renamed should appear under the new name in the working set tree.
-
-### View properties of a data set/data set member
-Click with the right mouse button on the existing data set which properties you'd like to view. Click "Properties". A pop up window should appear where you would see all the available properties for the data set.
-
-### Delete data set/data set member
-Click with the right mouse button on the data set/data set member you'd like to delete in the working set tree on the right side of your screen. Click "Delete". Confirm your intention to delete a data set/data set member in the pop up window by pressing "Yes". After the deleting is complete you should no longer see the data set/data set member in the working set tree.
-
-# Developer guide
-
-## Requirements
+### Requirements
 - Latest IntelliJ IDEA version (Community will be enough)
 - Java SDK 11 (IntelliJ built-in)
 
-## Setup steps
+### Setup steps
 - Clone the project repo:
 
 ``git clone git@github.com:zowe/zowe-explorer-intellij.git``
@@ -88,10 +62,10 @@ Click with the right mouse button on the data set/data set member you'd like to 
 
 **In case of any troubles during plugin usage, feel free to contact us.**
 
-# How to contribute
+## How to contribute
 If you want to help the project, improve some functionality, resolve bug or add some new feature, please, refer to the [contribution guide](CONTRIBUTING.md).
 
-# How to obtain and provide feedback
+## How to obtain and provide feedback
 If you have any questions, related to the project development, further plans or something else, you can reach as out by some of the communication chanels:
 * [For Mainframe Slack channel in IBA workspace](https://iba-mainframe-tools.slack.com/archives/C01V4MZL9DH)
 * [Zowe Explorer IntelliJ Slack channel in Open Mainframe Project workspace](https://openmainframeproject.slack.com/archives/C020BGPSU0M)

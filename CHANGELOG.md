@@ -1,4 +1,4 @@
-# IntelliJ Plugin Changelog
+# Zowe IntelliJ Plugin Changelog
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 

@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Abstraction for attributes services that work with child files (e.g. member of dataset, spool file of job).
- * @param InfoType class of r2z response (e.g. Member, SpoolFile)
+ * @param InfoType class of Zowe Kotlin SDK response (e.g. Member, SpoolFile)
  * @param ParentAttributes attributes of parent file (for example for member it is RemoteDatasetAttributes)
  * @see AttributesService
  * @author Viktar Mushtsin
