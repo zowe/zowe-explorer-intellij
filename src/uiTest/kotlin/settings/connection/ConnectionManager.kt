@@ -457,18 +457,18 @@ class ConnectionManager {
                         dialog("Warning") {
                             (findAllText()[2].text + findAllText()[4].text).shouldContain("The following Files working sets use selected connections:$wsName.")
                             (findAllText()[6].text + findAllText()[8].text).shouldContain("The following JES working sets use selected connections:$jwsName.")
-                            clickButton("Ok")
+                            clickButton("Yes")
                         }
                     } else if (wsName.isNotEmpty() && jwsName.isEmpty()) {
                         dialog("Warning") {
                             (findAllText()[2].text + findAllText()[4].text).shouldContain("The following Files working sets use selected connections:$wsName.")
-                            clickButton("Ok")
+                            clickButton("Yes")
                         }
 
                     } else if (wsName.isEmpty() && jwsName.isNotEmpty()) {
                         dialog("Warning") {
                             (findAllText()[2].text + findAllText()[4].text).shouldContain("The following JES working sets use selected connections:$jwsName.")
-                            clickButton("Ok")
+                            clickButton("Yes")
                         }
                     }
                     clickButton("OK")

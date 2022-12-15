@@ -16,10 +16,7 @@ import auxiliary.components.actionMenuItem
 import auxiliary.components.stripeButton
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
-import com.intellij.remoterobot.fixtures.CommonContainerFixture
-import com.intellij.remoterobot.fixtures.ComponentFixture
-import com.intellij.remoterobot.fixtures.ContainerFixture
-import com.intellij.remoterobot.fixtures.JTextFieldFixture
+import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
@@ -268,6 +265,63 @@ fun ContainerFixture.editJWSFromContextMenu(
     }
     actionMenuItem(remoteRobot, "Edit").click()
     closableFixtureCollector.add(EditJesWorkingSetDialog.xPath(), fixtureStack)
+}
+
+/**
+ * Creates a working set via action button.
+ */
+fun ContainerFixture.createWorkingSetFromActionButton(closableFixtureCollector: ClosableFixtureCollector,fixtureStack: MutableList<Locator>){
+    explorer {
+        fileExplorer.click()
+        createConfigItem()
+    }
+    find<HeavyWeightWindowFixture>(
+        byXpath("//div[@class='HeavyWeightWindow']"),
+        Duration.ofSeconds(30)
+    ).findAllText().forEach {
+        if (it.text == "Working Set" ) {
+            it.click()
+            closableFixtureCollector.add(AddWorkingSetDialog.xPath(), fixtureStack)
+        }
+    }
+}
+
+/**
+ * Creates a JES working set via action button.
+ */
+fun ContainerFixture.createJesWorkingSetFromActionButton(closableFixtureCollector: ClosableFixtureCollector,fixtureStack: MutableList<Locator>){
+    explorer {
+        jesExplorer.click()
+        createConfigItem()
+    }
+    find<HeavyWeightWindowFixture>(
+        byXpath("//div[@class='HeavyWeightWindow']"),
+        Duration.ofSeconds(30)
+    ).findAllText().forEach {
+        if (it.text == "JES Working Set" ) {
+            it.click()
+            closableFixtureCollector.add(AddJesWorkingSetDialog.xPath(), fixtureStack)
+        }
+    }
+}
+
+/**
+ * Creates a connection via action button.
+ */
+fun ContainerFixture.createConnectionFromActionButton(closableFixtureCollector: ClosableFixtureCollector,fixtureStack: MutableList<Locator>){
+    explorer {
+        jesExplorer.click()
+        createConfigItem()
+    }
+    find<HeavyWeightWindowFixture>(
+        byXpath("//div[@class='HeavyWeightWindow']"),
+        Duration.ofSeconds(30)
+    ).findAllText().forEach {
+        if (it.text == "Connection") {
+            it.click()
+            closableFixtureCollector.add(AddConnectionDialog.xPath(), fixtureStack)
+        }
+    }
 }
 
 /**
