@@ -19,7 +19,6 @@ import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project

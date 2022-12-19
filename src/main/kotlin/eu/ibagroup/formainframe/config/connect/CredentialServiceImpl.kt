@@ -14,8 +14,9 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.utils.sendTopic
+import eu.ibagroup.formainframe.utils.service
 
 /**
  * Function to create credential attributes with own key.
