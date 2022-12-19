@@ -14,18 +14,12 @@ import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
 import auxiliary.components.actionMenuItem
 import auxiliary.containers.*
-import auxiliary.fixtures.JEditorPaneFixture
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
-import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.Duration
-import javax.swing.JEditorPane
-
 
 /**
  * Tests creating, editing and deleting working sets and masks from context menu.
@@ -61,7 +55,16 @@ class RenameDatasetTest {
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
         createConnection(projectName, fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
         createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
-        allocatePDSAndCreateMask(wsName, pdsName, projectName, fixtureStack, closableFixtureCollector, remoteRobot,"$ZOS_USERID.*",  directory = 2)
+        allocatePDSAndCreateMask(
+            wsName,
+            pdsName,
+            projectName,
+            fixtureStack,
+            closableFixtureCollector,
+            remoteRobot,
+            "$ZOS_USERID.*",
+            directory = 2
+        )
         allocateMemberForPDS(pdsName, memberName, projectName, fixtureStack, remoteRobot)
         allocateMemberForPDS(pdsName, anotherMemberName, projectName, fixtureStack, remoteRobot)
     }
@@ -111,7 +114,7 @@ class RenameDatasetTest {
     @Test
     @Order(2)
     fun testRenameMemberWithNameOfAnotherMemberViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        val errorMessage = "Member already exists"
+        val errorDetail = "Member already exists"
 
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -124,14 +127,14 @@ class RenameDatasetTest {
             }
             clickButton("OK")
             Thread.sleep(3000)
-            checkErrorNotification(errorHeader, errorType, errorMessage, remoteRobot)
+            checkErrorNotification(errorHeader, errorType, errorDetail, remoteRobot)
         }
     }
 
     @Test
     @Order(3)
     fun testRenameMemberWithTheSameNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        val errorMessage = "Member in use"
+        val errorDetail = "Member in use"
 
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -144,7 +147,7 @@ class RenameDatasetTest {
             }
             clickButton("OK")
             Thread.sleep(3000)
-            checkErrorNotification(errorHeader, errorType, errorMessage, remoteRobot)
+            checkErrorNotification(errorHeader, errorType, errorDetail, remoteRobot)
         }
     }
 
@@ -211,15 +214,22 @@ class RenameDatasetTest {
     private fun checkErrorNotification(
         errorHeader: String,
         errorType: String,
-        errorMessage: String,
+        errorDetail: String,
         remoteRobot: RemoteRobot
     ) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
+            var errorMessage = ""
             find<ComponentFixture>(byXpath("//div[@class='LinkLabel']")).click()
             find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']")).findText(errorHeader)
-            //find<ContainerFixture>(byXpath("//div[@class='JBScrollPane'][.//div[@class='JEditorPane']]")).findText(errorType)
-            find<ContainerFixture>(byXpath("//div[@class='JBScrollPane'][.//div[contains(@visible_text, 'name.')]]")).findText(errorMessage)
-            find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
+            find<ContainerFixture>(byXpath("//div[@class='JEditorPane']")).findAllText().forEach {
+                errorMessage += it.text
+            }
+            if (!(errorMessage.contains(errorType) && errorMessage.contains(errorDetail))) {
+                find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
+                throw Exception("Error message is different from expected")
+            } else {
+                find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
+            }
         }
     }
 }
