@@ -13,7 +13,6 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil

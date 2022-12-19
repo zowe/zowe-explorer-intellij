@@ -100,7 +100,7 @@ tasks {
         </ul>
       <b>Fixed bugs:</b>
       <ul>
-        <li>Hotfix for IntelliJ 2022.3 compatibility issue</li>
+        <li>GitHub issue #108: Hotfix for IntelliJ 2022.3 compatibility issue</li>
       </ul>"""
     )
   }

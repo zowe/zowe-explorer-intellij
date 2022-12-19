@@ -11,6 +11,8 @@
 package org.zowe.explorer.utils
 
 import com.google.gson.Gson
+import com.intellij.codeWithMe.ClientId
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
 import java.util.*
@@ -21,6 +23,13 @@ import java.util.stream.StreamSupport
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 import kotlin.streams.toList
+
+// TODO: Remove and replace with intellij service
+inline fun <reified T : Any> service(): T {
+  val serviceClass = T::class.java
+  return ApplicationManager.getApplication().getService(serviceClass)
+    ?: throw RuntimeException("Cannot find service ${serviceClass.name} (classloader=${serviceClass.classLoader}, client=${ClientId.currentOrNull})")
+}
 
 /** Transform the stream to the mutable list */
 fun <E> Stream<E>.toMutableList(): MutableList<E> {
