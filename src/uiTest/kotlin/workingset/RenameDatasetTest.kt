@@ -65,6 +65,8 @@ class RenameDatasetTest {
             "$ZOS_USERID.*",
             directory = 2
         )
+        allocateDataSet(wsName, dsName, projectName, fixtureStack, remoteRobot)
+        allocateDataSet(wsName, anotherDsName, projectName, fixtureStack, remoteRobot)
         allocateMemberForPDS(pdsName, memberName, projectName, fixtureStack, remoteRobot)
         allocateMemberForPDS(pdsName, anotherMemberName, projectName, fixtureStack, remoteRobot)
     }
@@ -74,10 +76,13 @@ class RenameDatasetTest {
      */
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        //clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        //ideFrameImpl(projectName, fixtureStack) {
-        //    close()
-        //}
+        deleteDataset(pdsName, projectName, fixtureStack, remoteRobot)
+        deleteDataset(anotherDsName, projectName, fixtureStack, remoteRobot)
+        deleteDataset(dsFinalName, projectName, fixtureStack, remoteRobot)
+        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(projectName, fixtureStack) {
+            close()
+        }
     }
 
     /**
@@ -127,7 +132,7 @@ class RenameDatasetTest {
             }
             clickButton("OK")
             Thread.sleep(3000)
-            checkErrorNotification(errorHeader, errorType, errorDetail, remoteRobot)
+            checkErrorNotification(errorHeader, errorType, errorDetail, projectName, fixtureStack, remoteRobot)
         }
     }
 
@@ -147,7 +152,7 @@ class RenameDatasetTest {
             }
             clickButton("OK")
             Thread.sleep(3000)
-            checkErrorNotification(errorHeader, errorType, errorDetail, remoteRobot)
+            checkErrorNotification(errorHeader, errorType, errorDetail, projectName, fixtureStack, remoteRobot)
         }
     }
 
@@ -211,25 +216,123 @@ class RenameDatasetTest {
         }
     }
 
-    private fun checkErrorNotification(
-        errorHeader: String,
-        errorType: String,
-        errorDetail: String,
-        remoteRobot: RemoteRobot
-    ) = with(remoteRobot) {
+    @Test
+    @Order(7)
+    fun testRenameMemberWithEmptyNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
-            var errorMessage = ""
-            find<ComponentFixture>(byXpath("//div[@class='LinkLabel']")).click()
-            find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']")).findText(errorHeader)
-            find<ContainerFixture>(byXpath("//div[@class='JEditorPane']")).findAllText().forEach {
-                errorMessage += it.text
+            explorer {
+                Thread.sleep(5000)
+                find<ComponentFixture>(viewTree).findText(memberFinalName).rightClick()
             }
-            if (!(errorMessage.contains(errorType) && errorMessage.contains(errorDetail))) {
-                find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
+            actionMenuItem(remoteRobot, "Rename").click()
+            dialog("Rename Member") {
+                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = ""
+            }
+            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
+                MEMBER_EMPTY_NAME_MESSAGE
+            )
+            Thread.sleep(3000)
+            clickButton("Cancel")
+        }
+    }
+    @Test
+    @Order(8)
+    fun testRenameDataSetWithCorrectNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        ideFrameImpl(projectName, fixtureStack) {
+            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+            explorer {
+                Thread.sleep(3000)
+                find<ComponentFixture>(viewTree).findText(dsName).rightClick()
+            }
+            actionMenuItem(remoteRobot, "Rename").click()
+            dialog("Rename Dataset") {
+                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = dsFinalName
+            }
+            clickButton("OK")
+        }
+    }
+
+    @Test
+    @Order(9)
+    fun testRenameDatasetWithNameOfAnotherDatasetViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        val errorDetail = "data set rename failed"
+
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                Thread.sleep(5000)
+                find<ComponentFixture>(viewTree).findText(dsFinalName).rightClick()
+            }
+            actionMenuItem(remoteRobot, "Rename").click()
+            dialog("Rename Dataset") {
+                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = anotherDsName
+            }
+            clickButton("OK")
+            Thread.sleep(3000)
+            checkErrorNotification(errorHeader, errorType, errorDetail, projectName, fixtureStack, remoteRobot)
+        }
+    }
+
+    @Test
+    @Order(10)
+    fun testRenameDatasetWithInvalidSectionViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                Thread.sleep(5000)
+                find<ComponentFixture>(viewTree).findText(dsFinalName).rightClick()
+            }
+            actionMenuItem(remoteRobot, "Rename").click()
+            dialog("Rename Dataset") {
+                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = dsFinalName + ".123456789"
+            }
+            var message = ""
+            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findAllText().forEach {
+                message += it.text
+            }
+            Thread.sleep(3000)
+            clickButton("Cancel")
+            if (!message.contains(DATASET_INVALID_SECTION_MESSAGE)) {
                 throw Exception("Error message is different from expected")
-            } else {
-                find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
             }
+        }
+    }
+
+    @Test
+    @Order(11)
+    fun testRenameDatasetWithTooLongNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                Thread.sleep(5000)
+                find<ComponentFixture>(viewTree).findText(dsFinalName).rightClick()
+            }
+            actionMenuItem(remoteRobot, "Rename").click()
+            dialog("Rename Dataset") {
+                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = "A".repeat(45)
+            }
+            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
+                DATASET_NAME_LENGTH_MESSAGE
+            )
+            Thread.sleep(3000)
+            clickButton("Cancel")
+        }
+    }
+
+    @Test
+    @Order(12)
+    fun testRenameDatasetWithEmptyNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                Thread.sleep(5000)
+                find<ComponentFixture>(viewTree).findText(dsFinalName).rightClick()
+            }
+            actionMenuItem(remoteRobot, "Rename").click()
+            dialog("Rename Dataset") {
+                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = ""
+            }
+            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
+                DATASET_EMPTY_NAME_MESSAGE
+            )
+            Thread.sleep(3000)
+            clickButton("Cancel")
         }
     }
 }

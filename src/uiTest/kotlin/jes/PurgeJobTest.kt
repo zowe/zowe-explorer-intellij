@@ -30,7 +30,6 @@ import java.awt.event.KeyEvent
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-@Tag("FirstTime")
 class PurgeJobTest {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()

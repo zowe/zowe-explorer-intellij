@@ -26,7 +26,6 @@ import org.junit.jupiter.api.extension.ExtendWith
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-@Tag("FirstTime")
 class ConnectionManager {
   private var closableFixtureCollector = ClosableFixtureCollector()
   private var fixtureStack = mutableListOf<Locator>()

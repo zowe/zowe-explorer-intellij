@@ -29,15 +29,16 @@ import java.awt.event.KeyEvent
 import java.time.Duration
 
 //Change ZOS_USERID, ZOS_PWD, CONNECTION_URL with valid values before UI tests execution
-const val ZOS_USERID = "ZOSMFAD"
-const val ZOS_PWD = "ZOSMF"
-const val CONNECTION_URL = "https://172.20.2.69:10443"
+const val ZOS_USERID = ""
+const val ZOS_PWD = ""
+const val CONNECTION_URL = ""
 
 const val ENTER_VALID_DS_MASK_MESSAGE = "Enter valid dataset mask"
 const val IDENTICAL_MASKS_MESSAGE = "You cannot add several identical masks to table"
 const val EMPTY_DATASET_MESSAGE = "You are going to create a Working Set that doesn't fetch anything"
 const val TEXT_FIELD_LENGTH_MESSAGE = "Text field must not exceed 8 characters."
 const val MEMBER_NAME_LENGTH_MESSAGE = "Member name must not exceed 8 characters."
+const val MEMBER_EMPTY_NAME_MESSAGE = "This field must not be blank"
 const val INVALID_MEMBER_NAME_MESSAGE = "Member name should contain only A-Z a-z 0-9 or national characters"
 const val INVALID_MEMBER_NAME_BEGINNING_MESSAGE = "Member name should start with A-Z a-z or national characters"
 const val JOB_ID_LENGTH_MESSAGE = "Job ID length must be 8 characters."
@@ -45,6 +46,9 @@ const val TEXT_FIELD_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z,
 const val JOBID_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z, 0-9"
 const val PREFIX_OWNER_JOBID_MESSAGE = "You must provide either an owner and a prefix or a job ID."
 const val IDENTICAL_FILTERS_MESSAGE = "You cannot add several identical job filters to table"
+const val DATASET_NAME_LENGTH_MESSAGE = "Dataset name cannot exceed 44 characters"
+const val DATASET_EMPTY_NAME_MESSAGE = "Dataset name must not be empty"
+const val DATASET_INVALID_SECTION_MESSAGE = "Each name segment (qualifier) is 1 to 8 characters, the first of which must be alphabetic (A to Z) or national (# @ \$). The remaining seven characters are either alphabetic, numeric (0 - 9), national, a hyphen (-). Name segments are separated by a period (.)"
 
 val maskWithLength44 =
     "$ZOS_USERID." + "A2345678.".repeat((44 - (ZOS_USERID.length + 1)) / 9) + "A".repeat((44 - (ZOS_USERID.length + 1)) % 9)
@@ -604,7 +608,7 @@ fun createMemberAndPasteContent(
     }
 
 /**
- * Allocates a dataset and creates a mask for it.
+ * Allocates a PDS dataset and creates a mask for it.
  * @param maskName when specified, mask will be created with the provided name, otherwise maskName will be equal to datasetName
  */
 fun allocatePDSAndCreateMask(wsName: String,
@@ -615,44 +619,39 @@ fun allocatePDSAndCreateMask(wsName: String,
                              remoteRobot: RemoteRobot,
                              maskName: String? = null,
                              directory: Int = 1) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            if (maskName != null){
-                createMask(wsName, fixtureStack, closableFixtureCollector)
-                createMaskDialog(fixtureStack){
-                    createMask(Pair(maskName, "z/OS"))
-                    clickButton("OK")
-                    Thread.sleep(3000)
-                }
-            }
-
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(wsName).rightClick()
-            }
-            actionMenu(remoteRobot, "New").click()
-            actionMenuItem(remoteRobot, "Dataset").click()
-            allocateDatasetDialog(fixtureStack) {
-                allocateDataset(datasetName, "PO", "TRK", 10, 1, directory, "VB", 255, 6120)
+    ideFrameImpl(projectName, fixtureStack) {
+        if (maskName != null){
+            createMask(wsName, fixtureStack, closableFixtureCollector)
+            createMaskDialog(fixtureStack){
+                createMask(Pair(maskName, "z/OS"))
                 clickButton("OK")
-                Thread.sleep(10000)
-            }
-            find<ContainerFixture>(byXpath("//div[@class='MyDialog']")).findText("Dataset $datasetName Has Been Created")
-
-            if (maskName != null){
-                clickButton("No")
-                Thread.sleep(5000)
-                /*explorer {
-                    fileExplorer.click()
-                    find<ComponentFixture>(viewTree).findText(wsName).rightClick()
-                }
-                actionMenu(remoteRobot, "Refresh").click()*/
-            } else {
-                clickButton("Yes")
-                Thread.sleep(5000)
+                Thread.sleep(3000)
             }
         }
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+
+        explorer {
+            fileExplorer.click()
+            find<ComponentFixture>(viewTree).findText(wsName).rightClick()
+        }
+        actionMenu(remoteRobot, "New").click()
+        actionMenuItem(remoteRobot, "Dataset").click()
+        allocateDatasetDialog(fixtureStack) {
+            allocateDataset(datasetName, "PO", "TRK", 10, 1, directory, "VB", 255, 6120)
+            clickButton("OK")
+            Thread.sleep(10000)
+        }
+        find<ContainerFixture>(byXpath("//div[@class='MyDialog']")).findText("Dataset $datasetName Has Been Created")
+
+        if (maskName != null){
+            clickButton("No")
+            Thread.sleep(5000)
+        } else {
+            clickButton("Yes")
+            Thread.sleep(5000)
+        }
     }
+    openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+}
 
 /**
  * Creates working set without masks.
@@ -699,6 +698,64 @@ fun allocateMemberForPDS(datasetName: String,
             allocateMember(memberName)
             clickButton("OK")
             Thread.sleep(5000)
+        }
+    }
+}
+
+/**
+ * Allocates a sequential dataset.
+ */
+fun allocateDataSet(wsName: String,
+                    datasetName: String,
+                    projectName: String,
+                    fixtureStack: MutableList<Locator>,
+                    remoteRobot: RemoteRobot) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        explorer {
+            fileExplorer.click()
+            find<ComponentFixture>(viewTree).findText(wsName).rightClick()
+        }
+        actionMenu(remoteRobot, "New").click()
+        actionMenuItem(remoteRobot, "Dataset").click()
+        allocateDatasetDialog(fixtureStack) {
+            allocateDataset(datasetName, "PS", "TRK", 10, 1, 0, "VB", 255, 6120)
+            clickButton("OK")
+            Thread.sleep(10000)
+        }
+        find<ContainerFixture>(byXpath("//div[@class='MyDialog']")).findText("Dataset $datasetName Has Been Created")
+        clickButton("No")
+        explorer {
+            fileExplorer.click()
+            find<ComponentFixture>(viewTree).findText(wsName).rightClick()
+        }
+        actionMenuItem(remoteRobot, "Refresh").click()
+        Thread.sleep(3000)
+    }
+}
+
+/**
+ * Checks title and error information for popup window.
+ */
+fun checkErrorNotification(
+    errorHeader: String,
+    errorType: String,
+    errorDetail: String,
+    projectName: String,
+    fixtureStack: MutableList<Locator>,
+    remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        var errorMessage = ""
+        find<ComponentFixture>(byXpath("//div[@class='LinkLabel']")).click()
+        find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']")).findText(errorHeader)
+        find<ContainerFixture>(byXpath("//div[@class='JEditorPane']")).findAllText().forEach {
+            errorMessage += it.text
+        }
+        if (!(errorMessage.contains(errorType) && errorMessage.contains(errorDetail))) {
+            find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
+            throw Exception("Error message is different from expected")
+        } else {
+            find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
         }
     }
 }
