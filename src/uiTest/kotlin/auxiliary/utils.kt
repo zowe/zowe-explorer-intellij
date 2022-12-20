@@ -29,9 +29,9 @@ import java.awt.event.KeyEvent
 import java.time.Duration
 
 //Change ZOS_USERID, ZOS_PWD, CONNECTION_URL with valid values before UI tests execution
-const val ZOS_USERID = ""
-const val ZOS_PWD = ""
-const val CONNECTION_URL = ""
+const val ZOS_USERID = "changeme"
+const val ZOS_PWD = "changeme"
+const val CONNECTION_URL = "changeme"
 
 const val ENTER_VALID_DS_MASK_MESSAGE = "Enter valid dataset mask"
 const val IDENTICAL_MASKS_MESSAGE = "You cannot add several identical masks to table"
