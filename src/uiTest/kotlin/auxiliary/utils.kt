@@ -803,8 +803,8 @@ fun allocateMemberForPDS(datasetName: String,
 
         actionMenu(remoteRobot, "New").click()
         actionMenuItem(remoteRobot, "Member").click()
-        allocateMemberDialog(fixtureStack) {
-            allocateMember(memberName)
+        createMemberDialog(fixtureStack) {
+            createMember(memberName)
             clickButton("OK")
             Thread.sleep(5000)
         }

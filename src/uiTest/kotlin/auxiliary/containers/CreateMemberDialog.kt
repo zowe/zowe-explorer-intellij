@@ -20,19 +20,19 @@ import com.intellij.remoterobot.search.locators.byXpath
 import java.time.Duration
 
 /**
- * Class representing the Allocate Member Dialog.
+ * Class representing the Create Member Dialog.
  */
-@FixtureName("Allocate Member Dialog")
-open class AllocateMemberDialog(
+@FixtureName("Create Member Dialog")
+open class CreateMemberDialog(
     remoteRobot: RemoteRobot,
     remoteComponent: RemoteComponent
 ) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
     val memberTextParams = findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']"))
 
     /**
-     * Fills in the required information for allocating a new member.
+     * Fills in the required information for creating a new member.
      */
-    fun allocateMember(memberName: String) {
+    fun createMember(memberName: String) {
         memberTextParams[0].text = memberName
     }
 
@@ -43,10 +43,10 @@ open class AllocateMemberDialog(
         clickButton("Cancel")
     }
     companion object {
-        const val name = "Allocate Member Dialog"
+        const val name = "Create Member Dialog"
 
         /**
-         * Returns the xPath of the Allocate Member Dialog.
+         * Returns the xPath of the Create Member Dialog.
          */
         @JvmStatic
         fun xPath() = byXpath( name,"//div[@accessiblename='Create Member' and @class='MyDialog']")
@@ -54,14 +54,14 @@ open class AllocateMemberDialog(
 }
 
 /**
- * Finds the AllocateMemberDialog and modifies fixtureStack.
+ * Finds the CreateMemberDialog and modifies fixtureStack.
  */
-fun ContainerFixture.allocateMemberDialog(
+fun ContainerFixture.createMemberDialog(
     fixtureStack: MutableList<Locator>,
     timeout: Duration = Duration.ofSeconds(60),
-    function: AllocateMemberDialog.() -> Unit = {}) {
-    find<AllocateMemberDialog>(AllocateMemberDialog.xPath(), timeout).apply {
-        fixtureStack.add(AllocateMemberDialog.xPath())
+    function: CreateMemberDialog.() -> Unit = {}) {
+    find<CreateMemberDialog>(CreateMemberDialog.xPath(), timeout).apply {
+        fixtureStack.add(CreateMemberDialog.xPath())
         function()
         fixtureStack.removeLast()
     }

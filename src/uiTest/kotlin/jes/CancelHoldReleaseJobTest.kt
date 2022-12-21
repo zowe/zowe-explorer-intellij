@@ -57,7 +57,7 @@ class CancelHoldReleaseJobTest {
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
         createConnection(projectName, fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
         createWS(remoteRobot)
-        allocatePDSAndCreateMask(wsName, datasetName, projectName, fixtureStack, remoteRobot)
+        allocatePDSAndCreateMask(wsName, datasetName, projectName, fixtureStack, closableFixtureCollector, remoteRobot)
         createJob(remoteRobot)
     }
 

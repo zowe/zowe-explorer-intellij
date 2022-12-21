@@ -62,7 +62,7 @@ class RenameDatasetTest {
             fixtureStack,
             closableFixtureCollector,
             remoteRobot,
-            "$ZOS_USERID.*",
+            "$ZOS_USERID.UI.TEST*",
             directory = 2
         )
         allocateDataSet(wsName, dsName, projectName, fixtureStack, remoteRobot)
@@ -94,13 +94,12 @@ class RenameDatasetTest {
     }
 
     /**
-     * Tests to add new working set without connection, checks that correct message is returned.
+     * Tests renaming member when valid member name is provided.
      */
     @Test
     @Order(1)
     fun testRenameMemberWithCorrectNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
-            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
             explorer {
                 fileExplorer.click()
                 Thread.sleep(3000)
@@ -116,6 +115,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming member to name of another member in the same PDS and validates error pop-up notification.
+     */
     @Test
     @Order(2)
     fun testRenameMemberWithNameOfAnotherMemberViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -136,6 +138,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming member to the same name and validates error pop-up notification.
+     */
     @Test
     @Order(3)
     fun testRenameMemberWithTheSameNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -156,6 +161,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming member to very long and validates error notification.
+     */
     @Test
     @Order(4)
     fun testRenameMemberWithTooLongNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -176,6 +184,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming member to invalid name and validates error notification.
+     */
     @Test
     @Order(5)
     fun testRenameMemberWithInvalidNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -196,6 +207,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming member to name with the invalid first symbol and validates error notification.
+     */
     @Test
     @Order(6)
     fun testRenameMemberWithInvalidFirstSymbolViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -216,6 +230,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming member to empty name and validates error notification.
+     */
     @Test
     @Order(7)
     fun testRenameMemberWithEmptyNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -235,11 +252,14 @@ class RenameDatasetTest {
             clickButton("Cancel")
         }
     }
+
+    /**
+     * Tests renaming DataSet when valid member name is provided.
+     */
     @Test
     @Order(8)
     fun testRenameDataSetWithCorrectNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
-            closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
             explorer {
                 Thread.sleep(3000)
                 find<ComponentFixture>(viewTree).findText(dsName).rightClick()
@@ -252,6 +272,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming DataSet to name of another DataSet and validates error pop-up notification.
+     */
     @Test
     @Order(9)
     fun testRenameDatasetWithNameOfAnotherDatasetViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -272,6 +295,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming DataSet to name with invalid section and validates error notification.
+     */
     @Test
     @Order(10)
     fun testRenameDatasetWithInvalidSectionViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -296,6 +322,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming DataSet to very long name and validates error notification.
+     */
     @Test
     @Order(11)
     fun testRenameDatasetWithTooLongNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -316,6 +345,9 @@ class RenameDatasetTest {
         }
     }
 
+    /**
+     * Tests renaming DataSet to empty name and validates error notification.
+     */
     @Test
     @Order(12)
     fun testRenameDatasetWithEmptyNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
