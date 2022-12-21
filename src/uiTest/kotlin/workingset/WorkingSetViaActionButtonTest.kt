@@ -17,6 +17,8 @@ import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
+import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.extension.ExtendWith
@@ -72,15 +74,24 @@ class WorkingSetViaActionButtonTest {
     fun testAddWorkingSetWithoutConnectionViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "first ws"
         ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                createWorkingSet(closableFixtureCollector, fixtureStack)
+            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
+
+            try {
+                if (dialog("Add Working Set Dialog").isShowing) {
+                    Assertions.assertTrue(false)
+                }
+            } catch (e: WaitForConditionTimeoutException) {
+                e.message.shouldContain("Failed to find 'Dialog' by 'title Add Working Set Dialog'")
+            } finally {
+                closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
             }
+            createConnectionFromActionButton(closableFixtureCollector, fixtureStack)
             addConnectionDialog(fixtureStack) {
                 addConnection(connectionName, CONNECTION_URL, ZOS_USERID, ZOS_PWD, true)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
+            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
@@ -103,10 +114,7 @@ class WorkingSetViaActionButtonTest {
     fun testAddEmptyWorkingSetWithVeryLongNameViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName: String = "B".repeat(200)
         ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                createWorkingSet(closableFixtureCollector, fixtureStack)
-            }
+            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
@@ -130,10 +138,7 @@ class WorkingSetViaActionButtonTest {
         val wsName = "WS1"
         val mask = Pair("$ZOS_USERID.*", "z/OS")
         ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                createWorkingSet(closableFixtureCollector, fixtureStack)
-            }
+            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName, mask)
                 clickButton("OK")
@@ -158,10 +163,7 @@ class WorkingSetViaActionButtonTest {
         }
 
         ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                createWorkingSet(closableFixtureCollector, fixtureStack)
-            }
+            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName, masks)
                 clickButton("OK")
@@ -186,10 +188,7 @@ class WorkingSetViaActionButtonTest {
         }
 
         ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                createWorkingSet(closableFixtureCollector, fixtureStack)
-            }
+            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName, masks)
                 clickButton("OK")
@@ -208,10 +207,7 @@ class WorkingSetViaActionButtonTest {
     fun testAddWorkingSetWithInvalidMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS4"
         ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                createWorkingSet(closableFixtureCollector, fixtureStack)
-            }
+            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName)
                 maskMessageMap.forEach {
@@ -248,10 +244,7 @@ class WorkingSetViaActionButtonTest {
     fun testAddWorkingSetWithTheSameMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS4"
         ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                createWorkingSet(closableFixtureCollector, fixtureStack)
-            }
+            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName)
                 addMask(Pair("$ZOS_USERID.*", "z/OS"))

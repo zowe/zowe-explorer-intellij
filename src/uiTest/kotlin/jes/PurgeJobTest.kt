@@ -114,10 +114,7 @@ class PurgeJobTest {
             Triple("TEST3", ZOS_USERID, "")
         )
         ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                jesExplorer.click()
-                createJesWorkingSet(closableFixtureCollector, fixtureStack)
-            }
+            createJesWorkingSetFromActionButton(closableFixtureCollector,fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName, filters)
                 clickButton("OK")
