@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.showYesNoDialog
 import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
-import eu.ibagroup.formainframe.explorer.ui.JobsWsNode
+import eu.ibagroup.formainframe.explorer.ui.JesWsNode
 
 /**
  * Action class for delete JES node action (working set or filter)
@@ -33,7 +33,7 @@ class DeleteJesNodeAction : AnAction() {
     // Delete selected JES working sets
     selected
       .map { it.node }
-      .filterIsInstance<JobsWsNode>()
+      .filterIsInstance<JesWsNode>()
       .forEach {
         if (
           showYesNoDialog(
@@ -81,6 +81,6 @@ class DeleteJesNodeAction : AnAction() {
       return
     }
     val selected = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = selected[0].node is JobsWsNode || selected[0].node is JesFilterNode
+    e.presentation.isEnabledAndVisible = selected[0].node is JesWsNode || selected[0].node is JesFilterNode
   }
 }

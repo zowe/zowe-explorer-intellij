@@ -11,6 +11,9 @@
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.util.containers.isEmpty
+import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
@@ -18,8 +21,9 @@ import eu.ibagroup.formainframe.config.ws.ui.FilesWorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.files.FilesWorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
-import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_CONTEXT_MENU
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.getAll
 
 /**
  * Implementation of AddWsActionBase for files working sets.
@@ -45,7 +49,10 @@ class AddWorkingSetAction : AddWsActionBase() {
    */
   override fun update(e: AnActionEvent) {
     super.update(e)
-    if (e.getData(JES_EXPLORER_VIEW) != null) {
+    if (configCrudable.getAll<ConnectionConfig>().isEmpty()) {
+      e.presentation.isEnabled = false
+    }
+    if (e.place.contains(JES_EXPLORER_CONTEXT_MENU)) {
       e.presentation.isEnabledAndVisible = false
     }
   }

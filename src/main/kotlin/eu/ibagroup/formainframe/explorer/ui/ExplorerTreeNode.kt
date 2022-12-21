@@ -96,8 +96,7 @@ abstract class ExplorerTreeNode<Value : Any>(
           icon = AllIcons.General.WarningDialog
         )
         runBackgroundableTask("Navigating to ${file.name}") { indicator ->
-          this.navigating = true
-          this.update()
+
 
           if (doSync) {
             val onThrowableHandler: (Throwable) -> Unit = {
@@ -131,6 +130,8 @@ abstract class ExplorerTreeNode<Value : Any>(
                 onSyncSuccessHandler = onSyncSuccessHandler
               )
             if (!file.isBeingEditingNow()) {
+              this.navigating = true
+              this.update()
               runCatching {
                 contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
               }.also {
@@ -161,5 +162,4 @@ abstract class ExplorerTreeNode<Value : Any>(
 
   val path: TreePath
     get() = TreePath(pathList.toTypedArray())
-
 }

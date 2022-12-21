@@ -14,7 +14,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -100,7 +99,59 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
   }
 
   /**
+   * Make "fetch files" call and convert response to files
+   * @param query the query to fetch files
+   * @param progressIndicator the progress indicator to cancel the fetch process in case the user wants to
+   * @return fetched files
+   */
+  private fun getFetchedFiles(query: RemoteQuery<Request, Unit>, progressIndicator: ProgressIndicator): List<File> {
+    val fetched = fetchResponse(query, progressIndicator)
+    return runWriteActionOnWriteThread {
+      fetched.mapNotNull {
+        convertResponseToFile(it)
+      }
+    }
+  }
+
+  /**
+   * Trigger onCacheUpdated event when the operation is completed successfully
+   * @param query the query that was used in fetch call
+   * @param files the files that were fetched
+   */
+  private fun publishCacheUpdated(query: RemoteQuery<Request, Unit>, files: List<File>) {
+    sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onCacheUpdated(query, files)
+  }
+
+  /**
+   * Trigger onFetchCancelled if the fetch operation is cancelled, and onFetchFailure in case the fetch operation is failed.
+   * In case of process cancellation, cleans the cache. In case of fetch failure, makes cache in error state, resets the cache
+   */
+  private fun publishFetchCancelledOrFailed(query: RemoteQuery<Request, Unit>, throwable: Throwable) {
+    if (throwable is ProcessCanceledException) {
+      cleanCacheInternal(query, false)
+      sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchCancelled(query)
+    } else {
+      if (throwable is CallException) {
+        val details = throwable.errorParams?.get("details")
+        var errorMessage = throwable.message ?: "Error"
+        if (details is List<*>) {
+          errorMessage = details[0] as String
+        }
+        errorMessages[query] =
+          service<ErrorSeparatorService>().separateErrorMessage(errorMessage)["error.description"] as String
+      } else {
+        val errorMessage = throwable.message ?: "Error"
+        errorMessages[query] = errorMessage
+      }
+      cache[query] = listOf()
+      cacheState[query] = CacheState.ERROR
+      sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchFailure(query, throwable)
+    }
+  }
+
+  /**
    * Method for reloading remote files. The files are fetched again, the old cache is cleared, the new cache is loaded.
+   * All the old files attributes are set to invalid
    * @param query query with all necessary information to send request.
    * @param progressIndicator progress indicator to display progress of fetching items in UI.
    */
@@ -109,62 +160,58 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
     progressIndicator: ProgressIndicator
   ) {
     runCatching {
-      val needToUpdateFiles = query.castOrNull<BatchedRemoteQuery<*>>()?.let { it.fetchNeeded && it.alreadyFetched > 0 } == true
-      val fetched = fetchResponse(query, progressIndicator)
-      val files = runWriteActionOnWriteThread {
-        fetched.mapNotNull {
-          convertResponseToFile(it)
-        }
-      }
+      val files = getFetchedFiles(query, progressIndicator)
 
-      cache[query]?.parallelStream()?.filter { oldFile ->
-        oldFile.isValid && files.none { compareOldAndNewFile(oldFile, it) }
-      }?.toList()?.apply {
-        runWriteActionOnWriteThread {
-          forEach { cleanupUnusedFile(it, query) }
+      // Cleans up attributes of invalid files
+      cache[query]
+        ?.parallelStream()
+        ?.filter { oldFile ->
+          // TODO: does not work correctly on datasets (check VOLSER)
+          oldFile.isValid && files.none { compareOldAndNewFile(oldFile, it) }
         }
-      }
-      if (needToUpdateFiles) {
-        val newCache = cache[query]?.toMutableList() ?: mutableListOf()
-        newCache.addAll(files)
-        cache[query] = newCache
-      } else {
-        cache[query] = files
-      }
+        ?.toList()
+        ?.apply {
+          runWriteActionOnWriteThread {
+            forEach { cleanupUnusedFile(it, query) }
+          }
+        }
+
+      cache[query] = files
       cacheState[query] = CacheState.FETCHED
       files
-    }.onSuccess {
-      sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onCacheUpdated(query, it)
-    }.onFailure {
-      if (it is ProcessCanceledException) {
-        cleanCacheInternal(query, false)
-        sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchCancelled(query)
-      } else {
-        if (it is CallException) {
-          val details = it.errorParams?.get("details")
-          var errorMessage = it.message ?: "Error"
-          if (details is List<*>) {
-            errorMessage = details[0] as String
-          }
-          errorMessages[query] =
-            service<ErrorSeparatorService>().separateErrorMessage(errorMessage)["error.description"] as String
-        } else {
-          val errorMessage = it.message ?: "Error"
-          errorMessages[query] = errorMessage
-        }
-        cache[query] = listOf()
-        cacheState[query] = CacheState.ERROR
-        sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchFailure(query, it)
-      }
     }
+      .onSuccess { publishCacheUpdated(query, it) }
+      .onFailure { publishFetchCancelledOrFailed(query, it) }
+  }
+
+  /**
+   * Load more children elements. Is triggered when "load more" node is navigated
+   * @param query query with all necessary information to send the request
+   * @param progressIndicator progress indicator to display progress of fetching items in UI
+   */
+  override fun loadMode(
+    query: RemoteQuery<Request, Unit>,
+    progressIndicator: ProgressIndicator
+  ) {
+    runCatching {
+      val files = getFetchedFiles(query, progressIndicator)
+      val newCache = cache[query]?.toMutableList() ?: mutableListOf()
+      newCache.addAll(files)
+      cache[query] = newCache
+      cacheState[query] = CacheState.FETCHED
+      files
+    }
+      .onSuccess { publishCacheUpdated(query, it) }
+      .onFailure { publishFetchCancelledOrFailed(query, it) }
   }
 
   /**
    * Clears the cache with sending the cache change topic.
    * @param query query that identifies the cache.
+   * @param sendTopic true if it is necessary to send message in CACHE_CHANGES topic and false otherwise.
    */
-  override fun cleanCache(query: RemoteQuery<Request, Unit>) {
-    cleanCacheInternal(query, true)
+  override fun cleanCache(query: RemoteQuery<Request, Unit>, sendTopic: Boolean) {
+    cleanCacheInternal(query, sendTopic)
   }
 
   /** @see FileFetchProvider.getRealQueryInstance */

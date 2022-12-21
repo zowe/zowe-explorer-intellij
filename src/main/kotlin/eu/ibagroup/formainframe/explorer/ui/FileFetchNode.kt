@@ -42,16 +42,36 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
 
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
-  /** current cache will not be cleaned if this value is true. It was made for fetching files bi batches. */
-  var needToLoadMore = false
+
+  private val hasError = AtomicBoolean(false)
+
+  private val connectionError = "Error: Check connection"
+
+  @Volatile
+  private var needsToShowPlus = true
+
+  private var cachedChildren: List<AbstractTreeNode<*>>? by locked(null, lock)
 
   private val fileFetchProvider
     get() = explorer.componentManager.service<DataOpsManager>()
       .getFileFetchProvider(requestClass, queryClass, vFileClass)
 
-  protected abstract fun makeFetchTaskTitle(query: Q): String
-
   private val loadingNode by lazy { LoadingNode(notNullProject, this, explorer, treeStructure) }
+
+  protected abstract val requestClass: Class<out R>
+
+  protected abstract val queryClass: Class<out Query<*, *>>
+
+  protected abstract val vFileClass: Class<out File>
+
+  abstract val query: Q?
+
+  /** Indicates whether the next children fetch should load more child elements to the children list */
+  var needToLoadMore = false
+
+  protected abstract fun Collection<File>.toChildrenNodes(): List<AbstractTreeNode<*>>
+
+  protected abstract fun makeFetchTaskTitle(query: Q): String
 
   /**
    * Method to build a list of error nodes with specified error text
@@ -60,13 +80,10 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
     return listOf(ErrorNode(notNullProject, this, explorer, treeStructure, text = text))
   }
 
-  private val hasError = AtomicBoolean(false)
-
-  private val connectionError = "Error: Check connection"
-
   /**
    * Method which is called when tree node is expanded or refresh is pressed on tree node.
-   * It fetches the children nodes if no cached nodes are present / displays "loading..." during fetch / displays any Error if an error happened during fetch
+   * It fetches the children nodes if no cached nodes are present / displays "loading..." during fetch / displays any Error if an error happened during fetch.
+   * Normally, this function is called after nodes invalidation
    * @return collection of children tree nodes
    */
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
@@ -77,21 +94,31 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
         if (q != null && fileFetchProvider.isCacheValid(q)) {
           val fetched = fileFetchProvider.getCached(q)?.toMutableList()
           if (fetched != null && !needToLoadMore) {
-            fetched.toChildrenNodes().toMutableList().apply {
-              val batchedQ = q.castOrNull<BatchedRemoteQuery<*>>()
-              if (batchedQ?.fetchNeeded == true) {
-                val itemsLeft = batchedQ.totalRows?.let { it - batchedQ.alreadyFetched }
-                add(LoadMoreNode(notNullProject, this@FileFetchNode, explorer, treeStructure, itemsLeft))
+            fetched
+              .toChildrenNodes()
+              .toMutableList()
+              .apply {
+                val batchedQ = q.castOrNull<BatchedRemoteQuery<*>>()
+                if (batchedQ?.fetchNeeded == true) {
+                  val itemsLeft = batchedQ.totalRows?.let { it - batchedQ.alreadyFetched }
+                  add(LoadMoreNode(notNullProject, this@FileFetchNode, explorer, treeStructure, itemsLeft))
+                }
               }
-            }.also { cachedChildren = it }
+              .also {
+                cachedChildren = it
+              }
           } else {
-            needToLoadMore = false
             runBackgroundableTask(
               title = makeFetchTaskTitle(q),
               project = project,
               cancellable = true
             ) {
-              fileFetchProvider.reload(q, it)
+              if (needToLoadMore) {
+                fileFetchProvider.loadMode(q, it)
+              } else {
+                fileFetchProvider.reload(q, it)
+              }
+              needToLoadMore = false
             }
             (fetched?.toChildrenNodes()?.toMutableList() ?: mutableListOf()).apply { add(loadingNode) }
           }
@@ -125,26 +152,27 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
     }
   }
 
-  abstract val query: Q?
-
-  @Volatile
-  private var needsToShowPlus = true
-
-  private var cachedChildren: List<AbstractTreeNode<*>>? by locked(null, lock)
-
   /**
    * Method which is called to clean a cache during refresh or reload of the tree node
    * @param recursively - determines if all children nodes should clean the cache
+   * @param cleanFetchProviderCache - also cleans cache of fetch provider for corresponding query.
+   * @param cleanBatchedQuery - cleans current position of fetching items in batched query.
+   * @param sendTopic - true if it is necessary to send message in CACHE_CHANGES topic and false otherwise.
    * @return Void
    */
-  fun cleanCache(recursively: Boolean = true, cleanFetchProviderCache: Boolean = true, cleanBatchedQuery: Boolean = false) {
+  fun cleanCache(
+    recursively: Boolean = true,
+    cleanFetchProviderCache: Boolean = true,
+    cleanBatchedQuery: Boolean = false,
+    sendTopic: Boolean = true
+  ) {
     val children = cachedChildren
     if (!hasError.compareAndSet(true, false)) {
       cachedChildren = null
     }
     if (cleanFetchProviderCache) {
       query?.let {
-        fileFetchProvider.cleanCache(it)
+        fileFetchProvider.cleanCache(it, sendTopic)
       }
     }
     if (cleanBatchedQuery) {
@@ -159,22 +187,15 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
     }
   }
 
-  protected abstract fun Collection<File>.toChildrenNodes(): List<AbstractTreeNode<*>>
-
-  protected abstract val requestClass: Class<out R>
-
-  protected abstract val queryClass: Class<out Query<*, *>>
-
-  protected abstract val vFileClass: Class<out File>
-
 }
 
+// TODO: rework or remove as it is not customisable at the moment (recursively and cleanFetchProviderCache is omitted)
 /**
  * Method to call cleanCache() of desired instance of the tree node. Tree node should be an instance of FileFetchNode
- * @return Void
+ * @param cleanBatchedQuery value to indicate whether it is needed to clean batched query
  */
-fun ExplorerTreeNode<*>.cleanCacheIfPossible() {
+fun ExplorerTreeNode<*>.cleanCacheIfPossible(cleanBatchedQuery: Boolean) {
   if (this is FileFetchNode<*, *, *, *, *>) {
-    cleanCache(cleanBatchedQuery = true)
+    cleanCache(cleanBatchedQuery = cleanBatchedQuery)
   }
 }

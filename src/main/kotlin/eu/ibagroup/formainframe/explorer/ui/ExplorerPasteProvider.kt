@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,12 +25,14 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
+import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
@@ -48,6 +51,128 @@ class ExplorerPasteProvider : PasteProvider {
   private val dataOpsManager = service<DataOpsManager>()
   private val pastePredicate: (NodeData) -> Boolean = {
     it.attributes?.isPastePossible ?: true
+  }
+
+  /**
+   * Get nodes to refresh. Normally it would be some parent nodes that are changed during the copy/move operation.
+   * E.g. for copy operation it will be parent node of the destination. For move operation it will be both source and destination nodes
+   * @param operations operations list to find nodes by
+   * @param explorerView the explorer view to get filesystem tree structure and the operation type
+   * @return nodes to refresh
+   */
+  private fun getNodesToRefresh(
+    operations: List<MoveCopyOperation>,
+    explorerView: FileExplorerView
+  ): List<ExplorerTreeNode<*>> {
+    fun List<MoveCopyOperation>.collectByFile(
+      fileChooser: (MoveCopyOperation) -> VirtualFile
+    ): List<VirtualFile> {
+      return map(fileChooser)
+        .distinct()
+        .getMinimalCommonParents()
+        .toList()
+    }
+
+    val destinationFilesToRefresh = operations.collectByFile { it.destination }
+    val sourceFilesToRefresh = if (explorerView.isCut.get()) {
+      operations.collectByFile { it.source }
+    } else {
+      emptyList()
+    }
+    val destinationNodes = destinationFilesToRefresh
+      .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file) }
+      .flatten()
+      .distinct()
+    return if (explorerView.isCut.get()) {
+      val sourceNodesToRefresh = sourceFilesToRefresh
+        .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).map { it.parent } }
+        .flatten()
+        .filterNotNull()
+        .distinct()
+      destinationNodes.plus(sourceNodesToRefresh)
+    } else {
+      destinationNodes
+    }
+  }
+
+  /**
+   * Refresh provided nodes
+   * @param nodesToRefresh the nodes to refresh
+   * @param explorerView the explorer view to clean "invalidate on expand" for nodes
+   */
+  private fun refreshNodes(nodesToRefresh: List<ExplorerTreeNode<*>>, explorerView: FileExplorerView) {
+    nodesToRefresh
+      .forEach { node ->
+        val parentNode = node.castOrNull<FileFetchNode<*, *, *, *, *>>() ?: return
+        parentNode.query ?: return
+        parentNode.cleanCache(recursively = false, cleanBatchedQuery = true)
+        cleanInvalidateOnExpand(parentNode, explorerView)
+      }
+  }
+
+  /**
+   * Run move or copy task. Cleans cache on subtrees after the operation is completed
+   * @param titlePrefix the operation title
+   * @param filesToMoveTotal count of files to perform operation on
+   * @param isDragAndDrop value to indicate whether the operation is DnD
+   * @param operations the operation instances that carry all the necessary information about the operations
+   * @param copyPasteSupport the copy-paste support to control the custom clipboard
+   * @param explorerView explorer view instance to control operation
+   * @param project the project to run task in
+   */
+  private fun runMoveOrCopyTask(
+    titlePrefix: String,
+    filesToMoveTotal: Int,
+    isDragAndDrop: Boolean,
+    operations: List<MoveCopyOperation>,
+    copyPasteSupport: FileExplorerView.ExplorerCopyPasteSupport,
+    explorerView: FileExplorerView,
+    project: Project
+  ) {
+    runModalTask(
+      title = "$titlePrefix $filesToMoveTotal file(s)",
+      project = project,
+      cancellable = true
+    ) {
+      it.isIndeterminate = false
+      operations.forEach { op ->
+        op.sourceAttributes?.let { attr ->
+          service<AnalyticsService>()
+            .trackAnalyticsEvent(
+              FileEvent(
+                attr,
+                if (op.isMove) FileAction.MOVE else FileAction.COPY
+              )
+            )
+        }
+        it.text = "${op.source.name} to ${op.destination.name}"
+        runCatching {
+          dataOpsManager.performOperation(
+            operation = op,
+            progressIndicator = it
+          )
+        }
+          .onSuccess {
+            if (explorerView.isCut.get()) {
+              copyPasteSupport.removeFromBuffer { node -> node.file == op.source }
+            }
+          }
+          .onFailure { throwable ->
+            explorerView.explorer.reportThrowable(throwable, project)
+            if (isDragAndDrop) {
+              copyPasteSupport.removeFromBuffer { node ->
+                node.file == op.source &&
+                  operations.minus(op).none { operation -> operation.source == op.source }
+              }
+            }
+          }
+        it.fraction = it.fraction + 1.0 / filesToMoveTotal
+      }
+
+      val nodesToRefresh = getNodesToRefresh(operations, explorerView)
+
+      refreshNodes(nodesToRefresh, explorerView)
+    }
   }
 
   /**
@@ -147,7 +272,8 @@ class ExplorerPasteProvider : PasteProvider {
                 }
               } ?: return@conflicts null)
             }
-        }.flatten()
+        }
+        .flatten()
 
       if (conflicts.isNotEmpty()) {
         val choice = Messages.showDialog(
@@ -171,19 +297,23 @@ class ExplorerPasteProvider : PasteProvider {
         }
       }
 
-      val ussToPdsWarnings = pasteDestinations.mapNotNull { destFile ->
-        val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
-        if (destAttributes !is RemoteDatasetAttributes) null
-        else {
-          val sourceUssAttributes = sourceFiles.filter { sourceFile ->
-            val sourceAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
-            sourceAttributes is RemoteUssAttributes || sourceFile is VirtualFileImpl
+      val ussToPdsWarnings = pasteDestinations
+        .mapNotNull { destFile ->
+          val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
+          if (destAttributes !is RemoteDatasetAttributes) null
+          else {
+            val sourceUssAttributes = sourceFiles
+              .filter { sourceFile ->
+                val sourceAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
+                sourceAttributes is RemoteUssAttributes || sourceFile is VirtualFileImpl
+              }
+            sourceUssAttributes.map { Pair(destFile, it) }.ifEmpty { null }
           }
-          sourceUssAttributes.map { Pair(destFile, it) }.ifEmpty { null }
         }
-      }.flatten()
+        .flatten()
 
-      if (ussToPdsWarnings.isNotEmpty() &&
+      if (
+        ussToPdsWarnings.isNotEmpty() &&
         !showYesNoDialog(
           "USS File To PDS Placing",
           "You are about to place USS file to PDS. All lines exceeding the record length will be truncated.",
@@ -196,25 +326,53 @@ class ExplorerPasteProvider : PasteProvider {
         skipDestinationSourceList.addAll(ussToPdsWarnings)
       }
 
-      val operations = pasteDestinations.map { destFile ->
-        sourceFiles.mapNotNull { sourceFile ->
-          if (skipDestinationSourceList.contains(Pair(destFile, sourceFile))) {
-            if (isDragAndDrop) {
-              copyPasteSupport.removeFromBuffer { it.file == sourceFile }
+      val operations = pasteDestinations
+        .map { destFile ->
+          sourceFiles.mapNotNull { sourceFile ->
+            if (skipDestinationSourceList.contains(Pair(destFile, sourceFile))) {
+              if (isDragAndDrop) {
+                copyPasteSupport.removeFromBuffer { it.file == sourceFile }
+              }
+              return@mapNotNull null
             }
-            return@mapNotNull null
+            MoveCopyOperation(
+              source = sourceFile,
+              destination = destFile,
+              isMove = explorerView.isCut.get(),
+              forceOverwriting = overwriteDestinationSourceList.contains(Pair(destFile, sourceFile)),
+              newName = null,
+              dataOpsManager,
+              explorerView.explorer
+            )
           }
-          MoveCopyOperation(
-            source = sourceFile,
-            destination = destFile,
-            isMove = explorerView.isCut.get(),
-            forceOverwriting = overwriteDestinationSourceList.contains(Pair(destFile, sourceFile)),
-            newName = null,
-            dataOpsManager,
-            explorerView.explorer
-          )
         }
-      }.flatten()
+        .flatten()
+
+      val filesToDownload = operations
+        .filter { operation -> operation.destination !is MFVirtualFile }
+        .map { operation -> operation.source.name }
+
+      if (filesToDownload.isNotEmpty()) {
+        val tagP = "<p style=\"margin-left: 10px\">"
+        val filesStringToShow = if (filesToDownload.size > 5) {
+          "$tagP${filesToDownload.subList(0, 5).joinToString("</p>$tagP")}</p>${tagP}and ${filesToDownload.size - 5} more ...</p>"
+        } else {
+          "$tagP${filesToDownload.joinToString("</p>$tagP")}</p>"
+        }
+        if (
+          !showYesNoDialog(
+            "Downloading Files",
+            "<html><span>You are going to DOWNLOAD files:\n</span>\n$filesStringToShow\n" +
+              "<span>It may be against your company's security policy. Are you sure?</span></html>",
+            null,
+            "Yes",
+            "No",
+            AllIcons.General.WarningDialog
+          )
+        ) {
+          return
+        }
+      }
 
       val filesToMoveTotal = operations.size
       val hasLocalFilesInOperationsSources = operations.any { it.source !is MFVirtualFile }
@@ -230,87 +388,16 @@ class ExplorerPasteProvider : PasteProvider {
       } else {
         "Copying"
       }
-      runModalTask(
-        title = "$titlePrefix $filesToMoveTotal file(s)",
-        project = project,
-        cancellable = true
-      ) {
-        it.isIndeterminate = false
-        operations.forEach { op ->
-          op.sourceAttributes?.let { attr ->
-            service<AnalyticsService>().trackAnalyticsEvent(
-              FileEvent(
-                attr,
-                if (op.isMove) FileAction.MOVE else FileAction.COPY
-              )
-            )
-          }
-          it.text = "${op.source.name} to ${op.destination.name}"
-          runCatching {
-            dataOpsManager.performOperation(
-              operation = op,
-              progressIndicator = it
-            )
-          }.onSuccess {
-            if (explorerView.isCut.get()) {
-              copyPasteSupport.removeFromBuffer { it.file == op.source }
-            }
-          }.onFailure {
-            explorerView.explorer.reportThrowable(it, project)
-            if (isDragAndDrop) {
-              copyPasteSupport.removeFromBuffer {
-                it.file == op.source && operations.minus(op)
-                  .none { operation -> operation.source == op.source }
-              }
-            }
-          }
-          it.fraction = it.fraction + 1.0 / filesToMoveTotal
-        }
-        fun List<MoveCopyOperation>.collectByFile(
-          fileChooser: (MoveCopyOperation) -> VirtualFile
-        ): List<VirtualFile> {
-          return map(fileChooser)
-            .distinct()
-            .getMinimalCommonParents()
-            .toList()
-        }
 
-        val destinationFilesToRefresh = operations.collectByFile { it.destination }
-        val sourceFilesToRefresh = if (explorerView.isCut.get()) {
-          operations.collectByFile { it.source }
-        } else {
-          emptyList()
-        }
-        val destinationNodes = destinationFilesToRefresh
-          .map { explorerView.myFsTreeStructure.findByVirtualFile(it) }
-          .flatten()
-          .distinct()
-        val nodesToRefresh = if (explorerView.isCut.get()) {
-          val sourceNodesToRefresh = sourceFilesToRefresh
-            .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).map { it.parent } }
-            .flatten()
-            .filterNotNull()
-            .distinct()
-          destinationNodes.plus(sourceNodesToRefresh)
-        } else {
-          destinationNodes
-        }
-
-        nodesToRefresh.forEach { node ->
-          // node.cleanCacheIfPossible()
-          explorerView.myFsTreeStructure.findByPredicate { foundNode ->
-            if (foundNode is FetchNode && node is FetchNode) {
-              foundNode.query == node.query
-            } else false
-          }.onEach { foundNode ->
-            foundNode.cleanCacheIfPossible()
-          }.onEach { foundNode ->
-            explorerView.myStructure.invalidate(foundNode, true)
-          }
-
-        }
-
-      }
+      runMoveOrCopyTask(
+        titlePrefix,
+        filesToMoveTotal,
+        isDragAndDrop,
+        operations,
+        copyPasteSupport,
+        explorerView,
+        project
+      )
     }
   }
 

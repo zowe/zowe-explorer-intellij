@@ -19,7 +19,7 @@ import com.jetbrains.rd.util.UUID
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.*
 import eu.ibagroup.formainframe.utils.runIfTrue
@@ -89,7 +89,7 @@ class ConfigServiceImpl : ConfigService {
    */
   private fun acceptOldConfigs() {
     myState.connections = myState.connections.toMutableList()
-    myState.jobsWorkingSets = myState.jobsWorkingSets.toMutableList()
+    myState.jesWorkingSets = myState.jesWorkingSets.toMutableList()
     myState.filesWorkingSets = myState.filesWorkingSets.toMutableList()
 
     val configLocation =
@@ -124,9 +124,9 @@ private class FilterDecider(
     return crudable.getByColumnLambda(row as FilesWorkingSetConfig) { it.name }.count()
   }
 
-  /** Get the count of the JobsWorkingSetConfig rows by the filtering row UUID */
-  override fun onJobsWorkingSetConfig(): Long {
-    return crudable.getByColumnLambda(row as JobsWorkingSetConfig) { it.uuid }.count()
+  /** Get the count of the JesWorkingSetConfig rows by the filtering row UUID */
+  override fun onJesWorkingSetConfig(): Long {
+    return crudable.getByColumnLambda(row as JesWorkingSetConfig) { it.uuid }.count()
   }
 
   override fun onCredentials(): Long {
@@ -162,7 +162,6 @@ private class UpdateFilterDecider(
         || updatingRow.name == currentRow.name
         || updatingRow.zVersion == currentRow.zVersion
         || updatingRow.url == currentRow.url
-        || updatingRow.codePage == currentRow.codePage
         || updatingRow.isAllowSelfSigned == currentRow.isAllowSelfSigned
     } else false
   }
@@ -179,13 +178,13 @@ private class UpdateFilterDecider(
   }
 
   /**
-   * Check if the JobsWorkingSetConfig row update can be proceeded.
+   * Check if the JesWorkingSetConfig row update can be proceeded.
    * The update is possible either when UUIDs of the updating row and the current row are the same,
    * or if there is no any rows in the config
    */
-  override fun onJobsWorkingSetConfig(): Boolean {
-    return if (currentRow is JobsWorkingSetConfig && updatingRow is JobsWorkingSetConfig) {
-      filterSwitcher.onJobsWorkingSetConfig() == 0L || updatingRow.uuid == currentRow.uuid
+  override fun onJesWorkingSetConfig(): Boolean {
+    return if (currentRow is JesWorkingSetConfig && updatingRow is JesWorkingSetConfig) {
+      filterSwitcher.onJesWorkingSetConfig() == 0L || updatingRow.uuid == currentRow.uuid
     } else false
   }
 
@@ -227,8 +226,8 @@ internal fun makeCrudableWithoutListeners(
         }
       }
 
-      override fun onJobsWorkingSetConfig(): MutableList<*> {
-        return stateGetter().jobsWorkingSets
+      override fun onJesWorkingSetConfig(): MutableList<*> {
+        return stateGetter().jesWorkingSets
       }
 
       override fun onElse(): MutableList<*>? {

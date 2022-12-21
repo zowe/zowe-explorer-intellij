@@ -61,6 +61,7 @@ class FileLikeDatasetNode(
         }
 
       }
+
       is RemoteMemberAttributes -> {
         if (this.navigating) {
           presentation.setIcon(AnimatedIcon.Default())
@@ -68,6 +69,7 @@ class FileLikeDatasetNode(
           presentation.setIcon(ForMainframeIcons.MemberIcon)
         }
       }
+
       else -> {
         if (this.navigating) {
           presentation.setIcon(AnimatedIcon.Default())

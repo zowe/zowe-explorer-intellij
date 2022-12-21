@@ -31,7 +31,7 @@ class JesExplorerRootNode(
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return explorer.units.filterIsInstance<JesWorkingSetImpl>().map {
-      JobsWsNode(it, notNullProject, this, treeStructure)
+      JesWsNode(it, notNullProject, this, treeStructure)
     }.toMutableList()
   }
 }

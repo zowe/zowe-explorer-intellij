@@ -209,7 +209,21 @@ fun ContainerFixture.deleteWSFromContextMenu(wsName: String) {
 }
 
 /**
- * Creates a jobs working set via context menu from explorer.
+ * Deletes a JES working set via context menu from explorer.
+ */
+fun ContainerFixture.deleteJWSFromContextMenu(jwsName: String) {
+    explorer {
+        jesExplorer.click()
+        find<ComponentFixture>(viewTree).findText(jwsName)
+            .rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenuItem(remoteRobot, "Delete").click()
+    find<ComponentFixture>(byXpath("//div[@class='MyDialog' and @title='Deletion of JES Working Set $jwsName']"))
+}
+
+/**
+ * Creates a JES working set via context menu from explorer.
  */
 fun ContainerFixture.createJWSFromContextMenu(
     fixtureStack: MutableList<Locator>,
@@ -221,12 +235,12 @@ fun ContainerFixture.createJWSFromContextMenu(
         Thread.sleep(3000)
     }
     actionMenu(remoteRobot, "New").click()
-    actionMenuItem(remoteRobot, "Jobs Working Set").click()
-    closableFixtureCollector.add(AddJobsWorkingSetDialog.xPath(), fixtureStack)
+    actionMenuItem(remoteRobot, "JES Working Set").click()
+    closableFixtureCollector.add(AddJesWorkingSetDialog.xPath(), fixtureStack)
 }
 
 /**
- * Creates a jobs filter in the jobs working set via context menu from explorer.
+ * Creates a jobs filter in the JES working set via context menu from explorer.
  */
 fun ContainerFixture.createJobsFilter(
     jwsName: String, fixtureStack: MutableList<Locator>,
@@ -241,6 +255,80 @@ fun ContainerFixture.createJobsFilter(
     actionMenu(remoteRobot, "New").click()
     actionMenuItem(remoteRobot, "Jobs Filter").click()
     closableFixtureCollector.add(CreateJobsFilterDialog.xPath(), fixtureStack)
+}
+
+/**
+ * Edites a JES working set via context menu from explorer.
+ */
+fun ContainerFixture.editJWSFromContextMenu(
+    jwsName: String, fixtureStack: MutableList<Locator>,
+    closableFixtureCollector: ClosableFixtureCollector
+) {
+    explorer {
+        jesExplorer.click()
+        find<ComponentFixture>(viewTree).findText(jwsName)
+            .rightClick()
+        Thread.sleep(3000)
+    }
+    actionMenuItem(remoteRobot, "Edit").click()
+    closableFixtureCollector.add(EditJesWorkingSetDialog.xPath(), fixtureStack)
+}
+
+/**
+ * Creates a working set via action button.
+ */
+fun ContainerFixture.createWorkingSetFromActionButton(closableFixtureCollector: ClosableFixtureCollector,fixtureStack: MutableList<Locator>){
+    explorer {
+        fileExplorer.click()
+        createConfigItem()
+    }
+    find<HeavyWeightWindowFixture>(
+        byXpath("//div[@class='HeavyWeightWindow']"),
+        Duration.ofSeconds(30)
+    ).findAllText().forEach {
+        if (it.text == "Working Set" ) {
+            it.click()
+            closableFixtureCollector.add(AddWorkingSetDialog.xPath(), fixtureStack)
+        }
+    }
+}
+
+/**
+ * Creates a JES working set via action button.
+ */
+fun ContainerFixture.createJesWorkingSetFromActionButton(closableFixtureCollector: ClosableFixtureCollector,fixtureStack: MutableList<Locator>){
+    explorer {
+        jesExplorer.click()
+        createConfigItem()
+    }
+    find<HeavyWeightWindowFixture>(
+        byXpath("//div[@class='HeavyWeightWindow']"),
+        Duration.ofSeconds(30)
+    ).findAllText().forEach {
+        if (it.text == "JES Working Set" ) {
+            it.click()
+            closableFixtureCollector.add(AddJesWorkingSetDialog.xPath(), fixtureStack)
+        }
+    }
+}
+
+/**
+ * Creates a connection via action button.
+ */
+fun ContainerFixture.createConnectionFromActionButton(closableFixtureCollector: ClosableFixtureCollector,fixtureStack: MutableList<Locator>){
+    explorer {
+        jesExplorer.click()
+        createConfigItem()
+    }
+    find<HeavyWeightWindowFixture>(
+        byXpath("//div[@class='HeavyWeightWindow']"),
+        Duration.ofSeconds(30)
+    ).findAllText().forEach {
+        if (it.text == "Connection") {
+            it.click()
+            closableFixtureCollector.add(AddConnectionDialog.xPath(), fixtureStack)
+        }
+    }
 }
 
 /**
@@ -283,7 +371,7 @@ fun createConnection(
 }
 
 /**
- * Deletes all jobs working sets, working sets and connections. To be used in BeforeAll and AfterAll tests methods.
+ * Deletes all JES working sets, working sets and connections. To be used in BeforeAll and AfterAll tests methods.
  */
 fun clearEnvironment(
     projectName: String,
@@ -300,7 +388,7 @@ fun clearEnvironment(
             configurableEditor {
                 workingSetsTab.click()
                 deleteAllItems()
-                jobsWorkingSetsTab.click()
+                jesWorkingSetsTab.click()
                 deleteAllItems()
                 conTab.click()
                 deleteAllItems()
@@ -332,8 +420,13 @@ fun setUpTestEnvironment(
             }
         } catch (e: WaitForConditionTimeoutException) {
             e.message.shouldContain("Failed to find 'Dialog' by 'title For Mainframe Plugin Privacy Policy and Terms and Conditions'")
+        }
+        try {
+            find<ComponentFixture>(byXpath("//div[@class='ProjectViewTree']"))
             stripeButton(byXpath("//div[@accessiblename='Project' and @class='StripeButton' and @text='Project']"))
                 .click()
+        } catch (e: WaitForConditionTimeoutException) {
+            //do nothing if ProjectViewTree is hidden
         }
         forMainframe()
     }
@@ -372,6 +465,22 @@ fun openOrCloseWorkingSetInExplorer(
         explorer {
             fileExplorer.click()
             find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
+            Thread.sleep(3000)
+        }
+    }
+}
+
+/**
+ * Double-clicks on the jes working set to open or close it in explorer.
+ */
+fun openOrCloseJesWorkingSetInExplorer(
+    jwsName: String, projectName: String,
+    fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        explorer {
+            jesExplorer.click()
+            find<ComponentFixture>(viewTree).findText(jwsName).doubleClick()
             Thread.sleep(3000)
         }
     }
@@ -591,16 +700,16 @@ fun createMemberAndPasteContent(
                 find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberName
             }
             clickButton("OK")
-            Thread.sleep(10000)
+            Thread.sleep(5000)
             explorer {
                 find<ComponentFixture>(viewTree).findAllText(memberName).last().doubleClick()
             }
             with(textEditor()) {
                 keyboard {
                     hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_V)
-                    Thread.sleep(10000)
+                    Thread.sleep(2000)
                     hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_S)
-                    Thread.sleep(10000)
+                    Thread.sleep(2000)
                     hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
                 }
             }

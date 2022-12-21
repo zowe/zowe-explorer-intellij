@@ -135,7 +135,7 @@ class RenameAction : AnAction() {
           progressIndicator = it
         )
       }.onSuccess {
-        node.parent?.cleanCacheIfPossible()
+        node.parent?.cleanCacheIfPossible(cleanBatchedQuery = true)
       }.onFailure {
         node.explorer.reportThrowable(it, project)
       }

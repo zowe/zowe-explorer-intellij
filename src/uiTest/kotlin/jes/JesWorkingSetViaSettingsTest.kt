@@ -26,16 +26,16 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Duration
 
 /**
- * Tests creating jobs working sets and jobs filters via settings.
+ * Tests creating JES working sets and jobs filters via settings.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class JobsWorkingSetViaSettingsTest {
+class JesWorkingSetViaSettingsTest {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf(
-        "Settings Dialog", "Add Jobs Working Set Dialog", "Edit Jobs Working Set Dialog"
+        "Settings Dialog", "Add JES Working Set Dialog", "Edit JES Working Set Dialog"
     )
     private val projectName = "untitled"
     private val connectionName = "valid connection"
@@ -69,29 +69,29 @@ class JobsWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jobs working set without connection, checks that correct message is returned.
+     * Tests to add new JES working set without connection, checks that correct message is returned.
      */
     @Test
     @Order(1)
-    fun testAddJobsWorkingSetWithoutConnectionViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddJesWorkingSetWithoutConnectionViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
-                addJobsWorkingSetDialog(fixtureStack) {
-                    addJobsWorkingSet("JWS1", "")
+                addJesWorkingSetDialog(fixtureStack) {
+                    addJesWorkingSet("JWS1", "")
                     clickButton("OK")
                     comboBox("Specify connection").click()
                     find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText("You must provide a connection")
                     assertFalse(button("OK").isEnabled())
                     clickButton("Cancel")
                 }
-                closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
                 clickButton("Cancel")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
@@ -99,22 +99,22 @@ class JobsWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new empty jobs working sets with different names, checks that correct message is returned.
+     * Tests to add new empty JES working sets with different names, checks that correct message is returned.
      */
     @Test
     @Order(2)
-    fun testAddEmptyJobsWorkingSetsWithDifferentNamesViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddEmptyJesWorkingSetsWithDifferentNamesViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         createConnection(projectName, fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
         createJWS("A".repeat(200), true, remoteRobot)
         createJWS("B12#$%^&*", true, remoteRobot)
     }
 
     /**
-     * Tests to add new jobs working set with one valid jobs filter.
+     * Tests to add new JES working set with one valid jobs filter.
      */
     @Test
     @Order(3)
-    fun testAddJobsWorkingSetWithOneValidFilterViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun testAddJesWorkingSetWithOneValidFilterViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS1"
         val filter = Triple("*", ZOS_USERID, "")
         ideFrameImpl(projectName, fixtureStack) {
@@ -123,15 +123,15 @@ class JobsWorkingSetViaSettingsTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
-                addJobsWorkingSetDialog(fixtureStack) {
-                    addJobsWorkingSet(jwsName, connectionName, filter)
+                addJesWorkingSetDialog(fixtureStack) {
+                    addJesWorkingSet(jwsName, connectionName, filter)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
@@ -139,7 +139,7 @@ class JobsWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jobs working set with already existing name, checks that correct message is returned.
+     * Tests to add new JES working set with already existing name, checks that correct message is returned.
      */
     @Test
     @Order(4)
@@ -148,7 +148,7 @@ class JobsWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jobs working set with invalid jobs filters, checks that correct messages are returned.
+     * Tests to add new JES working set with invalid jobs filters, checks that correct messages are returned.
      */
     @Test
     @Order(5)
@@ -161,11 +161,11 @@ class JobsWorkingSetViaSettingsTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
-                addJobsWorkingSetDialog(fixtureStack) {
-                    addJobsWorkingSet(jwsName, connectionName)
+                addJesWorkingSetDialog(fixtureStack) {
+                    addJesWorkingSet(jwsName, connectionName)
                     invalidJobsFiltersMap.forEach {
                         addFilter(it.key.first)
                         if (button("OK").isEnabled()) {
@@ -191,7 +191,7 @@ class JobsWorkingSetViaSettingsTest {
                     clickButton("Cancel")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
                 clickButton("Cancel")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
@@ -199,7 +199,7 @@ class JobsWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to add new jobs working set with several valid jobs filters, opens filters in explorer.
+     * Tests to add new JES working set with several valid jobs filters, opens filters in explorer.
      */
     @Test
     @Order(6)
@@ -212,29 +212,29 @@ class JobsWorkingSetViaSettingsTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
-                addJobsWorkingSetDialog(fixtureStack) {
-                    addJobsWorkingSet(jwsName, connectionName, validJobsFilters)
+                addJesWorkingSetDialog(fixtureStack) {
+                    addJesWorkingSet(jwsName, connectionName, validJobsFilters)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
         validJobsFilters.forEach {
             openJobFilterInExplorer(it, "", projectName, fixtureStack, remoteRobot)
             closeFilterInExplorer(it, projectName, fixtureStack, remoteRobot)
         }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
     /**
-     * Tests to add new jobs working set with invalid connection, checks that correct message is returned.
+     * Tests to add new JES working set with invalid connection, checks that correct message is returned.
      */
     @Test
     @Order(7)
@@ -247,31 +247,31 @@ class JobsWorkingSetViaSettingsTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
-                addJobsWorkingSetDialog(fixtureStack) {
-                    addJobsWorkingSet(jwsName, "invalid_connection", Triple("*", ZOS_USERID, ""))
+                addJesWorkingSetDialog(fixtureStack) {
+                    addJesWorkingSet(jwsName, "invalid_connection", Triple("*", ZOS_USERID, ""))
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
         findAll<ComponentFixture>(byXpath("//div[@class='MyComponent'][.//div[@accessiblename='Invalid URL port: \"104431\"' and @class='JEditorPane']]")).forEach {
             it.click()
             findAll<ActionButtonFixture>(
                 byXpath("//div[@class='ActionButton' and @myicon= 'close.svg']")
             ).first().click()
         }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
     /**
-     * Tests to add new jobs working set with the same jobs filters, checks that correct message is returned.
+     * Tests to add new JES working set with the same jobs filters, checks that correct message is returned.
      */
     @Test
     @Order(8)
@@ -283,12 +283,12 @@ class JobsWorkingSetViaSettingsTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
-                addJobsWorkingSetDialog(fixtureStack) {
-                    addJobsWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
-                    addJobsWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
+                addJesWorkingSetDialog(fixtureStack) {
+                    addJesWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
+                    addJesWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
                     clickButton("OK")
                     find<HeavyWeightWindowFixture>(
                         byXpath("//div[@class='HeavyWeightWindow']"),
@@ -297,7 +297,7 @@ class JobsWorkingSetViaSettingsTest {
                     assertFalse(button("OK").isEnabled())
                     clickButton("Cancel")
                 }
-                closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
                 clickButton("Cancel")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
@@ -305,40 +305,40 @@ class JobsWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to edit jobs working set by adding one job filter, checks that jws is refreshed, opens new filter.
+     * Tests to edit JES working set by adding one job filter, checks that jws is refreshed, opens new filter.
      */
     @Test
     @Order(9)
     fun testEditJWSAddOneFilterViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS1"
         val newFilter = Triple("TEST1", ZOS_USERID, "")
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
-        closeFilterInExplorer(Triple("*", ZOS_USERID, ""),projectName,fixtureStack,remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        closeFilterInExplorer(Triple("*", ZOS_USERID, ""), projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     editWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
                 }
-                editJobsWorkingSetDialog(fixtureStack) {
+                editJesWorkingSetDialog(fixtureStack) {
                     addFilter(newFilter)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(EditJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
         openJobFilterInExplorer(newFilter, "", projectName, fixtureStack, remoteRobot)
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
     /**
-     * Tests to edit jobs working set by deleting several filters, checks that jws is refreshed and filters were deleted.
+     * Tests to edit JES working set by deleting several filters, checks that jws is refreshed and filters were deleted.
      */
     @Test
     @Order(10)
@@ -346,32 +346,32 @@ class JobsWorkingSetViaSettingsTest {
         val jwsName = "JWS2"
         val filtersToBeDeleted =
             listOf(Triple("*", ZOS_USERID, ""), Triple("TEST**", ZOS_USERID, ""), Triple("TEST***", ZOS_USERID, ""))
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
-                    editJobsWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
+                    jesWorkingSetsTab.click()
+                    editJesWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
                 }
-                editJobsWorkingSetDialog(fixtureStack) {
+                editJesWorkingSetDialog(fixtureStack) {
                     deleteFilters(filtersToBeDeleted)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(EditJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
         filtersToBeDeleted.forEach { checkFilterWasDeletedJWSRefreshed(it, projectName, fixtureStack, remoteRobot) }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
     /**
-     * Tests to edit jobs working set by deleting all filters, checks that jws is refreshed and filters were deleted.
+     * Tests to edit JES working set by deleting all filters, checks that jws is refreshed and filters were deleted.
      */
     @Test
     @Order(11)
@@ -386,17 +386,17 @@ class JobsWorkingSetViaSettingsTest {
             Triple("TEST1", "$ZOS_USERID***", ""),
             Triple("TEST***", "$ZOS_USERID***", "")
         )
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
-                    editJobsWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
+                    jesWorkingSetsTab.click()
+                    editJesWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
                 }
-                editJobsWorkingSetDialog(fixtureStack) {
+                editJesWorkingSetDialog(fixtureStack) {
                     deleteAllFilters()
                     clickButton("OK")
                     find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
@@ -405,38 +405,38 @@ class JobsWorkingSetViaSettingsTest {
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(EditJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
         filtersToBeDeleted.forEach { checkFilterWasDeletedJWSRefreshed(it, projectName, fixtureStack, remoteRobot) }
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
     /**
-     * Tests to edit jobs working set by changing connection to invalid, checks that correct message is returned.
+     * Tests to edit JES working set by changing connection to invalid, checks that correct message is returned.
      */
     @Test
     @Order(12)
     fun testEditJWSChangeConnectionToInvalidViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS1"
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
-                    editJobsWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
+                    jesWorkingSetsTab.click()
+                    editJesWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
                 }
-                editJobsWorkingSetDialog(fixtureStack) {
+                editJesWorkingSetDialog(fixtureStack) {
                     changeConnection("invalid_connection")
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(EditJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
@@ -457,7 +457,7 @@ class JobsWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to edit jobs working set by changing connection from invalid to valid, checks that jws is refreshed in explorer and error message disappeared.
+     * Tests to edit JES working set by changing connection from invalid to valid, checks that jws is refreshed in explorer and error message disappeared.
      */
     @Test
     @Order(13)
@@ -471,64 +471,64 @@ class JobsWorkingSetViaSettingsTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
-                    editJobsWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
+                    jesWorkingSetsTab.click()
+                    editJesWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
                 }
-                editJobsWorkingSetDialog(fixtureStack) {
+                editJesWorkingSetDialog(fixtureStack) {
                     changeConnection(newConnectionName)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(EditJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
         checkItemWasDeletedWSRefreshed("Invalid URL port: \"104431\"", projectName, fixtureStack, remoteRobot)
-        openOrCloseWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
     /**
-     * Tests to edit jobs working set by renaming it, checks that jws is refreshed in explorer.
+     * Tests to edit JES working set by renaming it, checks that jws is refreshed in explorer.
      */
     @Test
     @Order(14)
     fun testEditJWSRenameViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        val newJobsWorkingSetName = "new jws name"
-        val oldJobsWorkingSetName = "JWS1"
-        val alreadyExistsJobsWorkingSetName = "JWS2"
-        openOrCloseWorkingSetInExplorer(oldJobsWorkingSetName, projectName, fixtureStack, remoteRobot)
+        val newJesWorkingSetName = "new jws name"
+        val oldJesWorkingSetName = "JWS1"
+        val alreadyExistsJesWorkingSetName = "JWS2"
+        openOrCloseJesWorkingSetInExplorer(oldJesWorkingSetName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
-                    editJobsWorkingSet(oldJobsWorkingSetName, closableFixtureCollector, fixtureStack)
+                    jesWorkingSetsTab.click()
+                    editJesWorkingSet(oldJesWorkingSetName, closableFixtureCollector, fixtureStack)
                 }
-                editJobsWorkingSetDialog(fixtureStack) {
-                    renameJobsWorkingSet(alreadyExistsJobsWorkingSetName)
+                editJesWorkingSetDialog(fixtureStack) {
+                    renameJesWorkingSet(alreadyExistsJesWorkingSetName)
                     val message = find<HeavyWeightWindowFixture>(
                         byXpath("//div[@class='HeavyWeightWindow']"),
                         Duration.ofSeconds(30)
                     ).findAllText()
-                    (message[0].text + message[1].text).shouldContain("You must provide unique working set name. Working Set $alreadyExistsJobsWorkingSetName already exists.")
-                    renameJobsWorkingSet(newJobsWorkingSetName)
+                    (message[0].text + message[1].text).shouldContain("You must provide unique working set name. Working Set $alreadyExistsJesWorkingSetName already exists.")
+                    renameJesWorkingSet(newJesWorkingSetName)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(EditJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        checkItemWasDeletedWSRefreshed(oldJobsWorkingSetName, projectName, fixtureStack, remoteRobot)
-        openOrCloseWorkingSetInExplorer(newJobsWorkingSetName, projectName, fixtureStack, remoteRobot)
+        checkItemWasDeletedWSRefreshed(oldJesWorkingSetName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(newJesWorkingSetName, projectName, fixtureStack, remoteRobot)
     }
 
     /**
-     * Tests to delete jobs working set, checks that explorer info is refreshed.
+     * Tests to delete JES working set, checks that explorer info is refreshed.
      */
     @Test
     @Order(15)
@@ -540,7 +540,7 @@ class JobsWorkingSetViaSettingsTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     deleteItem(jwsName)
                 }
                 clickButton("OK")
@@ -551,7 +551,7 @@ class JobsWorkingSetViaSettingsTest {
     }
 
     /**
-     * Tests to delete all jobs working sets, checks that explorer info is refreshed.
+     * Tests to delete all JES working sets, checks that explorer info is refreshed.
      */
     @Test
     @Order(16)
@@ -562,7 +562,7 @@ class JobsWorkingSetViaSettingsTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     deleteAllItems()
                 }
                 clickButton("OK")
@@ -573,7 +573,7 @@ class JobsWorkingSetViaSettingsTest {
     }
 
     /**
-     * Creates empty jobs working set via settings.
+     * Creates empty JES working set via settings.
      */
     private fun createJWS(jwsName: String, isUniqueName: Boolean, remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(projectName, fixtureStack) {
@@ -582,11 +582,11 @@ class JobsWorkingSetViaSettingsTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
-                addJobsWorkingSetDialog(fixtureStack) {
-                    addJobsWorkingSet(jwsName, connectionName)
+                addJesWorkingSetDialog(fixtureStack) {
+                    addJesWorkingSet(jwsName, connectionName)
                     if (isUniqueName) {
                         clickButton("OK")
                         Thread.sleep(5000)
@@ -605,7 +605,7 @@ class JobsWorkingSetViaSettingsTest {
                         clickButton("Cancel")
                     }
                 }
-                closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)

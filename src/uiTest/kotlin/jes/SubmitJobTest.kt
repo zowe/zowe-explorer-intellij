@@ -115,15 +115,15 @@ class SubmitJobTest {
             }
             settingsDialog(fixtureStack) {
                 configurableEditor {
-                    jobsWorkingSetsTab.click()
+                    jesWorkingSetsTab.click()
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
-                addJobsWorkingSetDialog(fixtureStack) {
-                    addJobsWorkingSet(jwsName, connectionName, filter)
+                addJesWorkingSetDialog(fixtureStack) {
+                    addJesWorkingSet(jwsName, connectionName, filter)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
-                closableFixtureCollector.closeOnceIfExists(AddJobsWorkingSetDialog.name)
+                closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)

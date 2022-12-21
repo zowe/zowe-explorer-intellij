@@ -69,7 +69,7 @@ fun TreePath.getVirtualFile(): VirtualFile? {
 /**
  * Removes node from "invalidateOnExpand" collection of explorer view.
  * @param node node to remove.
- * @param view explorer view from wich to return node.
+ * @param view explorer view from which to return node.
  */
 fun cleanInvalidateOnExpand(
   node: ExplorerTreeNode<*>,

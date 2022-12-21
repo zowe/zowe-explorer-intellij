@@ -12,7 +12,7 @@ package eu.ibagroup.formainframe.config
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 
 /**
  * State of all configs for plugin. It includes lists of connections, working sets and masks, other settings.
@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
 data class ConfigState(
   var connections: MutableList<ConnectionConfig> = mutableListOf(),
   var filesWorkingSets: MutableList<FilesWorkingSetConfig> = mutableListOf(),
-  var jobsWorkingSets: MutableList<JobsWorkingSetConfig> = mutableListOf(),
+  var jesWorkingSets: MutableList<JesWorkingSetConfig> = mutableListOf(),
   var settings: SettingsState = SettingsState()
 )
 

@@ -11,32 +11,36 @@
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.util.containers.isEmpty
+import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
-import eu.ibagroup.formainframe.config.ws.ui.JobsWorkingSetDialogState
+import eu.ibagroup.formainframe.config.ws.ui.JesWorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
-import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsDialog
-import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
+import eu.ibagroup.formainframe.config.ws.ui.jes.JesWsDialog
+import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_CONTEXT_MENU
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.getAll
 
 /**
- * Implementation of AddWsActionBase for jobs working sets.
+ * Implementation of AddWsActionBase for JES working sets.
  * @see AddWsActionBase
  * @author Valiantsin Krus
  */
-class AddJobsWorkingSetAction : AddWsActionBase() {
+class AddJesWorkingSetAction : AddWsActionBase() {
   override val explorerView = JES_EXPLORER_VIEW
-  override val presentationTextInExplorer = "Jobs Working Set"
-  override val defaultPresentationText = "Create Jobs Working Set"
+  override val presentationTextInExplorer = "JES Working Set"
+  override val defaultPresentationText = "Create JES Working Set"
 
   /**
-   * Creates dialog for Jobs Working Set.
+   * Creates dialog for JES Working Set.
    * @see AddWsActionBase.createDialog
    */
   override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
-    return JobsWsDialog(configCrudable, JobsWorkingSetDialogState().initEmptyUuids(configCrudable))
+    return JesWsDialog(configCrudable, JesWorkingSetDialogState().initEmptyUuids(configCrudable))
   }
 
   /**
@@ -45,7 +49,10 @@ class AddJobsWorkingSetAction : AddWsActionBase() {
    */
   override fun update(e: AnActionEvent) {
     super.update(e)
-    if (e.getData(FILE_EXPLORER_VIEW) != null) {
+    if (configCrudable.getAll<ConnectionConfig>().isEmpty()) {
+      e.presentation.isEnabled = false
+    }
+    if (e.place.contains(FILE_EXPLORER_CONTEXT_MENU)) {
       e.presentation.isEnabledAndVisible = false
     }
   }

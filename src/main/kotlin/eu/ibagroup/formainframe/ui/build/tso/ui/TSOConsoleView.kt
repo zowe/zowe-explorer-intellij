@@ -25,6 +25,7 @@ import eu.ibagroup.formainframe.dataops.operations.MessageType
 import eu.ibagroup.formainframe.ui.build.TerminalCommandReceiver
 import eu.ibagroup.formainframe.ui.build.tso.SESSION_COMMAND_ENTERED
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
+import eu.ibagroup.formainframe.ui.build.tso.utils.InputRecognizer
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.awt.BorderLayout
 import javax.swing.*
@@ -48,6 +49,7 @@ class TSOConsoleView (
 
   private var tsoMessageTypeComboBoxModel = CollectionComboBoxModel(tsoMessageTypes)
   private var tsoDataTypeComboBoxModel = CollectionComboBoxModel(tsoDataTypes)
+  private var inputRecognizer: InputRecognizer
 
   private val consoleView: TerminalExecutionConsole = TerminalExecutionConsole(project, null)
   private val terminalCommandReceiver: TerminalCommandReceiver = TerminalCommandReceiver(consoleView)
@@ -84,6 +86,9 @@ class TSOConsoleView (
    * Initialization method when class is called first. Initialize some callbacks and UI place
    */
   init {
+    inputRecognizer = InputRecognizer(project, tsoSession)
+    terminalCommandReceiver.inputRecognizer = inputRecognizer
+
     terminalCommandReceiver.waitForCommandInput { enteredCommand ->
       println("ENTERED COMMAND: $enteredCommand")
       sendTopic(SESSION_COMMAND_ENTERED).processCommand(
@@ -98,7 +103,7 @@ class TSOConsoleView (
       terminalCommandReceiver.waitForCommandInput()
     }
 
-    terminalCommandReceiver.setInitialized(true)
+    terminalCommandReceiver.initialized = true
 
     Disposer.register(this, consoleView)
     layout = BorderLayout()
@@ -115,10 +120,21 @@ class TSOConsoleView (
   }
 
   /**
-   * Setter for TSO session wrapper class for each TSO session
+   * Setter for TSO session wrapper class for each TSO session.
+   * Also it sets input recognizer for every TSO session initialized
    */
   fun setTsoSession(session: TSOConfigWrapper) {
     tsoSession = session
+    updateSessionForInputRecognizer(session)
+    terminalCommandReceiver.inputRecognizer = inputRecognizer
+  }
+
+  /**
+   * Function to update the session for input recognizer when the session was broken
+   * @param session - new session after reconnect
+   */
+  private fun updateSessionForInputRecognizer(session: TSOConfigWrapper) {
+    inputRecognizer = InputRecognizer(project, session)
   }
 
   /**

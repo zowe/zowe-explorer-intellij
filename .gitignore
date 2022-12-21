@@ -1,6 +1,10 @@
 .gradle
 .idea
-gradle
+gradle/*
+gradle/wrapper/*
+!gradle/
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.properties
 build
 
 libs
@@ -27,3 +31,7 @@ $RECYCLE.BIN/
 # VS Code files
 bin
 .vscode
+
+# Fleet files
+.fleet
+.editorconfig

@@ -78,7 +78,7 @@ class MFVirtualFileSystem : VirtualFileSystem(), FileSystemInterface, Disposable
   }
 
   override fun refresh(asynchronous: Boolean) {
-    return model.refresh(asynchronous)
+    return model.refresh()
   }
 
   override fun refreshAndFindFileByPath(path: String): MFVirtualFile? {
@@ -86,11 +86,11 @@ class MFVirtualFileSystem : VirtualFileSystem(), FileSystemInterface, Disposable
   }
 
   override fun addVirtualFileListener(listener: VirtualFileListener) {
-    return model.addVirtualFileListener(listener)
+    return model.addVirtualFileListener()
   }
 
   override fun removeVirtualFileListener(listener: VirtualFileListener) {
-    return model.removeVirtualFileListener(listener)
+    return model.removeVirtualFileListener()
   }
 
   @Throws(IOException::class)
@@ -221,10 +221,6 @@ class MFVirtualFileSystem : VirtualFileSystem(), FileSystemInterface, Disposable
     return file.ifOurInstance {
       model.getLength(it)
     }
-  }
-
-  fun extractRootPath(normalizedPath: String): String {
-    return model.extractRootPath(normalizedPath)
   }
 
   fun findFileByPathIfCached(path: String): VirtualFile? {

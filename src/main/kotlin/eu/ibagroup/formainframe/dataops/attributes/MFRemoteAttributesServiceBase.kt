@@ -95,7 +95,7 @@ abstract class MFRemoteAttributesServiceBase<Attributes : MFRemoteFileAttributes
    * @param newAttributes the new attributes to assign to the file
    */
   private fun reassignAttributesToFile(file: MFVirtualFile, oldAttributes: Attributes, newAttributes: Attributes) {
-    val urlDir = obtainAndRenameUrlDirIfNeeded(newAttributes)
+    obtainAndRenameUrlDirIfNeeded(newAttributes)
     reassignAttributesAfterUrlFolderRenaming(file, oldAttributes, newAttributes)
   }
 
