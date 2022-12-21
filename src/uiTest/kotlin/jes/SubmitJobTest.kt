@@ -48,8 +48,8 @@ class SubmitJobTest {
     fun setUpAll(remoteRobot: RemoteRobot) {
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
         createConnection(projectName, fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
-        createWS(remoteRobot)
-        allocatePDSAndCreateMask(wsName, datasetName, projectName, fixtureStack, remoteRobot)
+        createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+        allocatePDSAndCreateMask(wsName, datasetName, projectName, fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
     /**
@@ -169,26 +169,6 @@ class SubmitJobTest {
             checkNotification(jobName, remoteRobot)
             checkTabPanelAndConsole(jobName, jobId, rc, remoteRobot)
         }
-
-    /**
-     * Creates working set.
-     */
-    private fun createWS(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            createWSFromContextMenu(fixtureStack, closableFixtureCollector)
-            addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName, connectionName)
-                clickButton("OK")
-                Thread.sleep(3000)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                    EMPTY_DATASET_MESSAGE
-                )
-                clickButton("OK")
-                Thread.sleep(3000)
-            }
-            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        }
-    }
 
     /**
      * Checks TabPanel and Console that correct info is returned.
