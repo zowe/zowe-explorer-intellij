@@ -110,7 +110,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         row {
           label("File encoding:").widthGroup(sameWidthGroup)
           comboBox = comboBox(getSupportedEncodings())
-            .bindItem(state.ussAttributes::ussFileEncoding.toNullableProperty())
+            .bindItem(state.ussAttributes::charset.toNullableProperty())
             .horizontalAlign(HorizontalAlign.FILL)
         }
         row {
@@ -118,7 +118,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
             .widthGroup(sameWidthGroup)
             .applyToComponent {
               addActionListener {
-                state.ussAttributes.ussFileEncoding = DEFAULT_BINARY_CHARSET
+                state.ussAttributes.charset = DEFAULT_BINARY_CHARSET
                 comboBox.component.item = DEFAULT_BINARY_CHARSET
               }
             }

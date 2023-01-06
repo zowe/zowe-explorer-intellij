@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -51,10 +50,11 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
         log.info("Document cannot be used here")
         return
       }
-      val ussAttributes = attributes.castOrNull<RemoteUssAttributes>()
+      val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
       val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(source.project))
       val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
-      if (!(currentContent contentEquals file.contentsToByteArray()) || ussAttributes?.encodingChanged == true) {
+      val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
+      if (!(currentContent contentEquals previousContent)) {
         if (showSyncOnCloseDialog(file.name, source.project)) {
           runModalTask(
             title = "Syncing ${file.name}",
@@ -63,24 +63,12 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
           ) {
             runWriteActionInEdtAndWait {
               FileDocumentManager.getInstance().saveDocument(document)
-              service<DataOpsManager>().getContentSynchronizer(file)?.synchronizeWithRemote(syncProvider, it)
+              contentSynchronizer?.synchronizeWithRemote(syncProvider, it)
             }
           }
         }
       }
     }
     super.beforeFileClosed(source, file)
-  }
-
-  /**
-   * Called every time before opening the file in the editor
-   * @param source the source file editor manager to get the project where the file is being edited
-   * @param file file that opens in the editor
-   */
-  override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
-    val ussAttributes = dataOpsManager.tryToGetAttributes(file).castOrNull<RemoteUssAttributes>()
-    ussAttributes?.encodingChanged = false
-    ussAttributes?.contentEncodingMode = null
-    super.beforeFileOpened(source, file)
   }
 }

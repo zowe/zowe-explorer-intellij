@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
@@ -94,13 +95,13 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
-    val editor = getEditor(e) ?: let {
-      makeDisabled(e)
-      return
-    }
+    val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
+    val syncProvider = DocumentedSyncProvider(file)
+    val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+    val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
     e.presentation.isEnabledAndVisible = file.isWritable
         && !service<ConfigService>().isAutoSyncEnabled
-        && !(editor.document.text.toByteArray(file.charset) contentEquals file.contentsToByteArray())
+        && !(currentContent contentEquals previousContent)
   }
 
 }
