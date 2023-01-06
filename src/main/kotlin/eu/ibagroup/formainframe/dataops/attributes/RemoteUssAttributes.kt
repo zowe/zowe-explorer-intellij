@@ -160,11 +160,7 @@ data class RemoteUssAttributes(
               || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
-  var ussFileEncoding: Charset = DEFAULT_BINARY_CHARSET
-
-  var encodingChanged: Boolean = false
-
-  var contentEncodingMode: ContentEncodingMode? = null
+  var charset: Charset = DEFAULT_BINARY_CHARSET
 
   override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.BINARY)
 

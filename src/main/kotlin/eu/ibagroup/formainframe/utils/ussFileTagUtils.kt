@@ -36,9 +36,9 @@ const val FILE_TAG_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.utils.FileT
 fun checkUssFileTag(attributes: RemoteUssAttributes) {
   val charset = getUssFileTagCharset(attributes)
   if (charset != null) {
-    attributes.ussFileEncoding = charset
+    attributes.charset = charset
   } else {
-    attributes.ussFileEncoding = DEFAULT_BINARY_CHARSET
+    attributes.charset = DEFAULT_BINARY_CHARSET
   }
 }
 
@@ -68,7 +68,7 @@ fun getUssFileTagCharset(attributes: RemoteUssAttributes): Charset? {
  * @param attributes uss file attributes.
  */
 fun updateFileTag(attributes: RemoteUssAttributes) {
-  if (attributes.ussFileEncoding == DEFAULT_BINARY_CHARSET) {
+  if (attributes.charset == DEFAULT_BINARY_CHARSET) {
     removeUssFileTag(attributes)
   } else {
     setUssFileTag(attributes)
@@ -107,11 +107,11 @@ fun listUssFileTag(attributes: RemoteUssAttributes): ResponseBody? {
  * @param attributes uss file attributes.
  */
 fun setUssFileTag(attributes: RemoteUssAttributes) {
-  var encoding = attributes.ussFileEncoding.name()
-  if (encoding.contains("x-IBM")) {
-    encoding = encoding.substring(2)
+  var charset = attributes.charset.name()
+  if (charset.contains("x-IBM")) {
+    charset = charset.substring(2)
   }
-  val ccsid = CCSID.getCCSID(encoding)
+  val ccsid = CCSID.getCCSID(charset)
   val codeSet = ccsid.toString()
 
   runCatching {
@@ -170,7 +170,7 @@ private fun notifyError(th: Throwable, title: String) {
 }
 
 private val unsupportedEncodings = listOf(
-  "GBK"
+  "GBK", "x-IBM300"
 )
 
 /**

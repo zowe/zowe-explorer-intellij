@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.io.IOException
-import java.nio.charset.Charset
 
 const val SYNC_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.SyncNotificationGroupId"
 
@@ -68,11 +67,10 @@ interface SyncProvider {
 
   /**
    * Extracts content of file from the storage.
-   * @param charset charset of the content to retrieve (file.charset by default).
    * @return bytes of the required content.
    */
   @Throws(IOException::class)
-  fun retrieveCurrentContent(charset: Charset = file.charset): ByteArray
+  fun retrieveCurrentContent(): ByteArray
 
   /**
    * Function that will be invoked if some throwable object was thrown.

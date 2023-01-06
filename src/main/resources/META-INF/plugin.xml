@@ -106,11 +106,11 @@ Example of how to see the output:<br/>
         <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
+        <listener class="eu.ibagroup.formainframe.editor.ProjectOpenListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+
         <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
-
-        <listener class="eu.ibagroup.formainframe.editor.FileSelectionChangeListener"
-                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
 
         <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
                   topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
@@ -349,6 +349,13 @@ Example of how to see the output:<br/>
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>
 
         <typedHandler implementation="eu.ibagroup.formainframe.explorer.actions.ChangeContentAction"/>
+
+        <statusBarWidgetFactory id="MFLineSeparatorWidget"
+                implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"/>
+
+        <statusBarWidgetFactory id="MFEncodingWidget"
+                                implementation="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
+                                order="after MFLineSeparatorWidget"/>
     </extensions>
 
     <actions>

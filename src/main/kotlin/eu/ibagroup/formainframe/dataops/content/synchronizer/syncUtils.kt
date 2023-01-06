@@ -11,9 +11,13 @@
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.encoding.EncodingManager
 import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import java.nio.charset.Charset
 
 private const val NEW_LINE = "\n"
@@ -21,6 +25,10 @@ private const val NEW_LINE = "\n"
 val DEFAULT_TEXT_CHARSET: Charset = Charset.forName("ISO8859_1")
 
 val DEFAULT_BINARY_CHARSET: Charset = Charset.forName("IBM-1047")
+
+const val LF_LINE_SEPARATOR: String = "\n"
+
+const val CR_LINE_SEPARATOR: String = "\r"
 
 /** Remove string's last blank line */
 fun String.removeLastNewLine(): String {
@@ -94,5 +102,20 @@ fun showReloadCancelDialog(fileName: String, encodingName: String, project: Proj
   return when (result) {
     0 -> ContentEncodingMode.RELOAD
     else -> null
+  }
+}
+
+/** Initializes the line separator to the contents of the file (by default "\n"). */
+fun initLineSeparator(file: VirtualFile) {
+  if (file.contentsToByteArray().isEmpty()) {
+    file.detectedLineSeparator = LF_LINE_SEPARATOR
+  }
+  file.detectedLineSeparator = LoadTextUtil.detectLineSeparator(file, true)
+}
+
+/** Changes the file encoding to the specified one. */
+fun changeFileEncodingTo(file: VirtualFile, charset: Charset) {
+  runWriteActionInEdtAndWait {
+    EncodingManager.getInstance().setEncoding(file, charset)
   }
 }

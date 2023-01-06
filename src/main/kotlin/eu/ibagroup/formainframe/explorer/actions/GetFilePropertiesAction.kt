@@ -10,26 +10,20 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
-import com.ibm.disthub2.impl.formats.Envelop.Constants.topicsTable_type.timeStamp
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
-import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
-import eu.ibagroup.formainframe.dataops.content.synchronizer.showReloadCancelDialog
-import eu.ibagroup.formainframe.dataops.content.synchronizer.showReloadConvertCancelDialog
+import eu.ibagroup.formainframe.dataops.content.synchronizer.*
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.*
-import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
 import eu.ibagroup.r2z.ChangeMode
 
 /**
@@ -54,7 +48,7 @@ class GetFilePropertiesAction : AnAction() {
           }
 
           is RemoteUssAttributes -> {
-            val oldUssFileEncoding = attributes.ussFileEncoding
+            val oldCharset = attributes.charset
             val initFileMode = attributes.fileMode?.clone()
             val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes, virtualFile.isBeingEditingNow()))
             if (dialog.showAndGet()) {
@@ -83,36 +77,27 @@ class GetFilePropertiesAction : AnAction() {
                   }
                 }
               }
-              if (!virtualFile.isDirectory && oldUssFileEncoding != dialog.state.ussAttributes.ussFileEncoding) {
-                val newAttributes = dialog.state.ussAttributes
-                val event = listOf(
-                  VFileContentChangeEvent(
-                    FileDocumentManagerImpl.getInstance(),
-                    virtualFile,
-                    virtualFile.modificationStamp,
-                    timeStamp.toLong(),
-                    false
-                  )
-                )
-                attributes.contentEncodingMode = if (!virtualFile.isWritable) {
-                  showReloadCancelDialog(virtualFile.name, newAttributes.ussFileEncoding.name(), e.project)
+              val newAttributes = dialog.state.ussAttributes
+              if (!virtualFile.isDirectory && oldCharset != newAttributes.charset) {
+                val contentEncodingMode = if (!virtualFile.isWritable) {
+                  showReloadCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
                 } else {
-                  showReloadConvertCancelDialog(virtualFile.name, newAttributes.ussFileEncoding.name(), e.project)
+                  showReloadConvertCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
                 }
-                if (attributes.contentEncodingMode == null) {
-                  attributes.ussFileEncoding = oldUssFileEncoding
+                if (contentEncodingMode == null) {
+                  attributes.charset = oldCharset
                 } else {
-                  runWriteActionInEdtAndWait { sendVfsChangesTopic().before(event) }
-                  attributes.encodingChanged = true
+                  val syncProvider = DocumentedSyncProvider(virtualFile)
                   updateFileTag(newAttributes)
-                }
-                if (attributes.contentEncodingMode == ContentEncodingMode.RELOAD) {
-                  val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.default(e.project))
-                  val contentSynchronizer = dataOpsManager.getContentSynchronizer(virtualFile)
-                  contentSynchronizer?.synchronizeWithRemote(syncProvider)
-                }
-                if (attributes.contentEncodingMode == ContentEncodingMode.CONVERT) {
-                  runWriteActionInEdtAndWait { sendVfsChangesTopic().after(event) }
+                  if (contentEncodingMode == ContentEncodingMode.RELOAD) {
+                    val contentSynchronizer =
+                      service<DataOpsManager>().getContentSynchronizer(virtualFile)
+                    runWriteActionInEdtAndWait {
+                      syncProvider.saveDocument()
+                      contentSynchronizer?.synchronizeWithRemote(syncProvider = syncProvider, forceReload = true)
+                    }
+                  }
+                  changeFileEncodingTo(virtualFile, newAttributes.charset)
                 }
               }
             }
