@@ -41,30 +41,39 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
     <extensionPoints>
 
         <extensionPoint name="attributesService"
+                        dynamic="true"
                         interface="org.zowe.explorer.dataops.attributes.AttributesServiceFactory"/>
 
         <extensionPoint name="fileDataProvider"
+                        dynamic="true"
                         interface="org.zowe.explorer.dataops.fetch.FileFetchProviderFactory"/>
 
         <extensionPoint name="contentSynchronizer"
+                        dynamic="true"
                         interface="org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizerFactory"/>
 
         <extensionPoint name="mfContentAdapter"
+                        dynamic="true"
                         interface="org.zowe.explorer.dataops.content.adapters.MFContentAdapterFactory"/>
 
         <extensionPoint name="operationRunner"
+                        dynamic="true"
                         interface="org.zowe.explorer.dataops.operations.OperationRunnerFactory"/>
 
         <extensionPoint name="logFetcher"
+                        dynamic="true"
                         interface="org.zowe.explorer.dataops.log.LogFetcherFactory"/>
 
         <extensionPoint name="oldConfigAdapter"
+                        dynamic="true"
                         interface="org.zowe.explorer.config.OldConfigAdapterFactory"/>
 
         <extensionPoint name="explorerContentProvider"
+                        dynamic="true"
                         interface="org.zowe.explorer.explorer.ExplorerContentProviderFactory"/>
 
         <extensionPoint name="explorer"
+                        dynamic="true"
                         interface="org.zowe.explorer.explorer.ExplorerFactory"/>
 
     </extensionPoints>
@@ -207,7 +216,8 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
         <logFetcher implementation="org.zowe.explorer.dataops.log.JobLogFetcherFactory"/>
 
