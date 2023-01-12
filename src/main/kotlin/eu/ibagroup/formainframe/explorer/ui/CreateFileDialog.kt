@@ -43,7 +43,7 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
         FileModeValue.READ_WRITE,
         FileModeValue.EXECUTE,
         FileModeValue.READ_EXECUTE,
-        FileModeValue.READ_WRITE,
+        FileModeValue.WRITE_EXECUTE,
         FileModeValue.READ_WRITE_EXECUTE
       )
 
@@ -70,8 +70,7 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::fileName)
-          .validationOnInput { validateUssFileName(it) }
-          .validationOnApply { validateForBlank(it) }
+          .validationOnApply { validateForBlank(it) ?: validateUssFileName(it) }
           .horizontalAlign(HorizontalAlign.FILL)
           .focused()
       }
@@ -91,7 +90,7 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
         comboBox(fileModeValues)
           .bindItem(
             { state.parameters.mode.group.toFileModeValue() },
-            { state.parameters.mode.owner = it?.mode ?: 0 }
+            { state.parameters.mode.group = it?.mode ?: 0 }
           )
           .widthGroup(sameWidthComboBoxGroup)
       }
@@ -100,8 +99,8 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
           .widthGroup(sameWidthLabelsGroup)
         comboBox(fileModeValues)
           .bindItem(
-            { state.parameters.mode.group.toFileModeValue() },
-            { state.parameters.mode.owner = it?.mode ?: 0 }
+            { state.parameters.mode.all.toFileModeValue() },
+            { state.parameters.mode.all = it?.mode ?: 0 }
           )
           .widthGroup(sameWidthComboBoxGroup)
       }

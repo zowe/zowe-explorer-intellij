@@ -17,15 +17,14 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
-import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.explorer.JesWorkingSet
+import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
 import eu.ibagroup.formainframe.utils.validateJobFilter
 import javax.swing.JComponent
 
 class AddJobsFilterDialog(
   project: Project?,
-  override var state: JobsFilterState
-) : DialogWrapper(project), StatefulComponent<JobsFilterState> {
+  override var state: JobFilterStateWithWS
+) : DialogWrapper(project), StatefulComponent<JobFilterStateWithWS> {
 
   init {
     title = "Create Jobs Filter"
@@ -40,7 +39,7 @@ class AddJobsFilterDialog(
 
     return panel {
       row {
-        label("Jobs Working Set: ")
+        label("JES working set: ")
           .widthGroup(sameWidthGroup)
         label(state.ws.name)
       }
@@ -51,7 +50,7 @@ class AddJobsFilterDialog(
           .bindText(state::prefix)
           .also { prefixField = it.component }
           .validationOnApply {
-            validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws, it, false)
+            validateJobFilter(it.text, ownerField.text, jobIdField.text, state.ws.masks, it, false)
           }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -62,7 +61,7 @@ class AddJobsFilterDialog(
           .bindText(state::owner)
           .also { ownerField = it.component }
           .validationOnApply {
-            validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws, it, false)
+            validateJobFilter(prefixField.text, it.text, jobIdField.text, state.ws.masks, it, false)
           }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -73,26 +72,10 @@ class AddJobsFilterDialog(
           .bindText(state::jobId)
           .also { jobIdField = it.component }
           .validationOnApply {
-            validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws, it, true)
+            validateJobFilter(prefixField.text, ownerField.text, it.text, state.ws.masks, it, true)
           }
           .horizontalAlign(HorizontalAlign.FILL)
       }
     }
   }
-}
-
-class JobsFilterState(
-  var ws: JesWorkingSet,
-  var prefix: String = "*",
-  var owner: String = "*",
-  var jobId: String = "",
-) {
-
-  fun toJobsFilter (): JobsFilter {
-    val resultOwner = owner.ifBlank { "" }.uppercase()
-    val resultPrefix = prefix.ifBlank { "" }.uppercase()
-    val resultJobId = jobId.ifBlank { "" }.uppercase()
-    return JobsFilter(resultOwner, resultPrefix, resultJobId)
-  }
-
 }

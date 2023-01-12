@@ -12,25 +12,38 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.config.ws.JobsWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
+import eu.ibagroup.formainframe.utils.clone
 
 /** JES working set implementation */
 class JesWorkingSetImpl(
   override val uuid: String,
-  jesExplorer: AbstractExplorerBase<JesWorkingSetImpl, JobsWorkingSetConfig>,
-  workingSetConfigProvider: (String) -> JobsWorkingSetConfig?,
+  jesExplorer: AbstractExplorerBase<JesWorkingSetImpl, JesWorkingSetConfig>,
+  workingSetConfigProvider: (String) -> JesWorkingSetConfig?,
   parentDisposable: Disposable
-) : WorkingSetBase<JobsFilter, WorkingSet<*>, JobsWorkingSetConfig>(
+) : WorkingSetBase<JobsFilter, WorkingSet<*>, JesWorkingSetConfig>(
   uuid,
   jesExplorer,
   workingSetConfigProvider
 ), JesWorkingSet {
-  override val wsConfigClass = JobsWorkingSetConfig::class.java
+  override val wsConfigClass = JesWorkingSetConfig::class.java
 
-  override fun JobsWorkingSetConfig.masks(): MutableCollection<JobsFilter> = this.jobsFilters
+  override fun JesWorkingSetConfig.masks(): MutableCollection<JobsFilter> = this.jobsFilters
 
   init {
     Disposer.register(parentDisposable, this)
+  }
+
+  /**
+   * Remove JES filter from the config
+   * @param jobsFilter the filter to delete
+   */
+  override fun removeFilter(jobsFilter: JobsFilter) {
+    val newWsConfig = workingSetConfig?.clone() ?: return
+    if (newWsConfig.jobsFilters.remove(jobsFilter)) {
+      configCrudable.update(newWsConfig)
+    }
   }
 }

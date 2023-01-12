@@ -9,7 +9,7 @@
 -->
 <idea-plugin>
     <id>eu.ibagroup.formainframe</id>
-    <resource-bundle>messages.CommonBundle</resource-bundle>
+    <resource-bundle>messages.FMBundle</resource-bundle>
     <name>For Mainframe</name>
     <vendor email="formainframe@ibagroup.eu" url="https://github.com/for-mainframe/For-Mainframe">IBAGroup_2020Y
     </vendor>
@@ -49,7 +49,7 @@ How to create a new Working Set through the Settings:<br/>
 Also you can do both of the actions just by clicking the "+" button:<br/>
 <a href="https://plugins.jetbrains.com/files/16353/screenshot_9b2b3bb9-0305-4826-8b17-ef7a174181f3"><img src="https://plugins.jetbrains.com/files/16353/screenshot_9b2b3bb9-0305-4826-8b17-ef7a174181f3" width="680"></a><br/>
 <h4>Data operations</h4>
-The Plugin allows you to operate with you Datasets and USS files. Also it allows to easily copy and move Datasets and USS files between Subsystems<br/>
+The Plugin allows you to operate with Datasets and USS files. Also it allows to easily copy and move Datasets and USS files between Subsystems<br/>
 Example of creation, renaming and deletion of Datasets and USS files:<br/>
 <a href="https://plugins.jetbrains.com/files/16353/screenshot_74141b83-3689-4c3b-92ab-aa0bc9abb717"><img src="https://plugins.jetbrains.com/files/16353/screenshot_74141b83-3689-4c3b-92ab-aa0bc9abb717" width="680"></a><br/>
 Example of how to change Dataset and USS file content:<br/>
@@ -104,6 +104,9 @@ Example of how to see the output:<br/>
 
     <applicationListeners>
         <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+
+        <listener class="eu.ibagroup.formainframe.editor.ProjectOpenListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
         <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
@@ -171,7 +174,10 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.DeleteMemberOperationRunnerFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.DeleteMemberOperationRunnerFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.UssChangeModeFactory"/>
 
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.MemberToPdsMoverFactory"/>
@@ -240,7 +246,13 @@ Example of how to see the output:<br/>
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
+
+        <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.TsoOperationRunnerFactory"/>
+
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
 
         <logFetcher implementation="eu.ibagroup.formainframe.dataops.log.JobLogFetcherFactory"/>
 
@@ -250,7 +262,7 @@ Example of how to see the output:<br/>
 
         <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldUsernameAdapterFactory"/>
 
-        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldJobsWorkingSetAdapterFactory"/>
+        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldJesWorkingSetAdapterFactory"/>
 
         <explorer implementation="eu.ibagroup.formainframe.explorer.FileExplorerFactory"/>
         <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory"/>
@@ -274,7 +286,7 @@ Example of how to see the output:<br/>
 
         <editorFloatingToolbarProvider
                 implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncToolbarProvider"/>
-        
+
         <editorFloatingToolbarProvider implementation="eu.ibagroup.formainframe.editor.SubmitJobToolbarProvider"/>
 
         <notificationGroup displayType="STICKY_BALLOON"
@@ -293,6 +305,12 @@ Example of how to see the output:<br/>
                     canCloseContents="true"
                     doNotActivateOnStart="true"/>
 
+        <toolWindow id="TSO CLI" anchor="bottom"
+                    factoryClass="eu.ibagroup.formainframe.ui.build.tso.TSOWindowFactory"
+                    canCloseContents="true"
+                    doNotActivateOnStart="true"/>
+
+
         <virtualFileSystem id="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            implementationClass="eu.ibagroup.formainframe.vfs.MFVirtualFileSystem"
                            key="mf"/>
@@ -304,7 +322,8 @@ Example of how to see the output:<br/>
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
 
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
-                            serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestAnalyticsServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
                             serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"/>
@@ -314,7 +333,8 @@ Example of how to see the output:<br/>
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager" preload="true"
-                            serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
                             serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"/>
@@ -329,6 +349,13 @@ Example of how to see the output:<br/>
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>
 
         <typedHandler implementation="eu.ibagroup.formainframe.explorer.actions.ChangeContentAction"/>
+
+        <statusBarWidgetFactory id="MFLineSeparatorWidget"
+                implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"/>
+
+        <statusBarWidgetFactory id="MFEncodingWidget"
+                                implementation="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
+                                order="after MFLineSeparatorWidget"/>
     </extensions>
 
     <actions>
@@ -351,10 +378,15 @@ Example of how to see the output:<br/>
                 text="Working Set"
                 icon="AllIcons.Nodes.Project"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"
-                class="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"
-                text="Jobs Working Set"
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"
+                text="JES Working Set"
                 icon="AllIcons.Nodes.Project"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddConnectionAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddConnectionAction"
+                text="Connection"
+                icon="AllIcons.Javaee.WebService"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AllocateDatasetAction"
@@ -381,6 +413,11 @@ Example of how to see the output:<br/>
                 id="eu.ibagroup.formainframe.explorer.actions.SettingAction"
                 icon="AllIcons.General.Settings"/>
 
+        <action class="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"
+                id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"
+                icon="AllIcons.Debugger.Console"/>
+
+
         <action class="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
                 id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"
                 text="Properties"/>
@@ -395,26 +432,36 @@ Example of how to see the output:<br/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.RenameAction"
                 class="eu.ibagroup.formainframe.explorer.actions.RenameAction"
-                text="Rename"
-                use-shortcut-of="RenameElement"/>
+                text="Rename">
+            <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
+        </action>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
-                class="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction" text="Force Rename"
-                use-shortcut-of="ForceRefresh"/>
+                class="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
+                text="Force Rename"
+                use-shortcut-of="ForceRefresh">
+            <keyboard-shortcut first-keystroke="shift F2" keymap="$default"/>
+        </action>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditJobsFilterAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditJobsFilterAction"
+                text="Edit"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.DeleteJesNodeAction"
+                class="eu.ibagroup.formainframe.explorer.actions.DeleteJesNodeAction"
+                text="Delete">
+            <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+        </action>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"
                 icon="ForMainframeIcons.DatasetMask"
                 text="Mask"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
-                class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"
+                class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"
                 icon="ForMainframeIcons.JclDirectory"
                 text="Jobs Filter"/>
-
-        <action id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
-                class="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"
-                text="Use Binary Mode"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
                 class="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"
@@ -439,7 +486,9 @@ Example of how to see the output:<br/>
         <action id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"
                 class="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"
                 text="Purge Job"
-                icon="AllIcons.Actions.GC"/>
+                icon="AllIcons.Actions.GC">
+            <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+        </action>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.EditJclAction"
                 class="eu.ibagroup.formainframe.explorer.actions.EditJclAction"
@@ -454,13 +503,13 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobToolbarAction"/>
         </group>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
-                class="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"
                 text="Edit"
                 use-shortcut-of="RenameElement"/>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"
-                class="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditJesWorkingSetAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditJesWorkingSetAction"
                 text="Edit"
                 use-shortcut-of="RenameElement"/>
 
@@ -479,28 +528,37 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddMaskAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilerAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"
+               icon="AllIcons.General.Add"
+               popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddConnectionAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">
-            <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.JESActionBarGroup">
-            <reference id="eu.ibagroup.formainframe.explorer.actions.AddJobsWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SettingAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.ContextMenuGroup">
             <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJclAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"/>
             <separator/>
@@ -508,21 +566,31 @@ Example of how to see the output:<br/>
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
             <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.EditWorkingSetAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJobsWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
             <separator/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.ChangeContentModeAction"/>
-            <separator/>
             <reference id="$Delete"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetFilePropertiesAction"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.JESContextMenuGroup">
+            <reference id="eu.ibagroup.formainframe.actions.NewItemGroup"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ViewJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJclAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJesWorkingSetAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditJobsFilterAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.DeleteJesNodeAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"/>
+            <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction"/>
         </group>
 

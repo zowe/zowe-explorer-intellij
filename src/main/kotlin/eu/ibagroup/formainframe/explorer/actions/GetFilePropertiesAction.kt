@@ -12,12 +12,19 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.*
+import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
+import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.r2z.ChangeMode
 
 /**
  * Action for displaying properties of files on UI in dialog by clicking item in explorer context menu.
@@ -29,19 +36,71 @@ class GetFilePropertiesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
-    if (node is ExplorerTreeNode<*>) {
+    if (node is ExplorerUnitTreeNodeBase<*, *>) {
       val virtualFile = node.virtualFile
+      val connectionConfig = node.unit.connectionConfig ?: return
       if (virtualFile != null) {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
-        when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone()) {
+        when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)) {
           is RemoteDatasetAttributes -> {
             val dialog = DatasetPropertiesDialog(e.project, DatasetState(attributes))
             dialog.showAndGet()
           }
 
           is RemoteUssAttributes -> {
-            val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes))
-            dialog.showAndGet()
+            val oldCharset = attributes.charset
+            val initFileMode = attributes.fileMode?.clone()
+            val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes, virtualFile.isBeingEditingNow()))
+            if (dialog.showAndGet()) {
+              if (attributes.fileMode?.owner != initFileMode?.owner || attributes.fileMode?.group != initFileMode?.group || attributes.fileMode?.all != initFileMode?.all) {
+                runBackgroundableTask(
+                  title = "Changing file mode on ${attributes.path}",
+                  project = e.project,
+                  cancellable = true
+                ) {
+                  if (attributes.fileMode != null) {
+                    runCatching {
+                      dataOpsManager.performOperation(
+                        operation = UssChangeModeOperation(
+                          request = UssChangeModeParams(ChangeMode(mode = attributes.fileMode), attributes.path),
+                          connectionConfig = connectionConfig
+                        ),
+                        progressIndicator = it
+                      )
+                    }
+                      .onSuccess {
+                        node.parent?.cleanCacheIfPossible(cleanBatchedQuery = false)
+                      }
+                      .onFailure { t ->
+                        view.explorer.reportThrowable(t, e.project)
+                      }
+                  }
+                }
+              }
+              val newAttributes = dialog.state.ussAttributes
+              if (!virtualFile.isDirectory && oldCharset != newAttributes.charset) {
+                val contentEncodingMode = if (!virtualFile.isWritable) {
+                  showReloadCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
+                } else {
+                  showReloadConvertCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
+                }
+                if (contentEncodingMode == null) {
+                  attributes.charset = oldCharset
+                } else {
+                  val syncProvider = DocumentedSyncProvider(virtualFile)
+                  updateFileTag(newAttributes)
+                  if (contentEncodingMode == ContentEncodingMode.RELOAD) {
+                    val contentSynchronizer =
+                      service<DataOpsManager>().getContentSynchronizer(virtualFile)
+                    runWriteActionInEdtAndWait {
+                      syncProvider.saveDocument()
+                      contentSynchronizer?.synchronizeWithRemote(syncProvider = syncProvider, forceReload = true)
+                    }
+                  }
+                  changeFileEncodingTo(virtualFile, newAttributes.charset)
+                }
+              }
+            }
           }
 
           is RemoteMemberAttributes -> {

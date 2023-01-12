@@ -15,14 +15,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
-import eu.ibagroup.formainframe.utils.ContentStorage
-import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.runWriteActionInEdt
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.r2z.XIBMDataType
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.utils.*
 import java.io.IOException
+import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.set
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
 private val log = logger<RemoteAttributedContentSynchronizer<*>>()
@@ -99,16 +96,24 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
    * Doesn't need to be overridden in most cases
    * @see ContentSynchronizer.synchronizeWithRemote
    */
-  override fun synchronizeWithRemote(syncProvider: SyncProvider, progressIndicator: ProgressIndicator?) {
+  override fun synchronizeWithRemote(
+    syncProvider: SyncProvider,
+    progressIndicator: ProgressIndicator?,
+    forceReload: Boolean
+  ) {
     runCatching {
       log.info("Starting synchronization for file ${syncProvider.file.name}.")
       progressIndicator?.text = "Synchronizing file ${syncProvider.file.name} with mainframe"
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
 
-      if (!isContentModeText(attributes)) {
-        idToBinaryFileMap[recordId] = syncProvider.file
+      val ussAttributes = attributes.castOrNull<RemoteUssAttributes>()
+      if (!wasFetchedBefore(syncProvider)) {
+        ussAttributes?.let {
+          checkUssFileTag(it)
+        }
       }
+      val currentCharset = ussAttributes?.charset ?: DEFAULT_TEXT_CHARSET
 
       val fetchedRemoteContentBytes = fetchRemoteContentBytes(attributes, progressIndicator)
       val contentAdapter = dataOpsManager.getMFContentAdapter(syncProvider.file)
@@ -117,38 +122,33 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       if (!wasFetchedBefore(syncProvider)) {
         log.info("Setting initial content for file ${syncProvider.file.name}")
         runWriteActionInEdtAndWait { syncProvider.putInitialContent(adaptedFetchedBytes) }
+        changeFileEncodingTo(syncProvider.file, currentCharset)
+        initLineSeparator(syncProvider.file)
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
         fetchedAtLeastOnce.add(syncProvider)
       } else {
-        if (!idToBinaryFileMap.containsKey(recordId)) {
-          val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
-          if (!(fileContent contentEquals adaptedFetchedBytes)) {
-            val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
-            val doUploadContent = syncProvider.saveStrategy
-              .decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
 
-            if (doUploadContent) {
-              log.info("Save strategy decided to forcefully update file content on mainframe.")
-              val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
-              runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
-              uploadNewContent(attributes, newContentPrepared, progressIndicator)
-              successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
-            } else {
-              log.info("Save strategy decided to accept remote file content.")
-              successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
-              runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
-            }
-          } else { /*do nothing*/
+        val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+
+        if (!(fileContent contentEquals adaptedFetchedBytes)) {
+          val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
+          val doUploadContent =
+            syncProvider.saveStrategy.decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
+
+          if (doUploadContent && !forceReload) {
+            log.info("Save strategy decided to forcefully update file content on mainframe.")
+            val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
+            runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
+            uploadNewContent(attributes, newContentPrepared, progressIndicator)
+            successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }
+          } else {
+            log.info("Save strategy decided to accept remote file content.")
+            successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
+            runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
           }
-        } else {
-          log.info("Content loaded from mainframe")
-          successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
-          runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
-          if (isContentModeText(attributes)) {
-            idToBinaryFileMap.remove(recordId)
-          } else { /*do nothing*/
-          }
+        } else { /*do nothing*/
         }
+        syncCharsetsIfNeeded(syncProvider.file, currentCharset)
       }
     }
       .onSuccess {
@@ -160,12 +160,21 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   }
 
   /**
-   * Determines if the current virtual file content is text
-   * @param attributes represents the current virtual file attributes
-   * @return True if the current file content is text. False otherwise
+   * Base implementation of [ContentSynchronizer.successfulContentStorage] method for each content synchronizer.
    */
-  private fun isContentModeText(attributes: FileAttributes): Boolean {
-    return attributes.contentMode.type == XIBMDataType.Type.TEXT
+  override fun successfulContentStorage(syncProvider: SyncProvider): ByteArray {
+    val recordId = handlerToStorageIdMap[syncProvider]
+    return recordId?.let { successfulStatesStorage.getBytes(it) } ?: ByteArray(0)
   }
 
+  /**
+   * Synchronizes the current charset with the file charset if needed.
+   * @param file virtual file to sync.
+   * @param currentCharset current content charset.
+   */
+  private fun syncCharsetsIfNeeded(file: VirtualFile, currentCharset: Charset) {
+    if (currentCharset != file.charset) {
+      changeFileEncodingTo(file, currentCharset)
+    }
+  }
 }

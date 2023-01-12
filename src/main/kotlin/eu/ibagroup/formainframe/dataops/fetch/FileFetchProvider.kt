@@ -34,7 +34,7 @@ interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
 
   fun getFetchedErrorMessage(query: Q): String? = "Error"
 
-  fun cleanCache(query: Q)
+  fun cleanCache(query: Q, sendTopic: Boolean = true)
 
   fun reload(query: Q, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE)
 

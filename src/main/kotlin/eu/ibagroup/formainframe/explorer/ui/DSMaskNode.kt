@@ -18,7 +18,6 @@ import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import icons.ForMainframeIcons

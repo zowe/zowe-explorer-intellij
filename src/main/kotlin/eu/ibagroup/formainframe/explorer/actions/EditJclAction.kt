@@ -13,22 +13,25 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
-import eu.ibagroup.formainframe.dataops.operations.jobs.*
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.dataops.content.synchronizer.changeFileEncodingTo
+import eu.ibagroup.formainframe.dataops.operations.jobs.BasicGetJclRecordsParams
+import eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperation
+import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.JobNode
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
  * Action to edit job JCL through the editor in JES explorer
  */
-class EditJclAction: AnAction() {
+class EditJclAction : AnAction() {
 
   override fun isDumbAware(): Boolean {
     return true
@@ -80,14 +83,14 @@ class EditJclAction: AnAction() {
                     DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(e.project))
                   if (!wasCreatedBefore) {
                     syncProvider.putInitialContent(jclContentBytes)
+                    changeFileEncodingTo(cachedFile, DEFAULT_TEXT_CHARSET)
                   } else {
                     val currentContent = syncProvider.retrieveCurrentContent()
                     if (!(currentContent contentEquals jclContentBytes)) {
                       syncProvider.loadNewContent(jclContentBytes)
                     }
                   }
-                  val document = syncProvider.getDocument()
-                  document?.let { doc -> FileDocumentManager.getInstance().saveDocument(doc) }
+                  syncProvider.saveDocument()
                   it.navigate(true)
                 }
               }
@@ -101,7 +104,7 @@ class EditJclAction: AnAction() {
   }
 
   /**
-   *  Makes action visible only for job in JES explorer
+   * Makes action visible only for job context menu in JES explorer
    */
   override fun update(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: let {
@@ -110,7 +113,6 @@ class EditJclAction: AnAction() {
     }
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
-    e.presentation.isVisible = selected.size == 1
-        && node is JobNode
+    e.presentation.isVisible = selected.size == 1 && node is JobNode
   }
 }

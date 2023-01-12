@@ -30,11 +30,16 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
 
-// TODO: doc Gleb
-// TODO: doc
+/**
+ * Data operation manager implementation class.
+ * Provides functions to obtain files/folders from mainframe and perform operations on it
+ */
 class DataOpsManagerImpl : DataOpsManager {
 
-  // TODO: doc
+  /**
+   * Creates a list of components
+   * @return MutableList of components
+   */
   private fun <Component> List<DataOpsComponentFactory<Component>>.buildComponents(): MutableList<Component> {
     return buildComponents(this@DataOpsManagerImpl)
   }
@@ -220,7 +225,10 @@ class DataOpsManagerImpl : DataOpsManager {
     }
   }
 
-  // TODO: doc
+  /**
+   * Clear the attributes service, file fetch providers, content synchronizers and mf content adapters
+   * if they are already initialized
+   */
   override fun dispose() {
     if (attributesServiceDelegate.isInitialized()) attributesServices.clear()
     if (fileFetchProvidersDelegate.isInitialized()) fileFetchProviders.clear()

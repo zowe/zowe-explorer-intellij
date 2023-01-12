@@ -45,7 +45,7 @@ class AddMaskAction : AnAction() {
     return true
   }
 
-  // TODO: doc, why getUnits.size == 1?
+  /** Decides to show action or not */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
@@ -54,7 +54,7 @@ class AddMaskAction : AnAction() {
     e.presentation.isEnabledAndVisible = getUnits(view).size == 1
   }
 
-  // TODO: doc
+  /** Finds files working set units for selected nodes in explorer */
   private fun getUnits(view: FileExplorerView): List<FilesWorkingSet> {
     return view.mySelectedNodesData
       .map { it.node }

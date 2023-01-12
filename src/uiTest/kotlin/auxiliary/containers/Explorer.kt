@@ -36,24 +36,15 @@ class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
      * Clicks on the settings action and adds the Settings Dialog to the list of fixtures needed to close.
      */
     fun settings(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
-        clickActionButton(byXpath("//div[@class='ActionButton' and @myaction=' ()']"))
+        clickActionButton(byXpath("//div[@class='ActionButton' and @myicon='settings.svg' and @myaction=' ()']"))
         closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
     }
 
     /**
-     * Clicks on the creating working set action and adds the Add Working Set Dialog to the list of fixtures needed to close.
+     * Clicks on the add action button.
      */
-    fun createWorkingSet(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
-        clickActionButton(byXpath("//div[@class='ActionButton' and @myaction='Working Set ()']"))
-        closableFixtureCollector.add(AddWorkingSetDialog.xPath(), fixtureStack)
-    }
-
-    /**
-     * Clicks on the creating jobs working set action and adds the Add Jobs Working Set Dialog to the list of fixtures needed to close.
-     */
-    fun createJobsWorkingSet(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
-        clickActionButton(byXpath("//div[@class='ActionButton' and @myaction='Jobs Working Set ()']"))
-        closableFixtureCollector.add(AddJobsWorkingSetDialog.xPath(), fixtureStack)
+    fun createConfigItem() {
+        clickActionButton(byXpath("//div[@class='ActionButton' and @myicon='add.svg' and @myaction=' ()']"))
     }
 
     companion object {

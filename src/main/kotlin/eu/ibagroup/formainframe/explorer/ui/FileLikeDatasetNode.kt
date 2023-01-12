@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.toMutableSmartList
@@ -48,20 +49,33 @@ class FileLikeDatasetNode(
     val attributes = service<DataOpsManager>().tryToGetAttributes(value)
     when (attributes) {
       is RemoteDatasetAttributes -> {
-        presentation.setIcon(
-          if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(
-            AllIcons.FileTypes.Any_type,
-            "DS"
+        if (this.navigating) {
+          presentation.setIcon(AnimatedIcon.Default())
+        } else {
+          presentation.setIcon(
+            if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(
+              AllIcons.FileTypes.Any_type,
+              "DS"
+            )
           )
-        )
+        }
+
       }
 
       is RemoteMemberAttributes -> {
-        presentation.setIcon(ForMainframeIcons.MemberIcon)
+        if (this.navigating) {
+          presentation.setIcon(AnimatedIcon.Default())
+        } else {
+          presentation.setIcon(ForMainframeIcons.MemberIcon)
+        }
       }
 
       else -> {
-        presentation.setIcon(AllIcons.FileTypes.Any_type)
+        if (this.navigating) {
+          presentation.setIcon(AnimatedIcon.Default())
+        } else {
+          presentation.setIcon(AllIcons.FileTypes.Any_type)
+        }
       }
     }
     updateMainTitleUsingCutBuffer(value.presentableName, presentation)

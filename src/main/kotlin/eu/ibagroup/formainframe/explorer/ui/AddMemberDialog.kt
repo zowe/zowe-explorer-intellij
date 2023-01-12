@@ -31,8 +31,7 @@ class AddMemberDialog(project: Project?, override var state: MemberAllocationPar
         label("Member name: ")
         textField()
           .bindText(state::memberName)
-          .validationOnInput { validateMemberName(it) }
-          .validationOnApply { validateForBlank(it) }
+          .validationOnApply { validateForBlank(it) ?: validateMemberName(it) }
           .apply { focused() }
           .horizontalAlign(HorizontalAlign.FILL)
       }

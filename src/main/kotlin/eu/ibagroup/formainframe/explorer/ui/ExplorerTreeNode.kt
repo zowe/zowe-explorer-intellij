@@ -17,6 +17,7 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
@@ -30,6 +31,7 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
@@ -42,6 +44,8 @@ abstract class ExplorerTreeNode<Value : Any>(
   val explorer: Explorer<*>,
   protected val treeStructure: ExplorerTreeStructureBase
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
+
+  var navigating: Boolean = false
 
   open fun init() {
     treeStructure.registerNode(this)
@@ -79,11 +83,6 @@ abstract class ExplorerTreeNode<Value : Any>(
     presentationData.addText(text, textAttributes)
   }
 
-  /**
-   * Open the specified node in IDE editor when it could be open, error dialog instead.
-   * Makes initial file synchronization if the autosync option selected.
-   * @param requestFocus parameter to request focus when it is needed
-   */
   override fun navigate(requestFocus: Boolean) {
     val file = virtualFile ?: return
     descriptor?.let { fileDescriptor ->
@@ -96,37 +95,50 @@ abstract class ExplorerTreeNode<Value : Any>(
           project = project,
           icon = AllIcons.General.WarningDialog
         )
-        if (doSync) {
-          val onThrowableHandler: (Throwable) -> Unit = {
-            if (it.message?.contains("Client is not authorized for file access") == true) {
-              Messages.showDialog(
-                project,
-                "You do not have permissions to read this file",
-                "Error While Opening File ${file.name}",
-                arrayOf("Ok"),
-                0,
-                AllIcons.General.ErrorDialog,
-                null
+        runBackgroundableTask("Navigating to ${file.name}") { indicator ->
+
+
+          if (doSync) {
+            val onThrowableHandler: (Throwable) -> Unit = {
+              if (it.message?.contains("Client is not authorized for file access") == true) {
+                Messages.showDialog(
+                  project,
+                  "You do not have permissions to read this file",
+                  "Error While Opening File ${file.name}",
+                  arrayOf("Ok"),
+                  0,
+                  AllIcons.General.ErrorDialog,
+                  null
+                )
+              } else {
+                DocumentedSyncProvider.defaultOnThrowableHandler(file, it)
+              }
+            }
+            val onSyncSuccessHandler: () -> Unit = {
+              dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
+                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
+              }
+              runWriteActionInEdtAndWait {
+                fileDescriptor.navigate(requestFocus)
+              }
+            }
+            val syncProvider =
+              DocumentedSyncProvider(
+                file = file,
+                saveStrategy = SaveStrategy.syncOnOpen(project),
+                onThrowableHandler = onThrowableHandler,
+                onSyncSuccessHandler = onSyncSuccessHandler
               )
-            } else {
-              DocumentedSyncProvider.defaultOnThrowableHandler(file, it)
+            if (!file.isBeingEditingNow()) {
+              this.navigating = true
+              this.update()
+              runCatching {
+                contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
+              }.also {
+                this.navigating = false
+                this.update()
+              }
             }
-          }
-          val onSyncSuccessHandler: () -> Unit = {
-            dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
-              service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
-            }
-            fileDescriptor.navigate(requestFocus)
-          }
-          val syncProvider =
-            DocumentedSyncProvider(
-              file = file,
-              saveStrategy = SaveStrategy.syncOnOpen(project),
-              onThrowableHandler = onThrowableHandler,
-              onSyncSuccessHandler = onSyncSuccessHandler
-            )
-          if (!file.isBeingEditingNow()) {
-            contentSynchronizer.synchronizeWithRemote(syncProvider)
           }
         }
       }

@@ -14,8 +14,8 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionConfigurable
 import eu.ibagroup.formainframe.config.settings.ui.SettingsConfigurable
-import eu.ibagroup.formainframe.config.ws.ui.files.WSConfigurable
-import eu.ibagroup.formainframe.config.ws.ui.jobs.JobsWsConfigurable
+import eu.ibagroup.formainframe.config.ws.ui.files.FilesWSConfigurable
+import eu.ibagroup.formainframe.config.ws.ui.jes.JesWsConfigurable
 
 /**
  * Main UI class to build configurables for project and set them to appropriate place
@@ -31,8 +31,8 @@ class MainframeConfigurable : TabbedConfigurable() {
   }
 
   private lateinit var connectionConfigurable: ConnectionConfigurable
-  private lateinit var wsConfigurable: WSConfigurable
-  private lateinit var jobsWsConfigurable: JobsWsConfigurable
+  private lateinit var wsConfigurable: FilesWSConfigurable
+  private lateinit var jesWsConfigurable: JesWsConfigurable
   private lateinit var settingsConfigurable: SettingsConfigurable
 
   /**
@@ -42,8 +42,8 @@ class MainframeConfigurable : TabbedConfigurable() {
   override fun createConfigurables(): MutableList<Configurable> {
     return mutableListOf(
       ConnectionConfigurable().also { connectionConfigurable = it },
-      WSConfigurable().also { wsConfigurable = it },
-      JobsWsConfigurable().also { jobsWsConfigurable = it },
+      FilesWSConfigurable().also { wsConfigurable = it },
+      JesWsConfigurable().also { jesWsConfigurable = it },
       SettingsConfigurable().also { settingsConfigurable = it }
     )
   }
@@ -78,8 +78,8 @@ class MainframeConfigurable : TabbedConfigurable() {
     super.createConfigurableTabs().also {
       myTabbedPane.selectedIndex = when (preferredConfigurableClass) {
         SettingsConfigurable::class.java -> 4
-        JobsWsConfigurable::class.java -> 3
-        WSConfigurable::class.java -> 2
+        JesWsConfigurable::class.java -> 3
+        FilesWSConfigurable::class.java -> 2
         ConnectionConfigurable::class.java -> 1
         else -> 0
       }

@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
@@ -36,7 +37,11 @@ class SpoolFileNode(
   override fun update(presentation: PresentationData) {
     val attributes = service<DataOpsManager>().tryToGetAttributes(value) as? RemoteSpoolFileAttributes
     val spoolFile = attributes?.info
-    presentation.setIcon(spoolFileIcon)
+    if (this.navigating) {
+      presentation.setIcon(AnimatedIcon.Default())
+    } else {
+      presentation.setIcon(spoolFileIcon)
+    }
     presentation.addText("${value.name} ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
     presentation.addText(spoolFile?.procStep ?: "", SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }

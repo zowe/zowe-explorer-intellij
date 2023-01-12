@@ -157,10 +157,10 @@ class ConfigTestSpec : ShouldSpec({
     // WSNameColumn.validateEntered
     should("check that the entered working set name is not empty") {}
     should("check that the entered working set name is not blank") {}
-    // jobs/JobsWsDisalog.validateOnApply
+    // jes/JesWsDialog.validateOnApply
     should("check that there are no errors for job filters") {}
     should("check that the error appears on any errors for job filters") {}
-    should("check that the error appears on empty jobs working set") {}
+    should("check that the error appears on empty JES working set") {}
     should("check that the error appears on adding the same job filter again") {}
     // files/WorkingSetDialog.validateOnApply
     should("check that there are no errors for file masks") {}

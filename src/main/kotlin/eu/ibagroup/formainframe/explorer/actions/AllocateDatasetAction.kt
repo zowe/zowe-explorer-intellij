@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.analytics.events.FileType
+import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.DSMask
@@ -33,6 +34,7 @@ import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.service
@@ -111,6 +113,10 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
               while (p !is DSMaskNode) {
                 p = p?.parent ?: break
               }
+              val nodeToClean = p?.castOrNull<FileFetchNode<*,*,*,*,*>>()
+              nodeToClean?.let { cleanInvalidateOnExpand(nodeToClean, view) }
+
+              var nodeCleaned = false
               p?.cleanCacheIfPossible(cleanBatchedQuery = true)
               runInEdt {
                 if (
@@ -125,9 +131,16 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
                   val filesWorkingSetConfig =
                     configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
                   if (filesWorkingSetConfig != null) {
+                    nodeToClean?.cleanCache(recursively = false, cleanBatchedQuery = true, sendTopic = false)
+                    nodeCleaned = true
+
                     filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
                     configCrudable.update(filesWorkingSetConfig)
                   }
+                }
+
+                if (!nodeCleaned) {
+                  nodeToClean?.cleanCache(recursively = false, cleanBatchedQuery = true)
                 }
               }
               initialState.errorMessage = ""
