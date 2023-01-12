@@ -26,6 +26,9 @@ val remoteRobotVersion = "0.11.16"
 
 repositories {
   mavenCentral()
+  flatDir {
+    dirs("libs")
+  }
 }
 
 java {
@@ -56,7 +59,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.3")
+  version.set("2022.2")
 }
 
 tasks {

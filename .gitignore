@@ -7,7 +7,6 @@ gradle/wrapper/*
 !gradle/wrapper/gradle-wrapper.properties
 build
 
-libs
 verifier-all.jar
 
 # Windows thumbnail cache files
