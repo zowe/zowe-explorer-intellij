@@ -21,7 +21,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "1.0.0"
+version = "1.1.0"
 val remoteRobotVersion = "0.11.16"
 
 repositories {
