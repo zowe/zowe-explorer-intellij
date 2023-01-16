@@ -1,0 +1,25 @@
+name: "Setup action"
+description: "Prepares for execution - set up Java, Kotlin, Gradle"
+
+inputs:
+  jdkVersion:
+    description: "JDK version"
+    required: false
+    default: "11"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up JDK ${{ inputs.jdkVersion }}
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'zulu'
+        java-version: ${{ inputs.jdkVersion }}
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      shell: bash
+
+#    - name: Bootstrap gradlew
+#      run: ./gradle/bootstrap/bootstrap_gradlew.sh
+#      shell: bash
