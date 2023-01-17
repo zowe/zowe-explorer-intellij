@@ -24,7 +24,6 @@ import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationOperation
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.FileType
 

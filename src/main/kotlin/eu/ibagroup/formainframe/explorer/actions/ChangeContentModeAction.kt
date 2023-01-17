@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.utils.sendTopic
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.XIBMDataType
 

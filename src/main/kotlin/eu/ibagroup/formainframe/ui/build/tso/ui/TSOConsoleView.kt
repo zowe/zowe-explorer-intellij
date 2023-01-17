@@ -19,7 +19,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.cellPanel
+//import com.intellij.ui.layout.cellPanel
 import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
 import eu.ibagroup.formainframe.ui.build.TerminalCommandReceiver
@@ -60,7 +60,7 @@ class TSOConsoleView (
    */
   private val tsoPanel by lazy {
     panel {
-      cellPanel()
+//      cellPanel()
       row {
         label("TSO message type").widthGroup(tsoWidthGroup)
         comboBox(

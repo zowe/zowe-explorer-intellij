@@ -11,8 +11,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("org.jetbrains.intellij") version "1.9.0"
-  kotlin("jvm") version "1.6.21"
+  id("org.jetbrains.intellij") version "1.12.0"
+  kotlin("jvm") version "1.7.10"
   java
   jacoco
 }
@@ -46,8 +46,8 @@ repositories {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
@@ -58,7 +58,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.3.0-rc.4")
+  implementation("eu.ibagroup:r2z:1.3.0-rc.10")
   implementation("com.segment.analytics.java:analytics:+")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")
@@ -73,13 +73,13 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.2")
+  version.set("2022.3")
 }
 
 tasks {
   withType<KotlinCompile> {
     kotlinOptions {
-      jvmTarget = JavaVersion.VERSION_11.toString()
+      jvmTarget = JavaVersion.VERSION_17.toString()
       languageVersion = org.jetbrains.kotlin.config.LanguageVersion.LATEST_STABLE.versionString
     }
   }
