@@ -132,6 +132,10 @@ class DocumentedSyncProvider(
   }
 
   override fun onThrowable(t: Throwable) {
+    if (t.message?.contains("Permission denied") == true) {
+      onThrowableHandler(Throwable("Permission denied. " + t.message))
+      return
+    }
     onThrowableHandler(t)
   }
 

@@ -13,19 +13,27 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.showUntilDone
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationOperation
+import eu.ibagroup.formainframe.dataops.operations.UssAllocationParams
+import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
+import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.r2z.ChangeMode
 import eu.ibagroup.r2z.FileType
 
 /**
@@ -83,15 +91,24 @@ abstract class CreateUssEntityAction : AnAction() {
             title = "Creating $fileType ${allocationParams.fileName}",
             project = e.project,
             cancellable = true
-          ) {
+          ) { indicator ->
+            val ussDirNode = node.castOrNull<UssDirNode>()
             runCatching {
               dataOpsManager.performOperation(
                 operation = UssAllocationOperation(
                   request = allocationParams,
                   connectionConfig = connectionConfig
                 ),
-                progressIndicator = it
+                progressIndicator = indicator
               )
+
+              val fileFetchProvider = dataOpsManager
+                .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, MFVirtualFile>(
+                  UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
+                )
+              ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }
+
+              changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
 
               service<AnalyticsService>().trackAnalyticsEvent(
                 FileEvent(
@@ -100,7 +117,7 @@ abstract class CreateUssEntityAction : AnAction() {
                 )
               )
             }.onSuccess {
-              node.castOrNull<UssDirNode>()?.cleanCache(false)
+              ussDirNode?.cleanCache(false)
               res = true
             }.onFailure { t ->
               view.explorer.reportThrowable(t, e.project)
@@ -108,6 +125,39 @@ abstract class CreateUssEntityAction : AnAction() {
           }
           res
         }
+      }
+    }
+  }
+
+  /**
+   * Changes the file mode if the wrong mode was specified when the file was created.
+   */
+  private fun changeFileModeIfNeeded(
+    parentFile: VirtualFile?,
+    params: UssAllocationParams,
+    connectionConfig: ConnectionConfig,
+    progressIndicator: ProgressIndicator
+  ) {
+    val dataOpsManager = service<DataOpsManager>()
+    val fileName = params.fileName
+    val createdFile = parentFile?.findChild(fileName)
+    val attributes = createdFile?.let { vFile ->
+      dataOpsManager.tryToGetAttributes(vFile)
+    }.castOrNull<RemoteUssAttributes>()
+    val fileMode = params.parameters.mode
+    val filePath = params.path + "/" + params.fileName
+    attributes?.let { attr ->
+      if (attr.fileMode != fileMode) {
+        dataOpsManager.performOperation(
+          operation = UssChangeModeOperation(
+            request = UssChangeModeParams(
+              parameters = ChangeMode(mode = fileMode),
+              path = filePath
+            ),
+            connectionConfig = connectionConfig
+          ),
+          progressIndicator = progressIndicator
+        )
       }
     }
   }
