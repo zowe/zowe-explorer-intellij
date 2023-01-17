@@ -14,6 +14,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
+import com.intellij.ui.AnimatedIcon
 import com.intellij.util.IconUtil
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -32,7 +33,11 @@ class UssFileNode(
   override fun update(presentation: PresentationData) {
     updateMainTitleUsingCutBuffer(value.presentableName, presentation)
     val icon = IconUtil.computeFileIcon(value, Iconable.ICON_FLAG_READ_STATUS, explorer.nullableProject)
-    presentation.setIcon(icon)
+    if (this.navigating) {
+      presentation.setIcon(AnimatedIcon.Default())
+    } else {
+      presentation.setIcon(icon)
+    }
   }
 
   override fun getVirtualFile(): MFVirtualFile {

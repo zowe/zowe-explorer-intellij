@@ -17,7 +17,6 @@ import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.crudable.nextUniqueValue
-import org.zowe.kotlinsdk.CodePage
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.util.*
 
@@ -32,20 +31,18 @@ data class ConnectionDialogState(
   var username: String = "",
   var password: String = "",
   var isAllowSsl: Boolean = false,
-  var codePage: CodePage = CodePage.IBM_1047,
   var zVersion: ZVersion = ZVersion.ZOS_2_1,
   var zoweConfigPath: String? = null,
   override var mode: DialogMode = DialogMode.CREATE
 ) : DialogState, Cloneable {
 
   var connectionConfig
-    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, codePage, zVersion, zoweConfigPath)
+    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion, zoweConfigPath)
     set(value) {
       connectionUuid = value.uuid
       connectionName = value.name
       connectionUrl = value.url
       isAllowSsl = value.isAllowSelfSigned
-      codePage = value.codePage
       zVersion = value.zVersion
     }
 
@@ -101,7 +98,6 @@ fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
     username = credentials.username,
     password = credentials.password,
     isAllowSsl = this.isAllowSelfSigned,
-    codePage = this.codePage,
     zVersion = this.zVersion,
     zoweConfigPath = this.zoweConfigPath
   )

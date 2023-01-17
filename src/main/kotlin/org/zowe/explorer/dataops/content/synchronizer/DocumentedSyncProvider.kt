@@ -13,12 +13,16 @@ package org.zowe.explorer.dataops.content.synchronizer
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.vfs.MFVirtualFile
+import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -67,6 +71,15 @@ class DocumentedSyncProvider(
     return FileDocumentManager.getInstance().getDocument(file)
   }
 
+  /**
+   * Saves document in FileDocumentManager if it was found.
+   * @see FileDocumentManager
+   * @see SyncProvider.saveDocument
+   */
+  override fun saveDocument() {
+    getDocument()?.let { FileDocumentManager.getInstance().saveDocument(it) }
+  }
+
   override val vFileClass = MFVirtualFile::class.java
 
   private val isInitialContentSet = AtomicBoolean(false)
@@ -102,7 +115,8 @@ class DocumentedSyncProvider(
     if (wasReadOnly) {
       document?.setReadOnly(false)
     }
-    document?.setText(String(content))
+    val charset = getCurrentCharset()
+    document?.setText(String(content, charset))
     if (wasReadOnly) {
       document?.setReadOnly(true)
     }
@@ -113,10 +127,15 @@ class DocumentedSyncProvider(
    * @see SyncProvider.retrieveCurrentContent
    */
   override fun retrieveCurrentContent(): ByteArray {
-    return getDocument()?.text?.toByteArray() ?: ByteArray(0)
+    val charset = getCurrentCharset()
+    return convertContentWithLineSeparator(getDocument()?.text ?: "").toByteArray(charset)
   }
 
   override fun onThrowable(t: Throwable) {
+    if (t.message?.contains("Permission denied") == true) {
+      onThrowableHandler(Throwable("Permission denied. " + t.message))
+      return
+    }
     onThrowableHandler(t)
   }
 
@@ -137,4 +156,47 @@ class DocumentedSyncProvider(
     return file.hashCode()
   }
 
+  /**
+   * Get the current file charset.
+   * For uss files this is [RemoteUssAttributes.charset], for other files - [DEFAULT_TEXT_CHARSET].
+   * @return charset of the file.
+   */
+  private fun getCurrentCharset(): Charset {
+    val ussAttributes =
+      service<DataOpsManager>().tryToGetAttributes(file).castOrNull<RemoteUssAttributes>()
+    return ussAttributes?.charset ?: DEFAULT_TEXT_CHARSET
+  }
+
+  /**
+   * Converts text to text with selected line separator.
+   * Necessary to correctly retrieve the contents of the document from the editor.
+   * @param content current editor text.
+   * @return converted text.
+   */
+  private fun convertContentWithLineSeparator(content: String): String {
+    if (content.isEmpty()) {
+      return content
+    }
+    val attributes =
+      service<DataOpsManager>().tryToGetAttributes(file).castOrNull<RemoteUssAttributes>()
+    if (attributes != null) {
+      val lfLineSeparator = LF_LINE_SEPARATOR
+      val crLineSeparator = CR_LINE_SEPARATOR
+      val contentLineSeparator = if (content.contains(crLineSeparator)) {
+        if (content.contains(lfLineSeparator)) {
+          crLineSeparator + lfLineSeparator
+        } else {
+          crLineSeparator
+        }
+      } else {
+        lfLineSeparator
+      }
+      file.detectedLineSeparator?.let {
+        if (contentLineSeparator != it) {
+          return content.replace(contentLineSeparator, it)
+        }
+      }
+    }
+    return content
+  }
 }

@@ -37,7 +37,6 @@ import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.utils.getMinimalCommonParents
 import org.zowe.explorer.utils.getParentsChain
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -375,9 +374,9 @@ class FileExplorerView(
       }
 
       return destinationFiles
-        .map { destFile ->
-          filteredSourceFiles.map { Pair(destFile, it) }
-        }.flatten().filter {
+        .map { destFile -> filteredSourceFiles.map { Pair(destFile, it) } }
+        .flatten()
+        .filter {
           dataOpsManager.isOperationSupported(
             operation = MoveCopyOperation(
               source = it.second,
@@ -412,7 +411,8 @@ class FileExplorerView(
       val selected = mySelectedNodesData
       selected.map { it.node }.filterIsInstance<FilesWorkingSetNode>()
         .forEach {
-          if (showYesNoDialog(
+          if (
+            showYesNoDialog(
               title = "Deletion of Working Set ${it.unit.name}",
               message = "Do you want to delete this Working Set from configs? Note: all data under it will be untouched",
               project = project,
@@ -425,13 +425,15 @@ class FileExplorerView(
       selected.map { it.node }.filterIsInstance<DSMaskNode>()
         .filter { explorer.isUnitPresented(it.unit) }
         .forEach {
-          if (showYesNoDialog(
+          if (
+            showYesNoDialog(
               title = "Deletion of DS Mask ${it.value.mask}",
               message = "Do you want to delete this mask from configs? Note: all data sets under it will be untouched",
               project = project,
               icon = AllIcons.General.QuestionDialog
             )
           ) {
+            it.cleanCache(recursively = true, cleanFetchProviderCache = true, cleanBatchedQuery = true, sendTopic = false)
             it.unit.removeMask(it.value)
           }
         }
@@ -446,6 +448,7 @@ class FileExplorerView(
               icon = AllIcons.General.QuestionDialog
             )
           ) {
+            node.cleanCache(recursively = true, cleanFetchProviderCache = true, cleanBatchedQuery = true, sendTopic = false)
             node.unit.removeUssPath(node.value)
           }
         }
@@ -492,7 +495,7 @@ class FileExplorerView(
               }
             nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
-              .forEach { it.cleanCache(cleanBatchedQuery = true) }
+              .forEach { it.cleanCache(recursively = false, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
           }
         }
       }

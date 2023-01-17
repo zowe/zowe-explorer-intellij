@@ -16,8 +16,6 @@ import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.kotlinsdk.InfoAPI
-import org.zowe.kotlinsdk.InfoResponse
 import org.zowe.kotlinsdk.SystemsApi
 import org.zowe.kotlinsdk.SystemsResponse
 

@@ -13,7 +13,7 @@ package org.zowe.explorer.config
 import com.intellij.openapi.application.ApplicationManager
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.config.ws.JobsWorkingSetConfig
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.annotations.Contains
 
@@ -56,7 +56,7 @@ interface ConfigSandbox {
     entities = [
       FilesWorkingSetConfig::class,
       ConnectionConfig::class,
-      JobsWorkingSetConfig::class
+      JesWorkingSetConfig::class
     ]
   )
   val crudable: Crudable

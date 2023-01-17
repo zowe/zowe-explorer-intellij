@@ -19,11 +19,8 @@ String jiraTicket = ''
 def gitlabBranch = env.BRANCH_NAME
 properties([gitLabConnection('code.iby.scdc.io-connection')])
 
-
 // @NonCPS
 // def changeVersion(String xmlFile) {
-
-
 //     def xml = new XmlSlurper().parseText(xmlFile)
 //     println xml.'idea-version'.'@since-build'
 //     xml.'idea-version'.'@since-build' =  '203.7148.72'

@@ -18,8 +18,8 @@ buildscript {
 
 plugins {
   id("org.sonarqube") version "3.3"
-  id("org.jetbrains.intellij") version "1.9.0"
-  kotlin("jvm") version "1.6.21"
+  id("org.jetbrains.intellij") version "1.12.0"
+  kotlin("jvm") version "1.7.10"
   java
   jacoco
 }
@@ -31,13 +31,16 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "0.3.1"
-val remoteRobotVersion = "0.11.14"
+version = "1.0.0"
+val remoteRobotVersion = "0.11.16"
 
 repositories {
   mavenCentral()
   flatDir {
     dirs("libs")
+  }
+  maven {
+    url = uri("https://zowe.jfrog.io/zowe/libs-release")
   }
   maven {
     url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
@@ -50,8 +53,8 @@ repositories {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
@@ -60,51 +63,92 @@ dependencies {
   implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20")
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("com.starxg:java-keytar:1.0.0")
-  implementation("org.zowe:kotlinsdk:0.3.1")
-  testImplementation("io.mockk:mockk:1.12.4")
-  testImplementation("org.mock-server:mockserver-netty:5.13.2")
-  testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
-  testImplementation("io.kotest:kotest-assertions-core:5.3.1")
-  testImplementation("io.kotest:kotest-runner-junit5:5.3.1")
+  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.3.1")
+  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
+  testImplementation("io.mockk:mockk:1.13.2")
+  testImplementation("org.mock-server:mockserver-netty:5.14.0")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+  testImplementation("io.kotest:kotest-assertions-core:5.5.2")
+  testImplementation("io.kotest:kotest-runner-junit5:5.5.2")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
-  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.0")
 }
 
 intellij {
-  version.set("2022.2")
+  version.set("2022.3")
 }
 
 tasks {
   withType<KotlinCompile> {
     kotlinOptions {
-      jvmTarget = JavaVersion.VERSION_11.toString()
+      jvmTarget = JavaVersion.VERSION_17.toString()
       languageVersion = org.jetbrains.kotlin.config.LanguageVersion.LATEST_STABLE.versionString
     }
   }
 
   patchPluginXml {
-    sinceBuild.set("221.5080")
-    untilBuild.set("222.*")
+    sinceBuild.set("223.7571")
+    untilBuild.set("223.*")
     changeNotes.set(
       """
-      <b>WARNING: </b> version 0.3 introduces breaking change. You won't be able to use the plugin with IntelliJ version < 2022.1
+      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version < 2022.3
       <br>
+      <br>
+      <b>New features:</b>
+      <ul>
+        <li>TSO CLI</li>
+        <li>Different encodings support (all IBM encodings are supported)</li>
+        <li>Support for CHMOD operation</li>
+        <li>Support for big files and datasets</li>
+        <li>JES Explorer: purge, edit, view job</li>
+        <li>Added "+" sign expandability: now it is possible to create connection / working set / mask through the revealing context menu on "+" click</li>
+        <li>Migrate to Kotlin DSL v2</li>
+        <li>All the code is documented now</li>
+      </ul>
       <b>Minor changes:</b>
       <ul>
-        <li>Added some unit tests for 'utils' module</li>
+        <li>Manual sync was proceeding in main thread</li>
+        <li>Codepage selection is removed from connection dialog</li>
+        <li>Added UI regression tests and Unit tests</li>
+        <li>Unit tests are written in Kotest now</li>
+        <li>Build warnings fixed</li>
+        <li>Other plugin's stability issues</li>
       </ul>
       <br>
       <b>Fixed bugs:</b>
       <ul>
-        <li>DnD does not work properly</li>
-        <li>Copy DS member to USS folder does not work</li>
-        <li>Unknown type of file if copy-delete-copy the same PDS member</li>
-        <li>Ctrl+C/Ctrl+V does not work if copy file from remote to local</li>
+        <li>Error in event log when copy member to PDS that does not have enough space</li>
+        <li>The creating z/OS mask '*.*' is not blocked</li>
+        <li>Impossible to rename USS directory whose name contains &</li>
+        <li>Problem with automatic refresh after creating new dataset/allocate like</li>
+        <li>Incorrect data encoding</li>
+        <li>When dataset member is moved from one DS to another, load more appears instead of it</li>
+        <li>Strange behavior of automatic reload and batch_size</li>
+        <li>USS files are not edible</li>
+        <li>Incompatible with IntelliJ 2022.3</li>
+        <li>IDE error with UnsupportedEncodingException for some encodings</li>
+        <li>IDE error with ReadOnlyModificationException when change encoding for read only file</li>
+        <li>Impossible to close uss-file with write permission after changing encoding</li>
+        <li>There is no warning if copy/paste from remote to local</li>
+        <li>Synchronization is cycled in autosync mode after first opening for the file</li>
+        <li>IDE error with UndeclaredThrowableException while closing CLI when connection was broken</li>
+        <li>Cancel DnD several members from one host to another does not work properly</li>
+        <li>IDE error with NoSuchElementException if start CLI when there is no any connections</li>
+        <li>Differences in the interface (field highlighting)</li>
+        <li>Vertical scrollbar in 'Add Working Set/Edit Working Set' does not work properly if you add a lot of masks</li>
+        <li>Different colmn name JES vs Jobs Working Set</li>
+        <li>z/OS mask is created in lowercase if use dataset name in lowercase during allocate/allocate like</li>
+        <li>Sync data does not work correctly when the content has not changed</li>
+        <li>Missing warning if delete connection that has any jobs working set</li>
+        <li>Last mask/filter is created in wrong way in Edit Working Set/Edit Jobs Working Set dialogs via context menu</li>
+        <li>File upload icon is cycling when double-clicking again on an open file</li>
+        <li>Small typo in annotation</li>
+        <li>The button 'Ok' on Warning when delete connections with ws/jws</li>
       </ul>"""
     )
   }
@@ -207,4 +251,9 @@ tasks {
   withType<Copy> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   }
+}
+
+tasks.test {
+  systemProperty("idea.force.use.core.classloader", "true")
+  systemProperty("idea.use.core.classloader.for.plugin.path", "true")
 }

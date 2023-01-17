@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.jetbrains.rd.util.ConcurrentHashMap
@@ -117,7 +116,10 @@ class MFVirtualFileSystemModel {
    * @param attributes the attributes to create the child if it is not found
    */
   fun findOrCreateDependentFile(
-    requestor: Any?, vDir: MFVirtualFile, remoteAttributes: org.zowe.explorer.dataops.attributes.FileAttributes, attributes: FileAttributes
+    requestor: Any?,
+    vDir: MFVirtualFile,
+    remoteAttributes: org.zowe.explorer.dataops.attributes.FileAttributes,
+    attributes: FileAttributes
   ): MFVirtualFile {
     return vDir.findChild(remoteAttributes.name)?.let { vFile ->
       remoteAttributes.castOrNull<RemoteSpoolFileAttributes>()?.let {
@@ -140,8 +142,8 @@ class MFVirtualFileSystemModel {
     return FilteringBFSIterator(fsGraph, root) { v, e ->
       v.validReadLock(false) {
         (pointerIndex < pathElements.size
-                && e.type == FSEdgeType.DIR
-                && pathElements[pointerIndex] == v.name)
+          && e.type == FSEdgeType.DIR
+          && pathElements[pointerIndex] == v.name)
           .also { successful ->
             if (successful) ++pointerIndex
           }
@@ -158,8 +160,7 @@ class MFVirtualFileSystemModel {
     return findFileByPath(pathElements)
   }
 
-  fun refresh(asynchronous: Boolean) {
-//    TODO("implement refresh of the model")
+  fun refresh() {
   }
 
   /**
@@ -169,17 +170,17 @@ class MFVirtualFileSystemModel {
   fun refreshAndFindFileByPath(path: String): MFVirtualFile? {
     return findFileByPath(path).let {
       if (it == null) {
-        refresh(false)
+        refresh()
         return findFileByPath(path)
       }
       it
     }
   }
 
-  fun addVirtualFileListener(listener: VirtualFileListener) {
+  fun addVirtualFileListener() {
   }
 
-  fun removeVirtualFileListener(listener: VirtualFileListener) {
+  fun removeVirtualFileListener() {
   }
 
   /**
@@ -268,9 +269,11 @@ class MFVirtualFileSystemModel {
               sendVfsChangesTopic().after(event)
               return vFile
             }
+
             alreadyExistingFile != null && replace -> { // move or copy in another folder with "replace" flag
               deleteFile(requestor, alreadyExistingFile)
             }
+
             alreadyExistingFile != null && !replace -> {
               throw FileAlreadyExistsException(alreadyExistingFile.path)
             }
@@ -507,33 +510,15 @@ class MFVirtualFileSystemModel {
   }
 
   /**
-   * Convert contents to byte array. On conversion, should change CRLF and CR to LF
+   * Convert contents to byte array
    * @param file virtual file to convert
    */
   @Throws(IOException::class)
   fun contentsToByteArray(file: MFVirtualFile): ByteArray {
     awaitForInitialContentIfNeeded(file)
-    val crSeparatorByte = "13".toByte() // \r
-    val lfSeparatorByte = "10".toByte() // \n
-    var bytesWithDefaultSeparator = file.validReadLock {
+    return file.validReadLock {
       contentStorage.getBytes(getIdForStorageAccess(file))
     }
-    val fileSeparatorBytes = file.detectedLineSeparator?.toByteArray()
-    if (fileSeparatorBytes != null) {
-      if (fileSeparatorBytes.contains(crSeparatorByte)) {
-        bytesWithDefaultSeparator =
-          if (fileSeparatorBytes.contains(crSeparatorByte)) {
-            bytesWithDefaultSeparator
-              .filter { it.compareTo(crSeparatorByte) != 0 }
-              .toByteArray()
-          } else {
-            bytesWithDefaultSeparator
-              .map { if (it.compareTo(crSeparatorByte) == 0) lfSeparatorByte else it }
-              .toByteArray()
-          }
-      }
-    }
-    return bytesWithDefaultSeparator
   }
 
   /**
@@ -757,10 +742,6 @@ class MFVirtualFileSystemModel {
         it
       }
     }
-  }
-
-  fun extractRootPath(normalizedPath: String) = with(MFVirtualFileSystem) {
-    ROOT_NAME + SEPARATOR
   }
 
   fun findFileByPathIfCached(path: String): MFVirtualFile? {

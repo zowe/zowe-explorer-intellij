@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.Requester
+import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.DeleteOperation
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.utils.cancelByIndicator
@@ -57,7 +58,8 @@ abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : 
         buildCall(operation, it).cancelByIndicator(progressIndicator).execute()
       }.mapCatching {
         if (!it.isSuccessful) {
-          throw IOException(it.code().toString())
+          val operationMessage = if (operation.isMove) "move" else "copy"
+          throw CallException(it, "Cannot $operationMessage ${operation.source.name} to ${operation.destination.name}")
         } else {
           it
         }

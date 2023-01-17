@@ -29,7 +29,6 @@ import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
-import org.zowe.explorer.utils.service
 
 /**
  * Class which represents a rename action

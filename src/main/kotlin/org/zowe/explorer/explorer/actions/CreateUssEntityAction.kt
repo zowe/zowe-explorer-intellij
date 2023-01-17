@@ -13,16 +13,24 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.common.ui.showUntilDone
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.fetch.UssQuery
 import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.dataops.operations.UssAllocationOperation
+import org.zowe.explorer.dataops.operations.UssAllocationParams
+import org.zowe.explorer.dataops.operations.UssChangeModeOperation
+import org.zowe.explorer.dataops.operations.UssChangeModeParams
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.kotlinsdk.ChangeMode
 import org.zowe.kotlinsdk.FileType
 
 /**
@@ -80,18 +88,27 @@ abstract class CreateUssEntityAction : AnAction() {
             title = "Creating $fileType ${allocationParams.fileName}",
             project = e.project,
             cancellable = true
-          ) {
+          ) { indicator ->
+            val ussDirNode = node.castOrNull<UssDirNode>()
             runCatching {
               dataOpsManager.performOperation(
                 operation = UssAllocationOperation(
                   request = allocationParams,
                   connectionConfig = connectionConfig
                 ),
-                progressIndicator = it
+                progressIndicator = indicator
               )
 
+              val fileFetchProvider = dataOpsManager
+                .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, MFVirtualFile>(
+                  UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
+                )
+              ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }
+
+              changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
+
             }.onSuccess {
-              node.castOrNull<UssDirNode>()?.cleanCache(false)
+              ussDirNode?.cleanCache(false)
               res = true
             }.onFailure { t ->
               view.explorer.reportThrowable(t, e.project)
@@ -99,6 +116,39 @@ abstract class CreateUssEntityAction : AnAction() {
           }
           res
         }
+      }
+    }
+  }
+
+  /**
+   * Changes the file mode if the wrong mode was specified when the file was created.
+   */
+  private fun changeFileModeIfNeeded(
+    parentFile: VirtualFile?,
+    params: UssAllocationParams,
+    connectionConfig: ConnectionConfig,
+    progressIndicator: ProgressIndicator
+  ) {
+    val dataOpsManager = service<DataOpsManager>()
+    val fileName = params.fileName
+    val createdFile = parentFile?.findChild(fileName)
+    val attributes = createdFile?.let { vFile ->
+      dataOpsManager.tryToGetAttributes(vFile)
+    }.castOrNull<RemoteUssAttributes>()
+    val fileMode = params.parameters.mode
+    val filePath = params.path + "/" + params.fileName
+    attributes?.let { attr ->
+      if (attr.fileMode != fileMode) {
+        dataOpsManager.performOperation(
+          operation = UssChangeModeOperation(
+            request = UssChangeModeParams(
+              parameters = ChangeMode(mode = fileMode),
+              path = filePath
+            ),
+            connectionConfig = connectionConfig
+          ),
+          progressIndicator = progressIndicator
+        )
       }
     }
   }

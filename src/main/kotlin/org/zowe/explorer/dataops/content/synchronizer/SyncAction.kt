@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.utils.runReadActionInEdtAndWait
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
@@ -69,9 +70,9 @@ class SyncAction : DumbAwareAction() {
       project = e.project,
       cancellable = true
     ) { indicator ->
-      service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
       runWriteActionInEdtAndWait {
         FileDocumentManager.getInstance().saveDocument(editor.document)
+        service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
       }
     }
   }
@@ -94,12 +95,13 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
-    val editor = getEditor(e) ?: let {
-      makeDisabled(e)
-      return
-    }
-    e.presentation.isEnabledAndVisible = !service<ConfigService>().isAutoSyncEnabled
-            && !(editor.document.text.toByteArray() contentEquals file.contentsToByteArray())
+    val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
+    val syncProvider = DocumentedSyncProvider(file)
+    val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+    val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
+    e.presentation.isEnabledAndVisible = file.isWritable
+        && !service<ConfigService>().isAutoSyncEnabled
+        && !(currentContent contentEquals previousContent)
   }
 
 }

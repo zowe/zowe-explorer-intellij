@@ -46,6 +46,11 @@ interface SyncProvider {
   fun getDocument(): Document?
 
   /**
+   * Saves document for the file.
+   */
+  fun saveDocument()
+
+  /**
    * Puts the content of file in storage for the first time.
    * @param content bytes of the content to put.
    */
@@ -62,7 +67,7 @@ interface SyncProvider {
 
   /**
    * Extracts content of file from the storage.
-   * @return bytes of the required content content.
+   * @return bytes of the required content.
    */
   @Throws(IOException::class)
   fun retrieveCurrentContent(): ByteArray

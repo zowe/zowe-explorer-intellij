@@ -14,8 +14,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -27,7 +25,6 @@ import kotlin.io.path.pathString
  * @version 0.2
  * @since 2021-06-21
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "1.0.0")
 class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
 
   /**
@@ -57,8 +54,9 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
     }
   }
 
-  override fun preload(indicator: ProgressIndicator) {
+  override suspend fun execute() {
     convertOldVersionConfig()
+    super.execute()
   }
 
 }

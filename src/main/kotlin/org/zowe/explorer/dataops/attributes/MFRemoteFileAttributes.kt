@@ -39,7 +39,7 @@ inline fun <reified R : Requester> MFRemoteFileAttributes<R>.findCommonUrlConnec
   }
   return thisRequestersWithUrlConnection.filter { pair ->
     otherUrlConnections.any {
-      pair.second.url == it.url && pair.second.isAllowSelfSigned == it.isAllowSelfSigned && pair.second.codePage == it.codePage
+      pair.second.url == it.url && pair.second.isAllowSelfSigned == it.isAllowSelfSigned
     }
   }
 }

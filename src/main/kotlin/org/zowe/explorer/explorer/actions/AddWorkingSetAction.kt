@@ -11,15 +11,19 @@
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.util.containers.isEmpty
+import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.config.ws.ui.AbstractWsDialog
 import org.zowe.explorer.config.ws.ui.AbstractWsDialogState
-import org.zowe.explorer.config.ws.ui.WorkingSetDialogState
-import org.zowe.explorer.config.ws.ui.files.WorkingSetDialog
+import org.zowe.explorer.config.ws.ui.FilesWorkingSetDialogState
+import org.zowe.explorer.config.ws.ui.files.FilesWorkingSetDialog
 import org.zowe.explorer.config.ws.ui.initEmptyUuids
 import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
-import org.zowe.explorer.explorer.ui.JES_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.JES_EXPLORER_CONTEXT_MENU
 import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.crudable.getAll
 
 /**
  * Implementation of AddWsActionBase for files working sets.
@@ -36,7 +40,7 @@ class AddWorkingSetAction : AddWsActionBase() {
    * @see AddWsActionBase.createDialog
    */
   override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
-    return WorkingSetDialog(configCrudable, WorkingSetDialogState().initEmptyUuids(configCrudable))
+    return FilesWorkingSetDialog(configCrudable, FilesWorkingSetDialogState().initEmptyUuids(configCrudable))
   }
 
   /**
@@ -45,7 +49,10 @@ class AddWorkingSetAction : AddWsActionBase() {
    */
   override fun update(e: AnActionEvent) {
     super.update(e)
-    if (e.getData(JES_EXPLORER_VIEW) != null) {
+    if (configCrudable.getAll<ConnectionConfig>().isEmpty()) {
+      e.presentation.isEnabled = false
+    }
+    if (e.place.contains(JES_EXPLORER_CONTEXT_MENU)) {
       e.presentation.isEnabledAndVisible = false
     }
   }

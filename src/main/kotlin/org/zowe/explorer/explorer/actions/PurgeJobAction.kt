@@ -13,7 +13,6 @@ import org.zowe.explorer.dataops.operations.jobs.PurgeJobOperation
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
-import org.zowe.explorer.utils.service
 import org.zowe.kotlinsdk.Job
 
 /** An action to purge a job */
@@ -109,7 +108,7 @@ class PurgeJobAction : AnAction() {
 
   /**
    * A job can be purged from the Jobs Tool Window
-   * or from the Jes Explorer by clicking on the corresponding job
+   * or from the JES Explorer by clicking on the corresponding job
    */
   override fun update(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: e.getData(JOBS_LOG_VIEW) ?: let {

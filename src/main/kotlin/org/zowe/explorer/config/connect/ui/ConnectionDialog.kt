@@ -14,7 +14,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.DialogMode
@@ -29,7 +28,6 @@ import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.utils.validateConnectionName
 import org.zowe.explorer.utils.validateForBlank
 import org.zowe.explorer.utils.validateZosmfUrl
-import org.zowe.kotlinsdk.CodePage
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
 import java.util.*
@@ -147,16 +145,13 @@ class ConnectionDialog(
         if (state.zoweConfigPath == null) {
           textField()
             .bindText(state::connectionName)
-            .validationOnInput {
-              validateConnectionName(
+            .validationOnApply {
+              it.text = it.text.trim()
+              validateForBlank(it) ?: validateConnectionName(
                 it,
                 initialState.connectionName.ifBlank { null },
                 crudable
               )
-            }
-            .validationOnApply {
-              it.text = it.text.trim()
-              validateForBlank(it)
             }
             .focused()
             .horizontalAlign(HorizontalAlign.FILL)
@@ -211,19 +206,6 @@ class ConnectionDialog(
             .bindSelected(state::isAllowSsl)
             .also { sslCheckbox = it.component }
         }
-      }
-      row {
-        label("Code page: ")
-          .widthGroup(sameWidthLabelsGroup)
-        comboBox(
-          CollectionComboBoxModel(
-            listOf(
-              CodePage.IBM_1025,
-              CodePage.IBM_1047
-            )
-          )
-        )
-          .bindItem(state::codePage.toNullableProperty())
       }
       if (state.mode == DialogMode.UPDATE) {
         row {

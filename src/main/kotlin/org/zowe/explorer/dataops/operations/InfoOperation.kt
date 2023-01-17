@@ -12,7 +12,6 @@ package org.zowe.explorer.dataops.operations
 
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.Operation
-import org.zowe.kotlinsdk.InfoResponse
 import org.zowe.kotlinsdk.SystemsResponse
 
 /**

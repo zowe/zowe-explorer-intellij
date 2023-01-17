@@ -18,7 +18,6 @@ import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.dataops.BatchedRemoteQuery
 import org.zowe.explorer.dataops.RemoteQuery
-import org.zowe.explorer.dataops.UnitRemoteQueryImpl
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.vfs.MFVirtualFile
 import icons.ForMainframeIcons

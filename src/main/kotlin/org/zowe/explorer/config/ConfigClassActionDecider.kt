@@ -3,7 +3,7 @@ package org.zowe.explorer.config
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.config.ws.JobsWorkingSetConfig
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
 
 /** Class to handle an action according to the class that is provided with the "invoke" operator */
 internal abstract class ConfigClassActionDecider<R> {
@@ -14,8 +14,8 @@ internal abstract class ConfigClassActionDecider<R> {
   /** Handle action when the FilesWorkingSetConfig class is provided */
   abstract fun onFilesWorkingSetConfig(): R
 
-  /** Handle action when the JobsWorkingSetConfig class is provided */
-  abstract fun onJobsWorkingSetConfig(): R
+  /** Handle action when the JesWorkingSetConfig class is provided */
+  abstract fun onJesWorkingSetConfig(): R
 
   /** Handle action when the Credentials class is provided */
   open fun onCredentials(): R {
@@ -33,7 +33,7 @@ internal abstract class ConfigClassActionDecider<R> {
     return when (clazz) {
       ConnectionConfig::class.java -> onConnectionConfig()
       FilesWorkingSetConfig::class.java -> onFilesWorkingSetConfig()
-      JobsWorkingSetConfig::class.java -> onJobsWorkingSetConfig()
+      JesWorkingSetConfig::class.java -> onJesWorkingSetConfig()
       Credentials::class.java -> onCredentials()
       else -> onElse()
     }

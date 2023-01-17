@@ -34,13 +34,12 @@ fun interface CutBufferListener {
 }
 
 /** Base implementation of explorer content provider */
-abstract class ExplorerContentProviderBase<E : Explorer<*>> : ExplorerContentProvider<E> {
+abstract class ExplorerContentProviderBase<E : Explorer<*>>(
+  val contextMenu: ActionGroup = ActionManager.getInstance().getAction("org.zowe.explorer.actions.ContextMenuGroup") as ActionGroup
+) : ExplorerContentProvider<E> {
 
   abstract val actionGroup: ActionGroup
   abstract val place: String
-  val contextMenu: ActionGroup =
-    ActionManager.getInstance().getAction("org.zowe.explorer.actions.ContextMenuGroup") as ActionGroup
-
 
   fun buildActionToolbar() = ActionManager.getInstance().createActionToolbar(place, actionGroup, true)
 

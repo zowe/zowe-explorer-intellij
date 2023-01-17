@@ -66,7 +66,8 @@ abstract class LReclContentAdapter<Attributes : FileAttributes>(
    */
   protected fun transferLinesByLRecl(content: ByteArray, lrecl: Int): ByteArray {
     val contentString = String(content)
-    val contentRows = contentString.split(Regex("\n|\r|\r\n"))
+    val lineSeparatorRegex = "\r\n|\n|\r"
+    val contentRows = contentString.split(Regex(lineSeparatorRegex))
     val resultRows = mutableListOf<String>()
     contentRows.forEach {
       if (it.length <= lrecl) {

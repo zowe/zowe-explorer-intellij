@@ -36,6 +36,11 @@ class ValidatingCellRenderer<Item> : DefaultTableCellRenderer() {
   ): Component {
     super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
     if (table is ValidatingTableView<*>) {
+      if (!isSelected && hasFocus) {
+        table.addSelection(table.listTableModel.getItem(row))
+        table.setRowSelectionInterval(row, row)
+        table.setColumnSelectionInterval(column, column)
+      }
       table.getCellValidator(column)
         ?.castOrNull<ValidatingColumnInfo<Item>>()
         ?.let { validator ->

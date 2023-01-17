@@ -5,7 +5,7 @@ gradle/wrapper/*
 !gradle/
 !gradle/wrapper/
 !gradle/wrapper/gradle-wrapper.properties
-build
+/build
 
 verifier-all.jar
 
@@ -32,3 +32,7 @@ bin
 .vscode
 
 gradle/wrapper/gradle-wrapper.jar
+
+# Fleet files
+.fleet
+.editorconfig

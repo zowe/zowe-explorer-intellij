@@ -48,6 +48,18 @@ interface ContentSynchronizer {
    * Performs synchronization of file with mainframe.
    * @param syncProvider instance of [SyncProvider] class that contains necessary data and handler to start synchronize.
    * @param progressIndicator indicator to reflect synchronization process (not required).
+   * @param forceReload flag indicating that the content should be force reloaded.
    */
-  fun synchronizeWithRemote(syncProvider: SyncProvider, progressIndicator: ProgressIndicator? = null)
+  fun synchronizeWithRemote(
+    syncProvider: SyncProvider,
+    progressIndicator: ProgressIndicator? = null,
+    forceReload: Boolean = false
+  )
+
+  /**
+   * Returns the last successfully synced file content with MF.
+   * @param syncProvider instance of [SyncProvider] class required to get content from the content storage.
+   * @return byte array with content.
+   */
+  fun successfulContentStorage(syncProvider: SyncProvider): ByteArray
 }

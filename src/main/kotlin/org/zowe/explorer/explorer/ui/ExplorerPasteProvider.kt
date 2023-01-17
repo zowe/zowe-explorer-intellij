@@ -336,6 +336,32 @@ class ExplorerPasteProvider : PasteProvider {
         }
         .flatten()
 
+      val filesToDownload = operations
+        .filter { operation -> operation.destination !is MFVirtualFile }
+        .map { operation -> operation.source.name }
+
+      if (filesToDownload.isNotEmpty()) {
+        val tagP = "<p style=\"margin-left: 10px\">"
+        val filesStringToShow = if (filesToDownload.size > 5) {
+          "$tagP${filesToDownload.subList(0, 5).joinToString("</p>$tagP")}</p>${tagP}and ${filesToDownload.size - 5} more ...</p>"
+        } else {
+          "$tagP${filesToDownload.joinToString("</p>$tagP")}</p>"
+        }
+        if (
+          !showYesNoDialog(
+            "Downloading Files",
+            "<html><span>You are going to DOWNLOAD files:\n</span>\n$filesStringToShow\n" +
+              "<span>It may be against your company's security policy. Are you sure?</span></html>",
+            null,
+            "Yes",
+            "No",
+            AllIcons.General.WarningDialog
+          )
+        ) {
+          return
+        }
+      }
+
       val filesToMoveTotal = operations.size
       val hasLocalFilesInOperationsSources = operations.any { it.source !is MFVirtualFile }
       val hasRemoteFilesInOperationsDestinations = operations.any { it.destination is MFVirtualFile }

@@ -9,7 +9,7 @@
 -->
 <idea-plugin>
     <id>org.zowe.explorer</id>
-    <resource-bundle>messages.CommonBundle</resource-bundle>
+    <resource-bundle>messages.FMBundle</resource-bundle>
     <name>Zowe Explorer</name>
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
     <depends>com.intellij.modules.platform</depends>
@@ -71,6 +71,9 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
     <applicationListeners>
         <listener class="org.zowe.explorer.editor.ProjectCloseListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+
+        <listener class="org.zowe.explorer.editor.ProjectOpenListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
         <listener class="org.zowe.explorer.editor.FileEditorEventsListener"
@@ -139,6 +142,8 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
         <operationRunner implementation="org.zowe.explorer.dataops.operations.DeleteRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.DeleteMemberOperationRunnerFactory"/>
+
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.UssChangeModeFactory"/>
 
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.mover.MemberToPdsMoverFactory"/>
@@ -209,6 +214,10 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.TsoOperationRunnerFactory"/>
+
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
+
         <logFetcher implementation="org.zowe.explorer.dataops.log.JobLogFetcherFactory"/>
 
         <oldConfigAdapter implementation="org.zowe.explorer.config.connect.OldConnectionsAdapterFactory"/>
@@ -217,7 +226,7 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <oldConfigAdapter implementation="org.zowe.explorer.config.connect.OldUsernameAdapterFactory"/>
 
-        <oldConfigAdapter implementation="org.zowe.explorer.config.ws.OldJobsWorkingSetAdapterFactory"/>
+        <oldConfigAdapter implementation="org.zowe.explorer.config.ws.OldJesWorkingSetAdapterFactory"/>
 
         <explorer implementation="org.zowe.explorer.explorer.FileExplorerFactory"/>
         <explorer implementation="org.zowe.explorer.explorer.JesExplorerFactory"/>
@@ -265,6 +274,11 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
                     canCloseContents="true"
                     doNotActivateOnStart="true"/>
 
+        <toolWindow id="Zowe TSO CLI" anchor="bottom"
+                    factoryClass="org.zowe.explorer.ui.build.tso.TSOWindowFactory"
+                    canCloseContents="true"
+                    doNotActivateOnStart="true"/>
+
         <virtualFileSystem id="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            implementationClass="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            key="zowe_mf"/>
@@ -282,7 +296,8 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
                             serviceImplementation="org.zowe.explorer.config.ConfigSandboxImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.dataops.DataOpsManager" preload="true"
-                            serviceImplementation="org.zowe.explorer.dataops.DataOpsManagerImpl"/>
+                            serviceImplementation="org.zowe.explorer.dataops.DataOpsManagerImpl"
+                            testServiceImplementation="org.zowe.explorer.testServiceImpl.TestDataOpsManagerImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.api.ZosmfApi"
                             serviceImplementation="org.zowe.explorer.api.ZosmfApiImpl"/>
@@ -298,6 +313,12 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
 
+        <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
+                implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
+
+        <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
+                                implementation="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
+                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
     </extensions>
 
     <actions>
@@ -320,10 +341,15 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
                 text="Working Set"
                 icon="AllIcons.Nodes.Project"/>
 
-        <action id="org.zowe.explorer.explorer.actions.AddJobsWorkingSetAction"
-                class="org.zowe.explorer.explorer.actions.AddJobsWorkingSetAction"
-                text="Jobs Working Set"
+        <action id="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"
+                class="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"
+                text="JES Working Set"
                 icon="AllIcons.Nodes.Project"/>
+
+        <action id="org.zowe.explorer.explorer.actions.AddConnectionAction"
+                class="org.zowe.explorer.explorer.actions.AddConnectionAction"
+                text="Connection"
+                icon="AllIcons.Javaee.WebService"/>
 
         <action id="org.zowe.explorer.explorer.actions.AllocateDatasetAction"
                 class="org.zowe.explorer.explorer.actions.AllocateDatasetAction"
@@ -350,6 +376,11 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
                 id="org.zowe.explorer.explorer.actions.SettingAction"
                 icon="AllIcons.General.Settings"/>
 
+        <action class="org.zowe.explorer.explorer.actions.TsoSessionCreateAction"
+                id="org.zowe.explorer.explorer.actions.TsoSessionCreateAction"
+                icon="AllIcons.Debugger.Console"/>
+
+
         <action class="org.zowe.explorer.explorer.actions.GetFilePropertiesAction"
                 id="org.zowe.explorer.explorer.actions.GetFilePropertiesAction"
                 text="Properties"/>
@@ -364,26 +395,36 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
 
         <action id="org.zowe.explorer.explorer.actions.RenameAction"
                 class="org.zowe.explorer.explorer.actions.RenameAction"
-                text="Rename"
-                use-shortcut-of="RenameElement"/>
+                text="Rename">
+            <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
+        </action>
 
         <action id="org.zowe.explorer.explorer.actions.ForceRenameAction"
-                class="org.zowe.explorer.explorer.actions.ForceRenameAction" text="Force Rename"
-                use-shortcut-of="ForceRefresh"/>
+                class="org.zowe.explorer.explorer.actions.ForceRenameAction"
+                text="Force Rename"
+                use-shortcut-of="ForceRefresh">
+            <keyboard-shortcut first-keystroke="shift F2" keymap="$default"/>
+        </action>
+
+        <action id="org.zowe.explorer.explorer.actions.EditJobsFilterAction"
+                class="org.zowe.explorer.explorer.actions.EditJobsFilterAction"
+                text="Edit"/>
+
+        <action id="org.zowe.explorer.explorer.actions.DeleteJesNodeAction"
+                class="org.zowe.explorer.explorer.actions.DeleteJesNodeAction"
+                text="Delete">
+            <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+        </action>
 
         <action id="org.zowe.explorer.explorer.actions.AddMaskAction"
                 class="org.zowe.explorer.explorer.actions.AddMaskAction"
                 icon="ForMainframeIcons.DatasetMask"
                 text="Mask"/>
 
-        <action id="org.zowe.explorer.explorer.actions.AddJobsFilerAction"
-                class="org.zowe.explorer.explorer.actions.AddJobsFilerAction"
+        <action id="org.zowe.explorer.explorer.actions.AddJobsFilterAction"
+                class="org.zowe.explorer.explorer.actions.AddJobsFilterAction"
                 icon="ForMainframeIcons.JclDirectory"
                 text="Jobs Filter"/>
-
-        <action id="org.zowe.explorer.explorer.actions.ChangeContentModeAction"
-                class="org.zowe.explorer.explorer.actions.ChangeContentModeAction"
-                text="Use Binary Mode"/>
 
         <action id="org.zowe.explorer.explorer.actions.SubmitJobAction"
                 class="org.zowe.explorer.explorer.actions.SubmitJobAction"
@@ -408,7 +449,9 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
         <action id="org.zowe.explorer.explorer.actions.PurgeJobAction"
                 class="org.zowe.explorer.explorer.actions.PurgeJobAction"
                 text="Purge Job"
-                icon="AllIcons.Actions.GC"/>
+                icon="AllIcons.Actions.GC">
+            <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+        </action>
 
         <action id="org.zowe.explorer.explorer.actions.EditJclAction"
                 class="org.zowe.explorer.explorer.actions.EditJclAction"
@@ -423,13 +466,13 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
             <reference id="org.zowe.explorer.explorer.actions.SubmitJobToolbarAction"/>
         </group>
 
-        <action id="org.zowe.explorer.explorer.actions.EditWorkingSetAction"
-                class="org.zowe.explorer.explorer.actions.EditWorkingSetAction"
+        <action id="org.zowe.explorer.explorer.actions.EditFilesWorkingSetAction"
+                class="org.zowe.explorer.explorer.actions.EditFilesWorkingSetAction"
                 text="Edit"
                 use-shortcut-of="RenameElement"/>
 
-        <action id="org.zowe.explorer.explorer.actions.EditJobsWorkingSetAction"
-                class="org.zowe.explorer.explorer.actions.EditJobsWorkingSetAction"
+        <action id="org.zowe.explorer.explorer.actions.EditJesWorkingSetAction"
+                class="org.zowe.explorer.explorer.actions.EditJesWorkingSetAction"
                 text="Edit"
                 use-shortcut-of="RenameElement"/>
 
@@ -448,28 +491,37 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
             <reference id="org.zowe.explorer.explorer.actions.CreateUssDirectoryAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.AddMaskAction"/>
-            <reference id="org.zowe.explorer.explorer.actions.AddJobsFilerAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.AddJobsFilterAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.AddWorkingSetAction"/>
-            <reference id="org.zowe.explorer.explorer.actions.AddJobsWorkingSetAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"/>
+        </group>
+
+        <group id="org.zowe.explorer.actions.AddWsOrConnectionGroup"
+               icon="AllIcons.General.Add"
+               popup="true">
+            <reference id="org.zowe.explorer.explorer.actions.AddConnectionAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.AddWorkingSetAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.TsoSessionCreateAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.FilesActionBarGroup">
-            <reference id="org.zowe.explorer.explorer.actions.AddWorkingSetAction"/>
+            <reference id="org.zowe.explorer.actions.AddWsOrConnectionGroup"/>
             <reference id="org.zowe.explorer.explorer.actions.SettingAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.JESActionBarGroup">
-            <reference id="org.zowe.explorer.explorer.actions.AddJobsWorkingSetAction"/>
+            <reference id="org.zowe.explorer.actions.AddWsOrConnectionGroup"/>
             <reference id="org.zowe.explorer.explorer.actions.SettingAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.ContextMenuGroup">
             <reference id="org.zowe.explorer.actions.NewItemGroup"/>
-            <reference id="org.zowe.explorer.explorer.actions.ViewJobAction"/>
-            <reference id="org.zowe.explorer.explorer.actions.EditJclAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.AllocateLikeAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.explorer.actions.SubmitJobAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.RefreshNodeAction"/>
             <separator/>
@@ -477,21 +529,31 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
-            <reference id="org.zowe.explorer.explorer.actions.SubmitJobAction"/>
             <reference id="org.zowe.explorer.explorer.actions.MigrateAction"/>
             <reference id="org.zowe.explorer.explorer.actions.RecallAction"/>
             <separator/>
-            <reference id="org.zowe.explorer.explorer.actions.EditWorkingSetAction"/>
-            <reference id="org.zowe.explorer.explorer.actions.EditJobsWorkingSetAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="org.zowe.explorer.explorer.actions.RenameAction"/>
             <reference id="org.zowe.explorer.explorer.actions.ForceRenameAction"/>
             <separator/>
-            <reference id="org.zowe.explorer.explorer.actions.ChangeContentModeAction"/>
-            <separator/>
             <reference id="$Delete"/>
-            <reference id="org.zowe.explorer.explorer.actions.PurgeJobAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.GetFilePropertiesAction"/>
+        </group>
+
+        <group id="org.zowe.explorer.actions.JESContextMenuGroup">
+            <reference id="org.zowe.explorer.actions.NewItemGroup"/>
+            <reference id="org.zowe.explorer.explorer.actions.ViewJobAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.EditJclAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.explorer.actions.RefreshNodeAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.explorer.actions.EditJesWorkingSetAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.EditJobsFilterAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.explorer.actions.DeleteJesNodeAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.PurgeJobAction"/>
+            <separator/>
             <reference id="org.zowe.explorer.explorer.actions.GetJobPropertiesAction"/>
         </group>
 

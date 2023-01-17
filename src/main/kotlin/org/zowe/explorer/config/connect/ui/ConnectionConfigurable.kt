@@ -26,6 +26,8 @@ import org.zowe.explorer.config.*
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
+import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
 import org.zowe.explorer.utils.runWriteActionOnWriteThread
@@ -124,29 +126,48 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     }
   }
 
-  /** Remove connections with the warning before they are deleted */
-  private fun removeConnectionsWithWarning(selectedConfigs: List<ConnectionDialogState>) {
-    val workingSets = sandboxCrudable.getAll<FilesWorkingSetConfig>().toMutableList()
-    val wsUsages = workingSets.filter { wsConfig ->
-      selectedConfigs.any { state -> wsConfig.connectionConfigUuid == state.connectionConfig.uuid }
-    }
-
-    if (wsUsages.isEmpty()) {
-      removeSelectedConnections()
-      return
-    }
-
-    val warningMessageBuilder = StringBuilder("The following working sets use selected connections:\n    ")
+  /** Generates a connection removal warning message that is used for working sets */
+  private fun generateRemoveWarningMessage(wsUsages: List<WorkingSetConfig>, wsType: String): StringBuilder {
+    val warningMessageBuilder =
+      StringBuilder("<nobr>The following $wsType working sets use selected connections:</nobr><br>")
     wsUsages.forEach { wsConfig ->
       warningMessageBuilder.append(wsConfig.name).append(", ")
     }
     warningMessageBuilder.setLength(warningMessageBuilder.length - 2)
-    warningMessageBuilder.append(".\n\nDo you really want to remove them?")
+    warningMessageBuilder.append(".<br>")
+    return warningMessageBuilder
+  }
+
+  /** Remove connections with the warning before they are deleted */
+  private fun removeConnectionsWithWarning(selectedConfigs: List<ConnectionDialogState>) {
+    val filesWorkingSets = sandboxCrudable.getAll<FilesWorkingSetConfig>().toMutableList()
+    val filesWsUsages = filesWorkingSets.filter { filesWsConfig ->
+      selectedConfigs.any { state -> filesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
+    }
+
+    val jesWorkingSet = sandboxCrudable.getAll<JesWorkingSetConfig>().toMutableList()
+    val jesWsUsages = jesWorkingSet.filter { jesWsConfig ->
+      selectedConfigs.any { state -> jesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
+    }
+
+    if (filesWsUsages.isEmpty() && jesWsUsages.isEmpty()) {
+      removeSelectedConnections()
+      return
+    }
+
+    val warningMessageBuilder = StringBuilder()
+    if (filesWsUsages.isNotEmpty()) {
+      warningMessageBuilder.append(generateRemoveWarningMessage(filesWsUsages, "Files"))
+    }
+    if (jesWsUsages.isNotEmpty()) {
+      warningMessageBuilder.append(generateRemoveWarningMessage(jesWsUsages, "JES"))
+    }
+    warningMessageBuilder.append("<br>Do you really want to remove it?")
 
     val ret = Messages.showOkCancelDialog(
       warningMessageBuilder.toString(),
       "Warning",
-      "Ok",
+      "Yes",
       "Cancel",
       Messages.getWarningIcon()
     )

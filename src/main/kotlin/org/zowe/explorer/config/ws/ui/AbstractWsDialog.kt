@@ -66,7 +66,7 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
   abstract val tableTitle: String
 
   /**
-   * Represents table of files masks (for Files Working Sets) or job filters (for Jobs Working Sets)
+   * Represents table of files masks (for Files Working Sets) or job filters (for JES Working Sets)
    */
   abstract val masksTable: ValidatingTableView<TableRow>
 
@@ -80,7 +80,7 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
   abstract fun validateOnApply(validationBuilder: ValidationInfoBuilder, component: JComponent): ValidationInfo?
 
   /**
-   * Custom apply for specific WorkingSet implementation (e.g. Files Working Set, Jobs Working Set).
+   * Custom apply for specific WorkingSet implementation (e.g. Files Working Set, JES Working Set).
    * @param state State, modified from dialog, to apply.
    * @return applied state.
    */
@@ -92,15 +92,14 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
         label(wsNameLabel)
         textField()
           .bindText(state::workingSetName)
-          .validationOnInput {
-            validateWorkingSetName(
+          .validationOnApply {
+            validateForBlank(it) ?: validateWorkingSetName(
               it,
               initialState.workingSetName.ifBlank { null },
               crudable,
               wsConfigClass
             )
           }
-          .validationOnApply { validateForBlank(it) }
       }
       row {
         label("Specify connection")

@@ -21,10 +21,10 @@ import org.zowe.explorer.utils.toMutableList
 
 /**
  * Abstract table model for table in configurations
- * for Working Sets (e.g. Jobs Working Set, Files Working Set).
+ * for Working Sets (e.g. JES Working Set, Files Working Set).
  * @param WSConfig WorkingSetConfig implementation class.
  * @see org.zowe.explorer.config.ws.FilesWorkingSetConfig
- * @see org.zowe.explorer.config.ws.JobsWorkingSetConfig
+ * @see org.zowe.explorer.config.ws.JesWorkingSetConfig
  * @param crudable Crudable instance to change data.
  * @author Valiantsin Krus
  */

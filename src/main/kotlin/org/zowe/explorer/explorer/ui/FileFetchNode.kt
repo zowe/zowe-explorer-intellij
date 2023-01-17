@@ -155,12 +155,16 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
   /**
    * Method which is called to clean a cache during refresh or reload of the tree node
    * @param recursively - determines if all children nodes should clean the cache
+   * @param cleanFetchProviderCache - also cleans cache of fetch provider for corresponding query.
+   * @param cleanBatchedQuery - cleans current position of fetching items in batched query.
+   * @param sendTopic - true if it is necessary to send message in CACHE_CHANGES topic and false otherwise.
    * @return Void
    */
   fun cleanCache(
     recursively: Boolean = true,
     cleanFetchProviderCache: Boolean = true,
-    cleanBatchedQuery: Boolean = false
+    cleanBatchedQuery: Boolean = false,
+    sendTopic: Boolean = true
   ) {
     val children = cachedChildren
     if (!hasError.compareAndSet(true, false)) {
@@ -168,7 +172,7 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
     }
     if (cleanFetchProviderCache) {
       query?.let {
-        fileFetchProvider.cleanCache(it)
+        fileFetchProvider.cleanCache(it, sendTopic)
       }
     }
     if (cleanBatchedQuery) {

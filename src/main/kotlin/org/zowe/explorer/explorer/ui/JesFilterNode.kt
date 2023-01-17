@@ -62,5 +62,4 @@ class JesFilterNode(
     return "Fetching jobs for ${query.request}"
   }
 
-
 }

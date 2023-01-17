@@ -23,10 +23,6 @@ inline fun <reified E : Any> Crudable.find(noinline predicate: (E) -> Boolean): 
   return this.find(E::class.java, predicate)
 }
 
-/**
- * Get all rows of the row class from crudable
- * @param rowClass the row class to get all rows by
- */
 inline fun <reified E : Any> Crudable.getAll(): Stream<E> {
   return this.getAll(E::class.java)
 }
@@ -57,7 +53,7 @@ fun interface UpdateFilter {
 interface Crudable {
   fun <E : Any> add(rowClass: Class<out E>, row: E): Optional<E>
   fun <E : Any> add(row: E): Optional<E>? {
-    return add<Any>(row.javaClass, row) as Optional<E>
+    return add(row.javaClass, row)
   }
 
   /**
@@ -67,7 +63,7 @@ interface Crudable {
   fun <E : Any> getAll(rowClass: Class<out E?>): Stream<E>
   fun <E : Any> update(rowClass: Class<out E>, row: E): Optional<E>
   fun <E : Any> update(row: E): Optional<E>? {
-    return update<Any>(row.javaClass, row) as Optional<E>
+    return update(row.javaClass, row)
   }
 
   fun <E : Any> addOrUpdate(rowClass: Class<out E>, row: E): Optional<E> {
@@ -79,12 +75,12 @@ interface Crudable {
   }
 
   fun <E : Any> addOrUpdate(row: E): Optional<E> {
-    return addOrUpdate<Any>(row.javaClass, row) as Optional<E>
+    return addOrUpdate(row.javaClass, row)
   }
 
   fun <E : Any> delete(rowClass: Class<out E>, row: E): Optional<E>
   fun <E : Any> delete(row: E): Optional<E> {
-    return delete<Any>(row.javaClass, row) as Optional<E>
+    return delete(row.javaClass, row)
   }
 
   fun <E : Any?, V : Any?> nextUniqueValue(rowClass: Class<out E?>): V
@@ -130,7 +126,7 @@ interface Crudable {
    *
    * @param rowClass  row class to get fields by
    * @param uniqueKey unique key to get field by
-   * @return the field or the
+   * @return the field or nothing
    */
   fun <E : Any, U> getByUniqueKey(
     rowClass: Class<out E?>,
@@ -150,7 +146,7 @@ interface Crudable {
         }
       }.findAny() as Optional<E>
     } else {
-      Optional.empty()
+      Optional.empty<E>()
     }
   }
 

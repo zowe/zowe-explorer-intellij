@@ -112,7 +112,6 @@ class ConnectionsTableModel(
     get(row).isAllowSsl = item.isAllowSsl
     get(row).password = item.password
     get(row).zVersion = item.zVersion
-    get(row).codePage = item.codePage
     super.set(row, item)
   }
 

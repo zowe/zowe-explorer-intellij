@@ -208,9 +208,10 @@ abstract class RemoteFileFetchProviderBase<Request : Any, Response : Any, File :
   /**
    * Clears the cache with sending the cache change topic.
    * @param query query that identifies the cache.
+   * @param sendTopic true if it is necessary to send message in CACHE_CHANGES topic and false otherwise.
    */
-  override fun cleanCache(query: RemoteQuery<Request, Unit>) {
-    cleanCacheInternal(query, true)
+  override fun cleanCache(query: RemoteQuery<Request, Unit>, sendTopic: Boolean) {
+    cleanCacheInternal(query, sendTopic)
   }
 
   /** @see FileFetchProvider.getRealQueryInstance */

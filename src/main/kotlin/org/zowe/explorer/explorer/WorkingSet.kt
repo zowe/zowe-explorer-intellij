@@ -36,5 +36,7 @@ interface FilesWorkingSet : WorkingSet<DSMask> {
 
 }
 
-/** Interface to represent the jobs working set */
-interface JesWorkingSet : WorkingSet<JobsFilter> {}
+/** Interface to represent the JES working set */
+interface JesWorkingSet : WorkingSet<JobsFilter> {
+  fun removeFilter(jobsFilter: JobsFilter)
+}

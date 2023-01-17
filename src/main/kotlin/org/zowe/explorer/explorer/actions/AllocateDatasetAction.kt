@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.util.IconUtil
+import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.ws.DSMask
@@ -28,6 +29,7 @@ import org.zowe.explorer.dataops.operations.DatasetAllocationOperation
 import org.zowe.explorer.dataops.operations.DatasetAllocationParams
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.service
@@ -105,6 +107,10 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
               while (p !is DSMaskNode) {
                 p = p?.parent ?: break
               }
+              val nodeToClean = p?.castOrNull<FileFetchNode<*,*,*,*,*>>()
+              nodeToClean?.let { cleanInvalidateOnExpand(nodeToClean, view) }
+
+              var nodeCleaned = false
               p?.cleanCacheIfPossible(cleanBatchedQuery = true)
               runInEdt {
                 if (
@@ -119,9 +125,16 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
                   val filesWorkingSetConfig =
                     configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
                   if (filesWorkingSetConfig != null) {
+                    nodeToClean?.cleanCache(recursively = false, cleanBatchedQuery = true, sendTopic = false)
+                    nodeCleaned = true
+
                     filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
                     configCrudable.update(filesWorkingSetConfig)
                   }
+                }
+
+                if (!nodeCleaned) {
+                  nodeToClean?.cleanCache(recursively = false, cleanBatchedQuery = true)
                 }
               }
               initialState.errorMessage = ""

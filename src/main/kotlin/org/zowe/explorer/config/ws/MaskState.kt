@@ -26,7 +26,7 @@ open class MaskState(
   var type: MaskType = MaskType.ZOS,
   var isTypeSelectedAutomatically: Boolean = false,
   var isTypeSelectedManually: Boolean = false,
-)
+) : TableRow
 
 /**
  * Mask state extension that stores working set reference to check the mask uniqueness basing on the working set existing masks

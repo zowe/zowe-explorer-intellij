@@ -15,7 +15,7 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.config.ws.JobsWorkingSetConfig
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.ReloadableEventHandler
@@ -47,8 +47,8 @@ internal fun <T> classToList(clazz: Class<out T>, state: SandboxState): MutableL
       return state.configState.filesWorkingSets as MutableList<T>
     }
 
-    override fun onJobsWorkingSetConfig(): MutableList<T> {
-      return state.configState.jobsWorkingSets as MutableList<T>
+    override fun onJesWorkingSetConfig(): MutableList<T> {
+      return state.configState.jesWorkingSets as MutableList<T>
     }
 
     override fun onCredentials(): MutableList<T> {
@@ -185,7 +185,7 @@ class ConfigSandboxImpl : ConfigSandbox {
     synchronized(stateLock) {
       rollbackSandbox<ConnectionConfig>()
       rollbackSandbox<FilesWorkingSetConfig>()
-      rollbackSandbox<JobsWorkingSetConfig>()
+      rollbackSandbox<JesWorkingSetConfig>()
       rollbackSandbox<Credentials>()
     }
   }

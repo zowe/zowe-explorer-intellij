@@ -14,9 +14,6 @@ import io.kotest.core.spec.style.ShouldSpec
 
 class ContentTestSpec : ShouldSpec({
   context("dataops module: content/synchronizer") {
-    // syncUtils.updateDataTypeWithEncoding
-    should("update data type with new encoding") {}
-    should("not update data type with new encoding when the operation is performed on z/OS v2.3") {}
     // syncUtils.removeLastNewLine
     should("remove last blank line") {}
     should("not remove last non-blank line") {}
