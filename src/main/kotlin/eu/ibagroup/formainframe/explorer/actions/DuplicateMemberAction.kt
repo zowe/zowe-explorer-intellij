@@ -23,8 +23,14 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.ui.*
 
+/**
+ * Class which represents a duplicate member action
+ */
 class DuplicateMemberAction : AnAction() {
 
+  /**
+   * The method of AnAction abstract class. Tells what to do if an action was submitted
+   */
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
@@ -38,6 +44,15 @@ class DuplicateMemberAction : AnAction() {
     }
   }
 
+  /**
+   * Method to run duplicate operation. It passes the control to rename operation runner
+   * @param project - current project
+   * @param view - an explorer tree view object
+   * @param selectedNode - a current selected node
+   * @param newName - a new name of the virtual file in VFS
+   * @throws any throwable during the processing of the request
+   * @return Void
+   */
   private fun runDuplicateOperation(project : Project, view : ExplorerTreeView<*,*>, selectedNode : NodeData, newName: String) {
     val dataOpsManager = view.explorer.componentManager.getService(DataOpsManager::class.java)
     val attributes = selectedNode.attributes ?: return
@@ -68,10 +83,16 @@ class DuplicateMemberAction : AnAction() {
     }
   }
 
+  /**
+   * Determines if an action is dumb aware
+   */
   override fun isDumbAware(): Boolean {
     return true
   }
 
+  /**
+   * Method determines if an action is visible for particular virtual file in VFS
+   */
   override fun update(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false

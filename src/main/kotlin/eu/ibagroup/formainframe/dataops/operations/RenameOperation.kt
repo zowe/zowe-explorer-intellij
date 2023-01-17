@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
  * @param file represents a virtual file on which rename will be performed.
  * @param attributes represents a file attributes of the given virtual file.
  * @param newName a new name of the file in VFS.
+ * @param requester a requester for this operation
  */
 data class RenameOperation(
   val file: VirtualFile,
