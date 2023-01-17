@@ -117,8 +117,8 @@ working set tree.
 
 ## Requirements
 
-- Latest IntelliJ IDEA version (Community will be enough)
-- Java SDK 11 (IntelliJ built-in)
+- IntelliJ IDEA version 2022.3 and later (Community will be enough)
+- Java SDK 17 (IntelliJ built-in)
 
 ## Setup steps
 
