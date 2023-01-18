@@ -66,7 +66,6 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     protocol = state.connectionUrl.split("://")[0]
     user = state.username
     password = state.password
-    codePage = state.codePage
     rejectUnauthorized = !state.isAllowSsl
   }
 

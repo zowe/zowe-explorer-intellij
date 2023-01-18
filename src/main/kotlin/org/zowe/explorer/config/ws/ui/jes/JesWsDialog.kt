@@ -8,14 +8,14 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.config.ws.ui.jobs
+package org.zowe.explorer.config.ws.ui.jes
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import org.zowe.explorer.common.ui.*
 import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.config.ws.JobFilterState
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
+import org.zowe.explorer.config.ws.JobFilterState
 import org.zowe.explorer.config.ws.ui.AbstractWsDialog
 import org.zowe.explorer.config.ws.ui.JesWorkingSetDialogState
 import org.zowe.explorer.utils.crudable.Crudable

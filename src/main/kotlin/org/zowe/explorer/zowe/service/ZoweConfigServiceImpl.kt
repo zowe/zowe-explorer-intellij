@@ -60,7 +60,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * it will parse it and save to object model inside zoweConfig field.
    * @return ZoweConfig instance if zowe.config.json is presented or null otherwise.
    */
-  private fun scanForZoweConfig (): ZoweConfig? {
+  private fun scanForZoweConfig(): ZoweConfig? {
     val zoweConfigLocation = "${myProject.basePath}/$ZOWE_CONFIG_NAME"
     val zoweFile = runReadActionInEdtAndWait {
       VirtualFileManager.getInstance().findFileByNioPath(Path.of(zoweConfigLocation))
@@ -158,14 +158,12 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val domain = if (port == null) host else "${host}:${port}"
     val zoweUrl = "${protocol}://${domain}${basePath}"
     val isAllowSelfSigned = !(rejectUnauthorized ?: false)
-    val codePage = codePage
 
     return ConnectionConfig(
       uuid,
       zoweConnectionName,
       zoweUrl,
       isAllowSelfSigned,
-      codePage,
       zVersion,
       "${myProject.basePath}/${ZOWE_CONFIG_NAME}"
     )
@@ -176,7 +174,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * related to zowe config or generates a new one.
    * @return converted ConnectionConfig.
    */
-  fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig = toConnectionConfig(getOrCreateUuid(), zVersion)
+  fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig =
+    toConnectionConfig(getOrCreateUuid(), zVersion)
 
   /**
    * @see ZoweConfigService.getZoweConfigState
@@ -194,7 +193,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
 
     return if (existingConnection == newConnection &&
       username(newConnection) == zoweUsername &&
-      password(newConnection) == zowePassword) {
+      password(newConnection) == zowePassword
+    ) {
       ZoweConfigState.SYNCHRONIZED
     } else {
       ZoweConfigState.NEED_TO_UPDATE

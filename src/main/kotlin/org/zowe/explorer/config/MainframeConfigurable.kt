@@ -15,7 +15,7 @@ import com.intellij.openapi.options.TabbedConfigurable
 import org.zowe.explorer.config.connect.ui.ConnectionConfigurable
 import org.zowe.explorer.config.settings.ui.SettingsConfigurable
 import org.zowe.explorer.config.ws.ui.files.FilesWSConfigurable
-import org.zowe.explorer.config.ws.ui.jobs.JesWsConfigurable
+import org.zowe.explorer.config.ws.ui.jes.JesWsConfigurable
 
 /**
  * Main UI class to build configurables for project and set them to appropriate place

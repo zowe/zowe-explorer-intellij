@@ -22,7 +22,10 @@ import org.zowe.explorer.dataops.content.synchronizer.*
 import org.zowe.explorer.dataops.operations.UssChangeModeOperation
 import org.zowe.explorer.dataops.operations.UssChangeModeParams
 import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.explorer.utils.*
+import org.zowe.explorer.utils.clone
+import org.zowe.explorer.utils.isBeingEditingNow
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.updateFileTag
 import org.zowe.kotlinsdk.ChangeMode
 
 /**

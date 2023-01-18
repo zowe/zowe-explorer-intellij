@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.config.ws.ui.jobs
+package org.zowe.explorer.config.ws.ui.jes
 
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.ui.AbstractWsTableModel

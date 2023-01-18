@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.config.ws.ui.jobs
+package org.zowe.explorer.config.ws.ui.jes
 
 import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.common.ui.DialogMode

@@ -12,8 +12,8 @@ package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.util.containers.isEmpty
-import org.zowe.explorer.config.ws.configCrudable
-import org.zowe.explorer.config.ws.connect.ConnectionConfig
+import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.config.ws.ui.AbstractWsDialog
 import org.zowe.explorer.config.ws.ui.AbstractWsDialogState
