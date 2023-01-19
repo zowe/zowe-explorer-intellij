@@ -443,6 +443,14 @@ Example of how to see the output:<br/>
             <keyboard-shortcut first-keystroke="shift F2" keymap="$default"/>
         </action>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"
+                class="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"
+                text="Duplicate"
+                use-shortcut-of="EditorDuplicate"
+                icon="AllIcons.Actions.Copy">
+            <keyboard-shortcut first-keystroke="F3" keymap="$default"/>
+        </action>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.EditJobsFilterAction"
                 class="eu.ibagroup.formainframe.explorer.actions.EditJobsFilterAction"
                 text="Edit"/>
@@ -572,6 +580,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"/>
             <separator/>
             <reference id="$Delete"/>
             <separator/>

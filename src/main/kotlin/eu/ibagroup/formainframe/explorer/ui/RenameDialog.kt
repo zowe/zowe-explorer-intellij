@@ -19,6 +19,7 @@ import com.intellij.ui.dsl.builder.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction
 import eu.ibagroup.formainframe.explorer.actions.RenameAction
 import eu.ibagroup.formainframe.utils.*
 import javax.swing.JComponent
@@ -50,7 +51,7 @@ class RenameDialog(project: Project?,
         label("New name: ")
         textField()
           .bindText(this@RenameDialog::state)
-          .validationOnInput { validateOnInput(it) ?: validateOnBlank(it) }
+          .validationOnApply { validateOnBlank(it) ?: validateOnInput(it) }
           .apply { focused() }
       }
     }
@@ -60,7 +61,7 @@ class RenameDialog(project: Project?,
    * Initialization of the object. It's called first
    */
   init {
-    title = "Rename $type"
+    title = if (currentAction is DuplicateMemberAction) "Duplicate $type" else "Rename $type"
     init()
   }
 
