@@ -56,6 +56,8 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: File upload icon is cycling when double-clicking again on an open file ([bec33017](https://github.com/zowe/zowe-explorer-intellij/commit/bec33017))
 * Bugfix: Small typo in annotation ([d7b898bf](https://github.com/zowe/zowe-explorer-intellij/commit/d7b898bf))
 * Bugfix: The button 'Ok' on Warning when delete connections with ws/jws ([ebf8d80e](https://github.com/zowe/zowe-explorer-intellij/commit/ebf8d80e))
+* Bugfix: Operation is not supported for read-only collection while trying to create JES Working set ([80f2af26](https://github.com/zowe/zowe-explorer-intellij/commit/80f2af26))
+* Bugfix: Exception during IDE startup with plugin ([5dbc9f27](https://github.com/zowe/zowe-explorer-intellij/commit/5dbc9f27))
 
 ## `0.3.1 (2022-11-30)`
 

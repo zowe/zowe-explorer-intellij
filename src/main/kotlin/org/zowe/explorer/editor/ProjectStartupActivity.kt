@@ -10,29 +10,25 @@
 
 package org.zowe.explorer.editor
 
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
 import com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
 
 /**
- * Project open event listener.
+ * Project post startup activity.
  */
-class ProjectOpenListener : ProjectManagerListener {
+class ProjectStartupActivity : StartupActivity, DumbAware {
 
   /**
-   * Implementation of [ProjectManagerListener.projectOpened].
+   * Implementation of [StartupActivity.runActivity].
    * Unregisters widget factories in the status bar that are overridden in the plugin.
-   * @see ProjectManagerListener.projectOpened
    */
-  override fun projectOpened(project: Project) {
+  override fun runActivity(project: Project) {
     val extensionPoint = StatusBarWidgetFactory.EP_NAME.point
-    invokeLater {
-      extensionPoint.unregisterExtension(EncodingPanelWidgetFactory::class.java)
-      extensionPoint.unregisterExtension(LineSeparatorWidgetFactory::class.java)
-    }
-    super.projectOpened(project)
+    extensionPoint.unregisterExtension(EncodingPanelWidgetFactory::class.java)
+    extensionPoint.unregisterExtension(LineSeparatorWidgetFactory::class.java)
   }
 }

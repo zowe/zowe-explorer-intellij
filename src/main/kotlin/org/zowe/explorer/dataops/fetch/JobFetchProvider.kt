@@ -11,7 +11,6 @@
 package org.zowe.explorer.dataops.fetch
 
 import com.intellij.openapi.progress.ProgressIndicator
-import io.ktor.util.collections.*
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.config.ws.JobsFilter
@@ -27,7 +26,7 @@ import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.ExecData
 import org.zowe.kotlinsdk.JESApi
 import org.zowe.kotlinsdk.annotations.ZVersion
-import java.util.Collections
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Factory to register JobFetchProvider in Intellij IoC container.
@@ -97,7 +96,7 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
         if(firstJobInfo.execStarted == null && firstJobInfo.execEnded == null && firstJobInfo.execSubmitted == null) {
           log.info("Try to get jobs timestamps and return code through log fetcher due to z/OS version < ${ZVersion.ZOS_2_4}")
           val updatedJobAttributes = mutableListOf<RemoteJobAttributes>()
-          val jobFetchHelperList = Collections.synchronizedList(listOf<JobFetchHelper>())
+          val jobFetchHelperList = CopyOnWriteArrayList<JobFetchHelper>()
           for (attr in attributes) {
             val jobFetchHelper = JobFetchHelper(query, attr)
             jobFetchHelperList.add(jobFetchHelper)

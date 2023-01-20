@@ -73,9 +73,6 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
         <listener class="org.zowe.explorer.editor.ProjectCloseListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
-        <listener class="org.zowe.explorer.editor.ProjectOpenListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-
         <listener class="org.zowe.explorer.editor.FileEditorEventsListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
 
@@ -249,6 +246,8 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
         <postStartupActivity implementation="org.zowe.explorer.zowe.ZoweStartupActivity"/>
         <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
+
+        <postStartupActivity implementation="org.zowe.explorer.editor.ProjectStartupActivity"/>
 
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
