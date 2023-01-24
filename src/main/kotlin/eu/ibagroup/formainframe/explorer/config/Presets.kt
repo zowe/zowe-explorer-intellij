@@ -1,9 +1,23 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
 package eu.ibagroup.formainframe.explorer.config
 
 import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
 
+/**
+ * Enum class represents possible preset choices for a dataset
+ * @param type - a string representation of a chosen preset
+ */
 enum class Presets (val type: String) {
   CUSTOM_DATASET("CUSTOM DATASET") {
     override fun initDataClass() : PresetCustomDataset {
@@ -46,15 +60,24 @@ enum class Presets (val type: String) {
     }
   };
 
+  /**
+   * Data class initialization for a chosen preset
+   */
   abstract fun initDataClass() : PresetType
 }
 
+/**
+ * Interface which represents a collection of presets for a chosen data class
+ */
 interface PresetType {
   val presetCustom : PresetCustomDataset?
   val presetSeq : PresetSeqDataset?
   val presetPds : PresetPdsDataset?
 }
 
+/**
+ * Data class which represents a custom dataset
+ */
 data class PresetCustomDataset(
   val datasetOrganization : DatasetOrganization = DatasetOrganization.PS,
   val spaceUnit : AllocationUnit = AllocationUnit.TRK,
@@ -71,6 +94,9 @@ data class PresetCustomDataset(
   override val presetPds: PresetPdsDataset? = null
 }
 
+/**
+ * Data class which represents a sequential dataset
+ */
 data class PresetSeqDataset(
   val datasetOrganization : DatasetOrganization = DatasetOrganization.PS,
   val spaceUnit : AllocationUnit = AllocationUnit.TRK,
@@ -87,6 +113,9 @@ data class PresetSeqDataset(
   override val presetPds: PresetPdsDataset? = null
 }
 
+/**
+ * Data class which represents a PDS dataset
+ */
 data class PresetPdsDataset(
   val datasetOrganization : DatasetOrganization = DatasetOrganization.PO,
   val spaceUnit : AllocationUnit = AllocationUnit.TRK,
@@ -103,6 +132,9 @@ data class PresetPdsDataset(
   override val presetPds: PresetPdsDataset = this
 }
 
+/**
+ * Open function to get the content of the default JCL member
+ */
 fun getSampleJclMemberContent() : String {
   return "//* THE SAMPLE JOB WHICH RUNS A REXX PGM IN TSO/E ADDRESS SPACE\n" +
       "//MYJOB    JOB MSGCLASS=A,MSGLEVEL=1,NOTIFY=&SYSUID\n" +

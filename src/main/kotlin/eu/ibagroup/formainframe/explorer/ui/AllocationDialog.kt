@@ -264,6 +264,11 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
     }
   }
 
+  /**
+   * Function which sets the proper values for a chosen preset from UI
+   * @param preset - a chosen preset from UI
+   * @return Void
+   */
   private fun doPresetAssignment(preset : Presets) {
     val dataContainer = preset.initDataClass()
     datasetOrganizationBox.selectedItem = dataContainer.presetCustom?.datasetOrganization ?: dataContainer.presetSeq?.datasetOrganization ?: dataContainer.presetPds?.datasetOrganization
