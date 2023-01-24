@@ -23,6 +23,7 @@ apply(plugin = "org.jetbrains.intellij")
 group = "eu.ibagroup"
 version = "1.1.0"
 val remoteRobotVersion = "0.11.16"
+val okHttp3Version = "4.10.0"
 
 repositories {
   mavenCentral()
@@ -54,23 +55,25 @@ dependencies {
   implementation(group = "com.squareup.retrofit2", name = "retrofit", version = "2.9.0")
   implementation("com.squareup.retrofit2:converter-gson:2.9.0")
   implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
-  implementation("com.squareup.okhttp3:okhttp:4.10.0")
+  implementation("com.squareup.okhttp3:okhttp:$okHttp3Version")
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20")
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("eu.ibagroup:r2z:1.3.0-rc.10")
-  implementation("com.segment.analytics.java:analytics:+")
+  implementation("com.segment.analytics.java:analytics:3.3.1")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")
   testImplementation("org.mock-server:mockserver-netty:5.14.0")
-  testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
-  testImplementation("io.kotest:kotest-assertions-core:5.5.2")
-  testImplementation("io.kotest:kotest-runner-junit5:5.5.2")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
+  testImplementation("io.kotest:kotest-assertions-core:5.5.4")
+  testImplementation("io.kotest:kotest-runner-junit5:5.5.4")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
-  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.0")
+  testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
+  testImplementation("com.squareup.okhttp3:okhttp-tls:$okHttp3Version")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
 }
 
 intellij {

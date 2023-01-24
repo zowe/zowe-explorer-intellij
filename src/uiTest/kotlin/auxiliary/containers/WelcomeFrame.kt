@@ -23,28 +23,36 @@ import java.time.Duration
  * Class representing the Welcome Frame.
  */
 @FixtureName("Welcome Frame")
-@DefaultXpath("type","//div[@class='FlatWelcomeFrame']")
-class WelcomeFrame(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) : CommonContainerFixture(remoteRobot, remoteComponent) {
-    val openProject
-        get() = actionLink(byXpath("Open Project", "//div[(@accessiblename='Open or Import' and @class='JButton') or (@class='MainButton' and @text='Open')]"))
+@DefaultXpath("type", "//div[@class='FlatWelcomeFrame']")
+class WelcomeFrame(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
+  CommonContainerFixture(remoteRobot, remoteComponent) {
+  val openProject
+    get() = actionLink(
+      byXpath(
+        "Open Project",
+        "//div[(@accessiblename='Open or Import' and @class='JButton') or (@class='MainButton' and @text='Open')]"
+      )
+    )
 
-    /**
-     * Opens project with projectName, which is located in the resources of the uiTest source set.
-     */
-    fun open(projectName: String) {
-        openProject.click()
-        dialog("Open File or Project") {
-            textField(byXpath("//div[@class='BorderlessTextField']")).text =
-                System.getProperty("user.dir") + "/src/uiTest/resources/$projectName"
-            clickButton("OK")
-        }
+  /**
+   * Opens project with projectName, which is located in the resources of the uiTest source set.
+   */
+  fun open(projectName: String) {
+    openProject.click()
+    Thread.sleep(1000)
+    dialog("Open File or Project") {
+      textField(byXpath("//div[@class='BorderlessTextField']")).text =
+        System.getProperty("user.dir") + "/src/uiTest/resources/$projectName"
+      Thread.sleep(1000)
+      clickButton("OK")
     }
+  }
 }
 
 /**
  * Finds the Welcome Frame and modifies the fixtureStack. The frame needs to be called from the
  * RemoteRobot as there is no ContainerFixture containing it.
  */
-fun RemoteRobot.welcomeFrame(function: WelcomeFrame.()-> Unit) {
-    find(WelcomeFrame::class.java, Duration.ofSeconds(60)).apply(function)
+fun RemoteRobot.welcomeFrame(function: WelcomeFrame.() -> Unit) {
+  find(WelcomeFrame::class.java, Duration.ofSeconds(60)).apply(function)
 }
