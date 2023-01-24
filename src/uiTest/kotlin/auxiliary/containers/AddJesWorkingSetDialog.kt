@@ -32,6 +32,13 @@ open class AddJesWorkingSetDialog(
 ) : ClosableCommonContainerFixture(remoteRobot, remoteComponent) {
 
   /**
+   * Fills in the JES working set name and connection name for adding a new empty JES working set.
+   */
+  fun addJesWorkingSet(jesWorkingSetName: String, connectionName: String) {
+    specifyJWSNameAndConnection(jesWorkingSetName, connectionName)
+  }
+
+  /**
    * Fills in the JES working set name, connection name and filter for adding a new JES working set.
    */
   fun addJesWorkingSet(
@@ -59,6 +66,19 @@ open class AddJesWorkingSetDialog(
     }
     findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).last().text = filter.third
     findAllText("Prefix").last().click()
+  }
+
+  /**
+   * Fills in the JES working set name, connection name and list of filters for adding a new JES working set.
+   */
+  fun addJesWorkingSet(
+    jesWorkingSetName: String,
+    connectionName: String,
+    connectionUsername: String,
+    filters: List<Triple<String, String, String>>
+  ) {
+    specifyJWSNameAndConnection(jesWorkingSetName, connectionName)
+    filters.forEach { addFilter(connectionUsername, it) }
   }
 
   /**

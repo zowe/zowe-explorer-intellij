@@ -104,6 +104,7 @@ class PurgeJobTest {
         }
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Creates working set.
      */
@@ -116,7 +117,7 @@ class PurgeJobTest {
         ideFrameImpl(projectName, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector,fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
-                addJesWorkingSet(jwsName, connectionName, filters)
+                addJesWorkingSet(jwsName, connectionName, ZOS_USERID, filters)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
