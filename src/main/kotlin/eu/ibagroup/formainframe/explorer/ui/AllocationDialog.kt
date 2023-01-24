@@ -14,14 +14,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toNullableProperty
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
+import eu.ibagroup.formainframe.explorer.config.*
 import eu.ibagroup.formainframe.utils.validateDataset
 import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
@@ -38,6 +36,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   private lateinit var spaceUnitBox: ComboBox<AllocationUnit>
   private lateinit var datasetOrganizationBox: ComboBox<DatasetOrganization>
   private lateinit var datasetNameField: JTextField
+  private lateinit var memberNameField: JTextField
   private lateinit var primaryAllocationField: JTextField
   private lateinit var secondaryAllocationField: JTextField
   private lateinit var directoryBlocksField: JTextField
@@ -45,12 +44,25 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   private lateinit var blockSizeField: JTextField
   private lateinit var averageBlockLengthField: JTextField
   private lateinit var advancedParametersField: JTextField
+  private lateinit var presetsBox: JComboBox<Presets>
 
+  @Suppress("UnstableApiUsage")
   private val mainPanel by lazy {
     val sameWidthLabelsGroup = "ALLOCATION_DIALOG_LABELS_WIDTH_GROUP"
     val sameWidthComboBoxGroup = "ALLOCATION_DIALOG_COMBO_BOX_WIDTH_GROUP"
 
     panel {
+      row {
+        label("Choose preset")
+          .widthGroup(sameWidthLabelsGroup)
+        comboBox(listOf(Presets.CUSTOM_DATASET, Presets.SEQUENTIAL_DATASET, Presets.PDS_DATASET, Presets.PDS_WITH_EMPTY_MEMBER, Presets.PDS_WITH_SAMPLE_JCL_MEMBER))
+          .bindItem(state::presets.toNullableProperty())
+          .also { presetsBox = it.component }
+          .widthGroup(sameWidthComboBoxGroup)
+          .whenItemSelectedFromUi {
+            doPresetAssignment(it)
+          }
+      }
       row {
         label("Dataset name: ")
           .widthGroup(sameWidthLabelsGroup)
@@ -61,6 +73,16 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           .onApply { state.datasetName = state.datasetName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
       }
+      row {
+        label("Member name: ")
+          .widthGroup(sameWidthLabelsGroup)
+        textField()
+          .bindText(state::memberName)
+          .also { memberNameField = it.component }
+          .onApply { state.memberName = state.memberName.uppercase() }
+          .horizontalAlign(HorizontalAlign.FILL)
+      }
+        .visibleIf(presetsBox.selectedValueMatches { it == Presets.PDS_WITH_EMPTY_MEMBER || it == Presets.PDS_WITH_SAMPLE_JCL_MEMBER })
       row {
         label("Dataset organization: ")
           .widthGroup(sameWidthLabelsGroup)
@@ -242,6 +264,24 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
     }
   }
 
+  private fun doPresetAssignment(preset : Presets) {
+    val dataContainer = preset.initDataClass()
+    datasetOrganizationBox.selectedItem = dataContainer.presetCustom?.datasetOrganization ?: dataContainer.presetSeq?.datasetOrganization ?: dataContainer.presetPds?.datasetOrganization
+    spaceUnitBox.selectedItem = dataContainer.presetCustom?.spaceUnit ?: dataContainer.presetSeq?.spaceUnit ?: dataContainer.presetPds?.spaceUnit
+    val primaryAlloc = dataContainer.presetCustom?.primaryAllocation ?: dataContainer.presetSeq?.primaryAllocation ?: dataContainer.presetPds?.primaryAllocation
+    primaryAllocationField.text = primaryAlloc.toString()
+    val secondaryAlloc = dataContainer.presetCustom?.secondaryAllocation ?: dataContainer.presetSeq?.secondaryAllocation ?: dataContainer.presetPds?.secondaryAllocation
+    secondaryAllocationField.text = secondaryAlloc.toString()
+    val dirBlocks = dataContainer.presetCustom?.directoryBlocks ?: dataContainer.presetSeq?.directoryBlocks ?: dataContainer.presetPds?.directoryBlocks
+    directoryBlocksField.text = dirBlocks.toString()
+    recordFormatBox.selectedItem = dataContainer.presetCustom?.recordFormat ?: dataContainer.presetSeq?.recordFormat ?: dataContainer.presetPds?.recordFormat
+    val recordLen = dataContainer.presetCustom?.recordLength ?: dataContainer.presetSeq?.recordLength ?: dataContainer.presetPds?.recordLength
+    recordLengthField.text = recordLen.toString()
+    val blockSize = dataContainer.presetCustom?.blockSize ?: dataContainer.presetSeq?.blockSize ?: dataContainer.presetPds?.blockSize
+    blockSizeField.text = blockSize.toString()
+    val avgBlockLen = dataContainer.presetCustom?.averageBlockLength ?: dataContainer.presetSeq?.averageBlockLength ?: dataContainer.presetPds?.averageBlockLength
+    averageBlockLengthField.text = avgBlockLen.toString()
+  }
 
   override fun doOKAction() {
     super.doOKAction()
