@@ -14,6 +14,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.VetoableProjectManagerListener
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 //private val log = log<FileEditorEventsListener>()
 
@@ -58,5 +61,17 @@ class ProjectCloseListener : ProjectManagerListener {
       }
     }
     ProjectManager.getInstance().addProjectManagerListener(projListener)
+  }
+
+  /**
+   * Filters encoding mappings that need to be written to the config (encodings.xml).
+   * MFVirtualFile encodings are filtered out.
+   * @param project the project to filter encoding mappings.
+   */
+  override fun projectClosingBeforeSave(project: Project) {
+    val encodingManager = EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl
+    val filteredMappings = encodingManager.allMappings.toMutableMap().filter { it.key !is MFVirtualFile }
+    encodingManager.setMapping(filteredMappings)
+    super.projectClosingBeforeSave(project)
   }
 }
