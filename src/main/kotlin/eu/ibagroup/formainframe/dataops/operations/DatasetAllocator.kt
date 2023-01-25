@@ -75,38 +75,18 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
         // Allocate member
         var throwable: Throwable? = null
         runCatching {
-          when (operation.request.presets) {
-            Presets.PDS_WITH_EMPTY_MEMBER -> {
-              val memberResponse = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
-                authorizationToken = operation.connectionConfig.authToken,
-                datasetName = operation.request.datasetName,
-                memberName = operation.request.memberName,
-                content = byteArrayOf()
-              ).cancelByIndicator(progressIndicator).execute()
-              if (!memberResponse.isSuccessful) {
-                throwable = CallException(
-                  memberResponse,
-                  "Cannot create sample member ${operation.request.memberName} in ${operation.request.datasetName} " +
-                      "on ${operation.connectionConfig.name}"
-                )
-              } else throwable = null
-            }
-            Presets.PDS_WITH_SAMPLE_JCL_MEMBER -> {
-              val memberJclResponse = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
-                authorizationToken = operation.connectionConfig.authToken,
-                datasetName = operation.request.datasetName,
-                memberName = operation.request.memberName,
-                content = getSampleJclMemberContent().encodeToByteArray()
-              ).cancelByIndicator(progressIndicator).execute()
-              if (!memberJclResponse.isSuccessful) {
-                throwable = CallException(
-                  memberJclResponse,
-                  "Cannot create sample JCL member ${operation.request.memberName} in ${operation.request.datasetName} " +
-                      "on ${operation.connectionConfig.name}"
-                )
-              } else throwable = null
-            }
-            else -> null
+          val memberResponse = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
+            authorizationToken = operation.connectionConfig.authToken,
+            datasetName = operation.request.datasetName,
+            memberName = operation.request.memberName,
+            content = if (operation.request.presets == Presets.PDS_WITH_EMPTY_MEMBER) byteArrayOf() else getSampleJclMemberContent().encodeToByteArray()
+          ).cancelByIndicator(progressIndicator).execute()
+          if (!memberResponse.isSuccessful) {
+            throwable = CallException(
+              memberResponse,
+              "Cannot create sample member ${operation.request.memberName} in ${operation.request.datasetName} " +
+                  "on ${operation.connectionConfig.name}"
+            )
           }
         }.onFailure { if(throwable != null) throw Throwable(cause = throwable) else throw Exception("Error allocating a new sample member ${operation.request.memberName}") }
       }
