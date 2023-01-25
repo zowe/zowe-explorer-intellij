@@ -18,52 +18,25 @@ import eu.ibagroup.r2z.RecordFormat
  * Enum class represents possible preset choices for a dataset
  * @param type - a string representation of a chosen preset
  */
-enum class Presets (val type: String) {
-  CUSTOM_DATASET("CUSTOM DATASET") {
-    override fun initDataClass() : PresetCustomDataset {
-      return PresetCustomDataset()
-    }
-    override fun toString(): String {
-      return type
-    }
-  },
-  SEQUENTIAL_DATASET("SEQUENTIAL DATASET") {
-    override fun initDataClass() : PresetSeqDataset {
-      return PresetSeqDataset()
-    }
-    override fun toString(): String {
-      return type
-    }
-  },
-  PDS_DATASET("PDS DATASET") {
-    override fun initDataClass() : PresetPdsDataset {
-      return PresetPdsDataset()
-    }
-    override fun toString(): String {
-      return type
-    }
-  },
-  PDS_WITH_EMPTY_MEMBER("PDS_WITH_MEMBER_DATASET") {
-    override fun initDataClass() : PresetPdsDataset {
-      return PresetPdsDataset()
-    }
-    override fun toString(): String {
-      return type
-    }
-  },
-  PDS_WITH_SAMPLE_JCL_MEMBER("PDS_WITH_JCL_MEMBER_DATASET") {
-    override fun initDataClass() : PresetPdsDataset {
-      return PresetPdsDataset()
-    }
-    override fun toString(): String {
-      return type
-    }
-  };
+enum class Presets(val type: String) {
+  CUSTOM_DATASET("CUSTOM DATASET"),
+  SEQUENTIAL_DATASET("SEQUENTIAL DATASET"),
+  PDS_DATASET("PDS DATASET"),
+  PDS_WITH_EMPTY_MEMBER("PDS_WITH_MEMBER_DATASET"),
+  PDS_WITH_SAMPLE_JCL_MEMBER("PDS_WITH_JCL_MEMBER_DATASET");
 
-  /**
-   * Data class initialization for a chosen preset
-   */
-  abstract fun initDataClass() : PresetType
+  companion object {
+    /**
+     * Data class initialization for a chosen preset
+     */
+    fun initDataClass(preset: Presets): PresetType {
+      return when (preset) {
+        CUSTOM_DATASET -> PresetCustomDataset()
+        SEQUENTIAL_DATASET -> PresetSeqDataset()
+        else -> PresetPdsDataset()
+      }
+    }
+  }
 }
 
 /**

@@ -268,7 +268,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
    * @return Void
    */
   private fun doPresetAssignment(preset : Presets) {
-    val dataContainer = preset.initDataClass()
+    val dataContainer = Presets.initDataClass(preset)
     datasetOrganizationBox.selectedItem = dataContainer.datasetOrganization
     spaceUnitBox.selectedItem = dataContainer.spaceUnit
     primaryAllocationField.text = dataContainer.primaryAllocation.toString()
