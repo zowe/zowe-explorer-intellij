@@ -22,6 +22,8 @@ import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.config.*
 import eu.ibagroup.formainframe.utils.validateDataset
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateMemberName
 import eu.ibagroup.r2z.AllocationUnit
 import eu.ibagroup.r2z.DatasetOrganization
 import eu.ibagroup.r2z.RecordFormat
@@ -76,7 +78,9 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::memberName)
-          .also { memberNameField = it.component }
+          .also { memberNameField = it.component
+          memberNameField.text = "SAMPLE"
+          }
           .onApply { state.memberName = state.memberName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -269,6 +273,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
    */
   private fun doPresetAssignment(preset : Presets) {
     val dataContainer = Presets.initDataClass(preset)
+    memberNameField.text = "SAMPLE"
     datasetOrganizationBox.selectedItem = dataContainer.datasetOrganization
     spaceUnitBox.selectedItem = dataContainer.spaceUnit
     primaryAllocationField.text = dataContainer.primaryAllocation.toString()
@@ -297,7 +302,8 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
       blockSizeField,
       averageBlockLengthField,
       advancedParametersField
-    )
+    ) ?: validateForBlank(memberNameField) ?:
+    validateMemberName(memberNameField)
   }
 
   init {
