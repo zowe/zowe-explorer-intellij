@@ -249,6 +249,9 @@ Example of how to see the output:<br/>
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.ChangePasswordOperationRunnerFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.TsoOperationRunnerFactory"/>
 
         <operationRunner

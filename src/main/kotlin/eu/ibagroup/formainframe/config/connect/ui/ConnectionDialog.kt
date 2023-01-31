@@ -21,8 +21,8 @@ import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.operations.InfoOperation
-import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
+import eu.ibagroup.formainframe.dataops.content.ChangePasswordRequestBody
+import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.utils.validateConnectionName
@@ -40,7 +40,7 @@ import javax.swing.JTextField
 class ConnectionDialog(
   private val crudable: Crudable,
   override var state: ConnectionDialogState = ConnectionDialogState(),
-  project: Project? = null
+  val project: Project? = null
 ) : StatefulDialog<ConnectionDialogState>(project) {
 
   companion object {
@@ -210,6 +210,63 @@ class ConnectionDialog(
           )
             .bindItem(state::zVersion.toNullableProperty())
             .enabled(false)
+        }
+        if (state.zVersion == ZVersion.ZOS_2_5) {
+          row {
+            button("Change user password") {
+              val changePasswordInitState = ChangePasswordDialogState(initialState.username, initialState.password, "")
+              val dataOpsManager = service<DataOpsManager>()
+              showUntilDone(
+                initialState = changePasswordInitState,
+                factory = { ChangePasswordDialog(changePasswordInitState, project) },
+                test = { changePasswordState ->
+                  val throwable = runTask(
+                    title = "Changing ${changePasswordState.username} password on ${initialState.connectionUrl}",
+                    project = project
+                  ) {
+                    return@runTask try {
+                      runCatching {
+                        dataOpsManager.performOperation(
+                          operation = ChangePasswordOperation(
+                            request = ChangePasswordRequestBody(
+                              changePasswordState.username,
+                              changePasswordState.oldPassword,
+                              changePasswordState.newPassword
+                            ),
+                            connectionConfig = initialState.connectionConfig
+                          ),
+                          progressIndicator = it
+                        )
+                      }.onFailure {
+                        throw it
+                      }
+                      null
+                    } catch (t: Throwable) {
+                      t
+                    }
+                  }
+                  if (throwable != null) {
+                    val errorMessage = throwable.message!!.substring(0, throwable.message!!.indexOf('\n'))
+                    val respMessage = throwable.message!!.substring(
+                      throwable.message!!.indexOf("MESSAGE:"),
+                      throwable.message!!.indexOf('\n', throwable.message!!.indexOf("MESSAGE:"))
+                    )
+                    val okCancelDialog = MessageDialogBuilder
+                      .okCancel(
+                        title = "Error",
+                        message = "${errorMessage}\n\n${respMessage}"
+                      ).icon(AllIcons.General.ErrorDialog)
+                      .run {
+                        ask(project)
+                      }
+                    okCancelDialog
+                  } else {
+                    true
+                  }
+                }
+              )
+            }
+          }
         }
       }
     }
