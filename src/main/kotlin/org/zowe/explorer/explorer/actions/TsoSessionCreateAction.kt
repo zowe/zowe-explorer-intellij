@@ -40,7 +40,7 @@ class TsoSessionCreateAction : AnAction() {
    * Method to perform an action which is called when OK button is pressed
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val project = ProjectManager.getInstance().defaultProject
+    val project = e.project
     var dialog = TSOSessionDialog(project, TSOSessionParams())
     showUntilDone(
       initialState = dialog.state,
@@ -49,7 +49,7 @@ class TsoSessionCreateAction : AnAction() {
         val throwable = runTask(title = "Testing TSO Connection to ${state.connectionConfig.url}", project = project) {
           return@runTask try {
             val tsoResponse = service<DataOpsManager>().performOperation(TsoOperation(dialog.state, TsoOperationMode.START))
-            if (tsoResponse.servletKey?.isNotEmpty() == true) {
+            if (tsoResponse.servletKey?.isNotEmpty() == true && project != null) {
               val config = TSOConfigWrapper(dialog.state, tsoResponse)
               sendTopic(SESSION_ADDED_TOPIC).create(project, config)
             }
