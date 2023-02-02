@@ -166,13 +166,16 @@ class JobNode(
    * @return true if return code is kind of Error. False otherwise
    */
   private fun isErrorReturnCode(returnCode : String?) : Boolean {
-    return if( returnCode != null) {
-      returnCode.startsWith("ABEND") ||
-          returnCode.startsWith("JCL ERROR") ||
-          returnCode.startsWith("CANCELED") ||
-          returnCode.split(" ")[1].toInt() > 0
-    } else {
-      false
+    if (returnCode != null) {
+      return if (!returnCode.startsWith("CANCELED")) {
+        val numberedRC = returnCode.split(" ")[1].toIntOrNull()
+        if (numberedRC != null) {
+          numberedRC > 0
+        } else {
+          true
+        }
+      } else true
     }
+    return false
   }
 }
