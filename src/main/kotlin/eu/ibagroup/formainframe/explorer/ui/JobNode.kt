@@ -167,12 +167,14 @@ class JobNode(
    */
   private fun isErrorReturnCode(returnCode : String?) : Boolean {
     if (returnCode != null) {
-      val numberedRC = returnCode.split(" ")[1].toIntOrNull()
-      return if (numberedRC != null) {
-        numberedRC > 0
-      } else {
-        true
-      }
+      return if (!returnCode.startsWith("CANCELED")) {
+        val numberedRC = returnCode.split(" ")[1].toIntOrNull()
+        if (numberedRC != null) {
+          numberedRC > 0
+        } else {
+          true
+        }
+      } else true
     }
     return false
   }
