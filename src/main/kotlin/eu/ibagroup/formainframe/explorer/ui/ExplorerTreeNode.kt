@@ -16,6 +16,7 @@ import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -141,7 +142,7 @@ abstract class ExplorerTreeNode<Value : Any>(
               }
             } else {
               runCatching {
-                ApplicationManager.getApplication().invokeLater {
+                invokeLater {
                   FileEditorManager.getInstance(project).openFile(file, true)
                 }
               }
