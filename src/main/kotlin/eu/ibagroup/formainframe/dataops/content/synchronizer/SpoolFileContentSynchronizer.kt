@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.apiWithBytesConverter
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
@@ -61,7 +62,7 @@ class SpoolFileContentSynchronizer(
   override fun executeGetContentRequest(
     attributes: RemoteSpoolFileAttributes,
     parentAttributes: RemoteJobAttributes,
-    requester: Requester,
+    requester: Requester<ConnectionConfig>,
     progressIndicator: ProgressIndicator?
   ): Response<ByteArray> {
     return apiWithBytesConverter<JESApi>(requester.connectionConfig).getSpoolFileRecords(
@@ -77,7 +78,7 @@ class SpoolFileContentSynchronizer(
   override fun executePutContentRequest(
     attributes: RemoteSpoolFileAttributes,
     parentAttributes: RemoteJobAttributes,
-    requester: Requester,
+    requester: Requester<ConnectionConfig>,
     newContentBytes: ByteArray,
     progressIndicator: ProgressIndicator?
   ): Response<Void>? = null

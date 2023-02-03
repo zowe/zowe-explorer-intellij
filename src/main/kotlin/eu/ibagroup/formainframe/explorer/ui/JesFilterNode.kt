@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.toMutableSmartList
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
@@ -28,14 +29,14 @@ private val jesFilterIcon = ForMainframeIcons.JclDirectory
 class JesFilterNode(
   jobsFilter: JobsFilter,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: JesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<JobsFilter, JobsFilter, JesWorkingSet>(
+) : RemoteMFFileFetchNode<ConnectionConfig, JobsFilter, JobsFilter, JesWorkingSet>(
   jobsFilter, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
 
-  override val query: RemoteQuery<JobsFilter, Unit>?
+  override val query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
       return if (connectionConfig != null) {
@@ -58,7 +59,7 @@ class JesFilterNode(
   }
 
 
-  override fun makeFetchTaskTitle(query: RemoteQuery<JobsFilter, Unit>): String {
+  override fun makeFetchTaskTitle(query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>): String {
     return "Fetching jobs for ${query.request}"
   }
 

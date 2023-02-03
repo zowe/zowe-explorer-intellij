@@ -116,6 +116,6 @@ sealed class GetJobStatusOperationParams {
 data class GetJobStatusOperation(
   override val request: GetJobStatusOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<GetJobStatusOperationParams, Job> {
+) : RemoteQuery<ConnectionConfig, GetJobStatusOperationParams, Job> {
   override val resultClass = Job::class.java
 }

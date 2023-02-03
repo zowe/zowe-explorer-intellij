@@ -366,7 +366,7 @@ fun validateJobFilter(
  * @param component the component to check the USS file name and show the warning for
  * @param selectedNode the selected node to check whether it is a file or a directory
  */
-fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData): ValidationInfo? {
+fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData<*>): ValidationInfo? {
   val text: String = component.text
   val childrenNodesFromParent = selectedNode.node.parent?.children
   when (selectedNode.node) {

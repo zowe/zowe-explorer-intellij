@@ -116,6 +116,6 @@ class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams()
 data class SubmitJobOperation(
   override val request: SubmitOperationParams,
   override val connectionConfig: ConnectionConfig,
-) : RemoteQuery<SubmitOperationParams, SubmitJobRequest> {
+) : RemoteQuery<ConnectionConfig, SubmitOperationParams, SubmitJobRequest> {
   override val resultClass = SubmitJobRequest::class.java
 }

@@ -36,8 +36,8 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
  * Get data for explorer node
  * @return Pair of [MFVirtualFile] and [ConnectionConfig]
  */
-fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, ConnectionConfig>? {
-  return if (node is ExplorerUnitTreeNodeBase<*, *> && node.unit is FilesWorkingSet) {
+fun getRequestDataForNode(node: ExplorerTreeNode<*, *>): Pair<VirtualFile, ConnectionConfig>? {
+  return if (node is ExplorerUnitTreeNodeBase<*, *, *> && node.unit is FilesWorkingSet) {
     val file = node.virtualFile
     val config = node.unit.connectionConfig
     if (file != null && config != null) {
@@ -53,7 +53,7 @@ fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, Connecti
  * Clean cache for explorer nodes
  * @see ExplorerTreeNode
  */
-private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*>>) {
+private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*, *>>) {
   val uniqueParentNodes = nodes.map { it.parent }.distinct()
   uniqueParentNodes.forEach { it?.cleanCacheIfPossible(cleanBatchedQuery = true) }
 }

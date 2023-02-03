@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.util.SmartList
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -38,7 +39,7 @@ class RemoteJobAttributesServiceFactory : AttributesServiceFactory {
  */
 class RemoteJobAttributesService(
   dataOpsManager: DataOpsManager
-) : MFRemoteAttributesServiceBase<RemoteJobAttributes>(dataOpsManager) {
+) : MFRemoteAttributesServiceBase<ConnectionConfig, RemoteJobAttributes>(dataOpsManager) {
   override val attributesClass = RemoteJobAttributes::class.java
   override val subFolderName = JOBS_FOLDER_NAME
 

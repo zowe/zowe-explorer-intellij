@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.util.SmartList
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -34,7 +35,7 @@ class RemoteDatasetAttributesServiceFactory : AttributesServiceFactory {
  */
 class RemoteDatasetAttributesService(
   dataOpsManager: DataOpsManager
-) : MFRemoteAttributesServiceBase<RemoteDatasetAttributes>(dataOpsManager) {
+) : MFRemoteAttributesServiceBase<ConnectionConfig, RemoteDatasetAttributes>(dataOpsManager) {
 
   override val attributesClass = RemoteDatasetAttributes::class.java
 

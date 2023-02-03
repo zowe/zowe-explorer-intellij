@@ -31,7 +31,7 @@ val CONFIGS_CHANGED = Topic.create("configsChanged", EventHandler::class.java)
 val CONFIGS_LOADED = Topic.create("configsLoaded", Runnable::class.java)
 
 /** Interface to represent the config service */
-interface ConfigService : PersistentStateComponent<ConfigState> {
+interface ConfigService : PersistentStateComponent<ConfigStateV2> {
 
   companion object {
     @JvmStatic
@@ -57,6 +57,18 @@ interface ConfigService : PersistentStateComponent<ConfigState> {
 
   /** Identifies size of the files batch to fetch in a single request. */
   var batchSize: Int
+
+  fun <T : Any> getConfigDeclaration(rowClass: Class<out T>): ConfigDeclaration<T>
+
+  fun <T> registerConfigClass(clazz: Class<out T>)
+
+  fun registerAllConfigClasses()
+
+  fun getRegisteredConfigClasses(): List<Class<*>>
+
+  fun getRegisteredConfigDeclarations(): List<ConfigDeclaration<*>>
+
+  fun migrateOldConfigState(state: ConfigState)
 }
 
 val configCrudable: Crudable

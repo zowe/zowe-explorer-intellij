@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.config.ws.ui.jes
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import eu.ibagroup.formainframe.common.ui.*
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.JobFilterState
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
@@ -31,12 +32,14 @@ import javax.swing.JTextField
 class JesWsDialog(
   crudable: Crudable,
   state: JesWorkingSetDialogState
-) : AbstractWsDialog<JesWorkingSetConfig, JobFilterState, JesWorkingSetDialogState>(
+) : AbstractWsDialog<ConnectionConfig, JesWorkingSetConfig, JobFilterState, JesWorkingSetDialogState>(
   crudable,
   JesWorkingSetDialogState::class.java,
   state
 ) {
   override val wsConfigClass = JesWorkingSetConfig::class.java
+  override val connectionClass = ConnectionConfig::class.java
+
 
   /**
    * TableView with Job Prefix, Owner, JobId columns for representation of jobs filters.

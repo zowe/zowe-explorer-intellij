@@ -72,7 +72,7 @@ data class RemoteUssAttributes(
   val groupId: String? = null,
   val modificationTime: String? = null,
   val symlinkTarget: String? = null
-) : MFRemoteFileAttributes<UssRequester>, Copyable {
+) : MFRemoteFileAttributes<ConnectionConfig, UssRequester>, Copyable {
 
   /**
    * Constructor for creating uss attributes object

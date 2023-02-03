@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
@@ -19,9 +20,9 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
  * Common abstract class which represents attributed virtual file in VFS.
  * Every virtual file object with attributes in explorer(WS, JES) extends this class
  */
-abstract class RemoteAttributedFileFetchBase<Request : Any, Response : FileAttributes, File : VirtualFile>(
+abstract class RemoteAttributedFileFetchBase<Connection: ConnectionConfigBase, Request : Any, Response : FileAttributes, File : VirtualFile>(
   dataOpsManager: DataOpsManager
-) : RemoteFileFetchProviderBase<Request, Response, File>(dataOpsManager) {
+) : RemoteFileFetchProviderBase<Connection, Request, Response, File>(dataOpsManager) {
 
   protected val attributesService: AttributesService<Response, File>
           by lazy { dataOpsManager.getAttributesService(responseClass, vFileClass) }

@@ -23,7 +23,7 @@ import eu.ibagroup.formainframe.utils.nullIfBlank
 data class MaskedRequester(
   override val connectionConfig: ConnectionConfig,
   val queryMask: DSMask,
-) : Requester {
+) : Requester<ConnectionConfig> {
   val queryVolser: String?
     get() = queryMask.volser.nullIfBlank()
 }

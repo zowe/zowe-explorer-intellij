@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
@@ -25,7 +26,7 @@ class GetJobPropertiesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
-    if (node is ExplorerTreeNode<*>) {
+    if (node is ExplorerTreeNode<ConnectionConfig, *>) {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()

@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.config.ws.ui.jes
 
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.sandboxCrudable
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JobFilterState
@@ -24,9 +25,9 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  * @see AbstractWsConfigurable
  */
 class JesWsConfigurable
-  : AbstractWsConfigurable<JesWorkingSetConfig, JesWsTableModel, JesWorkingSetDialogState>("JES Working Sets") {
+  : AbstractWsConfigurable<JesWorkingSetConfig, JesWsTableModel<ConnectionConfig>, JesWorkingSetDialogState>("JES Working Sets") {
   override val wsConfigClass = JesWorkingSetConfig::class.java
-  override val wsTableModel = JesWsTableModel(sandboxCrudable)
+  override val wsTableModel = JesWsTableModel(sandboxCrudable, ConnectionConfig::class.java)
 
   override fun emptyConfig() = JesWorkingSetConfig()
 

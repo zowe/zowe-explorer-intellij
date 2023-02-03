@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.utils.getAncestorNodes
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
@@ -34,9 +35,9 @@ fun interface CutBufferListener {
 }
 
 /** Base implementation of explorer content provider */
-abstract class ExplorerContentProviderBase<E : Explorer<*>>(
+abstract class ExplorerContentProviderBase<Connection: ConnectionConfigBase, E : Explorer<Connection, *>>(
   val contextMenu: ActionGroup = ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.ContextMenuGroup") as ActionGroup
-) : ExplorerContentProvider<E> {
+) : ExplorerContentProvider<Connection, E> {
 
   abstract val actionGroup: ActionGroup
   abstract val place: String

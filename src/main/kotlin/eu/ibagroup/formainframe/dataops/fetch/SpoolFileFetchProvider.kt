@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops.fetch
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -48,7 +49,7 @@ private val log = log<SpoolFileFetchProvider>()
  * @author Valiantsin Krus
  */
 class SpoolFileFetchProvider(dataOpsManager: DataOpsManager) :
-  RemoteAttributedFileFetchBase<JobQuery, RemoteSpoolFileAttributes, MFVirtualFile>(dataOpsManager) {
+  RemoteAttributedFileFetchBase<ConnectionConfig, JobQuery, RemoteSpoolFileAttributes, MFVirtualFile>(dataOpsManager) {
 
   private val remoteJobAttributesService by lazy {
     dataOpsManager.getAttributesService<RemoteJobAttributes, MFVirtualFile>()
@@ -66,7 +67,7 @@ class SpoolFileFetchProvider(dataOpsManager: DataOpsManager) :
    * @see RemoteAttributedFileFetchBase.fetchResponse
    */
   override fun fetchResponse(
-    query: RemoteQuery<JobQuery, Unit>,
+    query: RemoteQuery<ConnectionConfig, JobQuery, Unit>,
     progressIndicator: ProgressIndicator
   ): Collection<RemoteSpoolFileAttributes> {
     val jobAttributes = remoteJobAttributesService.getAttributes(query.request.library)
@@ -103,7 +104,7 @@ class SpoolFileFetchProvider(dataOpsManager: DataOpsManager) :
    * Clears attributes of unused job file.
    * @see RemoteAttributedFileFetchBase.cleanupUnusedFile
    */
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<JobQuery, Unit>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<ConnectionConfig, JobQuery, Unit>) {
     log.info("About to clean-up file=$file, query=$query")
     attributesService.clearAttributes(file)
     file.delete(this)

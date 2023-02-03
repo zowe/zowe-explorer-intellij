@@ -110,7 +110,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
     val sourceQuery = UnitRemoteQueryImpl(LibraryQuery(operation.source as MFVirtualFile), sourceConnectionConfig)
 
     val sourceFileFetchProvider = dataOpsManager
-      .getFileFetchProvider<LibraryQuery, RemoteQuery<LibraryQuery, Unit>, MFVirtualFile>(
+      .getFileFetchProvider<LibraryQuery, RemoteQuery<ConnectionConfig, LibraryQuery, Unit>, MFVirtualFile>(
         LibraryQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
       )
 

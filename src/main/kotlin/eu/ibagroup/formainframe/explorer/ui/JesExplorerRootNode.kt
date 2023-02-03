@@ -13,14 +13,15 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
 
 /** JES Explorer root node, where the information about the connection is situated */
 class JesExplorerRootNode(
-  value: Explorer<*>, project: Project,
+  value: Explorer<ConnectionConfig, *>, project: Project,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerTreeNode<Explorer<*>>(
+) : ExplorerTreeNode<ConnectionConfig, Explorer<ConnectionConfig, *>>(
   value, project,
   null,
   value, treeStructure

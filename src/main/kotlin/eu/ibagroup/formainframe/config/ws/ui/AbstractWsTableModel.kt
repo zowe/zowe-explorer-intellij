@@ -10,13 +10,15 @@
 
 package eu.ibagroup.formainframe.config.ws.ui
 
+import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.CrudableTableModel
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.MergedCollections
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import eu.ibagroup.formainframe.utils.nullable
 import eu.ibagroup.formainframe.utils.toMutableList
 
 /**
@@ -28,16 +30,18 @@ import eu.ibagroup.formainframe.utils.toMutableList
  * @param crudable Crudable instance to change data.
  * @author Valiantsin Krus
  */
-abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
-  crudable: Crudable
+abstract class AbstractWsTableModel<Connection: ConnectionConfigBase, WSConfig : WorkingSetConfig>(
+  crudable: Crudable,
+  connectionClass: Class<out Connection>,
+  connectionColumnName: String = message("configurable.ws.tables.ws.url.name")
 ) : CrudableTableModel<WSConfig>(crudable) {
 
   init {
     columnInfos = arrayOf(
       WSNameColumn { this.items },
-      WSConnectionNameColumn<WSConfig>(crudable),
+      WSConnectionNameColumn<Connection, WSConfig>(crudable, connectionClass),
       WSUsernameColumn { crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username },
-      UrlColumn { crudable.getByUniqueKey<ConnectionConfig>(it.connectionConfigUuid)?.url }
+      UrlColumn(connectionColumnName) { crudable.getByUniqueKey(connectionClass, it.connectionConfigUuid).nullable?.url }
     )
   }
 

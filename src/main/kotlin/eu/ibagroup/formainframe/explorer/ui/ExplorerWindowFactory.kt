@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
-import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
 
 /** Explorer window. This is the main class to represent the plugin */
@@ -27,7 +26,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val contentFactory = ContentFactory.SERVICE.getInstance()
-    UIComponentManager.INSTANCE.getExplorerContentProviders<Explorer<*>>().forEach {
+    UIComponentManager.INSTANCE.getExplorerContentProviders().forEach {
       val content = contentFactory
         .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)
       toolWindow.contentManager.addContent(content)

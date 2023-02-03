@@ -18,6 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.IdeFocusManager
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
@@ -29,7 +30,7 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  */
 abstract class AddWsActionBase : AnAction() {
 
-  abstract val explorerView: DataKey<out ExplorerTreeView<*, *>>
+  abstract val explorerView: DataKey<out ExplorerTreeView<ConnectionConfig, *, *>>
 
   /** Shows add Working Set dialog (for files or for jobs) */
   override fun actionPerformed(e: AnActionEvent) {
@@ -57,7 +58,7 @@ abstract class AddWsActionBase : AnAction() {
    * @see Crudable
    * @see ConfigService
    */
-  abstract fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>>
+  abstract fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, *, out AbstractWsDialogState<out WorkingSetConfig, *>>
 
   override fun isDumbAware(): Boolean {
     return true

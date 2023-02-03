@@ -102,6 +102,6 @@ class ChangeFileTagOperationParams(
 data class ChangeFileTagOperation(
   override val request: ChangeFileTagOperationParams,
   override val connectionConfig: ConnectionConfig
-): RemoteQuery<ChangeFileTagOperationParams, ResponseBody> {
+): RemoteQuery<ConnectionConfig, ChangeFileTagOperationParams, ResponseBody> {
   override val resultClass = ResponseBody::class.java
 }

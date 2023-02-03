@@ -59,7 +59,7 @@ class SequentialToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
    */
   override fun buildCall(
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, ConnectionConfig>
+    requesterWithUrl: Pair<Requester<ConnectionConfig>, ConnectionConfig>
   ): Call<Void> {
     val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
     var memberName: String

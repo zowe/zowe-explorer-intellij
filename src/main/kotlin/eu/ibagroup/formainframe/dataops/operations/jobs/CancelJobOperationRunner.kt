@@ -118,6 +118,6 @@ class CorrelatorCancelJobParams(val correlator: String) : CancelJobOperationPara
 data class CancelJobOperation(
   override val request: CancelJobOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<CancelJobOperationParams, CancelJobRequest> {
+) : RemoteQuery<ConnectionConfig, CancelJobOperationParams, CancelJobRequest> {
   override val resultClass = CancelJobRequest::class.java
 }

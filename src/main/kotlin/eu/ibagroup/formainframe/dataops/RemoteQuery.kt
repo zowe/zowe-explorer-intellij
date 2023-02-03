@@ -10,8 +10,10 @@
 
 package eu.ibagroup.formainframe.dataops
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+
 /**
  * Interface which represents query that should be executed on remote server,
  * consists from query and connection config to mainframe
  */
-interface RemoteQuery<Request, Result> : Query<Request, Result>, RemoteInfo
+interface RemoteQuery<Connection, Request, Result> : Query<Request, Result>, RemoteInfo<Connection>

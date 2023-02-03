@@ -66,8 +66,9 @@ abstract class CreateUssEntityAction : AnAction() {
       selectedNode.takeIf { it is UssDirNode }
     } ?: return
     val file = node.virtualFile
-    if (node is ExplorerUnitTreeNodeBase<*, *>) {
-      val connectionConfig = node.unit.connectionConfig ?: return
+    // TODO: Why is it highlighted ???
+    if (node is ExplorerUnitTreeNodeBase<*, *, *>) {
+      val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
       val dataOpsManager = node.unit.explorer.componentManager.service<DataOpsManager>()
       val filePath = if (file != null) {
         dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()

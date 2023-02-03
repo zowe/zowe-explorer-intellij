@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
 import eu.ibagroup.formainframe.config.ws.UssPath
@@ -58,7 +59,7 @@ class AddMaskAction : AnAction() {
   private fun getUnits(view: FileExplorerView): List<FilesWorkingSet> {
     return view.mySelectedNodesData
       .map { it.node }
-      .filterIsInstance<ExplorerUnitTreeNodeBase<*, FilesWorkingSet>>()
+      .filterIsInstance<ExplorerUnitTreeNodeBase<ConnectionConfig, *, FilesWorkingSet>>()
       .map { it.unit }
       .distinct()
   }

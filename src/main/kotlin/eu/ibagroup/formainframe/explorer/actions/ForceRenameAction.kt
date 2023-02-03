@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -68,7 +69,7 @@ class ForceRenameAction : AnAction() {
    * @param text represents an existing file name in VFS with name conflict
    * @param selectedNode represents a virtual file object in VFS
    */
-  private fun showConfirmDialogIfNecessary(text: String, selectedNode: NodeData): Int {
+  private fun showConfirmDialogIfNecessary(text: String, selectedNode: NodeData<*>): Int {
     val childrenNodesFromParent = selectedNode.node.parent?.children
     val virtualFilePath = selectedNode.node.virtualFile?.canonicalPath
     when (selectedNode.node) {
@@ -122,11 +123,11 @@ class ForceRenameAction : AnAction() {
    */
   private fun runRenameOperation(
     project: Project?,
-    explorer: Explorer<*>,
+    explorer: Explorer<ConnectionConfig, *>,
     file: MFVirtualFile,
     attributes: FileAttributes,
     newName: String,
-    node: ExplorerTreeNode<*>,
+    node: ExplorerTreeNode<ConnectionConfig, *>,
     override: Boolean
   ) {
     runBackgroundableTask(

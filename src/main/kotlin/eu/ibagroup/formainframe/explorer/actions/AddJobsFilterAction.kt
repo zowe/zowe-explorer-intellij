@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
 import eu.ibagroup.formainframe.explorer.ui.AddJobsFilterDialog
@@ -28,7 +29,7 @@ class AddJobsFilterAction : JobsFilterAction() {
    * Is node conforms to the JesFilterNode and the JesWsNode types
    * @param node the node to check
    */
-  override fun isNodeConformsToType(node: ExplorerTreeNode<*>?): Boolean {
+  override fun isNodeConformsToType(node: ExplorerTreeNode<ConnectionConfig, *>?): Boolean {
     return super.isNodeConformsToType(node) || node is JesWsNode
   }
 

@@ -15,8 +15,8 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 /**
  * Interface which represents remote info and holds connection config object almost for every remote query
  */
-interface RemoteInfo {
+interface RemoteInfo<Connection> {
 
-  val connectionConfig: ConnectionConfig
+  val connectionConfig: Connection
 
 }

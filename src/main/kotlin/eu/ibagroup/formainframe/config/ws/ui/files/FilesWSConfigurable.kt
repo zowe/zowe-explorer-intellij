@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.config.ws.ui.files
 
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.sandboxCrudable
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.MaskState
@@ -25,9 +26,9 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  * @see AbstractWsConfigurable
  */
 class FilesWSConfigurable :
-  AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel, FilesWorkingSetDialogState>("Working Sets") {
+  AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel<ConnectionConfig>, FilesWorkingSetDialogState>("Working Sets") {
   override val wsConfigClass = FilesWorkingSetConfig::class.java
-  override val wsTableModel = WSTableModel(sandboxCrudable)
+  override val wsTableModel = WSTableModel(sandboxCrudable, ConnectionConfig::class.java)
 
   override fun emptyConfig() = FilesWorkingSetConfig()
 

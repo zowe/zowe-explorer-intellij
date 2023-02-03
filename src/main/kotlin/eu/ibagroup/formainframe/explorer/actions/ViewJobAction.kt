@@ -28,7 +28,7 @@ class ViewJobAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(JES_EXPLORER_VIEW) ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
-    if (node is ExplorerTreeNode<*>) {
+    if (node is ExplorerTreeNode<*, *>) {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
