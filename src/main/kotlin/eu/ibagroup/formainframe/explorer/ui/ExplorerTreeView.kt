@@ -7,6 +7,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,6 +25,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.FileContentUtilCore
 import eu.ibagroup.formainframe.common.ui.DoubleClickTreeMouseListener
 import eu.ibagroup.formainframe.common.ui.makeNodeDataFromTreePath
 import eu.ibagroup.formainframe.common.ui.promisePath
@@ -197,7 +201,23 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
             .mapNotNull {
               val nodes = myFsTreeStructure.findByVirtualFile(it.file ?: return@mapNotNull null)
               when {
-                it is VFileContentChangeEvent || it is VFilePropertyChangeEvent -> {
+                it is VFileContentChangeEvent -> {
+                  nodes
+                }
+
+                it is VFilePropertyChangeEvent -> {
+                  if (
+                    VirtualFile.PROP_NAME == it.propertyName &&
+                    FileContentUtilCore.FORCE_RELOAD_REQUESTOR == it.requestor || it.oldValue != it.newValue
+                  ) {
+                    val editorEx =
+                      EditorUtil.getEditorEx(FileEditorManager.getInstance(project).getSelectedEditor(it.file))
+                    editorEx?.let { editor ->
+                      val editorHighlighterUpdater =
+                        EditorHighlighterUpdater(project, parentDisposable, editor, it.file)
+                      editorHighlighterUpdater.updateHighlighters()
+                    }
+                  }
                   nodes
                 }
 
