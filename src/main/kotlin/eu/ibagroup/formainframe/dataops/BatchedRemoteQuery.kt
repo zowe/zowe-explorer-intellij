@@ -30,7 +30,7 @@ class BatchedRemoteQuery<R>(
   var alreadyFetched: Int = 0,
   var start: String? = null,
   var fetchNeeded: Boolean = true
-): RemoteQuery<R, Unit> {
+): RemoteQuery<ConnectionConfig, R, Unit> {
   override val resultClass: Class<out Unit>
     get() = UNIT_CLASS
 

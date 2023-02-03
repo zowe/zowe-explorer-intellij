@@ -11,7 +11,6 @@
 package eu.ibagroup.formainframe.config.connect
 
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
-import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
 
 /**
  * Class which represents credentials.
@@ -19,8 +18,7 @@ import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
  */
 class Credentials {
   @Column(unique = true)
-  @ForeignKey(foreignClass = ConnectionConfig::class)
-  var connectionConfigUuid = ""
+  var configUuid = ""
 
   @Column
   var username = ""
@@ -30,7 +28,7 @@ class Credentials {
 
   constructor()
   constructor(connectionConfigUuid: String, username: String, password: String) {
-    this.connectionConfigUuid = connectionConfigUuid
+    this.configUuid = connectionConfigUuid
     this.username = username
     this.password = password
   }
@@ -39,13 +37,13 @@ class Credentials {
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val that = other as Credentials
-    if (connectionConfigUuid != that.connectionConfigUuid) return false
+    if (configUuid != that.configUuid) return false
     return if (username != that.username) false else password == that.password
   }
 
   override fun hashCode(): Int {
     var result = super.hashCode()
-    result = 31 * result + connectionConfigUuid.hashCode()
+    result = 31 * result + configUuid.hashCode()
     result = 31 * result + username.hashCode()
     result = 31 * result + password.hashCode()
     return result
@@ -53,7 +51,7 @@ class Credentials {
 
   override fun toString(): String {
     return "Credentials{" +
-      "connectionConfigUuid='" + connectionConfigUuid + '\'' +
+      "connectionConfigUuid='" + configUuid + '\'' +
       ", username='" + username + '\'' +
       ", password='" + password + '\'' +
       '}'

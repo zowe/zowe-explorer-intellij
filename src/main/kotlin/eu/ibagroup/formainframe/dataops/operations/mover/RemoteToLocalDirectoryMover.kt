@@ -76,7 +76,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     if (attributes is RemoteDatasetAttributes) {
       val sourceQuery = UnitRemoteQueryImpl(LibraryQuery(file as MFVirtualFile), connectionConfig)
       val sourceFileFetchProvider = dataOpsManager
-        .getFileFetchProvider<LibraryQuery, RemoteQuery<LibraryQuery, Unit>, VFile>(
+        .getFileFetchProvider<LibraryQuery, RemoteQuery<ConnectionConfig, LibraryQuery, Unit>, VFile>(
           LibraryQuery::class.java, RemoteQuery::class.java, vFileClass
         )
       sourceFileFetchProvider.reload(sourceQuery, progressIndicator)
@@ -84,7 +84,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     } else if (attributes is RemoteUssAttributes) {
       val sourceQuery = UnitRemoteQueryImpl(UssQuery(attributes.path), connectionConfig)
       val sourceFileFetchProvider = dataOpsManager
-        .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, VFile>(
+        .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, VFile>(
           UssQuery::class.java, RemoteQuery::class.java, vFileClass
         )
       sourceFileFetchProvider.reload(sourceQuery, progressIndicator)
@@ -150,12 +150,13 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable? = null
     try {
-      val attributes = dataOpsManager.tryToGetAttributes(operation.source) as MFRemoteFileAttributes<*>
+      val attributes = dataOpsManager.tryToGetAttributes(operation.source) as MFRemoteFileAttributes<*, *>
       if (attributes.requesters.isEmpty()) {
         throw IllegalArgumentException("Cannot get system information of file ${operation.source.name}")
       }
       for (requester in attributes.requesters) {
-        throwable = proceedLocalMoveCopy(operation, requester.connectionConfig, progressIndicator)
+        val connectionConfig = requester.connectionConfig as ConnectionConfig
+        throwable = proceedLocalMoveCopy(operation, connectionConfig, progressIndicator)
         if (throwable != null) {
           throw throwable
         }

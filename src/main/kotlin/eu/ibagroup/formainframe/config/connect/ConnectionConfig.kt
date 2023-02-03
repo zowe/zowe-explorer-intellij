@@ -10,7 +10,6 @@
 
 package eu.ibagroup.formainframe.config.connect
 
-import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 import eu.ibagroup.r2z.annotations.ZVersion
 
@@ -18,13 +17,13 @@ import eu.ibagroup.r2z.annotations.ZVersion
  * Class which represents connection config.
  * Instances of this class are saved and can be reloaded after Intellij closed.
  */
-class ConnectionConfig : EntityWithUuid {
+class ConnectionConfig : ConnectionConfigBase {
 
   @Column
-  var name = ""
+  override var name = ""
 
   @Column
-  var url = ""
+  override var url = ""
 
   @Column
   var isAllowSelfSigned = true
@@ -32,7 +31,9 @@ class ConnectionConfig : EntityWithUuid {
   @Column
   var zVersion = ZVersion.ZOS_2_1
 
-  constructor() {}
+
+
+  constructor()
 
   constructor(
     uuid: String,

@@ -93,6 +93,6 @@ class CorrelatorReleaseJobParams(val correlator: String) : ReleaseJobOperationPa
 data class ReleaseJobOperation(
   override val request: ReleaseJobOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<ReleaseJobOperationParams, ReleaseJobRequest> {
+) : RemoteQuery<ConnectionConfig, ReleaseJobOperationParams, ReleaseJobRequest> {
   override val resultClass = ReleaseJobRequest::class.java
 }

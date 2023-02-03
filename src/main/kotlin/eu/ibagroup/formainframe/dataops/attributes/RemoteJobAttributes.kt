@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.dataops.attributes
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.r2z.Job
 import eu.ibagroup.r2z.XIBMDataType
@@ -26,7 +27,7 @@ data class RemoteJobAttributes(
   val jobInfo: Job,
   override val url: String,
   override val requesters: MutableList<JobsRequester>,
-) : MFRemoteFileAttributes<JobsRequester> {
+) : MFRemoteFileAttributes<ConnectionConfig, JobsRequester> {
   override val name: String
     get() = jobInfo.jobName
 

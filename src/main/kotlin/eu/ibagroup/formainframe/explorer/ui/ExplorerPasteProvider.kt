@@ -38,7 +38,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
 
 object ExplorerDataKeys {
-  val NODE_DATA_ARRAY = DataKey.create<Array<NodeData>>("NodeDataArrayKey")
+  val NODE_DATA_ARRAY = DataKey.create<Array<NodeData<*>>>("NodeDataArrayKey")
 }
 
 /**
@@ -49,7 +49,7 @@ object ExplorerDataKeys {
  */
 class ExplorerPasteProvider : PasteProvider {
   private val dataOpsManager = service<DataOpsManager>()
-  private val pastePredicate: (NodeData) -> Boolean = {
+  private val pastePredicate: (NodeData<*>) -> Boolean = {
     it.attributes?.isPastePossible ?: true
   }
 
@@ -63,7 +63,7 @@ class ExplorerPasteProvider : PasteProvider {
   private fun getNodesToRefresh(
     operations: List<MoveCopyOperation>,
     explorerView: FileExplorerView
-  ): List<ExplorerTreeNode<*>> {
+  ): List<ExplorerTreeNode<*, *>> {
     fun List<MoveCopyOperation>.collectByFile(
       fileChooser: (MoveCopyOperation) -> VirtualFile
     ): List<VirtualFile> {
@@ -100,10 +100,10 @@ class ExplorerPasteProvider : PasteProvider {
    * @param nodesToRefresh the nodes to refresh
    * @param explorerView the explorer view to clean "invalidate on expand" for nodes
    */
-  private fun refreshNodes(nodesToRefresh: List<ExplorerTreeNode<*>>, explorerView: FileExplorerView) {
+  private fun refreshNodes(nodesToRefresh: List<ExplorerTreeNode<*, *>>, explorerView: FileExplorerView) {
     nodesToRefresh
       .forEach { node ->
-        val parentNode = node.castOrNull<FileFetchNode<*, *, *, *, *>>() ?: return
+        val parentNode = node.castOrNull<FileFetchNode<*, *, *, *, *, *>>() ?: return
         parentNode.query ?: return
         parentNode.cleanCache(recursively = false, cleanBatchedQuery = true)
         cleanInvalidateOnExpand(parentNode, explorerView)

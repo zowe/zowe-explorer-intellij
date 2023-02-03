@@ -10,7 +10,9 @@
 
 package eu.ibagroup.formainframe.config.ws
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
+import eu.ibagroup.formainframe.utils.crudable.annotations.ForeignKey
 import eu.ibagroup.formainframe.utils.isTheSameAs
 
 /**
@@ -26,6 +28,10 @@ class FilesWorkingSetConfig : WorkingSetConfig {
   @Column
   var ussPaths: MutableCollection<UssPath> = mutableListOf()
 
+  @Column
+  @ForeignKey(ConnectionConfig::class)
+  override var connectionConfigUuid: String = ""
+
   constructor()
 
   constructor(
@@ -33,9 +39,10 @@ class FilesWorkingSetConfig : WorkingSetConfig {
     connectionConfigUuid: String,
     dsMasks: MutableCollection<DSMask>,
     ussPaths: MutableCollection<UssPath>
-  ) : super(name, connectionConfigUuid) {
+  ) : super(name) {
     this.dsMasks = dsMasks
     this.ussPaths = ussPaths
+    this.connectionConfigUuid = connectionConfigUuid
   }
 
   constructor(
@@ -44,9 +51,10 @@ class FilesWorkingSetConfig : WorkingSetConfig {
     connectionConfigUuid: String,
     dsMasks: MutableCollection<DSMask>,
     ussPaths: MutableCollection<UssPath>
-  ) : super(name, connectionConfigUuid, uuid) {
+  ) : super(name, uuid) {
     this.dsMasks = dsMasks
     this.ussPaths = ussPaths
+    this.connectionConfigUuid = connectionConfigUuid
   }
 
   override fun equals(other: Any?): Boolean {

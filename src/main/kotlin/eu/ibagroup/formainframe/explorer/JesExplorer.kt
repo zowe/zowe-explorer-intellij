@@ -12,18 +12,19 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
 import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.rwLocked
 import java.util.stream.Collectors
 
 
-class JesExplorerFactory : ExplorerFactory<JesWorkingSetImpl, JesExplorer> {
+class JesExplorerFactory : ExplorerFactory<ConnectionConfig, JesWorkingSetImpl, JesExplorer> {
   override fun buildComponent(): JesExplorer = JesExplorer()
 }
 
 /** JES Explorer implementation */
-class JesExplorer : AbstractExplorerBase<JesWorkingSetImpl, JesWorkingSetConfig>() {
+class JesExplorer : AbstractExplorerBase<ConnectionConfig, JesWorkingSetImpl, JesWorkingSetConfig>() {
   override val unitClass = JesWorkingSetImpl::class.java
   override val unitConfigClass = JesWorkingSetConfig::class.java
 

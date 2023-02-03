@@ -14,18 +14,19 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerTreeNodeRoot
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.utils.sendTopic
 import javax.swing.JComponent
 import kotlin.concurrent.withLock
 
-class FileExplorerContentProviderFactory : ExplorerContentProviderFactory<FileExplorer>() {
-  override fun buildComponent(): ExplorerContentProvider<FileExplorer> = FileExplorerContentProvider.getInstance()
+class FileExplorerContentProviderFactory : ExplorerContentProviderFactory<ConnectionConfig, FileExplorer>() {
+  override fun buildComponent() = FileExplorerContentProvider.getInstance()
 }
 
 /** Class to provide content for File Explorer */
-class FileExplorerContentProvider private constructor() : ExplorerContentProviderBase<FileExplorer>() {
+class FileExplorerContentProvider private constructor() : ExplorerContentProviderBase<ConnectionConfig, FileExplorer>() {
 
   override val explorer: FileExplorer = UIComponentManager.INSTANCE.getExplorer(FileExplorer::class.java)
   override val displayName: String = "File Explorer"
@@ -55,7 +56,7 @@ class FileExplorerContentProvider private constructor() : ExplorerContentProvide
   @Suppress("UNCHECKED_CAST")
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
     return FileExplorerView(
-      explorer as Explorer<FilesWorkingSet>,
+      explorer as Explorer<ConnectionConfig, FilesWorkingSet>,
       project,
       parentDisposable,
       contextMenu,

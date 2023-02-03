@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.utils
 import com.google.gson.Gson
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
+import eu.ibagroup.formainframe.config.ConfigDeclaration
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
@@ -21,6 +22,14 @@ import java.util.stream.StreamSupport
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 import kotlin.streams.toList
+
+
+fun loadConfigClass(className: String): Class<*>? {
+  val configClassLoaders = ConfigDeclaration.EP.extensionList.map { it.javaClass.classLoader }
+  return configClassLoaders.firstNotNullOfOrNull { classLoader ->
+    runCatching { classLoader.loadClass(className) }.getOrNull()
+  }
+}
 
 /** Transform the stream to the mutable list */
 fun <E> Stream<E>.toMutableList(): MutableList<E> {

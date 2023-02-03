@@ -38,7 +38,7 @@ abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : 
    */
   abstract fun buildCall(
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, ConnectionConfig>
+    requesterWithUrl: Pair<Requester<ConnectionConfig>, ConnectionConfig>
   ): Call<Void>
 
   /**

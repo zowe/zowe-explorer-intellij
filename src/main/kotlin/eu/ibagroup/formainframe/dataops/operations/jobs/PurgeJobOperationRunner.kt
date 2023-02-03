@@ -80,6 +80,6 @@ class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams
 data class PurgeJobOperation(
   override val request: PurgeJobOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<PurgeJobOperationParams, CancelJobPurgeOutRequest> {
+) : RemoteQuery<ConnectionConfig, PurgeJobOperationParams, CancelJobPurgeOutRequest> {
   override val resultClass = CancelJobPurgeOutRequest::class.java
 }

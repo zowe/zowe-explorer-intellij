@@ -13,7 +13,7 @@ package eu.ibagroup.formainframe.dataops.attributes
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 
 /** Interface to describe possible mainframe remote file attributes and interactions with them */
-interface MFRemoteFileAttributes<R : Requester> : FileAttributes {
+interface MFRemoteFileAttributes<Connection, R : Requester<Connection>> : FileAttributes {
 
   val url: String
 
@@ -21,16 +21,18 @@ interface MFRemoteFileAttributes<R : Requester> : FileAttributes {
 
 }
 
-interface Requester {
-  val connectionConfig: ConnectionConfig
+interface Requester<Connection> {
+  val connectionConfig: Connection
 }
 
 /**
  * Check if two files are used with the same connection config by their attributes
  * @param other the other's file attributes to compare with the source one attributes
  */
-inline fun <reified R : Requester> MFRemoteFileAttributes<R>.findCommonUrlConnections(other: MFRemoteFileAttributes<R>)
-        : Collection<Pair<R, ConnectionConfig>> {
+inline fun <reified R : Requester<ConnectionConfig>>
+    MFRemoteFileAttributes<ConnectionConfig, R>.findCommonUrlConnections(
+      other: MFRemoteFileAttributes<ConnectionConfig, R>
+    ): Collection<Pair<R, ConnectionConfig>> {
   val thisRequestersWithUrlConnection = requesters.map {
     Pair(it, it.connectionConfig)
   }

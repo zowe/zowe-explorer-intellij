@@ -18,12 +18,14 @@ import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.analytics.events.FileType
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -43,7 +45,7 @@ class AddMemberAction : AnAction() {
       currentNode = currentNode.parent ?: return
       if (currentNode !is LibraryNode) return
     }
-    if ((currentNode as ExplorerUnitTreeNodeBase<*, *>).unit is FilesWorkingSet) {
+    if ((currentNode as ExplorerUnitTreeNodeBase<ConnectionConfig, *, out ExplorerUnit<ConnectionConfig>>).unit is FilesWorkingSet) {
       val connectionConfig = currentNode.unit.connectionConfig
       val dataOpsManager = currentNode.explorer.componentManager.service<DataOpsManager>()
       if (currentNode is LibraryNode && connectionConfig != null) {

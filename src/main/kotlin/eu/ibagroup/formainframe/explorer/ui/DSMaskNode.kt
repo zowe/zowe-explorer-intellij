@@ -15,6 +15,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -28,10 +29,10 @@ import icons.ForMainframeIcons
 class DSMaskNode(
   dsMask: DSMask,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: FilesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<DSMask, DSMask, FilesWorkingSet>(
+) : RemoteMFFileFetchNode<ConnectionConfig, DSMask, DSMask, FilesWorkingSet>(
   dsMask, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
 
@@ -41,7 +42,7 @@ class DSMaskNode(
     presentation.setIcon(ForMainframeIcons.DatasetMask)
   }
 
-  override val query: RemoteQuery<DSMask, Unit>?
+  override val query: RemoteQuery<ConnectionConfig, DSMask, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
       return if (connectionConfig != null) {
@@ -67,7 +68,7 @@ class DSMaskNode(
   /**
    * Makes and returns title for fetch task.
    */
-  override fun makeFetchTaskTitle(query: RemoteQuery<DSMask, Unit>): String {
+  override fun makeFetchTaskTitle(query: RemoteQuery<ConnectionConfig, DSMask, Unit>): String {
     return "Fetching listings for ${query.request.mask}"
   }
 

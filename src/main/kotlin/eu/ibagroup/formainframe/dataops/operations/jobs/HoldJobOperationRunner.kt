@@ -118,6 +118,6 @@ class CorrelatorHoldJobParams(val correlator: String) : HoldJobOperationParams()
 data class HoldJobOperation(
   override val request: HoldJobOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<HoldJobOperationParams, HoldJobRequest> {
+) : RemoteQuery<ConnectionConfig, HoldJobOperationParams, HoldJobRequest> {
   override val resultClass = HoldJobRequest::class.java
 }

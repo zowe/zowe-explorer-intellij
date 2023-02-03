@@ -14,18 +14,19 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerRootNode
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.utils.sendTopic
 import javax.swing.JComponent
 import kotlin.concurrent.withLock
 
-class JesExplorerContentProviderFactory : ExplorerContentProviderFactory<JesExplorer>() {
-  override fun buildComponent(): ExplorerContentProvider<JesExplorer> = JesExplorerContentProvider()
+class JesExplorerContentProviderFactory : ExplorerContentProviderFactory<ConnectionConfig, JesExplorer>() {
+  override fun buildComponent(): ExplorerContentProvider<ConnectionConfig, JesExplorer> = JesExplorerContentProvider()
 }
 
 /** Class to provide content for JES Explorer */
-class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>(
+class JesExplorerContentProvider : ExplorerContentProviderBase<ConnectionConfig, JesExplorer>(
   contextMenu = ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.JESContextMenuGroup") as ActionGroup
 ) {
 
@@ -43,7 +44,7 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>(
    */
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
     return JesExplorerView(
-      explorer as Explorer<JesWorkingSetImpl>,
+      explorer as Explorer<ConnectionConfig, JesWorkingSetImpl>,
       project,
       parentDisposable,
       contextMenu,

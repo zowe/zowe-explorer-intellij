@@ -14,6 +14,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.ConfigService
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -80,7 +81,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
    * @param file object which need to clear/update
    * @param query request which need to be performed
    */
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<LibraryQuery, Unit>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>) {
     log.info("About to clean-up file=$file, query=$query")
     attributesService.clearAttributes(file)
     file.delete(this)
@@ -92,7 +93,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
    * @param progressIndicator indicator to reflect fetching process status
    */
   override fun fetchResponse(
-    query: RemoteQuery<LibraryQuery, Unit>,
+    query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>,
     progressIndicator: ProgressIndicator
   ): Collection<RemoteMemberAttributes> {
     log.info("Fetching DS Lists for $query")
@@ -108,7 +109,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
    * @see RemoteBatchedFileFetchProviderBase.fetchBatch
    */
   override fun fetchBatch(
-    query: RemoteQuery<LibraryQuery, Unit>,
+    query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>,
     progressIndicator: ProgressIndicator,
     start: String?
   ): Response<MembersList> {
@@ -138,7 +139,7 @@ class MemberFileFetchProvider(private val dataOpsManager: DataOpsManager) :
    * @see RemoteBatchedFileFetchProviderBase.buildAttributes
    */
   override fun buildAttributes(
-    query: RemoteQuery<LibraryQuery, Unit>,
+    query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>,
     batchedItem: BatchedItem<Member>
   ): RemoteMemberAttributes {
     return RemoteMemberAttributes(batchedItem.original, query.request.library)

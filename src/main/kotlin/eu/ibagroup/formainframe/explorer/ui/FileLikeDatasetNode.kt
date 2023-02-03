@@ -19,6 +19,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.toMutableSmartList
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
@@ -33,10 +34,10 @@ private val migratedIcon = AllIcons.FileTypes.Any_type
 class FileLikeDatasetNode(
   file: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  unit: ExplorerUnit,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
+  unit: ExplorerUnit<ConnectionConfig>,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(
+) : ExplorerUnitTreeNodeBase<ConnectionConfig, MFVirtualFile, ExplorerUnit<ConnectionConfig>>(
   file, project, parent, unit, treeStructure
 ), MFNode {
 

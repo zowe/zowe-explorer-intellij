@@ -72,7 +72,7 @@ fun ConnectionDialogState.initEmptyUuids(crudable: Crudable): ConnectionDialogSt
 fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
 
   val credentials = crudable.getByUniqueKey<Credentials>(this.uuid) ?: Credentials().apply {
-    this.connectionConfigUuid = this@toDialogState.uuid
+    this.configUuid = this@toDialogState.uuid
   }
   return ConnectionDialogState(
     connectionUuid = this.uuid,

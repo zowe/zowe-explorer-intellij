@@ -13,15 +13,16 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.common.message
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.explorer.Explorer
 
-class ErrorNode(
+class ErrorNode<Connection: ConnectionConfigBase>(
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  explorer: Explorer<*>,
+  parent: ExplorerTreeNode<Connection, *>,
+  explorer: Explorer<Connection, *>,
   treeStructure: ExplorerTreeStructureBase,
   override var text: String = message("title.error")
-) : InfoNodeBase(project, parent, explorer, treeStructure) {
+) : InfoNodeBase<Connection>(project, parent, explorer, treeStructure) {
 
   override val textAttributes: SimpleTextAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES
 

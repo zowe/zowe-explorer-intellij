@@ -22,7 +22,8 @@ data class ConfigState(
   var connections: MutableList<ConnectionConfig> = mutableListOf(),
   var filesWorkingSets: MutableList<FilesWorkingSetConfig> = mutableListOf(),
   var jesWorkingSets: MutableList<JesWorkingSetConfig> = mutableListOf(),
-  var settings: SettingsState = SettingsState()
+  var settings: SettingsState = SettingsState(),
+  var migrated: Boolean = false
 )
 
 /**

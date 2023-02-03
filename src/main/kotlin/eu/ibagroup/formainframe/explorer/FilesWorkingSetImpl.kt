@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.UssPath
@@ -22,16 +23,17 @@ import kotlin.concurrent.withLock
 /** USS files and datasets working set implementation */
 class FilesWorkingSetImpl(
   override val uuid: String,
-  fileExplorer: AbstractExplorerBase<FilesWorkingSetImpl, FilesWorkingSetConfig>,
-  private val workingSetConfigProvider: (String) -> FilesWorkingSetConfig?,
+  fileExplorer: AbstractExplorerBase<ConnectionConfig, FilesWorkingSetImpl, FilesWorkingSetConfig>,
+  workingSetConfigProvider: (String) -> FilesWorkingSetConfig?,
   parentDisposable: Disposable
-) : WorkingSetBase<DSMask, WorkingSet<*>, FilesWorkingSetConfig>(
+) : WorkingSetBase<ConnectionConfig, DSMask, FilesWorkingSetConfig>(
   uuid,
   fileExplorer,
   workingSetConfigProvider
 ), FilesWorkingSet {
 
   override val wsConfigClass = FilesWorkingSetConfig::class.java
+  override val connectionConfigClass = ConnectionConfig::class.java
 
   override fun FilesWorkingSetConfig.masks() = this.dsMasks
 

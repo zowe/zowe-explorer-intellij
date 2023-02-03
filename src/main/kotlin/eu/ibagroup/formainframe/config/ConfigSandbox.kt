@@ -42,6 +42,8 @@ interface ConfigSandbox {
       get() = ApplicationManager.getApplication().getService(ConfigSandbox::class.java)
   }
 
+  fun <T> registerConfigClass(clazz: Class<out T>)
+
   fun updateState()
 
   fun <T : Any> apply(clazz: Class<out T>)

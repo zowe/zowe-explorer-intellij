@@ -114,6 +114,6 @@ class CorrelatorGetJclRecordsParams(val jobCorrelator: String) : GetJclRecordsOp
 data class GetJclRecordsOperation(
   override val request: GetJclRecordsOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<GetJclRecordsOperationParams, ByteArray> {
+) : RemoteQuery<ConnectionConfig, GetJclRecordsOperationParams, ByteArray> {
   override val resultClass = ByteArray::class.java
 }

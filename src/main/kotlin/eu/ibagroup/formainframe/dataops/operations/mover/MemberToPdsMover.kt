@@ -62,7 +62,7 @@ class MemberToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOp
    */
   override fun buildCall(
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, ConnectionConfig>
+    requesterWithUrl: Pair<Requester<ConnectionConfig>, ConnectionConfig>
   ): Call<Void> {
     val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
     var memberName: String

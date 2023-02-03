@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops.operations.mover
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -82,7 +83,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
       val sourceQuery = UnitRemoteQueryImpl(UssQuery(sourceAttributes.path), sourceConnectionConfig)
       val sourceFileFetchProvider = dataOpsManager
-        .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, MFVirtualFile>(
+        .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
           UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
         )
       sourceFileFetchProvider.reload(sourceQuery)

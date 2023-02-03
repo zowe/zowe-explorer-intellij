@@ -117,7 +117,7 @@ class RenameAction : AnAction() {
     file: VirtualFile,
     attributes: FileAttributes,
     newName: String,
-    node: ExplorerTreeNode<*>
+    node: ExplorerTreeNode<*, *>
   ) {
     runBackgroundableTask(
       title = "Renaming file ${file.name} to $newName",

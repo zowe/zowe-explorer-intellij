@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 
@@ -25,7 +26,7 @@ abstract class JobsFilterAction : AnAction() {
    * Is node conforms to the JesFilterNode type
    * @param node the node to check
    */
-  open fun isNodeConformsToType(node: ExplorerTreeNode<*>?): Boolean {
+  open fun isNodeConformsToType(node: ExplorerTreeNode<ConnectionConfig, *>?): Boolean {
     return node is JesFilterNode
   }
 
@@ -43,7 +44,7 @@ abstract class JobsFilterAction : AnAction() {
   /** Finds JES working set units for selected nodes in explorer */
   protected fun getUnits(view: JesExplorerView): List<JesWorkingSet> {
     return view.mySelectedNodesData.map { it.node }
-      .filterIsInstance<ExplorerUnitTreeNodeBase<*, JesWorkingSet>>()
+      .filterIsInstance<ExplorerUnitTreeNodeBase<ConnectionConfig, *, JesWorkingSet>>()
       .map { it.unit }
       .distinct()
   }
