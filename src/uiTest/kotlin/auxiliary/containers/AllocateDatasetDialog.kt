@@ -40,7 +40,8 @@ open class AllocateDatasetDialog(
         directory: Int,
         recordFormat: String,
         recordLength: Int,
-        blockSize: Int
+        blockSize: Int,
+        averageBlockLength: Int = 0
     ) {
         findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']"))[0].text = datasetName
         findAll<ComboBoxFixture>(byXpath("//div[@class='ComboBox']"))[0].selectItem(datasetOrganization)
@@ -56,14 +57,16 @@ open class AllocateDatasetDialog(
         if (datasetOrganization == "PS") {
             datasetTextParams[3].text = recordLength.toString()
             datasetTextParams[4].text = blockSize.toString()
+            datasetTextParams[5].text = averageBlockLength.toString()
         } else {
             datasetTextParams[3].text = directory.toString()
             datasetTextParams[4].text = recordLength.toString()
             datasetTextParams[5].text = blockSize.toString()
+            datasetTextParams[6].text = averageBlockLength.toString()
         }
     }
 
-    //TODO add allocate dataset with advanced parameters
+    //TODO add allocate dataset with advanced parameters when switched tp mock
 
     /**
      * The close function, which is used to close the dialog in the tear down method.
