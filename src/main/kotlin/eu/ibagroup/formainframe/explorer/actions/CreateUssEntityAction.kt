@@ -104,7 +104,7 @@ abstract class CreateUssEntityAction : AnAction() {
               )
 
               val fileFetchProvider = dataOpsManager
-                .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, MFVirtualFile>(
+                .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
                   UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
                 )
               ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }
