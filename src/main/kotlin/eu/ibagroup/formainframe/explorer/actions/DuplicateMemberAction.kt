@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
@@ -53,7 +54,7 @@ class DuplicateMemberAction : AnAction() {
    * @throws any throwable during the processing of the request
    * @return Void
    */
-  private fun runDuplicateOperation(project : Project, view : ExplorerTreeView<*,*>, selectedNode : NodeData, newName: String) {
+  private fun runDuplicateOperation(project : Project, view : ExplorerTreeView<ConnectionConfig, *,*>, selectedNode : NodeData<ConnectionConfig>, newName: String) {
     val dataOpsManager = view.explorer.componentManager.getService(DataOpsManager::class.java)
     val attributes = selectedNode.attributes ?: return
     val file = selectedNode.file ?: return

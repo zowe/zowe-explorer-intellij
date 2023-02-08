@@ -115,7 +115,7 @@ class PurgeJobAction : AnAction() {
    * @param jobInfo - job info for particular job
    * @return Void
    */
-  private fun waitJobReleasedAndRefresh(jobParentNode: ExplorerTreeNode<*>, jobInfo: Job) {
+  private fun waitJobReleasedAndRefresh(jobParentNode: ExplorerTreeNode<ConnectionConfig, *>, jobInfo: Job) {
     if (jobParentNode is JesFilterNode) {
       val query = jobParentNode.query
       if (query != null) {
