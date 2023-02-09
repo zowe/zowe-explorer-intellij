@@ -90,7 +90,7 @@ tasks {
     untilBuild.set("223.*")
     changeNotes.set(
       """
-      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version < 2022.3
+      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.3
       <br>
       <br>
       <b>New features:</b>
