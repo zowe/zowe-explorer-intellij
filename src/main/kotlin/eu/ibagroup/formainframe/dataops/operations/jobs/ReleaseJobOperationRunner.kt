@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.ReleaseJobRequest
 import eu.ibagroup.r2z.ReleaseJobRequestBody
@@ -31,6 +32,8 @@ class ReleaseJobOperationRunnerFactory : OperationRunnerFactory {
     return ReleaseJobOperationRunner()
   }
 }
+
+private val log = log<ReleaseJobOperationRunner>()
 
 /** Release operation runner */
 class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJobRequest> {
@@ -54,6 +57,7 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
 
     val response: Response<ReleaseJobRequest> = when (operation.request) {
       is BasicReleaseJobParams -> {
+        log.info("Releasing job ${operation.request.jobName}(${operation.request.jobId})")
         api<JESApi>(operation.connectionConfig).releaseJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobName = operation.request.jobName,
@@ -62,6 +66,7 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
         ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorReleaseJobParams -> {
+        log.info("Releasing job ${operation.request.correlator}")
         api<JESApi>(operation.connectionConfig).releaseJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator,
@@ -77,6 +82,7 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
         "Cannot release job on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Job has been released successfully")
     return body
   }
 }

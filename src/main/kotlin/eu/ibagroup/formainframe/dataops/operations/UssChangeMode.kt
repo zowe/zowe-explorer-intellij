@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.ChangeMode
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -29,6 +30,8 @@ class UssChangeModeFactory : OperationRunnerFactory {
     return UssChangeMode()
   }
 }
+
+private val log = log<UssChangeModeOperation>()
 
 /**
  * Data class which represents input parameters for uss change mode operation
@@ -68,6 +71,7 @@ class UssChangeMode : OperationRunner<UssChangeModeOperation, Unit> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
+    log.info("Changing file mode ${operation.request.path}")
     val response = api<DataAPI>(operation.connectionConfig).changeFileMode(
       authorizationToken = operation.connectionConfig.authToken,
       filePath = FilePath(operation.request.path),
@@ -79,6 +83,7 @@ class UssChangeMode : OperationRunner<UssChangeModeOperation, Unit> {
         "Cannot change file mode on ${operation.request.path}"
       )
     }
+    log.info("File mode has been changed successfully")
   }
 
   override fun canRun(operation: UssChangeModeOperation): Boolean {

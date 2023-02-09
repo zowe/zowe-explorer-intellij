@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CreateUssFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -29,6 +30,8 @@ class UssAllocatorFactory : OperationRunnerFactory {
     return UssAllocator()
   }
 }
+
+private val log = log<UssAllocationOperation>()
 
 /**
  * Data class which represents input parameters for uss allocation operation
@@ -69,6 +72,7 @@ class UssAllocator : Allocator<UssAllocationOperation> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
+    log.info("Allocating USS file ${operation.request.fileName}")
     val response = api<DataAPI>(operation.connectionConfig).createUssFile(
       authorizationToken = operation.connectionConfig.authToken,
       filePath = FilePath(operation.request.path + "/" + operation.request.fileName),
@@ -80,5 +84,6 @@ class UssAllocator : Allocator<UssAllocationOperation> {
         "Cannot allocate file ${operation.request.fileName} on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Allocate operation has been completed successfully")
   }
 }

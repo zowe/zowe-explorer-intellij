@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.applyIfNotNull
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -38,6 +39,8 @@ class CrossSystemPdsToUssDirMoverFactory : OperationRunnerFactory {
     return CrossSystemPdsToUssDirMover(dataOpsManager)
   }
 }
+
+private val log = log<CrossSystemPdsToUssDirMover>()
 
 /**
  * Implements copying partitioned data set between different systems.
@@ -107,6 +110,7 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
       val destConnectionConfig = destAttributes.requesters.firstOrNull()?.connectionConfig
         ?: throw IllegalStateException("Cannot find connection for dest USS folder '${destAttributes.path}'.")
 
+      log.info("Trying to move PDS ${operation.source.name} from ${sourceConnectionConfig.url} to USS directory ${operation.destinationAttributes.path} on ${destConnectionConfig.url}")
       proceedPdsMove(sourceConnectionConfig, destConnectionConfig, operation, progressIndicator)
     } catch (t: Throwable) {
       t
@@ -114,5 +118,6 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
     if (throwable != null) {
       throw throwable
     }
+    log.info("Dataset has been moved successfully")
   }
 }

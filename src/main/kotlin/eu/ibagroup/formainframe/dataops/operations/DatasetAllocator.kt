@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.config.Presets
 import eu.ibagroup.formainframe.explorer.config.getSampleJclMemberContent
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.*
 import java.lang.Exception
 
@@ -40,6 +41,8 @@ data class DatasetAllocationOperation(
   override val connectionConfig: ConnectionConfig,
 ) : RemoteUnitOperation<DatasetAllocationParams>
 
+private val log = log<DatasetAllocator>()
+
 /**
  * Class which represents dataset allocator operation runner
  */
@@ -57,6 +60,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
+    log.info("Allocating ${operation.request.datasetName}")
     val datasetResponse = api<DataAPI>(operation.connectionConfig).createDataset(
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.datasetName,
@@ -68,12 +72,14 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
         "Cannot allocate dataset ${operation.request.datasetName} on ${operation.connectionConfig.name}"
       )
     } else {
+      log.info("Allocate operation has been completed successfully")
       if (operation.request.presets != Presets.CUSTOM_DATASET
         && operation.request.presets != Presets.SEQUENTIAL_DATASET
         && operation.request.presets != Presets.PDS_DATASET
       ) {
         // Allocate member
         var throwable: Throwable? = null
+        log.info("Creating sample member ${operation.request.memberName} in ${operation.request.datasetName}")
         runCatching {
           val memberResponse = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
             authorizationToken = operation.connectionConfig.authToken,
@@ -88,6 +94,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
                   "on ${operation.connectionConfig.name}"
             )
           }
+          log.info("${operation.request.memberName} member has been created successfully")
         }.onFailure { if(throwable != null) throw Throwable(cause = throwable) else throw Exception("Error allocating a new sample member ${operation.request.memberName}") }
       }
     }

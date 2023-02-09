@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.attributes.USS_DELIMITER
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CopyDataUSS
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -35,6 +36,8 @@ class SequentialToUssFolderFileMoverFactory : OperationRunnerFactory {
     return SequentialToUssFolderMover(dataOpsManager)
   }
 }
+
+private val log = log<SequentialToUssFolderMover>()
 
 /**
  * Implements copying of sequential data set to uss directory inside 1 system.
@@ -67,6 +70,7 @@ class SequentialToUssFolderMover(dataOpsManager: DataOpsManager) : DefaultFileMo
     val destinationAttributes = operation.destinationAttributes as RemoteUssAttributes
     val dataset = operation.sourceAttributes as RemoteDatasetAttributes
     val to = destinationAttributes.path + USS_DELIMITER + (operation.newName ?: dataset.name)
+    log.info("Moving sequential dataset ${dataset.name} to USS folder ${destinationAttributes.path} on ${requesterWithUrl.second.url}")
     return api<DataAPI>(
       url = requesterWithUrl.second.url,
       isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned

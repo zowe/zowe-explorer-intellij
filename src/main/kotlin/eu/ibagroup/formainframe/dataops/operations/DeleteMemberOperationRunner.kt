@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 
 /**
@@ -27,6 +28,8 @@ class DeleteMemberOperationRunnerFactory: OperationRunnerFactory {
     return DeleteMemberOperationRunner()
   }
 }
+
+private val log = log<DeleteMemberOperationRunner>()
 
 /**
  * Class which represents dataset member delete operation runner.
@@ -48,6 +51,7 @@ class DeleteMemberOperationRunner: OperationRunner<DeleteMemberOperation, Unit> 
   override fun run(operation: DeleteMemberOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
 
+    log.info("Deleting member ${operation.request.datasetName}(${operation.request.memberName})")
     val response = api<DataAPI>(operation.connectionConfig).deleteDatasetMember(
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.datasetName,
@@ -61,6 +65,7 @@ class DeleteMemberOperationRunner: OperationRunner<DeleteMemberOperation, Unit> 
             "on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Delete operation has been completed successfully")
   }
 
   /**

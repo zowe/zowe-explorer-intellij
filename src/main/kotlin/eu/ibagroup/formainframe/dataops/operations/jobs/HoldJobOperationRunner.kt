@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.HoldJobRequest
 import eu.ibagroup.r2z.HoldJobRequestBody
 import eu.ibagroup.r2z.JESApi
@@ -33,6 +34,8 @@ class HoldJobOperationRunnerFactory : OperationRunnerFactory {
     return HoldJobOperationRunner()
   }
 }
+
+private val log = log<HoldJobOperationRunner>()
 
 /**
  * Class which represents hold job operation runner
@@ -66,6 +69,7 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
 
     val response: Response<HoldJobRequest> = when (operation.request) {
       is BasicHoldJobParams -> {
+        log.info("Holding job ${operation.request.jobName}(${operation.request.jobId})")
         api<JESApi>(operation.connectionConfig).holdJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobName = operation.request.jobName,
@@ -74,6 +78,7 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
         ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorHoldJobParams -> {
+        log.info("Holding job ${operation.request.correlator}")
         api<JESApi>(operation.connectionConfig).holdJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator,
@@ -89,6 +94,7 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
         "Cannot hold job on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Job has been held successfully")
     return body
   }
 }

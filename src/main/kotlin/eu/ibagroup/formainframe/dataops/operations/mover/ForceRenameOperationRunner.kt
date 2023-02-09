@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.operations.ForceRenameOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
 import eu.ibagroup.r2z.DataAPI
@@ -33,6 +34,8 @@ class ForceRenameOperationRunnerFactory : OperationRunnerFactory {
     return ForceRenameOperationRunner(dataOpsManager)
   }
 }
+
+private val log = log<ForceRenameOperationRunner>()
 
 /**
  * Base class implementation for running a force rename operation
@@ -69,6 +72,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
     attributes.requesters.map { requester ->
       try {
         progressIndicator.checkCanceled()
+        log.info("Trying to force rename $fileName to ${operation.newName}")
         if (!sourceFile.isDirectory) {
           sourceFile.parent?.let {
             dataOpsManager.performOperation(
@@ -124,5 +128,6 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
         throw RuntimeException(e)
       }
     }
+    log.info("Rename operation has been completed successfully")
   }
 }

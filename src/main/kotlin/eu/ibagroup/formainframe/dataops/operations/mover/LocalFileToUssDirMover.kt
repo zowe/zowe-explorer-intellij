@@ -19,10 +19,7 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -38,6 +35,8 @@ class LocalFileToUssDirMoverFactory : OperationRunnerFactory {
     return LocalFileToUssDirMover(dataOpsManager)
   }
 }
+
+private val log = log<LocalFileToUssDirMover>()
 
 /**
  * Implements copying of file from local file system to remote uss directory.
@@ -83,6 +82,7 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       if (sourceFile.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY) else XIBMDataType(XIBMDataType.Type.TEXT)
 
 
+    log.info("Trying to move local file ${sourceFile.name} to USS directory ${destAttributes.path} on ${destConnectionConfig.url}")
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(
       authorizationToken = destConnectionConfig.authToken,
       filePath = FilePath(pathToFile),
@@ -126,5 +126,6 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     if (throwable != null) {
       throw throwable
     }
+    log.info("Local file has been moved successfully")
   }
 }

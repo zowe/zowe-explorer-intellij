@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 
 /**
@@ -27,6 +28,8 @@ class MemberAllocatorFactory : OperationRunnerFactory {
     return MemberAllocator()
   }
 }
+
+private val log = log<MemberAllocator>()
 
 /**
  * Data class which represents member allocation operation object
@@ -55,6 +58,7 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
+    log.info("Allocating member ${operation.request.memberName} to ${operation.request.datasetName}")
     val request = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.datasetName,
@@ -68,6 +72,7 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
             "on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Member has been allocated successfully")
   }
 }
 

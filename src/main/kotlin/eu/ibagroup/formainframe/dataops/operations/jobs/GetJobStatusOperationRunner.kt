@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.Job
 import retrofit2.Response
@@ -42,6 +43,7 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, Job> 
 
     val response: Response<Job> = when (operation.request) {
       is GetJobStatusOperationParams.BasicStatusParams -> {
+        log.info("Getting job ${operation.request.jobName}(${operation.request.jobId}) status")
         api<JESApi>(operation.connectionConfig).getJob(
           basicCredentials = operation.connectionConfig.authToken,
           jobName = operation.request.jobName,
@@ -49,6 +51,7 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, Job> 
         ).cancelByIndicator(progressIndicator).execute()
       }
       is GetJobStatusOperationParams.CorrelatorStatusParams -> {
+        log.info("Getting job ${operation.request.correlator} status")
         api<JESApi>(operation.connectionConfig).getJob(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator
@@ -63,6 +66,7 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, Job> 
         "Cannot print job status on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Status has been got successfully")
     return body
   }
 
@@ -76,6 +80,8 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, Job> 
     return true
   }
 }
+
+private val log = log<GetJclRecordsOperationRunner>()
 
 /**
  * Class which represents factory for get job status operation runner

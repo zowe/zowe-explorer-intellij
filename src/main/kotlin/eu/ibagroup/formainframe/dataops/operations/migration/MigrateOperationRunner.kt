@@ -22,6 +22,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HMigrate
 
@@ -30,6 +31,8 @@ import eu.ibagroup.r2z.HMigrate
  * @param file file that is needed to be migrated
  */
 data class MigrateOperationParams(val file: VirtualFile)
+
+private val log = log<MigrateOperationRunner>()
 
 /**
  * Class which represents migrate operation runner
@@ -60,6 +63,7 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
    */
   override fun run(operation: MigrateOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
+    log.info("Migrating ${operation.request.file.name} on ${operation.connectionConfig.name}")
     val response = api<DataAPI>(operation.connectionConfig).migrateDataset(
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.file.name,
@@ -71,6 +75,7 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
         "Cannot migrate dataset ${operation.request.file.name} on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Migrate operation has been completed successfully")
   }
 }
 

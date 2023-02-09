@@ -16,6 +16,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -32,6 +33,8 @@ class RemoteToLocalFileMoverFactory : OperationRunnerFactory {
     return RemoteToLocalFileMover(dataOpsManager)
   }
 }
+
+private val log = log<RemoteToLocalFileMover>()
 
 /**
  * Implements copying (downloading) of remote uss file to local file system.
@@ -82,6 +85,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     }
     contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
 
+    log.info("Trying to move ${sourceFile.name} from ${operation.source.path} to local file ${destFile.path}")
     runWriteActionInEdtAndWait {
       if (operation.forceOverwriting) {
         destFile.children.filter { it.name === sourceFile.name && !it.isDirectory }.forEach { it.delete(this) }
@@ -110,5 +114,6 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     if (throwable != null) {
       throw throwable
     }
+    log.info("Remote file has been moved successfully")
   }
 }

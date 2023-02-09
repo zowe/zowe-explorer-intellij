@@ -21,6 +21,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HRecall
 
@@ -54,6 +55,7 @@ class RecallOperationRunner : MigrationRunner<RecallOperation> {
    */
   override fun run(operation: RecallOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
+    log.info("Recalling ${operation.request.file.name} on ${operation.connectionConfig.name}")
     val response = api<DataAPI>(operation.connectionConfig).recallMigratedDataset(
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.file.name,
@@ -65,8 +67,11 @@ class RecallOperationRunner : MigrationRunner<RecallOperation> {
         "Cannot recall dataset ${operation.request.file.name} on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Recall operation has been completed successfully")
   }
 }
+
+private val log = log<RecallOperationRunner>()
 
 /**
  * Class which represents factory for recall operation runner. Defined in plugin.xml

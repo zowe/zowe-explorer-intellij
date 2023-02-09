@@ -20,10 +20,7 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.addNewLine
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.XIBMDataType
@@ -38,6 +35,8 @@ class CrossSystemUssFileToPdsMoverFactory : OperationRunnerFactory {
     return CrossSystemUssFileToPdsMover(dataOpsManager)
   }
 }
+
+private val log = log<CrossSystemUssFileToPdsMover>()
 
 /**
  * Implements copying of uss file to partitioned data set between different systems.
@@ -72,6 +71,7 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
       ?: return Throwable("No connection for destination directory found.")
 
+    log.info("Trying to move USS file ${sourceFile.name} to PDS ${destAttributes.name} on ${destConnectionConfig.url}")
     if (sourceFile is MFVirtualFile) {
       val contentSynchronizer = dataOpsManager.getContentSynchronizer(sourceFile)
       val syncProvider = DocumentedSyncProvider(sourceFile)
@@ -139,5 +139,6 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
     if (throwable != null) {
       throw throwable
     }
+    log.info("USS file has been moved successfully")
   }
 }

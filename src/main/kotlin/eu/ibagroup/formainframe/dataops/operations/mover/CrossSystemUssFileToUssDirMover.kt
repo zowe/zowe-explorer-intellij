@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.applyIfNotNull
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -38,6 +39,8 @@ class CrossSystemUssFileToUssDirMoverFactory : OperationRunnerFactory {
     return CrossSystemUssFileToUssDirMover(dataOpsManager)
   }
 }
+
+private val log = log<CrossSystemUssFileToUssDirMover>()
 
 /**
  * Implements copying of uss file to uss directory between different systems.
@@ -79,6 +82,7 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
     val destConnectionConfig = destAttributes.requesters.firstOrNull()?.connectionConfig
       ?: return IllegalArgumentException("Cannot find connection configuration for file \"${op.destination.name}\"")
 
+    log.info("Trying to move USS file ${sourceAttributes.name} to USS directory ${destAttributes.path} on ${destConnectionConfig.url}")
     if (sourceAttributes.isSymlink) {
       return IllegalArgumentException(
         "Impossible to move symlink. ${op.source.name} is symlink to ${sourceAttributes.symlinkTarget}." +
@@ -129,5 +133,6 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
     if (throwable != null) {
       throw throwable
     }
+    log.info("USS file has been moved successfully")
   }
 }

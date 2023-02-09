@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CopyDataZOS
 import eu.ibagroup.r2z.DataAPI
 import retrofit2.Call
@@ -35,6 +36,8 @@ class MemberToPdsMoverFactory : OperationRunnerFactory {
     return MemberToPdsMover(dataOpsManager)
   }
 }
+
+private val log = log<MemberToPdsMover>()
 
 /**
  * Implements copying of member to partitioned data set inside 1 system.
@@ -71,6 +74,7 @@ class MemberToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOp
       dataOpsManager.tryToGetAttributes(parentFile)?.name
         ?: throw FileNotFoundException("Cannot find attributes for ${parentFile.path}")
     }
+    log.info("Moving member $memberName to PDS ${destinationAttributes.name} on ${requesterWithUrl.second.url}")
     return api<DataAPI>(
       url = requesterWithUrl.second.url,
       isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned

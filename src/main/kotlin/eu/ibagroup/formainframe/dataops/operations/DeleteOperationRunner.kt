@@ -24,6 +24,7 @@ import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.findAnyNullable
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -34,6 +35,8 @@ class DeleteRunnerFactory : OperationRunnerFactory {
     return DeleteOperationRunner(dataOpsManager)
   }
 }
+
+private val log = log<DeleteOperationRunner>()
 
 class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   OperationRunner<DeleteOperation, Unit> {
@@ -63,11 +66,13 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         attr.requesters.stream().map {
           try {
             progressIndicator.checkCanceled()
+            log.info("Deleting dataset ${attr.name}")
             val response = api<DataAPI>(it.connectionConfig).deleteDataset(
               authorizationToken = it.connectionConfig.authToken,
               datasetName = attr.name
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
+              log.info("Dataset has been deleted successfully")
               runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
               true
             } else {
@@ -91,12 +96,14 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
           libraryAttributes.requesters.stream().map {
             try {
               progressIndicator.checkCanceled()
+              log.info("Deleting member ${attr.name} from ${libraryAttributes.name}")
               val response = api<DataAPI>(it.connectionConfig).deleteDatasetMember(
                 authorizationToken = it.connectionConfig.authToken,
                 datasetName = libraryAttributes.name,
                 memberName = attr.name
               ).cancelByIndicator(progressIndicator).execute()
               if (response.isSuccessful) {
+                log.info("Member has been deleted successfully")
                 runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
                 true
               } else {
@@ -123,12 +130,14 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         attr.requesters.stream().map {
           try {
             progressIndicator.checkCanceled()
+            log.info("Deleting USS file ${attr.path}")
             val response = api<DataAPI>(it.connectionConfig).deleteUssFile(
               authorizationToken = it.connectionConfig.authToken,
               filePath = FilePath(attr.path),
               xIBMOption = XIBMOption.RECURSIVE
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
+              log.info("USS file has been deleted successfully")
               // TODO: clarify issue with removing from MF Virtual file system
               // runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
               true

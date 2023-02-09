@@ -21,6 +21,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.getParentsChain
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CopyDataUSS
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -37,6 +38,8 @@ class UssToUssFileMoverFactory : OperationRunnerFactory {
     return UssToUssFileMover(dataOpsManager)
   }
 }
+
+private val log = log<UssToUssFileMover>()
 
 /**
  * Implements copying of uss file to uss directory inside 1 system
@@ -103,6 +106,7 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {
       try {
+        log.info("Trying to move USS file ${operation.source.name} to USS directory ${operation.destination.path} on ${requester.connectionConfig.url}")
         val (call, from, to) = makeCall(requester.connectionConfig, operation, progressIndicator)
         val operationName = if (operation.isMove) "move" else "copy"
         val response: Response<Void> = call.execute()
@@ -117,6 +121,7 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     if (throwable != null) {
       throw throwable
     }
+    log.info("USS file has been moved successfully")
   }
 
 }

@@ -10,6 +10,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CancelJobPurgeOutRequest
 import eu.ibagroup.r2z.JESApi
 import retrofit2.Response
@@ -20,6 +21,8 @@ class PurgeJobOperationRunnerFactory : OperationRunnerFactory {
     return PurgeJobOperationRunner()
   }
 }
+
+private val log = log<PurgeJobOperationRunner>()
 
 /** Purge operation runner */
 class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurgeOutRequest> {
@@ -43,6 +46,7 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
 
     val response: Response<CancelJobPurgeOutRequest> = when (operation.request) {
       is BasicPurgeJobParams -> {
+        log.info("Purging job ${operation.request.jobName}(${operation.request.jobId})")
         api<JESApi>(operation.connectionConfig).cancelJobPurgeOutRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobName = operation.request.jobName,
@@ -50,6 +54,7 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
         ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorPurgeJobParams -> {
+        log.info("Purging job ${operation.request.correlator}")
         api<JESApi>(operation.connectionConfig).cancelJobPurgeOutRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator
@@ -64,6 +69,7 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
         "Cannot purge job on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Job has been purged successfully")
     return body
   }
 }

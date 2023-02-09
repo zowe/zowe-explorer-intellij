@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.*
 import okhttp3.ResponseBody
 
@@ -31,6 +32,8 @@ class ChangeFileTagOperationRunnerFactory : OperationRunnerFactory {
     return ChangeFileTagOperationRunner()
   }
 }
+
+private val log = log<ChangeFileTagOperationRunner>()
 
 /**
  * Class which represents change file tag operation runner.
@@ -52,6 +55,7 @@ class ChangeFileTagOperationRunner: OperationRunner<ChangeFileTagOperation, Resp
   override fun run(operation: ChangeFileTagOperation, progressIndicator: ProgressIndicator): ResponseBody {
     progressIndicator.checkCanceled()
 
+    log.info("Changing file tag for ${operation.request.filePath}")
     val response = api<DataAPI>(operation.connectionConfig).changeFileTag(
       authorizationToken = operation.connectionConfig.authToken,
       body = ChangeTag(
@@ -68,6 +72,7 @@ class ChangeFileTagOperationRunner: OperationRunner<ChangeFileTagOperation, Resp
         "Cannot change file tag for ${operation.request.filePath} on ${operation.connectionConfig.name}"
       )
     }
+    log.info("File tag has been changed successfully")
     return body
   }
 

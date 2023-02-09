@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.CopyDataUSS
 import eu.ibagroup.r2z.DataAPI
@@ -37,6 +38,8 @@ class PdsToUssFolderMoverFactory : OperationRunnerFactory {
     return PdsToUssFolderMover(dataOpsManager, MFVirtualFile::class.java)
   }
 }
+
+private val log = log<PdsToUssFolderMover<VirtualFile>>()
 
 /**
  * Implements copying partitioned data set inside 1 system.
@@ -90,6 +93,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {
       try {
+        log.info("Trying to move PDS ${operation.source.name} to USS folder ${operation.destination.path} on ${requester.connectionConfig.url}")
         throwable = proceedPdsMove(requester.connectionConfig, requester.connectionConfig, operation, progressIndicator)
         break
       } catch (t: Throwable) {
@@ -99,5 +103,6 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     if (throwable != null) {
       throw throwable
     }
+    log.info("PDS has been moved successfully")
   }
 }

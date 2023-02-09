@@ -16,6 +16,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.SystemsApi
 import eu.ibagroup.r2z.SystemsResponse
 
@@ -27,6 +28,8 @@ class InfoOperationRunnerFactory : OperationRunnerFactory {
     return InfoOperationRunner()
   }
 }
+
+private val log = log<InfoOperationRunner>()
 
 /**
  * Class which represents info operation runner
@@ -49,6 +52,7 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
    * @return SystemsResponse serialized object (body of the request)
    */
   override fun run(operation: InfoOperation, progressIndicator: ProgressIndicator): SystemsResponse {
+    log.info("Verifying credentials on ${operation.connectionConfig.url}")
     val response = api<SystemsApi>(connectionConfig = operation.connectionConfig)
       .getSystems(operation.connectionConfig.authToken)
       .cancelByIndicator(progressIndicator)
@@ -56,6 +60,7 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
     if (!response.isSuccessful) {
       throw CallException(response, "Credentials are not valid")
     }
+    log.info("Credentials has been verified successfully")
     return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
   }
 

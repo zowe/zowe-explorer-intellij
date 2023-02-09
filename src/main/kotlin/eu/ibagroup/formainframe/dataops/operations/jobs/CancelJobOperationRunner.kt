@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CancelJobRequest
 import eu.ibagroup.r2z.CancelJobRequestBody
 import eu.ibagroup.r2z.JESApi
@@ -33,6 +34,8 @@ class CancelJobOperationRunnerFactory : OperationRunnerFactory {
     return CancelJobOperationRunner()
   }
 }
+
+private val log = log<CancelJobOperationRunner>()
 
 /**
  * Class which represents cancel job operation runner
@@ -66,6 +69,7 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
 
     val response: Response<CancelJobRequest> = when (operation.request) {
       is BasicCancelJobParams -> {
+        log.info("Cancelling job ${operation.request.jobName}(${operation.request.jobId})")
         api<JESApi>(operation.connectionConfig).cancelJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobId = operation.request.jobId,
@@ -74,6 +78,7 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
         ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorCancelJobParams -> {
+        log.info("Cancelling job ${operation.request.correlator}")
         api<JESApi>(operation.connectionConfig).cancelJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator,
@@ -89,6 +94,7 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
         "Cannot cancel job on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Job has been cancelled successfully")
     return body
   }
 }

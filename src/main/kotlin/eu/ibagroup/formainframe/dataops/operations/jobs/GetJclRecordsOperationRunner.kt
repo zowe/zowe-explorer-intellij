@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.JESApi
 import retrofit2.Response
 
@@ -31,6 +32,8 @@ class GetJclRecordsOperationRunnerFactory : OperationRunnerFactory {
     return GetJclRecordsOperationRunner()
   }
 }
+
+private val log = log<GetJclRecordsOperationRunner>()
 
 /**
  * Class which represents get jcl records operation runner
@@ -56,6 +59,7 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
 
     val response : Response<ByteArray> = when (operation.request) {
       is BasicGetJclRecordsParams -> {
+        log.info("Getting jcl records from ${operation.request.jobName}(${operation.request.jobId})")
         apiWithBytesConverter<JESApi>(operation.connectionConfig).getJCLRecords(
           basicCredentials = operation.connectionConfig.authToken,
           jobId = operation.request.jobId,
@@ -63,6 +67,7 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
         ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorGetJclRecordsParams -> {
+        log.info("Getting  jcl records from ${operation.request.jobCorrelator}")
         apiWithBytesConverter<JESApi>(operation.connectionConfig).getJCLRecords(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.jobCorrelator
@@ -77,6 +82,7 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
         "Cannot get JCL records for job on ${operation.connectionConfig.name}"
       )
     }
+    log.info("Jcl records have been got successfully")
     return body
   }
 

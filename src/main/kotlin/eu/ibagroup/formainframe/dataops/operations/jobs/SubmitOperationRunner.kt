@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SubmitFileNameBody
 import eu.ibagroup.r2z.SubmitJobRequest
@@ -43,12 +44,14 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
 
     val response: Response<SubmitJobRequest> = when (operation.request) {
       is SubmitFilePathOperationParams -> {
+        log.info("Submitting job ${operation.request.submitFilePath}")
         api<JESApi>(operation.connectionConfig).submitJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           body = SubmitFileNameBody(operation.request.submitFilePath)
         ).cancelByIndicator(progressIndicator).execute()
       }
       is SubmitJobJclOperationParams -> {
+        log.info("Submitting job ${operation.request.jobJcl}")
         api<JESApi>(operation.connectionConfig).submitJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           body = operation.request.jobJcl
@@ -63,6 +66,7 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
         "Cannot submit file on ${operation.connectionConfig.name}"
       )
     }
+    log.info("File has been submitted successfully")
     return body
   }
 
@@ -76,6 +80,8 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
     return true
   }
 }
+
+private val log = log<SubmitOperationRunner>()
 
 /**
  * Class which represents factory for submit job operation runner

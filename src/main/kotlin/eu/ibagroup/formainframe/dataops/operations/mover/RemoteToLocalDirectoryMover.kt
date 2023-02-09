@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -36,6 +37,8 @@ class RemoteToLocalDirectoryMoverFactory : OperationRunnerFactory {
     return RemoteToLocalDirectoryMover(dataOpsManager, MFVirtualFile::class.java)
   }
 }
+
+private val log = log<RemoteToLocalDirectoryMover<VirtualFile>>()
 
 /**
  * Implements copying (downloading) of remote uss directory to local file system.
@@ -156,6 +159,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
       }
       for (requester in attributes.requesters) {
         val connectionConfig = requester.connectionConfig as ConnectionConfig
+        log.info("Trying to move remote file ${operation.source.name} from ${connectionConfig.url} to local directory ${operation.destination.path}")
         throwable = proceedLocalMoveCopy(operation, connectionConfig, progressIndicator)
         if (throwable != null) {
           throw throwable
@@ -167,5 +171,6 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     if (throwable != null) {
       throw throwable
     }
+    log.info("Remote file has been moved successfully")
   }
 }
