@@ -24,9 +24,9 @@ import eu.ibagroup.formainframe.explorer.config.*
 import eu.ibagroup.formainframe.utils.validateDataset
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateMemberName
-import eu.ibagroup.r2z.AllocationUnit
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.RecordFormat
+import org.zowe.kotlinsdk.AllocationUnit
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.RecordFormat
 import java.awt.Dimension
 import javax.swing.JComboBox
 import javax.swing.JComponent

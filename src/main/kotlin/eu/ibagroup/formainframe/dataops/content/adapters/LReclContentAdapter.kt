@@ -13,7 +13,7 @@ package eu.ibagroup.formainframe.dataops.content.adapters
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.r2z.RecordFormat
+import org.zowe.kotlinsdk.RecordFormat
 
 /**
  * Abstraction with utils methods to perform adapting content for files with record length restriction.

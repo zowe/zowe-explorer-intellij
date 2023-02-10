@@ -22,8 +22,8 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.SymlinkMode
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.SymlinkMode
 
 /**
  * Query with uss file to fetch children

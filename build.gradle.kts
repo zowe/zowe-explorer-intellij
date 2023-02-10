@@ -28,6 +28,9 @@ val okHttp3Version = "4.10.0"
 repositories {
   mavenCentral()
   maven {
+    url = uri("https://zowe.jfrog.io/zowe/libs-release")
+  }
+  maven {
     url = uri("http://10.221.23.186:8082/repository/internal/")
     isAllowInsecureProtocol = true
     credentials {
@@ -60,7 +63,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.3.0-rc.10")
+  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0-rc.1")
   implementation("com.segment.analytics.java:analytics:3.3.1")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")

@@ -12,7 +12,7 @@ package eu.ibagroup.formainframe.dataops.operations
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.Operation
-import eu.ibagroup.r2z.SystemsResponse
+import org.zowe.kotlinsdk.SystemsResponse
 
 /**
  * Base class which represents an operation to be performed against systems info defined to z/OSMF particular instance

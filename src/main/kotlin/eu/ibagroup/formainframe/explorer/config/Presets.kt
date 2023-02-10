@@ -10,9 +10,9 @@
 
 package eu.ibagroup.formainframe.explorer.config
 
-import eu.ibagroup.r2z.AllocationUnit
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.RecordFormat
+import org.zowe.kotlinsdk.AllocationUnit
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.RecordFormat
 
 /**
  * Enum class represents possible preset choices for a dataset

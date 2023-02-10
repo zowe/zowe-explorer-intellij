@@ -16,8 +16,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
-import eu.ibagroup.r2z.Job
-
+import org.zowe.kotlinsdk.Job
 
 const val JOBS_FOLDER_NAME = "Jobs"
 
