@@ -30,14 +30,14 @@ private fun attributesToFileType(fileAttributes: FileAttributes): FileType {
 }
 
 /**
- * Convert value of FileType enum from r2z library to plugin FileType.
- * @see eu.ibagroup.r2z.FileType
+ * Convert value of FileType enum from Zowe Kotlin SDK library to plugin FileType.
+ * @see org.zowe.kotlinsdk.FileType
  * @see FileType
- * @param fileType value of r2z FileType.
+ * @param fileType value of Zowe Kotlin SDK FileType.
  * @return value of plugin FileType.
  */
-private fun r2zFileTypeToAnalyticsFileType(fileType: eu.ibagroup.r2z.FileType): FileType {
-  return if (fileType == eu.ibagroup.r2z.FileType.FILE) FileType.USS_FILE else FileType.USS_DIR
+private fun zoweKSDKFileTypeToAnalyticsFileType(fileType: org.zowe.kotlinsdk.FileType): FileType {
+  return if (fileType == org.zowe.kotlinsdk.FileType.FILE) FileType.USS_FILE else FileType.USS_DIR
 }
 
 /**
@@ -64,7 +64,7 @@ class FileEvent(
 
   /**
    * One more constructor for creating file event from file attributes.
-   * @param fileAttributes type of the file (value of r2z FileType) the action was done on.
+   * @param fileAttributes type of the file (value of Zowe Kotlin SDK FileType) the action was done on.
    * @param fileAction action that was done on the file.
    */
   constructor(fileAttributes: FileAttributes, fileAction: FileAction) : this(
@@ -73,14 +73,14 @@ class FileEvent(
   )
 
   /**
-   * One more constructor for creating file event from r2z FileType.
+   * One more constructor for creating file event from Zowe Kotlin SDK FileType.
    * @param fileType attributes of the file the action was done on.
    * @param fileAction action that was done on the file.
    */
   constructor(
-    fileType: eu.ibagroup.r2z.FileType,
+    fileType: org.zowe.kotlinsdk.FileType,
     fileAction: FileAction
-  ) : this(r2zFileTypeToAnalyticsFileType(fileType), fileAction)
+  ) : this(zoweKSDKFileTypeToAnalyticsFileType(fileType), fileAction)
 }
 
 /**

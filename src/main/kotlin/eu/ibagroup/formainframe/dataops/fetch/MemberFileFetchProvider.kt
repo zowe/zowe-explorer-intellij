@@ -25,10 +25,10 @@ import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.Member
-import eu.ibagroup.r2z.MembersList
-import eu.ibagroup.r2z.XIBMAttr
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.Member
+import org.zowe.kotlinsdk.MembersList
+import org.zowe.kotlinsdk.XIBMAttr
 import retrofit2.Response
 
 /**

@@ -18,10 +18,10 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.MessageType
-import eu.ibagroup.r2z.TsoApi
-import eu.ibagroup.r2z.TsoData
-import eu.ibagroup.r2z.TsoResponse
+import org.zowe.kotlinsdk.MessageType
+import org.zowe.kotlinsdk.TsoApi
+import org.zowe.kotlinsdk.TsoData
+import org.zowe.kotlinsdk.TsoResponse
 import io.ktor.util.*
 import retrofit2.Response
 import java.nio.charset.Charset

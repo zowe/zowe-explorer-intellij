@@ -33,8 +33,8 @@ import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.ChangeMode
-import eu.ibagroup.r2z.FileType
+import org.zowe.kotlinsdk.ChangeMode
+import org.zowe.kotlinsdk.FileType
 
 /**
  * Abstract action for creating Uss Entity (file or directory) through context menu.

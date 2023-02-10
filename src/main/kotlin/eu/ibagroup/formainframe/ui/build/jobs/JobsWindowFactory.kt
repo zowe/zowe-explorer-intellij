@@ -24,8 +24,8 @@ import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
 import eu.ibagroup.formainframe.utils.subscribe
-import eu.ibagroup.r2z.Job
-import eu.ibagroup.r2z.SubmitJobRequest
+import org.zowe.kotlinsdk.Job
+import org.zowe.kotlinsdk.SubmitJobRequest
 
 interface JobHandler {
   fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest)

@@ -21,10 +21,10 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.CopyDataUSS
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.XIBMBpxkAutoCvt
+import org.zowe.kotlinsdk.CopyDataUSS
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.XIBMBpxkAutoCvt
 import retrofit2.Response
 
 /**

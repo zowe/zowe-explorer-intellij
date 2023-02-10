@@ -28,7 +28,7 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 
 /**
  * Factory for registering CrossSystemUssDirMover in Intellij IoC container.

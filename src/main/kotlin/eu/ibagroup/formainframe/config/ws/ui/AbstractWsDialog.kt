@@ -43,7 +43,7 @@ import javax.swing.JComponent
  * @author Valiantsin Krus
  * @author Viktar Mushtsin
  */
-abstract class AbstractWsDialog<Connection: ConnectionConfigBase, WSConfig : WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
+abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
   crudable: Crudable,
   wsdStateClass: Class<out WSDState>,
   override var state: WSDState,

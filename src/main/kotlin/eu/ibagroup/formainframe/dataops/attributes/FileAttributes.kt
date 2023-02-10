@@ -12,7 +12,7 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.utils.Copyable
 import eu.ibagroup.formainframe.utils.PasteAcceptor
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.XIBMDataType
 
 /** Interface to describe possible file attributes and interactions with them */
 interface FileAttributes : Cloneable, Copyable, PasteAcceptor {

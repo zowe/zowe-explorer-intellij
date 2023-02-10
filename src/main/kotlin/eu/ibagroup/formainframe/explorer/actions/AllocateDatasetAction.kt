@@ -37,7 +37,7 @@ import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 
 /**
  * Action class for dataset allocation with parameters chosen by user

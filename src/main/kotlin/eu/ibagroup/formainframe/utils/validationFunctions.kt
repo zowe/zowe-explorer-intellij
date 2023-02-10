@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
-import eu.ibagroup.r2z.DatasetOrganization
+import org.zowe.kotlinsdk.DatasetOrganization
 import javax.swing.JComponent
 import javax.swing.JTextField
 

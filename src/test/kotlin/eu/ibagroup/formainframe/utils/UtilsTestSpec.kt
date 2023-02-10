@@ -23,8 +23,8 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.annotations.ZVersion
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe

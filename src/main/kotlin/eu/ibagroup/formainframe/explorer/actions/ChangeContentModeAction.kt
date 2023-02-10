@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Base class implementation of the change content mode action

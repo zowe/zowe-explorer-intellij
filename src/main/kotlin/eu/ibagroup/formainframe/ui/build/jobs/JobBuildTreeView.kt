@@ -32,7 +32,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
 import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
 import eu.ibagroup.formainframe.dataops.log.MFLogger
-import eu.ibagroup.r2z.SpoolFile
+import org.zowe.kotlinsdk.SpoolFile
 import java.awt.BorderLayout
 import java.util.*
 import javax.swing.JComponent
