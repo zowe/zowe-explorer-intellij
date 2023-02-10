@@ -20,6 +20,7 @@ import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import io.kotest.matchers.string.shouldContain
+import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.extension.ExtendWith
@@ -47,6 +48,7 @@ class WorkingSetViaSettingsTest {
      */
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) {
+        startMockServer()
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
@@ -55,6 +57,7 @@ class WorkingSetViaSettingsTest {
      */
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        mockServer.shutdown()
         clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             close()
@@ -66,6 +69,7 @@ class WorkingSetViaSettingsTest {
      */
     @AfterEach
     fun tearDown(remoteRobot: RemoteRobot) {
+        responseDispatcher.removeAllEndpoints()
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
 
@@ -105,7 +109,25 @@ class WorkingSetViaSettingsTest {
     @Test
     @Order(2)
     fun testAddEmptyWorkingSetWithVeryLongNameViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        createConnection(projectName, fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
+        responseDispatcher.injectEndpoint(
+            "testAddEmptyWorkingSetWithVeryLongNameViaSettings_info",
+            { it?.requestLine?.contains("zosmf/info") ?: false },
+            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+        )
+        responseDispatcher.injectEndpoint(
+            "testAddEmptyWorkingSetWithVeryLongNameViaSettings_resttopology",
+            { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
+            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+        )
+        createConnection(
+            projectName,
+            fixtureStack,
+            closableFixtureCollector,
+            connectionName,
+            true,
+            remoteRobot,
+            "https://${mockServer.hostName}:${mockServer.port}"
+        )
         val wsName: String = "A".repeat(200)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -119,12 +141,12 @@ class WorkingSetViaSettingsTest {
                 addWorkingSetDialog(fixtureStack) {
                     addWorkingSet(wsName, connectionName)
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                     find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
                         EMPTY_DATASET_MESSAGE
                     )
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
                 clickButton("OK")
@@ -153,7 +175,7 @@ class WorkingSetViaSettingsTest {
                 addWorkingSetDialog(fixtureStack) {
                     addWorkingSet(wsName, connectionName, mask)
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
                 clickButton("OK")
@@ -176,6 +198,12 @@ class WorkingSetViaSettingsTest {
             masks.add(Pair(it, "z/OS"))
         }
 
+        responseDispatcher.injectEndpoint(
+            "testAddWorkingSetWithValidZOSMasksViaSettings_info",
+            { it?.requestLine?.contains("zosmf/restfiles/ds?dslevel") ?: false },
+            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+        )
+
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -188,14 +216,22 @@ class WorkingSetViaSettingsTest {
                 addWorkingSetDialog(fixtureStack) {
                     addWorkingSet(wsName, connectionName, masks)
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        validZOSMasks.forEach { openWSOpenMaskInExplorer(wsName, it, projectName, fixtureStack, remoteRobot) }
+        validZOSMasks.forEach {
+            openWSOpenMaskInExplorer(
+                wsName,
+                it.uppercase(),
+                projectName,
+                fixtureStack,
+                remoteRobot
+            )
+        }
     }
 
     /**
@@ -210,6 +246,12 @@ class WorkingSetViaSettingsTest {
             masks.add(Pair(it, "USS"))
         }
 
+        responseDispatcher.injectEndpoint(
+            "testAddWorkingSetWithValidUSSMasksViaSettings_info",
+            { it?.requestLine?.contains("zosmf/restfiles/fs?path") ?: false },
+            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+        )
+
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -222,7 +264,7 @@ class WorkingSetViaSettingsTest {
                 addWorkingSetDialog(fixtureStack) {
                     addWorkingSet(wsName, connectionName, masks)
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
                 clickButton("OK")
@@ -259,16 +301,16 @@ class WorkingSetViaSettingsTest {
                             findText("OK").moveMouse()
                         }
                         if (it.key.length < 49) {
-                            findText(it.key).moveMouse()
+                            findText(it.key.uppercase()).moveMouse()
                         } else {
-                            findText("${it.key.substring(0, 46)}...").moveMouse()
+                            findText("${it.key.uppercase().substring(0, 46)}...").moveMouse()
                         }
-                        Thread.sleep(5000)
+                        Thread.sleep(2000)
                         find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow'][.//div[@class='Header']]")).findText(
                             it.value
                         )
                         assertFalse(button("OK").isEnabled())
-                        findText(it.key).click()
+                        findText(it.key.uppercase()).click()
                         clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[@myaction.key='button.text.remove']"))
                     }
                     clickButton("Cancel")
@@ -322,8 +364,13 @@ class WorkingSetViaSettingsTest {
     @Order(8)
     fun testEditWorkingSetAddOneMaskViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS1"
+        responseDispatcher.injectEndpoint(
+            "testEditWorkingSetAddOneMaskViaSettings_info",
+            { it?.requestLine?.contains("zosmf/restfiles/") ?: false },
+            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+        )
         openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-        closeMaskInExplorer("$ZOS_USERID.*", projectName, fixtureStack, remoteRobot)
+        closeMaskInExplorer("$ZOS_USERID.*".uppercase(), projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
@@ -336,7 +383,7 @@ class WorkingSetViaSettingsTest {
                 editWorkingSetDialog(fixtureStack) {
                     addMask(Pair("/u/$ZOS_USERID", "USS"))
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
                 clickButton("OK")
@@ -354,7 +401,7 @@ class WorkingSetViaSettingsTest {
     @Order(9)
     fun testEditWorkingSetDeleteMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
-        val masks = listOf("$ZOS_USERID.*", "Q.*", ZOS_USERID)
+        val masks = listOf("$ZOS_USERID.*".uppercase(), "Q.*", ZOS_USERID.uppercase())
         openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -368,14 +415,14 @@ class WorkingSetViaSettingsTest {
                 editWorkingSetDialog(fixtureStack) {
                     deleteMasks(masks)
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        masks.forEach { checkItemWasDeletedWSRefreshed(it, projectName, fixtureStack, remoteRobot) }
+        masks.forEach { checkItemWasDeletedWSRefreshed(it.uppercase(), projectName, fixtureStack, remoteRobot) }
         openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
     }
 
@@ -402,14 +449,14 @@ class WorkingSetViaSettingsTest {
                     clickButton("OK")
                     find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText("You are going to create a Working Set that doesn't fetch anything")
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
                 clickButton("OK")
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        deletedMasks.forEach { checkItemWasDeletedWSRefreshed(it, projectName, fixtureStack, remoteRobot) }
+        deletedMasks.forEach { checkItemWasDeletedWSRefreshed(it.uppercase(), projectName, fixtureStack, remoteRobot) }
         openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
     }
 
@@ -421,7 +468,27 @@ class WorkingSetViaSettingsTest {
     fun testEditWorkingSetChangeConnectionToInvalidViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val newConnectionName = "invalid connection"
         val wsName = "WS1"
-        createConnection(projectName, fixtureStack, closableFixtureCollector, newConnectionName, false, remoteRobot)
+        val testPort = "10443"
+        var isFirstRequest = true
+        responseDispatcher.injectEndpoint(
+            "testEditWorkingSetChangeConnectionToInvalidViaSettings_info",
+            { it?.requestLine?.contains("zosmf/info") ?: false && isFirstRequest },
+            { MockResponse().setBody("Invalid URL port: \"${testPort}1\"") }
+        )
+        responseDispatcher.injectEndpoint(
+            "testEditWorkingSetChangeConnectionToInvalidViaSettings_info_second",
+            { it?.requestLine?.contains("zosmf/restfiles/") ?: false && !isFirstRequest },
+            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+        )
+        createConnection(
+            projectName,
+            fixtureStack,
+            closableFixtureCollector,
+            newConnectionName,
+            false,
+            remoteRobot,
+            "https://${mockServer.hostName}:$testPort"
+        )
         openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -435,7 +502,7 @@ class WorkingSetViaSettingsTest {
                 editWorkingSetDialog(fixtureStack) {
                     changeConnection(newConnectionName)
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
                 clickButton("OK")
@@ -448,7 +515,14 @@ class WorkingSetViaSettingsTest {
                 byXpath("//div[@class='ActionButton' and @myicon= 'close.svg']")
             ).first().click()
         }
-        openMaskInExplorer("$ZOS_USERID.*", "Invalid URL port: \"104431\"", projectName, fixtureStack, remoteRobot)
+        isFirstRequest = false
+        openMaskInExplorer(
+            "$ZOS_USERID.*".uppercase(),
+            "Invalid URL port: \"${testPort}1\"",
+            projectName,
+            fixtureStack,
+            remoteRobot
+        )
     }
 
     /**
@@ -458,7 +532,25 @@ class WorkingSetViaSettingsTest {
     @Order(12)
     fun testEditWorkingSetChangeConnectionToValidViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val newConnectionName = "new $connectionName"
-        createConnection(projectName, fixtureStack, closableFixtureCollector, newConnectionName, true, remoteRobot)
+        responseDispatcher.injectEndpoint(
+            "testEditWorkingSetChangeConnectionToValidViaSettings_info",
+            { it?.requestLine?.contains("zosmf/info") ?: false },
+            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+        )
+        responseDispatcher.injectEndpoint(
+            "testEditWorkingSetChangeConnectionToValidViaSettings_resttopology",
+            { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
+            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+        )
+        createConnection(
+            projectName,
+            fixtureStack,
+            closableFixtureCollector,
+            newConnectionName,
+            true,
+            remoteRobot,
+            "https://${mockServer.hostName}:${mockServer.port}"
+        )
         val wsName = "WS1"
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -472,7 +564,7 @@ class WorkingSetViaSettingsTest {
                 editWorkingSetDialog(fixtureStack) {
                     changeConnection(newConnectionName)
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
                 clickButton("OK")
@@ -504,6 +596,7 @@ class WorkingSetViaSettingsTest {
                 }
                 editWorkingSetDialog(fixtureStack) {
                     renameWorkingSet(alreadyExistsWorkingSetName)
+                    clickButton("OK")
                     val message = find<HeavyWeightWindowFixture>(
                         byXpath("//div[@class='HeavyWeightWindow']"),
                         Duration.ofSeconds(30)
@@ -511,7 +604,7 @@ class WorkingSetViaSettingsTest {
                     (message[0].text + message[1].text).shouldContain("You must provide unique working set name. Working Set $alreadyExistsWorkingSetName already exists.")
                     renameWorkingSet(newWorkingSetName)
                     clickButton("OK")
-                    Thread.sleep(5000)
+                    Thread.sleep(2000)
                 }
                 closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
                 clickButton("OK")

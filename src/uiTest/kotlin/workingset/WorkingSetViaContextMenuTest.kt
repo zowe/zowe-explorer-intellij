@@ -48,6 +48,7 @@ class WorkingSetViaContextMenuTest {
      */
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) {
+        startMockServer()
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
@@ -56,6 +57,7 @@ class WorkingSetViaContextMenuTest {
      */
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        mockServer.shutdown()
         clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             close()
@@ -67,6 +69,7 @@ class WorkingSetViaContextMenuTest {
      */
     @AfterEach
     fun tearDown(remoteRobot: RemoteRobot) {
+        responseDispatcher.removeAllEndpoints()
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
 

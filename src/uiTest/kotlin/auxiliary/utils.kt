@@ -22,14 +22,24 @@ import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
 import com.intellij.remoterobot.utils.keyboard
 import com.intellij.remoterobot.utils.waitFor
+import eu.ibagroup.r2z.zowe.MockResponseDispatcher
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 import java.awt.event.KeyEvent
+import java.net.InetAddress
 import java.time.Duration
+import java.util.concurrent.TimeUnit
+
+lateinit var mockServer: MockWebServer
+lateinit var responseDispatcher: MockResponseDispatcher
 
 //Change ZOS_USERID, ZOS_PWD, CONNECTION_URL with valid values before UI tests execution
-const val ZOS_USERID = "changeme"
+const val ZOS_USERID = "testid"
 const val ZOS_PWD = "changeme"
 const val CONNECTION_URL = "changeme"
 
@@ -464,7 +474,8 @@ fun openWSOpenMaskInExplorer(
         find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
         Thread.sleep(3000)
         find<ComponentFixture>(viewTree).findText(maskName).doubleClick()
-        Thread.sleep(20000)
+        Thread.sleep(2000)
+        waitFor(Duration.ofSeconds(20)) { find<ComponentFixture>(viewTree).hasText("loading…").not() }
         find<ComponentFixture>(viewTree).findAllText().shouldNotContain("Error")
         find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
       }
@@ -516,10 +527,12 @@ fun openMaskInExplorer(
         fileExplorer.click()
         find<ComponentFixture>(viewTree).findText(maskName).doubleClick()
         Thread.sleep(20000)
+        var allText=""
+        find<ComponentFixture>(viewTree).findAllText().forEach { allText += it.text }
         if (expectedError.isEmpty().not()) {
-          find<ComponentFixture>(viewTree).findText(expectedError)
+          allText.shouldContain(expectedError)
         } else {
-          find<ComponentFixture>(viewTree).findAllText().shouldNotContain("Error")
+          allText.shouldNotContain("Error")
         }
       }
     }
@@ -892,4 +905,20 @@ fun checkErrorNotification(
       find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
     }
   }
+}
+
+fun startMockServer() {
+  val localhost = InetAddress.getByName("localhost").canonicalHostName
+  val localhostCertificate = HeldCertificate.Builder()
+    .addSubjectAlternativeName(localhost)
+    .duration(10, TimeUnit.MINUTES)
+    .build()
+  val serverCertificates = HandshakeCertificates.Builder()
+    .heldCertificate(localhostCertificate)
+    .build()
+  mockServer = MockWebServer()
+  responseDispatcher = MockResponseDispatcher()
+  mockServer.dispatcher = responseDispatcher
+  mockServer.useHttps(serverCertificates.sslSocketFactory(), false)
+  mockServer.start()
 }
