@@ -126,7 +126,7 @@ class ConfigServiceImpl : ConfigService {
       myState.get<JesWorkingSetConfig>()?.addAll(state.jesWorkingSets)
       state.migrated = true
 
-      acceptOldConfigs()
+      // acceptOldConfigs()
     }
   }
 
