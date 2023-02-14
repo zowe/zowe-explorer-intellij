@@ -20,10 +20,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.log
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -39,8 +36,6 @@ class CrossSystemPdsToUssDirMoverFactory : OperationRunnerFactory {
     return CrossSystemPdsToUssDirMover(dataOpsManager)
   }
 }
-
-private val log = log<CrossSystemPdsToUssDirMover>()
 
 /**
  * Implements copying partitioned data set between different systems.
@@ -75,6 +70,7 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
     destConnectionConfig: ConnectionConfig,
     progressIndicator: ProgressIndicator
   ): Response<*>? {
+    val log = log<CrossSystemPdsToUssDirMoverFactory>()
     val memberFile = operation.source.children.firstOrNull { it.name == memberName }
       ?: throw IllegalArgumentException("No member with name '$memberName' found.")
     val contentSynchronizer = dataOpsManager.getContentSynchronizer(memberFile)
@@ -93,7 +89,11 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
       xIBMDataType = memberAttributes.contentMode
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
-    }.execute()
+    }.execute(
+      customMessage = "Copying member to $destinationPath/$memberName on ${destConnectionConfig.url}",
+      requestParams = mapOf(Pair("Copied member", memberFile), Pair("Source connection config", sourceConnectionConfig)),
+      log = log
+    )
   }
 
   /**
@@ -103,6 +103,7 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      val log = log<CrossSystemPdsToUssDirMover>()
       val sourceAttributes = operation.sourceAttributes as RemoteDatasetAttributes
       val destAttributes = operation.destinationAttributes as RemoteUssAttributes
       val sourceConnectionConfig = sourceAttributes.requesters.firstOrNull()?.connectionConfig
@@ -116,6 +117,7 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
       t
     }
     if (throwable != null) {
+      log.error("Failed to move dataset")
       throw throwable
     }
     log.info("Dataset has been moved successfully")

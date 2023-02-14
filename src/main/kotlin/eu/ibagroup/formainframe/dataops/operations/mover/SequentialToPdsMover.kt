@@ -18,7 +18,6 @@ import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CopyDataZOS
 import eu.ibagroup.r2z.DataAPI
 import retrofit2.Call
@@ -33,8 +32,6 @@ class SequentialToPdsMoverFactory : OperationRunnerFactory {
     return SequentialToPdsMover(dataOpsManager)
   }
 }
-
-private val log = log<SequentialToPdsMover>()
 
 /**
  * Implements copying of sequential data set to partitioned data set inside 1 system.
@@ -69,7 +66,6 @@ class SequentialToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
     val dataset = (operation.sourceAttributes as RemoteDatasetAttributes).also {
       memberName = it.name.split(".").last()
     }
-    log.info("Moving sequential dataset ${dataset.name} to PDS ${destinationAttributes.name} on ${requesterWithUrl.second.url}")
     return api<DataAPI>(
       url = requesterWithUrl.second.url,
       isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned

@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CancelJobRequest
 import eu.ibagroup.r2z.CancelJobRequestBody
@@ -35,8 +36,6 @@ class CancelJobOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<CancelJobOperationRunner>()
-
 /**
  * Class which represents cancel job operation runner
  */
@@ -45,6 +44,8 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
   override val operationClass = CancelJobOperation::class.java
 
   override val resultClass = CancelJobRequest::class.java
+
+  val log = log<CancelJobOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -69,21 +70,25 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
 
     val response: Response<CancelJobRequest> = when (operation.request) {
       is BasicCancelJobParams -> {
-        log.info("Cancelling job ${operation.request.jobName}(${operation.request.jobId})")
         api<JESApi>(operation.connectionConfig).cancelJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobId = operation.request.jobId,
           jobName = operation.request.jobName,
           body = CancelJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute()
+        ).cancelByIndicator(progressIndicator).execute(
+          customMessage = "Cancelling job ${operation.request.jobName}(${operation.request.jobId}) on ${operation.connectionConfig}",
+          log = log
+        )
       }
       is CorrelatorCancelJobParams -> {
-        log.info("Cancelling job ${operation.request.correlator}")
         api<JESApi>(operation.connectionConfig).cancelJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator,
           body = CancelJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute()
+        ).cancelByIndicator(progressIndicator).execute(
+          customMessage = "Cancelling job ${operation.request.correlator} on ${operation.connectionConfig}",
+          log = log
+        )
       }
       else -> throw Exception("Method with such parameters not found")
     }
@@ -94,7 +99,6 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
         "Cannot cancel job on ${operation.connectionConfig.name}"
       )
     }
-    log.info("Job has been cancelled successfully")
     return body
   }
 }

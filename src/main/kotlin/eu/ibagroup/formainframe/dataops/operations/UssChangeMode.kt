@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.ChangeMode
 import eu.ibagroup.r2z.DataAPI
@@ -30,8 +31,6 @@ class UssChangeModeFactory : OperationRunnerFactory {
     return UssChangeMode()
   }
 }
-
-private val log = log<UssChangeModeOperation>()
 
 /**
  * Data class which represents input parameters for uss change mode operation
@@ -58,6 +57,7 @@ class UssChangeMode : OperationRunner<UssChangeModeOperation, Unit> {
 
   override val operationClass = UssChangeModeOperation::class.java
   override val resultClass = Unit::class.java
+  val log = log<UssChangeMode>()
 
   /**
    * Runs an uss change mode operation
@@ -71,19 +71,21 @@ class UssChangeMode : OperationRunner<UssChangeModeOperation, Unit> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
-    log.info("Changing file mode ${operation.request.path}")
     val response = api<DataAPI>(operation.connectionConfig).changeFileMode(
       authorizationToken = operation.connectionConfig.authToken,
       filePath = FilePath(operation.request.path),
       body = operation.request.parameters
-    ).cancelByIndicator(progressIndicator).execute()
+    ).cancelByIndicator(progressIndicator).execute(
+      customMessage = "Changing file mode ${operation.request.path} on ${operation.connectionConfig.url}",
+      requestParams = mapOf(Pair("New file mode", operation.request.parameters.mode)),
+      log = log
+    )
     if (!response.isSuccessful) {
       throw CallException(
         response,
         "Cannot change file mode on ${operation.request.path}"
       )
     }
-    log.info("File mode has been changed successfully")
   }
 
   override fun canRun(operation: UssChangeModeOperation): Boolean {

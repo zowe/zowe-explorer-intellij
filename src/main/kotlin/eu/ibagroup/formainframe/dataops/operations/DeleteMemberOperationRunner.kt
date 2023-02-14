@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 
@@ -29,8 +30,6 @@ class DeleteMemberOperationRunnerFactory: OperationRunnerFactory {
   }
 }
 
-private val log = log<DeleteMemberOperationRunner>()
-
 /**
  * Class which represents dataset member delete operation runner.
  */
@@ -39,6 +38,8 @@ class DeleteMemberOperationRunner: OperationRunner<DeleteMemberOperation, Unit> 
   override val operationClass = DeleteMemberOperation::class.java
 
   override val resultClass = Unit::class.java
+
+  val log = log<DeleteMemberOperationRunner>()
 
   /**
    * Runs a dataset member delete operation.
@@ -51,12 +52,14 @@ class DeleteMemberOperationRunner: OperationRunner<DeleteMemberOperation, Unit> 
   override fun run(operation: DeleteMemberOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
 
-    log.info("Deleting member ${operation.request.datasetName}(${operation.request.memberName})")
     val response = api<DataAPI>(operation.connectionConfig).deleteDatasetMember(
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.datasetName,
       memberName = operation.request.memberName
-    ).cancelByIndicator(progressIndicator).execute()
+    ).cancelByIndicator(progressIndicator).execute(
+      customMessage = "Deleting member ${operation.request.datasetName}(${operation.request.memberName}) on ${operation.connectionConfig.url}",
+      log = log
+    )
 
     if (!response.isSuccessful) {
       throw CallException(
@@ -65,7 +68,6 @@ class DeleteMemberOperationRunner: OperationRunner<DeleteMemberOperation, Unit> 
             "on ${operation.connectionConfig.name}"
       )
     }
-    log.info("Delete operation has been completed successfully")
   }
 
   /**

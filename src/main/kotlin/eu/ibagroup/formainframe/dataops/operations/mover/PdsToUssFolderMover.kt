@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.CopyDataUSS
@@ -38,8 +39,6 @@ class PdsToUssFolderMoverFactory : OperationRunnerFactory {
     return PdsToUssFolderMover(dataOpsManager, MFVirtualFile::class.java)
   }
 }
-
-private val log = log<PdsToUssFolderMover<VirtualFile>>()
 
 /**
  * Implements copying partitioned data set inside 1 system.
@@ -75,6 +74,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     destConnectionConfig: ConnectionConfig,
     progressIndicator: ProgressIndicator
   ): Response<*>? {
+    val log = log<PdsToUssFolderMover<VFile>>()
     return api<DataAPI>(sourceConnectionConfig).copyDatasetOrMemberToUss(
       sourceConnectionConfig.authToken,
       XIBMBpxkAutoCvt.OFF,
@@ -82,7 +82,11 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
         from = CopyDataUSS.CopyFromDataset.Dataset(libraryAttributes.name, memberName.uppercase())
       ),
       FilePath(destinationPath)
-    ).cancelByIndicator(progressIndicator).execute()
+    ).cancelByIndicator(progressIndicator).execute(
+      customMessage = "Copying member to $destinationPath/$memberName on ${destConnectionConfig.url}",
+      requestParams = mapOf(Pair("Copied member", operation.source)),
+      log = log
+    )
   }
 
   /**
@@ -90,6 +94,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
    * @see OperationRunner.run
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
+    val log = log<PdsToUssFolderMover<VFile>>()
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {
       try {
@@ -101,6 +106,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
       }
     }
     if (throwable != null) {
+      log.error("Failed to move PDS")
       throw throwable
     }
     log.info("PDS has been moved successfully")

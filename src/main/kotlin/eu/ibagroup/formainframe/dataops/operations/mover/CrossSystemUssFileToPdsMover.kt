@@ -36,8 +36,6 @@ class CrossSystemUssFileToPdsMoverFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<CrossSystemUssFileToPdsMover>()
-
 /**
  * Implements copying of uss file to partitioned data set between different systems.
  * @author Valiantsin Krus
@@ -56,6 +54,8 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
             (operation.source !is MFVirtualFile || operation.commonUrls(dataOpsManager).isEmpty())
   }
 
+  val log = log<CrossSystemUssFileToPdsMover>()
+
   /**
    * Proceeds move/copy of uss file to partitioned data set between different systems.
    * @param operation requested operation.
@@ -71,7 +71,6 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
       ?: return Throwable("No connection for destination directory found.")
 
-    log.info("Trying to move USS file ${sourceFile.name} to PDS ${destAttributes.name} on ${destConnectionConfig.url}")
     if (sourceFile is MFVirtualFile) {
       val contentSynchronizer = dataOpsManager.getContentSynchronizer(sourceFile)
       val syncProvider = DocumentedSyncProvider(sourceFile)
@@ -101,7 +100,11 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
       xIBMDataType = xIBMDataType
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
-    }.execute()
+    }.execute(
+      customMessage = "Moving USS file to ${destAttributes.name}($memberName) on ${destConnectionConfig.url}",
+      requestParams = mapOf(Pair("Moved file", sourceFile)),
+      log = log
+    )
 
     if (!response.isSuccessful &&
       response.errorBody()?.string()?.contains("Truncation of a record occurred during an I/O operation.") != true
@@ -132,11 +135,13 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS file ${operation.source.name} to PDS ${operation.destination.name}")
       proceedCrossSystemMoveCopy(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.error("Failed to move USS file")
       throw throwable
     }
     log.info("USS file has been moved successfully")

@@ -5,6 +5,7 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.InfoAPI
 import eu.ibagroup.r2z.InfoResponse
@@ -18,14 +19,13 @@ class ZOSInfoOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<ZOSInfoOperationRunner>()
-
 /**
  * Base class implementation for running system info operation.
  */
 class ZOSInfoOperationRunner : OperationRunner<ZOSInfoOperation, InfoResponse> {
   override val operationClass = ZOSInfoOperation::class.java
   override val resultClass = InfoResponse::class.java
+  val log = log<ZOSInfoOperationRunner>()
 
   /**
    * Method determines if an operation can be run
@@ -41,15 +41,16 @@ class ZOSInfoOperationRunner : OperationRunner<ZOSInfoOperation, InfoResponse> {
    * @return InfoResponse serialized object
    */
   override fun run(operation: ZOSInfoOperation, progressIndicator: ProgressIndicator): InfoResponse {
-    log.info("Getting system info from ${operation.connectionConfig.url}")
     val response = api<InfoAPI>(connectionConfig = operation.connectionConfig)
       .getSystemInfo()
       .cancelByIndicator(progressIndicator)
-      .execute()
+      .execute(
+        customMessage = "Getting system info from ${operation.connectionConfig.url}",
+        log = log
+      )
     if (!response.isSuccessful) {
       throw CallException(response, "An internal error has occurred")
     }
-    log.info("System info has benn got successfully")
     return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
   }
 }

@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.log
 import retrofit2.Call
@@ -27,8 +28,6 @@ import retrofit2.Call
  * @author Valiantsin Krus
  */
 abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : AbstractFileMover() {
-
-  private val log = log<DefaultFileMover>()
 
   /**
    * Implementation should build retrofit Call to zosmf that will
@@ -42,6 +41,8 @@ abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : 
     requesterWithUrl: Pair<Requester<ConnectionConfig>, ConnectionConfig>
   ): Call<Void>
 
+  val log = log<DefaultFileMover>()
+
   /**
    * Starts operation execution. Throws throwable if something went wrong.
    * @throws Throwable
@@ -54,14 +55,17 @@ abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : 
     var throwable: Throwable? = null
     operation.commonUrls(dataOpsManager).stream().map {
       progressIndicator.checkCanceled()
+      val opNameForLog = if (operation.isMove) "Moving" else "Copying"
       runCatching {
-        buildCall(operation, it).cancelByIndicator(progressIndicator).execute()
+        buildCall(operation, it).cancelByIndicator(progressIndicator).execute(
+          customMessage = "$opNameForLog ${operation.source.name} to ${operation.destination.path} on ${it.second.url}",
+          log = log
+        )
       }.mapCatching {
         val operationMessage = if (operation.isMove) "move" else "copy"
         if (!it.isSuccessful) {
           throw CallException(it, "Cannot $operationMessage ${operation.source.name} to ${operation.destination.name}")
         } else {
-          log.info("$operationMessage operation has benn completed successfully")
           it
         }
       }.mapCatching {

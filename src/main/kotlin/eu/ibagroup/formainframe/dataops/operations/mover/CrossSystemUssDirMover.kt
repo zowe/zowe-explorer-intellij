@@ -38,8 +38,6 @@ class CrossSystemUssDirMoverFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<CrossSystemUssDirMover>()
-
 /**
  * Implements copying of uss directory to uss directory between different systems.
  * @author Valiantsin Krus
@@ -59,6 +57,8 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
             operation.commonUrls(dataOpsManager).isEmpty()
   }
 
+  val log = log<CrossSystemUssDirMover>()
+
   /**
    * Proceeds move/copy of uss directory to uss directory between different systems.
    * @param operation requested operation
@@ -72,8 +72,6 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
       ?: return IllegalStateException("No connection for destination directory \'${destAttributes.path}\' found.")
-
-    log.info("Trying to move USS directory ${sourceFile.name} to ${destAttributes.path} on ${destConnectionConfig.url}")
 
     if (sourceFile is MFVirtualFile) {
       val sourceAttributes = operation.sourceAttributes.castOrNull<RemoteUssAttributes>()
@@ -102,7 +100,11 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       body = CreateUssFile(FileType.DIR, FileMode(7, 7, 7))
     ).applyIfNotNull(progressIndicator) {
       cancelByIndicator(it)
-    }.execute()
+    }.execute(
+      customMessage = "Creating USS file in $pathToDir on ${destConnectionConfig.url}",
+      requestParams = mapOf(Pair("Moved directory", sourceFile)),
+      log = log
+    )
 
     if (!response.isSuccessful) {
       return CallException(response, "Cannot upload directory '$pathToDir'.")
@@ -150,11 +152,13 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS directory ${operation.source.name} to ${operation.destination.path}")
       proceedDirMove(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.error("Failed to move USS directory")
       throw throwable
     }
     log.info("USS directory has been moved successfully")

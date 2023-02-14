@@ -13,6 +13,8 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.*
 import retrofit2.Response
@@ -47,6 +49,8 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
     progressIndicator: ProgressIndicator
   ): Response<*>?
 
+  val log = log<AbstractPdsToUssFolderMover>()
+
   /**
    * Cancel changes if something went wrong in copying process.
    * @param prevResponse response of attempted request to copy member.
@@ -73,18 +77,24 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
       throwable = if (prevResponse == null) Exception(msg) else CallException(prevResponse, msg)
     }
     progressIndicator.text = "Attempt to rollback"
+    log.info("Trying to rollback changes")
     val responseRollback = api<DataAPI>(connectionConfig).deleteUssFile(
       connectionConfig.authToken,
       FilePath(destinationPath),
       XIBMOption.RECURSIVE
-    ).execute()
+    ).execute(
+      customMessage = "Deleting USS file $destinationPath on ${connectionConfig.url}",
+      log = log
+    )
 
     if (isCanceled && !responseRollback.isSuccessful) {
       throwable = CallException(responseRollback, "Cannot rollback $opName $sourceName to $sourceName.")
     } else if (!isCanceled && responseRollback.isSuccessful) {
       val msg = "Cannot $opName $sourceName to $destinationPath. Rollback proceeded successfully."
+      log.info("Rollback proceeded successfully")
       throwable = if (prevResponse == null) Exception() else CallException(prevResponse, msg)
     } else if (!isCanceled && !responseRollback.isSuccessful) {
+      log.error("Rollback failed")
       throwable = CallException(responseRollback, "Cannot $opName $sourceName to ${destinationPath}. Rollback failed.")
     }
     return throwable
@@ -121,11 +131,15 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
       val destinationPath = "${destinationAttributes.path}/${sourceAttributes.name}"
 
       if (operation.forceOverwriting) {
+        log.info("Overwriting directory $destinationPath")
         val response = api<DataAPI>(destConnectionConfig).deleteUssFile(
           authorizationToken = destConnectionConfig.authToken,
           filePath = FilePath(destinationPath),
           xIBMOption = XIBMOption.RECURSIVE
-        ).cancelByIndicator(progressIndicator).execute()
+        ).cancelByIndicator(progressIndicator).execute(
+          customMessage = "Deleting USS file $destinationPath on ${destConnectionConfig.url}",
+          log = log
+        )
         if (!response.isSuccessful) {
           throw CallException(response, "Cannot overwrite directory '$destinationPath'.")
         }
@@ -135,7 +149,10 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
         authorizationToken = destConnectionConfig.authToken,
         filePath = FilePath(destinationAttributes.path + "/" + sourceAttributes.name),
         body = CreateUssFile(FileType.DIR, destinationAttributes.fileMode ?: FileMode(7, 7, 7))
-      ).cancelByIndicator(progressIndicator).execute()
+      ).cancelByIndicator(progressIndicator).execute(
+        customMessage = "Creating USS file $destinationPath/${sourceAttributes.name} on ${destConnectionConfig.url}",
+        log = log
+      )
 
       if (response.isSuccessful) {
         val cachedChildren = sourceFileFetchProvider.getCached(sourceQuery)

@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.operations.ForceRenameOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
@@ -35,8 +36,6 @@ class ForceRenameOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<ForceRenameOperationRunner>()
-
 /**
  * Base class implementation for running a force rename operation
  */
@@ -45,6 +44,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
 
   override val operationClass = ForceRenameOperation::class.java
   override val resultClass = Unit::class.java
+  val log = log<ForceRenameOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -95,13 +95,17 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
                 val resp = api<DataAPI>(requester.connectionConfig).deleteUssFile(
                   authorizationToken = requester.connectionConfig.authToken,
                   filePath = FilePath("$parentDirPath/${operation.newName}")
-                ).cancelByIndicator(progressIndicator).execute()
+                ).cancelByIndicator(progressIndicator).execute(
+                  customMessage = "Deleting USS file from $parentDirPath/${operation.newName}",
+                  log = log
+                )
                 if (!resp.isSuccessful) {
                   throw CallException(
                     resp,
                     "Remote exception occurred. Unable to rename source directory $fileName"
                   )
                 }
+                log.info("Creating USS file on $parentDirPath/${operation.newName}")
                 sourceFile.parent?.let {
                   dataOpsManager.performOperation(
                     MoveCopyOperation(
@@ -125,9 +129,10 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
           }
         }
       } catch (e: Throwable) {
+        log.error("Failed to force rename file")
         throw RuntimeException(e)
       }
     }
-    log.info("Rename operation has been completed successfully")
+    log.info("Force rename operation has been completed successfully")
   }
 }

@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.HoldJobRequest
 import eu.ibagroup.r2z.HoldJobRequestBody
@@ -35,8 +36,6 @@ class HoldJobOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<HoldJobOperationRunner>()
-
 /**
  * Class which represents hold job operation runner
  */
@@ -45,6 +44,8 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
   override val operationClass = HoldJobOperation::class.java
 
   override val resultClass = HoldJobRequest::class.java
+
+  val log = log<HoldJobOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -69,21 +70,25 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
 
     val response: Response<HoldJobRequest> = when (operation.request) {
       is BasicHoldJobParams -> {
-        log.info("Holding job ${operation.request.jobName}(${operation.request.jobId})")
         api<JESApi>(operation.connectionConfig).holdJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobName = operation.request.jobName,
           jobId = operation.request.jobId,
           body = HoldJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute()
+        ).cancelByIndicator(progressIndicator).execute(
+          customMessage = "Holding job ${operation.request.jobName}(${operation.request.jobId}) on ${operation.connectionConfig}",
+          log = log
+        )
       }
       is CorrelatorHoldJobParams -> {
-        log.info("Holding job ${operation.request.correlator}")
         api<JESApi>(operation.connectionConfig).holdJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator,
           body = HoldJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute()
+        ).cancelByIndicator(progressIndicator).execute(
+          customMessage = "Holding job ${operation.request.correlator} on ${operation.connectionConfig}",
+          log = log
+        )
       }
       else -> throw Exception("Method with such parameters not found")
     }
@@ -94,7 +99,6 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
         "Cannot hold job on ${operation.connectionConfig.name}"
       )
     }
-    log.info("Job has been held successfully")
     return body
   }
 }

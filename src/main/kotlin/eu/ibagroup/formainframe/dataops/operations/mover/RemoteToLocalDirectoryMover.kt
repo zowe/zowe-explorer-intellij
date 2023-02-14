@@ -38,8 +38,6 @@ class RemoteToLocalDirectoryMoverFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<RemoteToLocalDirectoryMover<VirtualFile>>()
-
 /**
  * Implements copying (downloading) of remote uss directory to local file system.
  * @author Valiantsin Krus
@@ -95,6 +93,8 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     }
     throw IllegalArgumentException("Children of file ${file.name} cannot be fetched.")
   }
+
+  val log = log<RemoteToLocalDirectoryMover<VFile>>()
 
   /**
    * Proceeds download of remote uss directory to local file system.
@@ -153,13 +153,13 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable? = null
     try {
+      log.info("Trying to move remote file ${operation.source.name} to local directory ${operation.destination.path}")
       val attributes = dataOpsManager.tryToGetAttributes(operation.source) as MFRemoteFileAttributes<*, *>
       if (attributes.requesters.isEmpty()) {
         throw IllegalArgumentException("Cannot get system information of file ${operation.source.name}")
       }
       for (requester in attributes.requesters) {
         val connectionConfig = requester.connectionConfig as ConnectionConfig
-        log.info("Trying to move remote file ${operation.source.name} from ${connectionConfig.url} to local directory ${operation.destination.path}")
         throwable = proceedLocalMoveCopy(operation, connectionConfig, progressIndicator)
         if (throwable != null) {
           throw throwable
@@ -169,8 +169,9 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
       throwable = t
     }
     if (throwable != null) {
+      log.error("Failed to move remote file")
       throw throwable
     }
-    log.info("Remote file has been moved successfully")
+    log.info("Remote ile has been moved successfully")
   }
 }

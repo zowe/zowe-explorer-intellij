@@ -34,8 +34,6 @@ class RemoteToLocalFileMoverFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<RemoteToLocalFileMover>()
-
 /**
  * Implements copying (downloading) of remote uss file to local file system.
  * @author Valiantsin Krus
@@ -52,6 +50,8 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
             operation.destination is VirtualFileSystemEntry &&
             operation.destination.isDirectory
   }
+
+  val log = log<RemoteToLocalFileMover>()
 
   /**
    * Proceeds download of remote uss file to local file system.
@@ -85,7 +85,6 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     }
     contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
 
-    log.info("Trying to move ${sourceFile.name} from ${operation.source.path} to local file ${destFile.path}")
     runWriteActionInEdtAndWait {
       if (operation.forceOverwriting) {
         destFile.children.filter { it.name === sourceFile.name && !it.isDirectory }.forEach { it.delete(this) }
@@ -107,11 +106,13 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable?
     try {
+      log.info("Trying to move remote file ${operation.source.name} to local file ${operation.destination.name}")
       throwable = proceedLocalMoveCopy(operation, progressIndicator)
     } catch (t: Throwable) {
       throwable = t
     }
     if (throwable != null) {
+      log.error("Failed to move remote file")
       throw throwable
     }
     log.info("Remote file has been moved successfully")

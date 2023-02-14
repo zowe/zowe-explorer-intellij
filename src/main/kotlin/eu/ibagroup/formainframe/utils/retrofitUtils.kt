@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.utils
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
@@ -24,6 +25,8 @@ import retrofit2.Response
 internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by call {
   override fun clone() = WrappedCancellableCall(call.clone())
 
+  private val log = log<Call<T>>()
+
   private fun buildException(t: Throwable): Throwable {
     return if (call.isCanceled) {
       ProcessCanceledException(t)
@@ -33,11 +36,21 @@ internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by
   }
 
   override fun execute(): Response<T> {
-    return try {
-      call.execute()
+    val response: Response<T>
+    try {
+      response = call.execute()
     } catch (e: Throwable) {
       throw buildException(e)
     }
+    val strRequest = call.request().toString()
+    val defaultOperationName = strRequest.substring(strRequest.indexOf(".", strRequest.indexOf("api", ignoreCase = true)) + 1, strRequest.indexOf(" ", strRequest.indexOf("api", ignoreCase = true)))
+    log.info(
+      if (response.isSuccessful)
+        "Operation \"$defaultOperationName\" has been completed successfully"
+      else
+        "Operation \"$defaultOperationName\" has been completed failed"
+    )
+    return response
   }
 
   override fun enqueue(callback: Callback<T>) {
@@ -51,6 +64,26 @@ internal class WrappedCancellableCall<T>(private val call: Call<T>) : Call<T> by
       }
     })
   }
+}
+
+/**
+ * execute() function with logs
+ * @param customMessage the message to display in log
+ * @param requestParams the map for displaying parameters in log
+ * @param log [Logger] instance to display logs
+ * @see WrappedCancellableCall.execute
+ */
+inline fun <reified T : Any> Call<T>.execute(customMessage: String = "", requestParams: Map<String, Any> = emptyMap(), log: Logger = log<Call<T>>()): Response<T> {
+  val strRequest = this.request().toString()
+  val defaultOperationName = strRequest.substring(strRequest.indexOf(".", strRequest.indexOf("api", ignoreCase = true)) + 1, strRequest.indexOf(" ", strRequest.indexOf("api", ignoreCase = true)))
+
+  var message = customMessage.ifEmpty { "Operation \"$defaultOperationName\" has been started" }
+  if (requestParams.isNotEmpty()) {
+    val paramsStr = requestParams.map { "${it.key}: ${it.value}" } .joinToString(separator = "; ")
+    message = "$message\nRequest params: $paramsStr"
+  }
+  log.info(message)
+  return execute()
 }
 
 /**

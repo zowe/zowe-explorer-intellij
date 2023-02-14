@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.MessageType
 import eu.ibagroup.r2z.TsoApi
@@ -37,14 +38,13 @@ class TsoOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<TsoOperationRunner>()
-
 /**
  * Base instance class which is built by factory during runtime
  */
 class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
   override val operationClass = TsoOperation::class.java
   override val resultClass = TsoResponse::class.java
+  val log = log<TsoOperationRunner>()
 
   /**
    * Method determines if an operation can run
@@ -63,7 +63,6 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
     when (mode) {
       TsoOperationMode.START -> {
         val state = operation.state as TSOSessionParams
-        log.info("Starting TSO on ${state.connectionConfig.url}")
         response = api<TsoApi>(state.connectionConfig)
           .startTso(
             state.connectionConfig.authToken,
@@ -77,14 +76,16 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
             rsize = state.region.toInt()
           )
           .cancelByIndicator(progressIndicator)
-          .execute()
+          .execute(
+            customMessage = "Starting TSO on ${state.connectionConfig.url}",
+            log = log
+          )
       }
 
       TsoOperationMode.SEND_MESSAGE -> {
         val state = operation.state as TSOConfigWrapper
         val servletKey = state.getTSOResponse().servletKey
         if (servletKey != null) {
-          log.info("Sending TSO message on ${state.getConnectionConfig().url}")
           response = api<TsoApi>(state.getConnectionConfig())
             .sendMessageToTso(
               state.getConnectionConfig().authToken,
@@ -97,7 +98,10 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
               servletKey = servletKey
             )
             .cancelByIndicator(progressIndicator)
-            .execute()
+            .execute(
+              customMessage = "Sending TSO message on ${state.getConnectionConfig().url}",
+              log = log
+            )
         }
       }
 
@@ -105,14 +109,16 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
         val state = operation.state as TSOConfigWrapper
         val servletKey = state.getTSOResponse().servletKey
         if (servletKey != null) {
-          log.info("Getting TSO message on ${state.getConnectionConfig().url}")
           response = api<TsoApi>(state.getConnectionConfig())
             .receiveMessagesFromTso(
               state.getConnectionConfig().authToken,
               servletKey = servletKey
             )
             .cancelByIndicator(progressIndicator)
-            .execute()
+            .execute(
+              customMessage = "Getting TSO message on ${state.getConnectionConfig().url}",
+              log = log
+            )
         }
       }
 
@@ -120,14 +126,16 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
         val state = operation.state as TSOConfigWrapper
         val servletKey = state.getTSOResponse().servletKey
         if (servletKey != null) {
-          log.info("Stopping TSO on ${state.getConnectionConfig().url}")
           response = api<TsoApi>(state.getConnectionConfig())
             .endTso(
               state.getConnectionConfig().authToken,
               servletKey = servletKey
             )
             .cancelByIndicator(progressIndicator)
-            .execute()
+            .execute(
+              customMessage = "Stopping TSO on ${state.getConnectionConfig().url}",
+              log = log
+            )
         }
       }
     }
@@ -138,7 +146,6 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
           val errorMsg = body.msgData.toString()
           throw CallException(response, errorMsg)
         }
-        log.info("TSO operation has been completed successfully")
       } else {
         throw CallException(response, response.message())
       }

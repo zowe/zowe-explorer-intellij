@@ -36,8 +36,6 @@ class LocalFileToUssDirMoverFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<LocalFileToUssDirMover>()
-
 /**
  * Implements copying of file from local file system to remote uss directory.
  * @author Valiantsin Krus
@@ -56,6 +54,8 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       operation.destination is MFVirtualFile &&
       dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
   }
+
+  val log = log<LocalFileToUssDirMover>()
 
   /**
    * Proceeds move/copy of file from local file system to remote uss directory.
@@ -82,7 +82,6 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       if (sourceFile.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY) else XIBMDataType(XIBMDataType.Type.TEXT)
 
 
-    log.info("Trying to move local file ${sourceFile.name} to USS directory ${destAttributes.path} on ${destConnectionConfig.url}")
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(
       authorizationToken = destConnectionConfig.authToken,
       filePath = FilePath(pathToFile),
@@ -90,7 +89,10 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       xIBMDataType = xIBMDataType
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
-    }.execute()
+    }.execute(
+      customMessage = "Moving local file ${sourceFile.name} to USS directory $pathToFile on ${destConnectionConfig.url}",
+      log = log
+    )
 
     if (!response.isSuccessful) {
       throwable = CallException(response, "Cannot upload data to ${destAttributes.path}${sourceFile.name}")
@@ -119,11 +121,13 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable = try {
+      log.info("Trying to move local file ${operation.source.name} to USS directory ${operation.destination.path}")
       proceedLocalUpload(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.error("Failed to move local file")
       throw throwable
     }
     log.info("Local file has been moved successfully")

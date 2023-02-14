@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.getParentsChain
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CopyDataUSS
@@ -39,8 +40,6 @@ class UssToUssFileMoverFactory : OperationRunnerFactory {
   }
 }
 
-private val log = log<UssToUssFileMover>()
-
 /**
  * Implements copying of uss file to uss directory inside 1 system
  */
@@ -52,6 +51,8 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
             && operation.commonUrls(dataOpsManager).isNotEmpty()
             && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
+
+  val log = log<UssToUssFileMover>()
 
   /**
    * Proceeds move/copy of uss file to uss directory
@@ -106,10 +107,14 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {
       try {
-        log.info("Trying to move USS file ${operation.source.name} to USS directory ${operation.destination.path} on ${requester.connectionConfig.url}")
         val (call, from, to) = makeCall(requester.connectionConfig, operation, progressIndicator)
         val operationName = if (operation.isMove) "move" else "copy"
-        val response: Response<Void> = call.execute()
+        val opNameForLog = if (operation.isMove) "Moving" else "Copying"
+        val response: Response<Void> = call.execute(
+          customMessage = "$opNameForLog USS file to $to on ${requester.connectionConfig.url}",
+          requestParams = mapOf(Pair("Moved file", operation.source)),
+          log = log
+        )
         if (!response.isSuccessful) {
           throwable = CallException(response, "Cannot $operationName $from to $to")
         }
@@ -121,7 +126,6 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     if (throwable != null) {
       throw throwable
     }
-    log.info("USS file has been moved successfully")
   }
 
 }

@@ -22,6 +22,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HMigrate
@@ -31,8 +32,6 @@ import eu.ibagroup.r2z.HMigrate
  * @param file file that is needed to be migrated
  */
 data class MigrateOperationParams(val file: VirtualFile)
-
-private val log = log<MigrateOperationRunner>()
 
 /**
  * Class which represents migrate operation runner
@@ -56,6 +55,8 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
 
   override val operationClass = MigrateOperation::class.java
 
+  val log = log<MigrateOperationRunner>()
+
   /**
    * Runs migrate operation
    * @param operation migrate operation instance which contains all info needed for performing operation
@@ -63,19 +64,20 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
    */
   override fun run(operation: MigrateOperation, progressIndicator: ProgressIndicator) {
     progressIndicator.checkCanceled()
-    log.info("Migrating ${operation.request.file.name} on ${operation.connectionConfig.name}")
     val response = api<DataAPI>(operation.connectionConfig).migrateDataset(
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.file.name,
       body = HMigrate(wait = true)
-    ).cancelByIndicator(progressIndicator).execute()
+    ).cancelByIndicator(progressIndicator).execute(
+      customMessage = "Migrating ${operation.request.file.name} on ${operation.connectionConfig}",
+      log = log
+    )
     if (!response.isSuccessful) {
       throw CallException(
         response,
         "Cannot migrate dataset ${operation.request.file.name} on ${operation.connectionConfig.name}"
       )
     }
-    log.info("Migrate operation has been completed successfully")
   }
 }
 

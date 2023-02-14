@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 
@@ -28,8 +29,6 @@ class MemberAllocatorFactory : OperationRunnerFactory {
     return MemberAllocator()
   }
 }
-
-private val log = log<MemberAllocator>()
 
 /**
  * Data class which represents member allocation operation object
@@ -46,6 +45,8 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
 
   override val operationClass = MemberAllocationOperation::class.java
 
+  val log = log<MemberAllocator>()
+
   /**
    * Runs a member allocation operation
    * @param operation member allocation operation to be run
@@ -58,13 +59,15 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
-    log.info("Allocating member ${operation.request.memberName} to ${operation.request.datasetName}")
     val request = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.datasetName,
       memberName = operation.request.memberName,
       content = byteArrayOf()
-    ).cancelByIndicator(progressIndicator).execute()
+    ).cancelByIndicator(progressIndicator).execute(
+      customMessage = "Creating member ${operation.request.memberName} in ${operation.request.datasetName} on ${operation.connectionConfig.url}",
+      log = log
+    )
     if (!request.isSuccessful) {
       throw CallException(
         request,
@@ -72,7 +75,6 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
             "on ${operation.connectionConfig.name}"
       )
     }
-    log.info("Member has been allocated successfully")
   }
 }
 

@@ -18,7 +18,6 @@ import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CopyDataUSS
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -34,8 +33,6 @@ class MemberToUssFileMoverFactory : OperationRunnerFactory {
     return MemberToUssFileMover(dataOpsManager)
   }
 }
-
-private val log = log<MemberToUssFileMover>()
 
 /**
  * Implements copying of member to uss directory inside 1 system.
@@ -69,7 +66,6 @@ class MemberToUssFileMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
     val pdsAttributes = sourceAttributes.getLibraryAttributes(dataOpsManager)
       ?: throw IllegalArgumentException("Cannot get PDS attributes of member \"${sourceAttributes.name}\"")
     val to = destinationAttributes.path + USS_DELIMITER + (operation.newName ?: sourceAttributes.name)
-    log.info("Moving member ${sourceAttributes.name} to USS file ${destinationAttributes.path} on ${requesterWithUrl.second.url}")
     return api<DataAPI>(
       url = requesterWithUrl.second.url,
       isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned

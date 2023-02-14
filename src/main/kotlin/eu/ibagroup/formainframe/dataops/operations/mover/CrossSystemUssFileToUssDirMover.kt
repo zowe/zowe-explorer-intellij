@@ -20,10 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.log
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.FilePath
@@ -39,8 +36,6 @@ class CrossSystemUssFileToUssDirMoverFactory : OperationRunnerFactory {
     return CrossSystemUssFileToUssDirMover(dataOpsManager)
   }
 }
-
-private val log = log<CrossSystemUssFileToUssDirMover>()
 
 /**
  * Implements copying of uss file to uss directory between different systems.
@@ -71,6 +66,8 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
       ?: throw IllegalArgumentException("Cannot find attributes for file \"${fileName}\"")
   }
 
+  val log = log<CrossSystemUssFileToUssDirMover>()
+
   /**
    * Proceeds move/copy of uss file to uss directory between different systems.
    * @param op requested operation.
@@ -82,7 +79,6 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
     val destConnectionConfig = destAttributes.requesters.firstOrNull()?.connectionConfig
       ?: return IllegalArgumentException("Cannot find connection configuration for file \"${op.destination.name}\"")
 
-    log.info("Trying to move USS file ${sourceAttributes.name} to USS directory ${destAttributes.path} on ${destConnectionConfig.url}")
     if (sourceAttributes.isSymlink) {
       return IllegalArgumentException(
         "Impossible to move symlink. ${op.source.name} is symlink to ${sourceAttributes.symlinkTarget}." +
@@ -106,7 +102,11 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
       xIBMDataType = contentMode
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
-    }.execute()
+    }.execute(
+      customMessage = "Moving USS file to $pathToFile on ${destConnectionConfig.url}",
+      requestParams = mapOf(Pair("Moved file", op.source)),
+      log = log
+    )
 
     if (!response.isSuccessful) {
       throw CallException(response, "Cannot upload data to ${op.destination.path}${op.source.name}")
@@ -126,11 +126,13 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS file ${operation.source.name} to USS directory ${operation.destination.path}")
       proceedCrossSystemMoveCopy(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.error("Failed to move USS file")
       throw throwable
     }
     log.info("USS file has been moved successfully")
