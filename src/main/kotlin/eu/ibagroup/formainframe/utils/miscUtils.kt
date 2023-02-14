@@ -21,9 +21,14 @@ import java.util.stream.Stream
 import java.util.stream.StreamSupport
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
-import kotlin.streams.toList
 
 
+/**
+ * Finds class loader for specified class and tries to load the class.
+ * @param className name of the class to load.
+ * @return desired class instance, that is controlled by 1 of available class loaders
+ *         or null if desired class is not found or something went wrong.
+ */
 fun loadConfigClass(className: String): Class<*>? {
   val configClassLoaders = ConfigDeclaration.EP.extensionList.map { it.javaClass.classLoader }
   return configClassLoaders.firstNotNullOfOrNull { classLoader ->

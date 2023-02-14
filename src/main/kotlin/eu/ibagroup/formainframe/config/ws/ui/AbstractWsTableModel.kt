@@ -24,9 +24,8 @@ import eu.ibagroup.formainframe.utils.toMutableList
 /**
  * Abstract table model for table in configurations
  * for Working Sets (e.g. JES Working Set, Files Working Set).
- * @param WSConfig WorkingSetConfig implementation class.
- * @see eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
- * @see eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
+ * @param Connection The system (such as zosmf, cics etc.) connection class to work with (see [ConnectionConfigBase]).
+ * @param WSConfig Implementation class of [WorkingSetConfig].
  * @param crudable Crudable instance to change data.
  * @author Valiantsin Krus
  */

@@ -11,13 +11,20 @@
 package eu.ibagroup.formainframe.config.connect
 
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
+import eu.ibagroup.formainframe.utils.crudable.annotations.Column
 
+/**
+ * Abstract class to implement any connection config that could be integrated in plugin.
+ */
 abstract class ConnectionConfigBase : EntityWithUuid {
+  /** Connection name. Should be annotated with [Column] in implementation. */
   abstract var name: String
 
-  constructor()
-  constructor(uuid: String): super(uuid)
-
+  /** Connection url. Could be annotated with [Column] in implementation. */
   abstract val url: String
+
+  constructor()
+
+  constructor(uuid: String): super(uuid)
 
 }

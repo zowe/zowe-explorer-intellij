@@ -10,12 +10,13 @@
 
 package eu.ibagroup.formainframe.dataops
 
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 
 /**
  * Interface which represents remote info and holds connection config object almost for every remote query
+ * @param Connection The system (such as zosmf, cics etc.) connection class to work with (see [ConnectionConfigBase]).
  */
-interface RemoteInfo<Connection> {
+interface RemoteInfo<Connection: ConnectionConfigBase> {
 
   val connectionConfig: Connection
 

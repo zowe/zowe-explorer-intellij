@@ -73,6 +73,7 @@ class ConfigServiceImpl : ConfigService {
       eventHandler = this@ConfigServiceImpl.eventHandler
     }
 
+  /** List of registered config declarations */
   private val configDeclarations: List<ConfigDeclaration<out Any>> by lazy {
     ConfigDeclaration.EP.extensionList.map {
       it.buildConfigDeclaration(crudable)
@@ -92,13 +93,20 @@ class ConfigServiceImpl : ConfigService {
     }
 
 
+  /**
+   * Finds [ConfigDeclaration] for specified class through registered extension points (see [configDeclarations]).
+   * @param rowClass config class instance for which to find [ConfigDeclaration].
+   * @throws IllegalArgumentException if no config declaration found for passed class.
+   * @return config declaration instance.
+   */
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> getConfigDeclaration(rowClass: Class<out T>): ConfigDeclaration<T> {
     val result = configDeclarations.firstOrNull { it.clazz == rowClass }
-      ?: throw IllegalArgumentException("No configDecider found for class ${rowClass::class.java}.")
+      ?: throw IllegalArgumentException("No configDeclaration found for class ${rowClass::class.java}.")
     return result as ConfigDeclaration<T>
   }
 
+  /** Creates collection for config class in state (see [ConfigService.registerConfigClass]). */
   override fun <T> registerConfigClass(clazz: Class<out T>) {
     if (!state.collections.containsKey(clazz.name)) {
       state.collections[clazz.name] = mutableListOf<T>()
@@ -106,18 +114,28 @@ class ConfigServiceImpl : ConfigService {
     service<ConfigSandbox>().registerConfigClass(clazz)
   }
 
+  /**
+   * Creates collection for each class of registered config declarations.
+   * @see ConfigService.registerAllConfigClasses
+   */
   override fun registerAllConfigClasses() {
     configDeclarations.forEach { registerConfigClass(it.clazz) }
   }
 
+  /** Returns keys of [ConfigStateV2.collections]. see [ConfigService.getRegisteredConfigClasses] */
   override fun getRegisteredConfigClasses(): List<Class<*>> {
     return state.collections.keys.mapNotNull { loadConfigClass(it) }
   }
 
+  /** Returns registered in IoC container config declarations. see [ConfigService.getRegisteredConfigDeclarations] */
   override fun getRegisteredConfigDeclarations(): List<ConfigDeclaration<*>> {
     return configDeclarations.toList()
   }
 
+  /**
+   * Migrates configurations from old [ConfigState] to the new one [ConfigStateV2].
+   * @param state instance of old [ConfigState].
+   */
   override fun migrateOldConfigState(state: ConfigState) {
     if (!state.migrated) {
       myState.settings = state.settings.clone()

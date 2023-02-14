@@ -16,6 +16,7 @@ import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.explorer.Explorer
 
+/** Representation of errors in tree. It is node that will display error message highlighted with red color. */
 class ErrorNode<Connection: ConnectionConfigBase>(
   project: Project,
   parent: ExplorerTreeNode<Connection, *>,

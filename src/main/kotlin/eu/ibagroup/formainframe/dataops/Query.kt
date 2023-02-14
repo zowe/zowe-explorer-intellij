@@ -11,8 +11,9 @@
 package eu.ibagroup.formainframe.dataops
 
 /**
- * Interface which represents query that should be executed on remote server,
- * contains body request
+ * Interface which represents query that should be executed.
+ * @param Request data that is necessary to proceed query.
+ * @param Result result that should be returned after query execution.
  */
 interface Query<Request, Result> : Operation<Result> {
 
