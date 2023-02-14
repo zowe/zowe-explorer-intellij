@@ -10,7 +10,7 @@
 
 package eu.ibagroup.formainframe.config.ws.ui.files
 
-import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsTableModel
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -21,8 +21,8 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  * @author Valiantsin Krus
  * @author Viktar Mushtsin
  */
-class WSTableModel<Connection: ConnectionConfigBase>(crudable: Crudable, connectionClass: Class<out Connection>)
-  : AbstractWsTableModel<Connection, FilesWorkingSetConfig>(crudable, connectionClass) {
+class WSTableModel(crudable: Crudable)
+  : AbstractWsTableModel<ConnectionConfig, FilesWorkingSetConfig>(crudable, ConnectionConfig::class.java) {
 
   override val clazz = FilesWorkingSetConfig::class.java
 

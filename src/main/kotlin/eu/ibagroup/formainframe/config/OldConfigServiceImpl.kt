@@ -14,7 +14,10 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-
+/**
+ * Implementation of [OldConfigService] to read old configs from old file with configs.
+ * @author Valiantsin Krus.
+ */
 @State(
   name = "by.iba.connector.services.ConfigService",
   storages = [Storage(value = "iba_connector_config.xml", exportable = true)]
@@ -24,6 +27,7 @@ class OldConfigServiceImpl: OldConfigService {
   companion object {
     private val myState: ConfigState = ConfigState()
   }
+
   override fun getState(): ConfigState {
     return myState
   }
