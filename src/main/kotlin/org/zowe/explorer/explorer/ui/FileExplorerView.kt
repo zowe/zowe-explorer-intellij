@@ -495,7 +495,7 @@ class FileExplorerView(
               }
             nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
-              .forEach { it.cleanCache(recursively = false, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
+              .forEach { it.cleanCache(recursively = it is UssDirNode, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
           }
         }
       }

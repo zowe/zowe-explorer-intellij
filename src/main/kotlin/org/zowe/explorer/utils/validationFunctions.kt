@@ -470,7 +470,7 @@ fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
  */
 fun validateForGreaterValue(component: JTextField, value: Int): ValidationInfo? {
   return if ((component.text.toIntOrNull() ?: -1) < value) {
-    ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number grater than $value", component)
+    ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number greater than or equal to $value", component)
   } else {
     null
   }

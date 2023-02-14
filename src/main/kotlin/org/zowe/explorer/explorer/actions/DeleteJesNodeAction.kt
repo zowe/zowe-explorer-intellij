@@ -81,6 +81,7 @@ class DeleteJesNodeAction : AnAction() {
       return
     }
     val selected = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = selected[0].node is JesWsNode || selected[0].node is JesFilterNode
+    e.presentation.isEnabledAndVisible = selected.isNotEmpty()
+            && (selected[0].node is JesWsNode || selected[0].node is JesFilterNode)
   }
 }
