@@ -77,8 +77,4 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
 /**
  * Data class which represents input parameters for uss allocation operation
  */
-data class MemberAllocationParams(val datasetName: String, var memberName: String = "") {
-  override fun toString(): String {
-    return "MemberAllocationParams(datasetName='$datasetName', memberName='$memberName')"
-  }
-}
+data class MemberAllocationParams(val datasetName: String, var memberName: String = "")

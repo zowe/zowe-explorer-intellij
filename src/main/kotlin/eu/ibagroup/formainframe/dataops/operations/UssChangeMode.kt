@@ -39,11 +39,7 @@ class UssChangeModeFactory : OperationRunnerFactory {
 data class UssChangeModeParams(
   val parameters: ChangeMode,
   val path: String,
-) {
-  override fun toString(): String {
-    return "UssChangeModeParams(parameters=$parameters, path='$path')"
-  }
-}
+)
 
 /**
  * Data class which represents uss change mode operation object

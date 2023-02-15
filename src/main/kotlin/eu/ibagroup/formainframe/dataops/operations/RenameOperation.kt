@@ -27,8 +27,4 @@ data class RenameOperation(
   val attributes: FileAttributes,
   val newName: String,
   val requester: AnAction? = null
-) : UnitOperation {
-  override fun toString(): String {
-    return "RenameOperation(file=$file, attributes=$attributes, newName='$newName', requester=$requester)"
-  }
-}
+) : UnitOperation
