@@ -74,10 +74,18 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
 open class PurgeJobOperationParams
 
 /** Job Name and Job Id are used */
-class BasicPurgeJobParams(val jobName: String, val jobId: String) : PurgeJobOperationParams()
+class BasicPurgeJobParams(val jobName: String, val jobId: String) : PurgeJobOperationParams() {
+  override fun toString(): String {
+    return "BasicPurgeJobParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /** Correlator is used */
-class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams()
+class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorPurgeJobParams(correlator='$correlator')"
+  }
+}
 
 /** Class for purge job operation */
 data class PurgeJobOperation(

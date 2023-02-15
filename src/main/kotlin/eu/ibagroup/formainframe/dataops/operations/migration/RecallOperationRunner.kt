@@ -85,7 +85,11 @@ class RecallOperationFactory : OperationRunnerFactory {
  */
 data class RecallOperationParams(
   val file: VirtualFile
-)
+) {
+  override fun toString(): String {
+    return "RecallOperationParams(file=$file)"
+  }
+}
 
 /**
  * Data class which represents recall operation object

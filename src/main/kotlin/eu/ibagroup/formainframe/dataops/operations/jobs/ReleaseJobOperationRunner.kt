@@ -87,10 +87,18 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
 open class ReleaseJobOperationParams
 
 /** Job Name and Job Id are used */
-class BasicReleaseJobParams(val jobName: String, val jobId: String) : ReleaseJobOperationParams()
+class BasicReleaseJobParams(val jobName: String, val jobId: String) : ReleaseJobOperationParams() {
+  override fun toString(): String {
+    return "BasicReleaseJobParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /** Correlator is used */
-class CorrelatorReleaseJobParams(val correlator: String) : ReleaseJobOperationParams()
+class CorrelatorReleaseJobParams(val correlator: String) : ReleaseJobOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorReleaseJobParams(correlator='$correlator')"
+  }
+}
 
 /** Class for release job operation */
 data class ReleaseJobOperation(

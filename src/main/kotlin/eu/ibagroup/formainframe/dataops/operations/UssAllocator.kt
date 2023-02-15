@@ -41,7 +41,11 @@ data class UssAllocationParams(
   val parameters: CreateUssFile,
   val fileName: String,
   val path: String,
-)
+) {
+  override fun toString(): String {
+    return "UssAllocationParams(parameters=$parameters, fileName='$fileName', path='$path')"
+  }
+}
 
 /**
  * Data class which represents uss allocation operation object

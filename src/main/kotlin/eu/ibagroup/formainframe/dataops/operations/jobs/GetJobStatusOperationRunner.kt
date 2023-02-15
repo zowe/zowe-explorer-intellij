@@ -102,13 +102,21 @@ sealed class GetJobStatusOperationParams {
    * Class which contains parameters for get job status operation,
    * consists of jobName and jobID, 1st of 2 options to set particular job
    */
-  class BasicStatusParams(val jobName: String, val jobId: String) : GetJobStatusOperationParams()
+  class BasicStatusParams(val jobName: String, val jobId: String) : GetJobStatusOperationParams() {
+    override fun toString(): String {
+      return "BasicStatusParams(jobName='$jobName', jobId='$jobId')"
+    }
+  }
 
   /**
    * Class which contains parameters for get job status operation,
    * consists of job correlator, 2nd of 2 options to set particular job
    */
-  class CorrelatorStatusParams(val correlator: String) : GetJobStatusOperationParams()
+  class CorrelatorStatusParams(val correlator: String) : GetJobStatusOperationParams() {
+    override fun toString(): String {
+      return "CorrelatorStatusParams(correlator='$correlator')"
+    }
+  }
 }
 
 /**

@@ -106,12 +106,20 @@ open class HoldJobOperationParams
 /**
  * Class which contains parameters job name and job id for hold job operation
  */
-class BasicHoldJobParams(val jobName: String, val jobId: String) : HoldJobOperationParams()
+class BasicHoldJobParams(val jobName: String, val jobId: String) : HoldJobOperationParams() {
+  override fun toString(): String {
+    return "BasicHoldJobParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /**
  * Class which contains parameter job correlator for hold job operation
  */
-class CorrelatorHoldJobParams(val correlator: String) : HoldJobOperationParams()
+class CorrelatorHoldJobParams(val correlator: String) : HoldJobOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorHoldJobParams(correlator='$correlator')"
+  }
+}
 
 /**
  * Data class that represents all information needed to send hold job request

@@ -30,7 +30,11 @@ import eu.ibagroup.r2z.HMigrate
  * Data class which represents info about file needed for migration operation
  * @param file file that is needed to be migrated
  */
-data class MigrateOperationParams(val file: VirtualFile)
+data class MigrateOperationParams(val file: VirtualFile) {
+  override fun toString(): String {
+    return "MigrateOperationParams(file=$file)"
+  }
+}
 
 /**
  * Class which represents migrate operation runner

@@ -106,12 +106,20 @@ open class CancelJobOperationParams
 /**
  * Class which contains parameters job name and job id for cancel job operation
  */
-class BasicCancelJobParams(val jobName: String, val jobId: String) : CancelJobOperationParams()
+class BasicCancelJobParams(val jobName: String, val jobId: String) : CancelJobOperationParams() {
+  override fun toString(): String {
+    return "BasicCancelJobParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /**
  * Class which contains parameter job correlator for cancel job operation
  */
-class CorrelatorCancelJobParams(val correlator: String) : CancelJobOperationParams()
+class CorrelatorCancelJobParams(val correlator: String) : CancelJobOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorCancelJobParams(correlator='$correlator')"
+  }
+}
 
 /**
  * Data class that represents all information needed to send cancel job request

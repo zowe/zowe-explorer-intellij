@@ -80,7 +80,11 @@ class DeleteMemberOperationRunner: OperationRunner<DeleteMemberOperation, Unit> 
  * @param datasetName dataset name.
  * @param memberName dataset member name,
  */
-data class DeleteMemberOperationParams(val datasetName: String, val memberName: String)
+data class DeleteMemberOperationParams(val datasetName: String, val memberName: String) {
+  override fun toString(): String {
+    return "DeleteMemberOperationParams(datasetName='$datasetName', memberName='$memberName')"
+  }
+}
 
 /**
  * Data class that represents all information needed to send a request to delete dataset member.

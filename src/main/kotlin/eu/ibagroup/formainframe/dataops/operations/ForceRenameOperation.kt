@@ -30,4 +30,8 @@ data class ForceRenameOperation(
   val newName: String,
   val override: Boolean,
   val explorer: Explorer<ConnectionConfig, *>?
-) : UnitOperation
+) : UnitOperation {
+  override fun toString(): String {
+    return "ForceRenameOperation(file=$file, attributes=$attributes, newName='$newName', override=$override, explorer=$explorer)"
+  }
+}

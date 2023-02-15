@@ -103,13 +103,21 @@ open class SubmitOperationParams
  * Class which contains parameters for submit operation by file path
  * @param submitFilePath path to file which contains code that should be submitted on mainframe
  */
-class SubmitFilePathOperationParams(val submitFilePath: String) : SubmitOperationParams()
+class SubmitFilePathOperationParams(val submitFilePath: String) : SubmitOperationParams() {
+  override fun toString(): String {
+    return "SubmitFilePathOperationParams(submitFilePath='$submitFilePath')"
+  }
+}
 
 /**
  * Class which contains parameters for submit operation by job jcl
  * @param jobJcl code that should be submitted on mainframe
  */
-class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams()
+class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams() {
+  override fun toString(): String {
+    return "SubmitJobJclOperationParams(jobJcl='$jobJcl')"
+  }
+}
 
 /**
  * Data class which represents all info that is needed to execute submit operation

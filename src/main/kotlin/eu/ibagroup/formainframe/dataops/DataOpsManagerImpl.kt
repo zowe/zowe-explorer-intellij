@@ -202,9 +202,10 @@ class DataOpsManagerImpl : DataOpsManager {
     val opRunner = operationRunners[operation::class.java]?.find { it.canRun(operation) } ?: throw NoSuchElementException("Operation $operation not found").also {
       log<DataOpsManagerImpl>().error(it)
     }
+    val startOpMessage = "Operation '${opRunner.operationClass.simpleName}' has been started\nOperation params: $operation"
     val result = runCatching {
+      opRunner.log.info(startOpMessage)
       opRunner
-        .logOperationStart(operation)
         .run(operation, progressIndicator)
     }.onSuccess {
       opRunner.log.info("Operation '${opRunner.operationClass.simpleName}' has been completed successfully")

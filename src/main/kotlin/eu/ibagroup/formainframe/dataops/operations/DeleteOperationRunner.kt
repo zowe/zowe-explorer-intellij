@@ -161,4 +161,8 @@ data class DeleteOperation(
     attributes = dataOpsManager.tryToGetAttributes(file)
       ?: throw IllegalArgumentException("Deleting file should have attributes")
   )
+
+  override fun toString(): String {
+    return "DeleteOperation(file=$file, attributes=$attributes)"
+  }
 }

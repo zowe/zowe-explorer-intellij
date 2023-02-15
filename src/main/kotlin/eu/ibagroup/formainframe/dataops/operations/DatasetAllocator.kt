@@ -118,4 +118,8 @@ data class DatasetAllocationParams(
     recordFormat = RecordFormat.FB,
     datasetOrganization = DatasetOrganization.PS
   )
-)
+) {
+  override fun toString(): String {
+    return "DatasetAllocationParams(presets=$presets, datasetName='$datasetName', memberName='$memberName', errorMessage='$errorMessage', allocationParameters=$allocationParameters)"
+  }
+}

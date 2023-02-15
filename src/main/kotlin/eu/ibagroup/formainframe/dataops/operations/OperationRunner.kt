@@ -36,8 +36,4 @@ interface OperationRunner<O : Operation<R>, R : Any> {
   /** Runs operation. */
   fun run(operation: O, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE): R
 
-  fun logOperationStart(operation: O): OperationRunner<O, R> {
-    log.info("Operation '${operationClass.simpleName}' has been started")
-    return this
-  }
 }
