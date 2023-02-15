@@ -11,7 +11,7 @@
 package eu.ibagroup.formainframe.dataops.operations
 
 import eu.ibagroup.formainframe.dataops.Operation
-import eu.ibagroup.r2z.TsoResponse
+import org.zowe.kotlinsdk.TsoResponse
 
 /**
  * Class which represents any TSO operation, e.g. start new TSO session

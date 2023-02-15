@@ -15,9 +15,9 @@ import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.Job
-import eu.ibagroup.r2z.SpoolFile
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.Job
+import org.zowe.kotlinsdk.SpoolFile
 
 class JobLogFetcherFactory: LogFetcherFactory {
   override fun acceptsProcessInfo(mfProcessInfo: MFProcessInfo): Boolean {

@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 import okhttp3.ResponseBody
 
 /**

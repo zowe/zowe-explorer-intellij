@@ -20,7 +20,7 @@ import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.XIBMDataType
 import java.nio.file.Paths
 
 /**

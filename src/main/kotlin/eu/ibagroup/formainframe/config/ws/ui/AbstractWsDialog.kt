@@ -31,19 +31,18 @@ import javax.swing.JComponent
 
 /**
  * Abstract class for displaying configuration dialog of single Working Set.
- * @param WSConfig Implementation class of WorkingSetConfig
- * @see WorkingSetConfig
- * @param TableRow Class with data for each column of filters/masks table (for example mask, system type, ...)
- * @param WSDState Implementation of AbstractWsDialogState
- * @see AbstractWsDialogState
+ * @param Connection The system (such as zosmf, cics etc.) connection class to work with (see [ConnectionConfigBase]).
+ * @param WSConfig Implementation class of [WorkingSetConfig].
+ * @param TableRow Class with data for each column of filters/masks table (for example mask, system type, ...).
+ * @param WSDState Implementation of [AbstractWsDialogState].
  * @param crudable Crudable instance to change data in after dialog applied.
- * @param wsdStateClass Instance of Class for WSDState
- * @param state Instance of WSDState
- * @param initialState Initial state of dialog. (used only working set name from initial state ???)
+ * @param wsdStateClass Instance of Class for WSDState.
+ * @property state Instance of WSDState.
+ * @property initialState Initial state of dialog. (used only working set name from initial state ???).
  * @author Valiantsin Krus
  * @author Viktar Mushtsin
  */
-abstract class AbstractWsDialog<Connection: ConnectionConfigBase, WSConfig : WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
+abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
   crudable: Crudable,
   wsdStateClass: Class<out WSDState>,
   override var state: WSDState,

@@ -12,8 +12,8 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.r2z.Job
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.Job
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Attributes containing information about the job.

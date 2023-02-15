@@ -305,7 +305,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
 
   /**
    * Register the tree events listeners. These are both mouse listeners, and the other tree listeners
-   * @param tree the tree where the listeners will be registered
+   * @param tree the tree where listeners will be registered
    */
   private fun registerTreeListeners(tree: DnDAwareTree) {
 

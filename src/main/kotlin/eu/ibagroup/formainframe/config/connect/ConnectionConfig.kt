@@ -11,7 +11,7 @@
 package eu.ibagroup.formainframe.config.connect
 
 import eu.ibagroup.formainframe.utils.crudable.annotations.Column
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.annotations.ZVersion
 
 /**
  * Class which represents connection config.

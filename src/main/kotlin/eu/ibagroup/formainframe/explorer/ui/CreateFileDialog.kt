@@ -19,10 +19,10 @@ import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationParams
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateUssFileName
-import eu.ibagroup.r2z.CreateUssFile
-import eu.ibagroup.r2z.FileMode
-import eu.ibagroup.r2z.FileModeValue
-import eu.ibagroup.r2z.FileType
+import org.zowe.kotlinsdk.CreateUssFile
+import org.zowe.kotlinsdk.FileMode
+import org.zowe.kotlinsdk.FileModeValue
+import org.zowe.kotlinsdk.FileType
 import javax.swing.JComponent
 
 val dummyState: CreateFileDialogState

@@ -21,8 +21,8 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.Job
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.Job
 import retrofit2.Response
 
 /**

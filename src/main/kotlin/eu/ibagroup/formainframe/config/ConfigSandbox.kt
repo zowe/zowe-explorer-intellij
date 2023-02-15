@@ -27,7 +27,7 @@ fun <T : Any> applySandbox(clazz: Class<out T>) {
 
 /**
  * Apply the sandbox state to the config if it is modified
- * @param clazz the config class to get the configs to apply the state to
+ * @param T the config class to get the configs to apply the state to
  */
 inline fun <reified T : Any> applySandbox() {
   applySandbox(T::class.java)
@@ -42,6 +42,10 @@ interface ConfigSandbox {
       get() = ApplicationManager.getApplication().getService(ConfigSandbox::class.java)
   }
 
+  /**
+   * Creates collection in config sandbox for specified class.
+   * @param clazz config class instance for which to register collection.
+   */
   fun <T> registerConfigClass(clazz: Class<out T>)
 
   fun updateState()

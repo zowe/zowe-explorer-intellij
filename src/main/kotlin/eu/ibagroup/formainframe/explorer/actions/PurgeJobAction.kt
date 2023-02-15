@@ -15,9 +15,9 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
-import eu.ibagroup.r2z.ExecData
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.Job
+import org.zowe.kotlinsdk.ExecData
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.Job
 
 /** An action to purge a job */
 class PurgeJobAction : AnAction() {

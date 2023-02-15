@@ -26,7 +26,7 @@ import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.*
-import eu.ibagroup.r2z.ChangeMode
+import org.zowe.kotlinsdk.ChangeMode
 
 /**
  * Action for displaying properties of files on UI in dialog by clicking item in explorer context menu.

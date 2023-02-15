@@ -22,8 +22,8 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 import retrofit2.Response
 
 /**

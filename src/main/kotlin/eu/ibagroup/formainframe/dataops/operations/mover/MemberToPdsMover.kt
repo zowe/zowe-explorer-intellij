@@ -20,8 +20,8 @@ import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataZOS
-import eu.ibagroup.r2z.DataAPI
+import org.zowe.kotlinsdk.CopyDataZOS
+import org.zowe.kotlinsdk.DataAPI
 import retrofit2.Call
 import java.io.FileNotFoundException
 

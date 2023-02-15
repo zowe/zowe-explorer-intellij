@@ -18,9 +18,9 @@ import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataUSS
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
+import org.zowe.kotlinsdk.CopyDataUSS
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 import retrofit2.Call
 
 /**

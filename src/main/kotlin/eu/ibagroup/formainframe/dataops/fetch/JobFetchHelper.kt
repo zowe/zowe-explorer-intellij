@@ -18,7 +18,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
 import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
 import eu.ibagroup.formainframe.utils.asMutableList
-import eu.ibagroup.r2z.Job
+import org.zowe.kotlinsdk.Job
 
 /**
  * Helper runner class for getting job execution timestamps

@@ -11,9 +11,10 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 
 /** Interface to describe possible mainframe remote file attributes and interactions with them */
-interface MFRemoteFileAttributes<Connection, R : Requester<Connection>> : FileAttributes {
+interface MFRemoteFileAttributes<Connection: ConnectionConfigBase, R : Requester<Connection>> : FileAttributes {
 
   val url: String
 
@@ -21,7 +22,8 @@ interface MFRemoteFileAttributes<Connection, R : Requester<Connection>> : FileAt
 
 }
 
-interface Requester<Connection> {
+/** Interface that is necessary to implement requests to zosmf for specific entity (uss files, datasets, jobs etc.) */
+interface Requester<Connection: ConnectionConfigBase> {
   val connectionConfig: Connection
 }
 

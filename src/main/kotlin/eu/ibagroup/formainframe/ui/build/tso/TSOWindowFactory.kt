@@ -31,7 +31,7 @@ import eu.ibagroup.formainframe.ui.build.tso.ui.TSOConsoleView
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.subscribe
-import eu.ibagroup.r2z.TsoResponse
+import org.zowe.kotlinsdk.TsoResponse
 import java.net.ConnectException
 
 /**

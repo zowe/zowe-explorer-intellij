@@ -21,9 +21,9 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.ReleaseJobRequest
-import eu.ibagroup.r2z.ReleaseJobRequestBody
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.ReleaseJobRequest
+import org.zowe.kotlinsdk.ReleaseJobRequestBody
 import retrofit2.Response
 
 /** Factory for release job operation runner */

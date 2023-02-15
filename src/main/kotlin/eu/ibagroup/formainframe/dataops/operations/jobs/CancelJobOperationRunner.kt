@@ -21,9 +21,9 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.r2z.CancelJobRequest
-import eu.ibagroup.r2z.CancelJobRequestBody
-import eu.ibagroup.r2z.JESApi
+import org.zowe.kotlinsdk.CancelJobRequest
+import org.zowe.kotlinsdk.CancelJobRequestBody
+import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
 
 /**

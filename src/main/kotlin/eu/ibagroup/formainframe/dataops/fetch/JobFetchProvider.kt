@@ -24,9 +24,9 @@ import eu.ibagroup.formainframe.utils.asMutableList
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.ExecData
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.ExecData
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.annotations.ZVersion
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**

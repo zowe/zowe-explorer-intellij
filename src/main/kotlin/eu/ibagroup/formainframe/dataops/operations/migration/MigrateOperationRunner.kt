@@ -23,8 +23,8 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.HMigrate
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.HMigrate
 
 /**
  * Data class which represents info about file needed for migration operation

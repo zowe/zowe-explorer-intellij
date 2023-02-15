@@ -18,9 +18,9 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.r2z.ChangeMode
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
+import org.zowe.kotlinsdk.ChangeMode
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 
 /**
  * Class which represents factory for uss change mode operation runner. Defined in plugin.xml

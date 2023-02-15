@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.explorer.config.Presets
 import eu.ibagroup.formainframe.explorer.config.getSampleJclMemberContent
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 import java.lang.Exception
 
 /**

@@ -22,9 +22,9 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Factory for registering CrossSystemUssFileToUssDirMover in Intellij IoC container.

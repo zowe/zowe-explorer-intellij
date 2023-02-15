@@ -18,7 +18,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.r2z.DataAPI
+import org.zowe.kotlinsdk.DataAPI
 
 /**
  * Class which represents factory for member allocator operation runner. Defined in plugin.xml

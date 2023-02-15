@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.*
-import eu.ibagroup.r2z.TsoCodePage
+import org.zowe.kotlinsdk.TsoCodePage
 import java.awt.Dimension
 import javax.swing.JComboBox
 import javax.swing.JComponent

@@ -26,7 +26,7 @@ import javax.swing.JComponent
 import com.intellij.ui.dsl.builder.*
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import eu.ibagroup.formainframe.utils.getSupportedEncodings
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 import java.nio.charset.Charset
 
 /** Class for USS file properties dialog */

@@ -26,8 +26,8 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.fetch.JobQuery
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.Job
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.Job
+import org.zowe.kotlinsdk.annotations.ZVersion
 import kotlin.math.roundToInt
 
 private val jobIcon = AllIcons.Nodes.Folder

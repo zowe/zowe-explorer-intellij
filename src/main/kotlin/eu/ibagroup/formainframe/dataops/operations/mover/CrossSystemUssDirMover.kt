@@ -25,7 +25,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 
 /**
  * Factory for registering CrossSystemUssDirMover in Intellij IoC container.
