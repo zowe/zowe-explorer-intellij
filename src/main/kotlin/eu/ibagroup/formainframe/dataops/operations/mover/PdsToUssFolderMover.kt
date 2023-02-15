@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.CopyDataUSS
@@ -61,6 +60,8 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
             && operation.commonUrls(dataOpsManager).isNotEmpty()
   }
 
+  override val log = log<PdsToUssFolderMover<VFile>>()
+
   /**
    * Implements copying member inside 1 system.
    * @see AbstractPdsToUssFolderMover.canRun
@@ -74,7 +75,6 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     destConnectionConfig: ConnectionConfig,
     progressIndicator: ProgressIndicator
   ): Response<*>? {
-    val log = log<PdsToUssFolderMover<VFile>>()
     return api<DataAPI>(sourceConnectionConfig).copyDatasetOrMemberToUss(
       sourceConnectionConfig.authToken,
       XIBMBpxkAutoCvt.OFF,
@@ -82,11 +82,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
         from = CopyDataUSS.CopyFromDataset.Dataset(libraryAttributes.name, memberName.uppercase())
       ),
       FilePath(destinationPath)
-    ).cancelByIndicator(progressIndicator).execute(
-      customMessage = "Copying member to $destinationPath/$memberName on ${destConnectionConfig.url}",
-      requestParams = mapOf(Pair("Copied member", operation.source)),
-      log = log
-    )
+    ).cancelByIndicator(progressIndicator).execute()
   }
 
   /**
@@ -94,7 +90,6 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
    * @see OperationRunner.run
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
-    val log = log<PdsToUssFolderMover<VFile>>()
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {
       try {

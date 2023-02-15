@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
 import eu.ibagroup.r2z.*
@@ -44,7 +43,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
 
   override val resultClass = Unit::class.java
 
-  val log = log<RenameOperationRunner>()
+  override val log = log<RenameOperationRunner>()
 
   /**
    * Determined if operation can be run on selected object
@@ -80,11 +79,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 )
               ),
               toDatasetName = operation.newName
-            ).cancelByIndicator(progressIndicator).execute(
-              customMessage = "Renaming dataset to ${operation.newName}",
-              requestParams = mapOf(Pair("Old name", attributes.name), Pair("Connection config", it.connectionConfig)),
-              log = log
-            )
+            ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
               sendVfsChangesTopic()
             } else {
@@ -117,11 +112,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 ),
                 toDatasetName = parentAttributes.datasetInfo.name,
                 memberName = operation.newName
-              ).cancelByIndicator(progressIndicator).execute(
-                customMessage = "Duplicating member ${operation.newName} in ${parentAttributes.datasetInfo.name}",
-                requestParams = mapOf(Pair("Connection config", it.connectionConfig)),
-                log = log
-              )
+              ).cancelByIndicator(progressIndicator).execute()
               if (response.isSuccessful) {
                 sendVfsChangesTopic()
               } else {
@@ -138,11 +129,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 ),
                 toDatasetName = parentAttributes.datasetInfo.name,
                 memberName = operation.newName
-              ).cancelByIndicator(progressIndicator).execute(
-                customMessage = "Renaming member to ${operation.newName}",
-                requestParams = mapOf(Pair("Old name", attributes.info.name), Pair("Connection config", it.connectionConfig)),
-                log = log
-              )
+              ).cancelByIndicator(progressIndicator).execute()
               if (response.isSuccessful) {
                 sendVfsChangesTopic()
               } else {
@@ -169,11 +156,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 from = attributes.path
               ),
               filePath = FilePath("$parentDirPath/${operation.newName}")
-            ).cancelByIndicator(progressIndicator).execute(
-              customMessage = "Renaming uss file to ${operation.newName}",
-              requestParams = mapOf(Pair("Old name", attributes.path), Pair("Connection config", it.connectionConfig)),
-              log = log
-            )
+            ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
               sendVfsChangesTopic()
             } else {

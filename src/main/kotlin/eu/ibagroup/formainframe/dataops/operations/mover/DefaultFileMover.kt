@@ -17,7 +17,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.log
 import retrofit2.Call
@@ -41,7 +40,7 @@ abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : 
     requesterWithUrl: Pair<Requester<ConnectionConfig>, ConnectionConfig>
   ): Call<Void>
 
-  val log = log<DefaultFileMover>()
+  override val log = log<DefaultFileMover>()
 
   /**
    * Starts operation execution. Throws throwable if something went wrong.
@@ -55,12 +54,8 @@ abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : 
     var throwable: Throwable? = null
     operation.commonUrls(dataOpsManager).stream().map {
       progressIndicator.checkCanceled()
-      val opNameForLog = if (operation.isMove) "Moving" else "Copying"
       runCatching {
-        buildCall(operation, it).cancelByIndicator(progressIndicator).execute(
-          customMessage = "$opNameForLog ${operation.source.name} to ${operation.destination.path} on ${it.second.url}",
-          log = log
-        )
+        buildCall(operation, it).cancelByIndicator(progressIndicator).execute()
       }.mapCatching {
         val operationMessage = if (operation.isMove) "move" else "copy"
         if (!it.isSuccessful) {

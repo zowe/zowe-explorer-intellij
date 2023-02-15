@@ -51,7 +51,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
             operation.destination.isDirectory
   }
 
-  val log = log<RemoteToLocalFileMover>()
+  override val log = log<RemoteToLocalFileMover>()
 
   /**
    * Proceeds download of remote uss file to local file system.

@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.dataops.operations
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -27,10 +28,16 @@ interface OperationRunner<O : Operation<R>, R : Any> {
 
   val resultClass: Class<out R>
 
+  val log: Logger
+
   /** Determines if an operation can be run on selected object. */
   fun canRun(operation: O): Boolean
 
   /** Runs operation. */
   fun run(operation: O, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE): R
 
+  fun logOperationStart(operation: O): OperationRunner<O, R> {
+    log.info("Operation '${operationClass.simpleName}' has been started")
+    return this
+  }
 }

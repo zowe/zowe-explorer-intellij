@@ -54,7 +54,7 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
             (operation.source !is MFVirtualFile || operation.commonUrls(dataOpsManager).isEmpty())
   }
 
-  val log = log<CrossSystemUssFileToPdsMover>()
+  override val log = log<CrossSystemUssFileToPdsMover>()
 
   /**
    * Proceeds move/copy of uss file to partitioned data set between different systems.
@@ -100,11 +100,7 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
       xIBMDataType = xIBMDataType
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
-    }.execute(
-      customMessage = "Moving USS file to ${destAttributes.name}($memberName) on ${destConnectionConfig.url}",
-      requestParams = mapOf(Pair("Moved file", sourceFile)),
-      log = log
-    )
+    }.execute()
 
     if (!response.isSuccessful &&
       response.errorBody()?.string()?.contains("Truncation of a record occurred during an I/O operation.") != true

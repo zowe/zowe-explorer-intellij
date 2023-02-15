@@ -10,7 +10,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CancelJobPurgeOutRequest
 import eu.ibagroup.r2z.JESApi
@@ -30,7 +29,7 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
 
   override val resultClass = CancelJobPurgeOutRequest::class.java
 
-  val log = log<PurgeJobOperationRunner>()
+  override val log = log<PurgeJobOperationRunner>()
 
   override fun canRun(operation: PurgeJobOperation): Boolean {
     return true
@@ -51,19 +50,13 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
           basicCredentials = operation.connectionConfig.authToken,
           jobName = operation.request.jobName,
           jobId = operation.request.jobId
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Purging job ${operation.request.jobName}(${operation.request.jobId}) on ${operation.connectionConfig}",
-          log = log
-          )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorPurgeJobParams -> {
         api<JESApi>(operation.connectionConfig).cancelJobPurgeOutRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Purging job ${operation.request.correlator} on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       else -> throw Exception("Method with such parameters not found")
     }

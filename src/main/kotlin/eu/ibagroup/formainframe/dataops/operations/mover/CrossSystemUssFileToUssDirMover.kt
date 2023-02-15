@@ -66,7 +66,7 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
       ?: throw IllegalArgumentException("Cannot find attributes for file \"${fileName}\"")
   }
 
-  val log = log<CrossSystemUssFileToUssDirMover>()
+  override val log = log<CrossSystemUssFileToUssDirMover>()
 
   /**
    * Proceeds move/copy of uss file to uss directory between different systems.
@@ -102,11 +102,7 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
       xIBMDataType = contentMode
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
-    }.execute(
-      customMessage = "Moving USS file to $pathToFile on ${destConnectionConfig.url}",
-      requestParams = mapOf(Pair("Moved file", op.source)),
-      log = log
-    )
+    }.execute()
 
     if (!response.isSuccessful) {
       throw CallException(response, "Cannot upload data to ${op.destination.path}${op.source.name}")

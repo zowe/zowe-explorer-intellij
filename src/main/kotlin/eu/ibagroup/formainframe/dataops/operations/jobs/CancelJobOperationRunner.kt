@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CancelJobRequest
 import eu.ibagroup.r2z.CancelJobRequestBody
@@ -45,7 +44,7 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
 
   override val resultClass = CancelJobRequest::class.java
 
-  val log = log<CancelJobOperationRunner>()
+  override val log = log<CancelJobOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -75,20 +74,14 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
           jobId = operation.request.jobId,
           jobName = operation.request.jobName,
           body = CancelJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Cancelling job ${operation.request.jobName}(${operation.request.jobId}) on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorCancelJobParams -> {
         api<JESApi>(operation.connectionConfig).cancelJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator,
           body = CancelJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Cancelling job ${operation.request.correlator} on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       else -> throw Exception("Method with such parameters not found")
     }

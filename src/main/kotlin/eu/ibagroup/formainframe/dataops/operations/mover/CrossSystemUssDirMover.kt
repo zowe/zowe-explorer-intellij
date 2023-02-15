@@ -57,7 +57,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
             operation.commonUrls(dataOpsManager).isEmpty()
   }
 
-  val log = log<CrossSystemUssDirMover>()
+  override val log = log<CrossSystemUssDirMover>()
 
   /**
    * Proceeds move/copy of uss directory to uss directory between different systems.
@@ -100,11 +100,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       body = CreateUssFile(FileType.DIR, FileMode(7, 7, 7))
     ).applyIfNotNull(progressIndicator) {
       cancelByIndicator(it)
-    }.execute(
-      customMessage = "Creating USS file in $pathToDir on ${destConnectionConfig.url}",
-      requestParams = mapOf(Pair("Moved directory", sourceFile)),
-      log = log
-    )
+    }.execute()
 
     if (!response.isSuccessful) {
       return CallException(response, "Cannot upload directory '$pathToDir'.")

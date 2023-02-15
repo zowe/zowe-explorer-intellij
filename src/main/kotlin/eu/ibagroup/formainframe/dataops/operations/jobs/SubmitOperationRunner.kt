@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.SubmitFileNameBody
@@ -34,7 +33,7 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
 
   override val operationClass = SubmitJobOperation::class.java
 
-  val log = log<SubmitOperationRunner>()
+  override val log = log<SubmitOperationRunner>()
 
   /**
    * Sends submit request to mainframe and checks return code of request
@@ -50,19 +49,13 @@ class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobReque
         api<JESApi>(operation.connectionConfig).submitJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           body = SubmitFileNameBody(operation.request.submitFilePath)
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Submitting job ${operation.request.submitFilePath} on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       is SubmitJobJclOperationParams -> {
         api<JESApi>(operation.connectionConfig).submitJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           body = operation.request.jobJcl
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Submitting job ${operation.request.jobJcl} on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       else -> throw Exception("Method with such parameters not found")
     }

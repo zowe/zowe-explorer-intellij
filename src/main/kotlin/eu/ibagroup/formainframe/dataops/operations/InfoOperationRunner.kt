@@ -16,7 +16,6 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.SystemsApi
 import eu.ibagroup.r2z.SystemsResponse
@@ -36,7 +35,7 @@ class InfoOperationRunnerFactory : OperationRunnerFactory {
 class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
   override val operationClass = InfoOperation::class.java
   override val resultClass = SystemsResponse::class.java
-  val log = log<InfoOperationRunner>()
+  override val log = log<InfoOperationRunner>()
 
   /**
    * Determined if operation can be run on selected object
@@ -55,10 +54,7 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
     val response = api<SystemsApi>(connectionConfig = operation.connectionConfig)
       .getSystems(operation.connectionConfig.authToken)
       .cancelByIndicator(progressIndicator)
-      .execute(
-        customMessage = "Verifying credentials on ${operation.connectionConfig.url}",
-        log = log
-      )
+      .execute()
     if (!response.isSuccessful) {
       throw CallException(response, "Credentials are not valid")
     }

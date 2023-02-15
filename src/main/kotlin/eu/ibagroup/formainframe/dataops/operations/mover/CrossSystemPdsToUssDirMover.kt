@@ -57,6 +57,8 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
       operation.commonUrls(dataOpsManager).isEmpty()
   }
 
+  override val log = log<CrossSystemPdsToUssDirMover>()
+
   /**
    * Implements copying member from one system to another.
    * @see AbstractPdsToUssFolderMover.canRun
@@ -70,7 +72,6 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
     destConnectionConfig: ConnectionConfig,
     progressIndicator: ProgressIndicator
   ): Response<*>? {
-    val log = log<CrossSystemPdsToUssDirMoverFactory>()
     val memberFile = operation.source.children.firstOrNull { it.name == memberName }
       ?: throw IllegalArgumentException("No member with name '$memberName' found.")
     val contentSynchronizer = dataOpsManager.getContentSynchronizer(memberFile)
@@ -89,11 +90,7 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
       xIBMDataType = memberAttributes.contentMode
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
-    }.execute(
-      customMessage = "Copying member to $destinationPath/$memberName on ${destConnectionConfig.url}",
-      requestParams = mapOf(Pair("Copied member", memberFile), Pair("Source connection config", sourceConnectionConfig)),
-      log = log
-    )
+    }.execute()
   }
 
   /**
@@ -103,7 +100,6 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
-      val log = log<CrossSystemPdsToUssDirMover>()
       val sourceAttributes = operation.sourceAttributes as RemoteDatasetAttributes
       val destAttributes = operation.destinationAttributes as RemoteUssAttributes
       val sourceConnectionConfig = sourceAttributes.requesters.firstOrNull()?.connectionConfig

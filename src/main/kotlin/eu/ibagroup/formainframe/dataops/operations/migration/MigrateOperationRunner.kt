@@ -22,7 +22,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HMigrate
@@ -55,7 +54,7 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
 
   override val operationClass = MigrateOperation::class.java
 
-  val log = log<MigrateOperationRunner>()
+  override val log = log<MigrateOperationRunner>()
 
   /**
    * Runs migrate operation
@@ -68,10 +67,7 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.file.name,
       body = HMigrate(wait = true)
-    ).cancelByIndicator(progressIndicator).execute(
-      customMessage = "Migrating ${operation.request.file.name} on ${operation.connectionConfig}",
-      log = log
-    )
+    ).cancelByIndicator(progressIndicator).execute()
     if (!response.isSuccessful) {
       throw CallException(
         response,

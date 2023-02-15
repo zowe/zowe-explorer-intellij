@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.getParentsChain
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.*
@@ -56,7 +55,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
       && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
-  val log = log<UssFileToPdsMover>()
+  override val log = log<UssFileToPdsMover>()
 
   /**
    * Proceeds move/copy of uss file to partitioned data set.
@@ -91,11 +90,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
       ),
       toDatasetName = destinationAttributes.name,
       memberName = memberName
-    ).cancelByIndicator(progressIndicator).execute(
-      customMessage = "Moving USS file to ${destinationAttributes.name}($memberName) on ${connectionConfig.url}",
-      requestParams = mapOf(Pair("Moved file", operation.source)),
-      log = log
-    )
+    ).cancelByIndicator(progressIndicator).execute()
     if (!copyResponse.isSuccessful &&
       copyResponse.errorBody()?.string()?.contains("Truncation of a record occurred during an I/O operation.") != true
     ) {
@@ -108,18 +103,12 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
         authorizationToken = connectionConfig.authToken,
         filePath = FilePath(from),
         xIBMOption = XIBMOption.RECURSIVE
-      ).execute(
-        customMessage = "Deleting USS file $from on ${connectionConfig.url}",
-        log = log
-      )
+      ).execute()
       if (!deleteResponse.isSuccessful) {
         val rollbackResponse = api.deleteDatasetMember(
           authorizationToken = connectionConfig.authToken,
           datasetName = to, memberName = memberName
-        ).execute(
-          customMessage = "Deleting member $to($memberName) on ${connectionConfig.url}",
-          log = log
-        )
+        ).execute()
         throwable = if (rollbackResponse.isSuccessful) {
           log.info("Rollback proceeded successfully")
           CallException(deleteResponse, "Cannot $opName $from to $to. Rollback proceeded successfully.")

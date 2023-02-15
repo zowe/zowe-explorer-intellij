@@ -13,8 +13,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
-import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.*
 import retrofit2.Response
@@ -49,8 +47,6 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
     progressIndicator: ProgressIndicator
   ): Response<*>?
 
-  val log = log<AbstractPdsToUssFolderMover>()
-
   /**
    * Cancel changes if something went wrong in copying process.
    * @param prevResponse response of attempted request to copy member.
@@ -82,10 +78,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
       connectionConfig.authToken,
       FilePath(destinationPath),
       XIBMOption.RECURSIVE
-    ).execute(
-      customMessage = "Deleting USS file $destinationPath on ${connectionConfig.url}",
-      log = log
-    )
+    ).execute()
 
     if (isCanceled && !responseRollback.isSuccessful) {
       throwable = CallException(responseRollback, "Cannot rollback $opName $sourceName to $sourceName.")
@@ -136,10 +129,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
           authorizationToken = destConnectionConfig.authToken,
           filePath = FilePath(destinationPath),
           xIBMOption = XIBMOption.RECURSIVE
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Deleting USS file $destinationPath on ${destConnectionConfig.url}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
         if (!response.isSuccessful) {
           throw CallException(response, "Cannot overwrite directory '$destinationPath'.")
         }
@@ -149,10 +139,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
         authorizationToken = destConnectionConfig.authToken,
         filePath = FilePath(destinationAttributes.path + "/" + sourceAttributes.name),
         body = CreateUssFile(FileType.DIR, destinationAttributes.fileMode ?: FileMode(7, 7, 7))
-      ).cancelByIndicator(progressIndicator).execute(
-        customMessage = "Creating USS file $destinationPath/${sourceAttributes.name} on ${destConnectionConfig.url}",
-        log = log
-      )
+      ).cancelByIndicator(progressIndicator).execute()
 
       if (response.isSuccessful) {
         val cachedChildren = sourceFileFetchProvider.getCached(sourceQuery)

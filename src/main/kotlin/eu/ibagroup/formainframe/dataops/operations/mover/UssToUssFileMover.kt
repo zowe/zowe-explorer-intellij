@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.getParentsChain
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.CopyDataUSS
@@ -52,7 +51,7 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
             && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
-  val log = log<UssToUssFileMover>()
+  override val log = log<UssToUssFileMover>()
 
   /**
    * Proceeds move/copy of uss file to uss directory
@@ -109,12 +108,7 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
       try {
         val (call, from, to) = makeCall(requester.connectionConfig, operation, progressIndicator)
         val operationName = if (operation.isMove) "move" else "copy"
-        val opNameForLog = if (operation.isMove) "Moving" else "Copying"
-        val response: Response<Void> = call.execute(
-          customMessage = "$opNameForLog USS file to $to on ${requester.connectionConfig.url}",
-          requestParams = mapOf(Pair("Moved file", operation.source)),
-          log = log
-        )
+        val response: Response<Void> = call.execute()
         if (!response.isSuccessful) {
           throwable = CallException(response, "Cannot $operationName $from to $to")
         }

@@ -55,7 +55,7 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
   }
 
-  val log = log<LocalFileToUssDirMover>()
+  override val log = log<LocalFileToUssDirMover>()
 
   /**
    * Proceeds move/copy of file from local file system to remote uss directory.
@@ -89,10 +89,7 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       xIBMDataType = xIBMDataType
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
-    }.execute(
-      customMessage = "Moving local file ${sourceFile.name} to USS directory $pathToFile on ${destConnectionConfig.url}",
-      log = log
-    )
+    }.execute()
 
     if (!response.isSuccessful) {
       throwable = CallException(response, "Cannot upload data to ${destAttributes.path}${sourceFile.name}")

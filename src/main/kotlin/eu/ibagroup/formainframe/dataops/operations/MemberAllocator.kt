@@ -17,7 +17,6 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 
@@ -45,7 +44,7 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
 
   override val operationClass = MemberAllocationOperation::class.java
 
-  val log = log<MemberAllocator>()
+  override val log = log<MemberAllocator>()
 
   /**
    * Runs a member allocation operation
@@ -64,10 +63,7 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
       datasetName = operation.request.datasetName,
       memberName = operation.request.memberName,
       content = byteArrayOf()
-    ).cancelByIndicator(progressIndicator).execute(
-      customMessage = "Creating member ${operation.request.memberName} in ${operation.request.datasetName} on ${operation.connectionConfig.url}",
-      log = log
-    )
+    ).cancelByIndicator(progressIndicator).execute()
     if (!request.isSuccessful) {
       throw CallException(
         request,

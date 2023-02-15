@@ -17,7 +17,6 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.ChangeMode
 import eu.ibagroup.r2z.DataAPI
@@ -57,7 +56,7 @@ class UssChangeMode : OperationRunner<UssChangeModeOperation, Unit> {
 
   override val operationClass = UssChangeModeOperation::class.java
   override val resultClass = Unit::class.java
-  val log = log<UssChangeMode>()
+  override val log = log<UssChangeMode>()
 
   /**
    * Runs an uss change mode operation
@@ -75,11 +74,7 @@ class UssChangeMode : OperationRunner<UssChangeModeOperation, Unit> {
       authorizationToken = operation.connectionConfig.authToken,
       filePath = FilePath(operation.request.path),
       body = operation.request.parameters
-    ).cancelByIndicator(progressIndicator).execute(
-      customMessage = "Changing file mode ${operation.request.path} on ${operation.connectionConfig.url}",
-      requestParams = mapOf(Pair("New file mode", operation.request.parameters.mode)),
-      log = log
-    )
+    ).cancelByIndicator(progressIndicator).execute()
     if (!response.isSuccessful) {
       throw CallException(
         response,

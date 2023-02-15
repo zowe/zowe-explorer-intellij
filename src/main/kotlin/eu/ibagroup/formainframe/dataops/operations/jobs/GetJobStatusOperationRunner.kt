@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.Job
@@ -33,7 +32,7 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, Job> 
 
   override val operationClass = GetJobStatusOperation::class.java
 
-  val log = log<GetJobStatusOperationRunner>()
+  override val log = log<GetJobStatusOperationRunner>()
 
   /**
    * Sends get job status request to mainframe and checks return code of request
@@ -50,19 +49,13 @@ class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, Job> 
           basicCredentials = operation.connectionConfig.authToken,
           jobName = operation.request.jobName,
           jobId = operation.request.jobId
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Getting job ${operation.request.jobName}(${operation.request.jobId}) status on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       is GetJobStatusOperationParams.CorrelatorStatusParams -> {
         api<JESApi>(operation.connectionConfig).getJob(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Getting job ${operation.request.correlator} status on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
     }
 

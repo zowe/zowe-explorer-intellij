@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.HoldJobRequest
 import eu.ibagroup.r2z.HoldJobRequestBody
@@ -45,7 +44,7 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
 
   override val resultClass = HoldJobRequest::class.java
 
-  val log = log<HoldJobOperationRunner>()
+  override val log = log<HoldJobOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -75,20 +74,14 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
           jobName = operation.request.jobName,
           jobId = operation.request.jobId,
           body = HoldJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Holding job ${operation.request.jobName}(${operation.request.jobId}) on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorHoldJobParams -> {
         api<JESApi>(operation.connectionConfig).holdJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator,
           body = HoldJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Holding job ${operation.request.correlator} on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       else -> throw Exception("Method with such parameters not found")
     }

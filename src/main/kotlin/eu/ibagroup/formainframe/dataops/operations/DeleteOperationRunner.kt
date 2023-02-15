@@ -36,7 +36,7 @@ class DeleteRunnerFactory : OperationRunnerFactory {
 class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   OperationRunner<DeleteOperation, Unit> {
   override val operationClass = DeleteOperation::class.java
-  val log = log<DeleteOperationRunner>()
+  override val log = log<DeleteOperationRunner>()
 
   /**
    * Run "Delete" operation.
@@ -65,10 +65,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
             val response = api<DataAPI>(it.connectionConfig).deleteDataset(
               authorizationToken = it.connectionConfig.authToken,
               datasetName = attr.name
-            ).cancelByIndicator(progressIndicator).execute(
-              customMessage = "Deleting dataset ${attr.name} on ${it.connectionConfig.url}",
-              log = log
-            )
+            ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
               runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
               true
@@ -97,10 +94,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
                 authorizationToken = it.connectionConfig.authToken,
                 datasetName = libraryAttributes.name,
                 memberName = attr.name
-              ).cancelByIndicator(progressIndicator).execute(
-                customMessage = "Deleting member ${attr.name} from ${libraryAttributes.name} on ${it.connectionConfig.url}",
-                log = log
-              )
+              ).cancelByIndicator(progressIndicator).execute()
               if (response.isSuccessful) {
                 runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
                 true
@@ -132,10 +126,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
               authorizationToken = it.connectionConfig.authToken,
               filePath = FilePath(attr.path),
               xIBMOption = XIBMOption.RECURSIVE
-            ).cancelByIndicator(progressIndicator).execute(
-              customMessage = "Deleting USS file ${attr.path} on ${it.connectionConfig.url}",
-              log = log
-            )
+            ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
               // TODO: clarify issue with removing from MF Virtual file system
               // runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }

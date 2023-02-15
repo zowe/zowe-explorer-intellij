@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.config.Presets
 import eu.ibagroup.formainframe.explorer.config.getSampleJclMemberContent
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.*
 import java.lang.Exception
@@ -63,10 +62,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.datasetName,
       body = operation.request.allocationParameters
-    ).cancelByIndicator(progressIndicator).execute(
-      customMessage = "Allocating ${operation.request.datasetName} on ${operation.connectionConfig}",
-      log = log
-    )
+    ).cancelByIndicator(progressIndicator).execute()
     if (!datasetResponse.isSuccessful) {
       throw CallException(
         datasetResponse,
@@ -85,10 +81,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
             datasetName = operation.request.datasetName,
             memberName = operation.request.memberName,
             content = if (operation.request.presets == Presets.PDS_WITH_EMPTY_MEMBER) byteArrayOf() else getSampleJclMemberContent().encodeToByteArray()
-          ).cancelByIndicator(progressIndicator).execute(
-            customMessage = "Creating sample member ${operation.request.memberName} in ${operation.request.datasetName} on ${operation.connectionConfig.url}",
-            log = log
-          )
+          ).cancelByIndicator(progressIndicator).execute()
           if (!memberResponse.isSuccessful) {
             throwable = CallException(
               memberResponse,
@@ -103,7 +96,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
 
   override val operationClass = DatasetAllocationOperation::class.java
 
-  val log = log<DatasetAllocator>()
+  override val log = log<DatasetAllocator>()
 
 }
 

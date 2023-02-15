@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.JESApi
 import retrofit2.Response
@@ -43,7 +42,7 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
 
   override val resultClass = ByteArray::class.java
 
-  val log = log<GetJclRecordsOperationRunner>()
+  override val log = log<GetJclRecordsOperationRunner>()
 
   /**
    * Runs a get jcl records operation
@@ -64,19 +63,13 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
           basicCredentials = operation.connectionConfig.authToken,
           jobId = operation.request.jobId,
           jobName = operation.request.jobName
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Getting jcl records from ${operation.request.jobName}(${operation.request.jobId}) on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorGetJclRecordsParams -> {
         apiWithBytesConverter<JESApi>(operation.connectionConfig).getJCLRecords(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.jobCorrelator
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Getting  jcl records from ${operation.request.jobCorrelator} on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       else -> throw Exception("Method with such parameters not found")
     }

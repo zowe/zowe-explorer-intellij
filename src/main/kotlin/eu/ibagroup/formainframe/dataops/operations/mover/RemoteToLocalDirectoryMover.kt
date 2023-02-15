@@ -94,7 +94,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     throw IllegalArgumentException("Children of file ${file.name} cannot be fetched.")
   }
 
-  val log = log<RemoteToLocalDirectoryMover<VFile>>()
+  override val log = log<RemoteToLocalDirectoryMover<VFile>>()
 
   /**
    * Proceeds download of remote uss directory to local file system.

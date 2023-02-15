@@ -21,7 +21,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.DataAPI
 import eu.ibagroup.r2z.HRecall
@@ -47,7 +46,7 @@ class RecallOperationRunner : MigrationRunner<RecallOperation> {
 
   override val operationClass = RecallOperation::class.java
 
-  val log = log<RecallOperationRunner>()
+  override val log = log<RecallOperationRunner>()
 
   /**
    * Runs a recall operation
@@ -62,10 +61,7 @@ class RecallOperationRunner : MigrationRunner<RecallOperation> {
       authorizationToken = operation.connectionConfig.authToken,
       datasetName = operation.request.file.name,
       body = HRecall(wait = true)
-    ).cancelByIndicator(progressIndicator).execute(
-      customMessage = "Recalling ${operation.request.file.name} on ${operation.connectionConfig}",
-      log = log
-    )
+    ).cancelByIndicator(progressIndicator).execute()
     if (!response.isSuccessful) {
       throw CallException(
         response,

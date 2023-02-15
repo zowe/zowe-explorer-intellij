@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.ReleaseJobRequest
@@ -41,7 +40,7 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
 
   override val resultClass = ReleaseJobRequest::class.java
 
-  val log = log<ReleaseJobOperationRunner>()
+  override val log = log<ReleaseJobOperationRunner>()
 
   override fun canRun(operation: ReleaseJobOperation): Boolean {
     return true
@@ -63,20 +62,14 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
           jobName = operation.request.jobName,
           jobId = operation.request.jobId,
           body = ReleaseJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Releasing job ${operation.request.jobName}(${operation.request.jobId}) on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       is CorrelatorReleaseJobParams -> {
         api<JESApi>(operation.connectionConfig).releaseJobRequest(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.correlator,
           body = ReleaseJobRequestBody()
-        ).cancelByIndicator(progressIndicator).execute(
-          customMessage = "Releasing job ${operation.request.correlator} on ${operation.connectionConfig}",
-          log = log
-        )
+        ).cancelByIndicator(progressIndicator).execute()
       }
       else -> throw Exception("Method with such parameters not found")
     }

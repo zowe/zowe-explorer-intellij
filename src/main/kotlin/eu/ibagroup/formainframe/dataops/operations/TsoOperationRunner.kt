@@ -18,7 +18,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.MessageType
 import eu.ibagroup.r2z.TsoApi
@@ -44,7 +43,7 @@ class TsoOperationRunnerFactory : OperationRunnerFactory {
 class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
   override val operationClass = TsoOperation::class.java
   override val resultClass = TsoResponse::class.java
-  val log = log<TsoOperationRunner>()
+  override val log = log<TsoOperationRunner>()
 
   /**
    * Method determines if an operation can run
@@ -76,10 +75,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
             rsize = state.region.toInt()
           )
           .cancelByIndicator(progressIndicator)
-          .execute(
-            customMessage = "Starting TSO on ${state.connectionConfig.url}",
-            log = log
-          )
+          .execute()
       }
 
       TsoOperationMode.SEND_MESSAGE -> {
@@ -98,10 +94,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
               servletKey = servletKey
             )
             .cancelByIndicator(progressIndicator)
-            .execute(
-              customMessage = "Sending TSO message on ${state.getConnectionConfig().url}",
-              log = log
-            )
+            .execute()
         }
       }
 
@@ -115,10 +108,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
               servletKey = servletKey
             )
             .cancelByIndicator(progressIndicator)
-            .execute(
-              customMessage = "Getting TSO message on ${state.getConnectionConfig().url}",
-              log = log
-            )
+            .execute()
         }
       }
 
@@ -132,10 +122,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
               servletKey = servletKey
             )
             .cancelByIndicator(progressIndicator)
-            .execute(
-              customMessage = "Stopping TSO on ${state.getConnectionConfig().url}",
-              log = log
-            )
+            .execute()
         }
       }
     }

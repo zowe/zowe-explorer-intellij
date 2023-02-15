@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.r2z.*
 import okhttp3.ResponseBody
@@ -42,7 +41,7 @@ class ChangeFileTagOperationRunner: OperationRunner<ChangeFileTagOperation, Resp
 
   override val resultClass = ResponseBody::class.java
 
-  val log = log<ChangeFileTagOperationRunner>()
+  override val log = log<ChangeFileTagOperationRunner>()
 
   /**
    * Runs a change file tag operation.
@@ -64,10 +63,7 @@ class ChangeFileTagOperationRunner: OperationRunner<ChangeFileTagOperation, Resp
         codeSet = operation.request.codeSet
       ),
       filePath = FilePath(operation.request.filePath)
-    ).cancelByIndicator(progressIndicator).execute(
-      customMessage = "Changing file tag for ${operation.request.filePath} on ${operation.connectionConfig}",
-      log = log
-    )
+    ).cancelByIndicator(progressIndicator).execute()
     val body = response.body()
     if (!response.isSuccessful || body == null) {
       throw CallException(

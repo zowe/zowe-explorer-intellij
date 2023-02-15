@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.dataops.operations.ForceRenameOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.execute
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
@@ -44,7 +43,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
 
   override val operationClass = ForceRenameOperation::class.java
   override val resultClass = Unit::class.java
-  val log = log<ForceRenameOperationRunner>()
+  override val log = log<ForceRenameOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -95,10 +94,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
                 val resp = api<DataAPI>(requester.connectionConfig).deleteUssFile(
                   authorizationToken = requester.connectionConfig.authToken,
                   filePath = FilePath("$parentDirPath/${operation.newName}")
-                ).cancelByIndicator(progressIndicator).execute(
-                  customMessage = "Deleting USS file from $parentDirPath/${operation.newName}",
-                  log = log
-                )
+                ).cancelByIndicator(progressIndicator).execute()
                 if (!resp.isSuccessful) {
                   throw CallException(
                     resp,
