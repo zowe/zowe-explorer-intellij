@@ -214,7 +214,7 @@ class DataOpsManagerImpl : DataOpsManager {
       throw it
     }
     @Suppress("UNCHECKED_CAST")
-    return result as R
+    return result.getOrNull() as R
   }
 
   /**
