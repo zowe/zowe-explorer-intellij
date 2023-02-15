@@ -30,7 +30,6 @@ properties([gitLabConnection('code.iby.scdc.io-connection')])
 
 
 //     return w.toString()
-
 // }
 
 pipeline{
