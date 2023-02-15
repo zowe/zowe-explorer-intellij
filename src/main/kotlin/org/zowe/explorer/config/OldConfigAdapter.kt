@@ -76,3 +76,15 @@ fun Element.getOptionValue(name: String): String {
 fun Element.getApplicationOption(name: String): Element? {
   return this["component"].firstOrNull()?.get("option")?.firstOrNull { it.getAttribute("name") == name }
 }
+
+/**
+ * Utility function to get connection IDs from document element.
+ * @return list of connection IDs.
+ */
+fun Element.getConnectionIds() : List<String> {
+  return getApplicationOption("connections")
+    ?.get("list")
+    ?.firstOrNull()
+    ?.get("ConnectionConfig")
+    ?.map { it.getOptionValue("uuid") } ?: emptyList()
+}
