@@ -27,9 +27,9 @@ import retrofit2.Response
  * Class which represents factory for change password operation runner. Defined in plugin.xml
  */
 class ChangePasswordOperationRunnerFactory : OperationRunnerFactory {
-    override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-        return ChangePasswordOperationRunner()
-    }
+  override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
+    return ChangePasswordOperationRunner()
+  }
 }
 
 /**
@@ -37,44 +37,44 @@ class ChangePasswordOperationRunnerFactory : OperationRunnerFactory {
  */
 class ChangePasswordOperationRunner : OperationRunner<ChangePasswordOperation, ChangePasswordResponse> {
 
-    override val operationClass = ChangePasswordOperation::class.java
+  override val operationClass = ChangePasswordOperation::class.java
 
-    override val resultClass = ChangePasswordResponse::class.java
+  override val resultClass = ChangePasswordResponse::class.java
 
-    /**
-     * Determines if an operation can be run on selected object
-     * @param operation specifies a change password operation object [ChangePasswordOperation]
-     */
-    override fun canRun(operation: ChangePasswordOperation): Boolean {
-        return true
+  /**
+   * Determines if an operation can be run on selected object
+   * @param operation specifies a change password operation object [ChangePasswordOperation]
+   */
+  override fun canRun(operation: ChangePasswordOperation): Boolean {
+    return true
+  }
+
+  /**
+   * Runs a change password operation
+   *
+   * Sends a request to mainframe and checks response
+   * @param operation specifies a change password operation object [ChangePasswordOperation]
+   * @param progressIndicator interrupts operation if the computation is canceled
+   * @throws Exception if method with the requested parameters is not found
+   * @throws CallException if request is not successful or no response body
+   * @return [ChangePasswordResponse] body of response
+   */
+  override fun run(operation: ChangePasswordOperation, progressIndicator: ProgressIndicator): ChangePasswordResponse {
+    progressIndicator.checkCanceled()
+
+    val response: Response<ChangePasswordResponse> = api<ServiceApi>(operation.connectionConfig).changeUserPassword(
+      body = operation.request
+    ).cancelByIndicator(progressIndicator).execute()
+
+    val body = response.body()
+    if (!response.isSuccessful || body == null) {
+      throw CallException(
+        response,
+        "Cannot change password on ${operation.connectionConfig.url}"
+      )
     }
-
-    /**
-     * Runs a change password operation
-     *
-     * Sends a request to mainframe and checks response
-     * @param operation specifies a change password operation object [ChangePasswordOperation]
-     * @param progressIndicator interrupts operation if the computation is canceled
-     * @throws Exception if method with the requested parameters is not found
-     * @throws CallException if request is not successful or no response body
-     * @return [ChangePasswordResponse] body of response
-     */
-    override fun run(operation: ChangePasswordOperation, progressIndicator: ProgressIndicator): ChangePasswordResponse {
-        progressIndicator.checkCanceled()
-
-        val response: Response<ChangePasswordResponse> = api<ServiceApi>(operation.connectionConfig).changeUserPassword(
-            body = operation.request
-        ).cancelByIndicator(progressIndicator).execute()
-
-        val body = response.body()
-        if (!response.isSuccessful || body == null) {
-            throw CallException(
-                response,
-                "Cannot change password on ${operation.connectionConfig.url}"
-            )
-        }
-        return body
-    }
+    return body
+  }
 }
 
 /**
@@ -83,8 +83,8 @@ class ChangePasswordOperationRunner : OperationRunner<ChangePasswordOperation, C
  * @property connectionConfig credentials for connection to mainframe [ConnectionConfig]
  */
 data class ChangePasswordOperation(
-    override val request: ChangePasswordRequestBody,
-    override val connectionConfig: ConnectionConfig
+  override val request: ChangePasswordRequestBody,
+  override val connectionConfig: ConnectionConfig
 ) : RemoteQuery<ChangePasswordRequestBody, ChangePasswordResponse> {
-    override val resultClass = ChangePasswordResponse::class.java
+  override val resultClass = ChangePasswordResponse::class.java
 }

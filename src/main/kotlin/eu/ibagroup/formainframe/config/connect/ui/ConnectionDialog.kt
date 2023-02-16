@@ -211,7 +211,7 @@ class ConnectionDialog(
             .bindItem(state::zVersion.toNullableProperty())
             .enabled(false)
         }
-        if (state.zVersion == ZVersion.ZOS_2_5) {
+        if (state.zVersion > ZVersion.ZOS_2_4) {
           row {
             button("Change user password") {
               val changePasswordInitState = ChangePasswordDialogState(initialState.username, initialState.password, "")

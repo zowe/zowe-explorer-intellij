@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.utils.validateForBlank
+import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JPasswordField
 
@@ -28,6 +29,8 @@ class ChangePasswordDialog(
     init()
     title = "Change user password"
   }
+
+  lateinit var passField: JPasswordField
 
   /** Create dialog with the fields */
   override fun createCenterPanel(): JComponent {
@@ -58,8 +61,23 @@ class ChangePasswordDialog(
           .widthGroup(sameWidthLabelsGroup)
         cell(JPasswordField())
           .bindText(state::newPassword)
+          .also { passField = it.component }
           .validationOnApply { validateForBlank(it) }
           .horizontalAlign(HorizontalAlign.FILL)
+      }
+      indent {
+        row {
+          checkBox("Show password")
+            .applyToComponent {
+              addItemListener {
+                if (it.stateChange == ItemEvent.SELECTED) {
+                  passField.echoChar = 0.toChar()
+                } else {
+                  passField.echoChar = '*'
+                }
+              }
+            }
+        }
       }
     }
   }
