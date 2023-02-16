@@ -43,6 +43,11 @@ class ConnectionDialog(
   project: Project? = null
 ) : StatefulDialog<ConnectionDialogState>(project) {
 
+  /**
+   * Private field
+   * In case of DialogMode.UPDATE takes the last successful state from crudable, takes default state otherwise
+   */
+  private val lastSuccessfulState: ConnectionDialogState = if(state.mode == DialogMode.UPDATE) state.connectionConfig.toDialogState(crudable) else ConnectionDialogState()
   companion object {
 
     /** Show Test connection dialog and test the connection regarding the dialog state.
@@ -63,11 +68,6 @@ class ConnectionDialog(
         test = { state ->
           val throwable = runTask(title = "Testing Connection to ${state.connectionConfig.url}", project = project) {
             return@runTask try {
-              CredentialService.instance.setCredentials(
-                connectionConfigUuid = state.connectionUuid,
-                username = state.username,
-                password = state.password
-              )
               runCatching {
                 service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig), it)
               }.onSuccess {
@@ -224,6 +224,39 @@ class ConnectionDialog(
       DialogMode.UPDATE -> "Edit Connection"
       DialogMode.CREATE -> "Add Connection"
     }
+  }
+
+  /**
+   * Function to be performed when Ok button is pressed.
+   * Updates the credentials for the state
+   */
+  override fun doOKAction() {
+    super.doOKAction()
+    CredentialService.instance.setCredentials(
+      connectionConfigUuid = state.connectionUuid,
+      username = state.username,
+      password = state.password
+    )
+  }
+
+  /**
+   * Function to be performed when Cancel button is pressed.
+   * Resets the values in connection dialog and connections table model to the last successful state
+   * Updates the credentials to satisfy the last known successful state
+   */
+  override fun doCancelAction() {
+    super.doCancelAction()
+    state.connectionName = lastSuccessfulState.connectionName
+    state.connectionUrl = lastSuccessfulState.connectionUrl
+    state.username = lastSuccessfulState.username
+    state.password = lastSuccessfulState.password
+    state.isAllowSsl = lastSuccessfulState.isAllowSsl
+    state.zVersion = lastSuccessfulState.zVersion
+    CredentialService.instance.setCredentials(
+      connectionConfigUuid = lastSuccessfulState.connectionUuid,
+      username = lastSuccessfulState.username,
+      password = lastSuccessfulState.password
+    )
   }
 
 }
