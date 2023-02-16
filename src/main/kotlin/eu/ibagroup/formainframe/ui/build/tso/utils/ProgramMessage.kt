@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.ui.build.tso.utils
 
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
+import io.ktor.util.*
 
 /**
  * Basic class for a program TSO message
@@ -39,9 +40,13 @@ class ProgramMessage(
       val pgmParameters = ArrayList<String>()
       val lines = programLines?.lines()
       lines?.forEach { line ->
-        val isParameter = line.trim().contains("PULL", ignoreCase = true)
-        if (isParameter) {
-          pgmParameters.add(line.trim().substringAfter("PULL").trim())
+        val possibleParm = line.trim().contains("PULL", ignoreCase = true) && line.trim().contains("/*")
+        if (possibleParm) {
+          val parsedParm = line.trim().substringAfter("/*").substringBefore("*/")
+          if (!parsedParm.contains("PULL", ignoreCase = true))
+            pgmParameters.add(line.trim().toUpperCasePreservingASCIIRules().substringAfter("PULL").trim())
+        } else if (line.trim().contains("PULL", ignoreCase = true)) {
+          pgmParameters.add(line.trim().toUpperCasePreservingASCIIRules().substringAfter("PULL").trim())
         }
       }
       parameters = pgmParameters
