@@ -225,21 +225,17 @@ class ConnectionDialog(
                     project = project
                   ) {
                     return@runTask try {
-                      runCatching {
-                        dataOpsManager.performOperation(
-                          operation = ChangePasswordOperation(
-                            request = ChangePassword(
-                              changePasswordState.username,
-                              changePasswordState.oldPassword,
-                              changePasswordState.newPassword
-                            ),
-                            connectionConfig = initialState.connectionConfig
+                      dataOpsManager.performOperation(
+                        operation = ChangePasswordOperation(
+                          request = ChangePassword(
+                            changePasswordState.username,
+                            changePasswordState.oldPassword,
+                            changePasswordState.newPassword
                           ),
-                          progressIndicator = it
-                        )
-                      }.onFailure {
-                        throw it
-                      }
+                          connectionConfig = initialState.connectionConfig
+                        ),
+                        progressIndicator = it
+                      )
                       null
                     } catch (t: Throwable) {
                       t
