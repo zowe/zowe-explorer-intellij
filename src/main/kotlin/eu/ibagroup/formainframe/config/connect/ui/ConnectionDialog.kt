@@ -21,13 +21,13 @@ import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.content.ChangePasswordRequestBody
 import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.utils.validateConnectionName
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateZosmfUrl
+import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
 import java.util.*
@@ -228,7 +228,7 @@ class ConnectionDialog(
                       runCatching {
                         dataOpsManager.performOperation(
                           operation = ChangePasswordOperation(
-                            request = ChangePasswordRequestBody(
+                            request = ChangePassword(
                               changePasswordState.username,
                               changePasswordState.oldPassword,
                               changePasswordState.newPassword

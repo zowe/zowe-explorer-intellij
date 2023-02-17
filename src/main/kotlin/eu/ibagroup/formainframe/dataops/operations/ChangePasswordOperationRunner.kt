@@ -15,14 +15,13 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.content.ChangePasswordRequestBody
-import eu.ibagroup.formainframe.dataops.content.ChangePasswordResponse
-import eu.ibagroup.formainframe.dataops.content.ServiceApi
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import org.zowe.kotlinsdk.ChangePassword
+import org.zowe.kotlinsdk.ChangePasswordResponse
+import org.zowe.kotlinsdk.ServiceAPI
 import retrofit2.Response
 
-//TODO: add serviceApi to kotlinSdk
 /**
  * Class which represents factory for change password operation runner. Defined in plugin.xml
  */
@@ -62,7 +61,7 @@ class ChangePasswordOperationRunner : OperationRunner<ChangePasswordOperation, C
   override fun run(operation: ChangePasswordOperation, progressIndicator: ProgressIndicator): ChangePasswordResponse {
     progressIndicator.checkCanceled()
 
-    val response: Response<ChangePasswordResponse> = api<ServiceApi>(operation.connectionConfig).changeUserPassword(
+    val response: Response<ChangePasswordResponse> = api<ServiceAPI>(operation.connectionConfig).changeUserPassword(
       body = operation.request
     ).cancelByIndicator(progressIndicator).execute()
 
@@ -79,12 +78,12 @@ class ChangePasswordOperationRunner : OperationRunner<ChangePasswordOperation, C
 
 /**
  * Data class that represents all information needed to send change password request
- * @property request parameters for changing user password [ChangePasswordRequestBody]
+ * @property request parameters for changing user password [ChangePassword]
  * @property connectionConfig credentials for connection to mainframe [ConnectionConfig]
  */
 data class ChangePasswordOperation(
-  override val request: ChangePasswordRequestBody,
+  override val request: ChangePassword,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<ChangePasswordRequestBody, ChangePasswordResponse> {
+) : RemoteQuery<ConnectionConfig, ChangePassword, ChangePasswordResponse> {
   override val resultClass = ChangePasswordResponse::class.java
 }
