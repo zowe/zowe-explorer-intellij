@@ -111,7 +111,6 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
               nodeToClean?.let { cleanInvalidateOnExpand(nodeToClean, view) }
 
               var nodeCleaned = false
-              p?.cleanCacheIfPossible(cleanBatchedQuery = true)
               runInEdt {
                 if (
                   showOkNoDialog(
