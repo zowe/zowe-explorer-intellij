@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
-import eu.ibagroup.r2z.DatasetOrganization
+import org.zowe.kotlinsdk.DatasetOrganization
 import javax.swing.JComponent
 import javax.swing.JPasswordField
 import javax.swing.JTextField
@@ -376,7 +376,7 @@ fun validateJobFilter(
  * @param component the component to check the USS file name and show the warning for
  * @param selectedNode the selected node to check whether it is a file or a directory
  */
-fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData): ValidationInfo? {
+fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData<*>): ValidationInfo? {
   val text: String = component.text
   val childrenNodesFromParent = selectedNode.node.parent?.children
   when (selectedNode.node) {

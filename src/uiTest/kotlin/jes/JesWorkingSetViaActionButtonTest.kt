@@ -133,6 +133,7 @@ class JesWorkingSetViaActionButtonTest {
         }
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add new JES working set with one valid filter.
      */
@@ -144,14 +145,15 @@ class JesWorkingSetViaActionButtonTest {
         ideFrameImpl(projectName, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
-                addJesWorkingSet(jwsName, connectionName, filter)
+                addJesWorkingSet(jwsName, connectionName, ZOS_USERID, filter)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
             closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
     }
-
+    
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add new JES working set with several valid filters, opens filters in explorer.
      */
@@ -162,7 +164,7 @@ class JesWorkingSetViaActionButtonTest {
         ideFrameImpl(projectName, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
-                addJesWorkingSet(jwsName, connectionName, validJobsFilters)
+                addJesWorkingSet(jwsName, connectionName, ZOS_USERID, validJobsFilters)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
@@ -176,7 +178,7 @@ class JesWorkingSetViaActionButtonTest {
         openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
-
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add new JES working set with invalid filters, checks that correct messages are returned.
      */
@@ -189,7 +191,7 @@ class JesWorkingSetViaActionButtonTest {
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName)
                 invalidJobsFiltersMap.forEach {
-                    addFilter(it.key.first)
+                    addFilter(ZOS_USERID, it.key.first)
                     if (button("OK").isEnabled()) {
                         clickButton("OK")
                     } else {
@@ -217,6 +219,7 @@ class JesWorkingSetViaActionButtonTest {
         }
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add JES working set with the same filters, checks that correct message is returned.
      */
@@ -227,8 +230,8 @@ class JesWorkingSetViaActionButtonTest {
         ideFrameImpl(projectName, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
-                addJesWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
-                addJesWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
+                addJesWorkingSet(jwsName, connectionName, ZOS_USERID, Triple("*", ZOS_USERID.lowercase(), ""))
+                addJesWorkingSet(jwsName, connectionName, ZOS_USERID, Triple("*", ZOS_USERID.lowercase(), ""))
                 clickButton("OK")
                 find<HeavyWeightWindowFixture>(
                     byXpath("//div[@class='HeavyWeightWindow']"),
@@ -241,6 +244,7 @@ class JesWorkingSetViaActionButtonTest {
         }
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add JES working set with invalid connection, checks that correct message is returned.
      */
@@ -252,7 +256,7 @@ class JesWorkingSetViaActionButtonTest {
         ideFrameImpl(projectName, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
-                addJesWorkingSet(jwsName, "invalid_connection", Triple("*", ZOS_USERID, ""))
+                addJesWorkingSet(jwsName, "invalid_connection", ZOS_USERID, Triple("*", ZOS_USERID, ""))
                 clickButton("OK")
                 Thread.sleep(5000)
             }

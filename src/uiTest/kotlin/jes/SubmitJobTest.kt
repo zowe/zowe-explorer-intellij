@@ -99,6 +99,7 @@ class SubmitJobTest {
         doSubmitJobTest("TEST3", "job_abend_s806.txt", "ABEND S806", remoteRobot)
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to open and close jobs outputs in explorer.
      */
@@ -119,7 +120,7 @@ class SubmitJobTest {
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
                 addJesWorkingSetDialog(fixtureStack) {
-                    addJesWorkingSet(jwsName, connectionName, filter)
+                    addJesWorkingSet(jwsName, connectionName, ZOS_USERID, filter)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }

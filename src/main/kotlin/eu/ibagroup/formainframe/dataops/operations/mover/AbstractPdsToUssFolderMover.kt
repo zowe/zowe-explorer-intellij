@@ -14,7 +14,7 @@ import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 import retrofit2.Response
 
 /**
@@ -110,7 +110,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
     val sourceQuery = UnitRemoteQueryImpl(LibraryQuery(operation.source as MFVirtualFile), sourceConnectionConfig)
 
     val sourceFileFetchProvider = dataOpsManager
-      .getFileFetchProvider<LibraryQuery, RemoteQuery<LibraryQuery, Unit>, MFVirtualFile>(
+      .getFileFetchProvider<LibraryQuery, RemoteQuery<ConnectionConfig, LibraryQuery, Unit>, MFVirtualFile>(
         LibraryQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
       )
 

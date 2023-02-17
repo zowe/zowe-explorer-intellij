@@ -14,6 +14,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 
@@ -21,9 +22,9 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 class FilesWorkingSetNode(
   workingSet: FilesWorkingSet,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   treeStructure: ExplorerTreeStructureBase
-) : WorkingSetNode<DSMask>(
+) : WorkingSetNode<ConnectionConfig, DSMask>(
   workingSet, project, parent, treeStructure
 ), MFNode, RefreshableNode {
 

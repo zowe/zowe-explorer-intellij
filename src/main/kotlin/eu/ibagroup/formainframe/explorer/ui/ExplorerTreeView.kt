@@ -2,11 +2,11 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,9 +22,11 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.FileContentUtilCore
 import eu.ibagroup.formainframe.common.ui.DoubleClickTreeMouseListener
 import eu.ibagroup.formainframe.common.ui.makeNodeDataFromTreePath
 import eu.ibagroup.formainframe.common.ui.promisePath
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
@@ -48,6 +50,8 @@ import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
+val EXPLORER_VIEW = DataKey.create<ExplorerTreeView<*, *, *>>("explorerView")
+
 /**
  * Explorer tree view base implementation
  * @param explorer the explorer to provide the tree view for
@@ -57,20 +61,20 @@ import javax.swing.tree.TreeSelectionModel
  * @param rootNodeProvider the root node provider for the root node of the explorer
  * @param cutProviderUpdater the cut provider updater to store the information about the cut elements
  */
-abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
+abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>, UnitConfig : EntityWithUuid>
   (
-  val explorer: Explorer<U>,
+  val explorer: Explorer<Connection, U>,
   project: Project,
   parentDisposable: Disposable,
   private val contextMenu: ActionGroup,
-  rootNodeProvider: (explorer: Explorer<U>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
+  rootNodeProvider: (explorer: Explorer<Connection, U>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<Connection, *>,
   internal val cutProviderUpdater: (List<VirtualFile>) -> Unit
 ) : JBScrollPane(), DataProvider, Disposable {
 
 
-  internal var mySelectedNodesData: List<NodeData> by rwLocked(listOf())
-  internal val myFsTreeStructure: CommonExplorerTreeStructure<Explorer<U>>
-  internal val myStructure: StructureTreeModel<CommonExplorerTreeStructure<Explorer<U>>>
+  var mySelectedNodesData: List<NodeData<Connection>> by rwLocked(listOf())
+  internal val myFsTreeStructure: CommonExplorerTreeStructure<Explorer<Connection, U>>
+  internal val myStructure: StructureTreeModel<CommonExplorerTreeStructure<Explorer<Connection, U>>>
   internal val myTree: Tree
   internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
 
@@ -90,7 +94,7 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
     query: Query<*, *>,
     collapse: Boolean = false,
     invalidate: Boolean = true
-  ): Collection<ExplorerTreeNode<*>> {
+  ): Collection<ExplorerTreeNode<*, *>> {
     return myFsTreeStructure
       .findByPredicate {
         if (it is FetchNode) {
@@ -161,7 +165,7 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
       handler = object : ExplorerListener {
 
 
-        private fun onAddDelete(explorer: Explorer<*>) {
+        private fun <Connection: ConnectionConfigBase> onAddDelete(explorer: Explorer<Connection, *>) {
           if (explorer == this@ExplorerTreeView.explorer) {
             myFsTreeStructure.findByValue(explorer).forEach {
               myStructure.invalidate(it, true)
@@ -169,12 +173,12 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
           }
         }
 
-
-        override fun onAdded(explorer: Explorer<*>, unit: ExplorerUnit) {
+        override fun <Connection: ConnectionConfigBase> onAdded(explorer: Explorer<Connection, *>,unit: ExplorerUnit<Connection>) {
           onAddDelete(explorer)
         }
 
-        override fun onChanged(explorer: Explorer<*>, unit: ExplorerUnit) {
+
+        override fun <Connection: ConnectionConfigBase> onChanged(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>) {
           if (explorer == this@ExplorerTreeView.explorer) {
             myFsTreeStructure.findByValue(unit).forEach {
               myStructure.invalidate(it, true)
@@ -182,7 +186,7 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
           }
         }
 
-        override fun onDeleted(explorer: Explorer<*>, unit: ExplorerUnit) {
+        override fun <Connection: ConnectionConfigBase> onDeleted(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>) {
           onAddDelete(explorer)
         }
       },
@@ -197,7 +201,23 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
             .mapNotNull {
               val nodes = myFsTreeStructure.findByVirtualFile(it.file ?: return@mapNotNull null)
               when {
-                it is VFileContentChangeEvent || it is VFilePropertyChangeEvent -> {
+                it is VFileContentChangeEvent -> {
+                  nodes
+                }
+
+                it is VFilePropertyChangeEvent -> {
+                  if (
+                    VirtualFile.PROP_NAME == it.propertyName &&
+                    FileContentUtilCore.FORCE_RELOAD_REQUESTOR == it.requestor || it.oldValue != it.newValue
+                  ) {
+                    val editorEx =
+                      EditorUtil.getEditorEx(FileEditorManager.getInstance(project).getSelectedEditor(it.file))
+                    editorEx?.let { editor ->
+                      val editorHighlighterUpdater =
+                        EditorHighlighterUpdater(project, parentDisposable, editor, it.file)
+                      editorHighlighterUpdater.updateHighlighters()
+                    }
+                  }
                   nodes
                 }
 
@@ -281,18 +301,13 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
     )
   }
 
+  abstract val contextMenuPlace: String
+
   /**
    * Register the tree events listeners. These are both mouse listeners, and the other tree listeners
-   * @param tree the tree where the listeners will be registered
+   * @param tree the tree where listeners will be registered
    */
   private fun registerTreeListeners(tree: DnDAwareTree) {
-    val contextMenuPlace: String = when (this) {
-      is FileExplorerView -> FILE_EXPLORER_CONTEXT_MENU
-      is JesExplorerView -> JES_EXPLORER_CONTEXT_MENU
-      else -> {
-        "Unrecognized"
-      }
-    }
 
     tree.addMouseListener(object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
@@ -307,7 +322,7 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
 
     tree.selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
     tree.addTreeSelectionListener {
-      mySelectedNodesData = tree.selectionPaths?.map { makeNodeDataFromTreePath(explorer, it) } ?: listOf()
+      mySelectedNodesData = tree.selectionPaths?.mapNotNull { makeNodeDataFromTreePath<Connection>(explorer, it) } ?: listOf()
     }
 
     tree.addTreeWillExpandListener(object : TreeWillExpandListener {

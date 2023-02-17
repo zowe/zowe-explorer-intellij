@@ -109,6 +109,7 @@ class JesWorkingSetViaSettingsTest {
         createJWS("B12#$%^&*", true, remoteRobot)
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add new JES working set with one valid jobs filter.
      */
@@ -127,7 +128,7 @@ class JesWorkingSetViaSettingsTest {
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
                 addJesWorkingSetDialog(fixtureStack) {
-                    addJesWorkingSet(jwsName, connectionName, filter)
+                    addJesWorkingSet(jwsName, connectionName, ZOS_USERID, filter)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
@@ -147,6 +148,7 @@ class JesWorkingSetViaSettingsTest {
         createJWS("JWS1", false, remoteRobot)
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add new JES working set with invalid jobs filters, checks that correct messages are returned.
      */
@@ -167,7 +169,7 @@ class JesWorkingSetViaSettingsTest {
                 addJesWorkingSetDialog(fixtureStack) {
                     addJesWorkingSet(jwsName, connectionName)
                     invalidJobsFiltersMap.forEach {
-                        addFilter(it.key.first)
+                        addFilter(ZOS_USERID, it.key.first)
                         if (button("OK").isEnabled()) {
                             clickButton("OK")
                         } else {
@@ -198,6 +200,7 @@ class JesWorkingSetViaSettingsTest {
         }
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add new JES working set with several valid jobs filters, opens filters in explorer.
      */
@@ -216,7 +219,7 @@ class JesWorkingSetViaSettingsTest {
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
                 addJesWorkingSetDialog(fixtureStack) {
-                    addJesWorkingSet(jwsName, connectionName, validJobsFilters)
+                    addJesWorkingSet(jwsName, connectionName, ZOS_USERID, validJobsFilters)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
@@ -233,6 +236,7 @@ class JesWorkingSetViaSettingsTest {
         openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add new JES working set with invalid connection, checks that correct message is returned.
      */
@@ -251,7 +255,7 @@ class JesWorkingSetViaSettingsTest {
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
                 addJesWorkingSetDialog(fixtureStack) {
-                    addJesWorkingSet(jwsName, "invalid_connection", Triple("*", ZOS_USERID, ""))
+                    addJesWorkingSet(jwsName, "invalid_connection", ZOS_USERID, Triple("*", ZOS_USERID, ""))
                     clickButton("OK")
                     Thread.sleep(5000)
                 }
@@ -270,6 +274,7 @@ class JesWorkingSetViaSettingsTest {
         openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to add new JES working set with the same jobs filters, checks that correct message is returned.
      */
@@ -287,8 +292,8 @@ class JesWorkingSetViaSettingsTest {
                     addJWS(closableFixtureCollector, fixtureStack)
                 }
                 addJesWorkingSetDialog(fixtureStack) {
-                    addJesWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
-                    addJesWorkingSet(jwsName, connectionName, Triple("*", ZOS_USERID.lowercase(), ""))
+                    addJesWorkingSet(jwsName, connectionName, ZOS_USERID, Triple("*", ZOS_USERID.lowercase(), ""))
+                    addJesWorkingSet(jwsName, connectionName, ZOS_USERID, Triple("*", ZOS_USERID.lowercase(), ""))
                     clickButton("OK")
                     find<HeavyWeightWindowFixture>(
                         byXpath("//div[@class='HeavyWeightWindow']"),
@@ -304,6 +309,7 @@ class JesWorkingSetViaSettingsTest {
         }
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Tests to edit JES working set by adding one job filter, checks that jws is refreshed, opens new filter.
      */
@@ -324,7 +330,7 @@ class JesWorkingSetViaSettingsTest {
                     editWorkingSet(jwsName, closableFixtureCollector, fixtureStack)
                 }
                 editJesWorkingSetDialog(fixtureStack) {
-                    addFilter(newFilter)
+                    addFilter(ZOS_USERID, newFilter)
                     clickButton("OK")
                     Thread.sleep(5000)
                 }

@@ -14,6 +14,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
@@ -21,9 +23,10 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.*
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
+import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.*
-import eu.ibagroup.r2z.ChangeMode
+import org.zowe.kotlinsdk.ChangeMode
 
 /**
  * Action for displaying properties of files on UI in dialog by clicking item in explorer context menu.
@@ -34,8 +37,8 @@ class GetFilePropertiesAction : AnAction() {
   /** Shows dialog with properties depending on type of the file selected by user. */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(FILE_EXPLORER_VIEW) ?: return
-    val node = view.mySelectedNodesData.getOrNull(0)?.node
-    if (node is ExplorerUnitTreeNodeBase<*, *>) {
+    val node = view.mySelectedNodesData.getOrNull(0)?.node ?: return
+    if (node is ExplorerUnitTreeNodeBase<ConnectionConfig, *, out ExplorerUnit<ConnectionConfig>>) {
       val virtualFile = node.virtualFile
       val connectionConfig = node.unit.connectionConfig ?: return
       if (virtualFile != null) {

@@ -39,7 +39,7 @@ class AddWorkingSetAction : AddWsActionBase() {
    * Creates dialog for Files Working Set.
    * @see AddWsActionBase.createDialog
    */
-  override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
+  override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
     return FilesWorkingSetDialog(configCrudable, FilesWorkingSetDialogState().initEmptyUuids(configCrudable))
   }
 

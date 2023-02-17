@@ -33,8 +33,8 @@ import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.ChangeMode
-import eu.ibagroup.r2z.FileType
+import org.zowe.kotlinsdk.ChangeMode
+import org.zowe.kotlinsdk.FileType
 
 /**
  * Abstract action for creating Uss Entity (file or directory) through context menu.
@@ -66,8 +66,9 @@ abstract class CreateUssEntityAction : AnAction() {
       selectedNode.takeIf { it is UssDirNode }
     } ?: return
     val file = node.virtualFile
-    if (node is ExplorerUnitTreeNodeBase<*, *>) {
-      val connectionConfig = node.unit.connectionConfig ?: return
+    // TODO: Why is it highlighted ???
+    if (node is ExplorerUnitTreeNodeBase<*, *, *>) {
+      val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
       val dataOpsManager = node.unit.explorer.componentManager.service<DataOpsManager>()
       val filePath = if (file != null) {
         dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
@@ -103,7 +104,7 @@ abstract class CreateUssEntityAction : AnAction() {
               )
 
               val fileFetchProvider = dataOpsManager
-                .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, MFVirtualFile>(
+                .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
                   UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
                 )
               ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }

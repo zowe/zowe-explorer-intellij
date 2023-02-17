@@ -39,7 +39,7 @@ class AddJesWorkingSetAction : AddWsActionBase() {
    * Creates dialog for JES Working Set.
    * @see AddWsActionBase.createDialog
    */
-  override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
+  override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
     return JesWsDialog(configCrudable, JesWorkingSetDialogState().initEmptyUuids(configCrudable))
   }
 

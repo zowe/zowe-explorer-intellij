@@ -19,7 +19,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicReleaseJobParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.ReleaseJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
-import eu.ibagroup.r2z.Job
+import org.zowe.kotlinsdk.Job
 
 /** Action to release a holding job in the Jobs Tool Window */
 class ReleaseJobAction : AnAction() {

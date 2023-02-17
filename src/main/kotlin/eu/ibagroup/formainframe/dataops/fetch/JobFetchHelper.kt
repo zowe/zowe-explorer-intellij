@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.dataops.fetch
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
@@ -17,14 +18,14 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
 import eu.ibagroup.formainframe.dataops.log.JobProcessInfo
 import eu.ibagroup.formainframe.utils.asMutableList
-import eu.ibagroup.r2z.Job
+import org.zowe.kotlinsdk.Job
 
 /**
  * Helper runner class for getting job execution timestamps
  * @param query - jobs query for particular tree in JES Explorer
  * @param jobAttributes - remote job attributes to be updated
  */
-class JobFetchHelper(private val query: RemoteQuery<JobsFilter, Unit>, private val jobAttributes: RemoteJobAttributes) : Thread() {
+class JobFetchHelper(private val query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>, private val jobAttributes: RemoteJobAttributes) : Thread() {
 
   private val startKeyword = "STARTED"
   private val endKeyword = "ENDED"

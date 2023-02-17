@@ -10,8 +10,8 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.CancelJobPurgeOutRequest
-import eu.ibagroup.r2z.JESApi
+import org.zowe.kotlinsdk.CancelJobPurgeOutRequest
+import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
 
 /** Factory for purge job operation runner */
@@ -80,6 +80,6 @@ class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams
 data class PurgeJobOperation(
   override val request: PurgeJobOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<PurgeJobOperationParams, CancelJobPurgeOutRequest> {
+) : RemoteQuery<ConnectionConfig, PurgeJobOperationParams, CancelJobPurgeOutRequest> {
   override val resultClass = CancelJobPurgeOutRequest::class.java
 }

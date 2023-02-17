@@ -40,8 +40,8 @@ import javax.swing.tree.TreePath
 /** Drag source representation */
 class FileExplorerViewDragSource(
   private val myTree: Tree,
-  private val mySelectedNodesDataProvider: () -> List<NodeData>,
-  private val cutCopyPredicate: (NodeData) -> Boolean,
+  private val mySelectedNodesDataProvider: () -> List<NodeData<*>>,
+  private val cutCopyPredicate: (NodeData<*>) -> Boolean,
   private val copyPasteSupport: FileExplorerView.ExplorerCopyPasteSupport
 ) : DnDSource {
 

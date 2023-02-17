@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 
 /**
  * Class which represents factory for rename operation runner. Defined in plugin.xml

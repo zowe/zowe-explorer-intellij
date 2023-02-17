@@ -20,7 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.JESApi
+import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
 
 /**
@@ -114,6 +114,6 @@ class CorrelatorGetJclRecordsParams(val jobCorrelator: String) : GetJclRecordsOp
 data class GetJclRecordsOperation(
   override val request: GetJclRecordsOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<GetJclRecordsOperationParams, ByteArray> {
+) : RemoteQuery<ConnectionConfig, GetJclRecordsOperationParams, ByteArray> {
   override val resultClass = ByteArray::class.java
 }

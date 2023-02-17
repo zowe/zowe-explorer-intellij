@@ -11,7 +11,7 @@
 package eu.ibagroup.formainframe.config.connect
 
 import eu.ibagroup.formainframe.config.*
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.annotations.ZVersion
 import org.w3c.dom.Document
 
 /**

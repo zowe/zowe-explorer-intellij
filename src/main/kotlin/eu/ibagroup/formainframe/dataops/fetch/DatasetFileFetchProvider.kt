@@ -14,6 +14,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.ConfigService
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -26,10 +27,10 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.nullIfBlank
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.DataSetsList
-import eu.ibagroup.r2z.Dataset
-import eu.ibagroup.r2z.XIBMAttr
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.DataSetsList
+import org.zowe.kotlinsdk.Dataset
+import org.zowe.kotlinsdk.XIBMAttr
 import retrofit2.Response
 
 class DatasetFileFetchProviderFactory : FileFetchProviderFactory {
@@ -60,7 +61,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   // TODO: doc
   override fun fetchResponse(
-    query: RemoteQuery<DSMask, Unit>,
+    query: RemoteQuery<ConnectionConfig, DSMask, Unit>,
     progressIndicator: ProgressIndicator
   ): Collection<RemoteDatasetAttributes> {
     log.info("Fetching DS Lists for $query")
@@ -75,7 +76,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
    * @param file the file to remove
    * @param query the query to check the file attributes requesters
    */
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<DSMask, Unit>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<ConnectionConfig, DSMask, Unit>) {
     val deletingFileAttributes = attributesService.getAttributes(file)
     log.info("Cleaning-up file attributes $deletingFileAttributes")
     if (deletingFileAttributes != null) {
@@ -103,7 +104,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
    * @see RemoteBatchedFileFetchProviderBase.fetchBatch
    */
   override fun fetchBatch(
-    query: RemoteQuery<DSMask, Unit>,
+    query: RemoteQuery<ConnectionConfig, DSMask, Unit>,
     progressIndicator: ProgressIndicator,
     start: String?
   ): Response<DataSetsList> {
@@ -131,7 +132,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
    * @see RemoteBatchedFileFetchProviderBase.buildAttributes
    */
   override fun buildAttributes(
-    query: RemoteQuery<DSMask, Unit>,
+    query: RemoteQuery<ConnectionConfig, DSMask, Unit>,
     batchedItem: BatchedItem<Dataset>
   ): RemoteDatasetAttributes {
     return RemoteDatasetAttributes(

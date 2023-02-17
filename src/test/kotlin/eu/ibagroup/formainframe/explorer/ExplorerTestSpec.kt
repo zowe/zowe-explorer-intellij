@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeStructureBase
@@ -89,16 +90,16 @@ class ExplorerTestSpec : ShouldSpec({
       every { TreeAnchorizer.getService().createAnchor(any()) } returns mockk()
 
       mockkObject(UIComponentManager)
-      every { UIComponentManager.INSTANCE.getExplorerContentProvider<Explorer<WorkingSet<UssFileNode>>>(any()) } returns mockk()
-      val explorerTreeNodeMock = mockk<ExplorerTreeNode<*>>()
+      every { UIComponentManager.INSTANCE.getExplorerContentProvider<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, UssFileNode>>>(any()) } returns mockk()
+      val explorerTreeNodeMock = mockk<ExplorerTreeNode<ConnectionConfig, *>>()
 
       mockkObject(DataOpsManager)
       every { DataOpsManager.instance } returns mockk()
 
-      val explorer = mockk<Explorer<WorkingSet<*>>>()
+      val explorer = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
       every { explorer.componentManager } returns ApplicationManager.getApplication()
 
-      val explorerUnitMock = mockk<ExplorerUnit>()
+      val explorerUnitMock = mockk<ExplorerUnit<ConnectionConfig>>()
       every { explorerUnitMock.explorer } returns explorer
 
       val ussFileNode = spyk(

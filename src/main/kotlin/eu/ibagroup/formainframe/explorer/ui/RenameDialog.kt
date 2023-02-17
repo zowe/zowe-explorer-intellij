@@ -34,7 +34,7 @@ import javax.swing.JTextField
  */
 class RenameDialog(project: Project?,
                    type: String,
-                   private val selectedNode: NodeData,
+                   private val selectedNode: NodeData<*>,
                    private val currentAction: AnAction,
                    override var state: String
 ) : DialogWrapper(project),

@@ -10,16 +10,16 @@
 
 package eu.ibagroup.formainframe.dataops
 
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
 /**
  * Class which represents Unit type of the Result of remote query
  */
-data class UnitRemoteQueryImpl<R>(
+data class UnitRemoteQueryImpl<Connection: ConnectionConfigBase, R>(
   override val request: R,
-  override val connectionConfig: ConnectionConfig
-) : RemoteQuery<R, Unit> {
+  override val connectionConfig: Connection
+) : RemoteQuery<Connection, R, Unit> {
   override val resultClass: Class<out Unit>
     get() = UNIT_CLASS
 }

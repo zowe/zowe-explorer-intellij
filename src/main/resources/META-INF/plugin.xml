@@ -100,13 +100,12 @@ Example of how to see the output:<br/>
         <extensionPoint name="explorer"
                         interface="eu.ibagroup.formainframe.explorer.ExplorerFactory"/>
 
+        <extensionPoint name="configDeclaration"
+                        interface="eu.ibagroup.formainframe.config.ConfigDeclarationFactory"/>
     </extensionPoints>
 
     <applicationListeners>
         <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-
-        <listener class="eu.ibagroup.formainframe.editor.ProjectOpenListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
         <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
@@ -117,6 +116,14 @@ Example of how to see the output:<br/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="eu.ibagroup.formainframe">
+
+        <configDeclaration implementation="eu.ibagroup.formainframe.config.connect.ConnectionConfigDeclarationFactory"/>
+
+        <configDeclaration implementation="eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfigDeclarationFactory"/>
+
+        <configDeclaration implementation="eu.ibagroup.formainframe.config.ws.JesWorkingSetConfigDeclarationFactory"/>
+
+        <configDeclaration implementation="eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclarationFactory"/>
 
         <attributesService
                 implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesServiceFactory"/>
@@ -283,6 +290,10 @@ Example of how to see the output:<br/>
 
         <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
 
+        <postStartupActivity implementation="eu.ibagroup.formainframe.config.ConfigStartupActivity"/>
+
+        <postStartupActivity implementation="eu.ibagroup.formainframe.editor.ProjectStartupActivity"/>
+
         <applicationConfigurable id="configurable.mainframe.explorer"
                                  displayName="For Mainframe"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
@@ -323,6 +334,9 @@ Example of how to see the output:<br/>
 
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
+
+        <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.OldConfigService"
+                            serviceImplementation="eu.ibagroup.formainframe.config.OldConfigServiceImpl"/>
 
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"

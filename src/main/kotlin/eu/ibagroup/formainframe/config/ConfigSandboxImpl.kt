@@ -11,24 +11,36 @@
 package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.application.ApplicationManager
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import com.intellij.openapi.components.service
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.ReloadableEventHandler
-import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.isTheSameAs
-import kotlin.streams.toList
 
 /** Stateful class to represent the plugin configs sandbox */
 data class SandboxState(
-  val configState: ConfigState = ConfigState(),
+  val configState: ConfigStateV2 = ConfigStateV2(),
   val credentials: MutableList<Credentials> = mutableListOf()
-)
+) {
+
+  /** Clones sandbox state. It is necessary because standard clone here is not acceptable. */
+  internal fun cloneInternal(): SandboxState {
+    val prevCollections = configState.collections
+    val clonedCollections = mutableMapOf<String, MutableList<*>>()
+    prevCollections.keys.forEach {
+      prevCollections[it]
+        ?.map { el -> el?.clone(el.javaClass) }
+        ?.toMutableList()
+        ?.let { newList -> clonedCollections[it] = newList }
+    }
+    val clonedConfigState = ConfigStateV2(clonedCollections, configState.settings.clone())
+    return SandboxState(clonedConfigState, credentials.map { it.clone() }.toMutableList())
+  }
+}
 
 /**
  * Convert the provided class a the list of config rows
@@ -37,29 +49,7 @@ data class SandboxState(
  */
 @Suppress("UNCHECKED_CAST")
 internal fun <T> classToList(clazz: Class<out T>, state: SandboxState): MutableList<T>? {
-  return object : ConfigClassActionDecider<MutableList<T>?>() {
-
-    override fun onConnectionConfig(): MutableList<T> {
-      return state.configState.connections as MutableList<T>
-    }
-
-    override fun onFilesWorkingSetConfig(): MutableList<T> {
-      return state.configState.filesWorkingSets as MutableList<T>
-    }
-
-    override fun onJesWorkingSetConfig(): MutableList<T> {
-      return state.configState.jesWorkingSets as MutableList<T>
-    }
-
-    override fun onCredentials(): MutableList<T> {
-      return state.credentials as MutableList<T>
-    }
-
-    override fun onElse(): MutableList<T>? {
-      return null
-    }
-
-  }(clazz as Class<*>)
+  return if (clazz == Credentials::class.java) state.credentials as MutableList<T> else state.configState.get(clazz)
 }
 
 /**
@@ -72,7 +62,7 @@ fun <T> isSandboxModified(clazz: Class<out T>): Boolean {
 
 /**
  * Check is the sandbox modified for the specified config class
- * @param clazz the class to check are the configs of this class modified
+ * @param T the class to check are the configs of this class modified
  */
 inline fun <reified T> isSandboxModified(): Boolean {
   return isSandboxModified(T::class.java)
@@ -88,7 +78,7 @@ fun <T> rollbackSandbox(clazz: Class<out T>) {
 
 /**
  * Rollback the config sandbox instance to have the values from the config service
- * @param clazz the class of configs to rollback in the config sandbox
+ * @param T the class of configs to rollback in the config sandbox
  */
 inline fun <reified T> rollbackSandbox() {
   rollbackSandbox(T::class.java)
@@ -109,6 +99,7 @@ class ConfigSandboxImpl : ConfigSandbox {
   private var initialState = SandboxState()
 
   private val stateLock = Any()
+
 
   private val eventHandler = object : ReloadableEventHandler {
 
@@ -137,10 +128,22 @@ class ConfigSandboxImpl : ConfigSandbox {
   }
 
   /** Fully initialized config sandbox crudable object */
-  override val crudable = makeCrudableWithoutListeners(true, { state.credentials }) { state.configState }
-    .configureCrudable {
-      eventHandler = this@ConfigSandboxImpl.eventHandler
+  override val crudable by lazy {
+      makeCrudableWithoutListeners(true, { state.credentials }) { state.configState }
+        .configureCrudable {
+          eventHandler = this@ConfigSandboxImpl.eventHandler
+        }
+  }
+
+  /** Registers collection for config class in [ConfigStateV2.collections] in [state] and [initialState]. */
+  override fun <T> registerConfigClass(clazz: Class<out T>) {
+    if (!state.configState.collections.containsKey(clazz.name)) {
+      state.configState.collections[clazz.name] = mutableListOf<T>()
     }
+    if (!initialState.configState.collections.containsKey(clazz.name)) {
+      initialState.configState.collections[clazz.name] = mutableListOf<T>()
+    }
+  }
 
   /**
    * Check is the weak state modified for the specified config class
@@ -169,8 +172,8 @@ class ConfigSandboxImpl : ConfigSandbox {
                 val credentialService = CredentialService.instance
                 listOf(toAdd, toUpdate)
                   .flatten()
-                  .forEach { credentialService.setCredentials(it.connectionConfigUuid, it.username, it.password) }
-                toDelete.forEach { credentialService.clearCredentials(it.connectionConfigUuid) }
+                  .forEach { credentialService.setCredentials(it.configUuid, it.username, it.password) }
+                toDelete.forEach { credentialService.clearCredentials(it.configUuid) }
               }
             } else {
               configCrudable.replaceGracefully(clazz, list.stream())
@@ -183,10 +186,13 @@ class ConfigSandboxImpl : ConfigSandbox {
   /** Fetch the config service values to the config sandbox for each config class */
   override fun fetch() {
     synchronized(stateLock) {
-      rollbackSandbox<ConnectionConfig>()
-      rollbackSandbox<FilesWorkingSetConfig>()
-      rollbackSandbox<JesWorkingSetConfig>()
-      rollbackSandbox<Credentials>()
+//      rollbackSandbox<ConnectionConfig>()
+//      rollbackSandbox<FilesWorkingSetConfig>()
+//      rollbackSandbox<JesWorkingSetConfig>()
+//      rollbackSandbox<Credentials>()
+      ConfigService.instance.getRegisteredConfigClasses().forEach {
+        rollbackSandbox(it)
+      }
     }
   }
 
@@ -201,14 +207,16 @@ class ConfigSandboxImpl : ConfigSandbox {
   override fun <T> rollback(clazz: Class<out T>) {
     synchronized(stateLock) {
       val current = if (clazz.isThe<Credentials>()) {
-        configCrudable
-          .getAll<ConnectionConfig>()
+        service<ConfigService>()
+          .getRegisteredConfigDeclarations()
+          .filter { it.useCredentials }
+          .flatMap { configCrudable.getAll(it.clazz).toList() }
+          .filterIsInstance<EntityWithUuid>()
           .map {
             with(CredentialService.instance) {
               Credentials(it.uuid, getUsernameByKey(it.uuid) ?: "", getPasswordByKey(it.uuid) ?: "")
             }
           }
-          .toList()
       } else {
         configCrudable.getAll(clazz).toList()
       }
@@ -217,7 +225,7 @@ class ConfigSandboxImpl : ConfigSandbox {
           list.clear()
           list.addAll(
             current
-              .mapNotNull { it?.clone(clazz) }
+              .map { it.clone(clazz) }
               .toMutableList() as MutableList<T>
           )
         }
@@ -226,7 +234,7 @@ class ConfigSandboxImpl : ConfigSandbox {
   }
 
   override fun updateState() {
-    initialState = state.clone()
+    initialState = state.cloneInternal()
   }
 
 }

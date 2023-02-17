@@ -20,8 +20,8 @@ import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataZOS
-import eu.ibagroup.r2z.DataAPI
+import org.zowe.kotlinsdk.CopyDataZOS
+import org.zowe.kotlinsdk.DataAPI
 import retrofit2.Call
 import java.io.FileNotFoundException
 
@@ -62,7 +62,7 @@ class MemberToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOp
    */
   override fun buildCall(
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, ConnectionConfig>
+    requesterWithUrl: Pair<Requester<ConnectionConfig>, ConnectionConfig>
   ): Call<Void> {
     val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
     var memberName: String

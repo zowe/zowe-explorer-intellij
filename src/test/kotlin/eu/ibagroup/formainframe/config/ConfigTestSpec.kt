@@ -10,14 +10,22 @@
 
 package eu.ibagroup.formainframe.config
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigDeclaration
 import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclaration
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionsTableModel
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
 
 class ConfigTestSpec : ShouldSpec({
   context("config module: connect") {
@@ -26,12 +34,29 @@ class ConfigTestSpec : ShouldSpec({
       lateinit var crudable: Crudable
       lateinit var connTab: ConnectionsTableModel
 
+      fun mockConfigService() {
+        val mockConfigServiceInstance = mockk<ConfigService>()
+        every { mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java) } returns ConnectionConfigDeclaration(crudable)
+        every { mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java) } returns CredentialsConfigDeclaration(crudable)
+
+        mockkObject(ConfigService)
+        every { ConfigService.instance } returns mockConfigServiceInstance
+      }
+
       beforeEach {
-        val sandboxState = SandboxState()
+        val configCollections: MutableMap<String, MutableList<*>> = mutableMapOf(
+          Pair(ConnectionConfig::class.java.name, mutableListOf<ConnectionConfig>()),
+          Pair(FilesWorkingSetConfig::class.java.name, mutableListOf<ConnectionConfig>()),
+          Pair(JesWorkingSetConfig::class.java.name, mutableListOf<ConnectionConfig>()),
+        )
+        val sandboxState = SandboxState(ConfigStateV2(configCollections))
+
         crudable =
           makeCrudableWithoutListeners(true, { sandboxState.credentials }) { sandboxState.configState }
         connTab = ConnectionsTableModel(crudable)
+        mockConfigService()
       }
+
 
       val connectionDialogState = ConnectionDialogState(
         connectionName = "a", connectionUrl = "https://a.com", username = "a", password = "a"

@@ -1,0 +1,26 @@
+{
+  "zos_version": "04.26.00",
+  "zosmf_port": "10443",
+  "zosmf_version": "26",
+  "zosmf_hostname": "S0W1.DAL-EBIS.IHOST.COM",
+  "plugins": [
+    {
+      "pluginVersion": "HSMA230;PH15438P;2019-09-16T04:53:43",
+      "pluginDefaultName": "z/OS Operator Consoles",
+      "pluginStatus": "ACTIVE"
+    },
+    {
+      "pluginVersion": "HSMA234;PH09032P;2019-03-04T16:37:21",
+      "pluginDefaultName": "Software Deployment",
+      "pluginStatus": "ACTIVE"
+    },
+    {
+      "pluginVersion": "HSMA230;PI96931P;2018-05-22T06:55:26",
+      "pluginDefaultName": "Variables",
+      "pluginStatus": "ACTIVE"
+    }
+  ],
+  "zosmf_saf_realm": "SAFRealm",
+  "zosmf_full_version": "26.0",
+  "api_version": "1"
+}

@@ -20,8 +20,8 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.Job
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.Job
 import retrofit2.Response
 
 /**
@@ -116,6 +116,6 @@ sealed class GetJobStatusOperationParams {
 data class GetJobStatusOperation(
   override val request: GetJobStatusOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<GetJobStatusOperationParams, Job> {
+) : RemoteQuery<ConnectionConfig, GetJobStatusOperationParams, Job> {
   override val resultClass = Job::class.java
 }

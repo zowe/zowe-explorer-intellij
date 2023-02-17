@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.clone
@@ -20,15 +21,16 @@ import eu.ibagroup.formainframe.utils.clone
 /** JES working set implementation */
 class JesWorkingSetImpl(
   override val uuid: String,
-  jesExplorer: AbstractExplorerBase<JesWorkingSetImpl, JesWorkingSetConfig>,
+  jesExplorer: AbstractExplorerBase<ConnectionConfig, JesWorkingSetImpl, JesWorkingSetConfig>,
   workingSetConfigProvider: (String) -> JesWorkingSetConfig?,
   parentDisposable: Disposable
-) : WorkingSetBase<JobsFilter, WorkingSet<*>, JesWorkingSetConfig>(
+) : WorkingSetBase<ConnectionConfig, JobsFilter, JesWorkingSetConfig>(
   uuid,
   jesExplorer,
   workingSetConfigProvider
 ), JesWorkingSet {
   override val wsConfigClass = JesWorkingSetConfig::class.java
+  override val connectionConfigClass = ConnectionConfig::class.java
 
   override fun JesWorkingSetConfig.masks(): MutableCollection<JobsFilter> = this.jobsFilters
 

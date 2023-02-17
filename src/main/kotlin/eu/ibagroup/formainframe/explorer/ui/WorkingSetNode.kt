@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.username
 import eu.ibagroup.formainframe.explorer.WorkingSet
 
@@ -26,12 +27,12 @@ private val grayscaleIcon = IconUtil.desaturate(regularIcon)
 private val errorIcon = LayeredIcon(grayscaleIcon, errorIconElement)
 
 /** Base implementation of working set tree node */
-abstract class WorkingSetNode<MaskType>(
-  workingSet: WorkingSet<MaskType>,
+abstract class WorkingSetNode<Connection: ConnectionConfigBase, MaskType>(
+  workingSet: WorkingSet<Connection, MaskType>,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<Connection, *>,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<WorkingSet<MaskType>, WorkingSet<MaskType>>(
+) : ExplorerUnitTreeNodeBase<Connection, WorkingSet<Connection, MaskType>, WorkingSet<Connection, MaskType>>(
   workingSet, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
   protected var cachedChildrenInternal: MutableCollection<out AbstractTreeNode<*>>? = null

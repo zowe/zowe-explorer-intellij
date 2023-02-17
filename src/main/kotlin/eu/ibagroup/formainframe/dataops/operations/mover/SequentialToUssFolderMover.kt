@@ -20,9 +20,9 @@ import eu.ibagroup.formainframe.dataops.attributes.USS_DELIMITER
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataUSS
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
+import org.zowe.kotlinsdk.CopyDataUSS
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 import retrofit2.Call
 
 /**
@@ -62,7 +62,7 @@ class SequentialToUssFolderMover(dataOpsManager: DataOpsManager) : DefaultFileMo
    */
   override fun buildCall(
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, ConnectionConfig>
+    requesterWithUrl: Pair<Requester<ConnectionConfig>, ConnectionConfig>
   ): Call<Void> {
     val destinationAttributes = operation.destinationAttributes as RemoteUssAttributes
     val dataset = operation.sourceAttributes as RemoteDatasetAttributes

@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.config.ws.ui.jes
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsTableModel
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -19,7 +20,8 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  * @see AbstractWsTableModel
  * @author Valiantsin Krus
  */
-class JesWsTableModel(crudable: Crudable) : AbstractWsTableModel<JesWorkingSetConfig>(crudable) {
+class JesWsTableModel(crudable: Crudable)
+  : AbstractWsTableModel<ConnectionConfig, JesWorkingSetConfig>(crudable, ConnectionConfig::class.java) {
 
   override fun set(row: Int, item: JesWorkingSetConfig) {
     get(row).jobsFilters = item.jobsFilters

@@ -20,9 +20,9 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.ReleaseJobRequest
-import eu.ibagroup.r2z.ReleaseJobRequestBody
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.ReleaseJobRequest
+import org.zowe.kotlinsdk.ReleaseJobRequestBody
 import retrofit2.Response
 
 /** Factory for release job operation runner */
@@ -93,6 +93,6 @@ class CorrelatorReleaseJobParams(val correlator: String) : ReleaseJobOperationPa
 data class ReleaseJobOperation(
   override val request: ReleaseJobOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<ReleaseJobOperationParams, ReleaseJobRequest> {
+) : RemoteQuery<ConnectionConfig, ReleaseJobOperationParams, ReleaseJobRequest> {
   override val resultClass = ReleaseJobRequest::class.java
 }

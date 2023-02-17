@@ -17,7 +17,7 @@ import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.annotations.ZVersion
 
 /**
  * Data class which represents state for connection dialog
@@ -72,7 +72,7 @@ fun ConnectionDialogState.initEmptyUuids(crudable: Crudable): ConnectionDialogSt
 fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
 
   val credentials = crudable.getByUniqueKey<Credentials>(this.uuid) ?: Credentials().apply {
-    this.connectionConfigUuid = this@toDialogState.uuid
+    this.configUuid = this@toDialogState.uuid
   }
   return ConnectionDialogState(
     connectionUuid = this.uuid,

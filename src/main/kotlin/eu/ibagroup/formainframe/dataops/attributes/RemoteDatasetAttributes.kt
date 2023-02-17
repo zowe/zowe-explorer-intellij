@@ -10,11 +10,12 @@
 
 package eu.ibagroup.formainframe.dataops.attributes
 
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.r2z.Dataset
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.HasMigrated
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.Dataset
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.HasMigrated
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Attributes containing information about the dataset
@@ -27,7 +28,7 @@ data class RemoteDatasetAttributes(
   val datasetInfo: Dataset,
   override val url: String,
   override val requesters: MutableList<MaskedRequester>
-) : MFRemoteFileAttributes<MaskedRequester> {
+) : MFRemoteFileAttributes<ConnectionConfig, MaskedRequester> {
 
   /**
    * Clones current instance of dataset attributes.

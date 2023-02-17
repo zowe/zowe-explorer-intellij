@@ -20,9 +20,9 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.HoldJobRequest
-import eu.ibagroup.r2z.HoldJobRequestBody
-import eu.ibagroup.r2z.JESApi
+import org.zowe.kotlinsdk.HoldJobRequest
+import org.zowe.kotlinsdk.HoldJobRequestBody
+import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
 
 /**
@@ -118,6 +118,6 @@ class CorrelatorHoldJobParams(val correlator: String) : HoldJobOperationParams()
 data class HoldJobOperation(
   override val request: HoldJobOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<HoldJobOperationParams, HoldJobRequest> {
+) : RemoteQuery<ConnectionConfig, HoldJobOperationParams, HoldJobRequest> {
   override val resultClass = HoldJobRequest::class.java
 }

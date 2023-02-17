@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.STYLE_BOLD
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
@@ -25,8 +26,8 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.fetch.JobQuery
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.Job
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.Job
+import org.zowe.kotlinsdk.annotations.ZVersion
 import kotlin.math.roundToInt
 
 private val jobIcon = AllIcons.Nodes.Folder
@@ -35,19 +36,19 @@ private val jobIcon = AllIcons.Nodes.Folder
 class JobNode(
   library: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: JesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<MFVirtualFile, JobQuery, JesWorkingSet>(
+) : RemoteMFFileFetchNode<ConnectionConfig, MFVirtualFile, JobQuery, JesWorkingSet>(
   library, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
-  override fun makeFetchTaskTitle(query: RemoteQuery<JobQuery, Unit>): String {
+  override fun makeFetchTaskTitle(query: RemoteQuery<ConnectionConfig, JobQuery, Unit>): String {
     return "Fetching members for ${query.request.library.name}"
   }
 
   private val jobJclNotAvailable = "JCL NOT AVAILABLE"
 
-  override val query: RemoteQuery<JobQuery, Unit>?
+  override val query: RemoteQuery<ConnectionConfig, JobQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
 
@@ -166,13 +167,16 @@ class JobNode(
    * @return true if return code is kind of Error. False otherwise
    */
   private fun isErrorReturnCode(returnCode : String?) : Boolean {
-    return if( returnCode != null) {
-      returnCode.startsWith("ABEND") ||
-          returnCode.startsWith("JCL ERROR") ||
-          returnCode.startsWith("CANCELED") ||
-          returnCode.split(" ")[1].toInt() > 0
-    } else {
-      false
+    if (returnCode != null) {
+      return if (!returnCode.startsWith("CANCELED")) {
+        val numberedRC = returnCode.split(" ")[1].toIntOrNull()
+        if (numberedRC != null) {
+          numberedRC > 0
+        } else {
+          true
+        }
+      } else true
     }
+    return false
   }
 }

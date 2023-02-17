@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 
@@ -21,11 +22,11 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
  * Provides interaction with the root node
  */
 class FileExplorerTreeNodeRoot(
-  explorer: Explorer<FilesWorkingSet>,
+  explorer: Explorer<ConnectionConfig, FilesWorkingSet>,
   project: Project,
   treeStructure: ExplorerTreeStructureBase
 ) :
-  ExplorerTreeNode<Explorer<FilesWorkingSet>>(explorer, project, null, explorer, treeStructure) {
+  ExplorerTreeNode<ConnectionConfig, Explorer<ConnectionConfig, FilesWorkingSet>>(explorer, project, null, explorer, treeStructure) {
 
   override fun isAlwaysExpand(): Boolean {
     return true

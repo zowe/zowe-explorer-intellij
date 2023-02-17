@@ -13,6 +13,11 @@ package eu.ibagroup.formainframe.dataops
 import io.kotest.core.spec.style.ShouldSpec
 
 class OperationsTestSpec : ShouldSpec({
+  context("dataops module: operations/ZOSIntoOperationRunner") {
+    context("run") {
+      should("perform Info operation") {}
+    }
+  }
   context("dataops module: operations/RenameOperationRunner") {
     // run
     should("perform USS file rename") {}

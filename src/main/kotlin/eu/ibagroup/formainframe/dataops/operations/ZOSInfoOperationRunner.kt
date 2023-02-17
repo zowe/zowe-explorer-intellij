@@ -5,8 +5,8 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.InfoAPI
-import eu.ibagroup.r2z.InfoResponse
+import org.zowe.kotlinsdk.InfoAPI
+import org.zowe.kotlinsdk.InfoResponse
 
 /**
  * Factory class to build an instance of system info operation runner. Defined in plugin.xml

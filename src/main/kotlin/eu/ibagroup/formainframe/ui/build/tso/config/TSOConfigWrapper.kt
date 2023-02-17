@@ -12,8 +12,8 @@ package eu.ibagroup.formainframe.ui.build.tso.config
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
-import eu.ibagroup.r2z.TsoData
-import eu.ibagroup.r2z.TsoResponse
+import org.zowe.kotlinsdk.TsoData
+import org.zowe.kotlinsdk.TsoResponse
 
 /**
  * Class which is used to consolidate all the information about TSO session created

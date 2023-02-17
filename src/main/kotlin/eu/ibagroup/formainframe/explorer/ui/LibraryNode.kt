@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
@@ -27,14 +28,14 @@ import icons.ForMainframeIcons
 class LibraryNode(
   library: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: FilesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<MFVirtualFile, LibraryQuery, FilesWorkingSet>(
+) : RemoteMFFileFetchNode<ConnectionConfig, MFVirtualFile, LibraryQuery, FilesWorkingSet>(
   library, project, parent, workingSet, treeStructure
 ), MFNode, RefreshableNode {
 
-  override val query: RemoteQuery<LibraryQuery, Unit>?
+  override val query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
 
@@ -62,7 +63,7 @@ class LibraryNode(
     return value
   }
 
-  override fun makeFetchTaskTitle(query: RemoteQuery<LibraryQuery, Unit>): String {
+  override fun makeFetchTaskTitle(query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>): String {
     return "Fetching members for ${query.request.library.name}"
   }
 }

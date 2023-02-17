@@ -20,9 +20,9 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.SubmitFileNameBody
-import eu.ibagroup.r2z.SubmitJobRequest
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.SubmitFileNameBody
+import org.zowe.kotlinsdk.SubmitJobRequest
 import retrofit2.Response
 
 /**
@@ -116,6 +116,6 @@ class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams()
 data class SubmitJobOperation(
   override val request: SubmitOperationParams,
   override val connectionConfig: ConnectionConfig,
-) : RemoteQuery<SubmitOperationParams, SubmitJobRequest> {
+) : RemoteQuery<ConnectionConfig, SubmitOperationParams, SubmitJobRequest> {
   override val resultClass = SubmitJobRequest::class.java
 }

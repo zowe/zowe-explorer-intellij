@@ -12,28 +12,30 @@ package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
-import eu.ibagroup.formainframe.config.ConfigState
+import eu.ibagroup.formainframe.config.ConfigStateV2
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.makeCrudableWithoutListeners
-import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.*
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.annotations.ZVersion
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.spyk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.time.Duration
+import java.time.Instant.now
 import java.util.stream.Stream
 import javax.swing.JTextField
 
@@ -79,7 +81,7 @@ class UtilsTestSpec : ShouldSpec({
     }
     context("validateConnectionName") {
       val jTextField = JTextField()
-      val mockCrud = spyk(makeCrudableWithoutListeners(false) { ConfigState() })
+      val mockCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
 
       should("validate connection name when there are no other connections") {
         jTextField.text = "a"
@@ -145,7 +147,7 @@ class UtilsTestSpec : ShouldSpec({
     }
     context("validateWorkingSetName") {
       val jTextField = JTextField()
-      val mockCrud = spyk(makeCrudableWithoutListeners(false) { ConfigState() })
+      val mockCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
 
       should("validate working set name when there are no other working sets") {
         jTextField.text = "a1"
@@ -165,8 +167,8 @@ class UtilsTestSpec : ShouldSpec({
         val initialConName = null
 
         every { mockCrud.getAll(WorkingSetConfig::class.java) } returns Stream.of(
-          WorkingSetConfig(uuid = "ws", name = "a", connectionConfigUuid = "con"),
-          WorkingSetConfig(uuid = "ws1", name = "a1", connectionConfigUuid = "con1")
+          FilesWorkingSetConfig("ws", "a", "con", mutableListOf(), mutableListOf()),
+          FilesWorkingSetConfig("ws1", "a1", "con1", mutableListOf(), mutableListOf())
         )
 
         val actual = validateWorkingSetName(jTextField, initialConName, mockCrud, WorkingSetConfig::class.java)
@@ -181,8 +183,8 @@ class UtilsTestSpec : ShouldSpec({
         val initialConName = "a1"
 
         every { mockCrud.getAll(WorkingSetConfig::class.java) } returns Stream.of(
-          WorkingSetConfig(uuid = "ws", name = "a", connectionConfigUuid = "con"),
-          WorkingSetConfig(uuid = "ws1", name = "a1", connectionConfigUuid = "con1")
+          FilesWorkingSetConfig("ws", "a", "con", mutableListOf(), mutableListOf()),
+          FilesWorkingSetConfig("ws1", "a1", "con1", mutableListOf(), mutableListOf())
         )
 
         val actual = validateWorkingSetName(jTextField, initialConName, mockCrud, WorkingSetConfig::class.java)
@@ -734,7 +736,24 @@ class UtilsTestSpec : ShouldSpec({
     should("cancel the call on the progress indicator finish") {}
   }
   context("utils module: miscUtils") {
-    // debounce
-    should("run a block of code after the debounce action") {}
+    lateinit var test: String
+    lateinit var duration: Duration
+
+    should("run a block of code after the debounce action") {
+
+      withContext(Dispatchers.IO) {
+        val started = now()
+        debounce(500) {
+          duration = Duration.between(started, now())
+          test = "debounce block"
+        }.invoke()
+        Thread.sleep(1000)
+      }
+
+      assertSoftly {
+        test shouldBe "debounce block"
+        duration.toMillis() shouldBeGreaterThan 500
+      }
+    }
   }
 })

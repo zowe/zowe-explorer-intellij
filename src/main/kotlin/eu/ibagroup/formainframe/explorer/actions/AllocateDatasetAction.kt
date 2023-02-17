@@ -37,7 +37,7 @@ import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 
 /**
  * Action class for dataset allocation with parameters chosen by user
@@ -81,7 +81,7 @@ class AllocateDatasetAction : AnAction() {
 private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationParams = DatasetAllocationParams()) {
   val view = e.getData(FILE_EXPLORER_VIEW) ?: return
   val parentNode = view.mySelectedNodesData[0].node
-  if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is FilesWorkingSet) {
+  if (parentNode is ExplorerUnitTreeNodeBase<*, *, *> && parentNode.unit is FilesWorkingSet) {
     val workingSet = parentNode.unit
     val config = parentNode.unit.connectionConfig
     if (config != null) {
@@ -108,11 +108,11 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
           }
             .onSuccess {
               res = true
-              var p: ExplorerTreeNode<*>? = parentNode
+              var p: ExplorerTreeNode<*, *>? = parentNode
               while (p !is DSMaskNode) {
                 p = p?.parent ?: break
               }
-              val nodeToClean = p?.castOrNull<FileFetchNode<*,*,*,*,*>>()
+              val nodeToClean = p?.castOrNull<FileFetchNode<*, *, *, *, *, *>>()
               nodeToClean?.let { cleanInvalidateOnExpand(nodeToClean, view) }
 
               var nodeCleaned = false

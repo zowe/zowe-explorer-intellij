@@ -21,8 +21,7 @@ import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
- * Implementation of AbstractWsConfigurable class for modifying Files Working Set configurations.
- * @see AbstractWsConfigurable
+ * Implementation of [AbstractWsConfigurable] class for modifying Files Working Set configurations.
  */
 class FilesWSConfigurable :
   AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel, FilesWorkingSetDialogState>("Working Sets") {

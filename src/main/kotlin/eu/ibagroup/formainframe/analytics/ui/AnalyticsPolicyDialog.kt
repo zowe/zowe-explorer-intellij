@@ -14,9 +14,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.UIUtil
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.PolicyProvider
+import java.awt.Dimension
 import javax.swing.JComponent
 
 class AnalyticsPolicyDialog(
@@ -60,12 +63,17 @@ class AnalyticsPolicyDialog(
             caretPosition = 0
           }
         scrollCell(licenseTextArea)
-      }
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
+      }.resizableRow()
       row {
-        label(policyProvider.buildAgreementText("clicking"))
+        text(policyProvider.buildAgreementText("clicking"))
           .apply {
             component.font = UIUtil.getFont(UIUtil.FontSize.NORMAL, component.font)
+            component.preferredSize = Dimension(660, 20)
           }
+          .horizontalAlign(HorizontalAlign.FILL)
+          .verticalAlign(VerticalAlign.FILL)
       }
     }
   }
