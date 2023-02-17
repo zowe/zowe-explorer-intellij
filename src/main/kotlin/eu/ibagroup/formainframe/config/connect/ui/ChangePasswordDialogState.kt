@@ -17,4 +17,5 @@ data class ChangePasswordDialogState(
   var username: String = "",
   var oldPassword: String = "",
   var newPassword: String = "",
+  var confirmPassword: String = ""
 )

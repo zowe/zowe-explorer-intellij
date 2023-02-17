@@ -10,14 +10,16 @@
 
 package eu.ibagroup.formainframe.config.connect.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.utils.validateForBlank
-import java.awt.event.ItemEvent
-import javax.swing.JComponent
-import javax.swing.JPasswordField
+import eu.ibagroup.formainframe.utils.validateForPassword
+import java.awt.BorderLayout
+import java.awt.event.*
+import javax.swing.*
 
 /** Dialog to change user password */
 class ChangePasswordDialog(
@@ -29,8 +31,6 @@ class ChangePasswordDialog(
     init()
     title = "Change user password"
   }
-
-  lateinit var passField: JPasswordField
 
   /** Create dialog with the fields */
   override fun createCenterPanel(): JComponent {
@@ -53,6 +53,10 @@ class ChangePasswordDialog(
           .widthGroup(sameWidthLabelsGroup)
         cell(JPasswordField())
           .bindText(state::oldPassword)
+          .applyToComponent {
+            this.layout = BorderLayout()
+            addShowHidePasswordIcon(this)
+          }
           .validationOnApply { validateForBlank(it) }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -61,25 +65,52 @@ class ChangePasswordDialog(
           .widthGroup(sameWidthLabelsGroup)
         cell(JPasswordField())
           .bindText(state::newPassword)
-          .also { passField = it.component }
+          .applyToComponent {
+            this.layout = BorderLayout()
+            addShowHidePasswordIcon(this)
+            addFocusListener(object : FocusAdapter() {
+              override fun focusLost(e: FocusEvent?) {
+                state.newPassword = this@applyToComponent.text
+              }
+            })
+          }
           .validationOnApply { validateForBlank(it) }
           .horizontalAlign(HorizontalAlign.FILL)
       }
-      indent {
-        row {
-          checkBox("Show password")
-            .applyToComponent {
-              addItemListener {
-                if (it.stateChange == ItemEvent.SELECTED) {
-                  passField.echoChar = 0.toChar()
-                } else {
-                  passField.echoChar = '*'
-                }
-              }
-            }
-        }
+      row {
+        label("Confirm password: ")
+          .widthGroup(sameWidthLabelsGroup)
+        cell(JPasswordField())
+          .bindText(state::confirmPassword)
+          .applyToComponent {
+            this.layout = BorderLayout()
+            addShowHidePasswordIcon(this)
+          }
+          .validationOnApply { validateForBlank(it) ?: validateForPassword(state.newPassword, it) }
+          .horizontalAlign(HorizontalAlign.FILL)
       }
     }
+  }
+
+  /**
+   * Add "eye" icon to show password
+   * @param component [JPasswordField] instance to add icon
+   */
+  private fun addShowHidePasswordIcon(component: JPasswordField) {
+    val defaultEchoChar = component.echoChar
+    val eyeIcon = JLabel(AllIcons.General.InspectionsEye)
+
+    eyeIcon.addMouseListener(object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent?) {
+        component.echoChar = '\u0000'
+      }
+
+      override fun mouseReleased(e: MouseEvent?) {
+        component.echoChar = defaultEchoChar
+      }
+    })
+
+    component.add(eyeIcon, BorderLayout.EAST)
   }
 
 
