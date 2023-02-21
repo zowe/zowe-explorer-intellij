@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.HoldJobRequest
 import org.zowe.kotlinsdk.HoldJobRequestBody
 import org.zowe.kotlinsdk.JESApi
@@ -42,6 +43,8 @@ class HoldJobOperationRunner : OperationRunner<HoldJobOperation, HoldJobRequest>
   override val operationClass = HoldJobOperation::class.java
 
   override val resultClass = HoldJobRequest::class.java
+
+  override val log = log<HoldJobOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -103,12 +106,20 @@ open class HoldJobOperationParams
 /**
  * Class which contains parameters job name and job id for hold job operation
  */
-class BasicHoldJobParams(val jobName: String, val jobId: String) : HoldJobOperationParams()
+class BasicHoldJobParams(val jobName: String, val jobId: String) : HoldJobOperationParams() {
+  override fun toString(): String {
+    return "BasicHoldJobParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /**
  * Class which contains parameter job correlator for hold job operation
  */
-class CorrelatorHoldJobParams(val correlator: String) : HoldJobOperationParams()
+class CorrelatorHoldJobParams(val correlator: String) : HoldJobOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorHoldJobParams(correlator='$correlator')"
+  }
+}
 
 /**
  * Data class that represents all information needed to send hold job request

@@ -21,6 +21,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.getParentsChain
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.CopyDataUSS
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
@@ -49,6 +50,8 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
             && operation.commonUrls(dataOpsManager).isNotEmpty()
             && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
+
+  override val log = log<UssToUssFileMover>()
 
   /**
    * Proceeds move/copy of uss file to uss directory

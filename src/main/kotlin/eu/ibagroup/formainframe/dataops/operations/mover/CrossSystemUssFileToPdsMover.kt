@@ -20,10 +20,7 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.addNewLine
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.XIBMDataType
@@ -56,6 +53,8 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
             operation.destination is MFVirtualFile &&
             (operation.source !is MFVirtualFile || operation.commonUrls(dataOpsManager).isEmpty())
   }
+
+  override val log = log<CrossSystemUssFileToPdsMover>()
 
   /**
    * Proceeds move/copy of uss file to partitioned data set between different systems.
@@ -132,12 +131,15 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS file ${operation.source.name} to PDS ${operation.destination.name}")
       proceedCrossSystemMoveCopy(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.error("Failed to move USS file")
       throw throwable
     }
+    log.info("USS file has been moved successfully")
   }
 }

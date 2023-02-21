@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.CancelJobRequest
 import org.zowe.kotlinsdk.CancelJobRequestBody
 import org.zowe.kotlinsdk.JESApi
@@ -42,6 +43,8 @@ class CancelJobOperationRunner : OperationRunner<CancelJobOperation, CancelJobRe
   override val operationClass = CancelJobOperation::class.java
 
   override val resultClass = CancelJobRequest::class.java
+
+  override val log = log<CancelJobOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -103,12 +106,20 @@ open class CancelJobOperationParams
 /**
  * Class which contains parameters job name and job id for cancel job operation
  */
-class BasicCancelJobParams(val jobName: String, val jobId: String) : CancelJobOperationParams()
+class BasicCancelJobParams(val jobName: String, val jobId: String) : CancelJobOperationParams() {
+  override fun toString(): String {
+    return "BasicCancelJobParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /**
  * Class which contains parameter job correlator for cancel job operation
  */
-class CorrelatorCancelJobParams(val correlator: String) : CancelJobOperationParams()
+class CorrelatorCancelJobParams(val correlator: String) : CancelJobOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorCancelJobParams(correlator='$correlator')"
+  }
+}
 
 /**
  * Data class that represents all information needed to send cancel job request

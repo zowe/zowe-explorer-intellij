@@ -5,6 +5,7 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.InfoAPI
 import org.zowe.kotlinsdk.InfoResponse
 
@@ -23,6 +24,7 @@ class ZOSInfoOperationRunnerFactory : OperationRunnerFactory {
 class ZOSInfoOperationRunner : OperationRunner<ZOSInfoOperation, InfoResponse> {
   override val operationClass = ZOSInfoOperation::class.java
   override val resultClass = InfoResponse::class.java
+  override val log = log<ZOSInfoOperationRunner>()
 
   /**
    * Method determines if an operation can be run

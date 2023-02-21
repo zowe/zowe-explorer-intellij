@@ -10,6 +10,7 @@
 package eu.ibagroup.formainframe.dataops.operations.mover
 
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
+import eu.ibagroup.formainframe.utils.log
 
 /** Class to represent a file mover abstraction */
 abstract class AbstractFileMover : OperationRunner<MoveCopyOperation, Unit> {
@@ -17,5 +18,7 @@ abstract class AbstractFileMover : OperationRunner<MoveCopyOperation, Unit> {
   override val operationClass = MoveCopyOperation::class.java
 
   override val resultClass = Unit::class.java
+
+  override val log = log<MoveCopyOperation>()
 
 }

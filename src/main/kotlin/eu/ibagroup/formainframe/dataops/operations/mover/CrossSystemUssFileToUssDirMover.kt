@@ -20,9 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
@@ -67,6 +65,8 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
     return castOrNull<RemoteUssAttributes>()
       ?: throw IllegalArgumentException("Cannot find attributes for file \"${fileName}\"")
   }
+
+  override val log = log<CrossSystemUssFileToUssDirMover>()
 
   /**
    * Proceeds move/copy of uss file to uss directory between different systems.
@@ -122,12 +122,15 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS file ${operation.source.name} to USS directory ${operation.destination.path}")
       proceedCrossSystemMoveCopy(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.error("Failed to move USS file")
       throw throwable
     }
+    log.info("USS file has been moved successfully")
   }
 }

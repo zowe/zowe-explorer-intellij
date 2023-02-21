@@ -21,6 +21,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.config.Presets
 import eu.ibagroup.formainframe.explorer.config.getSampleJclMemberContent
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.*
 import java.lang.Exception
 
@@ -96,6 +97,8 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
   }
 
   override val operationClass = DatasetAllocationOperation::class.java
+
+  override val log = log<DatasetAllocator>()
 
 }
 
