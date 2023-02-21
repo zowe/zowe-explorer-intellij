@@ -29,6 +29,8 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.toMutableList
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 
 /** Create and manage Connections tab in settings */
 @Suppress("DialogTitleCapitalization")
@@ -128,6 +130,21 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
 
   private var panel: DialogPanel? = null
 
+  /**
+   * Registers custom mouse listeners for the connections table view
+   * @param connectionsTable - connections table view object
+   * @return An instance of MouseAdapter
+   */
+  private fun registerMouseListeners(connectionsTable : ValidatingTableView<ConnectionDialogState>): MouseAdapter = object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) {
+      if (e.clickCount == 2) {
+        connectionsTable.selectedObject?.let {
+          editConnection()
+        }
+      }
+    }
+  }
+
   /** Create Connections panel in settings */
   override fun createPanel(): DialogPanel {
     val tableModel = ConnectionsTableModel(sandboxCrudable)
@@ -136,6 +153,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val table = ValidatingTableView(tableModel, disposable!!)
       .apply {
         rowHeight = DEFAULT_ROW_HEIGHT
+        addMouseListener(registerMouseListeners(this))
       }
 
     connectionsTable = table
