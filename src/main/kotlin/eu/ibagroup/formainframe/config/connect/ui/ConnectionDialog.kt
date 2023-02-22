@@ -19,10 +19,11 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
-import eu.ibagroup.formainframe.config.connect.CredentialService
+import eu.ibagroup.formainframe.config.connect.*
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.InfoOperation
 import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.utils.validateConnectionName
@@ -43,6 +44,11 @@ class ConnectionDialog(
   project: Project? = null
 ) : StatefulDialog<ConnectionDialogState>(project) {
 
+  /**
+   * Private field
+   * In case of DialogMode.UPDATE takes the last successful state from crudable, takes default state otherwise
+   */
+  private val lastSuccessfulState: ConnectionDialogState = if(state.mode == DialogMode.UPDATE) state.connectionConfig.toDialogState(crudable) else ConnectionDialogState()
   companion object {
 
     /** Show Test connection dialog and test the connection regarding the dialog state.
@@ -61,17 +67,30 @@ class ConnectionDialog(
         initialState = initialState,
         factory = { ConnectionDialog(crudable, initialState, project) },
         test = { state ->
-          val throwable = runTask(title = "Testing Connection to ${state.connectionConfig.url}", project = project) {
+          val newTestedConnConfig : ConnectionConfig
+          if (initialState.mode == DialogMode.UPDATE) {
+            val newState = state.clone()
+            newState.initEmptyUuids(crudable)
+            newTestedConnConfig = ConnectionConfig(newState.connectionUuid, newState.connectionName, newState.connectionUrl, newState.isAllowSsl, newState.zVersion)
+            CredentialService.instance.setCredentials(
+              connectionConfigUuid = newState.connectionUuid,
+              username = newState.username,
+              password = newState.password
+            )
+          } else {
+            state.initEmptyUuids(crudable)
+            newTestedConnConfig = state.connectionConfig
+            CredentialService.instance.setCredentials(
+              connectionConfigUuid = state.connectionUuid,
+              username = state.username,
+              password = state.password)
+          }
+          val throwable = runTask(title = "Testing Connection to ${newTestedConnConfig.url}", project = project) {
             return@runTask try {
-              CredentialService.instance.setCredentials(
-                connectionConfigUuid = state.connectionUuid,
-                username = state.username,
-                password = state.password
-              )
               runCatching {
-                service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig), it)
+                service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
               }.onSuccess {
-                val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(state.connectionConfig))
+                val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
                 state.zVersion = when (systemInfo.zosVersion) {
                   "04.25.00" -> ZVersion.ZOS_2_2
                   "04.26.00" -> ZVersion.ZOS_2_3
@@ -223,6 +242,28 @@ class ConnectionDialog(
       DialogMode.DELETE -> "Delete Connection"
       DialogMode.UPDATE -> "Edit Connection"
       DialogMode.CREATE -> "Add Connection"
+    }
+  }
+
+  /**
+   * Function to be performed when Cancel button is pressed.
+   * Resets the values in connection dialog and connections table model to the last successful state
+   * Updates the credentials to satisfy the last known successful state
+   */
+  override fun doCancelAction() {
+    super.doCancelAction()
+    if (state.mode == DialogMode.UPDATE) {
+      state.connectionName = lastSuccessfulState.connectionName
+      state.connectionUrl = lastSuccessfulState.connectionUrl
+      state.username = username(lastSuccessfulState.connectionConfig)
+      state.password = password(lastSuccessfulState.connectionConfig)
+      state.isAllowSsl = lastSuccessfulState.isAllowSsl
+      state.zVersion = lastSuccessfulState.zVersion
+      CredentialService.instance.setCredentials(
+        connectionConfigUuid = lastSuccessfulState.connectionUuid,
+        username = username(lastSuccessfulState.connectionConfig),
+        password = password(lastSuccessfulState.connectionConfig)
+      )
     }
   }
 

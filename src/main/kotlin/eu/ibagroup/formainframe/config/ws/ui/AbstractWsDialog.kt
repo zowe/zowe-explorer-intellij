@@ -26,6 +26,8 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.getAll
+import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import java.awt.Dimension
 import javax.swing.JComponent
 
@@ -111,7 +113,11 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
                 }
             },
             { config -> state.connectionUuid = config?.uuid ?: "" }
-          )
+          ).applyToComponent {
+            addActionListener {
+              state.connectionUuid = (selectedItem as ConnectionConfig).uuid
+            }
+          }
           .validationOnApply {
             if (it.selectedItem == null) {
               ValidationInfo("You must provide a connection", it)

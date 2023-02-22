@@ -13,8 +13,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.addNewLine
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
@@ -26,24 +26,24 @@ import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.XIBMDataType
 
 /**
- * Factory for registering CrossSystemUssFileToPdsMover in Intellij IoC container.
- * @see CrossSystemUssFileToPdsMover
+ * Factory for registering CrossSystemMemberOrUssFileToPdsMover in Intellij IoC container.
+ * @see CrossSystemMemberOrUssFileToPdsMover
  * @author Valiantsin Krus
  */
-class CrossSystemUssFileToPdsMoverFactory : OperationRunnerFactory {
+class CrossSystemMemberOrUssFileToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-    return CrossSystemUssFileToPdsMover(dataOpsManager)
+    return CrossSystemMemberOrUssFileToPdsMover(dataOpsManager)
   }
 }
 
 /**
- * Implements copying of uss file to partitioned data set between different systems.
+ * Implements copying of member or uss file to partitioned data set between different systems.
  * @author Valiantsin Krus
  */
-class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
+class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
   /**
-   * Checks that source is uss file, dest is partitioned data set, and they are located inside different systems.
+   * Checks that source is member or uss file, dest is partitioned data set, and they are located inside different systems.
    * @see OperationRunner.canRun
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
@@ -57,7 +57,7 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
   override val log = log<CrossSystemUssFileToPdsMover>()
 
   /**
-   * Proceeds move/copy of uss file to partitioned data set between different systems.
+   * Proceeds move/copy of member or uss file to partitioned data set between different systems.
    * @param operation requested operation.
    * @param progressIndicator indicator that will show progress of copying/moving in UI.
    */
@@ -82,21 +82,20 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
       memberName = "empty"
     }
 
-    val xIBMDataType = if (sourceFile.fileType.isBinary ||
-      (operation.sourceAttributes.castOrNull<RemoteUssAttributes>()?.contentMode?.type == XIBMDataType.Type.BINARY)
-    ) XIBMDataType(XIBMDataType.Type.BINARY)
+    val xIBMDataType = if (sourceFile.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY)
     else XIBMDataType(XIBMDataType.Type.TEXT)
 
     val sourceContent = sourceFile.contentsToByteArray()
     val contentToUpload =
-      if (sourceFile.fileType.isBinary) sourceContent else sourceContent.filter { it != '\r'.code.toByte() }
-        .toByteArray()
+      if (sourceFile.fileType.isBinary) sourceContent
+      else sourceContent.toString(sourceFile.charset).replace("\r\n", "\n")
+        .toByteArray(DEFAULT_TEXT_CHARSET).addNewLine()
 
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToDatasetMember(
       authorizationToken = destConnectionConfig.authToken,
       datasetName = destAttributes.name,
       memberName = memberName,
-      content = contentToUpload.addNewLine(),
+      content = contentToUpload,
       xIBMDataType = xIBMDataType
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)

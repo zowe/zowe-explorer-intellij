@@ -214,10 +214,10 @@ Example of how to see the output:<br/>
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToUssDirMoverFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileToPdsMoverFactory"/>
 
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssDirMoverFactory"/>
