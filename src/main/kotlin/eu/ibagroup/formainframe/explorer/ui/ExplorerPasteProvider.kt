@@ -80,12 +80,12 @@ class ExplorerPasteProvider : PasteProvider {
       emptyList()
     }
     val destinationNodes = destinationFilesToRefresh
-      .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file) }
+      .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed() }
       .flatten()
       .distinct()
     return if (explorerView.isCut.get()) {
       val sourceNodesToRefresh = sourceFilesToRefresh
-        .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).map { it.parent } }
+        .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed().map { it.parent } }
         .flatten()
         .filterNotNull()
         .distinct()
@@ -145,6 +145,7 @@ class ExplorerPasteProvider : PasteProvider {
               )
             )
         }
+        explorerView.ignoreVFileDeleteEvents.compareAndSet(false, true)
         it.text = "${op.source.name} to ${op.destination.name}"
         runCatching {
           dataOpsManager.performOperation(

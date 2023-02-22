@@ -71,15 +71,14 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
   internal val cutProviderUpdater: (List<VirtualFile>) -> Unit
 ) : JBScrollPane(), DataProvider, Disposable {
 
-
   var mySelectedNodesData: List<NodeData<Connection>> by rwLocked(listOf())
   internal val myFsTreeStructure: CommonExplorerTreeStructure<Explorer<Connection, U>>
   internal val myStructure: StructureTreeModel<CommonExplorerTreeStructure<Explorer<Connection, U>>>
   internal val myTree: Tree
   internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
+  internal val ignoreVFileDeleteEvents = AtomicBoolean(false)
 
   protected val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
-  protected val ignoreVFileDeleteEvents = AtomicBoolean(false)
 
   private var treeModel: AsyncTreeModel
 
@@ -254,7 +253,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
           .flatten()
           .distinct()
           .map {
-            myFsTreeStructure.findByVirtualFile(it)
+            myFsTreeStructure.findByVirtualFile(it).reversed()
           }.flatten()
           .distinct()
           .forEach {

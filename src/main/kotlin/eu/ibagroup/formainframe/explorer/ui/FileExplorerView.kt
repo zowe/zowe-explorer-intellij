@@ -515,7 +515,7 @@ class FileExplorerView(
               .filterIsInstance<FileFetchNode<*, *, *, *, *, *>>()
               .forEach {
                 it.cleanCache(
-                  recursively = false,
+                  recursively = it is UssDirNode,
                   cleanBatchedQuery = true,
                   cleanFetchProviderCache = true,
                   sendTopic = true
@@ -590,4 +590,3 @@ data class NodeData<Connection: ConnectionConfigBase>(
 
 /** Type alias for fetch node with any possible generic types. */
 typealias FetchNode = FileFetchNode<*, *, *, *, *, *>
-
