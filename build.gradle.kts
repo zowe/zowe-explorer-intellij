@@ -63,7 +63,6 @@ dependencies {
   implementation("com.segment.analytics.java:analytics:+")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")
-  testImplementation("org.mock-server:mockserver-netty:5.14.0")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
   testImplementation("io.kotest:kotest-assertions-core:5.5.2")
   testImplementation("io.kotest:kotest-runner-junit5:5.5.2")
