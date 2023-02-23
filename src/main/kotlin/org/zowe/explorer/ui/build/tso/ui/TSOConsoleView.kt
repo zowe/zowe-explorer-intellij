@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.ui.build.tso.ui
 
+//import com.intellij.ui.layout.cellPanel
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.project.Project
@@ -19,7 +20,6 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.dsl.builder.panel
-//import com.intellij.ui.layout.cellPanel
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.ui.build.TerminalCommandReceiver
@@ -28,24 +28,27 @@ import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
 import org.zowe.explorer.ui.build.tso.utils.InputRecognizer
 import org.zowe.explorer.utils.sendTopic
 import java.awt.BorderLayout
-import javax.swing.*
+import javax.swing.JComboBox
+import javax.swing.JComponent
 
 /**
  * Base class which represents TSO console view tool window. Basic TSO console view UI defined here
  * @param project - represents a root project
  * @param tsoSession - wrapper instance of TSO session response
  */
-class TSOConsoleView (
+class TSOConsoleView(
   private val project: Project,
   private var tsoSession: TSOConfigWrapper
-  ) : ExecutionConsole, JBPanel<TSOConsoleView>() {
+) : ExecutionConsole, JBPanel<TSOConsoleView>() {
 
   private lateinit var tsoMessageType: JComboBox<MessageType>
   private lateinit var tsoDataType: JComboBox<MessageData>
   private val tsoWidthGroup: String = "TSO_WIDTH_GROUP"
 
-  private val tsoMessageTypes: List<MessageType> = listOf(MessageType.TSO_MESSAGE, MessageType.TSO_PROMPT, MessageType.TSO_RESPONSE)
-  private val tsoDataTypes: List<MessageData> = listOf(MessageData.DATA_DATA, MessageData.DATA_HIDDEN, MessageData.DATA_ACTION)
+  private val tsoMessageTypes: List<MessageType> =
+    listOf(MessageType.TSO_MESSAGE, MessageType.TSO_PROMPT, MessageType.TSO_RESPONSE)
+  private val tsoDataTypes: List<MessageData> =
+    listOf(MessageData.DATA_DATA, MessageData.DATA_HIDDEN, MessageData.DATA_ACTION)
 
   private var tsoMessageTypeComboBoxModel = CollectionComboBoxModel(tsoMessageTypes)
   private var tsoDataTypeComboBoxModel = CollectionComboBoxModel(tsoDataTypes)
@@ -90,6 +93,7 @@ class TSOConsoleView (
     terminalCommandReceiver.inputRecognizer = inputRecognizer
 
     terminalCommandReceiver.waitForCommandInput { enteredCommand ->
+      // TODO: eliminate this (consider "log")
       println("ENTERED COMMAND: $enteredCommand")
       sendTopic(SESSION_COMMAND_ENTERED).processCommand(
         project,
@@ -115,7 +119,7 @@ class TSOConsoleView (
   /**
    * Getter for TSO session wrapper class for each TSO session created
    */
-  fun getTsoSession() : TSOConfigWrapper {
+  fun getTsoSession(): TSOConfigWrapper {
     return tsoSession
   }
 

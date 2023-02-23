@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.ui.build.tso.utils
 
+import io.ktor.util.*
 import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
 
 /**
@@ -19,16 +20,16 @@ import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
  * @param programLines - discovered lines of the program
  */
 class ProgramMessage(
-  command : String?,
-  session : TSOConfigWrapper?,
-  private val programLines : String?
-  ) : Message<ProgramMessage> {
+  command: String?,
+  session: TSOConfigWrapper?,
+  private val programLines: String?
+) : Message<ProgramMessage> {
 
   override val messageClass = ProgramMessage::class.java
 
   private val commandToBeIssued = command
   private val currentSession = session
-  lateinit var parameters : ArrayList<String>
+  lateinit var parameters: ArrayList<String>
 
   /**
    * Main function to parse the parameters
@@ -39,9 +40,13 @@ class ProgramMessage(
       val pgmParameters = ArrayList<String>()
       val lines = programLines?.lines()
       lines?.forEach { line ->
-        val isParameter = line.trim().contains("PULL", ignoreCase = true)
-        if (isParameter) {
-          pgmParameters.add(line.trim().substringAfter("PULL").trim())
+        val possibleParm = line.trim().contains("PULL", ignoreCase = true) && line.trim().contains("/*")
+        if (possibleParm) {
+          val parsedParm = line.trim().substringAfter("/*").substringBefore("*/")
+          if (!parsedParm.contains("PULL", ignoreCase = true))
+            pgmParameters.add(line.trim().toUpperCasePreservingASCIIRules().substringAfter("PULL").trim())
+        } else if (line.trim().contains("PULL", ignoreCase = true)) {
+          pgmParameters.add(line.trim().toUpperCasePreservingASCIIRules().substringAfter("PULL").trim())
         }
       }
       parameters = pgmParameters
