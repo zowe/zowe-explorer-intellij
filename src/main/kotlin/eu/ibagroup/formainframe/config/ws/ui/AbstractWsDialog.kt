@@ -22,12 +22,14 @@ import com.intellij.util.containers.isEmpty
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.common.ui.tableWithToolbar
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.Crudable
-import eu.ibagroup.formainframe.utils.crudable.getAll
-import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import eu.ibagroup.formainframe.utils.nullable
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateWorkingSetName
 import java.awt.Dimension
 import javax.swing.JComponent
 
