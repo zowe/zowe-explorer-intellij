@@ -30,7 +30,6 @@ import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.UIComponentManager
 import org.zowe.explorer.utils.isBeingEditingNow
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
