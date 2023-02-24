@@ -8,13 +8,14 @@
  * Copyright IBA Group 2020
  */
 
+import kotlinx.kover.api.KoverTaskExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("org.jetbrains.intellij") version "1.12.0"
   kotlin("jvm") version "1.7.10"
   java
-  jacoco
+  id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
 
 apply(plugin = "kotlin")
@@ -158,22 +159,11 @@ tasks {
       events("passed", "skipped", "failed")
     }
 
-    configure<JacocoTaskExtension> {
-      isIncludeNoLocationClasses = true
-      excludes = listOf("jdk.internal.*")
-    }
+    ignoreFailures = true
 
-    finalizedBy("jacocoTestReport")
-  }
-
-  jacocoTestReport {
-    classDirectories.setFrom(
-      files(classDirectories.files.map {
-        fileTree(it) {
-          exclude("${buildDir}/instrumented/**")
-        }
-      })
-    )
+    finalizedBy("koverHtmlReport")
+    systemProperty("idea.force.use.core.classloader", "true")
+    systemProperty("idea.use.core.classloader.for.plugin.path", "true")
   }
 
   val createOpenApiSourceJar by registering(Jar::class) {
@@ -233,6 +223,11 @@ val uiTest = task<Test>("uiTest") {
   testLogging {
     events("passed", "skipped", "failed")
   }
+  extensions.configure(KoverTaskExtension::class) {
+    // set to true to disable instrumentation of this task,
+    // Kover reports will not depend on the results of its execution
+    isDisabled.set(true)
+  }
 }
 
 /**
@@ -249,6 +244,17 @@ val firstTimeUiTest = task<Test>("firstTimeUiTest") {
   testLogging {
     events("passed", "skipped", "failed")
   }
+  extensions.configure(KoverTaskExtension::class) {
+    // set to true to disable instrumentation of this task,
+    // Kover reports will not depend on the results of its execution
+    isDisabled.set(true)
+  }
+}
+
+tasks {
+  withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  }
 }
 
 tasks.downloadRobotServerPlugin {
@@ -258,15 +264,4 @@ tasks.downloadRobotServerPlugin {
 tasks.runIdeForUiTests {
   systemProperty("idea.trust.all.projects", "true")
   systemProperty("ide.show.tips.on.startup.default.value", "false")
-}
-
-tasks {
-  withType<Copy> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-  }
-}
-
-tasks.test {
-  systemProperty("idea.force.use.core.classloader", "true")
-  systemProperty("idea.use.core.classloader.for.plugin.path", "true")
 }

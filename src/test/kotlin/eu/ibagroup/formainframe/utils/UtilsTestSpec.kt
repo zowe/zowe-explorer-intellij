@@ -10,7 +10,9 @@
 
 package eu.ibagroup.formainframe.utils
 
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.ui.components.JBTextField
 import eu.ibagroup.formainframe.config.ConfigStateV2
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -22,8 +24,6 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
-import org.zowe.kotlinsdk.DatasetOrganization
-import org.zowe.kotlinsdk.annotations.ZVersion
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.longs.shouldBeGreaterThan
@@ -34,6 +34,9 @@ import io.mockk.mockkObject
 import io.mockk.spyk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.annotations.ZVersion
+import retrofit2.Call
 import java.time.Duration
 import java.time.Instant.now
 import java.util.stream.Stream
@@ -378,7 +381,8 @@ class UtilsTestSpec : ShouldSpec({
       should("validate wrong URL") {
         component.text = "wrong url\""
         val actual = validateZosmfUrl(component)
-        val expected = ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
+        val expected =
+          ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
 
         assertSoftly {
           actual shouldBe expected
@@ -732,8 +736,25 @@ class UtilsTestSpec : ShouldSpec({
     }
   }
   context("utils module: retrofitUtils") {
-    // cancelByIndicator
-    should("cancel the call on the progress indicator finish") {}
+    should("cancel the call due to progress indicator is cancelled") {
+      lateinit var delegate: ProgressIndicator
+      var isCancelDelegateCalled = false
+
+      val mockCall = mockk<Call<Any>>()
+      val mockProgressIndicator = mockk<ProgressIndicatorEx>()
+      every { mockCall.cancel() } answers {
+        isCancelDelegateCalled = true
+      }
+      every { mockProgressIndicator.addStateDelegate(any()) } answers {
+        delegate = firstArg()
+      }
+
+      mockCall.cancelByIndicator(mockProgressIndicator)
+      delegate.cancel()
+
+      assert(isCancelDelegateCalled)
+    }
+    should("not cancel the call when the processing is finished") {}
   }
   context("utils module: miscUtils") {
     lateinit var test: String

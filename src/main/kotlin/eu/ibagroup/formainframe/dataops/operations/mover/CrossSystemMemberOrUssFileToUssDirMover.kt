@@ -50,12 +50,12 @@ class CrossSystemMemberOrUssFileToUssDirMover(val dataOpsManager: DataOpsManager
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
-            operation.destination.isDirectory &&
-            (operation.sourceAttributes is RemoteMemberAttributes || operation.sourceAttributes is RemoteUssAttributes) &&
-            operation.destinationAttributes is RemoteUssAttributes &&
-            operation.source is MFVirtualFile &&
-            operation.destination is MFVirtualFile &&
-            operation.commonUrls(dataOpsManager).isEmpty()
+      operation.destination.isDirectory &&
+      (operation.sourceAttributes is RemoteMemberAttributes || operation.sourceAttributes is RemoteUssAttributes) &&
+      operation.destinationAttributes is RemoteUssAttributes &&
+      operation.source is MFVirtualFile &&
+      operation.destination is MFVirtualFile &&
+      operation.commonUrls(dataOpsManager).isEmpty()
   }
 
   /**
@@ -68,7 +68,7 @@ class CrossSystemMemberOrUssFileToUssDirMover(val dataOpsManager: DataOpsManager
       ?: throw IllegalArgumentException("Cannot find attributes for file \"${fileName}\"")
   }
 
-  override val log = log<CrossSystemUssFileToUssDirMover>()
+  override val log = log<CrossSystemMemberOrUssFileToUssDirMover>()
 
   /**
    * Proceeds move/copy of member or uss file to uss directory between different systems.
