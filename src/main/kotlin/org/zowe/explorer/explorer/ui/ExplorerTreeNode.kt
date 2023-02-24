@@ -15,6 +15,9 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
@@ -130,6 +133,12 @@ abstract class ExplorerTreeNode<Value : Any>(
               }.also {
                 this.navigating = false
                 this.update()
+              }
+            } else {
+              runCatching {
+                invokeLater {
+                  FileEditorManager.getInstance(project).openFile(file, true)
+                }
               }
             }
           }

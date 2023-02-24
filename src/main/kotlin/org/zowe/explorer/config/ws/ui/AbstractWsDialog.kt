@@ -24,13 +24,11 @@ import org.zowe.explorer.common.ui.ValidatingTableView
 import org.zowe.explorer.common.ui.tableWithToolbar
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.WorkingSetConfig
-import org.zowe.explorer.utils.clone
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.findAnyNullable
-import org.zowe.explorer.utils.validateForBlank
-import org.zowe.explorer.utils.validateWorkingSetName
 import java.awt.Dimension
 import javax.swing.JComponent
 import kotlin.streams.toList
@@ -116,7 +114,11 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
                 }
             },
             { config -> state.connectionUuid = config?.uuid ?: "" }
-          )
+          ).applyToComponent {
+            addActionListener {
+              state.connectionUuid = (selectedItem as ConnectionConfig).uuid
+            }
+          }
           .validationOnApply {
             if (it.selectedItem == null) {
               ValidationInfo("You must provide a connection", it)

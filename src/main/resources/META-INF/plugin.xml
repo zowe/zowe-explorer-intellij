@@ -173,10 +173,10 @@ Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M"
                 implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssDirMoverFactory"/>
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileToPdsMoverFactory"/>
 
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemPdsToUssDirMoverFactory"/>
