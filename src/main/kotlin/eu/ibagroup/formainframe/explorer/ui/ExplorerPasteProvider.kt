@@ -191,7 +191,7 @@ class ExplorerPasteProvider : PasteProvider {
     val isDragAndDrop = dataContext.getData(IS_DRAG_AND_DROP_KEY) ?: false
 
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
-    val explorerView = FileExplorerContentProvider.getInstance().getExplorerView(project)
+    val explorerView = FileExplorerContentProvider.getInstance().getExplorerView(project).castOrNull<FileExplorerView>()
     val copyPasteSupport = explorerView?.copyPasteSupport ?: return
     val selectedNodesData = explorerView.mySelectedNodesData
     val pasteDestinationsNodesData = selectedNodesData
@@ -412,7 +412,8 @@ class ExplorerPasteProvider : PasteProvider {
   internal fun isPastePossibleAndEnabled(dataContext: DataContext): Boolean {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return false
     val destinationFiles = dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
-    val explorerView = FileExplorerContentProvider.getInstance().getExplorerView(project) ?: return false
+    val explorerView =
+      FileExplorerContentProvider.getInstance().getExplorerView(project).castOrNull<FileExplorerView>() ?: return false
     return explorerView.copyPasteSupport.isPastePossibleAndEnabled(destinationFiles)
   }
 
