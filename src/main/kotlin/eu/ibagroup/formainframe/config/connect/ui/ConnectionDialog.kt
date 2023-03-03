@@ -14,6 +14,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.DialogMode
@@ -30,6 +34,7 @@ import eu.ibagroup.formainframe.utils.validateZosmfUrl
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
+import java.awt.Point
 import java.util.*
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -137,6 +142,7 @@ class ConnectionDialog(
   /** Create dialog with the fields */
   override fun createCenterPanel(): JComponent {
     val sameWidthLabelsGroup = "CONNECTION_DIALOG_LABELS_WIDTH_GROUP"
+    lateinit var passField: Cell<JPasswordField>
 
     return panel {
       row {
@@ -183,7 +189,7 @@ class ConnectionDialog(
       row {
         label("Password: ")
           .widthGroup(sameWidthLabelsGroup)
-        cell(JPasswordField())
+        passField = cell(JPasswordField())
           .bindText(state::password)
           .validationOnApply { validateForBlank(it) }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -214,7 +220,7 @@ class ConnectionDialog(
         if (state.zVersion > ZVersion.ZOS_2_4) {
           row {
             button("Change user password") {
-              val changePasswordInitState = ChangePasswordDialogState(initialState.username, initialState.password, "")
+              val changePasswordInitState = ChangePasswordDialogState(state.username, state.password, "")
               val dataOpsManager = service<DataOpsManager>()
               showUntilDone(
                 initialState = changePasswordInitState,
@@ -232,7 +238,7 @@ class ConnectionDialog(
                             changePasswordState.oldPassword,
                             changePasswordState.newPassword
                           ),
-                          connectionConfig = initialState.connectionConfig
+                          connectionConfig = state.connectionConfig
                         ),
                         progressIndicator = it
                       )
@@ -257,6 +263,23 @@ class ConnectionDialog(
                       }
                     okCancelDialog
                   } else {
+                    if (state.username == changePasswordState.username) {
+                      passField.applyToComponent {
+                        this.text = changePasswordState.newPassword
+                        state.password = changePasswordState.newPassword
+                        val balloon = JBPopupFactory.getInstance()
+                          .createHtmlTextBalloonBuilder(
+                            "The password is substituted with the new value",
+                            MessageType.INFO,
+                            null
+                          )
+                          .setHideOnClickOutside(true)
+                          .setHideOnLinkClick(true)
+                          .createBalloon()
+                        val relativePoint = RelativePoint(this, Point(this.width / 2, this.height))
+                        balloon.show(relativePoint, Balloon.Position.below)
+                      }
+                    }
                     true
                   }
                 }

@@ -70,7 +70,7 @@ class ChangePasswordDialog(
             addShowHidePasswordIcon(this)
             addFocusListener(object : FocusAdapter() {
               override fun focusLost(e: FocusEvent?) {
-                state.newPassword = this@applyToComponent.text
+                state.newPassword = String(this@applyToComponent.password)
               }
             })
           }
