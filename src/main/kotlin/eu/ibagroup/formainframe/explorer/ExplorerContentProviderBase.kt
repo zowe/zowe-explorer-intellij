@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.getAncestorNodes
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
@@ -64,6 +65,16 @@ abstract class ExplorerContentProviderBase<Connection: ConnectionConfigBase, E :
         setContent(buildContent(this, project).also { builtContent = it })
       }
 
+      override fun getData(dataId: String): Any? {
+        val view = getExplorerView(project)
+        return when {
+          FILE_EXPLORER_VIEW.`is`(dataId) -> view
+          JES_EXPLORER_VIEW.`is`(dataId) -> view
+          EXPLORER_VIEW.`is`(dataId) -> view
+          else -> null
+        }
+      }
+
       override fun dispose() {
         if (builtContent is Disposable) {
           (builtContent as Disposable).dispose()
@@ -84,6 +95,12 @@ abstract class ExplorerContentProviderBase<Connection: ConnectionConfigBase, E :
   }
 
   abstract fun buildContent(parentDisposable: Disposable, project: Project): JComponent
+
+  /**
+   * Get selected explorer view.
+   * @param project the project that the view is in.
+   */
+  abstract fun getExplorerView(project: Project): ExplorerTreeView<*, *, *>?
 
   protected val lock = ReentrantLock()
 

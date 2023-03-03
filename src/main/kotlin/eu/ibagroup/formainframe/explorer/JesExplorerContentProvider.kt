@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerRootNode
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -36,6 +37,11 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<ConnectionConfig,
   override val actionGroup: ActionGroup =
     ActionManager.getInstance().getAction("eu.ibagroup.formainframe.actions.JESActionBarGroup") as ActionGroup
   override val place: String = "JES Explorer"
+  private val jesExplorerViews = mutableMapOf<Project, JesExplorerView>()
+
+  override fun getExplorerView(project: Project): ExplorerTreeView<*, *, *>?  {
+    return jesExplorerViews[project]
+  }
 
   /**
    * Build the JES explorer content vertical panel
@@ -57,6 +63,8 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<ConnectionConfig,
         sendTopic(CutBufferListener.CUT_BUFFER_CHANGES, explorer.componentManager)
           .onUpdate(previousState, it)
       }
+    }.also {
+      jesExplorerViews[project] = it
     }
   }
 }
