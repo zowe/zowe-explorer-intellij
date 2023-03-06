@@ -679,24 +679,24 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
     }
-    context("validateForGreaterValue") {
+    context("validateForGreaterOrEqualValue") {
       val component = JTextField()
 
-      should("validate that the number is greater than the provided one") {
+      should("validate that the number is greater than or equal to the provided one") {
         component.text = "15"
         val value = 10
-        val actual = validateForGreaterValue(component, value)
+        val actual = validateForGreaterOrEqualValue(component, value)
         val expected = null
 
         assertSoftly {
           actual shouldBe expected
         }
       }
-      should("validate that the number is not greater than the provided one") {
+      should("validate that the number is not greater than or equal to the provided one") {
         component.text = "5"
         val value = 10
-        val actual = validateForGreaterValue(component, value)
-        val expected = ValidationInfo("Enter a number grater than $value", component)
+        val actual = validateForGreaterOrEqualValue(component, value)
+        val expected = ValidationInfo("Enter a number greater than or equal to $value", component)
 
         assertSoftly {
           actual shouldBe expected
