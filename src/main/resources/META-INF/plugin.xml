@@ -17,13 +17,18 @@
 Zowe Explorer for IntelliJ IDEA is an <a href="https://ibagroupit.com/">IBA Group</a>-developed open-source plugin that gives access to mainframes from a modern IDE.
 With the help of the plugin, developers can work with mainframes through a modern interface, using a single toolbar, structured trees, and drag-and-drop operations.
 The solution suits those who need to work with z/OS datasets, USS files, and Jobs from the IntelliJ IDEA.
+<br/>
 Zowe Explorer extends IntelliJ’s tools similar to that of VS Code Zowe Explorer, giving developers a modern way to interact with Mainframe.
-It also:<br/>
+<br/>
+<br/>
+It also:
+<br/>
 <ul>
   <li>makes interactions with Mainframe as simple and intuitive as possible;</li>
   <li>reduces complexity by only requiring a mainframe connection and working set (user-created masks or filters applied to datasets);</li>
   <li>follows the IntelliJ user flow to bring a modern interface to Mainframe.</li>
-</ul></br>
+</ul>
+</br>
 Advantages:<br/>
 <ul>
   <li>Create new datasets and members;</li>
@@ -32,7 +37,7 @@ Advantages:<br/>
   <li>Allocate a new dataset like an existing dataset (via the "Allocate Like" item);</li>
   <li>Rename datasets and members;</li>
   <li>Delete datasets and members.</li>
-</ul><br/>
+</ul>
 <br/>
 About us:<br/>
 With over 30 years of experience in the mainframe domain, IBA Group is committed to maximizing your mainframe investment and enhancing your IT flexibility.
