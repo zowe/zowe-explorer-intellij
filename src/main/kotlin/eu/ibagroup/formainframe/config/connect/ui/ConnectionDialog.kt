@@ -27,7 +27,6 @@ import eu.ibagroup.formainframe.config.connect.*
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.InfoOperation
 import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
-import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.runTask
