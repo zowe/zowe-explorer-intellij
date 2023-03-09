@@ -67,7 +67,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("com.starxg:java-keytar:1.0.0")
-  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0-rc.2")
+  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
