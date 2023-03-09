@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.ChangePasswordResponse
 import org.zowe.kotlinsdk.ServiceAPI
@@ -39,6 +40,8 @@ class ChangePasswordOperationRunner : OperationRunner<ChangePasswordOperation, C
   override val operationClass = ChangePasswordOperation::class.java
 
   override val resultClass = ChangePasswordResponse::class.java
+
+  override val log = log<ChangePasswordOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
