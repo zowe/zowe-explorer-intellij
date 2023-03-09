@@ -21,6 +21,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.HRecall
 
@@ -44,6 +45,8 @@ class RecallOperationRunner : MigrationRunner<RecallOperation> {
   }
 
   override val operationClass = RecallOperation::class.java
+
+  override val log = log<RecallOperationRunner>()
 
   /**
    * Runs a recall operation

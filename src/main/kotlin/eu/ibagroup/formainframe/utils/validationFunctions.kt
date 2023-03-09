@@ -425,10 +425,10 @@ fun validateDataset(
   averageBlockLength: JTextField,
   advancedParameters: JTextField
 ): ValidationInfo? {
-  return validateDatasetNameOnInput(datasetName) ?: validateForGreaterValue(primaryAllocation, 1)
-  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterValue(directoryBlocks, 1).takeIf {
+  return validateDatasetNameOnInput(datasetName) ?: validateForGreaterOrEqualValue(primaryAllocation, 1)
+  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterOrEqualValue(directoryBlocks, 1).takeIf {
     datasetOrganization == DatasetOrganization.PO
-  } ?: validateForGreaterValue(recordLength, 1) ?: validateForPositiveInteger(blockSize)
+  } ?: validateForGreaterOrEqualValue(recordLength, 1) ?: validateForPositiveInteger(blockSize)
   ?: validateForPositiveInteger(averageBlockLength) ?: validateVolser(advancedParameters)
 }
 
@@ -470,17 +470,17 @@ fun validateVolser(component: JTextField): ValidationInfo? {
  * @param component the component with the number to validate
  */
 fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
-  return validateForGreaterValue(component, 0)
+  return validateForGreaterOrEqualValue(component, 0)
 }
 
 /**
- * Validate the component value is greater than the provided value
+ * Validate the component value is greater than or equal to the provided value
  * @param component the component to check the value
  * @param value the value to check that the component's value is greater
  */
-fun validateForGreaterValue(component: JTextField, value: Int): ValidationInfo? {
+fun validateForGreaterOrEqualValue(component: JTextField, value: Int): ValidationInfo? {
   return if ((component.text.toIntOrNull() ?: -1) < value) {
-    ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number grater than $value", component)
+    ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number greater than or equal to $value", component)
   } else {
     null
   }

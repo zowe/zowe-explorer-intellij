@@ -22,6 +22,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.HMigrate
 
@@ -52,6 +53,8 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
   }
 
   override val operationClass = MigrateOperation::class.java
+
+  override val log = log<MigrateOperationRunner>()
 
   /**
    * Runs migrate operation

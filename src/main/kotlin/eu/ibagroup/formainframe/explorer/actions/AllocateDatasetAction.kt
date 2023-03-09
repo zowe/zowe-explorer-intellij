@@ -86,7 +86,7 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
     val config = parentNode.unit.connectionConfig
     if (config != null) {
       showUntilDone(initialState, { initState ->
-        AllocationDialog(project = e.project, initState)
+        AllocationDialog(project = e.project, config, initState)
       }) {
         val state = postProcessState(it)
         var res = false
@@ -116,7 +116,6 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
               nodeToClean?.let { cleanInvalidateOnExpand(nodeToClean, view) }
 
               var nodeCleaned = false
-              p?.cleanCacheIfPossible(cleanBatchedQuery = true)
               runInEdt {
                 if (
                   showOkNoDialog(

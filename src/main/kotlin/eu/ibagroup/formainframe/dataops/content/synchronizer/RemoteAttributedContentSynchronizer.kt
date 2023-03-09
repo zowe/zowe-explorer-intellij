@@ -168,6 +168,19 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   }
 
   /**
+   * Base implementation of [ContentSynchronizer.isFileSyncPossible] method for each content synchronizer.
+   */
+  override fun isFileSyncPossible(syncProvider: SyncProvider): Boolean {
+    val attributes = attributesService.getAttributes(syncProvider.file) ?: return false
+    runCatching {
+      uploadNewContent(attributes, successfulContentStorage(syncProvider), null)
+    }.onFailure {
+      return false
+    }
+    return true
+  }
+
+  /**
    * Synchronizes the current charset with the file charset if needed.
    * @param file virtual file to sync.
    * @param currentCharset current content charset.

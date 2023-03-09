@@ -29,6 +29,7 @@ import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
+import eu.ibagroup.formainframe.utils.log
 
 /**
  * Data operation manager implementation class.
@@ -198,12 +199,25 @@ class DataOpsManagerImpl : DataOpsManager {
     operation: Operation<R>,
     progressIndicator: ProgressIndicator
   ): R {
-    val result = operationRunners[operation::class.java]
-      ?.find { it.canRun(operation) }
-      ?.run(operation, progressIndicator)
-      ?: throw IllegalArgumentException("Unsupported Operation $operation")
+    val opRunner = operationRunners[operation::class.java]?.find { it.canRun(operation) } ?: throw NoSuchElementException("Operation $operation not found").also {
+      log<DataOpsManagerImpl>().error(it)
+    }
+    var startOpMessage = "Operation '${opRunner.operationClass.simpleName}' has been started"
+    if (operation is Query<*, *>) {
+      startOpMessage += "\nRequest params: ${operation.request}"
+    }
+    val result = runCatching {
+      opRunner.log.info(startOpMessage)
+      opRunner
+        .run(operation, progressIndicator)
+    }.onSuccess {
+      opRunner.log.info("Operation '${opRunner.operationClass.simpleName}' has been completed successfully")
+    }.onFailure {
+      opRunner.log.error("Operation '${opRunner.operationClass.simpleName}' has failed", it)
+      throw it
+    }
     @Suppress("UNCHECKED_CAST")
-    return result as R
+    return result.getOrNull() as R
   }
 
   /**

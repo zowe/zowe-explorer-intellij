@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.ChangeMode
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
@@ -55,6 +56,7 @@ class UssChangeMode : OperationRunner<UssChangeModeOperation, Unit> {
 
   override val operationClass = UssChangeModeOperation::class.java
   override val resultClass = Unit::class.java
+  override val log = log<UssChangeMode>()
 
   /**
    * Runs an uss change mode operation

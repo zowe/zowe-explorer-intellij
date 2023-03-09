@@ -23,10 +23,7 @@ import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.*
 
@@ -60,6 +57,8 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
             operation.commonUrls(dataOpsManager).isEmpty()
   }
 
+  override val log = log<CrossSystemUssDirMover>()
+
   /**
    * Proceeds move/copy of uss directory to uss directory between different systems.
    * @param operation requested operation
@@ -73,7 +72,6 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
       ?: return IllegalStateException("No connection for destination directory \'${destAttributes.path}\' found.")
-
 
     if (sourceFile is MFVirtualFile) {
       val sourceAttributes = operation.sourceAttributes.castOrNull<RemoteUssAttributes>()
@@ -150,12 +148,15 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS directory ${operation.source.name} to ${operation.destination.path}")
       proceedDirMove(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.error("Failed to move USS directory")
       throw throwable
     }
+    log.info("USS directory has been moved successfully")
   }
 }

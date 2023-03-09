@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoApi
 import org.zowe.kotlinsdk.TsoData
@@ -42,6 +43,7 @@ class TsoOperationRunnerFactory : OperationRunnerFactory {
 class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
   override val operationClass = TsoOperation::class.java
   override val resultClass = TsoResponse::class.java
+  override val log = log<TsoOperationRunner>()
 
   /**
    * Method determines if an operation can run

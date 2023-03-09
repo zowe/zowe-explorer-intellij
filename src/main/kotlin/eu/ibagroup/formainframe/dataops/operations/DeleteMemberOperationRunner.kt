@@ -17,6 +17,7 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.DataAPI
 
 /**
@@ -36,6 +37,8 @@ class DeleteMemberOperationRunner: OperationRunner<DeleteMemberOperation, Unit> 
   override val operationClass = DeleteMemberOperation::class.java
 
   override val resultClass = Unit::class.java
+
+  override val log = log<DeleteMemberOperationRunner>()
 
   /**
    * Runs a dataset member delete operation.

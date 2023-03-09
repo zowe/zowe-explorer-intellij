@@ -56,6 +56,10 @@ class MoveCopyOperation(
     newName = newName,
     explorer = explorer
   )
+
+  override fun toString(): String {
+    return "MoveCopyOperation(source=$source, sourceAttributes=$sourceAttributes, destination=$destination, destinationAttributes=$destinationAttributes, isMove=$isMove, forceOverwriting=$forceOverwriting, newName=$newName, explorer=$explorer)"
+  }
 }
 
 /**

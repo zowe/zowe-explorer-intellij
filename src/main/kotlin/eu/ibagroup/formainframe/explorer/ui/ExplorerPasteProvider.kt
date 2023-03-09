@@ -80,12 +80,12 @@ class ExplorerPasteProvider : PasteProvider {
       emptyList()
     }
     val destinationNodes = destinationFilesToRefresh
-      .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file) }
+      .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed() }
       .flatten()
       .distinct()
     return if (explorerView.isCut.get()) {
       val sourceNodesToRefresh = sourceFilesToRefresh
-        .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).map { it.parent } }
+        .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed().map { it.parent } }
         .flatten()
         .filterNotNull()
         .distinct()
@@ -145,6 +145,7 @@ class ExplorerPasteProvider : PasteProvider {
               )
             )
         }
+        explorerView.ignoreVFileDeleteEvents.compareAndSet(false, true)
         it.text = "${op.source.name} to ${op.destination.name}"
         runCatching {
           dataOpsManager.performOperation(
@@ -190,7 +191,7 @@ class ExplorerPasteProvider : PasteProvider {
     val isDragAndDrop = dataContext.getData(IS_DRAG_AND_DROP_KEY) ?: false
 
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
-    val explorerView = FileExplorerContentProvider.getInstance().getExplorerView(project)
+    val explorerView = FileExplorerContentProvider.getInstance().getExplorerView(project).castOrNull<FileExplorerView>()
     val copyPasteSupport = explorerView?.copyPasteSupport ?: return
     val selectedNodesData = explorerView.mySelectedNodesData
     val pasteDestinationsNodesData = selectedNodesData
@@ -411,7 +412,8 @@ class ExplorerPasteProvider : PasteProvider {
   internal fun isPastePossibleAndEnabled(dataContext: DataContext): Boolean {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return false
     val destinationFiles = dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
-    val explorerView = FileExplorerContentProvider.getInstance().getExplorerView(project) ?: return false
+    val explorerView =
+      FileExplorerContentProvider.getInstance().getExplorerView(project).castOrNull<FileExplorerView>() ?: return false
     return explorerView.copyPasteSupport.isPastePossibleAndEnabled(destinationFiles)
   }
 

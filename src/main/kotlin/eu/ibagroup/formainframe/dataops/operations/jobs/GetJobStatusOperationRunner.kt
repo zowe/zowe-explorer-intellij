@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.JESApi
 import org.zowe.kotlinsdk.Job
 import retrofit2.Response
@@ -30,6 +31,8 @@ import retrofit2.Response
 class GetJobStatusOperationRunner : OperationRunner<GetJobStatusOperation, Job> {
 
   override val operationClass = GetJobStatusOperation::class.java
+
+  override val log = log<GetJobStatusOperationRunner>()
 
   /**
    * Sends get job status request to mainframe and checks return code of request
@@ -99,13 +102,21 @@ sealed class GetJobStatusOperationParams {
    * Class which contains parameters for get job status operation,
    * consists of jobName and jobID, 1st of 2 options to set particular job
    */
-  class BasicStatusParams(val jobName: String, val jobId: String) : GetJobStatusOperationParams()
+  class BasicStatusParams(val jobName: String, val jobId: String) : GetJobStatusOperationParams() {
+    override fun toString(): String {
+      return "BasicStatusParams(jobName='$jobName', jobId='$jobId')"
+    }
+  }
 
   /**
    * Class which contains parameters for get job status operation,
    * consists of job correlator, 2nd of 2 options to set particular job
    */
-  class CorrelatorStatusParams(val correlator: String) : GetJobStatusOperationParams()
+  class CorrelatorStatusParams(val correlator: String) : GetJobStatusOperationParams() {
+    override fun toString(): String {
+      return "CorrelatorStatusParams(correlator='$correlator')"
+    }
+  }
 }
 
 /**
