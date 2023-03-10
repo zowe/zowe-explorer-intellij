@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## `1.0.0 (2023-mm-dd)`
+## `1.0.0 (2023-03-13)`
 
 * Breaking: Java 17 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.3
 
@@ -58,6 +58,21 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: The button 'Ok' on Warning when delete connections with ws/jws ([ebf8d80e](https://github.com/zowe/zowe-explorer-intellij/commit/ebf8d80e))
 * Bugfix: Operation is not supported for read-only collection while trying to create JES Working set ([80f2af26](https://github.com/zowe/zowe-explorer-intellij/commit/80f2af26))
 * Bugfix: Exception during IDE startup with plugin ([5dbc9f27](https://github.com/zowe/zowe-explorer-intellij/commit/5dbc9f27))
+* Bugfix: Typo in error message in Allocate Dataset dialog ([8504564c](https://github.com/zowe/zowe-explorer-intellij/commit/8504564c))
+* Bugfix: Typo in message for incorrect directory quantity in allocate dataset ([8504564c](https://github.com/zowe/zowe-explorer-intellij/commit/8504564c))
+* Bugfix: Typo in message for incorrect directory quantity in allocate dataset ([8504564c](https://github.com/zowe/zowe-explorer-intellij/commit/8504564c))
+* Bugfix: Unhandled error type for jobs ([47ea9f94](https://github.com/zowe/zowe-explorer-intellij/commit/47ea9f94))
+* Bugfix: Automatic refresh does not work correctly for job filter after purge job via context menu ([47ea9f94](https://github.com/zowe/zowe-explorer-intellij/commit/47ea9f94))
+* Bugfix: Missing '>' for input next several commands in CLI after programm running finished ([ed7cf0bc](https://github.com/zowe/zowe-explorer-intellij/commit/ed7cf0bc))
+* Bugfix: Move member to another PDS refreshes only one PDS ([7c693076](https://github.com/zowe/zowe-explorer-intellij/commit/7c693076))
+* Bugfix: Content encoding change after uss read only file reopened ([0a4d638f](https://github.com/zowe/zowe-explorer-intellij/commit/0a4d638f))
+* Bugfix: Refresh does not work if copy-delete-copy one USS folder to another USS folder ([656fb37e](https://github.com/zowe/zowe-explorer-intellij/commit/656fb37e))
+* Bugfix: IndexOutOfBoundsException if create JWS via context menu ([c40bb42a](https://github.com/zowe/zowe-explorer-intellij/commit/c40bb42a))
+* Bugfix: Exception in Zowe Explorer when there is a configuration from For Mainframe plugin exist ([7cee23f3](https://github.com/zowe/zowe-explorer-intellij/commit/7cee23f3))
+* Bugfix: Policy agreement is gone wild ([d600f58e](https://github.com/zowe/zowe-explorer-intellij/commit/d600f58e))
+* Bugfix: Exception while opening TSO CLI ([540bfa80](https://github.com/zowe/zowe-explorer-intellij/commit/540bfa80))
+* Bugfix: Exception during IDE startup with plugin ([5dbc9f27](https://github.com/zowe/zowe-explorer-intellij/commit/5dbc9f27))
+
 
 ## `0.3.1 (2022-11-30)`
 
