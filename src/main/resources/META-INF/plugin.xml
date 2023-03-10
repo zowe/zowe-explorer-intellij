@@ -233,7 +233,8 @@ Thank you for considering IBA Group for your mainframe needs.
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.TsoOperationRunnerFactory"/>
 
@@ -304,7 +305,7 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <virtualFileSystem id="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            implementationClass="org.zowe.explorer.vfs.MFVirtualFileSystem"
-                           key="zowe_mf"/>
+                           key="zowemf"/>
 
         <fileType name="Unknown Data Set "
                   implementationClass="org.zowe.explorer.filetypes.UnknownDataSetFileType"/>
@@ -337,7 +338,7 @@ Thank you for considering IBA Group for your mainframe needs.
         <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
-                implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
+                                implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
