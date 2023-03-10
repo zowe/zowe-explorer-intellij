@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## `1.0.0 (2023-03-13)`
+## `1.0.0 (2023-mm-dd)`
 
 * Breaking: Java 17 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.3
 
