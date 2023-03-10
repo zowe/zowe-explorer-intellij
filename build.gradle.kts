@@ -67,7 +67,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("com.starxg:java-keytar:1.0.0")
-  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0-rc.2")
+  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
@@ -149,6 +149,21 @@ tasks {
         <li>File upload icon is cycling when double-clicking again on an open file</li>
         <li>Small typo in annotation</li>
         <li>The button 'Ok' on Warning when delete connections with ws/jws</li>
+        <li>Typo in error message in Allocate Dataset dialog</li>
+        <li>Typo in release note for 1.0.0</li>
+        <li>Typo in message for incorrect directory quantity in allocate dataset</li>
+        <li>Unhandled error type for jobs</li>
+        <li>Missing '>' for input next several commands in CLI after programm running finished</li>
+        <li>Move member to another PDS refreshes only one PDS</li>
+        <li>Content encoding change after uss read only file reopened</li>
+        <li>Refresh does not work if copy-delete-copy one USS folder to another USS folder</li>
+        <li>IndexOutOfBoundsException if create JWS via context menu</li>
+        <li>Automatic refresh does not work correctly for job filter after purge job via context menu</li>
+        <li>Exception in Zowe Explorer when there is a configuration from For Mainframe plugin exist</li>
+        <li>Policy agreement is gone wild</li>
+        <li>Exception while opening TSO CLI</li>
+        <li>Exception during IDE startup with plugin</li>
+        <li>Operation is not supported for read-only collection while trying to create JES Working set</li>
       </ul>"""
     )
   }
