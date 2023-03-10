@@ -194,10 +194,10 @@ Thank you for considering IBA Group for your mainframe needs.
                 implementation="org.zowe.explorer.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssFileToUssDirMoverFactory"/>
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileToPdsMoverFactory"/>
 
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssDirMoverFactory"/>

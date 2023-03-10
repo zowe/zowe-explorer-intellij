@@ -13,8 +13,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.apiWithBytesConverter
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.addNewLine
 import org.zowe.explorer.dataops.exceptions.CallException
@@ -29,24 +29,24 @@ import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.XIBMDataType
 
 /**
- * Factory for registering CrossSystemUssFileToPdsMover in Intellij IoC container.
- * @see CrossSystemUssFileToPdsMover
+ * Factory for registering CrossSystemMemberOrUssFileToPdsMover in Intellij IoC container.
+ * @see CrossSystemMemberOrUssFileToPdsMover
  * @author Valiantsin Krus
  */
-class CrossSystemUssFileToPdsMoverFactory : OperationRunnerFactory {
+class CrossSystemMemberOrUssFileToPdsMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-    return CrossSystemUssFileToPdsMover(dataOpsManager)
+    return CrossSystemMemberOrUssFileToPdsMover(dataOpsManager)
   }
 }
 
 /**
- * Implements copying of uss file to partitioned data set between different systems.
+ * Implements copying of member or uss file to partitioned data set between different systems.
  * @author Valiantsin Krus
  */
-class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
+class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
   /**
-   * Checks that source is uss file, dest is partitioned data set, and they are located inside different systems.
+   * Checks that source is member or uss file, dest is partitioned data set, and they are located inside different systems.
    * @see OperationRunner.canRun
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
@@ -58,7 +58,7 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
   }
 
   /**
-   * Proceeds move/copy of uss file to partitioned data set between different systems.
+   * Proceeds move/copy of member or uss file to partitioned data set between different systems.
    * @param operation requested operation.
    * @param progressIndicator indicator that will show progress of copying/moving in UI.
    */
@@ -83,21 +83,20 @@ class CrossSystemUssFileToPdsMover(val dataOpsManager: DataOpsManager) : Abstrac
       memberName = "empty"
     }
 
-    val xIBMDataType = if (sourceFile.fileType.isBinary ||
-      (operation.sourceAttributes.castOrNull<RemoteUssAttributes>()?.contentMode?.type == XIBMDataType.Type.BINARY)
-    ) XIBMDataType(XIBMDataType.Type.BINARY)
+    val xIBMDataType = if (sourceFile.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY)
     else XIBMDataType(XIBMDataType.Type.TEXT)
 
     val sourceContent = sourceFile.contentsToByteArray()
     val contentToUpload =
-      if (sourceFile.fileType.isBinary) sourceContent else sourceContent.filter { it != '\r'.code.toByte() }
-        .toByteArray()
+      if (sourceFile.fileType.isBinary) sourceContent
+      else sourceContent.toString(sourceFile.charset).replace("\r\n", "\n")
+        .toByteArray(DEFAULT_TEXT_CHARSET).addNewLine()
 
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToDatasetMember(
       authorizationToken = destConnectionConfig.authToken,
       datasetName = destAttributes.name,
       memberName = memberName,
-      content = contentToUpload.addNewLine(),
+      content = contentToUpload,
       xIBMDataType = xIBMDataType
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)

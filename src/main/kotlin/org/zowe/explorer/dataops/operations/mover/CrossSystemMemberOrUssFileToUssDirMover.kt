@@ -14,6 +14,7 @@ import org.zowe.explorer.api.apiWithBytesConverter
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
+import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.exceptions.CallException
@@ -23,39 +24,41 @@ import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.applyIfNotNull
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.setUssFileTag
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.XIBMDataType
 
 /**
- * Factory for registering CrossSystemUssFileToUssDirMover in Intellij IoC container.
- * @see CrossSystemUssFileToUssDirMover
+ * Factory for registering CrossSystemMemberOrUssFileToUssDirMover in Intellij IoC container.
+ * @see CrossSystemMemberOrUssFileToUssDirMover
  * @author Valiantsin Krus
  */
-class CrossSystemUssFileToUssDirMoverFactory : OperationRunnerFactory {
+class CrossSystemMemberOrUssFileToUssDirMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-    return CrossSystemUssFileToUssDirMover(dataOpsManager)
+    return CrossSystemMemberOrUssFileToUssDirMover(dataOpsManager)
   }
 }
 
 /**
- * Implements copying of uss file to uss directory between different systems.
+ * Implements copying of member or uss file to uss directory between different systems.
  * @author Valiantsin Krus
  */
-class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
+class CrossSystemMemberOrUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
   /**
-   * Checks that source is uss file, dest is uss directory, and they are located inside different systems.
+   * Checks that source is member or uss file, dest is uss directory, and they are located inside different systems.
    * @see OperationRunner.canRun
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
-      operation.destination.isDirectory &&
-      operation.destinationAttributes is RemoteUssAttributes &&
-      operation.source is MFVirtualFile &&
-      operation.destination is MFVirtualFile &&
-      operation.commonUrls(dataOpsManager).isEmpty()
+            operation.destination.isDirectory &&
+            (operation.sourceAttributes is RemoteMemberAttributes || operation.sourceAttributes is RemoteUssAttributes) &&
+            operation.destinationAttributes is RemoteUssAttributes &&
+            operation.source is MFVirtualFile &&
+            operation.destination is MFVirtualFile &&
+            operation.commonUrls(dataOpsManager).isEmpty()
   }
 
   /**
@@ -69,17 +72,17 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
   }
 
   /**
-   * Proceeds move/copy of uss file to uss directory between different systems.
+   * Proceeds move/copy of member or uss file to uss directory between different systems.
    * @param op requested operation.
    * @param progressIndicator indicator that will show progress of copying/moving in UI.
    */
   private fun proceedCrossSystemMoveCopy(op: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
-    val sourceAttributes = op.sourceAttributes.toUssAttributes(op.source.name)
+    val sourceAttributes = op.sourceAttributes
     val destAttributes = op.destinationAttributes.toUssAttributes(op.destination.name)
     val destConnectionConfig = destAttributes.requesters.firstOrNull()?.connectionConfig
       ?: return IllegalArgumentException("Cannot find connection configuration for file \"${op.destination.name}\"")
 
-    if (sourceAttributes.isSymlink) {
+    if (sourceAttributes is RemoteUssAttributes && sourceAttributes.isSymlink) {
       return IllegalArgumentException(
         "Impossible to move symlink. ${op.source.name} is symlink to ${sourceAttributes.symlinkTarget}." +
           " Please, move ${sourceAttributes.symlinkTarget} directly."
@@ -91,8 +94,7 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
     val syncProvider = DocumentedSyncProvider(op.source)
     contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
 
-    val contentMode =
-      if (op.source.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY) else sourceAttributes.contentMode
+    val contentMode = XIBMDataType(XIBMDataType.Type.BINARY)
     val pathToFile = destAttributes.path + "/" + op.source.name
     progressIndicator.text = "Uploading file '$pathToFile'"
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(
@@ -107,6 +109,7 @@ class CrossSystemUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : Abst
     if (!response.isSuccessful) {
       throw CallException(response, "Cannot upload data to ${op.destination.path}${op.source.name}")
     } else {
+      setUssFileTag(op.source.charset.name(), pathToFile, destConnectionConfig)
       if (op.isMove) {
         dataOpsManager.performOperation(DeleteOperation(op.source, dataOpsManager))
       }
