@@ -14,28 +14,52 @@
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
-Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
-IBA Group team of <b>mainframe enthusiasts</b> are actively developing new features for the open-source "Zowe Explorer" plugin.
-We keep improving existing features that help you to:<br/>
+Zowe Explorer for IntelliJ IDEA is an <a href="https://ibagroupit.com/">IBA Group</a>-developed open-source plugin that gives access to mainframes from a modern IDE.
+With the help of the plugin, developers can work with mainframes through a modern interface, using a single toolbar, structured trees, and drag-and-drop operations.
+The solution suits those who need to work with z/OS datasets, USS files, and Jobs from the IntelliJ IDEA.
+<br/>
+Zowe Explorer extends IntelliJ’s tools similar to that of VS Code Zowe Explorer, giving developers a modern way to interact with Mainframe.
+<br/>
+<br/>
+It also:
+<br/>
 <ul>
-  <li>Start working with z/OS easily with no complex configurations.</li>
-  <li>Organize datasets on z/OS, files on USS into Working Sets.</li>
-  <li>Allocate datasets, create members, files and directories with different permissions.</li>
-  <li>Perform renaming, copying and moving data in a modern way.</li>
-  <li>Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.</li>
-  <li>Create multiple connections to different z/OS systems.</li>
-  <li>Perform all available operations with Jobs.</li>
-  <li>Highlight all IntelliJ supported languages automatically and recognize them once opened from the mainframe.</li>
-</ul><br/>
+  <li>makes interactions with Mainframe as simple and intuitive as possible;</li>
+  <li>reduces complexity by only requiring a mainframe connection and working set (user-created masks or filters applied to datasets);</li>
+  <li>follows the IntelliJ user flow to bring a modern interface to Mainframe.</li>
+</ul>
+</br>
+Advantages:<br/>
+<ul>
+  <li>Create new datasets and members;</li>
+  <li>Copy and paste members between datasets;</li>
+  <li>View the properties of any dataset or member;</li>
+  <li>Allocate a new dataset like an existing dataset (via the "Allocate Like" item);</li>
+  <li>Rename datasets and members;</li>
+  <li>Delete datasets and members.</li>
+</ul>
+<br/>
 To start using the plugin:<br/>
 <ul>
   <li>Install the plugin in your Intellij based IDE.</li>
   <li>Contact your RACF administrator so that your user is in the <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf">IZUUSER  RACF group</a></li>
   <li>You are ready to go! Start working with z/OS from the IDE.</li>
-</ul></br>
-<b>Note: z/OS 2.1 or higher is required with <a href="https://docs.zowe.org/stable/user-guide/systemrequirements-zosmf.html">configured z/OSMF</a>. Plugin is in active development state.<br/>
-Feel free to recommend or report everything on our <a href="https://github.com/zowe/zowe-explorer-intellij/issues">Github</a></b><br/>
-Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M">Slack</a><br/>
+</ul>
+</br>
+<b>Note: z/OS 2.1 or higher is required with <a href="https://docs.zowe.org/stable/user-guide/systemrequirements-zosmf.html">configured z/OSMF</a>.
+<br/>
+Feel free to recommend or report everything on our <a href="https://github.com/zowe/zowe-explorer-intellij/issues">Github</a></b>
+<br/>
+Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M">Slack</a>
+<br/>
+About us:<br/>
+With over 30 years of experience in the mainframe domain, IBA Group is committed to maximizing your mainframe investment and enhancing your IT flexibility.
+One of the services we offer is Mainframe DevOps. Our approach is highly flexible, as we work with customers to choose the essential toolset for establishing a pipeline based on their preferences, existing tools, and the latest open-source opportunities (such as Zowe and plugins).
+<br/>
+We are also familiar with <a href="https://mainframe.ibagroupit.com/">Mainframe DevOps Solutions</a> of 2023 that can help modernize your mainframe and keep you competitive.
+We value your feedback and welcome any suggestions, proposals, or even complaints. Please feel free to contact us or schedule a call with our Mainframe DevOps expert.
+<br/>
+Thank you for considering IBA Group for your mainframe needs.
 ]]></description>
 
     <extensionPoints>
