@@ -13,10 +13,7 @@ package eu.ibagroup.formainframe.config
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionConfigurable
 import eu.ibagroup.formainframe.config.settings.ui.SettingsConfigurable
-import eu.ibagroup.formainframe.config.ws.ui.files.FilesWSConfigurable
-import eu.ibagroup.formainframe.config.ws.ui.jes.JesWsConfigurable
 
 /**
  * Main UI class to build configurables for project and set them to appropriate place
@@ -40,7 +37,8 @@ class MainframeConfigurable : TabbedConfigurable() {
     return configService
       .getRegisteredConfigDeclarations()
       .sortedBy { it.configPriority }
-      .mapNotNull { it.getConfigurable() }
+      .mapNotNull { it.getConfigurable() as Configurable? }
+      .distinct()
       .toMutableList()
       .apply { add(SettingsConfigurable()) }
   }

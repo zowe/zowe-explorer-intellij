@@ -8,12 +8,12 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.connect.ui
+package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogStateBase
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
@@ -23,18 +23,18 @@ import org.zowe.kotlinsdk.annotations.ZVersion
  * Data class which represents state for connection dialog
  */
 data class ConnectionDialogState(
-  var connectionUuid: String = "",
-  var connectionName: String = "",
-  var connectionUrl: String = "",
+  override var connectionUuid: String = "",
+  override var connectionName: String = "",
+  override var connectionUrl: String = "",
   /*var apiMeditationLayer: String = "",*/
-  var username: String = "",
-  var password: String = "",
+  override var username: String = "",
+  override var password: String = "",
   var isAllowSsl: Boolean = false,
   var zVersion: ZVersion = ZVersion.ZOS_2_1,
   override var mode: DialogMode = DialogMode.CREATE
-) : DialogState, Cloneable {
+) : ConnectionDialogStateBase<ConnectionConfig>() {
 
-  var connectionConfig
+  override var connectionConfig
     get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion)
     set(value) {
       connectionUuid = value.uuid
@@ -45,7 +45,7 @@ data class ConnectionDialogState(
     }
 
 
-  var credentials
+  override var credentials
     get() = Credentials(connectionUuid, username, password)
     set(value) {
       username = value.username

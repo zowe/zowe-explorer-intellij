@@ -15,14 +15,15 @@ import com.intellij.util.ui.ColumnInfo
 /**
  * Class which represents column of username in GUI
  */
-class ConnectionUsernameColumn : ColumnInfo<ConnectionDialogState, String>("Username") {
+class ConnectionUsernameColumn<ConnectionState : ConnectionDialogStateBase<*>>
+  : ColumnInfo<ConnectionState, String>("Username") {
 
   /**
    * Returns name of particular user
    * @param item all info about particular connection to mainframe
    * @return name of particular user
    */
-  override fun valueOf(item: ConnectionDialogState): String {
+  override fun valueOf(item: ConnectionState): String {
     return item.username
   }
 
@@ -31,7 +32,7 @@ class ConnectionUsernameColumn : ColumnInfo<ConnectionDialogState, String>("User
    * @param item all info about particular connection to mainframe
    * @param value new name of user
    */
-  override fun setValue(item: ConnectionDialogState, value: String) {
+  override fun setValue(item: ConnectionState, value: String) {
     item.username = value
   }
 

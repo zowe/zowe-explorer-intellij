@@ -11,11 +11,11 @@
 package eu.ibagroup.formainframe.config
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.ConnectionConfigDeclaration
+import eu.ibagroup.formainframe.config.connect.ZOSMFConnectionConfigDeclaration
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclaration
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionsTableModel
+import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialogState
+import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionsTableModel
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -36,7 +36,7 @@ class ConfigTestSpec : ShouldSpec({
 
       fun mockConfigService() {
         val mockConfigServiceInstance = mockk<ConfigService>()
-        every { mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java) } returns ConnectionConfigDeclaration(crudable)
+        every { mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java) } returns ZOSMFConnectionConfigDeclaration(crudable)
         every { mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java) } returns CredentialsConfigDeclaration(crudable)
 
         mockkObject(ConfigService)
