@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -79,7 +78,9 @@ class GetFilePropertiesAction : AnAction() {
               }
               val newAttributes = dialog.state.ussAttributes
               if (!virtualFile.isDirectory && oldCharset != newAttributes.charset) {
-                val contentEncodingMode = if (!virtualFile.isWritable) {
+                val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(virtualFile)
+                val syncProvider = DocumentedSyncProvider(virtualFile)
+                val contentEncodingMode = if (contentSynchronizer?.isFileSyncPossible(syncProvider) == false) {
                   showReloadCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
                 } else {
                   showReloadConvertCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
@@ -87,11 +88,8 @@ class GetFilePropertiesAction : AnAction() {
                 if (contentEncodingMode == null) {
                   attributes.charset = oldCharset
                 } else {
-                  val syncProvider = DocumentedSyncProvider(virtualFile)
                   updateFileTag(newAttributes)
                   if (contentEncodingMode == ContentEncodingMode.RELOAD) {
-                    val contentSynchronizer =
-                      service<DataOpsManager>().getContentSynchronizer(virtualFile)
                     runWriteActionInEdtAndWait {
                       syncProvider.saveDocument()
                       contentSynchronizer?.synchronizeWithRemote(syncProvider = syncProvider, forceReload = true)

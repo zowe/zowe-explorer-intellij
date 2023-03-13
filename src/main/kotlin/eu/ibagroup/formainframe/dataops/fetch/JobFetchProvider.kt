@@ -11,7 +11,6 @@
 package eu.ibagroup.formainframe.dataops.fetch
 
 import com.intellij.openapi.progress.ProgressIndicator
-import io.ktor.util.collections.*
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.config.ws.JobsFilter
@@ -27,6 +26,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.r2z.ExecData
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.annotations.ZVersion
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Factory to register JobFetchProvider in Intellij IoC container.
@@ -96,7 +96,7 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
         if(firstJobInfo.execStarted == null && firstJobInfo.execEnded == null && firstJobInfo.execSubmitted == null) {
           log.info("Try to get jobs timestamps and return code through log fetcher due to z/OS version < ${ZVersion.ZOS_2_4}")
           val updatedJobAttributes = mutableListOf<RemoteJobAttributes>()
-          val jobFetchHelperList = ConcurrentList<JobFetchHelper>()
+          val jobFetchHelperList = CopyOnWriteArrayList<JobFetchHelper>()
           for (attr in attributes) {
             val jobFetchHelper = JobFetchHelper(query, attr)
             jobFetchHelperList.add(jobFetchHelper)

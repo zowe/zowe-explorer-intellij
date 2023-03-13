@@ -115,9 +115,6 @@ Example of how to see the output:<br/>
         <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
-        <listener class="eu.ibagroup.formainframe.editor.ProjectOpenListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-
         <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
 
@@ -288,6 +285,8 @@ Example of how to see the output:<br/>
         <customPasteProvider implementation="eu.ibagroup.formainframe.explorer.ui.ExplorerPasteProvider"/>
 
         <!--        <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>-->
+
+        <postStartupActivity implementation="eu.ibagroup.formainframe.editor.ProjectStartupActivity"/>
 
         <applicationConfigurable id="configurable.mainframe.explorer"
                                  displayName="For Mainframe"

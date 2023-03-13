@@ -40,7 +40,6 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -501,7 +500,7 @@ class FileExplorerView(
               }
             nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
-              .forEach { it.cleanCache(recursively = false, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
+              .forEach { it.cleanCache(recursively = it is UssDirNode, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
           }
         }
       }

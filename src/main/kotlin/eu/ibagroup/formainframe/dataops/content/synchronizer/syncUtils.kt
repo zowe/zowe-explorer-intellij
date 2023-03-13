@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingManager
-import eu.ibagroup.formainframe.dataops.attributes.ContentEncodingMode
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import java.nio.charset.Charset
 
@@ -29,6 +28,11 @@ val DEFAULT_BINARY_CHARSET: Charset = Charset.forName("IBM-1047")
 const val LF_LINE_SEPARATOR: String = "\n"
 
 const val CR_LINE_SEPARATOR: String = "\r"
+
+enum class ContentEncodingMode(val value: String) {
+  CONVERT("CONVERT"),
+  RELOAD("RELOAD")
+}
 
 /** Remove string's last blank line */
 fun String.removeLastNewLine(): String {

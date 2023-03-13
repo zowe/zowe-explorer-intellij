@@ -30,7 +30,6 @@ properties([gitLabConnection('code.iby.scdc.io-connection')])
 
 
 //     return w.toString()
-
 // }
 
 pipeline{
@@ -85,10 +84,11 @@ pipeline{
         }
         stage('Build Plugin IDEA'){
             steps{
-                //sh 'sudo chmod +x /etc/profile.d/gradle.sh'
-                //sh 'sudo source /etc/profile.d/gradle.sh'
+                // sh 'sudo chmod +x /etc/profile.d/gradle.sh'
+                // sh 'sudo -s source /etc/profile.d/gradle.sh'
                 withGradle {
-                    //sh 'gradle -v'
+                    // To change Gradle version - Jenkins/Manage Jenkins/Global Tool Configuration
+                    // sh 'gradle -v'
                     sh 'gradle wrapper'
                     sh './gradlew buildPlugin'
                 }
