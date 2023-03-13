@@ -11,10 +11,10 @@
 package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.ConnectionConfigDeclaration
+import eu.ibagroup.formainframe.config.connect.ZOSMFConnectionConfigDeclaration
 
 /**
  * Factory to create instance of specific implementation of [ConfigDeclaration].
@@ -39,7 +39,7 @@ abstract class ConfigDeclaration<T: Any>(val crudable: Crudable) {
 
   /**
    *  Identifies if the config is linked with credentials
-   *  (for example see [ConnectionConfigDeclaration], [ConnectionConfig])
+   *  (for example see [ZOSMFConnectionConfigDeclaration], [ConnectionConfig])
    */
   open val useCredentials: Boolean = false
 
@@ -79,5 +79,5 @@ abstract class ConfigDeclaration<T: Any>(val crudable: Crudable) {
   abstract fun getDecider(): ConfigDecider<T>
 
   /** Builds configurable that will be displayed in settings. */
-  open fun getConfigurable(): Configurable? = null
+  open fun getConfigurable(): BoundSearchableConfigurable? = null
 }

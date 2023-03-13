@@ -16,20 +16,20 @@ import com.intellij.util.ui.ColumnInfo
  * Class represents a connection url column in connection table model.
  * It extends ColumnInfo abstract class and overloads getter and setter methods as values for this column.
  */
-@Suppress("DialogTitleCapitalization")
-class ConnectionUrlColumn : ColumnInfo<ConnectionDialogState, String>("z/OSMF URL") {
+class ConnectionUrlColumn<ConnectionState: ConnectionDialogStateBase<*>>(columnName: String)
+  : ColumnInfo<ConnectionState, String>(columnName) {
 
   /**
    * Overloaded getter method of ColumnInfo abstract class.
    */
-  override fun valueOf(item: ConnectionDialogState): String {
+  override fun valueOf(item: ConnectionState): String {
     return item.connectionUrl
   }
 
   /**
    * Overloaded setter method of ColumnInfo abstract class.
    */
-  override fun setValue(item: ConnectionDialogState, value: String) {
+  override fun setValue(item: ConnectionState, value: String) {
     item.connectionUrl = value
   }
 

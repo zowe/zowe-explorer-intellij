@@ -7,68 +7,50 @@
  *
  * Copyright IBA Group 2020
  */
-
 package eu.ibagroup.formainframe.config.connect
 
-import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import eu.ibagroup.formainframe.config.ConfigDeclaration
-import eu.ibagroup.formainframe.config.ConfigDeclarationFactory
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionConfigurable
+import eu.ibagroup.formainframe.config.connect.ui.CollectedConfigurable
 import eu.ibagroup.formainframe.utils.crudable.Crudable
-import eu.ibagroup.formainframe.utils.crudable.getByColumnLambda
 
 /**
- * Factory to create instance of [ConnectionConfigDeclaration].
+ * Abstract class to declare connection configs.
+ * @param Connection The system (such as zosmf, cics etc.) connection class to work with (see [ConnectionConfigBase]).
+ * @param crudable [Crudable] instance to get data from.
  * @author Valiantsin Krus
  */
-class ConnectionConfigDeclarationFactory : ConfigDeclarationFactory {
-  override fun buildConfigDeclaration(crudable: Crudable): ConfigDeclaration<*> {
-    return ConnectionConfigDeclaration(crudable)
-  }
-}
+abstract class ConnectionConfigDeclaration<Connection: ConnectionConfigBase>(crudable: Crudable)
+  : ConfigDeclaration<Connection>(crudable) {
 
-/**
- * Declares connection config that will represent connection to zosmf.
- * @param crudable instance of [Crudable] through which to work with config data.
- * @author Valiantsin Krus
- */
-class ConnectionConfigDeclaration(crudable: Crudable) :
-  ConfigDeclaration<ConnectionConfig>(crudable) {
+  companion object {
+    /** list of available connection configurables. */
+    private val connectionConfigurables = mutableListOf<BoundSearchableConfigurable>()
 
-  override val clazz = ConnectionConfig::class.java
-  override val useCredentials = true
-  override val configPriority = 1.0
-
-  override fun getDecider(): ConfigDecider<ConnectionConfig> {
-    return object : ConfigDecider<ConnectionConfig>() {
-      /**
-       * Enables to add connection config only if no existing connection with such name found.
-       * @param row [ConnectionConfig] instance to add.
-       * @return true if no existing connection with such name found and false otherwise.
-       */
-      override fun canAdd(row: ConnectionConfig): Boolean {
-        return crudable.getByColumnLambda(row) { it.name }.count() == 0L
-      }
-
-      /**
-       * Enables to update connection only if connection with such name exists or if some
-       * properties of current connection config and updating connection config are equals.
-       * @param currentRow current connection config instance that should be updated.
-       * @param updatingRow connection config to replace current connection config.
-       * @return true if connection with such name exists or if some properties of
-       *         existing and updating connections are equal and false otherwise.
-       */
-      override fun canUpdate(currentRow: ConnectionConfig, updatingRow: ConnectionConfig): Boolean {
-        return canAdd(updatingRow)
-            || updatingRow.name == currentRow.name
-            || updatingRow.zVersion == currentRow.zVersion
-            || updatingRow.url == currentRow.url
-            || updatingRow.isAllowSelfSigned == currentRow.isAllowSelfSigned
-      }
-
+    /** configurable joined from list of connection configurables. */
+    private val collectedConfigurable by lazy {
+      CollectedConfigurable(connectionConfigurables)
     }
   }
 
-  override fun getConfigurable(): Configurable = ConnectionConfigurable()
+  init {
+    this.getConnectionConfigurable()?.let {
+      connectionConfigurables.add(it)
+    }
+  }
+
+  /**
+   * Provides configurable collected from all connection configurables.
+   * @return desired configurable.
+   */
+  final override fun getConfigurable(): BoundSearchableConfigurable {
+    return collectedConfigurable
+  }
+
+  /**
+   * Creates single configurable that will be joined in [ConnectionConfigDeclaration.getConfigurable].
+   * @return desired configurable instance.
+   */
+  abstract fun getConnectionConfigurable(): BoundSearchableConfigurable?
 
 }

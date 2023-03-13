@@ -17,9 +17,9 @@ import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.content.ContentManagerUtil
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialog
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
-import eu.ibagroup.formainframe.config.connect.ui.initEmptyUuids
+import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialog
+import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialogState
+import eu.ibagroup.formainframe.config.connect.ui.zosmf.initEmptyUuids
 import eu.ibagroup.formainframe.explorer.hints.Hint
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull

@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.connect.ui
+package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
@@ -24,6 +24,8 @@ import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.connect.*
+import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialog
+import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialogState
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.InfoOperation
 import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
