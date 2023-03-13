@@ -10,7 +10,14 @@
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+buildscript {
+  dependencies {
+    classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.1.1")
+  }
+}
+
 plugins {
+  id("org.sonarqube") version "3.3"
   id("org.jetbrains.intellij") version "1.12.0"
   kotlin("jvm") version "1.7.10"
   java
@@ -19,6 +26,7 @@ plugins {
 
 apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
+apply(from = "gradle/sonar.gradle")
 
 group = "eu.ibagroup"
 version = "1.0.0"
@@ -26,8 +34,13 @@ val remoteRobotVersion = "0.11.16"
 
 repositories {
   mavenCentral()
-  flatDir {
-    dirs("libs")
+  maven {
+    url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    metadataSources {
+      mavenPom()
+      artifact()
+      ignoreGradleMetadataRedirection()
+    }
   }
 }
 
@@ -45,7 +58,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.3.0-rc.10")
+  implementation("eu.ibagroup:r2z:1.3.0")
   implementation("com.segment.analytics.java:analytics:+")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")
