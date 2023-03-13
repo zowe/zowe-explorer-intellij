@@ -10,7 +10,14 @@
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+buildscript {
+  dependencies {
+    classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.1.1")
+  }
+}
+
 plugins {
+  id("org.sonarqube") version "3.3"
   id("org.jetbrains.intellij") version "1.9.0"
   kotlin("jvm") version "1.6.21"
   java
@@ -19,6 +26,7 @@ plugins {
 
 apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
+apply(from = "gradle/sonar.gradle")
 
 group = "eu.ibagroup"
 version = "1.0.0"
@@ -26,6 +34,14 @@ val remoteRobotVersion = "0.11.16"
 
 repositories {
   mavenCentral()
+  maven {
+    url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    metadataSources {
+      mavenPom()
+      artifact()
+      ignoreGradleMetadataRedirection()
+    }
+  }
 }
 
 java {
