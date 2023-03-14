@@ -18,11 +18,13 @@ buildscript {
 
 plugins {
   id("org.sonarqube") version "3.3"
-  id("org.jetbrains.intellij") version "1.12.0"
+  id("org.jetbrains.intellij") version "1.13.0"
   kotlin("jvm") version "1.7.10"
   java
   jacoco
 }
+
+val sonarLinksCi: String by project
 
 apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
@@ -34,6 +36,9 @@ val remoteRobotVersion = "0.11.16"
 
 repositories {
   mavenCentral()
+  flatDir {
+    dirs("libs")
+  }
   maven {
     url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     metadataSources {
@@ -183,6 +188,11 @@ tasks {
         }
       })
     )
+    reports {
+      xml.required.set(true)
+      html.required.set(false)
+      xml.outputLocation.set(File("${buildDir}/reports/jacoco.xml"))
+    }
   }
 }
 
