@@ -71,9 +71,9 @@ class SeqDatasetContentSynchronizer(
           log.info("Content has been fetched successfully")
 
           content = if (attributes.contentMode.type == XIBMDataType.Type.BINARY) {
-            response.body()?.bytes()?.removeLastNewLine()
-          } else {
             response.body()?.bytes()
+          } else {
+            response.body()?.string()?.removeLastNewLine()?.toByteArray()
           }
 
         } else {
