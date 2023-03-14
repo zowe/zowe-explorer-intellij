@@ -110,6 +110,7 @@ tasks {
         <li>Migrate to Kotlin DSL v2</li>
         <li>All the code is documented now</li>
       </ul>
+      <br>
       <b>Minor changes:</b>
       <ul>
         <li>Manual sync was proceeding in main thread</li>
