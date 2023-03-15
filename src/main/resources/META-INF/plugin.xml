@@ -111,6 +111,9 @@ Example of how to see the output:<br/>
 
         <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
                   topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+
+        <listener class="eu.ibagroup.formainframe.editor.FileSelectionChangeListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="eu.ibagroup.formainframe">
@@ -277,8 +280,6 @@ Example of how to see the output:<br/>
 
         <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
 
-        <postStartupActivity implementation="eu.ibagroup.formainframe.editor.ProjectStartupActivity"/>
-
         <applicationConfigurable id="configurable.mainframe.explorer"
                                  displayName="For Mainframe"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
@@ -349,12 +350,13 @@ Example of how to see the output:<br/>
 
         <typedHandler implementation="eu.ibagroup.formainframe.explorer.actions.ChangeContentAction"/>
 
-        <statusBarWidgetFactory id="MFLineSeparatorWidget"
-                implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"/>
+        <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
+                                implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
+                                order="after positionWidget"/>
 
-        <statusBarWidgetFactory id="MFEncodingWidget"
+        <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
-                                order="after MFLineSeparatorWidget"/>
+                                order="after eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory, before powerStatus"/>
     </extensions>
 
     <actions>

@@ -10,19 +10,17 @@
 
 package eu.ibagroup.formainframe.editor.status
 
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.LineSeparatorPanel
-import com.intellij.util.LineSeparator
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+
+const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
 
 /**
  * Line separator panel in status bar with correctly display for MF files.
@@ -31,17 +29,13 @@ class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
 
   /**
    * Returns the state of the widget for correct display in the status bar.
-   * Disabled for all MF files except uss files.
+   * Displayed only for MF files.
    * @param file virtual file opened in editor.
    * @return widget state [com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup.WidgetState].
    */
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    val attributes = file?.let { service<DataOpsManager>().tryToGetAttributes(it) }
-    if (file is MFVirtualFile && attributes !is RemoteUssAttributes) {
-      val lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, project)
-      val toolTipText = IdeBundle.message("tooltip.line.separator", StringUtil.escapeLineBreak(lineSeparator))
-      val panelText = LineSeparator.fromString(lineSeparator).toString()
-      return WidgetState(toolTipText, panelText, false)
+    if (file !is MFVirtualFile) {
+      return WidgetState.HIDDEN
     }
     return super.getWidgetState(file)
   }
@@ -50,7 +44,16 @@ class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
     return MfLineSeparatorPanel(project)
   }
 
+  /** Widget is not enabled for all MF files except USS files. */
+  override fun isEnabledForFile(file: VirtualFile?): Boolean {
+    val attributes = file?.let { service<DataOpsManager>().tryToGetAttributes(it) }
+    if (attributes !is RemoteUssAttributes) {
+      return false
+    }
+    return super.isEnabledForFile(file)
+  }
+
   override fun ID(): String {
-    return  "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
+    return  MF_LINE_SEPARATOR_PANEL_WIDGET
   }
 }
