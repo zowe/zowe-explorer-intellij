@@ -10,14 +10,14 @@
 
 package eu.ibagroup.formainframe.editor.status
 
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EncodingPanel
-import com.intellij.util.ObjectUtils
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+
+const val MF_ENCODING_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.ENCODING_PANEL
 
 /**
  * Encoding panel in status bar with correctly display for MF files.
@@ -26,19 +26,13 @@ class MfEncodingPanel(project: Project): EncodingPanel(project) {
 
   /**
    * Returns the state of the widget for correct display in the status bar.
-   * Disabled for MF files.
+   * Displayed only for MF files.
    * @param file virtual file opened in editor.
    * @return widget state [com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup.WidgetState].
    */
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (file is MFVirtualFile) {
-      val charset = file.charset
-      val charsetName = ObjectUtils.notNull(charset.displayName(), IdeBundle.message("encoding.not.available"))
-      val toolTipText = IdeBundle.message(
-        "status.bar.text.file.encoding",
-        charsetName
-      )
-      return WidgetState(toolTipText, charsetName, false)
+    if (file !is MFVirtualFile) {
+      return WidgetState.HIDDEN
     }
     return super.getWidgetState(file)
   }
@@ -47,7 +41,12 @@ class MfEncodingPanel(project: Project): EncodingPanel(project) {
     return MfEncodingPanel(project)
   }
 
+  /** Widget is not enabled for MF files. */
+  override fun isEnabledForFile(file: VirtualFile?): Boolean {
+    return false
+  }
+
   override fun ID(): String {
-    return "MF" + StatusBar.StandardWidgets.ENCODING_PANEL
+    return MF_ENCODING_PANEL_WIDGET
   }
 }
