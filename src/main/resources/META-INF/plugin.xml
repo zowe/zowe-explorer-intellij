@@ -102,6 +102,9 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <listener class="org.zowe.explorer.dataops.content.synchronizer.MFAutoSaveDocumentListener"
                   topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+
+        <listener class="eu.ibagroup.formainframe.editor.FileSelectionChangeListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="org.zowe.explorer">
@@ -272,8 +275,6 @@ Thank you for considering IBA Group for your mainframe needs.
         <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
 
-        <postStartupActivity implementation="org.zowe.explorer.editor.ProjectStartupActivity"/>
-
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
@@ -337,12 +338,18 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
 
+        <applicationService serviceInterface="org.zowe.explorer.dataops.services.ErrorSeparatorService"
+                            serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"/>
+
+        <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
+
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
-                                implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
+                                implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
+                                order="after positionWidget"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
-                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
+                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory, before powerStatus"/>
     </extensions>
 
     <actions>

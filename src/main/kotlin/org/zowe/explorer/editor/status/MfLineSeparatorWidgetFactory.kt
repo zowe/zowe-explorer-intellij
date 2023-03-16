@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
  * Status bar widget factory for [MfLineSeparatorPanel].
@@ -21,10 +22,16 @@ import com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
 class MfLineSeparatorWidgetFactory: LineSeparatorWidgetFactory() {
 
   override fun getId(): String {
-    return "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
+    return MF_LINE_SEPARATOR_PANEL_WIDGET
   }
 
   override fun createWidget(project: Project): StatusBarWidget {
     return MfLineSeparatorPanel(project)
+  }
+
+  /** Enabled only for MF file opened in editor. */
+  override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
+    val file = getFileEditor(statusBar)?.file
+    return file is MFVirtualFile
   }
 }
