@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * Status bar widget factory for [MfEncodingPanel].

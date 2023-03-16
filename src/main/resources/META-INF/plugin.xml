@@ -103,7 +103,7 @@ Thank you for considering IBA Group for your mainframe needs.
         <listener class="org.zowe.explorer.dataops.content.synchronizer.MFAutoSaveDocumentListener"
                   topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
 
-        <listener class="eu.ibagroup.formainframe.editor.FileSelectionChangeListener"
+        <listener class="org.zowe.explorer.editor.FileSelectionChangeListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
@@ -335,11 +335,6 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <projectService serviceInterface="org.zowe.explorer.zowe.service.ZoweConfigService"
                         serviceImplementation="org.zowe.explorer.zowe.service.ZoweConfigServiceImpl"/>
-
-        <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
-
-        <applicationService serviceInterface="org.zowe.explorer.dataops.services.ErrorSeparatorService"
-                            serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"/>
 
         <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
 

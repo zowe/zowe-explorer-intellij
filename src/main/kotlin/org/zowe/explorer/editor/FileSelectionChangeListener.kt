@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.editor
+package org.zowe.explorer.editor
 
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
@@ -16,8 +16,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
 import com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * File selection change listener.
