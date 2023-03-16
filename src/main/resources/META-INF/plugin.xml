@@ -280,7 +280,7 @@ Example of how to see the output:<br/>
 
         <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
 
-        <applicationConfigurable id="configurable.mainframe.explorer"
+        <applicationConfigurable id="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"
                                  displayName="For Mainframe"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
 
