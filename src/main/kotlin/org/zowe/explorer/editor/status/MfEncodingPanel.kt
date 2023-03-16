@@ -17,7 +17,7 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EncodingPanel
 import org.zowe.explorer.vfs.MFVirtualFile
 
-const val MF_ENCODING_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.ENCODING_PANEL
+const val MF_ENCODING_PANEL_WIDGET = "ZoweMF" + StatusBar.StandardWidgets.ENCODING_PANEL
 
 /**
  * Encoding panel in status bar with correctly display for MF files.
