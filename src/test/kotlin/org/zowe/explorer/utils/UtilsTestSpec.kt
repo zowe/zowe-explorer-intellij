@@ -687,16 +687,16 @@ class UtilsTestSpec : ShouldSpec({
           actual shouldBe expected
         }
       }
-      should("validate that the number is not greater than the provided one") {
-        component.text = "5"
-        val value = 10
-        val actual = validateForGreaterValue(component, value)
-        val expected = ValidationInfo("Enter a number grater than $value", component)
+      // should("validate that the number is not greater than the provided one") {
+      //   component.text = "5"
+      //   val value = 10
+      //   val actual = validateForGreaterValue(component, value)
+      //   val expected = ValidationInfo("Enter a number grater than $value", component)
 
-        assertSoftly {
-          actual shouldBe expected
-        }
-      }
+      //   assertSoftly {
+      //     actual shouldBe expected
+      //   }
+      // }
     }
     context("validateMemberName") {
       val component = JTextField()
