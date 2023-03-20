@@ -13,20 +13,26 @@ package eu.ibagroup.formainframe.editor.status
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
-import com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
+import com.intellij.ui.UIBundle
+import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Status bar widget factory for [MfEncodingPanel].
  */
-class MfEncodingPanelWidgetFactory: EncodingPanelWidgetFactory() {
+class MfEncodingPanelWidgetFactory: StatusBarEditorBasedWidgetFactory() {
 
   override fun getId(): String {
     return  MF_ENCODING_PANEL_WIDGET
   }
 
-  override fun createWidget(project: Project): StatusBarWidget {
-    return MfEncodingPanel(project)
+  override fun getDisplayName(): String {
+    return UIBundle.message("status.bar.encoding.widget.name")
+  }
+
+  override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
+    return MfEncodingPanel(project, scope)
   }
 
   /** Enabled only for MF file opened in editor. */

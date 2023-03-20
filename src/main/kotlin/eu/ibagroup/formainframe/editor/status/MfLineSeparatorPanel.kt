@@ -19,13 +19,14 @@ import com.intellij.openapi.wm.impl.status.LineSeparatorPanel
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import kotlinx.coroutines.CoroutineScope
 
 const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
 
 /**
  * Line separator panel in status bar with correctly display for MF files.
  */
-class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
+class MfLineSeparatorPanel(project: Project, scope: CoroutineScope): LineSeparatorPanel(project, scope) {
 
   /**
    * Returns the state of the widget for correct display in the status bar.
@@ -41,7 +42,7 @@ class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
   }
 
   override fun createInstance(project: Project): StatusBarWidget {
-    return MfLineSeparatorPanel(project)
+    return MfLineSeparatorPanel(project, scope)
   }
 
   /** Widget is not enabled for all MF files except USS files. */

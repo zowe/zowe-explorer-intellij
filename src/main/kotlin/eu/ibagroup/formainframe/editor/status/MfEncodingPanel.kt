@@ -16,13 +16,14 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EncodingPanel
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import kotlinx.coroutines.CoroutineScope
 
 const val MF_ENCODING_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.ENCODING_PANEL
 
 /**
  * Encoding panel in status bar with correctly display for MF files.
  */
-class MfEncodingPanel(project: Project): EncodingPanel(project) {
+class MfEncodingPanel(project: Project, scope: CoroutineScope): EncodingPanel(project, scope) {
 
   /**
    * Returns the state of the widget for correct display in the status bar.
@@ -38,7 +39,7 @@ class MfEncodingPanel(project: Project): EncodingPanel(project) {
   }
 
   override fun createInstance(project: Project): StatusBarWidget {
-    return MfEncodingPanel(project)
+    return MfEncodingPanel(project, scope)
   }
 
   /** Widget is not enabled for MF files. */
