@@ -10,9 +10,8 @@
 
 package eu.ibagroup.formainframe.editor
 
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
 import com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
@@ -20,13 +19,13 @@ import com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
 /**
  * Project post startup activity.
  */
-class ProjectStartupActivity : StartupActivity, DumbAware {
+class ProjectStartupActivity : ProjectActivity {
 
   /**
-   * Implementation of [StartupActivity.runActivity].
+   * Implementation of [ProjectActivity.execute].
    * Unregisters widget factories in the status bar that are overridden in the plugin.
    */
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     val extensionPoint = StatusBarWidgetFactory.EP_NAME.point
     extensionPoint.unregisterExtension(EncodingPanelWidgetFactory::class.java)
     extensionPoint.unregisterExtension(LineSeparatorWidgetFactory::class.java)
