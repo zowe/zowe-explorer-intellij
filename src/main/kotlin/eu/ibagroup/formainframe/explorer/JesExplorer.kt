@@ -19,6 +19,7 @@ import eu.ibagroup.formainframe.utils.rwLocked
 import java.util.stream.Collectors
 
 
+/** Factory to register [JesExplorer] in Intellij IoC container. */
 class JesExplorerFactory : ExplorerFactory<ConnectionConfig, JesWorkingSetImpl, JesExplorer> {
   override fun buildComponent(): JesExplorer = JesExplorer()
 }
@@ -34,10 +35,9 @@ class JesExplorer : AbstractExplorerBase<ConnectionConfig, JesWorkingSetImpl, Je
   )
 
   /**
-   * Creates a unit class (JesWorkingSetImpl) from config class (JesWorkingSetConfig).
-   * @see JesWorkingSetConfig
-   * @see JesWorkingSetImpl
+   * Creates a unit class [JesWorkingSetImpl] from config class [JesWorkingSetConfig].
    * @param parentDisposable disposable parent.
+   * @return desired instance of [JesWorkingSetImpl].
    */
   override fun JesWorkingSetConfig.toUnit(parentDisposable: Disposable): JesWorkingSetImpl {
     return JesWorkingSetImpl(

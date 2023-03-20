@@ -22,6 +22,8 @@ import eu.ibagroup.formainframe.utils.sendTopic
 import javax.swing.JComponent
 import kotlin.concurrent.withLock
 
+
+/** Factory to register [JesExplorerContentProvider] in Intellij IoC container. */
 class JesExplorerContentProviderFactory : ExplorerContentProviderFactory<ConnectionConfig, JesExplorer>() {
   override fun buildComponent(): ExplorerContentProvider<ConnectionConfig, JesExplorer> = JesExplorerContentProvider()
 }
