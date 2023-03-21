@@ -268,10 +268,10 @@ Thank you for considering IBA Group for your mainframe needs.
     <extensions defaultExtensionNs="com.intellij">
 
         <preloadingActivity implementation="org.zowe.explorer.config.ZoweOldConfigConvertPreloadingActivity"/>
-        <postStartupActivity implementation="org.zowe.explorer.zowe.ZoweStartupActivity"/>
         <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
 
+        <postStartupActivity implementation="org.zowe.explorer.zowe.ZoweStartupActivity"/>
         <postStartupActivity implementation="org.zowe.explorer.editor.ProjectStartupActivity"/>
 
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
