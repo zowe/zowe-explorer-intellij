@@ -233,7 +233,8 @@ Thank you for considering IBA Group for your mainframe needs.
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.TsoOperationRunnerFactory"/>
 
@@ -330,6 +331,9 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <applicationService serviceInterface="org.zowe.explorer.dataops.services.ErrorSeparatorService"
                             serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"/>
+
+        <projectService serviceInterface="org.zowe.explorer.zowe.service.ZoweConfigService"
+                        serviceImplementation="org.zowe.explorer.zowe.service.ZoweConfigServiceImpl"/>
 
         <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
 

@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.subscribe
@@ -62,9 +62,9 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project) {
  * @version 0.5
  * @since 2021-02-12
  */
-class ZoweStartupActivity : StartupActivity {
+class ZoweStartupActivity : ProjectActivity {
 
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     showNotificationForAddUpdateZoweConfigIfNeeded(project)
   }
 }
