@@ -80,7 +80,7 @@ dependencies {
 }
 
 intellij {
-  version.set("LATEST-EAP-SNAPSHOT")
+  version.set("231.7515-EAP-CANDIDATE-SNAPSHOT")
 }
 
 tasks {
@@ -92,7 +92,7 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set("231.4840")
+    sinceBuild.set("231.7515")
     untilBuild.set("231.*")
     changeNotes.set(
       """
