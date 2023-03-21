@@ -80,7 +80,7 @@ dependencies {
 }
 
 intellij {
-  version.set("LATEST-EAP-SNAPSHOT")
+  version.set("231.7515-EAP-CANDIDATE-SNAPSHOT")
 }
 
 tasks {
