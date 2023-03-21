@@ -13,18 +13,24 @@ package org.zowe.explorer.editor.status
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
-import com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
+import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
+import com.intellij.ui.UIBundle
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Status bar widget factory for [MfLineSeparatorPanel].
  */
-class MfLineSeparatorWidgetFactory: LineSeparatorWidgetFactory() {
+class MfLineSeparatorWidgetFactory: StatusBarEditorBasedWidgetFactory() {
 
   override fun getId(): String {
     return "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
   }
 
-  override fun createWidget(project: Project): StatusBarWidget {
-    return MfLineSeparatorPanel(project)
+  override fun getDisplayName(): String {
+    return UIBundle.message("status.bar.line.separator.widget.name")
+  }
+
+  override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget {
+    return MfLineSeparatorPanel(project, scope)
   }
 }

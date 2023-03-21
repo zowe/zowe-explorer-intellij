@@ -339,9 +339,18 @@ Thank you for considering IBA Group for your mainframe needs.
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
                 implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
 
+        <applicationService serviceInterface="org.zowe.explorer.dataops.services.ErrorSeparatorService"
+                            serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"/>
+
+        <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
+
+        <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
+                                implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
+                                order="after Position"/>
+
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
-                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
+                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory, before PowerSaveMode"/>
     </extensions>
 
     <actions>

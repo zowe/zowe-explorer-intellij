@@ -23,11 +23,12 @@ import com.intellij.util.LineSeparator
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.vfs.MFVirtualFile
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Line separator panel in status bar with correctly display for MF files.
  */
-class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
+class MfLineSeparatorPanel(project: Project, scope: CoroutineScope): LineSeparatorPanel(project, scope) {
 
   /**
    * Returns the state of the widget for correct display in the status bar.
@@ -47,7 +48,7 @@ class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
   }
 
   override fun createInstance(project: Project): StatusBarWidget {
-    return MfLineSeparatorPanel(project)
+    return MfLineSeparatorPanel(project, scope)
   }
 
   override fun ID(): String {
