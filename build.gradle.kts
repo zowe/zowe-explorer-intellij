@@ -10,6 +10,7 @@
 
 import kotlinx.kover.api.KoverTaskExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.io.File
 
 plugins {
   id("org.jetbrains.intellij") version "1.12.0"
@@ -164,6 +165,17 @@ tasks {
     finalizedBy("koverHtmlReport")
     systemProperty("idea.force.use.core.classloader", "true")
     systemProperty("idea.use.core.classloader.for.plugin.path", "true")
+
+    afterSuite(
+      KotlinClosure2<TestDescriptor, TestResult, Unit>({ desc, result ->
+        if (desc.parent == null) { // will match the outermost suite
+          val output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
+                  "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+          val fileName = "./build/reports/tests/${result.resultType}.txt"
+          File(fileName).writeText(output)
+        }
+      })
+    )
   }
 
   val createOpenApiSourceJar by registering(Jar::class) {
@@ -219,6 +231,7 @@ val uiTest = task<Test>("uiTest") {
   classpath = sourceSets["uiTest"].runtimeClasspath
   useJUnitPlatform() {
     excludeTags("FirstTime")
+    excludeTags("SmokeTest")
   }
   testLogging {
     events("passed", "skipped", "failed")
@@ -240,6 +253,27 @@ val firstTimeUiTest = task<Test>("firstTimeUiTest") {
   classpath = sourceSets["uiTest"].runtimeClasspath
   useJUnitPlatform() {
     includeTags("FirstTime")
+  }
+  testLogging {
+    events("passed", "skipped", "failed")
+  }
+  extensions.configure(KoverTaskExtension::class) {
+    // set to true to disable instrumentation of this task,
+    // Kover reports will not depend on the results of its execution
+    isDisabled.set(true)
+  }
+}
+
+/**
+ * Runs the smoke ui test
+ */
+val SmokeUiTest = task<Test>("smokeUiTest") {
+  description = "Gets rid of license agreement, etc."
+  group = "verification"
+  testClassesDirs = sourceSets["uiTest"].output.classesDirs
+  classpath = sourceSets["uiTest"].runtimeClasspath
+  useJUnitPlatform() {
+    includeTags("SmokeTest")
   }
   testLogging {
     events("passed", "skipped", "failed")

@@ -29,7 +29,7 @@ import java.awt.event.KeyEvent
 import java.time.Duration
 
 //Change ZOS_USERID, ZOS_PWD, CONNECTION_URL with valid values before UI tests execution
-const val ZOS_USERID = "changeme"
+const val ZOS_USERID = "user"
 const val ZOS_PWD = "changeme"
 const val CONNECTION_URL = "changeme"
 
@@ -372,7 +372,7 @@ fun createConnection(
           addConnection(connectionName, "${url}1", user, password, true)
         }
         clickButton("OK")
-        Thread.sleep(1000)
+        Thread.sleep(3000)
       }
       closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
       if (isValidConnection.not()) {
@@ -890,6 +890,32 @@ fun checkErrorNotification(
       throw Exception("Error message is different from expected")
     } else {
       find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
+    }
+  }
+}
+
+/**
+ * Creates working set and a mask.
+ */
+fun createWsAndMask(
+  projectName: String,
+  wsName: String,
+  masks: List<Pair<String,String>>,
+  connectionName: String,
+  fixtureStack: MutableList<Locator>,
+  closableFixtureCollector: ClosableFixtureCollector,
+  remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+  createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+  ideFrameImpl(projectName, fixtureStack) {
+    masks.forEach{ mask ->
+      createMask(wsName, fixtureStack, closableFixtureCollector)
+      createMaskDialog(fixtureStack) {
+        createMask(mask)
+        Thread.sleep(3000)
+        clickButton("OK")
+      }
+      closableFixtureCollector.closeOnceIfExists(CreateMaskDialog.name)
     }
   }
 }
