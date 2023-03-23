@@ -74,7 +74,7 @@ dependencies {
 }
 
 intellij {
-  version.set("LATEST-EAP-SNAPSHOT")
+  version.set("231.7515-EAP-CANDIDATE-SNAPSHOT")
 }
 
 tasks {
@@ -86,8 +86,8 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set("231.4840")
-    untilBuild.set("231.*")
+    sinceBuild.set("231.7515")
+    untilBuild.set("232.*")
     changeNotes.set(
       """
       <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.3
