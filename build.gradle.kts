@@ -31,7 +31,7 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "1.0.0-2023.1"
+version = "1.0.0-231.8109"
 val remoteRobotVersion = "0.11.16"
 
 repositories {
@@ -80,7 +80,7 @@ dependencies {
 }
 
 intellij {
-  version.set("231.7515-EAP-CANDIDATE-SNAPSHOT")
+  version.set("231.8109-EAP-CANDIDATE-SNAPSHOT")
 }
 
 tasks {
