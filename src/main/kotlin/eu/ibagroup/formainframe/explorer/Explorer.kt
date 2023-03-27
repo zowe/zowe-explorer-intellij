@@ -261,8 +261,9 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
     })
     subscribe(CREDENTIALS_CHANGED, disposable, CredentialsListener { uuid ->
       lock.read {
-        val found = units.find { it.connectionConfig?.uuid == uuid }
-        sendTopic(UNITS_CHANGED).onChanged(this@AbstractExplorerBase, found ?: return@CredentialsListener)
+        units.filter { it.connectionConfig?.uuid == uuid }.forEach {
+          sendTopic(UNITS_CHANGED).onChanged(this@AbstractExplorerBase, it)
+        }
       }
     })
   }
