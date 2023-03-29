@@ -1,7 +1,3 @@
-Environment configurations for UI tests:
-* In IntelliJ Idea change Settings => Tools => Terminal Shell path parameter from PowerShell to Git Bash. Example: "C:\Program Files\Git\usr\bin\bash.exe" --login -i
-* Make Java version 17 available from command line (add to PATH)
-
 To run UI tests:
 * change values for ZOS_USERID, ZOS_PWD, CONNECTION_URL in src/uiTest/kotlin/auxiliary/utils.kt
 * run the script uiTest.sh

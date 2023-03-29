@@ -138,6 +138,10 @@ We have two options of tests:
 
 1. UI tests - run with open IDE, make test of user-like interaction with the plugin;
 2. Unit tests - automated headless bundle to test plugin functions as if they were a separate pieces.
+   
+### Environment configurations for UI tests:
+1. In IntelliJ Idea change Settings => Tools => Terminal Shell path parameter from PowerShell to Git Bash. Example: "C:\Program Files\Git\usr\bin\bash.exe" --login -i
+2. Make Java version 17 available from command line (add to PATH)
 
 ### To run unit tests:
 
