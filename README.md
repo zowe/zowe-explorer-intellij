@@ -150,6 +150,15 @@ We have two options of tests:
 
 UI tests results: build/reports/tests/uiTest/index.html
 
+### To run smoke test:
+1. change values for ZOS_USERID, ZOS_PWD, CONNECTION_URL in src/uiTest/kotlin/auxiliary/utils.kt
+2. run the script smokeTest.sh
+3. if unit tests fail, smoke ui test will be skipped. When unit tests are successful, IdeForUiTests will be run
+4. once IdeForUiTests started make it as main window on the screen and do not touch mouse anymore
+
+Smoke test results: build/reports/tests/test/index.html with report for unit tests,
+build/reports/tests/SUCCESS(FAILURE).txt with quick summary for unit test run (file name depends on test run result),
+build/reports/tests/smokeUiTest/index.html with report for smoke UI test
 
 ### To run unit tests:
 
@@ -163,16 +172,6 @@ In there, you need to enable VM options and add the following options:
 ```
 
 After the "Kotest" is set up, just click on the green arrow near the test you want to run.
-
-### To run smoke test:
-1. change values for ZOS_USERID, ZOS_PWD, CONNECTION_URL in src/uiTest/kotlin/auxiliary/utils.kt
-2. run the script smokeTest.sh
-3. if unit tests fail, smoke ui test will be skipped. When unit tests are successful, IdeForUiTests will be run
-4. once IdeForUiTests started make it as main window on the screen and do not touch mouse anymore
-
-Smoke test results: build/reports/tests/test/index.html with report for unit tests,
-build/reports/tests/SUCCESS(FAILURE).txt with quick summary for unit test run (file name depends on test run result),
-build/reports/tests/smokeUiTest/index.html with report for smoke UI test
 
 **In case of any troubles during plugin usage, feel free to contact us.**
 
