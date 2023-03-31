@@ -26,6 +26,7 @@ import org.zowe.explorer.ui.build.TerminalCommandReceiver
 import org.zowe.explorer.ui.build.tso.SESSION_COMMAND_ENTERED
 import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
 import org.zowe.explorer.ui.build.tso.utils.InputRecognizer
+import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.sendTopic
 import java.awt.BorderLayout
 import javax.swing.JComboBox
@@ -57,6 +58,8 @@ class TSOConsoleView(
   private val consoleView: TerminalExecutionConsole = TerminalExecutionConsole(project, null)
   private val terminalCommandReceiver: TerminalCommandReceiver = TerminalCommandReceiver(consoleView)
   private val processHandler: ProcessHandler = terminalCommandReceiver.processHandler
+
+  private val log = log<TSOConsoleView>()
 
   /**
    * UI panel which contains 2 combo boxes of TSO message type and message data type
@@ -93,8 +96,7 @@ class TSOConsoleView(
     terminalCommandReceiver.inputRecognizer = inputRecognizer
 
     terminalCommandReceiver.waitForCommandInput { enteredCommand ->
-      // TODO: eliminate this (consider "log")
-      println("ENTERED COMMAND: $enteredCommand")
+      log.info("ENTERED COMMAND: $enteredCommand")
       sendTopic(SESSION_COMMAND_ENTERED).processCommand(
         project,
         this,

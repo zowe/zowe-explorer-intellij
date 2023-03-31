@@ -47,8 +47,10 @@ class FileSelectionChangeListener: FileEditorManagerListener {
         extensionPoint.extensionList.none { it.id == StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL } &&
         lineSeparatorWidgetFactories.none { it.canBeEnabledOn(statusBar) }
       ) {
+        val widget = statusBar.getWidget(StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL) ?: return
+        val factory = LineSeparatorWidgetFactory()
         val order = LoadingOrder.readOrder("after positionWidget")
-        extensionPoint.registerExtension(LineSeparatorWidgetFactory(), order) {}
+        extensionPoint.registerExtension(factory, order, widget)
       }
       val encodingPanelWidgetFactories =
         extensionPoint.extensionList.mapNotNull { it.castOrNull<EncodingPanelWidgetFactory>() }
@@ -56,8 +58,10 @@ class FileSelectionChangeListener: FileEditorManagerListener {
         extensionPoint.extensionList.none { it.id == StatusBar.StandardWidgets.ENCODING_PANEL } &&
         encodingPanelWidgetFactories.none { it.canBeEnabledOn(statusBar) }
       ) {
+        val widget = statusBar.getWidget(StatusBar.StandardWidgets.ENCODING_PANEL) ?: return
+        val factory = EncodingPanelWidgetFactory()
         val order = LoadingOrder.readOrder("after lineSeparatorWidget, before powerStatus")
-        extensionPoint.registerExtension(EncodingPanelWidgetFactory(), order) {}
+        extensionPoint.registerExtension(factory, order, widget)
       }
     }
   }

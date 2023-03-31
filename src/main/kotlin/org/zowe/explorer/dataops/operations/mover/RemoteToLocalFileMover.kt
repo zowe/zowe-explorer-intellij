@@ -61,6 +61,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
   ): Throwable? {
     val sourceFile = operation.source
     val destFile = operation.destination
+    val newFileName = operation.newName
     val sourceFileAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
       ?: return IllegalArgumentException("Cannot find attributes for file ${sourceFile.name}")
 
@@ -84,10 +85,10 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
     runWriteActionInEdtAndWait {
       if (operation.forceOverwriting) {
-        destFile.children.filter { it.name === sourceFile.name && !it.isDirectory }.forEach { it.delete(this) }
+        destFile.children.filter { it.name === (newFileName?: sourceFile.name) && !it.isDirectory }.forEach { it.delete(this) }
       }
     }
-    val createdFileJava = Paths.get(destFile.path, sourceFile.name).toFile().apply { createNewFile() }
+    val createdFileJava = Paths.get(destFile.path, newFileName?: sourceFile.name).toFile().apply { createNewFile() }
     createdFileJava.writeBytes(sourceFile.contentsToByteArray())
     runReadActionInEdtAndWait {
       destFile.refresh(false, false)
