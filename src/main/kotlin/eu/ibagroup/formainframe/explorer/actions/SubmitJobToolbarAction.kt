@@ -72,9 +72,10 @@ class SubmitJobToolbarAction: AnAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
+    val parentFile = file.parent ?: return
     val dataOpsManager = service<DataOpsManager>()
     val attributes = dataOpsManager.tryToGetAttributes(file)
-    val parentAttributes = dataOpsManager.tryToGetAttributes(file.parent)
+    val parentAttributes = dataOpsManager.tryToGetAttributes(parentFile)
     e.presentation.isEnabledAndVisible = attributes == null &&
         parentAttributes is RemoteJobAttributes &&
         file.isWritable
