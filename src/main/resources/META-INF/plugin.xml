@@ -14,7 +14,7 @@
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
-Zowe Explorer for IntelliJ IDEA is an <a href="https://ibagroupit.com/">IBA Group</a>-developed open-source plugin that gives access to mainframes from a modern IDE.
+Zowe Explorer for IntelliJ IDEA is an <a href="https://ibagroupit.com/?utm_campaign=IBA_W-Mainframe&utm_source=JetBrains&utm_medium=referral&utm_content=description_zowe_explorer">IBA Group</a>-developed open-source plugin that gives access to mainframes from a modern IDE.
 With the help of the plugin, developers can work with mainframes through a modern interface, using a single toolbar, structured trees, and drag-and-drop operations.
 The solution suits those who need to work with z/OS datasets, USS files, and Jobs from the IntelliJ IDEA.
 <br/>
@@ -56,7 +56,7 @@ About us:<br/>
 With over 30 years of experience in the mainframe domain, IBA Group is committed to maximizing your mainframe investment and enhancing your IT flexibility.
 One of the services we offer is Mainframe DevOps. Our approach is highly flexible, as we work with customers to choose the essential toolset for establishing a pipeline based on their preferences, existing tools, and the latest open-source opportunities (such as Zowe and plugins).
 <br/>
-We are also familiar with <a href="https://mainframe.ibagroupit.com/">Mainframe DevOps Solutions</a> of 2023 that can help modernize your mainframe and keep you competitive.
+We are also familiar with <a href="https://mainframe.ibagroupit.com/?utm_campaign=IBA_W-Mainframe&utm_source=JetBrains&utm_medium=referral&utm_content=description_zowe_explorer">Mainframe DevOps Solutions</a> of 2023 that can help modernize your mainframe and keep you competitive.
 We value your feedback and welcome any suggestions, proposals, or even complaints. Please feel free to contact us or schedule a call with our Mainframe DevOps expert.
 <br/>
 Thank you for considering IBA Group for your mainframe needs.
