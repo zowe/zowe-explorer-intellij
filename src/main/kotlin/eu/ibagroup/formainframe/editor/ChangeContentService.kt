@@ -10,17 +10,20 @@
 package eu.ibagroup.formainframe.editor
 
 import com.intellij.openapi.editor.Editor
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
  * Service that  should be used to process editor content of MF Files.
  * @author Valiantsin Krus
  */
 interface ChangeContentService {
+
+  /** Initializes service. Should be called somewhere at list once. */
+  fun initialize()
+
   /**
    * Processes content of file in editor.
    * @param editor editor in which document of file is opened.
    * @param file source file that should be processed.
    */
-  fun processMfContent(editor: Editor, file: MFVirtualFile)
+  fun processMfContent(editor: Editor)
 }

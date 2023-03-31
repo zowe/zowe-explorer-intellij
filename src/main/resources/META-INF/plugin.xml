@@ -351,10 +351,6 @@ Example of how to see the output:<br/>
         <applicationService serviceInterface="eu.ibagroup.formainframe.editor.ChangeContentService"
                             serviceImplementation="eu.ibagroup.formainframe.editor.ChangeContentServiceImpl"/>
 
-        <typedHandler implementation="eu.ibagroup.formainframe.editor.MFTypedHandler"/>
-
-        <copyPastePostProcessor implementation="eu.ibagroup.formainframe.editor.MFPastePreprocessor"/>
-
         <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
                                 order="after positionWidget"/>
