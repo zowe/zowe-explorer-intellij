@@ -32,7 +32,6 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
-import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
@@ -108,10 +107,10 @@ class ExplorerPasteProvider : PasteProvider {
   private fun refreshNodes(nodesToRefresh: List<ExplorerTreeNode<*>>, explorerView: FileExplorerView) {
     nodesToRefresh
       .forEach { node ->
-        val parentNode = node.castOrNull<FileFetchNode<*, *, *, *, *>>() ?: return
+        val parentNode = node as? FetchNode ?: return
         parentNode.query ?: return
-        parentNode.cleanCache(recursively = false, cleanBatchedQuery = true)
         cleanInvalidateOnExpand(parentNode, explorerView)
+        parentNode.cleanCache(cleanBatchedQuery = true).let { explorerView.myStructure.invalidate(parentNode, true) }
       }
   }
 
