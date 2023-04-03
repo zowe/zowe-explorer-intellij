@@ -20,11 +20,11 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
-import eu.ibagroup.formainframe.dataops.content.synchronizer.changeFileEncodingTo
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicGetJclRecordsParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperation
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.JobNode
+import eu.ibagroup.formainframe.utils.changeFileEncodingTo
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 

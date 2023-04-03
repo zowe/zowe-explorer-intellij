@@ -201,9 +201,9 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
                 }
 
                 it is VFileDeleteEvent &&
-                  this@ExplorerTreeView
-                    .ignoreVFileDeleteEvents
-                    .compareAndSet(true, true) -> {
+                this@ExplorerTreeView
+                  .ignoreVFileDeleteEvents
+                  .compareAndSet(true, true) -> {
                   null
                 }
 
