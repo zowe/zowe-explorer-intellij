@@ -16,9 +16,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.editor.DocumentChangeListener
 import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.editor.FileContentChangeListener
 import java.io.IOException
-import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
@@ -32,6 +33,18 @@ private val log = logger<RemoteAttributedContentSynchronizer<*>>()
 abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>(
   val dataOpsManager: DataOpsManager
 ) : ContentSynchronizer {
+
+  init {
+    subscribe(
+      componentManager = dataOpsManager.componentManager,
+      topic = FileContentChangeListener.FILE_CONTENT_CHANGED,
+      handler = object : FileContentChangeListener {
+        override fun onUpdate(file: VirtualFile) {
+          needToUpload.add(DocumentedSyncProvider(file))
+        }
+      }
+    )
+  }
 
   /**
    * [FileAttributes] implementation class
@@ -50,6 +63,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   private val handlerToStorageIdMap = ConcurrentHashMap<SyncProvider, Int>()
   private val idToBinaryFileMap = ConcurrentHashMap<Int, VirtualFile>()
   private val fetchedAtLeastOnce = ConcurrentHashMap.newKeySet<SyncProvider>()
+  private val needToUpload = ConcurrentHashMap.newKeySet<SyncProvider>()
 
   /**
    * Abstract method for fetching content from mainframe.
@@ -98,8 +112,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
    */
   override fun synchronizeWithRemote(
     syncProvider: SyncProvider,
-    progressIndicator: ProgressIndicator?,
-    forceReload: Boolean
+    progressIndicator: ProgressIndicator?
   ) {
     runCatching {
       log.info("Starting synchronization for file ${syncProvider.file.name}.")
@@ -122,6 +135,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       if (!wasFetchedBefore(syncProvider)) {
         log.info("Setting initial content for file ${syncProvider.file.name}")
         runWriteActionInEdtAndWait { syncProvider.putInitialContent(adaptedFetchedBytes) }
+        runReadActionInEdtAndWait { syncProvider.getDocument()?.addDocumentListener(DocumentChangeListener()) }
         changeFileEncodingTo(syncProvider.file, currentCharset)
         initLineSeparator(syncProvider.file)
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
@@ -135,7 +149,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
           val doUploadContent =
             syncProvider.saveStrategy.decide(syncProvider.file, oldStorageBytes, adaptedFetchedBytes)
 
-          if (doUploadContent && !forceReload) {
+          if (doUploadContent && isFileUploadNeeded(syncProvider)) {
             log.info("Save strategy decided to forcefully update file content on mainframe.")
             val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
             runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
@@ -148,8 +162,8 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
           }
         } else { /*do nothing*/
         }
-        syncCharsetsIfNeeded(syncProvider.file, currentCharset)
       }
+      needToUpload.remove(syncProvider)
     }
       .onSuccess {
         syncProvider.onSyncSuccess()
@@ -168,6 +182,13 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   }
 
   /**
+   * Base implementation of [ContentSynchronizer.isFileUploadNeeded] method for each content synchronizer.
+   */
+  override fun isFileUploadNeeded(syncProvider: SyncProvider): Boolean {
+    return needToUpload.firstOrNull { syncProvider == it } != null
+  }
+
+  /**
    * Base implementation of [ContentSynchronizer.isFileSyncPossible] method for each content synchronizer.
    */
   override fun isFileSyncPossible(syncProvider: SyncProvider): Boolean {
@@ -178,16 +199,5 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       return false
     }
     return true
-  }
-
-  /**
-   * Synchronizes the current charset with the file charset if needed.
-   * @param file virtual file to sync.
-   * @param currentCharset current content charset.
-   */
-  private fun syncCharsetsIfNeeded(file: VirtualFile, currentCharset: Charset) {
-    if (currentCharset != file.charset) {
-      changeFileEncodingTo(file, currentCharset)
-    }
   }
 }
