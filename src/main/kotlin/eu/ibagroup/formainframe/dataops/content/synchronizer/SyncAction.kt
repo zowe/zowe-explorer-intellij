@@ -99,9 +99,11 @@ class SyncAction : DumbAwareAction() {
     val syncProvider = DocumentedSyncProvider(file)
     val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
     val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
+    val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
     e.presentation.isEnabledAndVisible = file.isWritable
         && !service<ConfigService>().isAutoSyncEnabled
         && !(currentContent contentEquals previousContent)
+        && needToUpload
   }
 
 }
