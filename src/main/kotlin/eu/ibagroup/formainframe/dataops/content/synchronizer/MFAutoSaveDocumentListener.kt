@@ -19,6 +19,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
+// TODO: need to rework
 /**
  * Listener that reacts on document saving to local file system and synchronizes it with mainframe.
  * Needed to fully implement auto-save.
@@ -33,7 +34,7 @@ class MFAutoSaveDocumentListener: BulkFileListener {
       return
     }
     events.forEach {
-      if (!it.isFromSave) {
+      if (!it.isFromSave && it.requestor !is MFVirtualFile) {
         return
       }
       val vFile = it.file

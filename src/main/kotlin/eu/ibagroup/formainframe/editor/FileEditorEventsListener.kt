@@ -43,7 +43,8 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
         val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
         val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
         val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
-        if (!(currentContent contentEquals previousContent)) {
+        val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
+        if (!(currentContent contentEquals previousContent) && needToUpload) {
           if (showSyncOnCloseDialog(file.name, source.project)) {
             runModalTask(
               title = "Syncing ${file.name}",
