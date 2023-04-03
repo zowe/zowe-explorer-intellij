@@ -1,4 +1,3 @@
-package eu.ibagroup.formainframe.explorer.ui
 /*
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -8,6 +7,8 @@ package eu.ibagroup.formainframe.explorer.ui
  *
  * Copyright IBA Group 2020
  */
+
+package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
