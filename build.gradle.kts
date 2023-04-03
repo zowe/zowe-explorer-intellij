@@ -73,7 +73,7 @@ dependencies {
 }
 
 intellij {
-  version.set("LATEST-EAP-SNAPSHOT")
+  version.set("2023.1")
 }
 
 tasks {
