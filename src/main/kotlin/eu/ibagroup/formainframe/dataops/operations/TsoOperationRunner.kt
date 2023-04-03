@@ -140,14 +140,4 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
     return response?.body() ?: throw Exception("Cannot retrieve response from server.")
   }
 
-  /**
-   * Method is used to generate default Application ID needed for TSO request
-   * @return random byte string for application ID
-   */
-  private fun generateDefaultAppId(): String {
-    val array = ByteArray(8)
-    Random().nextBytes(array)
-    return String(array, Charset.defaultCharset())
-  }
-
 }

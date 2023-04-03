@@ -221,9 +221,9 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
                 }
 
                 it is VFileDeleteEvent &&
-                  this@ExplorerTreeView
-                    .ignoreVFileDeleteEvents
-                    .compareAndSet(true, true) -> {
+                this@ExplorerTreeView
+                  .ignoreVFileDeleteEvents
+                  .compareAndSet(true, true) -> {
                   null
                 }
 

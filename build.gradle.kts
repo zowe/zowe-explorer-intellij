@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.File
 
 plugins {
-  id("org.jetbrains.intellij") version "1.12.0"
+  id("org.jetbrains.intellij") version "1.13.0"
   kotlin("jvm") version "1.7.10"
   java
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
@@ -111,6 +111,7 @@ tasks {
         <li>Migrate to Kotlin DSL v2</li>
         <li>All the code is documented now</li>
       </ul>
+      <br>
       <b>Minor changes:</b>
       <ul>
         <li>Manual sync was proceeding in main thread</li>
@@ -150,6 +151,21 @@ tasks {
         <li>File upload icon is cycling when double-clicking again on an open file</li>
         <li>Small typo in annotation</li>
         <li>The button 'Ok' on Warning when delete connections with ws/jws</li>
+        <li>Typo in error message in Allocate Dataset dialog</li>
+        <li>Typo in release note for 1.0.0</li>
+        <li>Typo in message for incorrect directory quantity in allocate dataset</li>
+        <li>Unhandled error type for jobs</li>
+        <li>Missing '>' for input next several commands in CLI after programm running finished</li>
+        <li>Move member to another PDS refreshes only one PDS</li>
+        <li>Content encoding change after uss read only file reopened</li>
+        <li>Refresh does not work if copy-delete-copy one USS folder to another USS folder</li>
+        <li>IndexOutOfBoundsException if create JWS via context menu</li>
+        <li>Automatic refresh does not work correctly for job filter after purge job via context menu</li>
+        <li>Exception in Zowe Explorer when there is a configuration from For Mainframe plugin exist</li>
+        <li>Policy agreement is gone wild</li>
+        <li>Exception while opening TSO CLI</li>
+        <li>Exception during IDE startup with plugin</li>
+        <li>Operation is not supported for read-only collection while trying to create JES Working set</li>
       </ul>"""
     )
   }

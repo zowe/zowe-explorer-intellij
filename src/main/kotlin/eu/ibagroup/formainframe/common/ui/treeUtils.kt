@@ -79,7 +79,7 @@ fun <Connection: ConnectionConfigBase> cleanInvalidateOnExpand(
   view: ExplorerTreeView<Connection, *, *>
 ) {
   view.myStructure.promisePath(node, view.myTree).onSuccess {
-    val lastNode = it.lastPathComponent
+    val lastNode = it?.lastPathComponent
     if (view.myNodesToInvalidateOnExpand.contains(lastNode)) {
       synchronized(view.myNodesToInvalidateOnExpand) {
         view.myNodesToInvalidateOnExpand.remove(lastNode)
