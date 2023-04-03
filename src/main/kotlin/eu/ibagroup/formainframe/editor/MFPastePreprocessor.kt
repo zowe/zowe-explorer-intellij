@@ -76,7 +76,7 @@ class MFPastePreprocessor : CopyPastePostProcessor<TextBlockTransferableData>() 
   ) {
     val vFile = FileDocumentManager.getInstance().getFile(editor.document)
     if (vFile != null && vFile.`is`<MFVirtualFile>()) {
-      service<ChangeContentService>().processMfContent(editor, vFile as MFVirtualFile)
+      service<ChangeContentService>().processMfContent(editor)
     }
     super.processTransferableData(project, editor, bounds, caretOffset, indented, values)
   }

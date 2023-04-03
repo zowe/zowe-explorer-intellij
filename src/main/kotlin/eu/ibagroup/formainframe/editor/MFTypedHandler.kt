@@ -29,7 +29,7 @@ class MFTypedHandler : TypedHandlerDelegate() {
 
     val vFile = file.virtualFile
     if (vFile != null && vFile.`is`<MFVirtualFile>()) {
-      service<ChangeContentService>().processMfContent(editor, vFile as MFVirtualFile)
+      service<ChangeContentService>().processMfContent(editor)
     }
     return super.charTyped(c, project, editor, file)
   }
