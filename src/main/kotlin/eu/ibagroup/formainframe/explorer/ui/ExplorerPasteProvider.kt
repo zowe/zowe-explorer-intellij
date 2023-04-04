@@ -32,6 +32,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
@@ -370,7 +371,9 @@ class ExplorerPasteProvider : PasteProvider {
         val filesToDownloadUpdated = operations.mapNotNull { operation -> operation.newName }
         val tagP = "<p style=\"margin-left: 10px\">"
         val filesStringToShow = if (filesToDownloadUpdated.size > 5) {
-          "$tagP${filesToDownloadUpdated.subList(0, 5).joinToString("</p>$tagP")}</p>${tagP}and ${filesToDownloadUpdated.size - 5} more ...</p>"
+          "$tagP${
+            filesToDownloadUpdated.subList(0, 5).joinToString("</p>$tagP")
+          }</p>${tagP}and ${filesToDownloadUpdated.size - 5} more ...</p>"
         } else {
           "$tagP${filesToDownloadUpdated.joinToString("</p>$tagP")}</p>"
         }
@@ -424,7 +427,10 @@ class ExplorerPasteProvider : PasteProvider {
    * @param filesToDownload - files we are going to download
    * @return Void
    */
-  private fun updateDuplicatesInFileNamesForRemoteOperations(operations: List<MoveCopyOperation>, filesToDownload : List<String>) {
+  private fun updateDuplicatesInFileNamesForRemoteOperations(
+    operations: List<MoveCopyOperation>,
+    filesToDownload: List<String>
+  ) {
     val operationToFileName = mutableMapOf<MoveCopyOperation, String>()
     updatedOperations = mutableListOf()
     val fileOccurrence = 0

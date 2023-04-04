@@ -39,7 +39,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
 /** Base class to implement the basic interactions with an explorer node */
-abstract class ExplorerTreeNode<Connection: ConnectionConfigBase, Value : Any>(
+abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
   value: Value,
   project: Project,
   val parent: ExplorerTreeNode<Connection, *>?,
@@ -98,8 +98,6 @@ abstract class ExplorerTreeNode<Connection: ConnectionConfigBase, Value : Any>(
           icon = AllIcons.General.WarningDialog
         )
         runBackgroundableTask("Navigating to ${file.name}") { indicator ->
-
-
           if (doSync) {
             val onThrowableHandler: (Throwable) -> Unit = {
               if (it.message?.contains("Client is not authorized for file access") == true) {
