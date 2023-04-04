@@ -104,6 +104,11 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
                   add(LoadMoreNode(notNullProject, this@FileFetchNode, explorer, treeStructure, itemsLeft))
                 }
               }
+              .apply {
+                if (isEmpty()) {
+                  add(NoItemsFoundNode(notNullProject, this@FileFetchNode, explorer, treeStructure))
+                }
+              }
               .also {
                 cachedChildren = it
               }
