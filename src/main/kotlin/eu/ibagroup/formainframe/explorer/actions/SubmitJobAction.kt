@@ -23,9 +23,10 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitFilePathOperationParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
-import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.formMfPath
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -40,7 +41,7 @@ class SubmitJobAction : AnAction() {
    * runs the submit operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -95,7 +96,7 @@ class SubmitJobAction : AnAction() {
    * Determines which objects on mainframe can be submitted
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

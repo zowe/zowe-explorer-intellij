@@ -42,7 +42,7 @@ class RenameAction : AnAction() {
    * Overloaded method of AnAction abstract class. Tells what to do if an action was submitted
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0]
     val node = selectedNode.node
     var initialState = ""
@@ -145,7 +145,7 @@ class RenameAction : AnAction() {
    * Method determines if an action is visible for particular virtual file in VFS
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

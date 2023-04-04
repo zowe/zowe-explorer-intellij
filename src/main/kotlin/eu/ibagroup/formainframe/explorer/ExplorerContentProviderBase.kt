@@ -68,8 +68,6 @@ abstract class ExplorerContentProviderBase<Connection: ConnectionConfigBase, E :
       override fun getData(dataId: String): Any? {
         val view = getExplorerView(project)
         return when {
-          FILE_EXPLORER_VIEW.`is`(dataId) -> view
-          JES_EXPLORER_VIEW.`is`(dataId) -> view
           EXPLORER_VIEW.`is`(dataId) -> view
           else -> null
         }

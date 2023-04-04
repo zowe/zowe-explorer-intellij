@@ -19,8 +19,8 @@ import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.AddMaskDialog
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
-import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.MaskType
 
 /** Action to add USS or z/OS mask */
@@ -28,7 +28,7 @@ class AddMaskAction : AnAction() {
 
   /** Add mask when the dialog is fulfilled    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
 
     val ws = getUnits(view).firstOrNull() ?: return
     val initialState = MaskStateWithWS(ws)
@@ -48,7 +48,7 @@ class AddMaskAction : AnAction() {
 
   /** Decides to show action or not */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

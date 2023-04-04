@@ -13,7 +13,6 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -25,7 +24,6 @@ import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
  * Data key for extracting current instance of JesExplorerView.
  * @see JesExplorerView
  */
-val JES_EXPLORER_VIEW = DataKey.create<JesExplorerView>("jesExplorerView")
 
 const val JES_EXPLORER_CONTEXT_MENU = "JES Explorer"
 
@@ -72,7 +70,6 @@ class JesExplorerView(
     return when {
       CommonDataKeys.NAVIGATABLE.`is`(dataId) -> if (mySelectedNodesData.isNotEmpty()) mySelectedNodesData[0].node else null
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.map { it.node }.toTypedArray()
-      JES_EXPLORER_VIEW.`is`(dataId) -> this
       EXPLORER_VIEW.`is`(dataId) -> this
       else -> null
     }

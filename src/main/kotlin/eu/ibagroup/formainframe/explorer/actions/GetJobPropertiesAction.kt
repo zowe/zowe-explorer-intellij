@@ -24,7 +24,7 @@ class GetJobPropertiesAction : AnAction() {
 
   /** Create properties dialog depending on received attributes*/
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
     if (node is ExplorerTreeNode<ConnectionConfig, *>) {
       val virtualFile = node.virtualFile
@@ -51,7 +51,7 @@ class GetJobPropertiesAction : AnAction() {
 
   /** Make action visible only for JES explorer*/
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

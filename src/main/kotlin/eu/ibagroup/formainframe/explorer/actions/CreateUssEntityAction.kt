@@ -57,7 +57,7 @@ abstract class CreateUssEntityAction : AnAction() {
    * Runs uss allocation operation.
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val selected = view.mySelectedNodesData[0]
     val selectedNode = selected.node
     val node = if (selectedNode is UssFileNode) {
@@ -171,7 +171,7 @@ abstract class CreateUssEntityAction : AnAction() {
    * Makes action visible only if one node (uss file or uss directory) is selected.
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

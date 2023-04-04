@@ -14,13 +14,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.*
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
@@ -36,7 +35,7 @@ class GetFilePropertiesAction : AnAction() {
 
   /** Shows dialog with properties depending on type of the file selected by user. */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node ?: return
     if (node is ExplorerUnitTreeNodeBase<ConnectionConfig, *, out ExplorerUnit<ConnectionConfig>>) {
       val virtualFile = node.virtualFile
@@ -120,7 +119,7 @@ class GetFilePropertiesAction : AnAction() {
 
   /** Shows action only for datasets (sequential and pds), for uss files and for uss directories. */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

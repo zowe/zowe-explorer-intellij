@@ -56,7 +56,7 @@ class AllocateDatasetAction : AnAction() {
    * Determines if dataset allocation is possible for chosen object
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -79,7 +79,7 @@ class AllocateDatasetAction : AnAction() {
  * @param initialState contains state/parameters with which dataset should be allocated
  */
 private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationParams = DatasetAllocationParams()) {
-  val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+  val view = e.getExplorerView<FileExplorerView>() ?: return
   val parentNode = view.mySelectedNodesData[0].node
   if (parentNode is ExplorerUnitTreeNodeBase<*, *, *> && parentNode.unit is FilesWorkingSet) {
     val workingSet = parentNode.unit
@@ -207,7 +207,7 @@ class AllocateLikeAction : AnAction() {
    * runs allocate dataset like operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -259,7 +259,7 @@ class AllocateLikeAction : AnAction() {
    * Determines if dataset allocation is possible for chosen object
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

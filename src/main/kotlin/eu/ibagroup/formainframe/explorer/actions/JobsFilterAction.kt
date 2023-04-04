@@ -32,7 +32,7 @@ abstract class JobsFilterAction : AnAction() {
 
   /** Decides to show action or not */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

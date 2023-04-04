@@ -38,7 +38,7 @@ class ForceRenameAction : AnAction() {
    * Called when force rename is chosen from context menu
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0]
     if (selectedNode.node is UssDirNode || selectedNode.node is UssFileNode) {
       val attributes = selectedNode.attributes as RemoteUssAttributes
@@ -171,7 +171,7 @@ class ForceRenameAction : AnAction() {
    * Determines for which nodes the force rename action is visible in the context menu
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

@@ -34,7 +34,7 @@ class DuplicateMemberAction : AnAction() {
    */
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0]
     val attributes = selectedNode.attributes ?: return
     val initialState = ""
@@ -95,7 +95,7 @@ class DuplicateMemberAction : AnAction() {
    * Method determines if an action is visible for particular virtual file in VFS
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
