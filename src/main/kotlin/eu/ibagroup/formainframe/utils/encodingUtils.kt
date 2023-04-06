@@ -56,7 +56,6 @@ fun saveIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
 fun reloadIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
   val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.syncOnOpen(project))
   runWriteActionInEdtAndWait {
-    syncProvider.saveDocument()
     EncodingManager.getInstance().setEncoding(virtualFile, charset)
     val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(virtualFile)
     contentSynchronizer?.synchronizeWithRemote(syncProvider)

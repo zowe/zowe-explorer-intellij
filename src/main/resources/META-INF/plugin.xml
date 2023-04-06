@@ -108,11 +108,11 @@ Example of how to see the output:<br/>
         <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
-        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
+        <listener class="eu.ibagroup.formainframe.editor.FileEditorBeforeEventsListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
 
-        <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
-                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
 
         <listener class="eu.ibagroup.formainframe.editor.FileSelectionChangeListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
