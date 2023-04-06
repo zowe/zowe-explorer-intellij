@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.analytics
 
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
@@ -27,7 +28,9 @@ class AnalyticsStartupActivity : StartupActivity {
     val analyticsService = service<AnalyticsService>()
     val policyProvider = service<PolicyProvider>()
     if (!analyticsService.isUserAcknowledged) {
-      AnalyticsPolicyDialog.open(analyticsService, policyProvider, project)
+      invokeLater {
+        AnalyticsPolicyDialog.open(analyticsService, policyProvider, project)
+      }
     }
   }
 }
