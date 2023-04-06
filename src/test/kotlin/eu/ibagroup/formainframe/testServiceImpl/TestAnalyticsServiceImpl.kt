@@ -15,11 +15,11 @@ class TestAnalyticsServiceImpl : AnalyticsService {
     override var isUserAcknowledged = true
 
     override fun trackAnalyticsEvent(eventName: String, eventProperties: Map<String, String>) {
-      TODO("Not yet implemented")
+      return
     }
 
     override fun trackAnalyticsEvent(event: AnalyticsEvent) {
-      TODO("Not yet implemented")
+      return
     }
   }
 

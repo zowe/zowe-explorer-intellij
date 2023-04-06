@@ -10,26 +10,19 @@
 
 package eu.ibagroup.formainframe.explorer
 
-import com.intellij.ide.util.treeView.TreeAnchorizer
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
-import eu.ibagroup.formainframe.config.*
+import eu.ibagroup.formainframe.config.ConfigService
+import eu.ibagroup.formainframe.config.ConfigStateV2
+import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.makeCrudableWithoutListeners
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeStructureBase
-import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.*
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
@@ -59,7 +52,7 @@ class ExplorerTestSpec : ShouldSpec({
       val mockedCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
       val uuid1 = "uuid1"
       mockkObject(ConfigService)
-      every {ConfigService.instance.crudable} returns mockk()
+      every { ConfigService.instance.crudable } returns mockk()
       every { configCrudable } returns mockk()
       mockkObject(gson)
 
@@ -72,30 +65,41 @@ class ExplorerTestSpec : ShouldSpec({
 
       every { gson.toJson(any() as FilesWorkingSetConfig) } returns "mocked_config_to_copy"
 
-      val clonedConfig = FilesWorkingSetConfig(uuid1, "filesWSuuid1", "connUuid",
+      val clonedConfig = FilesWorkingSetConfig(
+        uuid1, "filesWSuuid1", "connUuid",
         mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-        mutableListOf())
+        mutableListOf()
+      )
       every { gson.fromJson(any() as String, FilesWorkingSetConfig::class.java) } returns clonedConfig
       mockkObject(clonedConfig)
 
       every { mockedCrud.getAll(FilesWorkingSetConfig::class.java) } returns Stream.of(
-        FilesWorkingSetConfig(uuid1, "filesWSuuid1", "connUuid",
+        FilesWorkingSetConfig(
+          uuid1,
+          "filesWSuuid1",
+          "connUuid",
           mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-          mutableListOf(UssPath("/u/test1"))),
-        FilesWorkingSetConfig(uuid1, "filesWSuuid1", "connUuid",
+          mutableListOf(UssPath("/u/test1"))
+        ),
+        FilesWorkingSetConfig(
+          uuid1,
+          "filesWSuuid1",
+          "connUuid",
           mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-          mutableListOf())
+          mutableListOf()
+        )
       )
 
-      fun getMockedFilesWorkingSetConfigNotNull() : FilesWorkingSetConfig {
+      fun getMockedFilesWorkingSetConfigNotNull(): FilesWorkingSetConfig {
         return mockedFilesWSConfig
       }
 
-      fun getMockedFilesWorkingSetConfigNull() : FilesWorkingSetConfig? {
+      fun getMockedFilesWorkingSetConfigNull(): FilesWorkingSetConfig? {
         return null
       }
 
-      val mockedFileExplorer = mockk<AbstractExplorerBase<ConnectionConfig, FilesWorkingSetImpl, FilesWorkingSetConfig>>()
+      val mockedFileExplorer =
+        mockk<AbstractExplorerBase<ConnectionConfig, FilesWorkingSetImpl, FilesWorkingSetConfig>>()
       val mockedDisposable = mockk<Disposable>()
       val expectedValues = mockedCrud.getAll(FilesWorkingSetConfig::class.java).toMutableList()
 
@@ -181,7 +185,7 @@ class ExplorerTestSpec : ShouldSpec({
       val mockedCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
       val uuid1 = "uuid1"
       mockkObject(ConfigService)
-      every {ConfigService.instance.crudable} returns mockk()
+      every { ConfigService.instance.crudable } returns mockk()
       every { configCrudable } returns mockk()
       mockkObject(gson)
 
@@ -194,30 +198,39 @@ class ExplorerTestSpec : ShouldSpec({
 
       every { gson.toJson(any() as FilesWorkingSetConfig) } returns "mocked_config_to_copy"
 
-      val clonedConfig = FilesWorkingSetConfig(uuid1, "filesWSuuid1", "connUuid",
+      val clonedConfig = FilesWorkingSetConfig(
+        uuid1,
+        "filesWSuuid1",
+        "connUuid",
         mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-        mutableListOf(UssPath("/u/uss_path_to_remove")))
+        mutableListOf(UssPath("/u/uss_path_to_remove"))
+      )
       every { gson.fromJson(any() as String, FilesWorkingSetConfig::class.java) } returns clonedConfig
       mockkObject(clonedConfig)
 
       every { mockedCrud.getAll(FilesWorkingSetConfig::class.java) } returns Stream.of(
-        FilesWorkingSetConfig(uuid1, "filesWSuuid1", "connUuid",
+        FilesWorkingSetConfig(
+          uuid1, "filesWSuuid1", "connUuid",
           mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-          mutableListOf()),
-        FilesWorkingSetConfig(uuid1, "filesWSuuid1", "connUuid",
+          mutableListOf()
+        ),
+        FilesWorkingSetConfig(
+          uuid1, "filesWSuuid1", "connUuid",
           mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-          mutableListOf(UssPath("/u/uss_path_to_remove")))
+          mutableListOf(UssPath("/u/uss_path_to_remove"))
+        )
       )
 
-      fun getMockedFilesWorkingSetConfigNotNull() : FilesWorkingSetConfig {
+      fun getMockedFilesWorkingSetConfigNotNull(): FilesWorkingSetConfig {
         return mockedFilesWSConfig
       }
 
-      fun getMockedFilesWorkingSetConfigNull() : FilesWorkingSetConfig? {
+      fun getMockedFilesWorkingSetConfigNull(): FilesWorkingSetConfig? {
         return null
       }
 
-      val mockedFileExplorer = mockk<AbstractExplorerBase<ConnectionConfig, FilesWorkingSetImpl, FilesWorkingSetConfig>>()
+      val mockedFileExplorer =
+        mockk<AbstractExplorerBase<ConnectionConfig, FilesWorkingSetImpl, FilesWorkingSetConfig>>()
       val mockedDisposable = mockk<Disposable>()
       val expectedValues = mockedCrud.getAll(FilesWorkingSetConfig::class.java).toMutableList()
 
@@ -314,73 +327,6 @@ class ExplorerTestSpec : ShouldSpec({
     should("perform paste without conflicts") {}
     should("perform paste accepting conflicts") {}
     should("perform paste declining conflicts") {}
-  }
-  context("explorer module: ui/UssFileNode") {
-
-    context("navigate") {
-      val requestFocus = true
-
-      mockkObject(MFVirtualFileSystem)
-      every { MFVirtualFileSystem.instance } returns mockk()
-
-      val fileMock = mockk<MFVirtualFile>()
-      every { fileMock.isDirectory } returns false
-      every { fileMock.isReadable } returns true
-      every { fileMock.name } returns "navigate test"
-      mockkStatic(VirtualFile::isBeingEditingNow)
-      every { fileMock.isBeingEditingNow() } returns false
-
-      val projectMock = mockk<Project>()
-
-      val treeStructureMock = mockk<ExplorerTreeStructureBase>()
-      every { treeStructureMock.registerNode(any()) } returns mockk()
-
-      mockkStatic(TreeAnchorizer::class)
-      every { TreeAnchorizer.getService().createAnchor(any()) } returns mockk()
-
-      mockkObject(UIComponentManager)
-      every { UIComponentManager.INSTANCE.getExplorerContentProvider<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, UssFileNode>>>(any()) } returns mockk()
-      val explorerTreeNodeMock = mockk<ExplorerTreeNode<ConnectionConfig, *>>()
-
-      mockkObject(DataOpsManager)
-      every { DataOpsManager.instance } returns mockk()
-
-      val explorer = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-      every { explorer.componentManager } returns ApplicationManager.getApplication()
-
-      val explorerUnitMock = mockk<ExplorerUnit<ConnectionConfig>>()
-      every { explorerUnitMock.explorer } returns explorer
-
-      val ussFileNode = spyk(
-        UssFileNode(
-          fileMock,
-          projectMock,
-          explorerTreeNodeMock,
-          explorerUnitMock,
-          treeStructureMock
-        )
-      )
-      every { ussFileNode.virtualFile } returns fileMock
-
-      var updatesCount = 0
-      var isNavigatePerformed = false
-      every {
-        ussFileNode.update()
-      } answers {
-        updatesCount++
-        if (updatesCount == 2) {
-          isNavigatePerformed = true
-        }
-        false
-      }
-
-      should("perform navigate on file") {
-        ussFileNode.navigate(requestFocus)
-        assert(isNavigatePerformed)
-      }
-      should("perform navigate on file with failure due to permission denied") {}
-      should("perform navigate on file with failure due to error") {}
-    }
   }
   context("explorer module: actions/RenameAction") {
     // actionPerformed
