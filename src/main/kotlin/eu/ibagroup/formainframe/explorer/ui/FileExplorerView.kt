@@ -58,7 +58,6 @@ import kotlin.concurrent.withLock
  * Data key for extracting current instance of FileExplorerView.
  * @see FileExplorerView
  */
-val FILE_EXPLORER_VIEW = DataKey.create<FileExplorerView>("fileExplorerView")
 
 const val FILE_EXPLORER_CONTEXT_MENU = "File Explorer"
 
@@ -570,7 +569,6 @@ class FileExplorerView(
       PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> copyPasteSupport.cutProvider
       PlatformDataKeys.PASTE_PROVIDER.`is`(dataId) -> copyPasteSupport.pasteProvider
       PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> deleteProvider
-      FILE_EXPLORER_VIEW.`is`(dataId) -> this
       EXPLORER_VIEW.`is`(dataId) -> this
       else -> null
     }

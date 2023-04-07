@@ -26,10 +26,7 @@ import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationPar
 import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperation
 import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationParams
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
-import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
-import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
@@ -68,7 +65,7 @@ class RecallAction : DumbAwareAction() {
    * Runs recall operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW)
+    val view = e.getExplorerView<FileExplorerView>()
     if (view != null) {
       val triples = view.mySelectedNodesData.mapNotNull { getRequestDataForNode(it.node) }
       val operations: List<RecallOperation> = triples.map {
@@ -100,7 +97,7 @@ class RecallAction : DumbAwareAction() {
    * Determines if recall operation is possible for chosen object
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -124,7 +121,7 @@ class MigrateAction : DumbAwareAction() {
    * Runs migrate operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW)
+    val view = e.getExplorerView<FileExplorerView>()
     if (view != null) {
       val triples = view.mySelectedNodesData.mapNotNull { getRequestDataForNode(it.node) }
       val operations: List<MigrateOperation> = triples.map {
@@ -155,7 +152,7 @@ class MigrateAction : DumbAwareAction() {
    * Determines if migrate operation is possible for chosen object
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

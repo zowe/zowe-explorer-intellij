@@ -14,10 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
-import eu.ibagroup.formainframe.explorer.ui.AddJobsFilterDialog
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
-import eu.ibagroup.formainframe.explorer.ui.JesWsNode
+import eu.ibagroup.formainframe.explorer.ui.*
 
 /**
  * Action for adding Job Filter from UI.
@@ -35,7 +32,7 @@ class AddJobsFilterAction : JobsFilterAction() {
 
   /** Opens AddJobsFilterDialog and saves result. */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
 
     val ws = getUnits(view).firstOrNull() ?: return
     val owner = ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""

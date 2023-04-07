@@ -31,7 +31,7 @@ class PurgeJobAction : AnAction() {
    * After completion shows a notification
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: e.getData(JOBS_LOG_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -139,7 +139,7 @@ class PurgeJobAction : AnAction() {
    * or from the JES Explorer by clicking on the corresponding job
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: e.getData(JOBS_LOG_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

@@ -37,11 +37,8 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.explorer.*
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
-import eu.ibagroup.formainframe.utils.getAncestorNodes
-import eu.ibagroup.formainframe.utils.rwLocked
-import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.formainframe.utils.subscribe
 import org.jetbrains.concurrency.AsyncPromise
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
@@ -51,6 +48,14 @@ import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
 val EXPLORER_VIEW = DataKey.create<ExplorerTreeView<*, *, *>>("explorerView")
+
+fun <ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
+  return getData(EXPLORER_VIEW).castOrNull(clazz)
+}
+
+inline fun <reified ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(): ExplorerView? {
+  return getExplorerView(ExplorerView::class.java)
+}
 
 /**
  * Explorer tree view base implementation
