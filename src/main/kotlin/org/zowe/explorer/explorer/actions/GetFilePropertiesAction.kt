@@ -22,10 +22,7 @@ import org.zowe.explorer.dataops.content.synchronizer.*
 import org.zowe.explorer.dataops.operations.UssChangeModeOperation
 import org.zowe.explorer.dataops.operations.UssChangeModeParams
 import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.utils.clone
-import org.zowe.explorer.utils.isBeingEditingNow
-import org.zowe.explorer.utils.runWriteActionInEdtAndWait
-import org.zowe.explorer.utils.updateFileTag
+import org.zowe.explorer.utils.*
 import org.zowe.kotlinsdk.ChangeMode
 
 /**
@@ -92,13 +89,12 @@ class GetFilePropertiesAction : AnAction() {
                   attributes.charset = oldCharset
                 } else {
                   updateFileTag(newAttributes)
-                  if (contentEncodingMode == ContentEncodingMode.RELOAD) {
-                    runWriteActionInEdtAndWait {
-                      syncProvider.saveDocument()
-                      contentSynchronizer?.synchronizeWithRemote(syncProvider = syncProvider, forceReload = true)
-                    }
+                  if (contentEncodingMode == ContentEncodingMode.CONVERT) {
+                    saveIn(e.project, virtualFile, newAttributes.charset)
                   }
-                  changeFileEncodingTo(virtualFile, newAttributes.charset)
+                  if (contentEncodingMode == ContentEncodingMode.RELOAD) {
+                    reloadIn(e.project, virtualFile, newAttributes.charset)
+                  }
                 }
               }
             }
