@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
+import retrofit2.Response
 import java.time.Duration
 import java.time.Instant.now
 import java.util.stream.Stream
@@ -736,25 +737,36 @@ class UtilsTestSpec : ShouldSpec({
     }
   }
   context("utils module: retrofitUtils") {
-    should("cancel the call due to progress indicator is cancelled") {
+    context("cancelByIndicator") {
       lateinit var delegate: ProgressIndicator
-      var isCancelDelegateCalled = false
 
       val mockCall = mockk<Call<Any>>()
       val mockProgressIndicator = mockk<ProgressIndicatorEx>()
-      every { mockCall.cancel() } answers {
-        isCancelDelegateCalled = true
-      }
+
       every { mockProgressIndicator.addStateDelegate(any()) } answers {
         delegate = firstArg()
       }
 
-      mockCall.cancelByIndicator(mockProgressIndicator)
-      delegate.cancel()
+      should("cancel the call due to progress indicator is cancelled") {
+        var isCancelDelegateCalled = false
 
-      assert(isCancelDelegateCalled)
+        every { mockCall.cancel() } answers {
+          isCancelDelegateCalled = true
+        }
+
+        mockCall.cancelByIndicator(mockProgressIndicator)
+        delegate.cancel()
+
+        assert(isCancelDelegateCalled)
+      }
+      should("not cancel the call when the processing is finished") {
+        every { mockCall.execute() } returns Response.success("Success")
+
+        val result = mockCall.cancelByIndicator(mockProgressIndicator).execute()
+
+        assert(result.isSuccessful)
+      }
     }
-    should("not cancel the call when the processing is finished") {}
   }
   context("utils module: miscUtils") {
     lateinit var test: String
