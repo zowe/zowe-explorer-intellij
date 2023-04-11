@@ -10,7 +10,14 @@
 
 package eu.ibagroup.formainframe.explorer
 
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
@@ -18,17 +25,30 @@ import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.ConfigStateV2
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.ws.JobsFilter
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
+import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
+import eu.ibagroup.formainframe.explorer.actions.PurgeJobAction
+import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import io.kotest.assertions.assertSoftly
 import eu.ibagroup.formainframe.config.makeCrudableWithoutListeners
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.UssPath
+import eu.ibagroup.formainframe.dataops.Operation
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.*
-import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.kotlinsdk.CancelJobPurgeOutRequest
 import java.util.*
 import java.util.stream.Stream
+import org.zowe.kotlinsdk.Job
 
 class ExplorerTestSpec : ShouldSpec({
   beforeSpec {
@@ -337,8 +357,107 @@ class ExplorerTestSpec : ShouldSpec({
   }
   context("explorer module: actions/PurgeJobAction") {
     // actionPerformed
-    should("perform purge on job successfully") {}
-    should("perform purge on job with error") {}
+
+    val purgeAction = PurgeJobAction()
+    val mockActionEvent = mockk<AnActionEvent>()
+    val jesExplorerView = mockk<JesExplorerView>()
+
+    val job = mockk<Job>()
+    every { job.jobName } returns "name"
+    every { job.jobId } returns "id"
+    val connectionConfig = mockk<ConnectionConfig>()
+    val jobsFilter = mockk<JobsFilter>()
+
+    every { mockActionEvent.getData(any() as DataKey<Any>) } returns jesExplorerView
+
+    val jobNode = mockk<JobNode>()
+    val virtualFile = mockk<MFVirtualFile>()
+
+    every { jesExplorerView.mySelectedNodesData } returns listOf(
+      NodeData(
+        jobNode,
+        virtualFile,
+        null
+      )
+    )
+    every { jobNode.virtualFile } returns virtualFile
+    every { jobNode.parent } returns mockk()
+
+    val explorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>>()
+    every { jobNode.explorer } returns explorer
+    every { explorer.componentManager } returns ApplicationManager.getApplication()
+
+    lateinit var dataOpsManager: TestDataOpsManagerImpl
+
+    val project = mockk<Project>()
+    every {
+      mockActionEvent.project
+    } returns project
+
+    every {
+      jesExplorerView.explorer
+    } returns explorer
+
+    val mockRequest = mockk<CancelJobPurgeOutRequest>()
+
+    should("perform purge on job successfully") {
+
+      dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+          return RemoteJobAttributes(
+            job,
+            "test",
+            mutableListOf(JobsRequester(connectionConfig, jobsFilter))
+          )
+        }
+        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+          return mockRequest as R
+        }
+      }
+
+      var isOperationSucceeded = false
+
+      every {
+        explorer.showNotification(any(), any(), NotificationType.INFORMATION, any())
+      } answers {
+        isOperationSucceeded = true
+      }
+
+      purgeAction.actionPerformed(mockActionEvent)
+
+      assertSoftly { isOperationSucceeded shouldBe true }
+
+    }
+    should("perform purge on job with error") {
+
+      dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+          return RemoteJobAttributes(
+            job,
+            "test",
+            mutableListOf(JobsRequester(connectionConfig, jobsFilter))
+          )
+        }
+        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+          throw Exception("Error")
+        }
+      }
+
+      var isOperationFailed = false
+
+      every {
+        explorer.showNotification(any(), any(), NotificationType.ERROR, any())
+      } answers {
+        isOperationFailed = true
+      }
+
+      purgeAction.actionPerformed(mockActionEvent)
+
+      assertSoftly { isOperationFailed shouldBe true }
+
+    }
   }
   context("explorer module: actions/GetJobPropertiesAction") {
     // actionPerformed
