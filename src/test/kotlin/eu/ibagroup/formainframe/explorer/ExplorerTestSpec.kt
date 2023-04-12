@@ -400,20 +400,27 @@ class ExplorerTestSpec : ShouldSpec({
 
     val mockRequest = mockk<CancelJobPurgeOutRequest>()
 
+    val jobAttr = spyk(
+      RemoteJobAttributes(
+        job,
+        "test",
+        mutableListOf(JobsRequester(connectionConfig, jobsFilter))
+      )
+    )
+
+    every { jobAttr.clone() } returns jobAttr
+
     should("perform purge on job successfully") {
 
       dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
       dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-          return RemoteJobAttributes(
-            job,
-            "test",
-            mutableListOf(JobsRequester(connectionConfig, jobsFilter))
-          )
+          return jobAttr
         }
         override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
           return mockRequest as R
         }
+
       }
 
       var isOperationSucceeded = false
@@ -434,11 +441,7 @@ class ExplorerTestSpec : ShouldSpec({
       dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
       dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-          return RemoteJobAttributes(
-            job,
-            "test",
-            mutableListOf(JobsRequester(connectionConfig, jobsFilter))
-          )
+          return jobAttr
         }
         override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
           throw Exception("Error")
