@@ -21,8 +21,9 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
-import eu.ibagroup.r2z.DatasetOrganization
+import org.zowe.kotlinsdk.DatasetOrganization
 import javax.swing.JComponent
+import javax.swing.JPasswordField
 import javax.swing.JTextField
 
 private val urlRegex = Regex("^(https?|http)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")
@@ -56,6 +57,15 @@ private val memberRegex = Regex("[A-Z@$#a-z][A-Z@#\$a-z0-9]{0,7}")
  */
 fun validateForBlank(text: String, component: JComponent): ValidationInfo? {
   return if (text.isBlank()) ValidationInfo("This field must not be blank", component) else null
+}
+
+/**
+ * Validate new password
+ * @param password new password
+ * @param component confirm password component
+ */
+fun validateForPassword(password: String, component: JPasswordField): ValidationInfo? {
+  return if (password != component.text) ValidationInfo("Passwords do not match", component) else null
 }
 
 /**
@@ -415,10 +425,10 @@ fun validateDataset(
   averageBlockLength: JTextField,
   advancedParameters: JTextField
 ): ValidationInfo? {
-  return validateDatasetNameOnInput(datasetName) ?: validateForGreaterValue(primaryAllocation, 1)
-  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterValue(directoryBlocks, 1).takeIf {
+  return validateDatasetNameOnInput(datasetName) ?: validateForGreaterOrEqualValue(primaryAllocation, 1)
+  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterOrEqualValue(directoryBlocks, 1).takeIf {
     datasetOrganization == DatasetOrganization.PO
-  } ?: validateForGreaterValue(recordLength, 1) ?: validateForPositiveInteger(blockSize)
+  } ?: validateForGreaterOrEqualValue(recordLength, 1) ?: validateForPositiveInteger(blockSize)
   ?: validateForPositiveInteger(averageBlockLength) ?: validateVolser(advancedParameters)
 }
 
@@ -460,17 +470,17 @@ fun validateVolser(component: JTextField): ValidationInfo? {
  * @param component the component with the number to validate
  */
 fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
-  return validateForGreaterValue(component, 0)
+  return validateForGreaterOrEqualValue(component, 0)
 }
 
 /**
- * Validate the component value is greater than the provided value
+ * Validate the component value is greater than or equal to the provided value
  * @param component the component to check the value
  * @param value the value to check that the component's value is greater
  */
-fun validateForGreaterValue(component: JTextField, value: Int): ValidationInfo? {
+fun validateForGreaterOrEqualValue(component: JTextField, value: Int): ValidationInfo? {
   return if ((component.text.toIntOrNull() ?: -1) < value) {
-    ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number grater than $value", component)
+    ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number greater than or equal to $value", component)
   } else {
     null
   }

@@ -20,9 +20,10 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.SubmitFileNameBody
-import eu.ibagroup.r2z.SubmitJobRequest
+import eu.ibagroup.formainframe.utils.log
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.SubmitFileNameBody
+import org.zowe.kotlinsdk.SubmitJobRequest
 import retrofit2.Response
 
 /**
@@ -31,6 +32,8 @@ import retrofit2.Response
 class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobRequest> {
 
   override val operationClass = SubmitJobOperation::class.java
+
+  override val log = log<SubmitOperationRunner>()
 
   /**
    * Sends submit request to mainframe and checks return code of request
@@ -100,13 +103,21 @@ open class SubmitOperationParams
  * Class which contains parameters for submit operation by file path
  * @param submitFilePath path to file which contains code that should be submitted on mainframe
  */
-class SubmitFilePathOperationParams(val submitFilePath: String) : SubmitOperationParams()
+class SubmitFilePathOperationParams(val submitFilePath: String) : SubmitOperationParams() {
+  override fun toString(): String {
+    return "SubmitFilePathOperationParams(submitFilePath='$submitFilePath')"
+  }
+}
 
 /**
  * Class which contains parameters for submit operation by job jcl
  * @param jobJcl code that should be submitted on mainframe
  */
-class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams()
+class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams() {
+  override fun toString(): String {
+    return "SubmitJobJclOperationParams(jobJcl='$jobJcl')"
+  }
+}
 
 /**
  * Data class which represents all info that is needed to execute submit operation

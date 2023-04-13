@@ -19,20 +19,22 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.username
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.config.*
 import eu.ibagroup.formainframe.utils.validateDataset
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateMemberName
-import eu.ibagroup.r2z.AllocationUnit
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.RecordFormat
+import org.zowe.kotlinsdk.AllocationUnit
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.RecordFormat
 import java.awt.Dimension
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JTextField
 
-class AllocationDialog(project: Project?, override var state: DatasetAllocationParams) :
+class AllocationDialog(project: Project?, config: ConnectionConfig, override var state: DatasetAllocationParams) :
   StatefulDialog<DatasetAllocationParams>(project = project) {
 
   private lateinit var recordFormatBox: JComboBox<RecordFormat>
@@ -48,6 +50,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
   private lateinit var averageBlockLengthField: JTextField
   private lateinit var advancedParametersField: JTextField
   private lateinit var presetsBox: JComboBox<Presets>
+  private val HLQ = username(config)
 
   private val mainPanel by lazy {
     val sameWidthLabelsGroup = "ALLOCATION_DIALOG_LABELS_WIDTH_GROUP"
@@ -55,7 +58,7 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
 
     panel {
       row {
-        label("Choose preset")
+        label("Choose preset: ")
           .widthGroup(sameWidthLabelsGroup)
         comboBox(listOf(Presets.CUSTOM_DATASET, Presets.SEQUENTIAL_DATASET, Presets.PDS_DATASET, Presets.PDS_WITH_EMPTY_MEMBER, Presets.PDS_WITH_SAMPLE_JCL_MEMBER))
           .bindItem(state::presets.toNullableProperty())
@@ -69,7 +72,9 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
         textField()
           .bindText(state::datasetName)
           .apply { focused() }
-          .also { datasetNameField = it.component }
+          .also { datasetNameField = it.component
+            datasetNameField.text = HLQ
+          }
           .onApply { state.datasetName = state.datasetName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
       }

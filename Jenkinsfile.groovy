@@ -30,7 +30,6 @@ properties([gitLabConnection('code.iby.scdc.io-connection')])
 
 
 //     return w.toString()
-
 // }
 
 pipeline{
@@ -44,6 +43,7 @@ pipeline{
     }
     tools{
         gradle 'Default'
+        jdk 'Java 17'
     }
     stages{
         stage('Initial checkup'){

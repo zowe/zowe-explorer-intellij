@@ -17,8 +17,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
-import eu.ibagroup.r2z.XIBMDataType
-
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Factory class which builds remote uss attributes service instance. Defined in plugin.xml.

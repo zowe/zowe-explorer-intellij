@@ -22,8 +22,9 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.dataops.operations.RemoteUnitOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.HMigrate
+import eu.ibagroup.formainframe.utils.log
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.HMigrate
 
 /**
  * Data class which represents info about file needed for migration operation
@@ -52,6 +53,8 @@ class MigrateOperationRunner : MigrationRunner<MigrateOperation> {
   }
 
   override val operationClass = MigrateOperation::class.java
+
+  override val log = log<MigrateOperationRunner>()
 
   /**
    * Runs migrate operation

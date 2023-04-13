@@ -22,12 +22,10 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.findAnyNullable
-import eu.ibagroup.formainframe.utils.runWriteActionInEdt
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.XIBMOption
+import eu.ibagroup.formainframe.utils.*
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.XIBMOption
 
 class DeleteRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
@@ -38,6 +36,7 @@ class DeleteRunnerFactory : OperationRunnerFactory {
 class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   OperationRunner<DeleteOperation, Unit> {
   override val operationClass = DeleteOperation::class.java
+  override val log = log<DeleteOperationRunner>()
 
   /**
    * Run "Delete" operation.

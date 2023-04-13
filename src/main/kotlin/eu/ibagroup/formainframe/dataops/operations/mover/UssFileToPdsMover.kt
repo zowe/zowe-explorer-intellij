@@ -21,7 +21,8 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.*
+import eu.ibagroup.formainframe.utils.log
+import org.zowe.kotlinsdk.*
 
 /**
  * Factory for registering UssFileToPdsMover in Intellij IoC container.
@@ -53,6 +54,8 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
       && operation.commonUrls(dataOpsManager).isNotEmpty()
       && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
+
+  override val log = log<UssFileToPdsMover>()
 
   /**
    * Proceeds move/copy of uss file to partitioned data set.
@@ -95,6 +98,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     }
 
     if (operation.isMove) {
+      log.info("Trying to rollback changes")
       val deleteResponse = api.deleteUssFile(
         authorizationToken = connectionConfig.authToken,
         filePath = FilePath(from),
@@ -106,8 +110,10 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
           datasetName = to, memberName = memberName
         ).execute()
         throwable = if (rollbackResponse.isSuccessful) {
+          log.info("Rollback proceeded successfully")
           CallException(deleteResponse, "Cannot $opName $from to $to. Rollback proceeded successfully.")
         } else {
+          log.error("Rollback failed")
           CallException(deleteResponse, "Cannot $opName $from to $to. Rollback failed.")
         }
       }
@@ -125,6 +131,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {
       try {
+        log.info("Trying to move USS file ${operation.source.name} to PDS ${operation.destination.path} on ${requester.connectionConfig.url}")
         throwable = proceedMoveCopyToPds(requester.connectionConfig, operation, progressIndicator)
         break
       } catch (t: Throwable) {
@@ -132,8 +139,10 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
       }
     }
     if (throwable != null) {
+      log.error("Failed to move USS file")
       throw throwable
     }
+    log.info("USS file has been moved successfully")
   }
 
 

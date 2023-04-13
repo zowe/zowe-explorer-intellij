@@ -17,7 +17,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
 
-/** JES Explorer root node, where the information about the connection is situated */
+/** JES Explorer root node, that is hidden, but aggregates all nodes in JES Explorer. */
 class JesExplorerRootNode(
   value: Explorer<ConnectionConfig, *>, project: Project,
   treeStructure: ExplorerTreeStructureBase

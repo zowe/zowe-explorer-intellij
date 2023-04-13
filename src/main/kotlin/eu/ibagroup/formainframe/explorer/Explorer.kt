@@ -33,6 +33,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.editor.ChangeContentService
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.anyEventAdaptor
@@ -228,6 +229,7 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
    * for reactive processing of data updates on UI.
    */
   fun doInit() {
+    service<ChangeContentService>().initialize()
     Disposer.register(service<DataOpsManager>(), disposable)
     subscribe(CONFIGS_CHANGED, disposable, eventAdapter(unitConfigClass) {
       onDelete { unit ->
@@ -261,8 +263,9 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
     })
     subscribe(CREDENTIALS_CHANGED, disposable, CredentialsListener { uuid ->
       lock.read {
-        val found = units.find { it.connectionConfig?.uuid == uuid }
-        sendTopic(UNITS_CHANGED).onChanged(this@AbstractExplorerBase, found ?: return@CredentialsListener)
+        units.filter { it.connectionConfig?.uuid == uuid }.forEach {
+          sendTopic(UNITS_CHANGED).onChanged(this@AbstractExplorerBase, it)
+        }
       }
     })
   }

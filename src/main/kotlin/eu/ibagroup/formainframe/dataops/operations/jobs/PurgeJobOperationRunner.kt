@@ -10,8 +10,9 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.CancelJobPurgeOutRequest
-import eu.ibagroup.r2z.JESApi
+import eu.ibagroup.formainframe.utils.log
+import org.zowe.kotlinsdk.CancelJobPurgeOutRequest
+import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
 
 /** Factory for purge job operation runner */
@@ -27,6 +28,8 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
   override val operationClass = PurgeJobOperation::class.java
 
   override val resultClass = CancelJobPurgeOutRequest::class.java
+
+  override val log = log<PurgeJobOperationRunner>()
 
   override fun canRun(operation: PurgeJobOperation): Boolean {
     return true
@@ -71,10 +74,18 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
 open class PurgeJobOperationParams
 
 /** Job Name and Job Id are used */
-class BasicPurgeJobParams(val jobName: String, val jobId: String) : PurgeJobOperationParams()
+class BasicPurgeJobParams(val jobName: String, val jobId: String) : PurgeJobOperationParams() {
+  override fun toString(): String {
+    return "BasicPurgeJobParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /** Correlator is used */
-class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams()
+class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorPurgeJobParams(correlator='$correlator')"
+  }
+}
 
 /** Class for purge job operation */
 data class PurgeJobOperation(

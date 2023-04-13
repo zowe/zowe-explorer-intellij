@@ -27,10 +27,10 @@ import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.nullIfBlank
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.DataSetsList
-import eu.ibagroup.r2z.Dataset
-import eu.ibagroup.r2z.XIBMAttr
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.DataSetsList
+import org.zowe.kotlinsdk.Dataset
+import org.zowe.kotlinsdk.XIBMAttr
 import retrofit2.Response
 
 class DatasetFileFetchProviderFactory : FileFetchProviderFactory {

@@ -33,8 +33,8 @@ import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.ChangeMode
-import eu.ibagroup.r2z.FileType
+import org.zowe.kotlinsdk.ChangeMode
+import org.zowe.kotlinsdk.FileType
 
 /**
  * Abstract action for creating Uss Entity (file or directory) through context menu.
@@ -57,7 +57,7 @@ abstract class CreateUssEntityAction : AnAction() {
    * Runs uss allocation operation.
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val selected = view.mySelectedNodesData[0]
     val selectedNode = selected.node
     val node = if (selectedNode is UssFileNode) {
@@ -171,7 +171,7 @@ abstract class CreateUssEntityAction : AnAction() {
    * Makes action visible only if one node (uss file or uss directory) is selected.
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

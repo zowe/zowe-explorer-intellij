@@ -14,7 +14,7 @@ import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 import retrofit2.Response
 
 /**
@@ -73,6 +73,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
       throwable = if (prevResponse == null) Exception(msg) else CallException(prevResponse, msg)
     }
     progressIndicator.text = "Attempt to rollback"
+    log.info("Trying to rollback changes")
     val responseRollback = api<DataAPI>(connectionConfig).deleteUssFile(
       connectionConfig.authToken,
       FilePath(destinationPath),
@@ -83,8 +84,10 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
       throwable = CallException(responseRollback, "Cannot rollback $opName $sourceName to $sourceName.")
     } else if (!isCanceled && responseRollback.isSuccessful) {
       val msg = "Cannot $opName $sourceName to $destinationPath. Rollback proceeded successfully."
+      log.info("Rollback proceeded successfully")
       throwable = if (prevResponse == null) Exception() else CallException(prevResponse, msg)
     } else if (!isCanceled && !responseRollback.isSuccessful) {
+      log.error("Rollback failed")
       throwable = CallException(responseRollback, "Cannot $opName $sourceName to ${destinationPath}. Rollback failed.")
     }
     return throwable
@@ -121,6 +124,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
       val destinationPath = "${destinationAttributes.path}/${sourceAttributes.name}"
 
       if (operation.forceOverwriting) {
+        log.info("Overwriting directory $destinationPath")
         val response = api<DataAPI>(destConnectionConfig).deleteUssFile(
           authorizationToken = destConnectionConfig.authToken,
           filePath = FilePath(destinationPath),

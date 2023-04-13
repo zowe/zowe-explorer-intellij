@@ -16,8 +16,9 @@ import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.explorer.ui.EditJobsFilterDialog
-import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 
@@ -26,7 +27,7 @@ class EditJobsFilterAction : JobsFilterAction() {
 
   /** Save changes when the dialog is fulfilled */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
 
     val node = view.mySelectedNodesData.getOrNull(0)?.node
     if (node is JesFilterNode) {

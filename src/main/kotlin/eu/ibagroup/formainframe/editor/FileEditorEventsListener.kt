@@ -11,7 +11,7 @@
 package eu.ibagroup.formainframe.editor
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.progress.runModalTask
@@ -22,13 +22,30 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
-private val log = log<FileEditorEventsListener>()
-
 /**
  * File editor events listener.
- * Needed to handle file close event
+ * Needed to handle file open event
  */
-class FileEditorEventsListener : FileEditorManagerListener.Before {
+class FileEditorEventsListener : FileEditorManagerListener {
+
+  /**
+   * Adds the file editor focus listener [FileEditorFocusListener] after the file is opened.
+   * @param source the source file editor manager to get the editor in which the file is open.
+   * @param file the file that was opened.
+   */
+  override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+    val editor = source.selectedTextEditor as? EditorEx
+    val focusListener = FileEditorFocusListener()
+    editor?.addFocusListener(focusListener)
+    super.fileOpened(source, file)
+  }
+}
+
+/**
+ * File editor before events listener.
+ * Needed to handle before file close event
+ */
+class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
 
   private val dataOpsManager = service<DataOpsManager>()
 
@@ -39,35 +56,31 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
    */
   override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
     val configService = service<ConfigService>()
+    val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(source.project))
     val attributes = dataOpsManager.tryToGetAttributes(file)
-    if (
-      file is MFVirtualFile
-      && !configService.isAutoSyncEnabled
-      && file.isWritable
-      && attributes != null
-    ) {
-      val document = FileDocumentManager.getInstance().getDocument(file) ?: let {
-        log.info("Document cannot be used here")
-        return
-      }
+    if (file is MFVirtualFile && file.isWritable && attributes != null) {
       val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
-      val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(source.project))
       val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
       val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
-      if (!(currentContent contentEquals previousContent)) {
-        if (showSyncOnCloseDialog(file.name, source.project)) {
-          runModalTask(
-            title = "Syncing ${file.name}",
-            project = source.project,
-            cancellable = true
-          ) {
-            runWriteActionInEdtAndWait {
-              FileDocumentManager.getInstance().saveDocument(document)
-              contentSynchronizer?.synchronizeWithRemote(syncProvider, it)
+      val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
+      if (!(currentContent contentEquals previousContent) && needToUpload)
+        if (!configService.isAutoSyncEnabled) {
+          if (showSyncOnCloseDialog(file.name, source.project)) {
+            runModalTask(
+              title = "Syncing ${file.name}",
+              project = source.project,
+              cancellable = true
+            ) {
+              runWriteActionInEdtAndWait {
+                syncProvider.saveDocument()
+                contentSynchronizer?.synchronizeWithRemote(syncProvider, it)
+              }
             }
           }
+        } else {
+          runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+          sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, DataOpsManager.instance.componentManager).sync(file)
         }
-      }
     }
     super.beforeFileClosed(source, file)
   }

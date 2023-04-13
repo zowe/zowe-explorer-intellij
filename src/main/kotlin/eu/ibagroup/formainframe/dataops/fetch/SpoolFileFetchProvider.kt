@@ -24,7 +24,7 @@ import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.JESApi
+import org.zowe.kotlinsdk.JESApi
 
 /**
  * Query with file to fetch children.

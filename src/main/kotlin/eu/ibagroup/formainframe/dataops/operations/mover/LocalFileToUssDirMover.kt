@@ -19,14 +19,11 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Factory for registering LocalFileToUssDirMover in Intellij IoC container.
@@ -57,6 +54,8 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       operation.destination is MFVirtualFile &&
       dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
   }
+
+  override val log = log<LocalFileToUssDirMover>()
 
   /**
    * Proceeds move/copy of file from local file system to remote uss directory.
@@ -119,12 +118,15 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable = try {
+      log.info("Trying to move local file ${operation.source.name} to USS directory ${operation.destination.path}")
       proceedLocalUpload(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.error("Failed to move local file")
       throw throwable
     }
+    log.info("Local file has been moved successfully")
   }
 }

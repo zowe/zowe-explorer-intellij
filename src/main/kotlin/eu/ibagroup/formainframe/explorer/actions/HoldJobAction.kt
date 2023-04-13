@@ -19,7 +19,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicHoldJobParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.HoldJobOperation
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
-import eu.ibagroup.r2z.Job
+import org.zowe.kotlinsdk.Job
 
 /** Action to hold a running job in the Jobs Tool Window */
 class HoldJobAction : AnAction() {

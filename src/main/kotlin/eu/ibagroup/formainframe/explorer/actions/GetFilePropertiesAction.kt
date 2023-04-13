@@ -14,19 +14,18 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.*
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.*
-import eu.ibagroup.r2z.ChangeMode
+import org.zowe.kotlinsdk.ChangeMode
 
 /**
  * Action for displaying properties of files on UI in dialog by clicking item in explorer context menu.
@@ -36,7 +35,7 @@ class GetFilePropertiesAction : AnAction() {
 
   /** Shows dialog with properties depending on type of the file selected by user. */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node ?: return
     if (node is ExplorerUnitTreeNodeBase<ConnectionConfig, *, out ExplorerUnit<ConnectionConfig>>) {
       val virtualFile = node.virtualFile
@@ -81,7 +80,9 @@ class GetFilePropertiesAction : AnAction() {
               }
               val newAttributes = dialog.state.ussAttributes
               if (!virtualFile.isDirectory && oldCharset != newAttributes.charset) {
-                val contentEncodingMode = if (!virtualFile.isWritable) {
+                val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(virtualFile)
+                val syncProvider = DocumentedSyncProvider(virtualFile)
+                val contentEncodingMode = if (contentSynchronizer?.isFileSyncPossible(syncProvider) == false) {
                   showReloadCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
                 } else {
                   showReloadConvertCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
@@ -89,17 +90,13 @@ class GetFilePropertiesAction : AnAction() {
                 if (contentEncodingMode == null) {
                   attributes.charset = oldCharset
                 } else {
-                  val syncProvider = DocumentedSyncProvider(virtualFile)
                   updateFileTag(newAttributes)
-                  if (contentEncodingMode == ContentEncodingMode.RELOAD) {
-                    val contentSynchronizer =
-                      service<DataOpsManager>().getContentSynchronizer(virtualFile)
-                    runWriteActionInEdtAndWait {
-                      syncProvider.saveDocument()
-                      contentSynchronizer?.synchronizeWithRemote(syncProvider = syncProvider, forceReload = true)
-                    }
+                  if (contentEncodingMode == ContentEncodingMode.CONVERT) {
+                    saveIn(e.project, virtualFile, newAttributes.charset)
                   }
-                  changeFileEncodingTo(virtualFile, newAttributes.charset)
+                  if (contentEncodingMode == ContentEncodingMode.RELOAD) {
+                    reloadIn(e.project, virtualFile, newAttributes.charset)
+                  }
                 }
               }
             }
@@ -122,7 +119,7 @@ class GetFilePropertiesAction : AnAction() {
 
   /** Shows action only for datasets (sequential and pds), for uss files and for uss directories. */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

@@ -16,6 +16,10 @@ import eu.ibagroup.formainframe.config.ws.ui.files.FilesWSConfigurable
 import eu.ibagroup.formainframe.config.ws.ui.jes.JesWsConfigurable
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
+/**
+ * Instance to build implementation of [WorkingSetConfigDeclaration] for [FilesWorkingSetConfig].
+ * @author Valiantsin Krus
+ */
 class FilesWorkingSetConfigDeclarationFactory : ConfigDeclarationFactory {
 
   override fun buildConfigDeclaration(crudable: Crudable): ConfigDeclaration<*> {
@@ -27,6 +31,10 @@ class FilesWorkingSetConfigDeclarationFactory : ConfigDeclarationFactory {
 
 }
 
+/**
+ * Instance to build implementation of [WorkingSetConfigDeclaration] for [JesWorkingSetConfig].
+ * @author Valiantsin Krus
+ */
 class JesWorkingSetConfigDeclarationFactory : ConfigDeclarationFactory {
   override fun buildConfigDeclaration(crudable: Crudable): ConfigDeclaration<*> {
     return object : WorkingSetConfigDeclaration<JesWorkingSetConfig>(crudable, JesWorkingSetConfig::class.java) {
@@ -36,6 +44,12 @@ class JesWorkingSetConfigDeclarationFactory : ConfigDeclarationFactory {
   }
 }
 
+/**
+ * Abstract class with wrapped logic of working with working sets configs.
+ * @param crudable instance of [Crudable] through which to work with config data.
+ * @param clazz instance of class that implements [WorkingSetConfig].
+ * @author Valiantsin Krus.
+ */
 abstract class WorkingSetConfigDeclaration<WS : WorkingSetConfig>(
   crudable: Crudable,
   override val clazz: Class<out WS>
@@ -43,10 +57,24 @@ abstract class WorkingSetConfigDeclaration<WS : WorkingSetConfig>(
 
   override fun getDecider(): ConfigDecider<WS> {
     return object : ConfigDecider<WS>() {
+
+      /**
+       * Enables to add working set config only if no existing working set with such name found.
+       * @param row [WorkingSetConfig] instance to add.
+       * @return true if no existing working set with such name found and false otherwise.
+       */
       override fun canAdd(row: WS): Boolean {
         return crudable.find(clazz) { it.name == row.name }.count() == 0L
       }
 
+      /**
+       * Enables to update working set only if connection with such name
+       * exists or if names of current and updating working sets are equal.
+       * @param currentRow working set config instance that should be updated.
+       * @param updatingRow working set config to replace current working set config.
+       * @return true if working set with such name exists or if names of
+       *         existing and updating working sets are equal and false otherwise.
+       */
       override fun canUpdate(currentRow: WS, updatingRow: WS): Boolean {
         return canAdd(updatingRow) || updatingRow.name == currentRow.name
       }

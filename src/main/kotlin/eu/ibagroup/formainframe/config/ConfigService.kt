@@ -58,16 +58,38 @@ interface ConfigService : PersistentStateComponent<ConfigStateV2> {
   /** Identifies size of the files batch to fetch in a single request. */
   var batchSize: Int
 
+  /**
+   * Finds [ConfigDeclaration] for specified class through registered extension points.
+   * @param rowClass config class instance for which to find [ConfigDeclaration].
+   * @return config declaration instance.
+   */
   fun <T : Any> getConfigDeclaration(rowClass: Class<out T>): ConfigDeclaration<T>
 
+  /**
+   * Creates collection in config state for specified class.
+   * @param clazz config class instance for which to register collection.
+   */
   fun <T> registerConfigClass(clazz: Class<out T>)
 
+  /**
+   * Walks through registered config declarations (see [ConfigDeclaration])
+   * and creates collection in config state for each of their config classes.
+   */
   fun registerAllConfigClasses()
 
+  /**
+   * Walks through registered collections and gets corresponding config classes for them.
+   * @return list of registered in state config classes (see [ConfigDeclaration])
+   */
   fun getRegisteredConfigClasses(): List<Class<*>>
 
+  /**
+   * Gets all registered config declarations (see [ConfigDeclaration]).
+   * @return list of all registered config declarations.
+   */
   fun getRegisteredConfigDeclarations(): List<ConfigDeclaration<*>>
 
+  /** Inserts all configs from old state in a new one if they were not migrated before. */
   fun migrateOldConfigState(state: ConfigState)
 }
 

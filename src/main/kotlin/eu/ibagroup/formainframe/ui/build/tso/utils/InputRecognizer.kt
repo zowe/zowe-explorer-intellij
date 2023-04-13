@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
-import eu.ibagroup.r2z.DataAPI
+import org.zowe.kotlinsdk.DataAPI
 import io.ktor.util.*
 
 /**

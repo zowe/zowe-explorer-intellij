@@ -38,7 +38,7 @@ class AddMemberAction : AnAction() {
    * @param e an action event to get the file explorer view and the project
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     var currentNode = view.mySelectedNodesData[0].node
     DataOpsManager.instance
     if (currentNode !is FetchNode) {
@@ -109,7 +109,7 @@ class AddMemberAction : AnAction() {
    * @param e an action event to get the presentation so show and the file explorer view
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

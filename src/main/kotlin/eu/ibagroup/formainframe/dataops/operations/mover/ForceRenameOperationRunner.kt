@@ -20,10 +20,11 @@ import eu.ibagroup.formainframe.dataops.operations.ForceRenameOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
 
 /**
  * Factory class for building an instance of the runner class on runtime. Defined in plugin.xml
@@ -42,6 +43,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
 
   override val operationClass = ForceRenameOperation::class.java
   override val resultClass = Unit::class.java
+  override val log = log<ForceRenameOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -69,6 +71,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
     attributes.requesters.map { requester ->
       try {
         progressIndicator.checkCanceled()
+        log.info("Trying to force rename $fileName to ${operation.newName}")
         if (!sourceFile.isDirectory) {
           sourceFile.parent?.let {
             dataOpsManager.performOperation(
@@ -98,6 +101,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
                     "Remote exception occurred. Unable to rename source directory $fileName"
                   )
                 }
+                log.info("Creating USS file on $parentDirPath/${operation.newName}")
                 sourceFile.parent?.let {
                   dataOpsManager.performOperation(
                     MoveCopyOperation(
@@ -121,8 +125,10 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
           }
         }
       } catch (e: Throwable) {
+        log.error("Failed to force rename file")
         throw RuntimeException(e)
       }
     }
+    log.info("Force rename operation has been completed successfully")
   }
 }

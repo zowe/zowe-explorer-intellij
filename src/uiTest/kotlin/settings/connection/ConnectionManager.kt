@@ -17,6 +17,7 @@ import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import testutils.MockResponseDispatcher
 import io.kotest.matchers.string.shouldContain
 import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*

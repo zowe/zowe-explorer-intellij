@@ -32,7 +32,6 @@ import kotlin.concurrent.withLock
 /**
  * Abstract class to represent a tree node in explorer
  */
-/** Another unnecessary abstraction (?) to represent tree node */
 abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit<Connection>>(
   value: Value,
   project: Project,
@@ -103,6 +102,11 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
                 if (batchedQ?.fetchNeeded == true) {
                   val itemsLeft = batchedQ.totalRows?.let { it - batchedQ.alreadyFetched }
                   add(LoadMoreNode(notNullProject, this@FileFetchNode, explorer, treeStructure, itemsLeft))
+                }
+              }
+              .apply {
+                if (isEmpty()) {
+                  add(NoItemsFoundNode(notNullProject, this@FileFetchNode, explorer, treeStructure))
                 }
               }
               .also {

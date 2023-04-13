@@ -37,7 +37,7 @@ import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 
 /**
  * Action class for dataset allocation with parameters chosen by user
@@ -56,7 +56,7 @@ class AllocateDatasetAction : AnAction() {
    * Determines if dataset allocation is possible for chosen object
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -79,14 +79,14 @@ class AllocateDatasetAction : AnAction() {
  * @param initialState contains state/parameters with which dataset should be allocated
  */
 private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationParams = DatasetAllocationParams()) {
-  val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+  val view = e.getExplorerView<FileExplorerView>() ?: return
   val parentNode = view.mySelectedNodesData[0].node
   if (parentNode is ExplorerUnitTreeNodeBase<*, *, *> && parentNode.unit is FilesWorkingSet) {
     val workingSet = parentNode.unit
     val config = parentNode.unit.connectionConfig
     if (config != null) {
       showUntilDone(initialState, { initState ->
-        AllocationDialog(project = e.project, initState)
+        AllocationDialog(project = e.project, config, initState)
       }) {
         val state = postProcessState(it)
         var res = false
@@ -116,7 +116,6 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
               nodeToClean?.let { cleanInvalidateOnExpand(nodeToClean, view) }
 
               var nodeCleaned = false
-              p?.cleanCacheIfPossible(cleanBatchedQuery = true)
               runInEdt {
                 if (
                   showOkNoDialog(
@@ -208,7 +207,7 @@ class AllocateLikeAction : AnAction() {
    * runs allocate dataset like operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -260,7 +259,7 @@ class AllocateLikeAction : AnAction() {
    * Determines if dataset allocation is possible for chosen object
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

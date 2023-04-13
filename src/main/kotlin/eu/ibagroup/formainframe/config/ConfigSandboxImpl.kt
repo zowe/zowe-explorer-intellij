@@ -20,13 +20,14 @@ import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.ReloadableEventHandler
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.isTheSameAs
-import kotlin.streams.toList
 
 /** Stateful class to represent the plugin configs sandbox */
 data class SandboxState(
   val configState: ConfigStateV2 = ConfigStateV2(),
   val credentials: MutableList<Credentials> = mutableListOf()
 ) {
+
+  /** Clones sandbox state. It is necessary because standard clone here is not acceptable. */
   internal fun cloneInternal(): SandboxState {
     val prevCollections = configState.collections
     val clonedCollections = mutableMapOf<String, MutableList<*>>()
@@ -61,7 +62,7 @@ fun <T> isSandboxModified(clazz: Class<out T>): Boolean {
 
 /**
  * Check is the sandbox modified for the specified config class
- * @param clazz the class to check are the configs of this class modified
+ * @param T the class to check are the configs of this class modified
  */
 inline fun <reified T> isSandboxModified(): Boolean {
   return isSandboxModified(T::class.java)
@@ -77,7 +78,7 @@ fun <T> rollbackSandbox(clazz: Class<out T>) {
 
 /**
  * Rollback the config sandbox instance to have the values from the config service
- * @param clazz the class of configs to rollback in the config sandbox
+ * @param T the class of configs to rollback in the config sandbox
  */
 inline fun <reified T> rollbackSandbox() {
   rollbackSandbox(T::class.java)
@@ -134,6 +135,7 @@ class ConfigSandboxImpl : ConfigSandbox {
         }
   }
 
+  /** Registers collection for config class in [ConfigStateV2.collections] in [state] and [initialState]. */
   override fun <T> registerConfigClass(clazz: Class<out T>) {
     if (!state.configState.collections.containsKey(clazz.name)) {
       state.configState.collections[clazz.name] = mutableListOf<T>()

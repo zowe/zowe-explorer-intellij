@@ -16,8 +16,9 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.SystemsApi
-import eu.ibagroup.r2z.SystemsResponse
+import eu.ibagroup.formainframe.utils.log
+import org.zowe.kotlinsdk.SystemsApi
+import org.zowe.kotlinsdk.SystemsResponse
 
 /**
  * Class which represents factory for info operation runner. Defined in plugin.xml
@@ -34,6 +35,7 @@ class InfoOperationRunnerFactory : OperationRunnerFactory {
 class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
   override val operationClass = InfoOperation::class.java
   override val resultClass = SystemsResponse::class.java
+  override val log = log<InfoOperationRunner>()
 
   /**
    * Determined if operation can be run on selected object

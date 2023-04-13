@@ -381,7 +381,7 @@ fun createConnection(
                     addConnection(connectionName, "${url}1", user, password, true)
                 }
                 clickButton("OK")
-                Thread.sleep(1000)
+                Thread.sleep(3000)
             }
             closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
             if (isValidConnection.not()) {
@@ -925,4 +925,30 @@ fun startMockServer() {
     mockServer.dispatcher = responseDispatcher
     mockServer.useHttps(serverCertificates.sslSocketFactory(), false)
     mockServer.start()
+}
+
+/**
+ * Creates working set and a mask.
+ */
+fun createWsAndMask(
+  projectName: String,
+  wsName: String,
+  masks: List<Pair<String,String>>,
+  connectionName: String,
+  fixtureStack: MutableList<Locator>,
+  closableFixtureCollector: ClosableFixtureCollector,
+  remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+  createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+  ideFrameImpl(projectName, fixtureStack) {
+    masks.forEach{ mask ->
+      createMask(wsName, fixtureStack, closableFixtureCollector)
+      createMaskDialog(fixtureStack) {
+        createMask(mask)
+        Thread.sleep(3000)
+        clickButton("OK")
+      }
+      closableFixtureCollector.closeOnceIfExists(CreateMaskDialog.name)
+    }
+  }
 }

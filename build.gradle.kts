@@ -8,13 +8,15 @@
  * Copyright IBA Group 2020
  */
 
+import kotlinx.kover.api.KoverTaskExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.io.File
 
 plugins {
-  id("org.jetbrains.intellij") version "1.12.0"
+  id("org.jetbrains.intellij") version "1.13.0"
   kotlin("jvm") version "1.7.10"
   java
-  jacoco
+  id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
 
 apply(plugin = "kotlin")
@@ -27,6 +29,9 @@ val okHttp3Version = "4.10.0"
 
 repositories {
   mavenCentral()
+  maven {
+    url = uri("https://zowe.jfrog.io/zowe/libs-release")
+  }
   maven {
     url = uri("http://10.221.23.186:8082/repository/internal/")
     isAllowInsecureProtocol = true
@@ -60,14 +65,13 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.3.0-rc.10")
+  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0-rc.2")
   implementation("com.segment.analytics.java:analytics:3.3.1")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")
-  testImplementation("org.mock-server:mockserver-netty:5.14.0")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
-  testImplementation("io.kotest:kotest-assertions-core:5.5.4")
-  testImplementation("io.kotest:kotest-runner-junit5:5.5.4")
+  testImplementation("io.kotest:kotest-assertions-core:5.5.5")
+  testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
   testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
@@ -107,6 +111,7 @@ tasks {
         <li>Migrate to Kotlin DSL v2</li>
         <li>All the code is documented now</li>
       </ul>
+      <br>
       <b>Minor changes:</b>
       <ul>
         <li>Manual sync was proceeding in main thread</li>
@@ -146,6 +151,21 @@ tasks {
         <li>File upload icon is cycling when double-clicking again on an open file</li>
         <li>Small typo in annotation</li>
         <li>The button 'Ok' on Warning when delete connections with ws/jws</li>
+        <li>Typo in error message in Allocate Dataset dialog</li>
+        <li>Typo in release note for 1.0.0</li>
+        <li>Typo in message for incorrect directory quantity in allocate dataset</li>
+        <li>Unhandled error type for jobs</li>
+        <li>Missing '>' for input next several commands in CLI after programm running finished</li>
+        <li>Move member to another PDS refreshes only one PDS</li>
+        <li>Content encoding change after uss read only file reopened</li>
+        <li>Refresh does not work if copy-delete-copy one USS folder to another USS folder</li>
+        <li>IndexOutOfBoundsException if create JWS via context menu</li>
+        <li>Automatic refresh does not work correctly for job filter after purge job via context menu</li>
+        <li>Exception in Zowe Explorer when there is a configuration from For Mainframe plugin exist</li>
+        <li>Policy agreement is gone wild</li>
+        <li>Exception while opening TSO CLI</li>
+        <li>Exception during IDE startup with plugin</li>
+        <li>Operation is not supported for read-only collection while trying to create JES Working set</li>
       </ul>"""
     )
   }
@@ -156,19 +176,19 @@ tasks {
       events("passed", "skipped", "failed")
     }
 
-    configure<JacocoTaskExtension> {
-      isIncludeNoLocationClasses = true
-      excludes = listOf("jdk.internal.*")
-    }
+    ignoreFailures = true
 
-    finalizedBy("jacocoTestReport")
-  }
+    finalizedBy("koverHtmlReport")
+    systemProperty("idea.force.use.core.classloader", "true")
+    systemProperty("idea.use.core.classloader.for.plugin.path", "true")
 
-  jacocoTestReport {
-    classDirectories.setFrom(
-      files(classDirectories.files.map {
-        fileTree(it) {
-          exclude("${buildDir}/instrumented/**")
+    afterSuite(
+      KotlinClosure2<TestDescriptor, TestResult, Unit>({ desc, result ->
+        if (desc.parent == null) { // will match the outermost suite
+          val output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
+                  "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+          val fileName = "./build/reports/tests/${result.resultType}.txt"
+          File(fileName).writeText(output)
         }
       })
     )
@@ -227,9 +247,15 @@ val uiTest = task<Test>("uiTest") {
   classpath = sourceSets["uiTest"].runtimeClasspath
   useJUnitPlatform() {
     excludeTags("FirstTime")
+    excludeTags("SmokeTest")
   }
   testLogging {
     events("passed", "skipped", "failed")
+  }
+  extensions.configure(KoverTaskExtension::class) {
+    // set to true to disable instrumentation of this task,
+    // Kover reports will not depend on the results of its execution
+    isDisabled.set(true)
   }
 }
 
@@ -247,6 +273,38 @@ val firstTimeUiTest = task<Test>("firstTimeUiTest") {
   testLogging {
     events("passed", "skipped", "failed")
   }
+  extensions.configure(KoverTaskExtension::class) {
+    // set to true to disable instrumentation of this task,
+    // Kover reports will not depend on the results of its execution
+    isDisabled.set(true)
+  }
+}
+
+/**
+ * Runs the smoke ui test
+ */
+val SmokeUiTest = task<Test>("smokeUiTest") {
+  description = "Gets rid of license agreement, etc."
+  group = "verification"
+  testClassesDirs = sourceSets["uiTest"].output.classesDirs
+  classpath = sourceSets["uiTest"].runtimeClasspath
+  useJUnitPlatform() {
+    includeTags("SmokeTest")
+  }
+  testLogging {
+    events("passed", "skipped", "failed")
+  }
+  extensions.configure(KoverTaskExtension::class) {
+    // set to true to disable instrumentation of this task,
+    // Kover reports will not depend on the results of its execution
+    isDisabled.set(true)
+  }
+}
+
+tasks {
+  withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  }
 }
 
 tasks.downloadRobotServerPlugin {
@@ -256,15 +314,4 @@ tasks.downloadRobotServerPlugin {
 tasks.runIdeForUiTests {
   systemProperty("idea.trust.all.projects", "true")
   systemProperty("ide.show.tips.on.startup.default.value", "false")
-}
-
-tasks {
-  withType<Copy> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-  }
-}
-
-tasks.test {
-  systemProperty("idea.force.use.core.classloader", "true")
-  systemProperty("idea.use.core.classloader.for.plugin.path", "true")
 }

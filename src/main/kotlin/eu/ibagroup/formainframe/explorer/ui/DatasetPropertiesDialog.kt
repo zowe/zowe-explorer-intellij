@@ -20,7 +20,7 @@ import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.r2z.HasMigrated
+import org.zowe.kotlinsdk.HasMigrated
 import javax.swing.JComponent
 
 class DatasetPropertiesDialog(val project: Project?, override var state: DatasetState) : DialogWrapper(project),

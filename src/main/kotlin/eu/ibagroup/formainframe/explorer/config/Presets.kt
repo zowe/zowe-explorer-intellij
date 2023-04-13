@@ -10,20 +10,24 @@
 
 package eu.ibagroup.formainframe.explorer.config
 
-import eu.ibagroup.r2z.AllocationUnit
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.RecordFormat
+import org.zowe.kotlinsdk.AllocationUnit
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.RecordFormat
 
 /**
  * Enum class represents possible preset choices for a dataset
  * @param type - a string representation of a chosen preset
  */
-enum class Presets(val type: String) {
-  CUSTOM_DATASET("CUSTOM DATASET"),
-  SEQUENTIAL_DATASET("SEQUENTIAL DATASET"),
-  PDS_DATASET("PDS DATASET"),
-  PDS_WITH_EMPTY_MEMBER("PDS WITH MEMBER DATASET"),
-  PDS_WITH_SAMPLE_JCL_MEMBER("PDS WITH JCL MEMBER DATASET");
+enum class Presets(private val type: String) {
+  CUSTOM_DATASET("Custom Dataset"),
+  SEQUENTIAL_DATASET("Sequential Dataset"),
+  PDS_DATASET("PDS Dataset"),
+  PDS_WITH_EMPTY_MEMBER("PDS with empty member Dataset"),
+  PDS_WITH_SAMPLE_JCL_MEMBER("PDS with sample JCL member Dataset");
+
+  override fun toString(): String {
+    return type
+  }
 
   companion object {
     /**
@@ -102,18 +106,12 @@ data class PresetPdsDataset(
 /**
  * Open function to get the content of the default JCL member
  */
-fun getSampleJclMemberContent() : String {
-  return "//* THE SAMPLE JOB WHICH RUNS A REXX PGM IN TSO/E ADDRESS SPACE\n" +
-      "//MYJOB    JOB MSGCLASS=A,MSGLEVEL=1,NOTIFY=&SYSUID\n" +
+fun getSampleJclMemberContent(defaultUser: String) : String {
+  return "//* THE SAMPLE JOB WHICH DO NOTHING\n" +
+      "//MYJOB    JOB MSGCLASS=A,MSGLEVEL=1,NOTIFY=${defaultUser}\n" +
       "//*-------------------------------------------------------------------\n" +
-      "//RUNPROG  EXEC PGM=IKJEFT01\n" +
+      "//RUN  EXEC PGM=IEFBR14\n" +
       "//*\n" +
-      "//*        RUN OUR REXX PROGRAM CALLED HELLO IN A TSO/E ENVIRONMENT\n" +
-      "//*\n" +
-      "//SYSPROC  DD DSN=USER.CLIST,DISP=SHR\n" +
-      "//SYSEXEC  DD DSN=USER.EXEC,DISP=SHR\n" +
-      "//SYSTSIN  DD *\n" +
-      "   HELLO\n" +
       "//SYSTSPRT DD SYSOUT=*\n" +
       "//SYSPRINT DD SYSOUT=*\n" +
       "//*--------------------------------------------------------------------\n"

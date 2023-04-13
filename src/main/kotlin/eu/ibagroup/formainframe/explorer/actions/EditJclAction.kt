@@ -20,11 +20,12 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
-import eu.ibagroup.formainframe.dataops.content.synchronizer.changeFileEncodingTo
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicGetJclRecordsParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperation
-import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JobNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.utils.changeFileEncodingTo
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -43,7 +44,7 @@ class EditJclAction : AnAction() {
    * Opens the file in editor
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
     val selected = view.mySelectedNodesData.getOrNull(0)
     val node = selected?.node
     if (node is JobNode) {
@@ -107,7 +108,7 @@ class EditJclAction : AnAction() {
    * Makes action visible only for job context menu in JES explorer
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

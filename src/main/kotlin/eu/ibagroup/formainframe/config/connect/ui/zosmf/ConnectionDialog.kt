@@ -8,28 +8,37 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.connect.ui
+package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
-import eu.ibagroup.formainframe.config.connect.CredentialService
+import eu.ibagroup.formainframe.config.connect.*
+import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialog
+import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialogState
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.InfoOperation
 import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
+import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.utils.validateConnectionName
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateZosmfUrl
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.ChangePassword
+import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
+import java.awt.Point
 import java.util.*
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -40,9 +49,14 @@ import javax.swing.JTextField
 class ConnectionDialog(
   private val crudable: Crudable,
   override var state: ConnectionDialogState = ConnectionDialogState(),
-  project: Project? = null
+  val project: Project? = null
 ) : StatefulDialog<ConnectionDialogState>(project) {
 
+  /**
+   * Private field
+   * In case of DialogMode.UPDATE takes the last successful state from crudable, takes default state otherwise
+   */
+  private val lastSuccessfulState: ConnectionDialogState = if(state.mode == DialogMode.UPDATE) state.connectionConfig.toDialogState(crudable) else ConnectionDialogState()
   companion object {
 
     /** Show Test connection dialog and test the connection regarding the dialog state.
@@ -61,17 +75,30 @@ class ConnectionDialog(
         initialState = initialState,
         factory = { ConnectionDialog(crudable, initialState, project) },
         test = { state ->
-          val throwable = runTask(title = "Testing Connection to ${state.connectionConfig.url}", project = project) {
+          val newTestedConnConfig : ConnectionConfig
+          if (initialState.mode == DialogMode.UPDATE) {
+            val newState = state.clone()
+            newState.initEmptyUuids(crudable)
+            newTestedConnConfig = ConnectionConfig(newState.connectionUuid, newState.connectionName, newState.connectionUrl, newState.isAllowSsl, newState.zVersion)
+            CredentialService.instance.setCredentials(
+              connectionConfigUuid = newState.connectionUuid,
+              username = newState.username,
+              password = newState.password
+            )
+          } else {
+            state.initEmptyUuids(crudable)
+            newTestedConnConfig = state.connectionConfig
+            CredentialService.instance.setCredentials(
+              connectionConfigUuid = state.connectionUuid,
+              username = state.username,
+              password = state.password)
+          }
+          val throwable = runTask(title = "Testing Connection to ${newTestedConnConfig.url}", project = project) {
             return@runTask try {
-              CredentialService.instance.setCredentials(
-                connectionConfigUuid = state.connectionUuid,
-                username = state.username,
-                password = state.password
-              )
               runCatching {
-                service<DataOpsManager>().performOperation(InfoOperation(state.connectionConfig), it)
+                service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
               }.onSuccess {
-                val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(state.connectionConfig))
+                val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
                 state.zVersion = when (systemInfo.zosVersion) {
                   "04.25.00" -> ZVersion.ZOS_2_2
                   "04.26.00" -> ZVersion.ZOS_2_3
@@ -137,6 +164,7 @@ class ConnectionDialog(
   /** Create dialog with the fields */
   override fun createCenterPanel(): JComponent {
     val sameWidthLabelsGroup = "CONNECTION_DIALOG_LABELS_WIDTH_GROUP"
+    lateinit var passField: Cell<JPasswordField>
 
     return panel {
       row {
@@ -183,7 +211,7 @@ class ConnectionDialog(
       row {
         label("Password: ")
           .widthGroup(sameWidthLabelsGroup)
-        cell(JPasswordField())
+        passField = cell(JPasswordField())
           .bindText(state::password)
           .validationOnApply { validateForBlank(it) }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -211,6 +239,76 @@ class ConnectionDialog(
             .bindItem(state::zVersion.toNullableProperty())
             .enabled(false)
         }
+        if (state.zVersion > ZVersion.ZOS_2_4) {
+          row {
+            button("Change user password") {
+              val changePasswordInitState = ChangePasswordDialogState(state.username, state.password, "")
+              val dataOpsManager = service<DataOpsManager>()
+              showUntilDone(
+                initialState = changePasswordInitState,
+                factory = { ChangePasswordDialog(changePasswordInitState, project) },
+                test = { changePasswordState ->
+                  val throwable = runTask(
+                    title = "Changing ${changePasswordState.username} password on ${initialState.connectionUrl}",
+                    project = project
+                  ) {
+                    return@runTask try {
+                      dataOpsManager.performOperation(
+                        operation = ChangePasswordOperation(
+                          request = ChangePassword(
+                            changePasswordState.username,
+                            changePasswordState.oldPassword,
+                            changePasswordState.newPassword
+                          ),
+                          connectionConfig = state.connectionConfig
+                        ),
+                        progressIndicator = it
+                      )
+                      null
+                    } catch (t: Throwable) {
+                      t
+                    }
+                  }
+                  if (throwable != null) {
+                    val errorMessage = throwable.message!!.substring(0, throwable.message!!.indexOf('\n'))
+                    val respMessage = throwable.message!!.substring(
+                      throwable.message!!.indexOf("MESSAGE:"),
+                      throwable.message!!.indexOf('\n', throwable.message!!.indexOf("MESSAGE:"))
+                    )
+                    val okCancelDialog = MessageDialogBuilder
+                      .okCancel(
+                        title = "Error",
+                        message = "${errorMessage}\n\n${respMessage}"
+                      ).icon(AllIcons.General.ErrorDialog)
+                      .run {
+                        ask(project)
+                      }
+                    okCancelDialog
+                  } else {
+                    if (state.username == changePasswordState.username) {
+                      passField.applyToComponent {
+                        this.text = changePasswordState.newPassword
+                        state.password = changePasswordState.newPassword
+                        val balloon = JBPopupFactory.getInstance()
+                          .createHtmlTextBalloonBuilder(
+                            "The password is substituted with the new value",
+                            MessageType.INFO,
+                            null
+                          )
+                          .setHideOnClickOutside(true)
+                          .setHideOnLinkClick(true)
+                          .createBalloon()
+                        val relativePoint = RelativePoint(this, Point(this.width / 2, this.height))
+                        balloon.show(relativePoint, Balloon.Position.below)
+                      }
+                    }
+                    true
+                  }
+                }
+              )
+            }
+          }
+        }
       }
     }
       .withMinimumWidth(500)
@@ -223,6 +321,28 @@ class ConnectionDialog(
       DialogMode.DELETE -> "Delete Connection"
       DialogMode.UPDATE -> "Edit Connection"
       DialogMode.CREATE -> "Add Connection"
+    }
+  }
+
+  /**
+   * Function to be performed when Cancel button is pressed.
+   * Resets the values in connection dialog and connections table model to the last successful state
+   * Updates the credentials to satisfy the last known successful state
+   */
+  override fun doCancelAction() {
+    super.doCancelAction()
+    if (state.mode == DialogMode.UPDATE) {
+      state.connectionName = lastSuccessfulState.connectionName
+      state.connectionUrl = lastSuccessfulState.connectionUrl
+      state.username = username(lastSuccessfulState.connectionConfig)
+      state.password = password(lastSuccessfulState.connectionConfig)
+      state.isAllowSsl = lastSuccessfulState.isAllowSsl
+      state.zVersion = lastSuccessfulState.zVersion
+      CredentialService.instance.setCredentials(
+        connectionConfigUuid = lastSuccessfulState.connectionUuid,
+        username = username(lastSuccessfulState.connectionConfig),
+        password = password(lastSuccessfulState.connectionConfig)
+      )
     }
   }
 

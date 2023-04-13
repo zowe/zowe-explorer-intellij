@@ -21,7 +21,6 @@ import eu.ibagroup.formainframe.config.ws.ui.JesWorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
 import eu.ibagroup.formainframe.config.ws.ui.jes.JesWsDialog
 import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_CONTEXT_MENU
-import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
 
@@ -31,7 +30,6 @@ import eu.ibagroup.formainframe.utils.crudable.getAll
  * @author Valiantsin Krus
  */
 class AddJesWorkingSetAction : AddWsActionBase() {
-  override val explorerView = JES_EXPLORER_VIEW
   override val presentationTextInExplorer = "JES Working Set"
   override val defaultPresentationText = "Create JES Working Set"
 

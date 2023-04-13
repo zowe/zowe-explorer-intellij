@@ -37,11 +37,8 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.explorer.*
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
-import eu.ibagroup.formainframe.utils.getAncestorNodes
-import eu.ibagroup.formainframe.utils.rwLocked
-import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.formainframe.utils.subscribe
 import org.jetbrains.concurrency.AsyncPromise
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
@@ -51,6 +48,14 @@ import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
 val EXPLORER_VIEW = DataKey.create<ExplorerTreeView<*, *, *>>("explorerView")
+
+fun <ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
+  return getData(EXPLORER_VIEW).castOrNull(clazz)
+}
+
+inline fun <reified ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(): ExplorerView? {
+  return getExplorerView(ExplorerView::class.java)
+}
 
 /**
  * Explorer tree view base implementation
@@ -71,15 +76,14 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
   internal val cutProviderUpdater: (List<VirtualFile>) -> Unit
 ) : JBScrollPane(), DataProvider, Disposable {
 
-
   var mySelectedNodesData: List<NodeData<Connection>> by rwLocked(listOf())
   internal val myFsTreeStructure: CommonExplorerTreeStructure<Explorer<Connection, U>>
   internal val myStructure: StructureTreeModel<CommonExplorerTreeStructure<Explorer<Connection, U>>>
   internal val myTree: Tree
   internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
+  internal val ignoreVFileDeleteEvents = AtomicBoolean(false)
 
   protected val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
-  protected val ignoreVFileDeleteEvents = AtomicBoolean(false)
 
   private var treeModel: AsyncTreeModel
 
@@ -222,9 +226,9 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
                 }
 
                 it is VFileDeleteEvent &&
-                  this@ExplorerTreeView
-                    .ignoreVFileDeleteEvents
-                    .compareAndSet(true, true) -> {
+                this@ExplorerTreeView
+                  .ignoreVFileDeleteEvents
+                  .compareAndSet(true, true) -> {
                   null
                 }
 
@@ -254,7 +258,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
           .flatten()
           .distinct()
           .map {
-            myFsTreeStructure.findByVirtualFile(it)
+            myFsTreeStructure.findByVirtualFile(it).reversed()
           }.flatten()
           .distinct()
           .forEach {
@@ -305,7 +309,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
 
   /**
    * Register the tree events listeners. These are both mouse listeners, and the other tree listeners
-   * @param tree the tree where the listeners will be registered
+   * @param tree the tree where listeners will be registered
    */
   private fun registerTreeListeners(tree: DnDAwareTree) {
 

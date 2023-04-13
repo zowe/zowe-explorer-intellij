@@ -21,10 +21,11 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.r2z.CopyDataUSS
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.MoveUssFile
+import eu.ibagroup.formainframe.utils.log
+import org.zowe.kotlinsdk.CopyDataUSS
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.MoveUssFile
 import retrofit2.Call
 import retrofit2.Response
 
@@ -49,6 +50,8 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
             && operation.commonUrls(dataOpsManager).isNotEmpty()
             && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
+
+  override val log = log<UssToUssFileMover>()
 
   /**
    * Proceeds move/copy of uss file to uss directory

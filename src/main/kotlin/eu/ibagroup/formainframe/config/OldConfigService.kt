@@ -13,6 +13,10 @@ package eu.ibagroup.formainframe.config
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 
+/**
+ * Config service to read old configs.
+ * @author Valiantsin Krus
+ */
 interface OldConfigService : PersistentStateComponent<ConfigState> {
   companion object {
     @JvmStatic

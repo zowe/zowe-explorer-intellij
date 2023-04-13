@@ -31,7 +31,7 @@ import eu.ibagroup.formainframe.ui.build.tso.ui.TSOConsoleView
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.subscribe
-import eu.ibagroup.r2z.TsoResponse
+import org.zowe.kotlinsdk.TsoResponse
 import java.net.ConnectException
 
 /**
@@ -363,19 +363,29 @@ class TSOWindowFactory : ToolWindowFactory {
         ) { }
 
         override fun close(project: Project, session: TSOConfigWrapper) {
-          runCatching {
-            service<DataOpsManager>().performOperation(
-              TsoOperation(
-                state = session,
-                mode = TsoOperationMode.STOP
-              )
-            )
-          }.onSuccess {
-            tsoSessionToConfigMap.remove(session.getTSOResponse().servletKey)
-          }.onFailure {
-            // We don't want exception to be thrown in this case which will be reported as IDE error. Just remove the session from config map
-            tsoSessionToConfigMap.remove(session.getTSOResponse().servletKey)
-          }
+          /**
+           * z/OSMF can be down due to VPN issues (if any) which causes the IDE to be frozen for ~20-30 seconds while closing the toolWindow content.
+           * We don't want this behavior, so let's run the request in the separate thread.
+           * If it fails, do not report the failure as IDE error and just remove the failed session from the session map
+           */
+          val closeThread = Thread(object : Runnable {
+            override fun run() {
+              runCatching {
+                service<DataOpsManager>().performOperation(
+                  TsoOperation(
+                    state = session,
+                    mode = TsoOperationMode.STOP
+                  )
+                )
+              }.onSuccess {
+                tsoSessionToConfigMap.remove(session.getTSOResponse().servletKey)
+              }.onFailure {
+                // We don't want exception to be thrown in this case which will be reported as IDE error. Just remove the session from config map
+                tsoSessionToConfigMap.remove(session.getTSOResponse().servletKey)
+              }
+            }
+          })
+          closeThread.start()
         }
       }
     )

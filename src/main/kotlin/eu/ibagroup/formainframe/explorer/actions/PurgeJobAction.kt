@@ -15,9 +15,9 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
-import eu.ibagroup.r2z.ExecData
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.Job
+import org.zowe.kotlinsdk.ExecData
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.Job
 
 /** An action to purge a job */
 class PurgeJobAction : AnAction() {
@@ -31,7 +31,7 @@ class PurgeJobAction : AnAction() {
    * After completion shows a notification
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: e.getData(JOBS_LOG_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -139,7 +139,7 @@ class PurgeJobAction : AnAction() {
    * or from the JES Explorer by clicking on the corresponding job
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: e.getData(JOBS_LOG_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

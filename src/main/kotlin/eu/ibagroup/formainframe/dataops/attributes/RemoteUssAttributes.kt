@@ -14,9 +14,9 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import eu.ibagroup.formainframe.utils.Copyable
 import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.r2z.FileMode
-import eu.ibagroup.r2z.UssFile
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.FileMode
+import org.zowe.kotlinsdk.UssFile
+import org.zowe.kotlinsdk.XIBMDataType
 import java.nio.charset.Charset
 
 private const val CURRENT_DIR_NAME = "."

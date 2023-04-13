@@ -18,10 +18,11 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.MessageType
-import eu.ibagroup.r2z.TsoApi
-import eu.ibagroup.r2z.TsoData
-import eu.ibagroup.r2z.TsoResponse
+import eu.ibagroup.formainframe.utils.log
+import org.zowe.kotlinsdk.MessageType
+import org.zowe.kotlinsdk.TsoApi
+import org.zowe.kotlinsdk.TsoData
+import org.zowe.kotlinsdk.TsoResponse
 import io.ktor.util.*
 import retrofit2.Response
 import java.nio.charset.Charset
@@ -42,6 +43,7 @@ class TsoOperationRunnerFactory : OperationRunnerFactory {
 class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
   override val operationClass = TsoOperation::class.java
   override val resultClass = TsoResponse::class.java
+  override val log = log<TsoOperationRunner>()
 
   /**
    * Method determines if an operation can run
@@ -136,16 +138,6 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
       }
     }
     return response?.body() ?: throw Exception("Cannot retrieve response from server.")
-  }
-
-  /**
-   * Method is used to generate default Application ID needed for TSO request
-   * @return random byte string for application ID
-   */
-  private fun generateDefaultAppId(): String {
-    val array = ByteArray(8)
-    Random().nextBytes(array)
-    return String(array, Charset.defaultCharset())
   }
 
 }

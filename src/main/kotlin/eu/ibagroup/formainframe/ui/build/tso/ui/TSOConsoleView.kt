@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.ui.build.tso.ui
 
+//import com.intellij.ui.layout.cellPanel
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.project.Project
@@ -19,33 +20,36 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.dsl.builder.panel
-//import com.intellij.ui.layout.cellPanel
 import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
 import eu.ibagroup.formainframe.ui.build.TerminalCommandReceiver
 import eu.ibagroup.formainframe.ui.build.tso.SESSION_COMMAND_ENTERED
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.utils.InputRecognizer
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.awt.BorderLayout
-import javax.swing.*
+import javax.swing.JComboBox
+import javax.swing.JComponent
 
 /**
  * Base class which represents TSO console view tool window. Basic TSO console view UI defined here
  * @param project - represents a root project
  * @param tsoSession - wrapper instance of TSO session response
  */
-class TSOConsoleView (
+class TSOConsoleView(
   private val project: Project,
   private var tsoSession: TSOConfigWrapper
-  ) : ExecutionConsole, JBPanel<TSOConsoleView>() {
+) : ExecutionConsole, JBPanel<TSOConsoleView>() {
 
   private lateinit var tsoMessageType: JComboBox<MessageType>
   private lateinit var tsoDataType: JComboBox<MessageData>
   private val tsoWidthGroup: String = "TSO_WIDTH_GROUP"
 
-  private val tsoMessageTypes: List<MessageType> = listOf(MessageType.TSO_MESSAGE, MessageType.TSO_PROMPT, MessageType.TSO_RESPONSE)
-  private val tsoDataTypes: List<MessageData> = listOf(MessageData.DATA_DATA, MessageData.DATA_HIDDEN, MessageData.DATA_ACTION)
+  private val tsoMessageTypes: List<MessageType> =
+    listOf(MessageType.TSO_MESSAGE, MessageType.TSO_PROMPT, MessageType.TSO_RESPONSE)
+  private val tsoDataTypes: List<MessageData> =
+    listOf(MessageData.DATA_DATA, MessageData.DATA_HIDDEN, MessageData.DATA_ACTION)
 
   private var tsoMessageTypeComboBoxModel = CollectionComboBoxModel(tsoMessageTypes)
   private var tsoDataTypeComboBoxModel = CollectionComboBoxModel(tsoDataTypes)
@@ -54,6 +58,8 @@ class TSOConsoleView (
   private val consoleView: TerminalExecutionConsole = TerminalExecutionConsole(project, null)
   private val terminalCommandReceiver: TerminalCommandReceiver = TerminalCommandReceiver(consoleView)
   private val processHandler: ProcessHandler = terminalCommandReceiver.processHandler
+
+  private val log = log<TSOConsoleView>()
 
   /**
    * UI panel which contains 2 combo boxes of TSO message type and message data type
@@ -90,7 +96,7 @@ class TSOConsoleView (
     terminalCommandReceiver.inputRecognizer = inputRecognizer
 
     terminalCommandReceiver.waitForCommandInput { enteredCommand ->
-      println("ENTERED COMMAND: $enteredCommand")
+      log.info("ENTERED COMMAND: $enteredCommand")
       sendTopic(SESSION_COMMAND_ENTERED).processCommand(
         project,
         this,
@@ -115,7 +121,7 @@ class TSOConsoleView (
   /**
    * Getter for TSO session wrapper class for each TSO session created
    */
-  fun getTsoSession() : TSOConfigWrapper {
+  fun getTsoSession(): TSOConfigWrapper {
     return tsoSession
   }
 

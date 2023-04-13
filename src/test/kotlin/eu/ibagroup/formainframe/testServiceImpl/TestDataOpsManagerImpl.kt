@@ -18,7 +18,7 @@ import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
 import io.mockk.every
 import io.mockk.mockk
 
-class TestDataOpsManagerImpl(override val componentManager: ComponentManager) : DataOpsManager {
+open class TestDataOpsManagerImpl(override val componentManager: ComponentManager) : DataOpsManager {
 
   /**
    * Test instance for the DataOpsManager.
@@ -33,8 +33,8 @@ class TestDataOpsManagerImpl(override val componentManager: ComponentManager) : 
       TODO("Not yet implemented")
     }
 
-    override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
-      TODO("Not yet implemented")
+    override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+      throw NotImplementedError("An operation should be implemented during the test execution")
     }
 
     override fun tryToGetFile(attributes: FileAttributes): VirtualFile? {

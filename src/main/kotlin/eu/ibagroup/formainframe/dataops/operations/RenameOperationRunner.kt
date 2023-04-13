@@ -20,8 +20,9 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 
 /**
  * Class which represents factory for rename operation runner. Defined in plugin.xml
@@ -32,6 +33,7 @@ class RenameOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
+
 /**
  * Class which represents rename operation runner
  */
@@ -40,6 +42,8 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
   override val operationClass = RenameOperation::class.java
 
   override val resultClass = Unit::class.java
+
+  override val log = log<RenameOperationRunner>()
 
   /**
    * Determined if operation can be run on selected object
@@ -95,6 +99,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
         parentAttributes.requesters.map {
           try {
             progressIndicator.checkCanceled()
+            log.info("Checking for duplicate names in dataset ${parentAttributes.datasetInfo.name}")
             if (operation.requester is DuplicateMemberAction) {
               val response = api<DataAPI>(it.connectionConfig).copyToDatasetMember(
                 authorizationToken = it.connectionConfig.authToken,

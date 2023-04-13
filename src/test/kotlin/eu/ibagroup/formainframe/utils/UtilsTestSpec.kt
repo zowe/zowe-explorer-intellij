@@ -10,9 +10,10 @@
 
 package eu.ibagroup.formainframe.utils
 
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.ui.components.JBTextField
-import eu.ibagroup.formainframe.config.ConfigState
 import eu.ibagroup.formainframe.config.ConfigStateV2
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.makeCrudableWithoutListeners
@@ -23,15 +24,21 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
-import eu.ibagroup.r2z.DatasetOrganization
-import eu.ibagroup.r2z.annotations.ZVersion
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.spyk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.annotations.ZVersion
+import retrofit2.Call
+import java.time.Duration
+import java.time.Instant.now
 import java.util.stream.Stream
 import javax.swing.JTextField
 
@@ -374,7 +381,8 @@ class UtilsTestSpec : ShouldSpec({
       should("validate wrong URL") {
         component.text = "wrong url\""
         val actual = validateZosmfUrl(component)
-        val expected = ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
+        val expected =
+          ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
 
         assertSoftly {
           actual shouldBe expected
@@ -671,24 +679,24 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
     }
-    context("validateForGreaterValue") {
+    context("validateForGreaterOrEqualValue") {
       val component = JTextField()
 
-      should("validate that the number is greater than the provided one") {
+      should("validate that the number is greater than or equal to the provided one") {
         component.text = "15"
         val value = 10
-        val actual = validateForGreaterValue(component, value)
+        val actual = validateForGreaterOrEqualValue(component, value)
         val expected = null
 
         assertSoftly {
           actual shouldBe expected
         }
       }
-      should("validate that the number is not greater than the provided one") {
+      should("validate that the number is not greater than or equal to the provided one") {
         component.text = "5"
         val value = 10
-        val actual = validateForGreaterValue(component, value)
-        val expected = ValidationInfo("Enter a number grater than $value", component)
+        val actual = validateForGreaterOrEqualValue(component, value)
+        val expected = ValidationInfo("Enter a number greater than or equal to $value", component)
 
         assertSoftly {
           actual shouldBe expected
@@ -728,11 +736,51 @@ class UtilsTestSpec : ShouldSpec({
     }
   }
   context("utils module: retrofitUtils") {
-    // cancelByIndicator
-    should("cancel the call on the progress indicator finish") {}
+    should("cancel the call due to progress indicator is cancelled") {
+      lateinit var delegate: ProgressIndicator
+      var isCancelDelegateCalled = false
+
+      val mockCall = mockk<Call<Any>>()
+      val mockProgressIndicator = mockk<ProgressIndicatorEx>()
+      every { mockCall.cancel() } answers {
+        isCancelDelegateCalled = true
+      }
+      every { mockProgressIndicator.addStateDelegate(any()) } answers {
+        delegate = firstArg()
+      }
+
+      mockCall.cancelByIndicator(mockProgressIndicator)
+      delegate.cancel()
+
+      assert(isCancelDelegateCalled)
+    }
+    should("not cancel the call when the processing is finished") {}
   }
   context("utils module: miscUtils") {
-    // debounce
-    should("run a block of code after the debounce action") {}
+    lateinit var test: String
+    lateinit var duration: Duration
+
+    should("run a block of code after the debounce action") {
+
+      withContext(Dispatchers.IO) {
+        val started = now()
+        debounce(500) {
+          duration = Duration.between(started, now())
+          test = "debounce block"
+        }.invoke()
+        Thread.sleep(1000)
+      }
+
+      assertSoftly {
+        test shouldBe "debounce block"
+        duration.toMillis() shouldBeGreaterThan 500
+      }
+    }
+  }
+  context("utils module: EncodingUtil") {
+    // saveIn
+    should("convert file content to new encoding") {}
+    // reloadIn
+    should("reload file content to new encoding") {}
   }
 })

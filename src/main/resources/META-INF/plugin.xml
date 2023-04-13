@@ -108,11 +108,14 @@ Example of how to see the output:<br/>
         <listener class="eu.ibagroup.formainframe.editor.ProjectCloseListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
-        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
+        <listener class="eu.ibagroup.formainframe.editor.FileEditorBeforeEventsListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
 
-        <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
-                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+        <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+
+        <listener class="eu.ibagroup.formainframe.editor.FileSelectionChangeListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="eu.ibagroup.formainframe">
@@ -214,10 +217,10 @@ Example of how to see the output:<br/>
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToUssDirMoverFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileToPdsMoverFactory"/>
 
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemUssDirMoverFactory"/>
@@ -256,6 +259,9 @@ Example of how to see the output:<br/>
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
+        <operationRunner
+                implementation="eu.ibagroup.formainframe.dataops.operations.ChangePasswordOperationRunnerFactory"/>
+
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.TsoOperationRunnerFactory"/>
 
         <operationRunner
@@ -289,9 +295,7 @@ Example of how to see the output:<br/>
 
         <postStartupActivity implementation="eu.ibagroup.formainframe.config.ConfigStartupActivity"/>
 
-        <postStartupActivity implementation="eu.ibagroup.formainframe.editor.ProjectStartupActivity"/>
-
-        <applicationConfigurable id="configurable.mainframe.explorer"
+        <applicationConfigurable id="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"
                                  displayName="For Mainframe"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
 
@@ -362,14 +366,16 @@ Example of how to see the output:<br/>
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>
 
-        <typedHandler implementation="eu.ibagroup.formainframe.explorer.actions.ChangeContentAction"/>
+        <applicationService serviceInterface="eu.ibagroup.formainframe.editor.ChangeContentService"
+                            serviceImplementation="eu.ibagroup.formainframe.editor.ChangeContentServiceImpl"/>
 
-        <statusBarWidgetFactory id="MFLineSeparatorWidget"
-                implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"/>
+        <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
+                                implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
+                                order="after positionWidget"/>
 
-        <statusBarWidgetFactory id="MFEncodingWidget"
+        <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
-                                order="after MFLineSeparatorWidget"/>
+                                order="after eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory, before powerStatus"/>
     </extensions>
 
     <actions>
