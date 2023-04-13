@@ -781,7 +781,7 @@ fun allocatePDSAndCreateMask(
             clickButton("OK")
             Thread.sleep(10000)
         }
-        find<ContainerFixture>(byXpath("//div[@class='MyDialog']")).findText("Dataset $datasetName Has Been Created")
+        find<ContainerFixture>(byXpath("//div[@class='MyDialog']")).findText("Dataset ${datasetName.uppercase()} Has Been Created")
 
         if (maskName != null) {
             clickButton("No")
