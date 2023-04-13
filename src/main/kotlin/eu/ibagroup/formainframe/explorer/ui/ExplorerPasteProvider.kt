@@ -149,7 +149,7 @@ class ExplorerPasteProvider : PasteProvider {
               )
             )
         }
-        explorerView.ignoreVFileDeleteEvents.compareAndSet(false, true)
+        explorerView.ignoreVFSChangeEvents.compareAndSet(false, true)
         it.text = "${op.source.name} to ${op.destination.name}"
         runCatching {
           dataOpsManager.performOperation(
