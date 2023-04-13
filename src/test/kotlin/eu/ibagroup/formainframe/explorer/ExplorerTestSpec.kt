@@ -10,10 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer
 
-import com.intellij.ide.dnd.DnDAction
-import com.intellij.ide.dnd.DnDDragStartBean
-import com.intellij.ide.dnd.DnDEvent
-import com.intellij.ide.dnd.DnDSource
+import com.intellij.ide.dnd.*
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
@@ -22,12 +19,12 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.treeStructure.Tree
-import eu.ibagroup.formainframe.common.ui.getVirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.ConfigStateV2
 import eu.ibagroup.formainframe.config.configCrudable
@@ -50,10 +47,12 @@ import io.mockk.*
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.datatransfer.DataFlavor
+import java.io.File
 import java.util.*
 import java.util.stream.Stream
 import javax.swing.JRootPane
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
 class ExplorerTestSpec : ShouldSpec({
@@ -338,6 +337,7 @@ class ExplorerTestSpec : ShouldSpec({
       }
     }
   }
+
   context("explorer module: ui/FileExplorerViewDropTarget") {
 
     var isUpdatePerformed = false
@@ -888,6 +888,90 @@ class ExplorerTestSpec : ShouldSpec({
 
     }
   }
+
+  context("explorer module: ui/ExplorerDropTarget additional test") {
+    context("getSourcesTargetAndBounds") {
+      should("perform drop with defined getSourcesTargetAndBounds") {
+        var isDropPossibleForEvent = false
+        val mockedDnDEvent = mockk<DnDEvent>()
+        val mockedPoint = Point(500, 220)
+        mockkObject(mockedPoint)
+
+        every { mockedDnDEvent.setDropPossible(any() as Boolean, any() as String) } answers {
+          isDropPossibleForEvent = false
+        }
+        every { mockedDnDEvent.point } returns mockedPoint
+
+        val mockedJTree = mockk<Tree>()
+        val mockedFileExplorer = mockk<Explorer<ConnectionConfig, FilesWorkingSetImpl>>()
+        val mockedCopyPasterProvider = mockk<FileExplorerView.ExplorerCopyPasteSupport>()
+        val mockedProject = mockk<Project>()
+        every { mockedCopyPasterProvider.project } returns mockedProject
+        every { ProjectViewImpl.getInstance(mockedProject) } returns mockk()
+        every { ProjectViewImpl.getInstance(mockedProject).currentProjectViewPane } returns mockk()
+        every { ProjectViewImpl.getInstance(mockedProject).currentProjectViewPane.tree } returns mockedJTree
+        every { mockedDnDEvent.currentOverComponent } returns mockedJTree
+        every { mockedJTree.getClosestPathForLocation(any() as Int, any() as Int) } returns TreePath(arrayOf("project", "project", "test1", "test2"))
+        every { mockedJTree.getPathBounds(any() as TreePath) } returns Rectangle(50, 200, 100, 50)
+        val mockedDnDWrapper = FileExplorerViewDragSource.ExplorerTransferableWrapper(mockedJTree)
+        val mockedDefaultWrapper =  object : TransferableWrapper {
+          override fun asFileList(): MutableList<File>? {
+            TODO("Not yet implemented")
+          }
+          override fun getTreeNodes(): Array<TreeNode>? {
+            TODO("Not yet implemented")
+          }
+          override fun getPsiElements(): Array<PsiElement>? {
+            TODO("Not yet implemented")
+          }
+        }
+        mockkObject(mockedDnDWrapper)
+        mockkObject(mockedDefaultWrapper)
+        every { mockedDnDWrapper.treePaths } returns arrayOf(TreePath(arrayOf("u/root", "/test_1", "/u/ZOSMFAD", "test_2")))
+        every { mockedDefaultWrapper.treePaths } returns arrayOf(TreePath(arrayOf("u/root", "/test_1", "/u/ZOSMFAD", "test_2")))
+
+        val fileExplorerViewDropTarget = spyk(
+          FileExplorerViewDropTarget(mockedJTree, mockedFileExplorer, mockedCopyPasterProvider), recordPrivateCalls = true
+        )
+
+        mockkStatic(FileExplorerViewDragSource::class)
+        mockkStatic(FileExplorerViewDragSource.ExplorerTransferableWrapper::class)
+
+        every { mockedCopyPasterProvider.pasteProvider } returns mockk()
+        every { mockedCopyPasterProvider.copyProvider } returns mockk()
+        every { mockedCopyPasterProvider.cutProvider } returns mockk()
+
+        every { mockedCopyPasterProvider.project } returns mockk()
+        every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns true
+        every { mockedCopyPasterProvider.copyProvider.isCopyEnabled(any() as DataContext) } returns true
+
+        var isCutPerformed: Boolean
+        var isCopyPerformed: Boolean
+        var isPastePerformed: Boolean
+
+        every { mockedCopyPasterProvider.cutProvider.performCut(any() as DataContext) } answers {
+          isCutPerformed = true
+        }
+        every { mockedCopyPasterProvider.copyProvider.performCopy(any() as DataContext) } answers {
+          isCopyPerformed = true
+        }
+        every { mockedCopyPasterProvider.pasteProvider.performPaste(any() as DataContext) } answers {
+          isPastePerformed = true
+        }
+
+        every { mockedDnDEvent.attachedObject } returns mockedDefaultWrapper
+
+        isCopyPerformed = false
+        isPastePerformed = false
+        fileExplorerViewDropTarget.drop(mockedDnDEvent)
+        assertSoftly {
+          isCopyPerformed shouldBe true
+          isPastePerformed shouldBe true
+        }
+      }
+    }
+  }
+
   context("explorer module: ui/ExplorerPasteProvider") {
     // performPaste
     should("perform paste without conflicts") {}
