@@ -889,27 +889,39 @@ class ExplorerTestSpec : ShouldSpec({
     }
   }
 
-  context("explorer module: ui/ExplorerDropTarget additional test") {
+  context("explorer module: ui/ExplorerDropTarget additional tests") {
     context("getSourcesTargetAndBounds") {
-      should("perform drop with defined getSourcesTargetAndBounds") {
-        var isDropPossibleForEvent = false
-        val mockedDnDEvent = mockk<DnDEvent>()
+
+      val mockedDnDEvent = mockk<DnDEvent>()
+      var isDropPossibleForEvent = false
+      every { mockedDnDEvent.setDropPossible(any() as Boolean, any() as String) } answers {
+        isDropPossibleForEvent = false
+      }
+      val mockedJTree = mockk<Tree>()
+      val mockedProjectTree = mockk<Tree>()
+      val mockedFileExplorer = mockk<Explorer<ConnectionConfig, FilesWorkingSetImpl>>()
+      val mockedCopyPasterProvider = mockk<FileExplorerView.ExplorerCopyPasteSupport>()
+      val mockedProject = mockk<Project>()
+
+      var isCutPerformed = false
+      var isCopyPerformed = false
+      var isPastePerformed = false
+
+      beforeEach {
+        isCutPerformed = false
+        isCopyPerformed = false
+        isPastePerformed = false
+      }
+
+      val fileExplorerViewDropTarget = spyk(
+        FileExplorerViewDropTarget(mockedJTree, mockedFileExplorer, mockedCopyPasterProvider), recordPrivateCalls = true
+      )
+
+      should("perform drop with defined getSourcesTargetAndBounds when tree is myTree") {
         val mockedPoint = Point(500, 220)
         mockkObject(mockedPoint)
 
-        every { mockedDnDEvent.setDropPossible(any() as Boolean, any() as String) } answers {
-          isDropPossibleForEvent = false
-        }
         every { mockedDnDEvent.point } returns mockedPoint
-
-        val mockedJTree = mockk<Tree>()
-        val mockedFileExplorer = mockk<Explorer<ConnectionConfig, FilesWorkingSetImpl>>()
-        val mockedCopyPasterProvider = mockk<FileExplorerView.ExplorerCopyPasteSupport>()
-        val mockedProject = mockk<Project>()
-        every { mockedCopyPasterProvider.project } returns mockedProject
-        every { ProjectViewImpl.getInstance(mockedProject) } returns mockk()
-        every { ProjectViewImpl.getInstance(mockedProject).currentProjectViewPane } returns mockk()
-        every { ProjectViewImpl.getInstance(mockedProject).currentProjectViewPane.tree } returns mockedJTree
         every { mockedDnDEvent.currentOverComponent } returns mockedJTree
         every { mockedJTree.getClosestPathForLocation(any() as Int, any() as Int) } returns TreePath(arrayOf("project", "project", "test1", "test2"))
         every { mockedJTree.getPathBounds(any() as TreePath) } returns Rectangle(50, 200, 100, 50)
@@ -930,10 +942,6 @@ class ExplorerTestSpec : ShouldSpec({
         every { mockedDnDWrapper.treePaths } returns arrayOf(TreePath(arrayOf("u/root", "/test_1", "/u/ZOSMFAD", "test_2")))
         every { mockedDefaultWrapper.treePaths } returns arrayOf(TreePath(arrayOf("u/root", "/test_1", "/u/ZOSMFAD", "test_2")))
 
-        val fileExplorerViewDropTarget = spyk(
-          FileExplorerViewDropTarget(mockedJTree, mockedFileExplorer, mockedCopyPasterProvider), recordPrivateCalls = true
-        )
-
         mockkStatic(FileExplorerViewDragSource::class)
         mockkStatic(FileExplorerViewDragSource.ExplorerTransferableWrapper::class)
 
@@ -944,10 +952,6 @@ class ExplorerTestSpec : ShouldSpec({
         every { mockedCopyPasterProvider.project } returns mockk()
         every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns true
         every { mockedCopyPasterProvider.copyProvider.isCopyEnabled(any() as DataContext) } returns true
-
-        var isCutPerformed: Boolean
-        var isCopyPerformed: Boolean
-        var isPastePerformed: Boolean
 
         every { mockedCopyPasterProvider.cutProvider.performCut(any() as DataContext) } answers {
           isCutPerformed = true
@@ -961,12 +965,108 @@ class ExplorerTestSpec : ShouldSpec({
 
         every { mockedDnDEvent.attachedObject } returns mockedDefaultWrapper
 
-        isCopyPerformed = false
-        isPastePerformed = false
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
         assertSoftly {
           isCopyPerformed shouldBe true
           isPastePerformed shouldBe true
+        }
+      }
+
+      should("perform drop with defined getSourcesTargetAndBounds when tree is mot myTree, but project tree is null") {
+        every { mockedDnDEvent.currentOverComponent } returns mockedProjectTree
+        fileExplorerViewDropTarget.drop(mockedDnDEvent)
+        assertSoftly {
+          isDropPossibleForEvent shouldBe false
+          isCutPerformed shouldBe false
+          isCopyPerformed shouldBe false
+          isPastePerformed shouldBe false
+        }
+      }
+
+      should("perform drop with defined getSourcesTargetAndBounds when tree is project tree") {
+        every { mockedCopyPasterProvider.project } returns mockedProject
+        every { ProjectViewImpl.getInstance(mockedProject) } returns mockk()
+        every { ProjectViewImpl.getInstance(mockedProject).currentProjectViewPane } returns mockk()
+        every { ProjectViewImpl.getInstance(mockedProject).currentProjectViewPane.tree } returns mockedProjectTree
+        every { mockedDnDEvent.currentOverComponent } returns mockedProjectTree
+        every { mockedProjectTree.getClosestPathForLocation(any() as Int, any() as Int) } returns TreePath(arrayOf("project", "project", "test1", "test2"))
+        every { mockedProjectTree.getPathBounds(any() as TreePath) } returns Rectangle(50, 200, 100, 50)
+        fileExplorerViewDropTarget.drop(mockedDnDEvent)
+        assertSoftly {
+          isCopyPerformed shouldBe true
+          isPastePerformed shouldBe true
+        }
+      }
+
+      should("perform drop with defined getSourcesTargetAndBounds when event tree is new tree, but current tree is the project tree") {
+        every { mockedDnDEvent.currentOverComponent } returns mockk()
+        fileExplorerViewDropTarget.drop(mockedDnDEvent)
+        assertSoftly {
+          isCutPerformed shouldBe false
+          isCopyPerformed shouldBe false
+          isPastePerformed shouldBe false
+        }
+      }
+
+      should("perform drop with defined getSourcesTargetAndBounds when bounds are not suitable") {
+        every { mockedDnDEvent.currentOverComponent } returns mockedProjectTree
+        every { mockedProjectTree.getPathBounds(any() as TreePath) } returns Rectangle(50, 400, 100, 50)
+        fileExplorerViewDropTarget.drop(mockedDnDEvent)
+        assertSoftly {
+          isCutPerformed shouldBe false
+          isCopyPerformed shouldBe false
+          isPastePerformed shouldBe false
+        }
+      }
+
+      should("perform drop with defined getSourcesTargetAndBounds when project is null to get project tree") {
+        every { mockedCopyPasterProvider.project } returns null
+        fileExplorerViewDropTarget.drop(mockedDnDEvent)
+        assertSoftly {
+          isCutPerformed shouldBe false
+          isCopyPerformed shouldBe false
+          isPastePerformed shouldBe false
+        }
+      }
+
+      should("perform drop with defined getSourcesTargetAndBounds when project tree getClosestPathForLocation returns null") {
+        every { mockedCopyPasterProvider.project } returns mockedProject
+        every { mockedProjectTree.getClosestPathForLocation(any() as Int, any() as Int) } returns null
+        fileExplorerViewDropTarget.drop(mockedDnDEvent)
+        assertSoftly {
+          isCutPerformed shouldBe false
+          isCopyPerformed shouldBe false
+          isPastePerformed shouldBe false
+        }
+      }
+
+      should("perform drop with defined getSourcesTargetAndBounds when transfer data (sources) is not an instance of TransferableWrapper") {
+        every { mockedProjectTree.getClosestPathForLocation(any() as Int, any() as Int) } returns TreePath(arrayOf("project", "project", "test1", "test2"))
+        every { mockedProjectTree.getPathBounds(any() as TreePath) } returns Rectangle(50, 200, 100, 50)
+        every { mockedDnDEvent.attachedObject } answers {
+          object : DnDSource {
+            override fun canStartDragging(action: DnDAction?, dragOrigin: Point): Boolean {
+              TODO("Not yet implemented")
+            }
+            override fun startDragging(action: DnDAction?, dragOrigin: Point): DnDDragStartBean {
+              TODO("Not yet implemented")
+            }
+          }
+        }
+        fileExplorerViewDropTarget.drop(mockedDnDEvent)
+        assertSoftly {
+          isCopyPerformed shouldBe true
+          isPastePerformed shouldBe true
+        }
+      }
+
+      should("perform drop with defined getSourcesTargetAndBounds when current event point is null") {
+        every { mockedDnDEvent.point } returns null
+        fileExplorerViewDropTarget.drop(mockedDnDEvent)
+        assertSoftly {
+          isCutPerformed shouldBe false
+          isCopyPerformed shouldBe false
+          isPastePerformed shouldBe false
         }
       }
     }
