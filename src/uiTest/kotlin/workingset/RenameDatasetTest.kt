@@ -525,31 +525,6 @@ class RenameDatasetTest {
         allocateMemberForPDS(pdsName, memberName, projectName, fixtureStack, remoteRobot)
     }
 
-    private fun listDS(dsName: String): String {
-        return "{\n" +
-                "      \"dsname\": \"${dsName}\",\n" +
-                "      \"blksz\": \"3200\",\n" +
-                "      \"catnm\": \"TEST.CATALOG.MASTER\",\n" +
-                "      \"cdate\": \"2021/11/15\",\n" +
-                "      \"dev\": \"3390\",\n" +
-                "      \"dsntp\": \"PDS\",\n" +
-                "      \"dsorg\": \"PO\",\n" +
-                "      \"edate\": \"***None***\",\n" +
-                "      \"extx\": \"1\",\n" +
-                "      \"lrecl\": \"255\",\n" +
-                "      \"migr\": \"NO\",\n" +
-                "      \"mvol\": \"N\",\n" +
-                "      \"ovf\": \"NO\",\n" +
-                "      \"rdate\": \"2021/11/17\",\n" +
-                "      \"recfm\": \"VB\",\n" +
-                "      \"sizex\": \"10\",\n" +
-                "      \"spacu\": \"TRACKS\",\n" +
-                "      \"used\": \"1\",\n" +
-                "      \"vol\": \"TESTVOL\",\n" +
-                "      \"vols\": \"TESTVOL\"\n" +
-                "    },"
-    }
-
     private fun buildFinalListDatasetJson(): String {
         var result = "{}"
         if (mapListDatasets.isNotEmpty()) {

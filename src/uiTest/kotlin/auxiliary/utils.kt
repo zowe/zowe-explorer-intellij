@@ -22,7 +22,7 @@ import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
 import com.intellij.remoterobot.utils.keyboard
 import com.intellij.remoterobot.utils.waitFor
-import eu.ibagroup.r2z.zowe.MockResponseDispatcher
+import testutils.MockResponseDispatcher
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.string.shouldContain
@@ -951,4 +951,32 @@ fun createWsAndMask(
       closableFixtureCollector.closeOnceIfExists(CreateMaskDialog.name)
     }
   }
+}
+
+/**
+ * Creates json to list dataset.
+ */
+fun listDS(dsName: String): String {
+    return "{\n" +
+            "      \"dsname\": \"${dsName}\",\n" +
+            "      \"blksz\": \"3200\",\n" +
+            "      \"catnm\": \"TEST.CATALOG.MASTER\",\n" +
+            "      \"cdate\": \"2021/11/15\",\n" +
+            "      \"dev\": \"3390\",\n" +
+            "      \"dsntp\": \"PDS\",\n" +
+            "      \"dsorg\": \"PO\",\n" +
+            "      \"edate\": \"***None***\",\n" +
+            "      \"extx\": \"1\",\n" +
+            "      \"lrecl\": \"255\",\n" +
+            "      \"migr\": \"NO\",\n" +
+            "      \"mvol\": \"N\",\n" +
+            "      \"ovf\": \"NO\",\n" +
+            "      \"rdate\": \"2021/11/17\",\n" +
+            "      \"recfm\": \"VB\",\n" +
+            "      \"sizex\": \"10\",\n" +
+            "      \"spacu\": \"TRACKS\",\n" +
+            "      \"used\": \"1\",\n" +
+            "      \"vol\": \"TESTVOL\",\n" +
+            "      \"vols\": \"TESTVOL\"\n" +
+            "    },"
 }

@@ -48,7 +48,7 @@ class AllocateDatasetTest {
     private var datasetsToBeDeleted = mutableListOf<String>()
 
     //TODO change message when ijmp-907 is fixed
-    private val numberGreaterThanOneMsg = "Enter a number grater than 1"
+    private val numberGreaterThanOneMsg = "Enter a number greater than or equal to 1"
     private val enterPositiveNumberMsg = "Enter a positive number"
     private var mapListDatasets = mutableMapOf<String, String>()
 

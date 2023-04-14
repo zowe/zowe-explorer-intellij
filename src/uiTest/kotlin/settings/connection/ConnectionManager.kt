@@ -17,7 +17,6 @@ import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
-import testutils.MockResponseDispatcher
 import io.kotest.matchers.string.shouldContain
 import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
@@ -553,7 +552,7 @@ class ConnectionManager {
   @Order(15)
   fun testDeleteConnectionWithWSandJWS(remoteRobot: RemoteRobot) = with(remoteRobot) {
     val testUsername = "testuser"
-    val connectionName = "testDeleteConnectionWithWSandJWS connection"
+    val connectionName = "new connection"
     responseDispatcher.injectEndpoint(
       "testAddValidConnection_info",
       { it?.requestLine?.contains("zosmf/info") ?: false },
@@ -627,6 +626,11 @@ class ConnectionManager {
     remoteRobot: RemoteRobot
   ) =
     with(remoteRobot) {
+      responseDispatcher.injectEndpoint(
+        "createJesWorkingSet_restjobs",
+        { it?.requestLine?.contains("/zosmf/restjobs/jobs") ?: false },
+        { MockResponse().setBody("[]") }
+      )
       ideFrameImpl(projectName, fixtureStack) {
         explorer {
           settings(closableFixtureCollector, fixtureStack)
@@ -652,6 +656,11 @@ class ConnectionManager {
    * Creates working set.
    */
   private fun createWorkingSet(wsName: String, connectionName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
+    responseDispatcher.injectEndpoint(
+      "createWorkingSet_restfiles",
+      { it?.requestLine?.contains("zosmf/restfiles/ds?dslevel=") ?: false },
+      { MockResponse().setBody("{}") }
+    )
     ideFrameImpl(projectName, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
