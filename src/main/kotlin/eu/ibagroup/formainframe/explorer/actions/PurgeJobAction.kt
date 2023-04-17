@@ -127,7 +127,7 @@ class PurgeJobAction : AnAction() {
           execData = ExecData.YES
         ).execute()
         val result = response.body()
-        if (response.isSuccessful && result != null && result.isNotEmpty()) {
+        if (response.isSuccessful && result != null) {
           val job = result.find { it.jobId == jobInfo.jobId }
           if (job != null) waitJobReleasedAndRefresh(jobParentNode, jobInfo) else jobParentNode.cleanCache()
         }
