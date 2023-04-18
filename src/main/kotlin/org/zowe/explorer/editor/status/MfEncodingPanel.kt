@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EncodingPanel
-import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.explorer.editor.isMfVirtualFile
 
 const val MF_ENCODING_PANEL_WIDGET = "ZoweMF" + StatusBar.StandardWidgets.ENCODING_PANEL
 
@@ -24,26 +24,16 @@ const val MF_ENCODING_PANEL_WIDGET = "ZoweMF" + StatusBar.StandardWidgets.ENCODI
  */
 class MfEncodingPanel(project: Project): EncodingPanel(project) {
 
-  /**
-   * Returns the state of the widget for correct display in the status bar.
-   * Displayed only for MF files.
-   * @param file virtual file opened in editor.
-   * @return widget state [com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup.WidgetState].
-   */
-  override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (file !is MFVirtualFile) {
-      return WidgetState.HIDDEN
-    }
-    return super.getWidgetState(file)
-  }
-
   override fun createInstance(project: Project): StatusBarWidget {
     return MfEncodingPanel(project)
   }
 
   /** Widget is not enabled for MF files. */
   override fun isEnabledForFile(file: VirtualFile?): Boolean {
-    return false
+    if (file != null && file.isMfVirtualFile()) {
+      return false
+    }
+    return super.isEnabledForFile(file)
   }
 
   override fun ID(): String {

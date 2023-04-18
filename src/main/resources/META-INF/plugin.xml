@@ -102,9 +102,6 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <listener class="org.zowe.explorer.dataops.content.synchronizer.MFAutoSaveDocumentListener"
                   topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-
-        <listener class="org.zowe.explorer.editor.FileSelectionChangeListener"
-                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="org.zowe.explorer">
@@ -272,6 +269,7 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <preloadingActivity implementation="org.zowe.explorer.config.ZoweOldConfigConvertPreloadingActivity"/>
         <postStartupActivity implementation="org.zowe.explorer.zowe.ZoweStartupActivity"/>
+        <postStartupActivity implementation="org.zowe.explorer.editor.ProjectStartupActivity"/>
         <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
 

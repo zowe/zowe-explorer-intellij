@@ -11,10 +11,8 @@
 package org.zowe.explorer.editor.status
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
-import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * Status bar widget factory for [MfLineSeparatorPanel].
@@ -27,11 +25,5 @@ class MfLineSeparatorWidgetFactory: LineSeparatorWidgetFactory() {
 
   override fun createWidget(project: Project): StatusBarWidget {
     return MfLineSeparatorPanel(project)
-  }
-
-  /** Enabled only for MF file opened in editor. */
-  override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-    val file = getFileEditor(statusBar)?.file
-    return file is MFVirtualFile
   }
 }
