@@ -122,9 +122,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
 
       val ussAttributes = attributes.castOrNull<RemoteUssAttributes>()
       if (!wasFetchedBefore(syncProvider)) {
-        ussAttributes?.let {
-          checkUssFileTag(it)
-        }
+        ussAttributes?.let { checkUssFileTag(it) }
       }
       val currentCharset = ussAttributes?.charset ?: DEFAULT_TEXT_CHARSET
 
