@@ -312,16 +312,7 @@ class ExplorerTestSpec : ShouldSpec({
       }
     }
   }
-  context("explorer module: ui/FileExplorerViewDropTarget") {
-    // drop
-    should("perform paste from project files to the mainframe files") {}
-    should("perform paste from mainframe files to the project files") {}
-    should("perform paste from mainframe z/OS datasets to the USS files") {}
-    should("perform paste from mainframe USS files to the datasets") {}
-    should("perform paste from mainframe USS files of the first mainframe to the USS files of the other") {}
-    // update
-    should("highlight places where paste is possible") {}
-  }
+
   context("explorer module: ui/ExplorerPasteProvider") {
     // performPaste
     should("perform paste without conflicts") {}
