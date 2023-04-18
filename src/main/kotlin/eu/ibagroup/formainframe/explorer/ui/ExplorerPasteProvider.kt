@@ -32,7 +32,6 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
-import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
@@ -52,6 +51,11 @@ class ExplorerPasteProvider : PasteProvider {
   private val pastePredicate: (NodeData) -> Boolean = {
     it.attributes?.isPastePossible ?: true
   }
+
+  /**
+   * Stores the updated remoteToLocalFile operations
+   */
+  private var updatedOperations = mutableListOf<MoveCopyOperation>()
 
   /**
    * Get nodes to refresh. Normally it would be some parent nodes that are changed during the copy/move operation.
@@ -103,10 +107,10 @@ class ExplorerPasteProvider : PasteProvider {
   private fun refreshNodes(nodesToRefresh: List<ExplorerTreeNode<*>>, explorerView: FileExplorerView) {
     nodesToRefresh
       .forEach { node ->
-        val parentNode = node.castOrNull<FileFetchNode<*, *, *, *, *>>() ?: return
+        val parentNode = node as? FetchNode ?: return
         parentNode.query ?: return
-        parentNode.cleanCache(recursively = false, cleanBatchedQuery = true)
         cleanInvalidateOnExpand(parentNode, explorerView)
+        parentNode.cleanCache(cleanBatchedQuery = true).let { explorerView.myStructure.invalidate(parentNode, true) }
       }
   }
 
@@ -250,11 +254,11 @@ class ExplorerPasteProvider : PasteProvider {
         }
       }
 
-      val conflicts = pasteDestinations
+      val listOfAllConflicts = pasteDestinations
         .mapNotNull { destFile ->
           destFile.children
-            ?.mapNotNull conflicts@{ destChild ->
-              Pair(destFile, sourceFiles.find { source ->
+            ?.map conflicts@{ destChild ->
+              val filteredSourceFiles = sourceFiles.filter { source ->
                 val sourceAttributes = dataOpsManager.tryToGetAttributes(source)
                 val destAttributes = dataOpsManager.tryToGetAttributes(destChild)
                 if (
@@ -271,10 +275,17 @@ class ExplorerPasteProvider : PasteProvider {
                 } else {
                   source.name == destChild.name
                 }
-              } ?: return@conflicts null)
+              }
+              val foundConflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
+              if (filteredSourceFiles.isNotEmpty()) {
+                filteredSourceFiles.forEach { foundConflict -> foundConflicts.add(Pair(destFile, foundConflict)) }
+              }
+              foundConflicts
             }
         }
         .flatten()
+      val conflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
+      listOfAllConflicts.forEach { conflictList -> conflicts.addAll(conflictList) }
 
       if (conflicts.isNotEmpty()) {
         val choice = Messages.showDialog(
@@ -327,7 +338,7 @@ class ExplorerPasteProvider : PasteProvider {
         skipDestinationSourceList.addAll(ussToPdsWarnings)
       }
 
-      val operations = pasteDestinations
+      var operations = pasteDestinations
         .map { destFile ->
           sourceFiles.mapNotNull { sourceFile ->
             if (skipDestinationSourceList.contains(Pair(destFile, sourceFile))) {
@@ -354,11 +365,14 @@ class ExplorerPasteProvider : PasteProvider {
         .map { operation -> operation.source.name }
 
       if (filesToDownload.isNotEmpty()) {
+        updateDuplicatesInFileNamesForRemoteOperations(operations, filesToDownload)
+        operations = updatedOperations
+        val filesToDownloadUpdated = operations.mapNotNull { operation -> operation.newName }
         val tagP = "<p style=\"margin-left: 10px\">"
-        val filesStringToShow = if (filesToDownload.size > 5) {
-          "$tagP${filesToDownload.subList(0, 5).joinToString("</p>$tagP")}</p>${tagP}and ${filesToDownload.size - 5} more ...</p>"
+        val filesStringToShow = if (filesToDownloadUpdated.size > 5) {
+          "$tagP${filesToDownloadUpdated.subList(0, 5).joinToString("</p>$tagP")}</p>${tagP}and ${filesToDownloadUpdated.size - 5} more ...</p>"
         } else {
-          "$tagP${filesToDownload.joinToString("</p>$tagP")}</p>"
+          "$tagP${filesToDownloadUpdated.joinToString("</p>$tagP")}</p>"
         }
         if (
           !showYesNoDialog(
@@ -399,6 +413,55 @@ class ExplorerPasteProvider : PasteProvider {
         explorerView,
         project
       )
+    }
+  }
+
+  /**
+   * Function is used to handle all filename conflicts for every RemoteToLocal copy operation
+   * In case we would like to copy more than 1 file with identical names (for example from different USS folders), all duplicates are resolved
+   * and become copied to the destination local folder regarding what action we had chosen (skip or overwrite)
+   * @param operations - original remote operations with possible duplicates in filenames
+   * @param filesToDownload - files we are going to download
+   * @return Void
+   */
+  private fun updateDuplicatesInFileNamesForRemoteOperations(operations: List<MoveCopyOperation>, filesToDownload : List<String>) {
+    val operationToFileName = mutableMapOf<MoveCopyOperation, String>()
+    updatedOperations = mutableListOf()
+    val fileOccurrence = 0
+    var newName: String
+    val possibleNextFileToRename = filesToDownload.associateWith { _ -> fileOccurrence }.toMutableMap()
+
+    val remoteOperations = operations.filter { operation -> operation.destination !is MFVirtualFile }.toMutableList()
+
+    filesToDownload.forEach { name ->
+      val foundOperation = remoteOperations.find { operation -> operation.source.name == name }
+      if (foundOperation != null) {
+        if (possibleNextFileToRename[name] == 0) {
+          operationToFileName[foundOperation] = name
+        } else {
+          newName = name + "_Copy${possibleNextFileToRename[name]}"
+          operationToFileName[foundOperation] = newName
+        }
+        possibleNextFileToRename[name] = possibleNextFileToRename.getValue(name) + 1
+        remoteOperations.remove(foundOperation)
+      }
+    }
+    operations.forEach { operation ->
+      if (operation.destination !is MFVirtualFile) {
+        val newFileName = operationToFileName[operation]
+        val updatedRemoteOperation = MoveCopyOperation(
+          source = operation.source,
+          destination = operation.destination,
+          isMove = operation.isMove,
+          forceOverwriting = true,
+          newName = newFileName,
+          dataOpsManager,
+          operation.explorer
+        )
+        updatedOperations.add(updatedRemoteOperation)
+      } else {
+        updatedOperations.add(operation)
+      }
     }
   }
 

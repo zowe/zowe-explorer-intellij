@@ -89,13 +89,12 @@ class GetFilePropertiesAction : AnAction() {
                   attributes.charset = oldCharset
                 } else {
                   updateFileTag(newAttributes)
-                  if (contentEncodingMode == ContentEncodingMode.RELOAD) {
-                    runWriteActionInEdtAndWait {
-                      syncProvider.saveDocument()
-                      contentSynchronizer?.synchronizeWithRemote(syncProvider = syncProvider, forceReload = true)
-                    }
+                  if (contentEncodingMode == ContentEncodingMode.CONVERT) {
+                    saveIn(e.project, virtualFile, newAttributes.charset)
                   }
-                  changeFileEncodingTo(virtualFile, newAttributes.charset)
+                  if (contentEncodingMode == ContentEncodingMode.RELOAD) {
+                    reloadIn(e.project, virtualFile, newAttributes.charset)
+                  }
                 }
               }
             }
