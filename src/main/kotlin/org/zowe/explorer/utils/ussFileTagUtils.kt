@@ -15,6 +15,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
@@ -101,13 +102,31 @@ fun listUssFileTag(attributes: RemoteUssAttributes): ResponseBody? {
 }
 
 /**
- * Sets the file tag to the current uss file encoding.
- * If the encoding name starts with 'x-IBM', then the 'x-' is truncated from the name
- * (this is necessary to match between encoding names).
+ * Sets the file tag to the current uss file encoding by attributes.
  * @param attributes uss file attributes.
  */
 fun setUssFileTag(attributes: RemoteUssAttributes) {
-  var charset = attributes.charset.name()
+  setUssFileTagCommon(attributes.charset.name(), attributes.path, attributes.requesters[0].connectionConfig)
+}
+
+/**
+ * Sets the file tag to the current uss file encoding by common params.
+ * @see setUssFileTagCommon
+ */
+fun setUssFileTag(charset: String, path: String, connectionConfig: ConnectionConfig) {
+  setUssFileTagCommon(charset, path, connectionConfig)
+}
+
+/**
+ * Common func to set the file tag to the current uss file encoding.
+ * If the encoding name starts with 'x-IBM', then the 'x-' is truncated from the name
+ * (this is necessary to match between encoding names).
+ * @param charsetName file charset name to set.
+ * @param filePath path to uss file.
+ * @param connectionConfig connection config on which the file is located.
+ */
+private fun setUssFileTagCommon(charsetName: String, filePath: String, connectionConfig: ConnectionConfig) {
+  var charset = charsetName
   if (charset.contains("x-IBM")) {
     charset = charset.substring(2)
   }
@@ -115,11 +134,10 @@ fun setUssFileTag(attributes: RemoteUssAttributes) {
   val codeSet = ccsid.toString()
 
   runCatching {
-    val connectionConfig = attributes.requesters[0].connectionConfig
     service<DataOpsManager>().performOperation(
       operation = ChangeFileTagOperation(
         request = ChangeFileTagOperationParams(
-          filePath = attributes.path,
+          filePath = filePath,
           action = TagAction.SET,
           type = UssFileDataType.TEXT,
           codeSet = codeSet
@@ -128,7 +146,7 @@ fun setUssFileTag(attributes: RemoteUssAttributes) {
       )
     )
   }.onFailure {
-    notifyError(it, "Cannot set uss file tag for ${attributes.path}")
+    notifyError(it, "Cannot set uss file tag for $filePath")
   }
 }
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
+import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * Status bar widget factory for [MfEncodingPanel].
@@ -21,10 +22,16 @@ import com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
 class MfEncodingPanelWidgetFactory: EncodingPanelWidgetFactory() {
 
   override fun getId(): String {
-    return  "MF" + StatusBar.StandardWidgets.ENCODING_PANEL
+    return  MF_ENCODING_PANEL_WIDGET
   }
 
   override fun createWidget(project: Project): StatusBarWidget {
     return MfEncodingPanel(project)
+  }
+
+  /** Enabled only for MF file opened in editor. */
+  override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
+    val file = getFileEditor(statusBar)?.file
+    return file is MFVirtualFile
   }
 }

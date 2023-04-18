@@ -20,7 +20,11 @@ import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
-import org.zowe.explorer.dataops.content.synchronizer.changeFileEncodingTo
+import org.zowe.explorer.dataops.operations.jobs.BasicGetJclRecordsParams
+import org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperation
+import org.zowe.explorer.explorer.ui.JES_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.JobNode
+import org.zowe.explorer.utils.changeFileEncodingTo
 import org.zowe.explorer.dataops.operations.jobs.*
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait

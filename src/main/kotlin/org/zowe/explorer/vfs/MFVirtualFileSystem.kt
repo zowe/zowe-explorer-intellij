@@ -33,7 +33,7 @@ class MFVirtualFileSystem : VirtualFileSystem(), FileSystemInterface, Disposable
 
   companion object {
     const val SEPARATOR = "/"
-    const val PROTOCOL = "zowe_mf"
+    const val PROTOCOL = "zowemf"
     const val ROOT_NAME = "Zowe Explorer"
     const val ROOT_ID = 0
 

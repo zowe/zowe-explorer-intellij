@@ -18,7 +18,7 @@ buildscript {
 
 plugins {
   id("org.sonarqube") version "3.3"
-  id("org.jetbrains.intellij") version "1.12.0"
+  id("org.jetbrains.intellij") version "1.13.0"
   kotlin("jvm") version "1.7.10"
   java
   jacoco
@@ -31,7 +31,7 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "1.0.0"
+version = "1.0.1"
 val remoteRobotVersion = "0.11.16"
 
 repositories {
@@ -101,70 +101,27 @@ tasks {
       <br>
       <b>New features:</b>
       <ul>
-        <li>TSO CLI</li>
-        <li>Different encodings support (all IBM encodings are supported)</li>
-        <li>Support for CHMOD operation</li>
-        <li>Support for big files and datasets</li>
-        <li>JES Explorer: purge, edit, view job</li>
-        <li>Added "+" sign expandability: now it is possible to create connection / working set / mask through the revealing context menu on "+" click</li>
-        <li>Migrate to Kotlin DSL v2</li>
-        <li>All the code is documented now</li>
-      </ul>
-      <br>
-      <b>Minor changes:</b>
-      <ul>
-        <li>Manual sync was proceeding in main thread</li>
-        <li>Codepage selection is removed from connection dialog</li>
-        <li>Added UI regression tests and Unit tests</li>
-        <li>Unit tests are written in Kotest now</li>
-        <li>Build warnings fixed</li>
-        <li>Other plugin's stability issues</li>
+        <li>Support for IntelliJ 2023.1</li>
       </ul>
       <br>
       <b>Fixed bugs:</b>
       <ul>
-        <li>Error in event log when copy member to PDS that does not have enough space</li>
-        <li>The creating z/OS mask '*.*' is not blocked</li>
-        <li>Impossible to rename USS directory whose name contains &</li>
-        <li>Problem with automatic refresh after creating new dataset/allocate like</li>
-        <li>Incorrect data encoding</li>
-        <li>When dataset member is moved from one DS to another, load more appears instead of it</li>
-        <li>Strange behavior of automatic reload and batch_size</li>
-        <li>USS files are not edible</li>
-        <li>Incompatible with IntelliJ 2022.3</li>
-        <li>IDE error with UnsupportedEncodingException for some encodings</li>
-        <li>IDE error with ReadOnlyModificationException when change encoding for read only file</li>
-        <li>Impossible to close uss-file with write permission after changing encoding</li>
-        <li>There is no warning if copy/paste from remote to local</li>
-        <li>Synchronization is cycled in autosync mode after first opening for the file</li>
-        <li>IDE error with UndeclaredThrowableException while closing CLI when connection was broken</li>
-        <li>Cancel DnD several members from one host to another does not work properly</li>
-        <li>IDE error with NoSuchElementException if start CLI when there is no any connections</li>
-        <li>Differences in the interface (field highlighting)</li>
-        <li>Vertical scrollbar in 'Add Working Set/Edit Working Set' does not work properly if you add a lot of masks</li>
-        <li>Different colmn name JES vs Jobs Working Set</li>
-        <li>z/OS mask is created in lowercase if use dataset name in lowercase during allocate/allocate like</li>
-        <li>Sync data does not work correctly when the content has not changed</li>
-        <li>Missing warning if delete connection that has any jobs working set</li>
-        <li>Last mask/filter is created in wrong way in Edit Working Set/Edit Jobs Working Set dialogs via context menu</li>
-        <li>File upload icon is cycling when double-clicking again on an open file</li>
-        <li>Small typo in annotation</li>
-        <li>The button 'Ok' on Warning when delete connections with ws/jws</li>
-        <li>Typo in error message in Allocate Dataset dialog</li>
-        <li>Typo in release note for 1.0.0</li>
-        <li>Typo in message for incorrect directory quantity in allocate dataset</li>
-        <li>Unhandled error type for jobs</li>
-        <li>Missing '>' for input next several commands in CLI after programm running finished</li>
-        <li>Move member to another PDS refreshes only one PDS</li>
-        <li>Content encoding change after uss read only file reopened</li>
-        <li>Refresh does not work if copy-delete-copy one USS folder to another USS folder</li>
-        <li>IndexOutOfBoundsException if create JWS via context menu</li>
-        <li>Automatic refresh does not work correctly for job filter after purge job via context menu</li>
-        <li>Exception in Zowe Explorer when there is a configuration from For Mainframe plugin exist</li>
-        <li>Policy agreement is gone wild</li>
-        <li>Exception while opening TSO CLI</li>
-        <li>Exception during IDE startup with plugin</li>
-        <li>Operation is not supported for read-only collection while trying to create JES Working set</li>
+        <li>Runtime Exception in Zowe Explorer when delete dataset</li>
+        <li>File is not displayed after folder moved inside another folder</li>
+        <li>IDE freeze after closing CLI during command execution with broken coonection</li>
+        <li>Last opened file remains active in editor</li>
+        <li>Duplicate widgets when installing For Mainframe and Zowe Explorer plugins together</li>
+        <li>Changed parameters in edit connection dialog do not reset after cancelation</li>
+        <li>Incorrect reloading on USS encoding change</li>
+        <li>println in TSO CLI</li>
+        <li>Copy DS member from one host to USS folder on another host does not work</li>
+        <li>Jobs filter is created with wrong default user</li>
+        <li>"Access is allowed from Event Dispatch Thread (EDT) only" on the plugin debug</li>
+        <li>SonarCloud compaint on Random</li>
+        <li>Autosync works strange</li>
+        <li>Strange behavior on copy paste from remote to local</li>
+        <li>Error while trying to move PS inside PDS</li>
+        <li>USS file empty after rename</li>
       </ul>"""
     )
   }

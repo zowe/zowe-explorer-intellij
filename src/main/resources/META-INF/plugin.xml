@@ -14,7 +14,7 @@
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
-Zowe Explorer for IntelliJ IDEA is an <a href="https://ibagroupit.com/">IBA Group</a>-developed open-source plugin that gives access to mainframes from a modern IDE.
+Zowe Explorer for IntelliJ IDEA is an <a href="https://ibagroupit.com/?utm_campaign=IBA_W-Mainframe&utm_source=JetBrains&utm_medium=referral&utm_content=description_zowe_explorer">IBA Group</a>-developed open-source plugin that gives access to mainframes from a modern IDE.
 With the help of the plugin, developers can work with mainframes through a modern interface, using a single toolbar, structured trees, and drag-and-drop operations.
 The solution suits those who need to work with z/OS datasets, USS files, and Jobs from the IntelliJ IDEA.
 <br/>
@@ -56,7 +56,7 @@ About us:<br/>
 With over 30 years of experience in the mainframe domain, IBA Group is committed to maximizing your mainframe investment and enhancing your IT flexibility.
 One of the services we offer is Mainframe DevOps. Our approach is highly flexible, as we work with customers to choose the essential toolset for establishing a pipeline based on their preferences, existing tools, and the latest open-source opportunities (such as Zowe and plugins).
 <br/>
-We are also familiar with <a href="https://mainframe.ibagroupit.com/">Mainframe DevOps Solutions</a> of 2023 that can help modernize your mainframe and keep you competitive.
+We are also familiar with <a href="https://mainframe.ibagroupit.com/?utm_campaign=IBA_W-Mainframe&utm_source=JetBrains&utm_medium=referral&utm_content=description_zowe_explorer">Mainframe DevOps Solutions</a> of 2023 that can help modernize your mainframe and keep you competitive.
 We value your feedback and welcome any suggestions, proposals, or even complaints. Please feel free to contact us or schedule a call with our Mainframe DevOps expert.
 <br/>
 Thank you for considering IBA Group for your mainframe needs.
@@ -102,6 +102,9 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <listener class="org.zowe.explorer.dataops.content.synchronizer.MFAutoSaveDocumentListener"
                   topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+
+        <listener class="org.zowe.explorer.editor.FileSelectionChangeListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="org.zowe.explorer">
@@ -194,10 +197,10 @@ Thank you for considering IBA Group for your mainframe needs.
                 implementation="org.zowe.explorer.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssFileToUssDirMoverFactory"/>
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssFileToPdsMoverFactory"/>
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileToPdsMoverFactory"/>
 
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemUssDirMoverFactory"/>
@@ -233,7 +236,8 @@ Thank you for considering IBA Group for your mainframe needs.
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.jobs.PurgeJobOperationRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.TsoOperationRunnerFactory"/>
 
@@ -271,8 +275,6 @@ Thank you for considering IBA Group for your mainframe needs.
         <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
 
-        <postStartupActivity implementation="org.zowe.explorer.editor.ProjectStartupActivity"/>
-
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
@@ -304,7 +306,7 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <virtualFileSystem id="org.zowe.explorer.vfs.MFVirtualFileSystem"
                            implementationClass="org.zowe.explorer.vfs.MFVirtualFileSystem"
-                           key="zowe_mf"/>
+                           key="zowemf"/>
 
         <fileType name="Unknown Data Set "
                   implementationClass="org.zowe.explorer.filetypes.UnknownDataSetFileType"/>
@@ -337,11 +339,12 @@ Thank you for considering IBA Group for your mainframe needs.
         <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
-                implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
+                                implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
+                                order="after positionWidget"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
-                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"/>
+                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory, before powerStatus"/>
     </extensions>
 
     <actions>
