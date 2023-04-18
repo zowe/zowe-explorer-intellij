@@ -2,6 +2,27 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
+## `1.0.1 (2023-04-18)`
+
+* Feature: Support for IntelliJ 2023.1
+
+
+* Bugfix: File is not displayed after folder moved inside another folder ([46e2fca8](https://github.com/zowe/zowe-explorer-intellij/commit/46e2fca8))
+* Bugfix: IDE freeze after closing CLI during command execution with broken coonection ([1555d895](https://github.com/zowe/zowe-explorer-intellij/commit/1555d895))
+* Bugfix: Last opened file remains active in editor ([419fe720](https://github.com/zowe/zowe-explorer-intellij/commit/419fe720))
+* Bugfix: Duplicate widgets when installing For Mainframe and Zowe Explorer plugins together ([17a18f49](https://github.com/zowe/zowe-explorer-intellij/commit/17a18f49))
+* Bugfix: Changed parameters in edit connection dialog do not reset after cancelation ([e28bf46e](https://github.com/zowe/zowe-explorer-intellij/commit/e28bf46e))
+* Bugfix: Incorrect reloading on USS encoding change ([b3093e3f](https://github.com/zowe/zowe-explorer-intellij/commit/b3093e3f))
+* Bugfix: println in TSO CLI ([70325f91](https://github.com/zowe/zowe-explorer-intellij/commit/70325f91))
+* Bugfix: Copy DS member from one host to USS folder on another host does not work ([9e469698](https://github.com/zowe/zowe-explorer-intellij/commit/9e469698))
+* Bugfix: Jobs filter is created with wrong default user ([33967d23](https://github.com/zowe/zowe-explorer-intellij/commit/33967d23))
+* Bugfix: "Access is allowed from Event Dispatch Thread (EDT) only" on the plugin debug ([f5416f68](https://github.com/zowe/zowe-explorer-intellij/commit/f5416f68))
+* Bugfix: SonarCloud compaint on Random ([294f3c11](https://github.com/zowe/zowe-explorer-intellij/commit/294f3c11))
+* Bugfix: Autosync works strange ([8115f9dc](https://github.com/zowe/zowe-explorer-intellij/commit/8115f9dc))
+* Bugfix: Strange behavior on copy paste from remote to local ([a193676c](https://github.com/zowe/zowe-explorer-intellij/commit/a193676c))
+* Bugfix: Error while trying to move PS inside PDS ([ec94b39e](https://github.com/zowe/zowe-explorer-intellij/commit/ec94b39e))
+* Bugfix: USS file empty after rename ([71c49b24](https://github.com/zowe/zowe-explorer-intellij/commit/71c49b24))
+
 ## `1.0.0 (2023-03-13)`
 
 * Breaking: Java 17 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.3
