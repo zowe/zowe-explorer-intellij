@@ -10,35 +10,20 @@
 
 package org.zowe.explorer.editor.status
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.LineSeparatorPanel
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.explorer.editor.isMfVirtualFile
+import org.zowe.explorer.editor.isUssVirtualFile
 
-const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
+const val MF_LINE_SEPARATOR_PANEL_WIDGET = "ZoweMF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
 
 /**
  * Line separator panel in status bar with correctly display for MF files.
  */
 class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
-
-  /**
-   * Returns the state of the widget for correct display in the status bar.
-   * Displayed only for MF files.
-   * @param file virtual file opened in editor.
-   * @return widget state [com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup.WidgetState].
-   */
-  override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (file !is MFVirtualFile) {
-      return WidgetState.HIDDEN
-    }
-    return super.getWidgetState(file)
-  }
 
   override fun createInstance(project: Project): StatusBarWidget {
     return MfLineSeparatorPanel(project)
@@ -46,8 +31,7 @@ class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
 
   /** Widget is not enabled for all MF files except USS files. */
   override fun isEnabledForFile(file: VirtualFile?): Boolean {
-    val attributes = file?.let { service<DataOpsManager>().tryToGetAttributes(it) }
-    if (attributes !is RemoteUssAttributes) {
+    if (file != null && file.isMfVirtualFile() && !file.isUssVirtualFile()) {
       return false
     }
     return super.isEnabledForFile(file)
