@@ -32,6 +32,7 @@ import org.zowe.explorer.config.connect.CREDENTIALS_CHANGED
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialsListener
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.editor.ChangeContentService
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.EntityWithUuid
 import org.zowe.explorer.utils.crudable.anyEventAdaptor
@@ -226,6 +227,7 @@ abstract class AbstractExplorerBase<U : WorkingSet<*>, UnitConfig : EntityWithUu
    * for reactive processing of data updates on UI.
    */
   fun doInit() {
+    service<ChangeContentService>().initialize()
     Disposer.register(service<DataOpsManager>(), disposable)
     subscribe(CONFIGS_CHANGED, disposable, eventAdapter(unitConfigClass) {
       onDelete { unit ->

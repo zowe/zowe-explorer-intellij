@@ -333,10 +333,11 @@ Thank you for considering IBA Group for your mainframe needs.
         <applicationService serviceInterface="org.zowe.explorer.dataops.services.ErrorSeparatorService"
                             serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"/>
 
+        <applicationService serviceInterface="org.zowe.explorer.editor.ChangeContentService"
+                            serviceImplementation="org.zowe.explorer.editor.ChangeContentServiceImpl"/>
+
         <projectService serviceInterface="org.zowe.explorer.zowe.service.ZoweConfigService"
                         serviceImplementation="org.zowe.explorer.zowe.service.ZoweConfigServiceImpl"/>
-
-        <typedHandler implementation="org.zowe.explorer.explorer.actions.ChangeContentAction"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
