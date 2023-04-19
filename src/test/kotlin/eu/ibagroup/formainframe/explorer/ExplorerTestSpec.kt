@@ -40,7 +40,10 @@ import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
+import eu.ibagroup.formainframe.dataops.log.MFLogger
 import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
 import eu.ibagroup.formainframe.utils.*
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
@@ -350,7 +353,7 @@ class ExplorerTestSpec : ShouldSpec({
     // actionPerformed
 
     val purgeAction = PurgeJobAction()
-    val mockActionEvent = mockk<AnActionEvent>()
+    val mockActionEventForJesEx = mockk<AnActionEvent>()
     val jesExplorerView = mockk<JesExplorerView>()
 
     val job = mockk<Job>()
@@ -359,7 +362,7 @@ class ExplorerTestSpec : ShouldSpec({
     val connectionConfig = mockk<ConnectionConfig>()
     val jobsFilter = mockk<JobsFilter>()
 
-    every { mockActionEvent.getData(any() as DataKey<Any>) } returns jesExplorerView
+    every { mockActionEventForJesEx.getExplorerView<JesExplorerView>() } returns jesExplorerView
 
     val jobNode = mockk<JobNode>()
     val virtualFile = mockk<MFVirtualFile>()
@@ -382,7 +385,7 @@ class ExplorerTestSpec : ShouldSpec({
 
     val project = mockk<Project>()
     every {
-      mockActionEvent.project
+      mockActionEventForJesEx.project
     } returns project
 
     every {
@@ -390,7 +393,6 @@ class ExplorerTestSpec : ShouldSpec({
     } returns explorer
 
     val mockRequest = mockk<CancelJobPurgeOutRequest>()
-
     val jobAttr = spyk(
       RemoteJobAttributes(
         job,
@@ -398,8 +400,24 @@ class ExplorerTestSpec : ShouldSpec({
         mutableListOf(JobsRequester(connectionConfig, jobsFilter))
       )
     )
-
     every { jobAttr.clone() } returns jobAttr
+
+    val mockActionEventForJobsLog = mockk<AnActionEvent>()
+    val jobsLogView = mockk<JobBuildTreeView>()
+
+    every { mockActionEventForJobsLog.getData(any() as DataKey<Any>) } returns jobsLogView
+    every { mockActionEventForJobsLog.project } returns project
+
+    val mockkLogger = mockk<MFLogger<JobLogFetcher>>()
+    val mockkFetcher = mockk<JobLogFetcher>()
+
+    every { jobsLogView.getJobLogger() } returns mockkLogger
+    every {
+      hint(JobLogFetcher::class)
+      mockkLogger.logFetcher
+    } returns mockkFetcher
+    every { mockkFetcher.getCachedJobStatus() } returns job
+    every { jobsLogView.getConnectionConfig() } returns connectionConfig
 
     should("perform purge on job successfully") {
 
@@ -414,17 +432,27 @@ class ExplorerTestSpec : ShouldSpec({
 
       }
 
-      var isOperationSucceeded = false
-
+      var isOperationSucceededForJesEx = false
       every {
         explorer.showNotification(any(), any(), NotificationType.INFORMATION, any())
       } answers {
-        isOperationSucceeded = true
+        isOperationSucceededForJesEx = true
       }
 
-      purgeAction.actionPerformed(mockActionEvent)
+      var isOperationSucceededForJobsLog = false
+      every {
+        jobsLogView.showNotification(any(), any(), any(), NotificationType.INFORMATION)
+      } answers {
+        isOperationSucceededForJobsLog = true
+      }
 
-      assertSoftly { isOperationSucceeded shouldBe true }
+      purgeAction.actionPerformed(mockActionEventForJesEx)
+      purgeAction.actionPerformed(mockActionEventForJobsLog)
+
+      assertSoftly {
+        isOperationSucceededForJesEx shouldBe true
+        isOperationSucceededForJobsLog shouldBe true
+      }
 
     }
     should("perform purge on job with error") {
@@ -439,18 +467,27 @@ class ExplorerTestSpec : ShouldSpec({
         }
       }
 
-      var isOperationFailed = false
-
+      var isOperationFailedForJesEx = false
       every {
         explorer.showNotification(any(), any(), NotificationType.ERROR, any())
       } answers {
-        isOperationFailed = true
+        isOperationFailedForJesEx = true
       }
 
-      purgeAction.actionPerformed(mockActionEvent)
+      var isOperationFailedForJobsLog = false
+      every {
+        jobsLogView.showNotification(any(), any(), any(), NotificationType.ERROR)
+      } answers {
+        isOperationFailedForJobsLog = true
+      }
 
-      assertSoftly { isOperationFailed shouldBe true }
+      purgeAction.actionPerformed(mockActionEventForJesEx)
+      purgeAction.actionPerformed(mockActionEventForJobsLog)
 
+      assertSoftly {
+        isOperationFailedForJesEx shouldBe true
+        isOperationFailedForJobsLog shouldBe true
+      }
     }
   }
   context("explorer module: actions/GetJobPropertiesAction") {
