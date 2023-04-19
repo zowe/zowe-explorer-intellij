@@ -154,7 +154,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       t
     }
     if (throwable != null) {
-      log.error("Failed to move USS directory")
+      log.info("Failed to move USS directory")
       throw throwable
     }
     log.info("USS directory has been moved successfully")
