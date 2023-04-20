@@ -93,7 +93,7 @@ class ExplorerPasteProvider : PasteProvider {
         .flatten()
         .filterNotNull()
         .distinct()
-      destinationNodes.plus(sourceNodesToRefresh)
+      sourceNodesToRefresh.plus(destinationNodes)
     } else {
       destinationNodes
     }
