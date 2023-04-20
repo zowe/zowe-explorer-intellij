@@ -139,7 +139,7 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
       t
     }
     if (throwable != null) {
-      log.error("Failed to move USS file")
+      log.info("Failed to move USS file")
       throw throwable
     }
     log.info("USS file has been moved successfully")

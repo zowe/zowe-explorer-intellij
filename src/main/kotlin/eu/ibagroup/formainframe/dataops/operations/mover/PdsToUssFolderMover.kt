@@ -101,7 +101,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
       }
     }
     if (throwable != null) {
-      log.error("Failed to move PDS")
+      log.info("Failed to move PDS")
       throw throwable
     }
     log.info("PDS has been moved successfully")
