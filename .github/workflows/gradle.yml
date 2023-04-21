@@ -108,5 +108,5 @@ jobs:
     - name: Move built plugin to destination folder
       shell: bash
       run: >
-        mkdir -p /var/www/plugin-builds/${{ steps.extract_branch.outputs.branch }} &&
+        mkdir -p /var/www/plugin-builds/${{ steps.extract_branch.outputs.BRANCH_NAME }} &&
         mv ${{ steps.getting_file_name.outputs.CURRENT_FILE_NAME_PATH }} /var/www/plugin-builds/${{ steps.extract_branch.outputs.BRANCH_NAME }}/${{ steps.generate_file_name.outputs.NEW_FILE_NAME }}
