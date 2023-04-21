@@ -2,7 +2,7 @@
 name: Feature or improvement request
 about: Suggest an idea for this project
 title: ''
-labels: priority-medium, severity-medium
+labels: priority-medium
 assignees: ''
 
 ---
