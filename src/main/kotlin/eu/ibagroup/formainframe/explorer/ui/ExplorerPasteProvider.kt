@@ -287,6 +287,35 @@ class ExplorerPasteProvider : PasteProvider {
       val conflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
       listOfAllConflicts.forEach { conflictList -> conflicts.addAll(conflictList) }
 
+      // Handle conflicts with different file type (file - directory, directory - file)
+      val conflictsThatCannotBeSolved = conflicts.filter {
+        val conflictChild = it.first.findChild(it.second.name)
+        (conflictChild?.isDirectory == true && !it.second.isDirectory)
+            || (conflictChild?.isDirectory == false && it.second.isDirectory)
+      }
+      conflicts.removeAll(conflictsThatCannotBeSolved)
+      skipDestinationSourceList.addAll(conflictsThatCannotBeSolved)
+      if (conflictsThatCannotBeSolved.isNotEmpty()) {
+        val startMessage = "There are some conflicts that cannot be resolved:"
+        val finishMessage = "File(s) above will be skipped."
+        val conflictsToShow = conflictsThatCannotBeSolved.map {
+          if (it.second.isDirectory) {
+            "Directory '${it.second.name}' cannot replace file '${it.second.name}'"
+          } else {
+            "File '${it.second.name}' cannot replace directory '${it.second.name}'"
+          }
+        }
+        Messages.showDialog(
+          project,
+          createHtmlMessageWithItemsList(startMessage, conflictsToShow, finishMessage),
+          "Not Resolvable Conflicts",
+          arrayOf("Ok"),
+          0,
+          Messages.getErrorIcon(),
+          null
+        )
+      }
+
       if (conflicts.isNotEmpty()) {
         val choice = Messages.showDialog(
           project,
@@ -368,17 +397,14 @@ class ExplorerPasteProvider : PasteProvider {
         updateDuplicatesInFileNamesForRemoteOperations(operations, filesToDownload)
         operations = updatedOperations
         val filesToDownloadUpdated = operations.mapNotNull { operation -> operation.newName }
-        val tagP = "<p style=\"margin-left: 10px\">"
-        val filesStringToShow = if (filesToDownloadUpdated.size > 5) {
-          "$tagP${filesToDownloadUpdated.subList(0, 5).joinToString("</p>$tagP")}</p>${tagP}and ${filesToDownloadUpdated.size - 5} more ...</p>"
-        } else {
-          "$tagP${filesToDownloadUpdated.joinToString("</p>$tagP")}</p>"
-        }
+
+        val startMessage = "You are going to DOWNLOAD files:"
+        val finishMessage = "It may be against your company's security policy. Are you sure?"
+
         if (
           !showYesNoDialog(
             "Downloading Files",
-            "<html><span>You are going to DOWNLOAD files:\n</span>\n$filesStringToShow\n" +
-              "<span>It may be against your company's security policy. Are you sure?</span></html>",
+            createHtmlMessageWithItemsList(startMessage, filesToDownloadUpdated, finishMessage),
             null,
             "Yes",
             "No",
@@ -494,5 +520,18 @@ class ExplorerPasteProvider : PasteProvider {
    */
   override fun isPasteEnabled(dataContext: DataContext): Boolean {
     return isPastePossibleAndEnabled(dataContext)
+  }
+
+  private fun createHtmlMessageWithItemsList(
+    startMessage: String, items: List<String>, finishMessage: String, maxItems: Int = 5
+  ): String {
+    val tagP = "<p style=\"margin-left: 10px\">"
+    val itemsToShow = if (items.size > maxItems) {
+      items.subList(0, maxItems).toMutableList().apply { add("more ...") }
+    } else {
+      items
+    }
+    val itemsString = "$tagP${itemsToShow.joinToString("</p>$tagP")}</p>"
+    return "<html><span>$startMessage\n</span>\n$itemsString\n<span>$finishMessage</span></html>"
   }
 }
