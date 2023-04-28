@@ -167,8 +167,7 @@ class ExplorerPasteProvider : PasteProvider {
             explorerView.explorer.reportThrowable(throwable, project)
             if (isDragAndDrop) {
               copyPasteSupport.removeFromBuffer { node ->
-                node.file == op.source &&
-                  operations.minus(op).none { operation -> operation.source == op.source }
+                node.file == op.source && operations.minus(op).none { operation -> operation.source == op.source }
               }
             }
           }
