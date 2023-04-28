@@ -87,7 +87,7 @@ class CancelHoldReleaseJobTest {
             { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${datasetName}") ?: false },
             { MockResponse().setBody("{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":1,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255}") }
         )
-        mapListDatasets[datasetName] = listDS(datasetName)
+        mapListDatasets[datasetName] = listDS(datasetName, "PDS", "PO")
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restfiles",
             {
@@ -325,9 +325,9 @@ class CancelHoldReleaseJobTest {
                     responseDispatcher.injectEndpoint(
                         "${testInfo.displayName}_cancel_files",
                         { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files HTTP") ?: false },
-                        {
-                            MockResponse().setBody(replaceInJson("getSpoolFiles", jobName, "CANCELED"))
-                        }
+                        { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+                                Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", "CC 0000"),
+                                Pair("jobStatus", JobStatus.OUTPUT.name)))) }
                     )
                     responseDispatcher.injectEndpoint(
                         "${testInfo.displayName}_cancel_files2",
@@ -384,7 +384,9 @@ class CancelHoldReleaseJobTest {
                                 it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files HTTP")
                                     ?: false
                             },
-                            { MockResponse().setBody(replaceInJson("getSpoolFiles", jobName, "CC 0000")) }
+                            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+                                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", "CC 0000"),
+                                    Pair("jobStatus", JobStatus.OUTPUT.name)))) }
                         )
                         responseDispatcher.injectEndpoint(
                             "${testInfo.displayName}_release_files2",
@@ -403,7 +405,9 @@ class CancelHoldReleaseJobTest {
                         responseDispatcher.injectEndpoint(
                             "${testInfo.displayName}_release_files3",
                             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-                            { MockResponse().setBody(replaceInJson("getStatus", jobName, "CC 0000", JobStatus.OUTPUT)) }
+                            { MockResponse().setBody(replaceInJson("getStatus", mapOf(Pair("hostName", mockServer.hostName),
+                                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", "CC 0000"),
+                                    Pair("jobStatus", JobStatus.OUTPUT.name))))}
                         )
                     } else {
                         responseDispatcher.injectEndpoint(
@@ -598,7 +602,9 @@ class CancelHoldReleaseJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files",
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files HTTP") ?: false },
-            { MockResponse().setBody(replaceInJson("getSpoolFiles", jobName, rc)) }
+            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", JobStatus.OUTPUT.name)))) }
         )
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files2",
@@ -608,7 +614,9 @@ class CancelHoldReleaseJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files3",
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-            { MockResponse().setBody(replaceInJson(statusJson, jobName, rc, jobStatus)) }
+            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", jobStatus.name)))) }
         )
         submitJob(jobName, projectName, fixtureStack, remoteRobot)
         responseDispatcher.removeAllEndpoints()
@@ -657,17 +665,5 @@ class CancelHoldReleaseJobTest {
                 "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
                 "\"status\":\"0\"\n" +
                 "}"
-    }
-
-    private fun replaceInJson(
-        fileName: String,
-        jobName: String,
-        rc: String,
-        jobStatus: JobStatus = JobStatus.OUTPUT
-    ): String {
-        return (responseDispatcher.readMockJson(fileName) ?: "").replace("hostName", mockServer.hostName)
-            .replace("port", mockServer.port.toString())
-            .replace("jobName", jobName)
-            .replace("retCode", rc).replace("jobStatus", jobStatus.name)
     }
 }

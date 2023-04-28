@@ -93,7 +93,7 @@ class RenameDatasetTest {
             directory = 2,
             false
         )
-        mapListDatasets[pdsName] = listDS(pdsName)
+        mapListDatasets[pdsName] = listDS(pdsName, "PDS", "PO")
         allocateDSWithMock(testInfo, dsName, remoteRobot)
         allocateDSWithMock(testInfo, anotherDsName, remoteRobot)
         openWSAndListDatasets(testInfo, remoteRobot)
@@ -351,7 +351,7 @@ class RenameDatasetTest {
                 { MockResponse().setBody("{\"request\":\"rename\",\"from-dataset\":{\"dsn\":\"${dsName}\"}}") }
             )
             mapListDatasets.remove(dsName)
-            mapListDatasets[dsFinalName] = listDS(dsFinalName)
+            mapListDatasets[dsFinalName] = listDS(dsFinalName, "PDS", "PO")
             responseDispatcher.injectEndpoint(
                 "${testInfo.displayName}_restfiles",
                 {
@@ -496,7 +496,7 @@ class RenameDatasetTest {
             { MockResponse().setBody("{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":1,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255}") }
         )
         allocateDataSet(wsName, dsName, projectName, fixtureStack, remoteRobot)
-        mapListDatasets[dsName] = listDS(dsName)
+        mapListDatasets[dsName] = listDS(dsName, "PDS", "PO")
     }
 
     private fun openWSAndListDatasets(testInfo: TestInfo, remoteRobot: RemoteRobot) {

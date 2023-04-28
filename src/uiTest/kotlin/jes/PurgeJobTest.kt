@@ -83,7 +83,7 @@ class PurgeJobTest {
             { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${datasetName}") ?: false },
             { MockResponse().setBody("{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":1,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255}") }
         )
-        mapListDatasets[datasetName] = listDS(datasetName)
+        mapListDatasets[datasetName] = listDS(datasetName, "PDS", "PO")
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restfiles",
             {
@@ -334,7 +334,9 @@ class PurgeJobTest {
                 it?.requestLine?.contains("/zosmf/restjobs/jobs?owner=${ZOS_USERID.uppercase()}&prefix=${jobName}")
                         ?: false && isFirstRequest
             },
-            { MockResponse().setBody(replaceInJson("getJob", jobName, rc,"OUTPUT")).setResponseCode(200) }
+            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", "OUTPUT")))).setResponseCode(200) }
         )
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_${jobName}_restjobs2",
@@ -347,7 +349,9 @@ class PurgeJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_${jobName}_restjobs3",
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/${jobName}/JOB07380/files HTTP") ?: false },
-            { MockResponse().setBody(replaceInJson("getSpoolFiles", jobName, rc)).setResponseCode(200) }
+            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", "")))).setResponseCode(200) }
         )
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
@@ -542,7 +546,9 @@ class PurgeJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files",
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files HTTP") ?: false },
-            { MockResponse().setBody(replaceInJson("getSpoolFiles", jobName, rc)) }
+            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", ""))))}
         )
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files2",
@@ -552,17 +558,11 @@ class PurgeJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files3",
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-            { MockResponse().setBody(replaceInJson("getStatus", jobName, rc,"OUTPUT")) }
+            { MockResponse().setBody(replaceInJson("getStatus", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", "OUTPUT")))) }
         )
         submitJob(jobName, projectName, fixtureStack, remoteRobot)
-    }
-
-    private fun replaceInJson(fileName: String, jobName: String, rc: String,jobStatus:String=""): String {
-        return (responseDispatcher.readMockJson(fileName) ?: "").replace("hostName", mockServer.hostName)
-            .replace("port", mockServer.port.toString())
-            .replace("jobName", jobName)
-            .replace("retCode", rc).
-                replace("jobStatus",jobStatus)
     }
 
     private fun setBodyJobSubmit(jobName: String): String {

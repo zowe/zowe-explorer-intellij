@@ -911,6 +911,64 @@ fun checkErrorNotification(
     }
 }
 
+/**
+ * Creates uss file or directory for provided mask name
+ * @param fileType must contain "File" or "Directory" value to specify desired file type
+ */
+fun createUssFile(
+    ussMaskName: String,
+    fileName: String,
+    fileType: String,
+    projectName: String,
+    fixtureStack: MutableList<Locator>,
+    remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    ideFrameImpl(projectName, fixtureStack) {
+        explorer {
+            fileExplorer.click()
+            find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
+        }
+        actionMenu(remoteRobot, "New").click()
+        actionMenuItem(remoteRobot, fileType).click()
+        createUssFileDialog(fixtureStack) {
+            createFile(fileName, "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
+            clickButton("OK")
+            Thread.sleep(5000)
+        }
+    }
+}
+
+/**
+ * Builds json list of objects based on provided map
+ */
+fun buildResponseListJson(
+    elementList: Map<String, String>,
+    containsTotal: Boolean
+): String {
+    var result = "{\"items\":[],\"returnedRows\":0," +
+            if (containsTotal) {
+                "  \"totalRows\": ${elementList.size},\n"
+            } else {
+                ""
+            } + "\"JSONversion\":1}"
+    if (elementList.isNotEmpty()) {
+        var elementsListJson = "{\"items\":["
+        elementList.forEach {
+            elementsListJson += it.value
+        }
+        result = elementsListJson.dropLast(1) + "],\n" +
+                "  \"returnedRows\": ${elementList.size},\n" +
+                if (containsTotal) {
+                    "  \"totalRows\": ${elementList.size},\n"
+                } else {
+                    ""
+                } +
+                "  \"JSONversion\": 1\n" +
+                "}"
+    }
+    return result
+}
+
 fun startMockServer() {
     val localhost = InetAddress.getByName("localhost").canonicalHostName
     val localhostCertificate = HeldCertificate.Builder()
@@ -956,15 +1014,15 @@ fun createWsAndMask(
 /**
  * Creates json to list dataset.
  */
-fun listDS(dsName: String): String {
+fun listDS(dsName: String, dsNtp: String, dsOrg: String): String {
     return "{\n" +
             "      \"dsname\": \"${dsName}\",\n" +
             "      \"blksz\": \"3200\",\n" +
             "      \"catnm\": \"TEST.CATALOG.MASTER\",\n" +
             "      \"cdate\": \"2021/11/15\",\n" +
             "      \"dev\": \"3390\",\n" +
-            "      \"dsntp\": \"PDS\",\n" +
-            "      \"dsorg\": \"PO\",\n" +
+            "      \"dsntp\": \"${dsNtp}\",\n" +
+            "      \"dsorg\": \"${dsOrg}\",\n" +
             "      \"edate\": \"***None***\",\n" +
             "      \"extx\": \"1\",\n" +
             "      \"lrecl\": \"255\",\n" +
@@ -979,4 +1037,13 @@ fun listDS(dsName: String): String {
             "      \"vol\": \"TESTVOL\",\n" +
             "      \"vols\": \"TESTVOL\"\n" +
             "    },"
+}
+
+fun replaceInJson(fileName: String, valuesMap: Map<String, String>): String {
+    var sourceJson = responseDispatcher.readMockJson(fileName) ?: ""
+    valuesMap.forEach{ entry ->
+        sourceJson = sourceJson.replace(entry.key, entry.value)
+    }
+
+    return sourceJson
 }
