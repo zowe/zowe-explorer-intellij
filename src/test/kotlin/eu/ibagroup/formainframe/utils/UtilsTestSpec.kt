@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.ui.components.JBTextField
@@ -28,12 +29,10 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.spyk
+import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.*
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
@@ -738,12 +737,12 @@ class UtilsTestSpec : ShouldSpec({
   }
   context("utils module: retrofitUtils") {
     context("cancelByIndicator") {
-      lateinit var delegate: ProgressIndicator
+      lateinit var delegate: ProgressIndicatorEx
 
       val mockCall = mockk<Call<Any>>()
-      val mockProgressIndicator = mockk<ProgressIndicatorEx>()
+      val mockProgressIndicatorEx = mockk<ProgressIndicatorEx>()
 
-      every { mockProgressIndicator.addStateDelegate(any()) } answers {
+      every { mockProgressIndicatorEx.addStateDelegate(any()) } answers {
         delegate = firstArg()
       }
 
@@ -754,16 +753,25 @@ class UtilsTestSpec : ShouldSpec({
           isCancelDelegateCalled = true
         }
 
-        mockCall.cancelByIndicator(mockProgressIndicator)
+        mockCall.cancelByIndicator(mockProgressIndicatorEx)
         delegate.cancel()
 
+        assertFalse(delegate.wasStarted())
+        assertThrows(UnsupportedOperationException::class.java) { delegate.addStateDelegate(mockk()) }
         assert(isCancelDelegateCalled)
       }
       should("not cancel the call when the processing is finished") {
         every { mockCall.execute() } returns Response.success("Success")
+        val taskInfo = mockk<TaskInfo>()
+        val result = mockCall.cancelByIndicator(mockProgressIndicatorEx).execute()
 
-        val result = mockCall.cancelByIndicator(mockProgressIndicator).execute()
+        val mockProgressIndicator = mockk<ProgressIndicator>()
+        val result2 = mockCall.cancelByIndicator(mockProgressIndicator)
 
+        delegate.processFinish()
+        delegate.finish(taskInfo)
+        assertEquals(mockCall, result2)
+        assertTrue(delegate.isFinished(taskInfo))
         assert(result.isSuccessful)
       }
     }
