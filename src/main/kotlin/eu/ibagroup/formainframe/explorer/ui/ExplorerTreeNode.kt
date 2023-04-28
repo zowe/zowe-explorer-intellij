@@ -102,15 +102,17 @@ abstract class ExplorerTreeNode<Value : Any>(
           if (doSync) {
             val onThrowableHandler: (Throwable) -> Unit = {
               if (it.message?.contains("Client is not authorized for file access") == true) {
-                Messages.showDialog(
-                  project,
-                  "You do not have permissions to read this file",
-                  "Error While Opening File ${file.name}",
-                  arrayOf("Ok"),
-                  0,
-                  AllIcons.General.ErrorDialog,
-                  null
-                )
+                invokeLater {
+                  Messages.showDialog(
+                    project,
+                    "You do not have permissions to read this file",
+                    "Error While Opening File ${file.name}",
+                    arrayOf("Ok"),
+                    0,
+                    AllIcons.General.ErrorDialog,
+                    null
+                  )
+                }
               } else {
                 DocumentedSyncProvider.defaultOnThrowableHandler(file, it)
               }
