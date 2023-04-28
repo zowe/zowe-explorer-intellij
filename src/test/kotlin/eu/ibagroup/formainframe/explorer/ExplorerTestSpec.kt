@@ -21,10 +21,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.ConfigStateV2
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
@@ -39,6 +41,7 @@ import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.Operation
+import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
@@ -49,9 +52,12 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.zowe.kotlinsdk.CancelJobPurgeOutRequest
+import org.zowe.kotlinsdk.JESApi
 import java.util.*
 import java.util.stream.Stream
 import org.zowe.kotlinsdk.Job
+import retrofit2.Call
+import retrofit2.Response
 
 class ExplorerTestSpec : ShouldSpec({
   beforeSpec {
@@ -360,22 +366,64 @@ class ExplorerTestSpec : ShouldSpec({
     every { job.jobName } returns "name"
     every { job.jobId } returns "id"
     val connectionConfig = mockk<ConnectionConfig>()
-    val jobsFilter = mockk<JobsFilter>()
+    every { connectionConfig.uuid } returns "uuid"
+    val jobsFilter = spyk(
+      JobsFilter(
+        "owner",
+        "prefix",
+        "id"
+      )
+    )
+
+    mockkObject(CredentialService)
+    every { CredentialService.instance.getUsernameByKey(any()) } returns "user"
+    every { CredentialService.instance.getPasswordByKey(any()) } returns "pas"
 
     every { mockActionEventForJesEx.getExplorerView<JesExplorerView>() } returns jesExplorerView
 
     val jobNode = mockk<JobNode>()
     val virtualFile = mockk<MFVirtualFile>()
 
-    every { jesExplorerView.mySelectedNodesData } returns listOf(
+    val nodeData = spyk(
       NodeData(
         jobNode,
         virtualFile,
         null
       )
     )
+    every { jesExplorerView.mySelectedNodesData } returns listOf(nodeData)
+
+    val parentNode = mockk<JesFilterNode>()
+    val query = spyk(
+      UnitRemoteQueryImpl(
+        jobsFilter,
+        connectionConfig
+      )
+    )
+    every { parentNode.query } returns query
+    justRun { parentNode.cleanCache()}
+
+    val jesApi = mockk<JESApi>()
+    val call = mockk<Call<List<Job>>>()
+    mockkObject(ZosmfApi)
+    every { ZosmfApi.instance.getApi<JESApi>(any(), any()) } returns jesApi
+    every { jesApi.getFilteredJobs(any(), any(), any(), any(), any(), any(), any(), any()) } returns call
+
+    val response = mockk<Response<List<Job>>>()
+    val jobList = mutableListOf(job, job)
+    every { call.execute() } returns response
+    every { response.body() } answers {
+      if (jobList.isNotEmpty()) {
+        jobList.removeFirst()
+        jobList
+      } else {
+        null
+      }
+    }
+    every { response.isSuccessful } returns true
+
     every { jobNode.virtualFile } returns virtualFile
-    every { jobNode.parent } returns mockk()
+    every { jobNode.parent } returns parentNode
 
     val explorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>>()
     every { jobNode.explorer } returns explorer
@@ -446,16 +494,44 @@ class ExplorerTestSpec : ShouldSpec({
         isOperationSucceededForJobsLog = true
       }
 
+      var isVisibleInJes = false
+      every { mockActionEventForJesEx.presentation.setVisible(true) } answers { isVisibleInJes = true }
+
+      every { job.status } returns mockk()
+      var isEnabledInJobsLog = true
+      every { mockActionEventForJobsLog.presentation.setEnabled(false) } answers { isEnabledInJobsLog = false }
+
       purgeAction.actionPerformed(mockActionEventForJesEx)
+      purgeAction.update(mockActionEventForJesEx)
       purgeAction.actionPerformed(mockActionEventForJobsLog)
+      purgeAction.update(mockActionEventForJobsLog)
 
       assertSoftly {
         isOperationSucceededForJesEx shouldBe true
         isOperationSucceededForJobsLog shouldBe true
+        isVisibleInJes shouldBe true
+        isEnabledInJobsLog shouldBe true
+        purgeAction.isDumbAware shouldBe true
       }
 
     }
     should("perform purge on job with error") {
+
+      val updateJesAction = mockk<AnActionEvent>()
+      val jesViewForUpdate = mockk<JesExplorerView>()
+      every { updateJesAction.getExplorerView<JesExplorerView>() } returns jesViewForUpdate
+      every { jesViewForUpdate.mySelectedNodesData } returns listOf()
+
+      val updateJesAction2 = mockk<AnActionEvent>()
+      val jesViewForUpdate2 = mockk<JesExplorerView>()
+      every { updateJesAction2.getExplorerView<JesExplorerView>() } returns jesViewForUpdate2
+      val errorNode = mockk<ErrorNode<ConnectionConfig>>()
+      every { jesViewForUpdate2.mySelectedNodesData } returns listOf(
+        NodeData(
+        errorNode,
+        virtualFile,
+        null
+      ))
 
       dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
       dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
@@ -481,12 +557,35 @@ class ExplorerTestSpec : ShouldSpec({
         isOperationFailedForJobsLog = true
       }
 
+      var isOperationFailedForNoContextAction = false
+      val mockActionEventWithoutDataContext = mockk<AnActionEvent>()
+      every { mockActionEventWithoutDataContext.getData(any() as DataKey<Any>) } returns null
+      every { mockActionEventWithoutDataContext.presentation.setEnabledAndVisible(false) } answers { isOperationFailedForNoContextAction = true }
+
+      every { job.status } returns null
+      var isEnabledInJobsLog = true
+      every { mockActionEventForJobsLog.presentation.setEnabled(false) } answers { isEnabledInJobsLog = false }
+
+      var isVisibleForJes = true
+      every { updateJesAction.presentation.setVisible(false) } answers { isVisibleForJes = false }
+      var isVisibleForJes2 = true
+      every { updateJesAction2.presentation.setVisible(false) } answers { isVisibleForJes2 = false }
+
       purgeAction.actionPerformed(mockActionEventForJesEx)
       purgeAction.actionPerformed(mockActionEventForJobsLog)
+      purgeAction.actionPerformed(mockActionEventWithoutDataContext)
+      purgeAction.update(mockActionEventWithoutDataContext)
+      purgeAction.update(mockActionEventForJobsLog)
+      purgeAction.update(updateJesAction)
+      purgeAction.update(updateJesAction2)
 
       assertSoftly {
         isOperationFailedForJesEx shouldBe true
         isOperationFailedForJobsLog shouldBe true
+        isEnabledInJobsLog shouldBe false
+        isVisibleForJes shouldBe false
+        isVisibleForJes2 shouldBe false
+        isOperationFailedForNoContextAction shouldBe true
       }
     }
   }
