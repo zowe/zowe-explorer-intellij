@@ -10,8 +10,6 @@ import com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -39,6 +37,8 @@ import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.explorer.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
+import eu.ibagroup.formainframe.vfs.MFBulkFileListener
+import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import org.jetbrains.concurrency.AsyncPromise
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
@@ -198,9 +198,9 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
     )
     subscribe(
       componentManager = ApplicationManager.getApplication(),
-      topic = VirtualFileManager.VFS_CHANGES,
-      handler = object : BulkFileListener {
-        override fun after(events: MutableList<out VFileEvent>) {
+      topic = MFVirtualFileSystem.MF_VFS_CHANGES_TOPIC,
+      handler = object : MFBulkFileListener {
+        override fun after(events: List<VFileEvent>) {
           events
             .mapNotNull {
               val nodes = myFsTreeStructure.findByVirtualFile(it.file ?: return@mapNotNull null)
