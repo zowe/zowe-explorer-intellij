@@ -109,24 +109,13 @@ class JesWorkingSetViaSettingsTest {
     @Order(2)
     fun testAddEmptyJesWorkingSetsWithDifferentNamesViaSettings(testInfo: TestInfo, remoteRobot: RemoteRobot) =
         with(remoteRobot) {
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_info",
-                { it?.requestLine?.contains("zosmf/info") ?: false },
-                { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-            )
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_resttopology",
-                { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-                { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-            )
-            createConnection(
+            createValidConnectionWithMock(
+                testInfo,
+                connectionName,
                 projectName,
                 fixtureStack,
                 closableFixtureCollector,
-                connectionName,
-                true,
-                remoteRobot,
-                "https://${mockServer.hostName}:${mockServer.port}"
+                remoteRobot
             )
             createJWS("A".repeat(200), true, remoteRobot)
             createJWS("B12#$%^&*", true, remoteRobot)

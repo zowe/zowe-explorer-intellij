@@ -53,25 +53,14 @@ class SubmitJobTest {
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         startMockServer()
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_info",
-            { it?.requestLine?.contains("zosmf/info") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_resttopology",
-            { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        createConnection(
+        createValidConnectionWithMock(
+            testInfo,
+            connectionName,
             projectName,
             fixtureStack,
             closableFixtureCollector,
-            connectionName,
-            true,
-            remoteRobot,
-            "https://${mockServer.hostName}:${mockServer.port}"
+            remoteRobot
         )
         createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
         responseDispatcher.injectEndpoint(
@@ -172,7 +161,7 @@ class SubmitJobTest {
                 it?.requestLine?.contains("/zosmf/restjobs/jobs?owner=${ZOS_USERID.uppercase()}&prefix=${jobName}")
                     ?: false
             },
-            { MockResponse().setBody(replaceInJson("getJob", jobName, "CC 0000","OUTPUT")).setResponseCode(200) }
+            { MockResponse().setBody(replaceInJson("getJob", jobName, "CC 0000", "OUTPUT")).setResponseCode(200) }
         )
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs2",
@@ -275,7 +264,10 @@ class SubmitJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}__restjobs",
             { it?.requestLine?.contains("PUT /zosmf/restjobs/jobs") ?: false },
-            { MockResponse().setBody("{\"file\":\"//'$datasetName($jobName)'\"}").setBody(setBodyJobSubmit(jobName)) }
+            {
+                MockResponse().setBody("{\"file\":\"//'$datasetName($jobName)'\"}")
+                    .setBody(setBodyJobSubmit(jobName, JobStatus.ACTIVE))
+            }
         )
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files",
@@ -290,7 +282,7 @@ class SubmitJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files3",
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-            { MockResponse().setBody(replaceInJson("getStatus", jobName, rc,"OUTPUT")) }
+            { MockResponse().setBody(replaceInJson("getStatus", jobName, rc, "OUTPUT")) }
         )
         submitJob(jobName, projectName, fixtureStack, remoteRobot)
     }
@@ -322,51 +314,11 @@ class SubmitJobTest {
             { MockResponse().setBody("") }
         )
 
-        createEmptyMember(datasetName, memberName, remoteRobot)
+        createEmptyDatasetMember(datasetName, memberName, projectName, fixtureStack, remoteRobot)
         isFirstRequest = false
-        pasteContent(memberName, remoteRobot)
+        pasteContent(memberName, projectName, fixtureStack, remoteRobot)
     }
 
-    private fun pasteContent(
-        memberName: String,
-        remoteRobot: RemoteRobot
-    ) =
-        with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    find<ComponentFixture>(viewTree).findAllText(memberName).last().doubleClick()
-                }
-                with(textEditor()) {
-                    keyboard {
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_V)
-                        Thread.sleep(2000)
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_S)
-                        Thread.sleep(2000)
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
-                    }
-                }
-            }
-        }
-
-    private fun createEmptyMember(
-        datasetName: String,
-        memberName: String,
-        remoteRobot: RemoteRobot
-    ) =
-        with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    fileExplorer.click()
-                    find<ComponentFixture>(viewTree).findAllText(datasetName).last().rightClick()
-                }
-                actionMenu(remoteRobot, "New").click()
-                actionMenuItem(remoteRobot, "Member").click()
-                dialog("Create Member") {
-                    find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberName
-                }
-                clickButton("OK")
-            }
-        }
 
     /**
      * Checks TabPanel and Console that correct info is returned.
@@ -414,24 +366,6 @@ class SubmitJobTest {
         }
     }
 
-    private fun setBodyJobSubmit(jobName: String): String {
-        return "{\n" +
-                "  \"owner\": \"${ZOS_USERID.uppercase()}\",\n" +
-                "  \"phase\": 14,\n" +
-                "  \"subsystem\": \"JES2\",\n" +
-                "  \"phase-name\": \"Job is actively executing\",\n" +
-                "  \"job-correlator\": \"J0007380S0W1....DB23523B.......:\",\n" +
-                "  \"type\": \"JOB\",\n" +
-                "  \"url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A\",\n" +
-                "  \"jobid\": \"JOB07380\",\n" +
-                "  \"class\": \"B\",\n" +
-                "  \"files-url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A/files\",\n" +
-                "  \"jobname\": \"${jobName}\",\n" +
-                "  \"status\": \"ACTIVE\",\n" +
-                "  \"retcode\": null\n" +
-                "}\n"
-    }
-
     private fun buildFinalListDatasetJson(): String {
         var result = "{}"
         if (mapListDatasets.isNotEmpty()) {
@@ -448,12 +382,11 @@ class SubmitJobTest {
         return result
     }
 
-    private fun replaceInJson(fileName: String, jobName: String, rc: String, jobStatus:String=""): String {
+    private fun replaceInJson(fileName: String, jobName: String, rc: String, jobStatus: String = ""): String {
         return (responseDispatcher.readMockJson(fileName) ?: "").replace("hostName", mockServer.hostName)
             .replace("port", mockServer.port.toString())
             .replace("jobName", jobName)
-            .replace("retCode", rc).
-                replace("jobStatus",jobStatus)
+            .replace("retCode", rc).replace("jobStatus", jobStatus)
     }
 
     private fun buildListMembersJson(): String {

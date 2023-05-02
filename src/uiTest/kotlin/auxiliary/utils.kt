@@ -27,9 +27,11 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
+import org.junit.jupiter.api.TestInfo
 import java.awt.event.KeyEvent
 import java.net.InetAddress
 import java.time.Duration
@@ -37,6 +39,8 @@ import java.util.concurrent.TimeUnit
 
 lateinit var mockServer: MockWebServer
 lateinit var responseDispatcher: MockResponseDispatcher
+
+enum class JobStatus { ACTIVE, INPUT, OUTPUT }
 
 //Change ZOS_USERID, ZOS_PWD, CONNECTION_URL with valid values before UI tests execution
 const val ZOS_USERID = "user"
@@ -911,6 +915,9 @@ fun checkErrorNotification(
     }
 }
 
+/**
+ * Starts mock server for UI tests.
+ */
 fun startMockServer() {
     val localhost = InetAddress.getByName("localhost").canonicalHostName
     val localhostCertificate = HeldCertificate.Builder()
@@ -931,26 +938,26 @@ fun startMockServer() {
  * Creates working set and a mask.
  */
 fun createWsAndMask(
-  projectName: String,
-  wsName: String,
-  masks: List<Pair<String,String>>,
-  connectionName: String,
-  fixtureStack: MutableList<Locator>,
-  closableFixtureCollector: ClosableFixtureCollector,
-  remoteRobot: RemoteRobot
+    projectName: String,
+    wsName: String,
+    masks: List<Pair<String, String>>,
+    connectionName: String,
+    fixtureStack: MutableList<Locator>,
+    closableFixtureCollector: ClosableFixtureCollector,
+    remoteRobot: RemoteRobot
 ) = with(remoteRobot) {
-  createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
-  ideFrameImpl(projectName, fixtureStack) {
-    masks.forEach{ mask ->
-      createMask(wsName, fixtureStack, closableFixtureCollector)
-      createMaskDialog(fixtureStack) {
-        createMask(mask)
-        Thread.sleep(3000)
-        clickButton("OK")
-      }
-      closableFixtureCollector.closeOnceIfExists(CreateMaskDialog.name)
+    createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+    ideFrameImpl(projectName, fixtureStack) {
+        masks.forEach { mask ->
+            createMask(wsName, fixtureStack, closableFixtureCollector)
+            createMaskDialog(fixtureStack) {
+                createMask(mask)
+                Thread.sleep(3000)
+                clickButton("OK")
+            }
+            closableFixtureCollector.closeOnceIfExists(CreateMaskDialog.name)
+        }
     }
-  }
 }
 
 /**
@@ -979,4 +986,100 @@ fun listDS(dsName: String): String {
             "      \"vol\": \"TESTVOL\",\n" +
             "      \"vols\": \"TESTVOL\"\n" +
             "    },"
+}
+
+/**
+ * Creates valid connection to mock server.
+ */
+fun createValidConnectionWithMock(
+    testInfo: TestInfo, connectionName: String, projectName: String, fixtureStack: MutableList<Locator>,
+    closableFixtureCollector: ClosableFixtureCollector, remoteRobot: RemoteRobot
+) = with(remoteRobot) {
+    responseDispatcher.injectEndpoint(
+        "${testInfo.displayName}_info",
+        { it?.requestLine?.contains("zosmf/info") ?: false },
+        { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+    )
+    responseDispatcher.injectEndpoint(
+        "${testInfo.displayName}_resttopology",
+        { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
+        { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+    )
+    createConnection(
+        projectName,
+        fixtureStack,
+        closableFixtureCollector,
+        connectionName,
+        true,
+        remoteRobot,
+        "https://${mockServer.hostName}:${mockServer.port}"
+    )
+}
+
+fun createEmptyDatasetMember(
+    datasetName: String,
+    memberName: String,
+    projectName: String, fixtureStack: MutableList<Locator>,
+    remoteRobot: RemoteRobot
+) =
+    with(remoteRobot) {
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                fileExplorer.click()
+                find<ComponentFixture>(viewTree).findAllText(datasetName).last().rightClick()
+            }
+            actionMenu(remoteRobot, "New").click()
+            actionMenuItem(remoteRobot, "Member").click()
+            dialog("Create Member") {
+                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberName
+            }
+            clickButton("OK")
+        }
+    }
+
+/**
+ * Pastes content to dataset member from buffer.
+ */
+fun pasteContent(
+    memberName: String,
+    projectName: String, fixtureStack: MutableList<Locator>,
+    remoteRobot: RemoteRobot
+) =
+    with(remoteRobot) {
+        ideFrameImpl(projectName, fixtureStack) {
+            explorer {
+                find<ComponentFixture>(viewTree).findAllText(memberName).last().doubleClick()
+                Thread.sleep(2000)
+            }
+            with(textEditor()) {
+                keyboard {
+                    hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_V)
+                    Thread.sleep(2000)
+                    hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_S)
+                    Thread.sleep(2000)
+                    hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
+                }
+            }
+        }
+    }
+
+/**
+ * Creates json for submitted job.
+ */
+fun setBodyJobSubmit(jobName: String, jobStatus: JobStatus): String {
+    return "{\n" +
+            "  \"owner\": \"${ZOS_USERID.uppercase()}\",\n" +
+            "  \"phase\": 14,\n" +
+            "  \"subsystem\": \"JES2\",\n" +
+            "  \"phase-name\": \"Job is actively executing\",\n" +
+            "  \"job-correlator\": \"J0007380S0W1....DB23523B.......:\",\n" +
+            "  \"type\": \"JOB\",\n" +
+            "  \"url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A\",\n" +
+            "  \"jobid\": \"JOB07380\",\n" +
+            "  \"class\": \"B\",\n" +
+            "  \"files-url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A/files\",\n" +
+            "  \"jobname\": \"${jobName}\",\n" +
+            "  \"status\": \"${jobStatus}\",\n" +
+            "  \"retcode\": null\n" +
+            "}\n"
 }
