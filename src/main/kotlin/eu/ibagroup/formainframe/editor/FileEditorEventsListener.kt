@@ -24,7 +24,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
  * File editor events listener.
- * Needed to handle file open event
+ * Needed to handle file editor events
  */
 class FileEditorEventsListener : FileEditorManagerListener {
 
@@ -43,7 +43,7 @@ class FileEditorEventsListener : FileEditorManagerListener {
 
 /**
  * File editor before events listener.
- * Needed to handle before file close event
+ * Needed to handle before file editor events
  */
 class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
 
@@ -83,5 +83,15 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
         }
     }
     super.beforeFileClosed(source, file)
+  }
+
+  /**
+   * Handle before file open event
+   * @param source the source file editor manager to get the project where the file is being edited
+   * @param file the file that opens
+   */
+  override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
+    file.putUserData()
+    super.beforeFileOpened(source, file)
   }
 }
