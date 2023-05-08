@@ -17,12 +17,12 @@ import auxiliary.components.stripeButton
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.*
+import com.intellij.remoterobot.fixtures.dataExtractor.RemoteText
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
 import com.intellij.remoterobot.utils.keyboard
 import com.intellij.remoterobot.utils.waitFor
-import testutils.MockResponseDispatcher
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.string.shouldContain
@@ -32,6 +32,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import org.junit.jupiter.api.TestInfo
+import testutils.MockResponseDispatcher
 import java.awt.event.KeyEvent
 import java.net.InetAddress
 import java.time.Duration
@@ -158,7 +159,6 @@ fun ContainerFixture.createWSFromContextMenu(
     explorer {
         fileExplorer.click()
         find<ComponentFixture>(viewTree).rightClick()
-        Thread.sleep(3000)
     }
     actionMenu(remoteRobot, "New").click()
 
@@ -496,7 +496,7 @@ fun openOrCloseWorkingSetInExplorer(
         explorer {
             fileExplorer.click()
             find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
-            Thread.sleep(3000)
+            Thread.sleep(1000)
         }
     }
 }
@@ -770,7 +770,6 @@ fun allocatePDSAndCreateMask(
             createMaskDialog(fixtureStack) {
                 createMask(Pair(maskName, "z/OS"))
                 clickButton("OK")
-                Thread.sleep(3000)
             }
         }
 
@@ -783,16 +782,23 @@ fun allocatePDSAndCreateMask(
         allocateDatasetDialog(fixtureStack) {
             allocateDataset(datasetName, "PO", "TRK", 10, 1, directory, "VB", 255, 6120)
             clickButton("OK")
-            Thread.sleep(10000)
+            Thread.sleep(500)
         }
-        find<ContainerFixture>(byXpath("//div[@class='MyDialog']")).findText("Dataset ${datasetName.uppercase()} Has Been Created")
+
+        val textToFind = "Dataset ${datasetName.uppercase()} Has Been Created"
+        val dialog = find<ContainerFixture>(byXpath("//div[@class='MyDialog']"))
+        val dialogContents = dialog.findAllText().map(RemoteText::text).joinToString("")
+        val hasText = dialogContents.contains(textToFind)
+        if (!hasText) {
+            throw Exception("Text is not found in dialog: $textToFind")
+        }
 
         if (maskName != null) {
             clickButton("No")
-            Thread.sleep(5000)
+            Thread.sleep(200)
         } else {
             clickButton("Yes")
-            Thread.sleep(5000)
+            Thread.sleep(200)
         }
     }
     if (openWs) {
@@ -965,27 +971,27 @@ fun createWsAndMask(
  */
 fun listDS(dsName: String): String {
     return "{\n" +
-            "      \"dsname\": \"${dsName}\",\n" +
-            "      \"blksz\": \"3200\",\n" +
-            "      \"catnm\": \"TEST.CATALOG.MASTER\",\n" +
-            "      \"cdate\": \"2021/11/15\",\n" +
-            "      \"dev\": \"3390\",\n" +
-            "      \"dsntp\": \"PDS\",\n" +
-            "      \"dsorg\": \"PO\",\n" +
-            "      \"edate\": \"***None***\",\n" +
-            "      \"extx\": \"1\",\n" +
-            "      \"lrecl\": \"255\",\n" +
-            "      \"migr\": \"NO\",\n" +
-            "      \"mvol\": \"N\",\n" +
-            "      \"ovf\": \"NO\",\n" +
-            "      \"rdate\": \"2021/11/17\",\n" +
-            "      \"recfm\": \"VB\",\n" +
-            "      \"sizex\": \"10\",\n" +
-            "      \"spacu\": \"TRACKS\",\n" +
-            "      \"used\": \"1\",\n" +
-            "      \"vol\": \"TESTVOL\",\n" +
-            "      \"vols\": \"TESTVOL\"\n" +
-            "    },"
+        "      \"dsname\": \"${dsName}\",\n" +
+        "      \"blksz\": \"3200\",\n" +
+        "      \"catnm\": \"TEST.CATALOG.MASTER\",\n" +
+        "      \"cdate\": \"2021/11/15\",\n" +
+        "      \"dev\": \"3390\",\n" +
+        "      \"dsntp\": \"PDS\",\n" +
+        "      \"dsorg\": \"PO\",\n" +
+        "      \"edate\": \"***None***\",\n" +
+        "      \"extx\": \"1\",\n" +
+        "      \"lrecl\": \"255\",\n" +
+        "      \"migr\": \"NO\",\n" +
+        "      \"mvol\": \"N\",\n" +
+        "      \"ovf\": \"NO\",\n" +
+        "      \"rdate\": \"2021/11/17\",\n" +
+        "      \"recfm\": \"VB\",\n" +
+        "      \"sizex\": \"10\",\n" +
+        "      \"spacu\": \"TRACKS\",\n" +
+        "      \"used\": \"1\",\n" +
+        "      \"vol\": \"TESTVOL\",\n" +
+        "      \"vols\": \"TESTVOL\"\n" +
+        "    },"
 }
 
 /**
@@ -1068,18 +1074,18 @@ fun pasteContent(
  */
 fun setBodyJobSubmit(jobName: String, jobStatus: JobStatus): String {
     return "{\n" +
-            "  \"owner\": \"${ZOS_USERID.uppercase()}\",\n" +
-            "  \"phase\": 14,\n" +
-            "  \"subsystem\": \"JES2\",\n" +
-            "  \"phase-name\": \"Job is actively executing\",\n" +
-            "  \"job-correlator\": \"J0007380S0W1....DB23523B.......:\",\n" +
-            "  \"type\": \"JOB\",\n" +
-            "  \"url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A\",\n" +
-            "  \"jobid\": \"JOB07380\",\n" +
-            "  \"class\": \"B\",\n" +
-            "  \"files-url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A/files\",\n" +
-            "  \"jobname\": \"${jobName}\",\n" +
-            "  \"status\": \"${jobStatus}\",\n" +
-            "  \"retcode\": null\n" +
-            "}\n"
+        "  \"owner\": \"${ZOS_USERID.uppercase()}\",\n" +
+        "  \"phase\": 14,\n" +
+        "  \"subsystem\": \"JES2\",\n" +
+        "  \"phase-name\": \"Job is actively executing\",\n" +
+        "  \"job-correlator\": \"J0007380S0W1....DB23523B.......:\",\n" +
+        "  \"type\": \"JOB\",\n" +
+        "  \"url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A\",\n" +
+        "  \"jobid\": \"JOB07380\",\n" +
+        "  \"class\": \"B\",\n" +
+        "  \"files-url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A/files\",\n" +
+        "  \"jobname\": \"${jobName}\",\n" +
+        "  \"status\": \"${jobStatus}\",\n" +
+        "  \"retcode\": null\n" +
+        "}\n"
 }

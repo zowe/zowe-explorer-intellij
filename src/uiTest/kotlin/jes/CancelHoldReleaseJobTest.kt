@@ -438,12 +438,12 @@ class CancelHoldReleaseJobTest {
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
-                Thread.sleep(3000)
+                Thread.sleep(500)
                 find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
                     EMPTY_DATASET_MESSAGE
                 )
                 clickButton("OK")
-                Thread.sleep(3000)
+                Thread.sleep(500)
             }
             closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
         }
@@ -508,10 +508,10 @@ class CancelHoldReleaseJobTest {
                 listDatasetsJson += it.value
             }
             result = listDatasetsJson.dropLast(1) + "],\n" +
-                    "  \"returnedRows\": ${mapListDatasets.size},\n" +
-                    "  \"totalRows\": ${mapListDatasets.size},\n" +
-                    "  \"JSONversion\": 1\n" +
-                    "}"
+                "  \"returnedRows\": ${mapListDatasets.size},\n" +
+                "  \"totalRows\": ${mapListDatasets.size},\n" +
+                "  \"JSONversion\": 1\n" +
+                "}"
         }
         return result
     }
@@ -574,29 +574,29 @@ class CancelHoldReleaseJobTest {
 
     private fun setBodyJobCancelled(jobName: String): String {
         return "{\n" +
-                "\"jobid\":\"JOB07380\",\n" +
-                "\"jobname\":\"$jobName\",\n" +
-                "\"original-jobid\":\"JOB07380\",\n" +
-                "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
-                "\"member\":\"JES2\",\n" +
-                "\"sysname\":\"SY1\",\n" +
-                "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
-                "\"status\":\"0\",\n" +
-                "\"retcode\":\"CANCELED\"\n" +
-                "}"
+            "\"jobid\":\"JOB07380\",\n" +
+            "\"jobname\":\"$jobName\",\n" +
+            "\"original-jobid\":\"JOB07380\",\n" +
+            "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
+            "\"member\":\"JES2\",\n" +
+            "\"sysname\":\"SY1\",\n" +
+            "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
+            "\"status\":\"0\",\n" +
+            "\"retcode\":\"CANCELED\"\n" +
+            "}"
     }
 
     private fun setBodyJobHeldOrReleased(jobName: String): String {
         return "{\n" +
-                "\"jobid\":\"JOB07380\",\n" +
-                "\"jobname\":\"$jobName\",\n" +
-                "\"original-jobid\":\"JOB07380\",\n" +
-                "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
-                "\"member\":\"JES2\",\n" +
-                "\"sysname\":\"SY1\",\n" +
-                "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
-                "\"status\":\"0\"\n" +
-                "}"
+            "\"jobid\":\"JOB07380\",\n" +
+            "\"jobname\":\"$jobName\",\n" +
+            "\"original-jobid\":\"JOB07380\",\n" +
+            "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
+            "\"member\":\"JES2\",\n" +
+            "\"sysname\":\"SY1\",\n" +
+            "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
+            "\"status\":\"0\"\n" +
+            "}"
     }
 
     private fun replaceInJson(
