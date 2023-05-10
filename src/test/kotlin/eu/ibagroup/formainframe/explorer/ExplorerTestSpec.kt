@@ -27,37 +27,40 @@ import eu.ibagroup.formainframe.config.ConfigStateV2
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
-import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
-import eu.ibagroup.formainframe.explorer.actions.PurgeJobAction
-import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import io.kotest.assertions.assertSoftly
 import eu.ibagroup.formainframe.config.makeCrudableWithoutListeners
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.UssPath
+import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
+import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
 import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
+import eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction
+import eu.ibagroup.formainframe.explorer.actions.PurgeJobAction
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
 import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.zowe.kotlinsdk.CancelJobPurgeOutRequest
 import org.zowe.kotlinsdk.JESApi
-import java.util.*
-import java.util.stream.Stream
 import org.zowe.kotlinsdk.Job
+import org.zowe.kotlinsdk.SpoolFile
 import retrofit2.Call
 import retrofit2.Response
+import java.lang.IllegalStateException
+import java.util.*
+import java.util.stream.Stream
 
 class ExplorerTestSpec : ShouldSpec({
   beforeSpec {
@@ -356,243 +359,361 @@ class ExplorerTestSpec : ShouldSpec({
     should("perform rename on USS directory") {}
   }
   context("explorer module: actions/PurgeJobAction") {
-    // actionPerformed
+    context("actionPerformed") {
+      val purgeAction = PurgeJobAction()
+      val mockActionEventForJesEx = mockk<AnActionEvent>()
+      val jesExplorerView = mockk<JesExplorerView>()
 
-    val purgeAction = PurgeJobAction()
-    val mockActionEventForJesEx = mockk<AnActionEvent>()
-    val jesExplorerView = mockk<JesExplorerView>()
-
-    val job = mockk<Job>()
-    every { job.jobName } returns "name"
-    every { job.jobId } returns "id"
-    val connectionConfig = mockk<ConnectionConfig>()
-    every { connectionConfig.uuid } returns "uuid"
-    val jobsFilter = spyk(
-      JobsFilter(
-        "owner",
-        "prefix",
-        "id"
+      val job = mockk<Job>()
+      every { job.jobName } returns "name"
+      every { job.jobId } returns "id"
+      val connectionConfig = mockk<ConnectionConfig>()
+      every { connectionConfig.uuid } returns "uuid"
+      val jobsFilter = spyk(
+        JobsFilter(
+          "owner",
+          "prefix",
+          "id"
+        )
       )
-    )
+      every { gson.fromJson(any() as String, Job::class.java) } returns job
 
-    mockkObject(CredentialService)
-    every { CredentialService.instance.getUsernameByKey(any()) } returns "user"
-    every { CredentialService.instance.getPasswordByKey(any()) } returns "pas"
+      mockkObject(CredentialService)
+      every { CredentialService.instance.getUsernameByKey(any()) } returns "user"
+      every { CredentialService.instance.getPasswordByKey(any()) } returns "pas"
 
-    every { mockActionEventForJesEx.getExplorerView<JesExplorerView>() } returns jesExplorerView
+      every { mockActionEventForJesEx.getExplorerView<JesExplorerView>() } returns jesExplorerView
 
-    val jobNode = mockk<JobNode>()
-    val virtualFile = mockk<MFVirtualFile>()
+      val jobNode = mockk<JobNode>()
+      val virtualFile = mockk<MFVirtualFile>()
 
-    val nodeData = spyk(
-      NodeData(
-        jobNode,
-        virtualFile,
-        null
-      )
-    )
-    every { jesExplorerView.mySelectedNodesData } returns listOf(nodeData)
-
-    val parentNode = mockk<JesFilterNode>()
-    val query = spyk(
-      UnitRemoteQueryImpl(
-        jobsFilter,
-        connectionConfig
-      )
-    )
-    every { parentNode.query } returns query
-    justRun { parentNode.cleanCache()}
-
-    val jesApi = mockk<JESApi>()
-    val call = mockk<Call<List<Job>>>()
-    mockkObject(ZosmfApi)
-    every { ZosmfApi.instance.getApi<JESApi>(any(), any()) } returns jesApi
-    every { jesApi.getFilteredJobs(any(), any(), any(), any(), any(), any(), any(), any()) } returns call
-
-    val response = mockk<Response<List<Job>>>()
-    val jobList = mutableListOf(job, job)
-    every { call.execute() } returns response
-    every { response.body() } answers {
-      if (jobList.isNotEmpty()) {
-        jobList.removeFirst()
-        jobList
-      } else {
-        null
-      }
-    }
-    every { response.isSuccessful } returns true
-
-    every { jobNode.virtualFile } returns virtualFile
-    every { jobNode.parent } returns parentNode
-
-    val explorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>>()
-    every { jobNode.explorer } returns explorer
-    every { explorer.componentManager } returns ApplicationManager.getApplication()
-
-    lateinit var dataOpsManager: TestDataOpsManagerImpl
-
-    val project = mockk<Project>()
-    every {
-      mockActionEventForJesEx.project
-    } returns project
-
-    every {
-      jesExplorerView.explorer
-    } returns explorer
-
-    val mockRequest = mockk<CancelJobPurgeOutRequest>()
-    val jobAttr = spyk(
-      RemoteJobAttributes(
-        job,
-        "test",
-        mutableListOf(JobsRequester(connectionConfig, jobsFilter))
-      )
-    )
-    every { jobAttr.clone() } returns jobAttr
-
-    val mockActionEventForJobsLog = mockk<AnActionEvent>()
-    val jobsLogView = mockk<JobBuildTreeView>()
-
-    every { mockActionEventForJobsLog.getData(any() as DataKey<Any>) } returns jobsLogView
-    every { mockActionEventForJobsLog.project } returns project
-
-    val mockkLogger = mockk<MFLogger<JobLogFetcher>>()
-    val mockkFetcher = mockk<JobLogFetcher>()
-
-    every { jobsLogView.getJobLogger() } returns mockkLogger
-    every {
-      hint(JobLogFetcher::class)
-      mockkLogger.logFetcher
-    } returns mockkFetcher
-    every { mockkFetcher.getCachedJobStatus() } returns job
-    every { jobsLogView.getConnectionConfig() } returns connectionConfig
-
-    should("perform purge on job successfully") {
-
-      dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-      dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
-        override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-          return jobAttr
-        }
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          return mockRequest as R
-        }
-
-      }
-
-      var isOperationSucceededForJesEx = false
-      every {
-        explorer.showNotification(any(), any(), NotificationType.INFORMATION, any())
-      } answers {
-        isOperationSucceededForJesEx = true
-      }
-
-      var isOperationSucceededForJobsLog = false
-      every {
-        jobsLogView.showNotification(any(), any(), any(), NotificationType.INFORMATION)
-      } answers {
-        isOperationSucceededForJobsLog = true
-      }
-
-      var isVisibleInJes = false
-      every { mockActionEventForJesEx.presentation.setVisible(true) } answers { isVisibleInJes = true }
-
-      every { job.status } returns mockk()
-      var isEnabledInJobsLog = true
-      every { mockActionEventForJobsLog.presentation.setEnabled(false) } answers { isEnabledInJobsLog = false }
-
-      purgeAction.actionPerformed(mockActionEventForJesEx)
-      purgeAction.update(mockActionEventForJesEx)
-      purgeAction.actionPerformed(mockActionEventForJobsLog)
-      purgeAction.update(mockActionEventForJobsLog)
-
-      assertSoftly {
-        isOperationSucceededForJesEx shouldBe true
-        isOperationSucceededForJobsLog shouldBe true
-        isVisibleInJes shouldBe true
-        isEnabledInJobsLog shouldBe true
-        purgeAction.isDumbAware shouldBe true
-      }
-
-    }
-    should("perform purge on job with error") {
-
-      val updateJesAction = mockk<AnActionEvent>()
-      val jesViewForUpdate = mockk<JesExplorerView>()
-      every { updateJesAction.getExplorerView<JesExplorerView>() } returns jesViewForUpdate
-      every { jesViewForUpdate.mySelectedNodesData } returns listOf()
-
-      val updateJesAction2 = mockk<AnActionEvent>()
-      val jesViewForUpdate2 = mockk<JesExplorerView>()
-      every { updateJesAction2.getExplorerView<JesExplorerView>() } returns jesViewForUpdate2
-      val errorNode = mockk<ErrorNode<ConnectionConfig>>()
-      every { jesViewForUpdate2.mySelectedNodesData } returns listOf(
+      val nodeData = spyk(
         NodeData(
-        errorNode,
-        virtualFile,
-        null
-      ))
+          jobNode,
+          virtualFile,
+          null
+        )
+      )
+      every { jesExplorerView.mySelectedNodesData } returns listOf(nodeData)
 
-      dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-      dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
-        override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-          return jobAttr
+      val parentNode = mockk<JesFilterNode>()
+      val query = spyk(
+        UnitRemoteQueryImpl(
+          jobsFilter,
+          connectionConfig
+        )
+      )
+      every { parentNode.query } returns query
+      justRun { parentNode.cleanCache() }
+
+      val jesApi = mockk<JESApi>()
+      val call = mockk<Call<List<Job>>>()
+      mockkObject(ZosmfApi)
+      every { ZosmfApi.instance.getApi<JESApi>(any(), any()) } returns jesApi
+      every { jesApi.getFilteredJobs(any(), any(), any(), any(), any(), any(), any(), any()) } returns call
+
+      val response = mockk<Response<List<Job>>>()
+      val jobList = mutableListOf(job, job)
+      every { call.execute() } returns response
+      every { response.body() } answers {
+        if (jobList.isNotEmpty()) {
+          jobList.removeFirst()
+          jobList
+        } else {
+          null
         }
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          throw Exception("Error")
+      }
+      every { response.isSuccessful } returns true
+
+      every { jobNode.virtualFile } returns virtualFile
+      every { jobNode.parent } returns parentNode
+
+      val explorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>>()
+      every { jobNode.explorer } returns explorer
+      every { explorer.componentManager } returns ApplicationManager.getApplication()
+
+      lateinit var dataOpsManager: TestDataOpsManagerImpl
+
+      val project = mockk<Project>()
+      every {
+        mockActionEventForJesEx.project
+      } returns project
+
+      every {
+        jesExplorerView.explorer
+      } returns explorer
+
+      val mockRequest = mockk<CancelJobPurgeOutRequest>()
+      val jobAttr = spyk(
+        RemoteJobAttributes(
+          job,
+          "test",
+          mutableListOf(JobsRequester(connectionConfig, jobsFilter))
+        )
+      )
+      every { jobAttr.clone() } returns jobAttr
+
+      val mockActionEventForJobsLog = mockk<AnActionEvent>()
+      val jobsLogView = mockk<JobBuildTreeView>()
+
+      every { mockActionEventForJobsLog.getData(any() as DataKey<Any>) } returns jobsLogView
+      every { mockActionEventForJobsLog.project } returns project
+
+      val mockkLogger = mockk<MFLogger<JobLogFetcher>>()
+      val mockkFetcher = mockk<JobLogFetcher>()
+
+      every { jobsLogView.getJobLogger() } returns mockkLogger
+      every {
+        hint(JobLogFetcher::class)
+        mockkLogger.logFetcher
+      } returns mockkFetcher
+      every { mockkFetcher.getCachedJobStatus() } returns job
+      every { jobsLogView.getConnectionConfig() } returns connectionConfig
+
+      should("perform purge on job successfully") {
+
+        dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return jobAttr
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            return mockRequest as R
+          }
+
         }
+
+        var isOperationSucceededForJesEx = false
+        every {
+          explorer.showNotification(any(), any(), NotificationType.INFORMATION, any())
+        } answers {
+          isOperationSucceededForJesEx = true
+        }
+
+        var isOperationSucceededForJobsLog = false
+        every {
+          jobsLogView.showNotification(any(), any(), any(), NotificationType.INFORMATION)
+        } answers {
+          isOperationSucceededForJobsLog = true
+        }
+
+        var isVisibleInJes = false
+        every { mockActionEventForJesEx.presentation.setVisible(true) } answers { isVisibleInJes = true }
+
+        every { job.status } returns mockk()
+        var isEnabledInJobsLog = true
+        every { mockActionEventForJobsLog.presentation.setEnabled(false) } answers { isEnabledInJobsLog = false }
+
+        purgeAction.actionPerformed(mockActionEventForJesEx)
+        purgeAction.update(mockActionEventForJesEx)
+        purgeAction.actionPerformed(mockActionEventForJobsLog)
+        purgeAction.update(mockActionEventForJobsLog)
+
+        assertSoftly {
+          isOperationSucceededForJesEx shouldBe true
+          isOperationSucceededForJobsLog shouldBe true
+          isVisibleInJes shouldBe true
+          isEnabledInJobsLog shouldBe true
+          purgeAction.isDumbAware shouldBe true
+        }
+
       }
+      should("perform purge on job with error") {
 
-      var isOperationFailedForJesEx = false
-      every {
-        explorer.showNotification(any(), any(), NotificationType.ERROR, any())
-      } answers {
-        isOperationFailedForJesEx = true
-      }
+        val updateJesAction = mockk<AnActionEvent>()
+        val jesViewForUpdate = mockk<JesExplorerView>()
+        every { updateJesAction.getExplorerView<JesExplorerView>() } returns jesViewForUpdate
+        every { jesViewForUpdate.mySelectedNodesData } returns listOf()
 
-      var isOperationFailedForJobsLog = false
-      every {
-        jobsLogView.showNotification(any(), any(), any(), NotificationType.ERROR)
-      } answers {
-        isOperationFailedForJobsLog = true
-      }
+        val updateJesAction2 = mockk<AnActionEvent>()
+        val jesViewForUpdate2 = mockk<JesExplorerView>()
+        every { updateJesAction2.getExplorerView<JesExplorerView>() } returns jesViewForUpdate2
+        val errorNode = mockk<ErrorNode<ConnectionConfig>>()
+        every { jesViewForUpdate2.mySelectedNodesData } returns listOf(
+          NodeData(
+            errorNode,
+            virtualFile,
+            null
+          )
+        )
 
-      var isOperationFailedForNoContextAction = false
-      val mockActionEventWithoutDataContext = mockk<AnActionEvent>()
-      every { mockActionEventWithoutDataContext.getData(any() as DataKey<Any>) } returns null
-      every { mockActionEventWithoutDataContext.presentation.setEnabledAndVisible(false) } answers { isOperationFailedForNoContextAction = true }
+        dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return jobAttr
+          }
 
-      every { job.status } returns null
-      var isEnabledInJobsLog = true
-      every { mockActionEventForJobsLog.presentation.setEnabled(false) } answers { isEnabledInJobsLog = false }
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            throw IllegalStateException("No operation is expected to be performed.")
+          }
+        }
 
-      var isVisibleForJes = true
-      every { updateJesAction.presentation.setVisible(false) } answers { isVisibleForJes = false }
-      var isVisibleForJes2 = true
-      every { updateJesAction2.presentation.setVisible(false) } answers { isVisibleForJes2 = false }
+        var isOperationFailedForJesEx = false
+        every {
+          explorer.showNotification(any(), any(), NotificationType.ERROR, any())
+        } answers {
+          isOperationFailedForJesEx = true
+        }
 
-      purgeAction.actionPerformed(mockActionEventForJesEx)
-      purgeAction.actionPerformed(mockActionEventForJobsLog)
-      purgeAction.actionPerformed(mockActionEventWithoutDataContext)
-      purgeAction.update(mockActionEventWithoutDataContext)
-      purgeAction.update(mockActionEventForJobsLog)
-      purgeAction.update(updateJesAction)
-      purgeAction.update(updateJesAction2)
+        var isOperationFailedForJobsLog = false
+        every {
+          jobsLogView.showNotification(any(), any(), any(), NotificationType.ERROR)
+        } answers {
+          isOperationFailedForJobsLog = true
+        }
 
-      assertSoftly {
-        isOperationFailedForJesEx shouldBe true
-        isOperationFailedForJobsLog shouldBe true
-        isEnabledInJobsLog shouldBe false
-        isVisibleForJes shouldBe false
-        isVisibleForJes2 shouldBe false
-        isOperationFailedForNoContextAction shouldBe true
+        var isOperationFailedForNoContextAction = false
+        val mockActionEventWithoutDataContext = mockk<AnActionEvent>()
+        every { mockActionEventWithoutDataContext.getData(any() as DataKey<Any>) } returns null
+        every { mockActionEventWithoutDataContext.presentation.setEnabledAndVisible(false) } answers {
+          isOperationFailedForNoContextAction = true
+        }
+
+        every { job.status } returns null
+        var isEnabledInJobsLog = true
+        every { mockActionEventForJobsLog.presentation.setEnabled(false) } answers { isEnabledInJobsLog = false }
+
+        var isVisibleForJes = true
+        every { updateJesAction.presentation.setVisible(false) } answers { isVisibleForJes = false }
+        var isVisibleForJes2 = true
+        every { updateJesAction2.presentation.setVisible(false) } answers { isVisibleForJes2 = false }
+
+        purgeAction.actionPerformed(mockActionEventForJesEx)
+        purgeAction.actionPerformed(mockActionEventForJobsLog)
+        purgeAction.actionPerformed(mockActionEventWithoutDataContext)
+        purgeAction.update(mockActionEventWithoutDataContext)
+        purgeAction.update(mockActionEventForJobsLog)
+        purgeAction.update(updateJesAction)
+        purgeAction.update(updateJesAction2)
+
+        assertSoftly {
+          isOperationFailedForJesEx shouldBe true
+          isOperationFailedForJobsLog shouldBe true
+          isEnabledInJobsLog shouldBe false
+          isVisibleForJes shouldBe false
+          isVisibleForJes2 shouldBe false
+          isOperationFailedForNoContextAction shouldBe true
+        }
       }
     }
   }
   context("explorer module: actions/GetJobPropertiesAction") {
-    // actionPerformed
-    should("get job properties") {}
-    should("get spool file properties") {}
+    context("actionPerformed") {
+      val getPropertiesEvent = mockk<AnActionEvent>()
+      val project = mockk<Project>()
+      every { getPropertiesEvent.project } returns project
+
+      val virtualFile = mockk<MFVirtualFile>()
+
+      val jesView = mockk<JesExplorerView>()
+      val explorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>>()
+      every { getPropertiesEvent.getExplorerView<JesExplorerView>() } returns jesView
+
+      val connectionConfig = mockk<ConnectionConfig>()
+      every { connectionConfig.uuid } returns "uuid"
+
+      should("get job properties") {
+        val jobNode = mockk<JobNode>()
+        every { jobNode.virtualFile } returns virtualFile
+        val nodeData = spyk(NodeData(jobNode, virtualFile, null))
+
+        every { jesView.mySelectedNodesData } returns listOf(nodeData)
+
+        every { jobNode.explorer } returns explorer
+        every { explorer.componentManager } returns ApplicationManager.getApplication()
+
+        val job = mockk<Job>()
+        every { job.jobName } returns "name"
+        every { job.jobId } returns "id"
+        val jobsFilter = spyk(JobsFilter("owner", "prefix", "id"))
+        val jobAttr = spyk(RemoteJobAttributes(job, "test", mutableListOf(JobsRequester(connectionConfig, jobsFilter))))
+
+        val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return jobAttr
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            throw IllegalStateException("No operation is expected to be performed.")
+          }
+        }
+
+        val dialogMock = mockk<JobPropertiesDialog>()
+        every { dialogMock.showAndGet() } returns true
+
+        mockkStatic(JobPropertiesDialog::class)
+        mockkObject(JobPropertiesDialog.Companion)
+
+        mockkStatic(SpoolFilePropertiesDialog::class)
+        mockkObject(SpoolFilePropertiesDialog.Companion)
+
+        every { JobPropertiesDialog.Companion.create(any() as Project?, any() as JobState) } returns dialogMock
+        every { SpoolFilePropertiesDialog.Companion.create(any() as Project?, any() as SpoolFileState) } answers {
+          throw IllegalStateException("Spool file properties dialog should not be used.")
+        }
+
+        GetJobPropertiesAction().actionPerformed(getPropertiesEvent)
+
+        verify { dialogMock.showAndGet() }
+
+      }
+      should("get spool file properties") {
+        val spoolFileNode = mockk<SpoolFileNode>()
+        every { spoolFileNode.virtualFile } returns virtualFile
+        val nodeData = spyk(NodeData(spoolFileNode, virtualFile, null))
+
+        every { jesView.mySelectedNodesData } returns listOf(nodeData)
+
+        every { spoolFileNode.explorer } returns explorer
+        every { explorer.componentManager } returns ApplicationManager.getApplication()
+
+        val spoolFile = mockk<SpoolFile>()
+
+        every { spoolFile.ddName } returns "ddname"
+        every { spoolFile.jobId } returns "jobid"
+        every { spoolFile.id } returns 1
+
+        mockkObject(gson)
+        every { gson.fromJson(any() as String, SpoolFile::class.java) } returns spoolFile
+
+        val parentFile = mockk<MFVirtualFile>()
+        val spoolFileAttr = spyk(RemoteSpoolFileAttributes(spoolFile, parentFile))
+
+        val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return spoolFileAttr
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            throw IllegalStateException("No operation is expected to be performed.")
+          }
+        }
+
+        val dialogMock = mockk<SpoolFilePropertiesDialog>()
+        every { dialogMock.showAndGet() } returns true
+
+        mockkStatic(JobPropertiesDialog::class)
+        mockkObject(JobPropertiesDialog.Companion)
+
+        mockkStatic(SpoolFilePropertiesDialog::class)
+        mockkObject(SpoolFilePropertiesDialog.Companion)
+
+        every { JobPropertiesDialog.Companion.create(any() as Project?, any() as JobState) } answers {
+          throw IllegalStateException("Job properties dialog should not be used.")
+        }
+        every {
+          SpoolFilePropertiesDialog.Companion.create(any() as Project?, any() as SpoolFileState)
+        } returns dialogMock
+
+        GetJobPropertiesAction().actionPerformed(getPropertiesEvent)
+
+        verify { dialogMock.showAndGet() }
+        unmockkObject(gson)
+      }
+    }
   }
   context("explorer module: actions/GetFilePropertiesAction") {
     // actionPerformed

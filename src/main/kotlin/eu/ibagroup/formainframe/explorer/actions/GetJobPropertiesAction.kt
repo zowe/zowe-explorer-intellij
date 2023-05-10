@@ -32,11 +32,11 @@ class GetJobPropertiesAction : AnAction() {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone()) {
           is RemoteJobAttributes -> {
-            val dialog = JobPropertiesDialog(e.project, JobState(attributes))
+            val dialog = JobPropertiesDialog.create(e.project, JobState(attributes))
             dialog.showAndGet()
           }
           is RemoteSpoolFileAttributes -> {
-            val dialog = SpoolFilePropertiesDialog(e.project, SpoolFileState(attributes))
+            val dialog = SpoolFilePropertiesDialog.create(e.project, SpoolFileState(attributes))
             dialog.showAndGet()
           }
         }
