@@ -1,5 +1,5 @@
 #!/bin/bash
 ./gradlew :clean runIdeForUiTest&
-sleep 40
-./gradlew firstTimeUiTest
-#./gradlew uiTest
+sleep 60
+#./gradlew firstTimeUiTest
+./gradlew uiTest
