@@ -115,14 +115,13 @@ class JobBuildTreeView(
     }
 
     jobLogger.onLogFinished {
-      val result = if (
-        jobLogger
+      val rc = jobLogger
           .logFetcher
           .getCachedJobStatus()
           ?.returnedCode
           ?.uppercase()
-          ?.contains(Regex("ERR|ABEND|CANCEL")) == true
-      ) FailureResultImpl() else SuccessResultImpl()
+      val result = if (rc == null || rc.contains(Regex("ERR|ABEND|CANCEL"))) FailureResultImpl()
+                   else SuccessResultImpl()
       jobLogger.logFetcher.getCachedLog()
         .forEach {
           treeConsoleView.onEvent(buildId, FinishEventImpl(it.key.id, buildId, Date().time, it.key.ddName, result))
