@@ -78,6 +78,19 @@ open class DatasetPropertiesDialog(
     }
 
     /**
+     * Checks if the dataset is migrated.
+     */
+    fun isDatasetMigrated(): Boolean {
+        var result = false
+        val dsDataParams = findAll<JLabelFixture>(byXpath("//div[@class='JBTextField']"))
+        if(dsDataParams.last().hasText("Dataset has migrated.")){
+            result = true
+        }
+
+        return result
+    }
+
+    /**
      * The close function, which is used to close the dialog in the tear down method.
      */
     override fun close() {
