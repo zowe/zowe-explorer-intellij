@@ -23,7 +23,7 @@ apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
 version = "1.1.0"
-val remoteRobotVersion = "0.11.16"
+val remoteRobotVersion = "0.11.18"
 val okHttp3Version = "4.10.0"
 val kotestVersion = "5.5.5"
 

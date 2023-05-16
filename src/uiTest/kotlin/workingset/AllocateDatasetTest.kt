@@ -22,6 +22,7 @@ import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import io.kotest.matchers.string.shouldContain
+import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.extension.ExtendWith
@@ -47,16 +48,25 @@ class AllocateDatasetTest {
     private var datasetsToBeDeleted = mutableListOf<String>()
 
     //TODO change message when ijmp-907 is fixed
-    private val numberGreaterThanOneMsg = "Enter a number grater than 1"
+    private val numberGreaterThanOneMsg = "Enter a number greater than or equal to 1"
     private val enterPositiveNumberMsg = "Enter a positive number"
+    private var mapListDatasets = mutableMapOf<String, String>()
 
     /**
      * Opens the project and Explorer, clears test environment, creates working set and mask.
      */
     @BeforeAll
-    fun setUpAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
+        startMockServer()
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        createConnection(projectName, fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
+        createValidConnectionWithMock(
+            testInfo,
+            connectionName,
+            projectName,
+            fixtureStack,
+            closableFixtureCollector,
+            remoteRobot
+        )
         createWsAndMask(remoteRobot)
 
     }
@@ -67,6 +77,7 @@ class AllocateDatasetTest {
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
         deleteDatasets(remoteRobot)
+        mockServer.shutdown()
         clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             close()
@@ -78,6 +89,7 @@ class AllocateDatasetTest {
      */
     @AfterEach
     fun tearDown(remoteRobot: RemoteRobot) {
+        responseDispatcher.removeAllEndpoints()
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
 
@@ -132,7 +144,6 @@ class AllocateDatasetTest {
             "FB", 80, 3200, 0, remoteRobot, false, numberGreaterThanOneMsg
         )
     }
-
 
     /**
      * Tests to allocate dataset with invalid directory, checks that correct message is returned.
@@ -193,17 +204,51 @@ class AllocateDatasetTest {
      * Allocates dataset with different record formats.
      */
     private fun doValidTest(datasetOrganization: String, remoteRobot: RemoteRobot) {
-        recordFormats.forEach {
-            val recordLength = if (it == "F") {
+        recordFormats.forEach { s ->
+            val recordLength = if (s == "F") {
                 3200
             } else {
                 80
             }
-            val dsName = "${datasetName}${datasetOrganization.replace("-", "")}.${it}"
+            val dsName = "${datasetName}${datasetOrganization.replace("-", "")}.${s}".uppercase()
+            responseDispatcher.injectEndpoint(
+                "testAllocateValid${datasetOrganization}Datasets_${s}_restfiles",
+                { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${dsName}") ?: false },
+                { MockResponse().setBody("{\"dsorg\":\"${datasetOrganization}\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":1,\"recfm\":\"${s}\",\"blksize\":3200,\"lrecl\":${recordLength}}") }
+            )
             allocateDataSet(
                 wsName, dsName, datasetOrganization, "TRK", 10, 1, 1,
-                it, recordLength, 3200, 0, remoteRobot, true, ""
+                s, recordLength, 3200, 0, remoteRobot, true, ""
             )
+            val dsntp = if (datasetOrganization == "PS") {
+                ""
+            } else {
+                "PDS"
+            }
+
+            val listDs = "{\n" +
+                    "      \"dsname\": \"${dsName}\",\n" +
+                    "      \"blksz\": \"3200\",\n" +
+                    "      \"catnm\": \"TEST.CATALOG.MASTER\",\n" +
+                    "      \"cdate\": \"2021/11/15\",\n" +
+                    "      \"dev\": \"3390\",\n" +
+                    "      \"dsntp\": \"${dsntp}\",\n" +
+                    "      \"dsorg\": \"${datasetOrganization}\",\n" +
+                    "      \"edate\": \"***None***\",\n" +
+                    "      \"extx\": \"1\",\n" +
+                    "      \"lrecl\": \"${recordLength}\",\n" +
+                    "      \"migr\": \"NO\",\n" +
+                    "      \"mvol\": \"N\",\n" +
+                    "      \"ovf\": \"NO\",\n" +
+                    "      \"rdate\": \"2021/11/17\",\n" +
+                    "      \"recfm\": \"${s}\",\n" +
+                    "      \"sizex\": \"10\",\n" +
+                    "      \"spacu\": \"TRACKS\",\n" +
+                    "      \"used\": \"1\",\n" +
+                    "      \"vol\": \"TESTVOL\",\n" +
+                    "      \"vols\": \"TESTVOL\"\n" +
+                    "    },"
+            mapListDatasets[dsName] = listDs
             datasetsToBeDeleted.add(dsName)
         }
     }
@@ -273,6 +318,16 @@ class AllocateDatasetTest {
      * Deletes created datasets.
      */
     private fun deleteDatasets(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        responseDispatcher.injectEndpoint(
+            "listAllAllocatedDatasets_restfiles",
+            { it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName.uppercase()}*") ?: false },
+            { MockResponse().setBody(buildFinalListDatasetJson()) }
+        )
+        responseDispatcher.injectEndpoint(
+            "listMembers_restfiles",
+            { it?.requestLine?.contains("/member") ?: false },
+            { MockResponse().setBody("{\"items\":[],\"returnedRows\":0,\"totalRows\":0,\"moreRows\":null,\"JSONversion\":1}") }
+        )
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
                 fileExplorer.click()
@@ -280,11 +335,38 @@ class AllocateDatasetTest {
                 Thread.sleep(10000)
             }
         }
-        datasetsToBeDeleted.forEach {
-            deleteDataset(it, projectName, fixtureStack, remoteRobot)
-            Thread.sleep(2000)
+        datasetsToBeDeleted.forEach { s ->
+            mapListDatasets.remove(s)
+            responseDispatcher.injectEndpoint(
+                "listAllocatedDatasets_restfiles_${s}",
+                { it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName.uppercase()}*") ?: false },
+                { MockResponse().setBody(buildFinalListDatasetJson()) }
+            )
+            responseDispatcher.injectEndpoint(
+                "deleteDataset_restfiles_${s}",
+                { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/${s}") ?: false },
+                { MockResponse().setBody("{}") }
+            )
+            deleteDataset(s, projectName, fixtureStack, remoteRobot)
         }
     }
+
+    private fun buildFinalListDatasetJson(): String {
+        var result = "{}"
+        if (mapListDatasets.isNotEmpty()) {
+            var listDatasetsJson = "{\"items\":["
+            mapListDatasets.forEach {
+                listDatasetsJson += it.value
+            }
+            result = listDatasetsJson.dropLast(1) + "],\n" +
+                    "  \"returnedRows\": ${mapListDatasets.size},\n" +
+                    "  \"totalRows\": ${mapListDatasets.size},\n" +
+                    "  \"JSONversion\": 1\n" +
+                    "}"
+        }
+        return result
+    }
+
 
     /**
      * Creates working set and z/OS mask.
@@ -301,5 +383,4 @@ class AllocateDatasetTest {
             closableFixtureCollector.closeOnceIfExists(CreateMaskDialog.name)
         }
     }
-
 }

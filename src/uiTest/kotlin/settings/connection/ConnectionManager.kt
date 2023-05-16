@@ -17,19 +17,13 @@ import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
-import testutils.MockResponseDispatcher
 import io.kotest.matchers.string.shouldContain
 import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.HeldCertificate
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
-import java.net.InetAddress
 import java.time.Duration
-import java.util.concurrent.TimeUnit
 
 /**
  * Tests the ConnectionManager on UI level.
@@ -42,32 +36,17 @@ class ConnectionManager {
   private var fixtureStack = mutableListOf<Locator>()
   private val wantToClose = listOf(
     "Settings Dialog", "Add Connection Dialog", "Error Creating Connection Dialog",
-    "Edit Connection Dialog"
+    "Edit Connection Dialog", "Add JES Working Set Dialog"
   )
   private val projectName = "untitled"
 
-  private lateinit var mockServer: MockWebServer
-  private lateinit var responseDispatcher: MockResponseDispatcher
 
   /**
    * Creates and starts mock server, opens the project and Explorer, clears test environment.
    */
   @BeforeAll
   fun setUpAll(remoteRobot: RemoteRobot) {
-    val localhost = InetAddress.getByName("localhost").canonicalHostName
-    val localhostCertificate = HeldCertificate.Builder()
-      .addSubjectAlternativeName(localhost)
-      .duration(10, TimeUnit.MINUTES)
-      .build()
-    val serverCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(localhostCertificate)
-      .build()
-    mockServer = MockWebServer()
-    responseDispatcher = MockResponseDispatcher()
-    mockServer.dispatcher = responseDispatcher
-    mockServer.useHttps(serverCertificates.sslSocketFactory(), false)
-    mockServer.start()
-
+    startMockServer()
     setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
   }
 
@@ -573,7 +552,7 @@ class ConnectionManager {
   @Order(15)
   fun testDeleteConnectionWithWSandJWS(remoteRobot: RemoteRobot) = with(remoteRobot) {
     val testUsername = "testuser"
-    val connectionName = "testDeleteConnectionWithWSandJWS connection"
+    val connectionName = "new connection"
     responseDispatcher.injectEndpoint(
       "testAddValidConnection_info",
       { it?.requestLine?.contains("zosmf/info") ?: false },
@@ -647,6 +626,11 @@ class ConnectionManager {
     remoteRobot: RemoteRobot
   ) =
     with(remoteRobot) {
+      responseDispatcher.injectEndpoint(
+        "createJesWorkingSet_restjobs",
+        { it?.requestLine?.contains("/zosmf/restjobs/jobs") ?: false },
+        { MockResponse().setBody("[]") }
+      )
       ideFrameImpl(projectName, fixtureStack) {
         explorer {
           settings(closableFixtureCollector, fixtureStack)
@@ -672,6 +656,11 @@ class ConnectionManager {
    * Creates working set.
    */
   private fun createWorkingSet(wsName: String, connectionName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
+    responseDispatcher.injectEndpoint(
+      "createWorkingSet_restfiles",
+      { it?.requestLine?.contains("zosmf/restfiles/ds?dslevel=") ?: false },
+      { MockResponse().setBody("{}") }
+    )
     ideFrameImpl(projectName, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)

@@ -1,0 +1,15 @@
+[
+  {
+    "jobid":"JOB07380",
+    "jobname":"jobName",
+    "subsystem":null,
+    "owner":"USER",
+    "status":"jobStatus",
+    "type":"JOB",
+    "class":"A",
+    "retcode":"retCode",
+    "phase-name": "PHASE1",
+    "url":"https:\/\/hostName:port\/zosmf\/restjobs\/jobs\/jobName\/JOB07380",
+    "files-url":"https:\/\/hostName:port\/zosmf\/restjobs\/jobs\/jobName\/JOB07380\/files"
+  }
+]
