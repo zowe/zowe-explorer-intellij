@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -37,7 +36,7 @@ class FsOperationException(operationName: String, file: MFVirtualFile) : IOExcep
   "Cannot perform $operationName on ${file.path}"
 )
 
-internal fun sendVfsChangesTopic() = sendTopic(VirtualFileManager.VFS_CHANGES)
+internal fun sendVfsChangesTopic() = sendTopic(MFVirtualFileSystem.MF_VFS_CHANGES_TOPIC)
 
 enum class FSEdgeType {
   DIR, SOFT_LINK, HARD_LINK;

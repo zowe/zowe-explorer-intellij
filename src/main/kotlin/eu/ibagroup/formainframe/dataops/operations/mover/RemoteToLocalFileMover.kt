@@ -113,7 +113,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       throwable = t
     }
     if (throwable != null) {
-      log.error("Failed to move remote file")
+      log.info("Failed to move remote file")
       throw throwable
     }
     log.info("Remote file has been moved successfully")

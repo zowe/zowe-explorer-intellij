@@ -12,7 +12,6 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import java.nio.charset.Charset
 
@@ -49,8 +48,10 @@ fun ByteArray.addNewLine(): ByteArray {
 }
 
 /** Initializes the line separator to the contents of the file (by default "\n"). */
-fun initLineSeparator(file: VirtualFile, project: Project? = null) {
+fun initLineSeparator(syncProvider: SyncProvider, project: Project? = null) {
+  val file = syncProvider.file
   runWriteActionInEdtAndWait {
+    syncProvider.saveDocument()
     LoadTextUtil.changeLineSeparators(
       project,
       file,

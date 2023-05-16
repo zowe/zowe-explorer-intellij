@@ -200,7 +200,7 @@ class DataOpsManagerImpl : DataOpsManager {
     progressIndicator: ProgressIndicator
   ): R {
     val opRunner = operationRunners[operation::class.java]?.find { it.canRun(operation) } ?: throw NoSuchElementException("Operation $operation not found").also {
-      log<DataOpsManagerImpl>().error(it)
+      log<DataOpsManagerImpl>().info(it)
     }
     var startOpMessage = "Operation '${opRunner.operationClass.simpleName}' has been started"
     if (operation is Query<*, *>) {
@@ -213,7 +213,7 @@ class DataOpsManagerImpl : DataOpsManager {
     }.onSuccess {
       opRunner.log.info("Operation '${opRunner.operationClass.simpleName}' has been completed successfully")
     }.onFailure {
-      opRunner.log.error("Operation '${opRunner.operationClass.simpleName}' has failed", it)
+      opRunner.log.info("Operation '${opRunner.operationClass.simpleName}' has failed", it)
       throw it
     }
     @Suppress("UNCHECKED_CAST")

@@ -71,12 +71,12 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::datasetName)
-          .apply { focused() }
           .also { datasetNameField = it.component
             datasetNameField.text = HLQ
           }
           .onApply { state.datasetName = state.datasetName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
+          .focused()
       }
       row {
         label("Member name: ")
@@ -291,12 +291,11 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
   }
 
   override fun doOKAction() {
-    super.doOKAction()
     mainPanel.apply()
+    super.doOKAction()
   }
 
   override fun doValidate(): ValidationInfo? {
-    super.doValidate()
     return validateDataset(
       datasetNameField,
       datasetOrganizationBox.selectedItem as DatasetOrganization,
@@ -309,6 +308,10 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       advancedParametersField
     ) ?: validateForBlank(memberNameField) ?:
     validateMemberName(memberNameField)
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return mainPanel.preferredFocusedComponent ?: super.getPreferredFocusedComponent()
   }
 
   init {

@@ -125,7 +125,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
           }
         }
       } catch (e: Throwable) {
-        log.error("Failed to force rename file")
+        log.info("Failed to force rename file")
         throw RuntimeException(e)
       }
     }

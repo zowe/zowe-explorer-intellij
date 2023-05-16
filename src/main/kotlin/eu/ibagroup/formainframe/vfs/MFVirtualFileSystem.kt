@@ -18,11 +18,34 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+
+/**
+ * A listener for VFS events of [MFVirtualFileSystem].
+ * @see BulkFileListener
+ * @author Valiantsin Krus
+ */
+interface MFBulkFileListener {
+  /**
+   * Handler for events preprocessing.
+   * @param events list of events that will be processed soon in [MFVirtualFileSystem].
+   */
+  fun before(events: List<VFileEvent>) {}
+
+  /**
+   * Handler for events postprocessing.
+   * @param events list of events that have been recently processed in [MFVirtualFileSystem].
+   */
+  fun after(events: List<VFileEvent>) {}
+}
+
 
 /** Class that implements all the functionality of the mainframe virtual file system */
 class MFVirtualFileSystem : VirtualFileSystem(), FileSystemInterface, Disposable {
@@ -36,6 +59,8 @@ class MFVirtualFileSystem : VirtualFileSystem(), FileSystemInterface, Disposable
     const val PROTOCOL = "mf"
     const val ROOT_NAME = "For Mainframe"
     const val ROOT_ID = 0
+
+    val MF_VFS_CHANGES_TOPIC = Topic.create("mfVfsChanges", MFBulkFileListener::class.java)
 
     @JvmStatic
     val instance: MFVirtualFileSystem
