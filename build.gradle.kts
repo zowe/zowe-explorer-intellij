@@ -21,7 +21,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "1.0.2"
+version = "1.0.2-221"
 val remoteRobotVersion = "0.11.16"
 
 repositories {
@@ -46,8 +46,8 @@ repositories {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_17
-  targetCompatibility = JavaVersion.VERSION_17
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
 }
 
 dependencies {
@@ -73,23 +73,23 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.3")
+  version.set("2022.1")
 }
 
 tasks {
   withType<KotlinCompile> {
     kotlinOptions {
-      jvmTarget = JavaVersion.VERSION_17.toString()
+      jvmTarget = JavaVersion.VERSION_11.toString()
       languageVersion = org.jetbrains.kotlin.config.LanguageVersion.LATEST_STABLE.versionString
     }
   }
 
   patchPluginXml {
-    sinceBuild.set("223.7571")
-    untilBuild.set("223.*")
+    sinceBuild.set("221.5080")
+    untilBuild.set("222.*")
     changeNotes.set(
       """
-      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.3
+      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.1
       <br>
       <br>
       <b>New features:</b>
