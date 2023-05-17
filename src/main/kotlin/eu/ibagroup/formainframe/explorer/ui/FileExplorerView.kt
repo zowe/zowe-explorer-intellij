@@ -569,4 +569,3 @@ data class NodeData(
 
 /** Type alias for fetch node with any possible generic types. */
 typealias FetchNode = FileFetchNode<*, *, *, *, *>
-
