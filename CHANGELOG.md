@@ -2,6 +2,24 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
+## `1.0.1 (2023-xx-xx)`
+
+* Feature: Returned support for IntelliJ 2022.1 ([6329c788](https://github.com/zowe/zowe-explorer-intellij/commit/6329c788))
+* Feature: Focus on dataset name field in allocation dialog ([fccb77f9](https://github.com/zowe/zowe-explorer-intellij/commit/fccb77f9))
+
+
+* Bugfix: Memory leak bug ([644c9fa1](https://github.com/zowe/zowe-explorer-intellij/commit/644c9fa1))
+* Bugfix: GitHub issue #132: IDE internal error - NPE ([d4319c61](https://github.com/zowe/zowe-explorer-intellij/commit/d4319c61))
+* Bugfix: Access denied error when copy from remote to local file when local has folder with the same name ([ec67210a](https://github.com/zowe/zowe-explorer-intellij/commit/ec67210a))
+* Bugfix: Paste to dataset with LRECL does not move exceeding characters to a new line ([5b844ee6](https://github.com/zowe/zowe-explorer-intellij/commit/5b844ee6))
+* Bugfix: USS file with 0 permissions is not accessible and no error message displayed ([b45ba4e0](https://github.com/zowe/zowe-explorer-intellij/commit/b45ba4e0))
+* Bugfix: Refresh does not work for job filter with one job after purge ([a0461f25](https://github.com/zowe/zowe-explorer-intellij/commit/a0461f25))
+* Bugfix: Name conflict message if move uss-file from folder to mask and then back ([2f1bdf51](https://github.com/zowe/zowe-explorer-intellij/commit/2f1bdf51))
+* Bugfix: File cash conflict ([6405b42a](https://github.com/zowe/zowe-explorer-intellij/commit/6405b42a))
+* Bugfix: Cancel button does not work for TSO connection test during ([5dbb6a4c](https://github.com/zowe/zowe-explorer-intellij/commit/5dbb6a4c))
+* Bugfix: Unknown file type after delete member after move ([02b8090f](https://github.com/zowe/zowe-explorer-intellij/commit/02b8090f))
+
+
 ## `1.0.1 (2023-04-18)`
 
 * Feature: Support for IntelliJ 2023.1
@@ -22,6 +40,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Strange behavior on copy paste from remote to local ([a193676c](https://github.com/zowe/zowe-explorer-intellij/commit/a193676c))
 * Bugfix: Error while trying to move PS inside PDS ([ec94b39e](https://github.com/zowe/zowe-explorer-intellij/commit/ec94b39e))
 * Bugfix: USS file empty after rename ([71c49b24](https://github.com/zowe/zowe-explorer-intellij/commit/71c49b24))
+
 
 ## `1.0.0 (2023-03-13)`
 
