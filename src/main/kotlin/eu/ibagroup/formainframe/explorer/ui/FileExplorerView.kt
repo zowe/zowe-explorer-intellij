@@ -40,7 +40,6 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.getParentsChain
-import eu.ibagroup.formainframe.utils.service // TODO: remove in 1.0.2-223 and greater
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
