@@ -11,15 +11,13 @@
 package org.zowe.explorer.editor.status
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
-import org.zowe.explorer.editor.zoweExplorerInstalled
 
 /**
  * Status bar widget factory for [MfLineSeparatorPanel].
  */
-class MfLineSeparatorWidgetFactory: LineSeparatorWidgetFactory() {
+class MfLineSeparatorWidgetFactory : LineSeparatorWidgetFactory() {
 
   override fun getId(): String {
     return MF_LINE_SEPARATOR_PANEL_WIDGET
@@ -29,11 +27,4 @@ class MfLineSeparatorWidgetFactory: LineSeparatorWidgetFactory() {
     return MfLineSeparatorPanel(project)
   }
 
-  /** Always enabled except when the zowe-explorer plugin is installed. */
-  override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-    if (zoweExplorerInstalled) {
-      return false
-    }
-    return super.canBeEnabledOn(statusBar)
-  }
 }

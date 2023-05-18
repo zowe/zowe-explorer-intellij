@@ -17,7 +17,6 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.LineSeparatorPanel
 import org.zowe.explorer.editor.isMfVirtualFile
 import org.zowe.explorer.editor.isUssVirtualFile
-import org.zowe.explorer.editor.zoweExplorerInstalled
 
 const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
 
@@ -25,19 +24,6 @@ const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE
  * Line separator panel in status bar with correctly display for MF files.
  */
 class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
-
-  /**
-   * Returns the state of the widget for correct display in the status bar.
-   * Always displayed except when the zowe-explorer plugin is installed.
-   * @param file virtual file opened in editor.
-   * @return widget state [com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup.WidgetState].
-   */
-  override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (zoweExplorerInstalled) {
-      return WidgetState.HIDDEN
-    }
-    return super.getWidgetState(file)
-  }
 
   override fun createInstance(project: Project): StatusBarWidget {
     return MfLineSeparatorPanel(project)

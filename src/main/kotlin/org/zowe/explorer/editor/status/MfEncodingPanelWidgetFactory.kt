@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
-import org.zowe.explorer.editor.zoweExplorerInstalled
+import org.zowe.explorer.editor.
 
 /**
  * Status bar widget factory for [MfEncodingPanel].
@@ -29,11 +29,4 @@ class MfEncodingPanelWidgetFactory: EncodingPanelWidgetFactory() {
     return MfEncodingPanel(project)
   }
 
-  /** Always enabled except when the zowe-explorer plugin is installed. */
-  override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-    if (zoweExplorerInstalled) {
-      return false
-    }
-    return super.canBeEnabledOn(statusBar)
-  }
 }
