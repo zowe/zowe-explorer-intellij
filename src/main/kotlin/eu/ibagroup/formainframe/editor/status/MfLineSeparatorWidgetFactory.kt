@@ -29,6 +29,7 @@ class MfLineSeparatorWidgetFactory: LineSeparatorWidgetFactory() {
     return MfLineSeparatorPanel(project)
   }
 
+  // This code should not be present in Zowe repo
   /** Always enabled except when the zowe-explorer plugin is installed. */
   override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
     if (zoweExplorerInstalled) {
