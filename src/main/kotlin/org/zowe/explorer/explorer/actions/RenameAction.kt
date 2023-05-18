@@ -29,6 +29,7 @@ import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
+import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
 
 /**
  * Class which represents a rename action

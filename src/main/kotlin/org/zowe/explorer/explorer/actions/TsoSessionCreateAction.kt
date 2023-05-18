@@ -48,7 +48,7 @@ class TsoSessionCreateAction : AnAction() {
       test = { state ->
         val throwable = runTask(title = "Testing TSO Connection to ${state.connectionConfig.url}", project = project) {
           return@runTask try {
-            val tsoResponse = service<DataOpsManager>().performOperation(TsoOperation(dialog.state, TsoOperationMode.START))
+            val tsoResponse = service<DataOpsManager>().performOperation(TsoOperation(dialog.state, TsoOperationMode.START), it)
             if (tsoResponse.servletKey?.isNotEmpty() == true && project != null) {
               val config = TSOConfigWrapper(dialog.state, tsoResponse)
               sendTopic(SESSION_ADDED_TOPIC).create(project, config)

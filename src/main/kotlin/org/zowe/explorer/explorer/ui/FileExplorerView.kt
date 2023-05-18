@@ -37,6 +37,7 @@ import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.utils.getMinimalCommonParents
 import org.zowe.explorer.utils.getParentsChain
+import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -493,7 +494,7 @@ class FileExplorerView(
                 }.onFailure { explorer.reportThrowable(it, project) }
                 indicator.fraction = indicator.fraction + 1.0 / files.size
               }
-            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
+            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }.distinctBy { it.path }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
               .forEach { it.cleanCache(recursively = it is UssDirNode, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
           }

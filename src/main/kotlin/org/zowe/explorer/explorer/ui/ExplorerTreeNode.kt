@@ -31,6 +31,7 @@ import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.UIComponentManager
 import org.zowe.explorer.utils.isBeingEditingNow
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
@@ -99,15 +100,17 @@ abstract class ExplorerTreeNode<Value : Any>(
           if (doSync) {
             val onThrowableHandler: (Throwable) -> Unit = {
               if (it.message?.contains("Client is not authorized for file access") == true) {
-                Messages.showDialog(
-                  project,
-                  "You do not have permissions to read this file",
-                  "Error While Opening File ${file.name}",
-                  arrayOf("Ok"),
-                  0,
-                  AllIcons.General.ErrorDialog,
-                  null
-                )
+                invokeLater {
+                  Messages.showDialog(
+                    project,
+                    "You do not have permissions to read this file",
+                    "Error While Opening File ${file.name}",
+                    arrayOf("Ok"),
+                    0,
+                    AllIcons.General.ErrorDialog,
+                    null
+                  )
+                }
               } else {
                 DocumentedSyncProvider.defaultOnThrowableHandler(file, it)
               }

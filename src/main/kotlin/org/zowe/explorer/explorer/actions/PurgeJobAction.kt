@@ -15,6 +15,7 @@ import org.zowe.explorer.dataops.operations.jobs.PurgeJobOperation
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
+import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
 import org.zowe.kotlinsdk.ExecData
 import org.zowe.kotlinsdk.JESApi
 import org.zowe.kotlinsdk.Job
@@ -127,7 +128,7 @@ class PurgeJobAction : AnAction() {
           execData = ExecData.YES
         ).execute()
         val result = response.body()
-        if (response.isSuccessful && result != null && result.isNotEmpty()) {
+        if (response.isSuccessful && result != null) {
           val job = result.find { it.jobId == jobInfo.jobId }
           if (job != null) waitJobReleasedAndRefresh(jobParentNode, jobInfo) else jobParentNode.cleanCache()
         }

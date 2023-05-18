@@ -19,12 +19,10 @@ import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.getAttributesService
-import org.zowe.explorer.dataops.operations.DeleteMemberOperation
-import org.zowe.explorer.dataops.operations.DeleteMemberOperationParams
-import org.zowe.explorer.dataops.operations.MemberAllocationOperation
-import org.zowe.explorer.dataops.operations.MemberAllocationParams
+import org.zowe.explorer.dataops.operations.*
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /** Class that represents "Add member" action */

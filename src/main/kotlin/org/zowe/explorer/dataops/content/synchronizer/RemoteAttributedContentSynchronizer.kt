@@ -122,9 +122,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
 
       val ussAttributes = attributes.castOrNull<RemoteUssAttributes>()
       if (!wasFetchedBefore(syncProvider)) {
-        ussAttributes?.let {
-          checkUssFileTag(it)
-        }
+        ussAttributes?.let { checkUssFileTag(it) }
       }
       val currentCharset = ussAttributes?.charset ?: DEFAULT_TEXT_CHARSET
 
@@ -135,10 +133,10 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       if (!wasFetchedBefore(syncProvider)) {
         log.info("Setting initial content for file ${syncProvider.file.name}")
         runWriteActionInEdtAndWait { syncProvider.putInitialContent(adaptedFetchedBytes) }
-        runReadActionInEdtAndWait { syncProvider.getDocument()?.addDocumentListener(DocumentChangeListener()) }
         changeFileEncodingTo(syncProvider.file, currentCharset)
-        initLineSeparator(syncProvider.file)
+        initLineSeparator(syncProvider)
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
+        runReadActionInEdtAndWait { syncProvider.getDocument()?.addDocumentListener(DocumentChangeListener()) }
         fetchedAtLeastOnce.add(syncProvider)
       } else {
 

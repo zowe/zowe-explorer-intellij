@@ -23,7 +23,7 @@ import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * File editor events listener.
- * Needed to handle file close event
+ * Needed to handle before file events
  */
 class FileEditorEventsListener : FileEditorManagerListener.Before {
 
@@ -63,5 +63,15 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
       syncProvider.saveDocument()
     }
     super.beforeFileClosed(source, file)
+  }
+
+  /**
+   * Handle before file open event
+   * @param source the source file editor manager to get the project where the file is being edited
+   * @param file the file that opens
+   */
+  override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
+    file.putUserData()
+    super.beforeFileOpened(source, file)
   }
 }
