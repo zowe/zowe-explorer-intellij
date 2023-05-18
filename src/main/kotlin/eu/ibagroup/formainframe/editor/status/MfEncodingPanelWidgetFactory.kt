@@ -15,7 +15,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.ui.UIBundle
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.formainframe.editor.zoweExplorerInstalled
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -35,9 +35,11 @@ class MfEncodingPanelWidgetFactory: StatusBarEditorBasedWidgetFactory() {
     return MfEncodingPanel(project, scope)
   }
 
-  /** Enabled only for MF file opened in editor. */
+  /** Always enabled except when the zowe-explorer plugin is installed. */
   override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-    val file = getFileEditor(statusBar)?.file
-    return file is MFVirtualFile
+    if (zoweExplorerInstalled) {
+      return false
+    }
+    return super.canBeEnabledOn(statusBar)
   }
 }

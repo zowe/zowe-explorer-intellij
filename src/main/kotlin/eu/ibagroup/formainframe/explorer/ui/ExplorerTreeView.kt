@@ -73,6 +73,7 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
   internal val myTree: Tree
   internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
   internal val ignoreVFileDeleteEvents = AtomicBoolean(false)
+  internal val ignoreVFSChangeEvents = AtomicBoolean(false)
 
   protected val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
 
@@ -196,6 +197,12 @@ abstract class ExplorerTreeView<U : WorkingSet<*>, UnitConfig : EntityWithUuid>
             .mapNotNull {
               val nodes = myFsTreeStructure.findByVirtualFile(it.file ?: return@mapNotNull null)
               when {
+                this@ExplorerTreeView
+                  .ignoreVFSChangeEvents
+                  .compareAndSet(true, true) -> {
+                  null
+                }
+
                 it is VFileContentChangeEvent || it is VFilePropertyChangeEvent -> {
                   nodes
                 }

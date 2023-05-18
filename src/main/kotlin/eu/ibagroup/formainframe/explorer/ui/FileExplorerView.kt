@@ -498,7 +498,7 @@ class FileExplorerView(
                 }.onFailure { explorer.reportThrowable(it, project) }
                 indicator.fraction = indicator.fraction + 1.0 / files.size
               }
-            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
+            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }.distinctBy { it.path }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
               .forEach { it.cleanCache(recursively = it is UssDirNode, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
           }
@@ -569,4 +569,3 @@ data class NodeData(
 
 /** Type alias for fetch node with any possible generic types. */
 typealias FetchNode = FileFetchNode<*, *, *, *, *>
-

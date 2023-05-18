@@ -10,15 +10,14 @@
 
 package eu.ibagroup.formainframe.editor.status
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.LineSeparatorPanel
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.formainframe.editor.isMfVirtualFile
+import eu.ibagroup.formainframe.editor.isUssVirtualFile
+import eu.ibagroup.formainframe.editor.zoweExplorerInstalled
 import kotlinx.coroutines.CoroutineScope
 
 const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
@@ -30,12 +29,12 @@ class MfLineSeparatorPanel(project: Project, scope: CoroutineScope): LineSeparat
 
   /**
    * Returns the state of the widget for correct display in the status bar.
-   * Displayed only for MF files.
+   * Always displayed except when the zowe-explorer plugin is installed.
    * @param file virtual file opened in editor.
    * @return widget state [com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup.WidgetState].
    */
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    if (file !is MFVirtualFile) {
+    if (zoweExplorerInstalled) {
       return WidgetState.HIDDEN
     }
     return super.getWidgetState(file)
@@ -47,8 +46,7 @@ class MfLineSeparatorPanel(project: Project, scope: CoroutineScope): LineSeparat
 
   /** Widget is not enabled for all MF files except USS files. */
   override fun isEnabledForFile(file: VirtualFile?): Boolean {
-    val attributes = file?.let { service<DataOpsManager>().tryToGetAttributes(it) }
-    if (attributes !is RemoteUssAttributes) {
+    if (file != null && file.isMfVirtualFile() && !file.isUssVirtualFile()) {
       return false
     }
     return super.isEnabledForFile(file)

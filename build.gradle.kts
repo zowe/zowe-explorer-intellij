@@ -21,8 +21,8 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "1.0.1-231"
-val remoteRobotVersion = "0.11.16"
+version = "1.0.2-231"
+val remoteRobotVersion = "0.11.18"
 
 repositories {
   mavenCentral()
@@ -59,7 +59,7 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("eu.ibagroup:r2z:1.3.0-rc.10")
+  implementation("eu.ibagroup:r2z:1.3.0")
   implementation("com.segment.analytics.java:analytics:+")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")
@@ -94,26 +94,22 @@ tasks {
       <br>
       <b>New features:</b>
       <ul>
-        <li>Support for IntelliJ 2023.1</li>
+        <li>Returned support for IntelliJ 2022.1</li>
+        <li>Focus on dataset name field in allocation dialog</li>
       </ul>
       <br>
       <b>Fixed bugs:</b>
       <ul>
-        <li>File is not displayed after folder moved inside another folder</li>
-        <li>IDE freeze after closing CLI during command execution with broken coonection</li>
-        <li>Last opened file remains active in editor</li>
-        <li>Duplicate widgets when installing For Mainframe and Zowe Explorer plugins together</li>
-        <li>Changed parameters in edit connection dialog do not reset after cancelation</li>
-        <li>Incorrect reloading on USS encoding change</li>
-        <li>println in TSO CLI</li>
-        <li>Copy DS member from one host to USS folder on another host does not work</li>
-        <li>Jobs filter is created with wrong default user</li>
-        <li>"Access is allowed from Event Dispatch Thread (EDT) only" on the plugin debug</li>
-        <li>SonarCloud compaint on Random</li>
-        <li>Autosync works strange</li>
-        <li>Strange behavior on copy paste from remote to local</li>
-        <li>Error while trying to move PS inside PDS</li>
-        <li>USS file empty after rename</li>
+        <li>Memory leak bug</li>
+        <li>GitHub issue #132: IDE internal error - NPE</li>
+        <li>Access denied error when copy from remote to local file when local has folder with the same name</li>
+        <li>Paste to dataset with LRECL does not move exceeding characters to a new line</li>
+        <li>USS file with 0 permissions is not accessible and no error message displayed</li>
+        <li>Refresh does not work for job filter with one job after purge</li>
+        <li>Name conflict message if move uss-file from folder to mask and then back</li>
+        <li>File cash conflict</li>
+        <li>Cancel button does not work for TSO connection test during</li>
+        <li>Unknown file type after delete member after move</li>
       </ul>"""
     )
   }

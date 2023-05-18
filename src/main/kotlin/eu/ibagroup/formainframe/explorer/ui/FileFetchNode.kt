@@ -69,6 +69,9 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
   /** Indicates whether the next children fetch should load more child elements to the children list */
   var needToLoadMore = false
 
+  /** Indicates whether it is possible to fetch for the current node or is it currently being executed  */
+  private var possibleToFetch = true
+
   protected abstract fun Collection<File>.toChildrenNodes(): List<AbstractTreeNode<*>>
 
   protected abstract fun makeFetchTaskTitle(query: Q): String
@@ -108,17 +111,21 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
                 cachedChildren = it
               }
           } else {
-            runBackgroundableTask(
-              title = makeFetchTaskTitle(q),
-              project = project,
-              cancellable = true
-            ) {
-              if (needToLoadMore) {
-                fileFetchProvider.loadMode(q, it)
-              } else {
-                fileFetchProvider.reload(q, it)
+            if (possibleToFetch) {
+              possibleToFetch = false
+              runBackgroundableTask(
+                title = makeFetchTaskTitle(q),
+                project = project,
+                cancellable = true
+              ) {
+                if (needToLoadMore) {
+                  fileFetchProvider.loadMode(q, it)
+                } else {
+                  fileFetchProvider.reload(q, it)
+                }
+                needToLoadMore = false
+                possibleToFetch = true
               }
-              needToLoadMore = false
             }
             (fetched?.toChildrenNodes()?.toMutableList() ?: mutableListOf()).apply { add(loadingNode) }
           }
