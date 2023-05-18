@@ -15,7 +15,6 @@ import org.zowe.explorer.dataops.operations.jobs.PurgeJobOperation
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
-import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
 import org.zowe.kotlinsdk.ExecData
 import org.zowe.kotlinsdk.JESApi
 import org.zowe.kotlinsdk.Job

@@ -22,7 +22,6 @@ import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.dataops.operations.*
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /** Class that represents "Add member" action */

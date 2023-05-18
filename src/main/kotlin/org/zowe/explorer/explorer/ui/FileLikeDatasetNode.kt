@@ -24,7 +24,6 @@ import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.explorer.ExplorerUnit
-import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 

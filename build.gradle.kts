@@ -31,7 +31,7 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "1.0.2-221"
+version = "1.0.2-223"
 val remoteRobotVersion = "0.11.18"
 
 repositories {
@@ -53,8 +53,8 @@ repositories {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
@@ -80,23 +80,23 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.1")
+  version.set("2022.3")
 }
 
 tasks {
   withType<KotlinCompile> {
     kotlinOptions {
-      jvmTarget = JavaVersion.VERSION_11.toString()
+      jvmTarget = JavaVersion.VERSION_17.toString()
       languageVersion = org.jetbrains.kotlin.config.LanguageVersion.LATEST_STABLE.versionString
     }
   }
 
   patchPluginXml {
-    sinceBuild.set("221.5080")
-    untilBuild.set("222.*")
+    sinceBuild.set("223.7571")
+    untilBuild.set("223.*")
     changeNotes.set(
       """
-      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.1
+      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.3
       <br>
       <br>
       <b>New features:</b>

@@ -20,7 +20,6 @@ import org.zowe.explorer.dataops.attributes.*
 import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
 import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.utils.sendTopic
-import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.XIBMDataType
 
