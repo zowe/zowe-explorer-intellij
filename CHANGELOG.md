@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## `1.0.1 (2023-xx-xx)`
+## `1.0.2 (2023-xx-xx)`
 
 * Feature: Returned support for IntelliJ 2022.1 ([6329c788](https://github.com/zowe/zowe-explorer-intellij/commit/6329c788))
 * Feature: Focus on dataset name field in allocation dialog ([fccb77f9](https://github.com/zowe/zowe-explorer-intellij/commit/fccb77f9))
