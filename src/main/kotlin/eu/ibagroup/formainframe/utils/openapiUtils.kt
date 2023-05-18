@@ -44,7 +44,7 @@ val cachesDir by lazy {
  * @param topic the topic to get sync publisher for
  * @param componentManager the component manager to get the topic sync publisher
  */
-fun <L> sendTopic(
+fun <L : Any> sendTopic(
   topic: Topic<L>,
   componentManager: ComponentManager = ApplicationManager.getApplication()
 ): L {
@@ -117,9 +117,9 @@ fun <T> submitOnWriteThread(block: () -> T): T {
 }
 
 @Suppress("UnstableApiUsage")
-inline fun <T> runWriteActionOnWriteThread(crossinline block: () -> T): T {
+fun <T> runWriteActionOnWriteThread(block: () -> T): T {
   val app = ApplicationManager.getApplication()
-  return if (app.isWriteThread) {
+  return if (app.isWriteIntentLockAcquired) {
     if (app.isWriteAccessAllowed) {
       block()
     } else {
@@ -131,7 +131,7 @@ inline fun <T> runWriteActionOnWriteThread(crossinline block: () -> T): T {
     }
 }
 
-inline fun <T> runReadActionInEdtAndWait(crossinline block: () -> T): T {
+fun <T> runReadActionInEdtAndWait(block: () -> T): T {
   return invokeAndWaitIfNeeded { runReadAction(block) }
 }
 
@@ -194,13 +194,13 @@ inline fun <reified T> runTask(
   })
 }
 
-inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
+fun runWriteActionInEdt(block: () -> Unit) {
   runInEdt {
     runWriteAction(block)
   }
 }
 
-inline fun runWriteActionInEdtAndWait(crossinline block: () -> Unit) {
+fun runWriteActionInEdtAndWait(block: () -> Unit) {
   invokeAndWaitIfNeeded {
     runWriteAction(block)
   }

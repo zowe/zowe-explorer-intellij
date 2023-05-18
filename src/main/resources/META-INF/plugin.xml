@@ -361,11 +361,11 @@ Example of how to see the output:<br/>
 
         <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
-                                order="after positionWidget"/>
+                                order="after Position"/>
 
         <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
-                                order="after eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory, before powerStatus"/>
+                                order="after eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory, before PowerSaveMode"/>
     </extensions>
 
     <actions>
