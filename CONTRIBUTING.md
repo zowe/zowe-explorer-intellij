@@ -5,11 +5,11 @@
 This document is a living summary of conventions and best practices for development within For Mainframe Plugin.
 
 ## General
-The following list describes general conventions for contributing to Zowe IntelliJ Plugin:
+The following list describes general conventions for contributing to For Mainframe Plugin:
 * Feel free to ask any questions related to the project or its components.
 * Before introducing some new functionality, please, discuss it with any of the project team members.
 * Reuse logging and error handling patterns already in place.
-* To be clear in future after you developed a new functionality, don't forget to leave the @author Javadoc tag in your comments.
+* To be clear in future after you developed a new functionality, don't forget to leave the @author KDoc tag in your comments.
 * Document your changes as descriptive as you can. We use Javadoc with our project.
 * Provide adequate logging to diagnose problems that happen at external customer sites.
 * Follow the general formatting rules for the code you are working on.
@@ -19,7 +19,6 @@ The following list describes general conventions for contributing to Zowe Intell
 * Pull requests should include tests.
 * Code coverage for new code should be at least 80%.
 * SonarCloud quality gate should be passed and no code smells, security hotspots and bugs should be added in pull requests.
-* If the pull request adds or changes functionality that requires an update of packaging or configuration, it needs to be tested on a test system installed from the Zowe PAX file.
 
 ### Acceptable contributions
 * Follows our coding standards
@@ -40,7 +39,6 @@ Our project follows the next coding rules:
 This project follows the branching strategy:
 - **main** - the main project branch with the latest stable code changes. It is changed as soon as the new version of the project is released.
 - **release** - this branch is used to store the latest changes before the new project version release.
-- **development** - this branch is used to store the latest unstable project changes.
 - **bugfix** - this branch is used to introduce some fix for a bug. It is a short-term branch, used to fix the bug and check the changes before it is pushed to some stable branch.
 - **feature** - this branch is used to develop some new functionality for the project. It is a short-term branch, used to introduce the changes and check them before it is pushed to some stable branch.
 

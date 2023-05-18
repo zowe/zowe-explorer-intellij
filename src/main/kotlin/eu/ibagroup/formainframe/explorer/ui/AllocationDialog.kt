@@ -56,10 +56,10 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::datasetName)
-          .apply { focused() }
           .also { datasetNameField = it.component }
           .onApply { state.datasetName = state.datasetName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
+          .focused()
       }
       row {
         label("Dataset organization: ")
@@ -244,12 +244,11 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
 
 
   override fun doOKAction() {
-    super.doOKAction()
     mainPanel.apply()
+    super.doOKAction()
   }
 
   override fun doValidate(): ValidationInfo? {
-    super.doValidate()
     return validateDataset(
       datasetNameField,
       datasetOrganizationBox.selectedItem as DatasetOrganization,
@@ -261,6 +260,10 @@ class AllocationDialog(project: Project?, override var state: DatasetAllocationP
       averageBlockLengthField,
       advancedParametersField
     )
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return mainPanel.preferredFocusedComponent ?: super.getPreferredFocusedComponent()
   }
 
   init {

@@ -34,6 +34,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.service // TODO: remove in 1.0.2-223 and greater
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
@@ -102,15 +103,17 @@ abstract class ExplorerTreeNode<Value : Any>(
           if (doSync) {
             val onThrowableHandler: (Throwable) -> Unit = {
               if (it.message?.contains("Client is not authorized for file access") == true) {
-                Messages.showDialog(
-                  project,
-                  "You do not have permissions to read this file",
-                  "Error While Opening File ${file.name}",
-                  arrayOf("Ok"),
-                  0,
-                  AllIcons.General.ErrorDialog,
-                  null
-                )
+                invokeLater {
+                  Messages.showDialog(
+                    project,
+                    "You do not have permissions to read this file",
+                    "Error While Opening File ${file.name}",
+                    arrayOf("Ok"),
+                    0,
+                    AllIcons.General.ErrorDialog,
+                    null
+                  )
+                }
               } else {
                 DocumentedSyncProvider.defaultOnThrowableHandler(file, it)
               }

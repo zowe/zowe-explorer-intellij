@@ -120,9 +120,6 @@ Example of how to see the output:<br/>
 
         <listener class="eu.ibagroup.formainframe.dataops.content.synchronizer.MFAutoSaveDocumentListener"
                   topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-
-        <listener class="eu.ibagroup.formainframe.editor.FileSelectionChangeListener"
-                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="eu.ibagroup.formainframe">
@@ -289,6 +286,8 @@ Example of how to see the output:<br/>
 
         <!--        <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>-->
 
+        <postStartupActivity implementation="eu.ibagroup.formainframe.editor.ProjectStartupActivity"/>
+
         <applicationConfigurable id="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"
                                  displayName="For Mainframe"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
@@ -357,7 +356,8 @@ Example of how to see the output:<br/>
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>
 
-        <typedHandler implementation="eu.ibagroup.formainframe.explorer.actions.ChangeContentAction"/>
+        <applicationService serviceInterface="eu.ibagroup.formainframe.editor.ChangeContentService"
+                            serviceImplementation="eu.ibagroup.formainframe.editor.ChangeContentServiceImpl"/>
 
         <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"

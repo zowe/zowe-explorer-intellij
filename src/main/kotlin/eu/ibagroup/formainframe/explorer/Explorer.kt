@@ -32,6 +32,7 @@ import eu.ibagroup.formainframe.config.connect.CREDENTIALS_CHANGED
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.editor.ChangeContentService
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.anyEventAdaptor
@@ -226,6 +227,7 @@ abstract class AbstractExplorerBase<U : WorkingSet<*>, UnitConfig : EntityWithUu
    * for reactive processing of data updates on UI.
    */
   fun doInit() {
+    service<ChangeContentService>().initialize()
     Disposer.register(service<DataOpsManager>(), disposable)
     subscribe(CONFIGS_CHANGED, disposable, eventAdapter(unitConfigClass) {
       onDelete { unit ->

@@ -40,6 +40,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.getParentsChain
+import eu.ibagroup.formainframe.utils.service // TODO: remove in 1.0.2-223 and greater
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -498,7 +499,7 @@ class FileExplorerView(
                 }.onFailure { explorer.reportThrowable(it, project) }
                 indicator.fraction = indicator.fraction + 1.0 / files.size
               }
-            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }
+            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }.distinctBy { it.path }
               .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
               .forEach { it.cleanCache(recursively = it is UssDirNode, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
           }
@@ -569,4 +570,3 @@ data class NodeData(
 
 /** Type alias for fetch node with any possible generic types. */
 typealias FetchNode = FileFetchNode<*, *, *, *, *>
-

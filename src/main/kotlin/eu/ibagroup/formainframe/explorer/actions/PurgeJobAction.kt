@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
+import eu.ibagroup.formainframe.utils.service // TODO: remove in 1.0.2-223 and greater
 import eu.ibagroup.r2z.ExecData
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.Job
@@ -127,7 +128,7 @@ class PurgeJobAction : AnAction() {
           execData = ExecData.YES
         ).execute()
         val result = response.body()
-        if (response.isSuccessful && result != null && result.isNotEmpty()) {
+        if (response.isSuccessful && result != null) {
           val job = result.find { it.jobId == jobInfo.jobId }
           if (job != null) waitJobReleasedAndRefresh(jobParentNode, jobInfo) else jobParentNode.cleanCache()
         }
