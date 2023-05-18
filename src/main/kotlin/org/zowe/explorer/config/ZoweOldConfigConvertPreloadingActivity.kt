@@ -14,6 +14,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.utils.crudable.nextUniqueValue
@@ -55,10 +56,12 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
       it.uuid = crudable.nextUniqueValue<ConnectionConfig, String>()
       CredentialService.instance.setCredentials(it.uuid, username, password)
       crudable.add(it.uuid)
-      filesWsToConvert.forEach { fws -> fws.connectionConfigUuid = it.uuid
+      filesWsToConvert.forEach { fws ->
+        fws.connectionConfigUuid = it.uuid
         crudable.update(fws)
       }
-      jesWsToConvert.forEach { jws -> jws.connectionConfigUuid = it.uuid
+      jesWsToConvert.forEach { jws ->
+        jws.connectionConfigUuid = it.uuid
         crudable.update(jws)
       }
     }
@@ -94,9 +97,8 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
     }
   }
 
-  override suspend fun execute() {
+  override fun preload(indicator: ProgressIndicator) {
     convertOldVersionConfig()
-    super.execute()
   }
 
 }

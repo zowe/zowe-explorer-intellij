@@ -18,7 +18,7 @@ import com.intellij.openapi.wm.impl.status.LineSeparatorPanel
 import org.zowe.explorer.editor.isMfVirtualFile
 import org.zowe.explorer.editor.isUssVirtualFile
 
-const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
+const val MF_LINE_SEPARATOR_PANEL_WIDGET = "ZoweMF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
 
 /**
  * Line separator panel in status bar with correctly display for MF files.

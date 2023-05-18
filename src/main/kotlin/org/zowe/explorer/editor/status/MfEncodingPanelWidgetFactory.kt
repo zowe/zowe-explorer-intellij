@@ -11,18 +11,16 @@
 package org.zowe.explorer.editor.status
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
-import org.zowe.explorer.editor.
 
 /**
  * Status bar widget factory for [MfEncodingPanel].
  */
-class MfEncodingPanelWidgetFactory: EncodingPanelWidgetFactory() {
+class MfEncodingPanelWidgetFactory : EncodingPanelWidgetFactory() {
 
   override fun getId(): String {
-    return  MF_ENCODING_PANEL_WIDGET
+    return MF_ENCODING_PANEL_WIDGET
   }
 
   override fun createWidget(project: Project): StatusBarWidget {
