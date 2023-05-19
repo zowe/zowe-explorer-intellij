@@ -19,6 +19,8 @@ import eu.ibagroup.formainframe.editor.isMfVirtualFile
 import eu.ibagroup.formainframe.editor.isUssVirtualFile
 import eu.ibagroup.formainframe.editor.zoweExplorerInstalled
 
+// This code should not be as described below in Zowe repo
+// Change MF to ZoweMF
 const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL
 
 /**
@@ -26,6 +28,7 @@ const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE
  */
 class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
 
+  // This code should not be present in Zowe repo
   /**
    * Returns the state of the widget for correct display in the status bar.
    * Always displayed except when the zowe-explorer plugin is installed.

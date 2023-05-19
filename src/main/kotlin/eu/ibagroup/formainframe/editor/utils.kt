@@ -35,6 +35,7 @@ fun showSyncOnCloseDialog(fileName: String, project: Project): Boolean {
     .ask(project = project)
 }
 
+// This code should not be present in Zowe repo
 val zoweExplorerInstalled = PluginManager.isPluginInstalled(PluginId.getId("org.zowe.explorer"))
 
 const val MF_VIRTUAL_FILE_KEY_NAME = "mfVirtualFile"
