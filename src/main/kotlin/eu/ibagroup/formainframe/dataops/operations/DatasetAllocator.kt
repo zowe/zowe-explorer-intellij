@@ -115,9 +115,10 @@ data class DatasetAllocationParams(
   var errorMessage: String = "",
   val allocationParameters: CreateDataset = CreateDataset(
     allocationUnit = AllocationUnit.TRK,
-    primaryAllocation = 0,
+    primaryAllocation = 1,
     secondaryAllocation = 0,
     recordFormat = RecordFormat.FB,
-    datasetOrganization = DatasetOrganization.PS
+    datasetOrganization = DatasetOrganization.PS,
+    recordLength = 80
   )
 )
