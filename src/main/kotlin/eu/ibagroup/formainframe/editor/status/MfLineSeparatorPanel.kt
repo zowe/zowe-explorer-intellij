@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.impl.status.LineSeparatorPanel
 import eu.ibagroup.formainframe.editor.isMfVirtualFile
 import eu.ibagroup.formainframe.editor.isUssVirtualFile
 import eu.ibagroup.formainframe.editor.zoweExplorerInstalled
+import kotlinx.coroutines.CoroutineScope
 
 // This code should not be as described below in Zowe repo
 // Change MF to ZoweMF
@@ -26,7 +27,7 @@ const val MF_LINE_SEPARATOR_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.LINE
 /**
  * Line separator panel in status bar with correctly display for MF files.
  */
-class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
+class MfLineSeparatorPanel(project: Project, scope: CoroutineScope): LineSeparatorPanel(project, scope) {
 
   // This code should not be present in Zowe repo
   /**
@@ -43,7 +44,7 @@ class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
   }
 
   override fun createInstance(project: Project): StatusBarWidget {
-    return MfLineSeparatorPanel(project)
+    return MfLineSeparatorPanel(project, scope)
   }
 
   /** Widget is not enabled for all MF files except USS files. */
