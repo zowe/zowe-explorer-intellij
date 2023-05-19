@@ -43,24 +43,6 @@ class MFPastePreprocessor : CopyPastePostProcessor<TextBlockTransferableData>() 
       return DATA_FLAVOR
     }
 
-    // This function is not needed to be overridden since v1.*.*-223
-    @ApiStatus.ScheduledForRemoval(inVersion = "2.0.0")
-    override fun getOffsetCount(): Int {
-      return 0
-    }
-
-    // This function is not needed to be overridden since v1.*.*-223
-    @ApiStatus.ScheduledForRemoval(inVersion = "2.0.0")
-    override fun getOffsets(offsets: IntArray?, index: Int): Int {
-      return index
-    }
-
-    // This function is not needed to be overridden since v1.*.*-223
-    @ApiStatus.ScheduledForRemoval(inVersion = "2.0.0")
-    override fun setOffsets(offsets: IntArray?, index: Int): Int {
-      return index
-    }
-
     companion object {
       private val DATA_FLAVOR = DataFlavor(MFPastePreprocessor::class.java, "class: ChangeContentByPasteAction")
     }
