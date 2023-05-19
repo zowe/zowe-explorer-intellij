@@ -12,8 +12,6 @@ package jes
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
-import auxiliary.components.actionMenu
-import auxiliary.components.actionMenuItem
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.*
@@ -53,25 +51,14 @@ class SubmitJobTest {
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         startMockServer()
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_info",
-            { it?.requestLine?.contains("zosmf/info") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_resttopology",
-            { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        createConnection(
+        createValidConnectionWithMock(
+            testInfo,
+            connectionName,
             projectName,
             fixtureStack,
             closableFixtureCollector,
-            connectionName,
-            true,
-            remoteRobot,
-            "https://${mockServer.hostName}:${mockServer.port}"
+            remoteRobot
         )
         createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
         responseDispatcher.injectEndpoint(
@@ -279,7 +266,10 @@ class SubmitJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}__restjobs",
             { it?.requestLine?.contains("PUT /zosmf/restjobs/jobs") ?: false },
-            { MockResponse().setBody("{\"file\":\"//'$datasetName($jobName)'\"}").setBody(setBodyJobSubmit(jobName)) }
+            {
+                MockResponse().setBody("{\"file\":\"//'$datasetName($jobName)'\"}")
+                    .setBody(setBodyJobSubmit(jobName, JobStatus.ACTIVE))
+            }
         )
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files",
@@ -330,51 +320,11 @@ class SubmitJobTest {
             { MockResponse().setBody("") }
         )
 
-        createEmptyMember(datasetName, memberName, remoteRobot)
+        createEmptyDatasetMember(datasetName, memberName, projectName, fixtureStack, remoteRobot)
         isFirstRequest = false
-        pasteContent(memberName, remoteRobot)
+        pasteContent(memberName, projectName, fixtureStack, remoteRobot)
     }
 
-    private fun pasteContent(
-        memberName: String,
-        remoteRobot: RemoteRobot
-    ) =
-        with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    find<ComponentFixture>(viewTree).findAllText(memberName).last().doubleClick()
-                }
-                with(textEditor()) {
-                    keyboard {
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_V)
-                        Thread.sleep(2000)
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_S)
-                        Thread.sleep(2000)
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
-                    }
-                }
-            }
-        }
-
-    private fun createEmptyMember(
-        datasetName: String,
-        memberName: String,
-        remoteRobot: RemoteRobot
-    ) =
-        with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    fileExplorer.click()
-                    find<ComponentFixture>(viewTree).findAllText(datasetName).last().rightClick()
-                }
-                actionMenu(remoteRobot, "New").click()
-                actionMenuItem(remoteRobot, "Member").click()
-                dialog("Create Member") {
-                    find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberName
-                }
-                clickButton("OK")
-            }
-        }
 
     /**
      * Checks TabPanel and Console that correct info is returned.
@@ -420,24 +370,6 @@ class SubmitJobTest {
                 .click()
             find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
         }
-    }
-
-    private fun setBodyJobSubmit(jobName: String): String {
-        return "{\n" +
-                "  \"owner\": \"${ZOS_USERID.uppercase()}\",\n" +
-                "  \"phase\": 14,\n" +
-                "  \"subsystem\": \"JES2\",\n" +
-                "  \"phase-name\": \"Job is actively executing\",\n" +
-                "  \"job-correlator\": \"J0007380S0W1....DB23523B.......:\",\n" +
-                "  \"type\": \"JOB\",\n" +
-                "  \"url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A\",\n" +
-                "  \"jobid\": \"JOB07380\",\n" +
-                "  \"class\": \"B\",\n" +
-                "  \"files-url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A/files\",\n" +
-                "  \"jobname\": \"${jobName}\",\n" +
-                "  \"status\": \"ACTIVE\",\n" +
-                "  \"retcode\": null\n" +
-                "}\n"
     }
 
     private fun buildFinalListDatasetJson(): String {

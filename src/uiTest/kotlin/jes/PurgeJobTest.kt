@@ -12,7 +12,6 @@ package jes
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
-import auxiliary.components.actionMenu
 import auxiliary.components.actionMenuItem
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
@@ -57,25 +56,14 @@ class PurgeJobTest {
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         startMockServer()
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_info",
-            { it?.requestLine?.contains("zosmf/info") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_resttopology",
-            { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        createConnection(
+        createValidConnectionWithMock(
+            testInfo,
+            connectionName,
             projectName,
             fixtureStack,
             closableFixtureCollector,
-            connectionName,
-            true,
-            remoteRobot,
-            "https://${mockServer.hostName}:${mockServer.port}"
+            remoteRobot
         )
         createWS(remoteRobot)
         responseDispatcher.injectEndpoint(
@@ -108,7 +96,7 @@ class PurgeJobTest {
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(testInfo: TestInfo,remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun tearDownAll(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restfiles",
             {
@@ -156,11 +144,11 @@ class PurgeJobTest {
      * Tests to purge jobs with RC=0, JCL ERROR, ABEND via context menu in Jes Explorer.
      * Checks that correct info is returned.
      */
-     @Test
+    @Test
     @Order(2)
-    fun testPurgeJobViaContextMenuInExplorer(testInfo: TestInfo,remoteRobot: RemoteRobot) {
+    fun testPurgeJobViaContextMenuInExplorer(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         for (i in 1..3) {
-            doPurgeJobTestViaContextMenu(testInfo,"TEST$i", remoteRobot)
+            doPurgeJobTestViaContextMenu(testInfo, "TEST$i", remoteRobot)
         }
     }
 
@@ -193,13 +181,13 @@ class PurgeJobTest {
             var isFirstRequest = true
             responseDispatcher.injectEndpoint(
                 "${testInfo.displayName}_delete_${jobName}",
-                { it?.requestLine?.contains("DELETE /zosmf/restjobs/jobs/${jobName}/JOB07380") ?: false && isFirstRequest},
+                { it?.requestLine?.contains("DELETE /zosmf/restjobs/jobs/${jobName}/JOB07380") ?: false && isFirstRequest },
                 { MockResponse().setBody("{}").setBody(setBodyJobPurged(jobName)) }
             )
 
             responseDispatcher.injectEndpoint(
                 "${testInfo.displayName}_delete_${jobName}_2",
-                { it?.requestLine?.contains("DELETE /zosmf/restjobs/jobs/${jobName}/JOB07380") ?: false && !isFirstRequest},
+                { it?.requestLine?.contains("DELETE /zosmf/restjobs/jobs/${jobName}/JOB07380") ?: false && !isFirstRequest },
                 { MockResponse().setBody("{}").setResponseCode(400) }
             )
             submitJobWithMock(testInfo, datasetName, jobName, remoteRobot)
@@ -220,7 +208,7 @@ class PurgeJobTest {
     /**
      * Purges job via context menu, checks notifications.
      */
-    private fun doPurgeJobTestViaContextMenu(testInfo: TestInfo,jobName: String, remoteRobot: RemoteRobot) =
+    private fun doPurgeJobTestViaContextMenu(testInfo: TestInfo, jobName: String, remoteRobot: RemoteRobot) =
         with(remoteRobot) {
 
             submitJobWithMock(testInfo, datasetName, jobName, remoteRobot)
@@ -228,7 +216,7 @@ class PurgeJobTest {
             val jobId = getJobIdFromPanel(remoteRobot)
             checkNotificationJobSubmitted(jobName, remoteRobot)
             closeTabInJobsPanel(jobName, remoteRobot)
-            purgeJobFromExplorer(testInfo,jobName, jobId, remoteRobot)
+            purgeJobFromExplorer(testInfo, jobName, jobId, remoteRobot)
             Thread.sleep(3000)
             checkNotificationJobPurged(jobName, jobId, true, remoteRobot)
             checkJobsOutputWasDeletedJWSRefreshed(jobName, jobId, remoteRobot)
@@ -310,65 +298,68 @@ class PurgeJobTest {
     /**
      * Purges job via context menu.
      */
-    private fun purgeJobFromExplorer(testInfo: TestInfo,jobName: String, jobId: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        var isFirstRequest = true
-        val rc = when (jobName) {
-            "TEST1" -> {
-                "CC 0000"
+    private fun purgeJobFromExplorer(testInfo: TestInfo, jobName: String, jobId: String, remoteRobot: RemoteRobot) =
+        with(remoteRobot) {
+            var isFirstRequest = true
+            val rc = when (jobName) {
+                "TEST1" -> {
+                    "CC 0000"
+                }
+
+                "TEST2" -> {
+                    "JCL ERROR"
+                }
+
+                else -> {
+                    "ABEND S806"
+                }
             }
-            "TEST2" -> {
-                "JCL ERROR"
-            }
-            else -> {
-                "ABEND S806"
-            }
-        }
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_delete_${jobName}",
-            { it?.requestLine?.contains("DELETE /zosmf/restjobs/jobs/${jobName}/JOB07380") ?: false},
-            { MockResponse().setBody("{}").setBody(setBodyJobPurged(jobName)) }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_${jobName}_restjobs",
-            {
-                it?.requestLine?.contains("/zosmf/restjobs/jobs?owner=${ZOS_USERID.uppercase()}&prefix=${jobName}")
-                        ?: false && isFirstRequest
-            },
-            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_delete_${jobName}",
+                { it?.requestLine?.contains("DELETE /zosmf/restjobs/jobs/${jobName}/JOB07380") ?: false },
+                { MockResponse().setBody("{}").setBody(setBodyJobPurged(jobName)) }
+            )
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_${jobName}_restjobs",
+                {
+                    it?.requestLine?.contains("/zosmf/restjobs/jobs?owner=${ZOS_USERID.uppercase()}&prefix=${jobName}")
+                            ?: false && isFirstRequest
+                },
+                { MockResponse().setBody(replaceInJson("getJob", mapOf(Pair("hostName", mockServer.hostName),
                     Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
                     Pair("jobStatus", "OUTPUT")))).setResponseCode(200) }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_${jobName}_restjobs2",
-            {
-                it?.requestLine?.contains("/zosmf/restjobs/jobs?owner=${ZOS_USERID.uppercase()}&prefix=${jobName}")
-                        ?: false && !isFirstRequest
-            },
-            { MockResponse().setBody("[]")}
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_${jobName}_restjobs3",
-            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/${jobName}/JOB07380/files HTTP") ?: false },
-            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+            )
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_${jobName}_restjobs2",
+                {
+                    it?.requestLine?.contains("/zosmf/restjobs/jobs?owner=${ZOS_USERID.uppercase()}&prefix=${jobName}")
+                            ?: false && !isFirstRequest
+                },
+                { MockResponse().setBody("[]") }
+            )
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_${jobName}_restjobs3",
+                { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/${jobName}/JOB07380/files HTTP") ?: false },
+                { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
                     Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
                     Pair("jobStatus", "")))).setResponseCode(200) }
-        )
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                jesExplorer.click()
+            )
+            ideFrameImpl(projectName, fixtureStack) {
+                explorer {
+                    jesExplorer.click()
+                }
             }
-        }
-        openJobFilterInExplorer(Triple(jobName, ZOS_USERID, ""), "", projectName, fixtureStack, remoteRobot)
-        isFirstRequest=false
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                find<ComponentFixture>(viewTree).findAllText { it.text.startsWith("$jobName ($jobId)") }.first()
-                    .rightClick()
+            openJobFilterInExplorer(Triple(jobName, ZOS_USERID, ""), "", projectName, fixtureStack, remoteRobot)
+            isFirstRequest = false
+            ideFrameImpl(projectName, fixtureStack) {
+                explorer {
+                    find<ComponentFixture>(viewTree).findAllText { it.text.startsWith("$jobName ($jobId)") }.first()
+                        .rightClick()
+                }
+                actionMenuItem(remoteRobot, "Purge Job").click()
             }
-            actionMenuItem(remoteRobot, "Purge Job").click()
-        }
 
-    }
+        }
 
 
     /**
@@ -466,54 +457,15 @@ class PurgeJobTest {
             { MockResponse().setBody("") }
         )
 
-        createEmptyMember(datasetName, memberName, remoteRobot)
+        createEmptyDatasetMember(datasetName, memberName, projectName, fixtureStack, remoteRobot)
         isFirstRequest = false
-        pasteContent(memberName, remoteRobot)
+        pasteContent(memberName, projectName, fixtureStack, remoteRobot)
         Thread.sleep(3000)
     }
 
-    private fun createEmptyMember(
-        datasetName: String,
-        memberName: String,
-        remoteRobot: RemoteRobot
-    ) =
-        with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    fileExplorer.click()
-                    find<ComponentFixture>(viewTree).findAllText(datasetName).last().rightClick()
-                }
-                actionMenu(remoteRobot, "New").click()
-                actionMenuItem(remoteRobot, "Member").click()
-                dialog("Create Member") {
-                    find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberName
-                }
-                clickButton("OK")
-            }
-        }
-
-    private fun pasteContent(
-        memberName: String,
-        remoteRobot: RemoteRobot
-    ) =
-        with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    find<ComponentFixture>(viewTree).findAllText(memberName).last().doubleClick()
-                    Thread.sleep(2000)
-                }
-                with(textEditor()) {
-                    keyboard {
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_V)
-                        Thread.sleep(2000)
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_S)
-                        Thread.sleep(2000)
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
-                    }
-                }
-            }
-        }
-
+    /**
+     * Submits job on mock server and sets OUTPUT job status.
+     */
     private fun submitJobWithMock(
         testInfo: TestInfo,
         datasetName: String,
@@ -541,7 +493,10 @@ class PurgeJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}__restjobs",
             { it?.requestLine?.contains("PUT /zosmf/restjobs/jobs") ?: false },
-            { MockResponse().setBody("{\"file\":\"//'$datasetName($jobName)'\"}").setBody(setBodyJobSubmit(jobName)) }
+            {
+                MockResponse().setBody("{\"file\":\"//'$datasetName($jobName)'\"}")
+                    .setBody(setBodyJobSubmit(jobName, JobStatus.ACTIVE))
+            }
         )
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files",
@@ -583,7 +538,7 @@ class PurgeJobTest {
                 "}\n"
     }
 
-    private fun setBodyJobPurged(jobName:String):String{
+    private fun setBodyJobPurged(jobName: String): String {
         return "{\n" +
                 "  \"jobid\":\"JOB07380\",\n" +
                 "  \"jobname\":\"${jobName}\",\n" +

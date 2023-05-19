@@ -124,7 +124,7 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       t
     }
     if (throwable != null) {
-      log.error("Failed to move local file")
+      log.info("Failed to move local file")
       throw throwable
     }
     log.info("Local file has been moved successfully")

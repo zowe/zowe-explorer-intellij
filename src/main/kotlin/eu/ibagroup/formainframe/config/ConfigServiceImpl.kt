@@ -139,9 +139,25 @@ class ConfigServiceImpl : ConfigService {
   override fun migrateOldConfigState(state: ConfigState) {
     if (!state.migrated) {
       myState.settings = state.settings.clone()
-      myState.get<ConnectionConfig>()?.addAll(state.connections)
-      myState.get<FilesWorkingSetConfig>()?.addAll(state.filesWorkingSets)
-      myState.get<JesWorkingSetConfig>()?.addAll(state.jesWorkingSets)
+
+      val newConnections = myState.get<ConnectionConfig>()
+      val newFilesWorkingSets = myState.get<FilesWorkingSetConfig>()
+      val newJesWorkingSets = myState.get<JesWorkingSetConfig>()
+
+      val connectionsToAdd = state.connections.filter { con ->
+        newConnections?.find { it.uuid == con.uuid } == null
+      }
+      val filesWorkingSetsToAdd = state.filesWorkingSets.filter { ws ->
+        newFilesWorkingSets?.find { it.uuid == ws.uuid } == null
+      }
+      val jesWorkingSetsToAdd = state.jesWorkingSets.filter { ws ->
+        newJesWorkingSets?.find { it.uuid == ws.uuid } == null
+      }
+
+      newConnections?.addAll(connectionsToAdd)
+      newFilesWorkingSets?.addAll(filesWorkingSetsToAdd)
+      newJesWorkingSets?.addAll(jesWorkingSetsToAdd)
+
       state.migrated = true
 
       // acceptOldConfigs()

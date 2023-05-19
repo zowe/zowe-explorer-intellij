@@ -138,9 +138,9 @@ class FileExplorerViewDropTarget(
 
         CommonDataKeys.VIRTUAL_FILE_ARRAY.name -> {
           if (sourcesTargetBounds.v4 == myTree) {
-            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2)?.file).filterNotNull()
+            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2)?.file).filterNotNull().toTypedArray()
           } else {
-            arrayOf(sourcesTargetBounds.v2.getVirtualFile())
+            arrayOf(sourcesTargetBounds.v2.getVirtualFile()).filterNotNull().toTypedArray()
           }
         }
 
