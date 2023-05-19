@@ -37,7 +37,7 @@ import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.utils.getMinimalCommonParents
 import org.zowe.explorer.utils.getParentsChain
-import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
+import org.zowe.explorer.utils.service // TODO: remove in v1.*.*-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor

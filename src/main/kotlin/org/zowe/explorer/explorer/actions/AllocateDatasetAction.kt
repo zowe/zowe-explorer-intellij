@@ -32,7 +32,7 @@ import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
-import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
+import org.zowe.explorer.utils.service // TODO: remove in v1.*.*-223 and greater
 import org.zowe.kotlinsdk.*
 
 /**

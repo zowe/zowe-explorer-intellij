@@ -29,7 +29,7 @@ import org.zowe.explorer.dataops.operations.UssChangeModeOperation
 import org.zowe.explorer.dataops.operations.UssChangeModeParams
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.service // TODO: remove in 1.0.2-223 and greater
+import org.zowe.explorer.utils.service // TODO: remove in v1.*.*-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.ChangeMode
 import org.zowe.kotlinsdk.FileType
