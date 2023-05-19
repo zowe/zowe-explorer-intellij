@@ -32,8 +32,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    // TODO: ContentFactory.SERVICE.getInstance() -> ContentFactory.getInstance() in new versions of the plugin
-    val contentFactory = ContentFactory.SERVICE.getInstance()
+    val contentFactory = ContentFactory.getInstance()
     UIComponentManager.INSTANCE.getExplorerContentProviders().forEach {
       val content = contentFactory
         .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)

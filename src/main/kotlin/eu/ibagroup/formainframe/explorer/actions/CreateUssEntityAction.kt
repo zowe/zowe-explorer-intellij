@@ -32,7 +32,6 @@ import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.ChangeMode
 import org.zowe.kotlinsdk.FileType
