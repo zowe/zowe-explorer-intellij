@@ -32,6 +32,7 @@ import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
+import org.zowe.explorer.utils.service
 import org.zowe.kotlinsdk.*
 
 /**
@@ -106,7 +107,7 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
               while (p !is DSMaskNode) {
                 p = p?.parent ?: break
               }
-              val nodeToClean = p?.castOrNull<FileFetchNode<*,*,*,*,*>>()
+              val nodeToClean = p?.castOrNull<FileFetchNode<*, *, *, *, *>>()
               nodeToClean?.let { cleanInvalidateOnExpand(nodeToClean, view) }
 
               var nodeCleaned = false
@@ -259,8 +260,8 @@ class AllocateLikeAction : AnAction() {
     }
     val selected = view.mySelectedNodesData
     e.presentation.isEnabledAndVisible = selected.size == 1
-      && selected[0].attributes is RemoteDatasetAttributes
-      && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
+        && selected[0].attributes is RemoteDatasetAttributes
+        && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 

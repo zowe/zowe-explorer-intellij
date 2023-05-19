@@ -14,7 +14,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.utils.crudable.nextUniqueValue
@@ -97,8 +96,9 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
     }
   }
 
-  override fun preload(indicator: ProgressIndicator) {
+  override suspend fun execute() {
     convertOldVersionConfig()
+    super.execute()
   }
 
 }
