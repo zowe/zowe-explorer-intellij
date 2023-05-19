@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import eu.ibagroup.formainframe.utils.`is`
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 
@@ -40,6 +41,24 @@ class MFPastePreprocessor : CopyPastePostProcessor<TextBlockTransferableData>() 
   internal class DumbData : TextBlockTransferableData {
     override fun getFlavor(): DataFlavor {
       return DATA_FLAVOR
+    }
+
+    // This function is not needed to be overridden since v1.*.*-223
+    @ApiStatus.ScheduledForRemoval(inVersion = "2.0.0")
+    override fun getOffsetCount(): Int {
+      return 0
+    }
+
+    // This function is not needed to be overridden since v1.*.*-223
+    @ApiStatus.ScheduledForRemoval(inVersion = "2.0.0")
+    override fun getOffsets(offsets: IntArray?, index: Int): Int {
+      return index
+    }
+
+    // This function is not needed to be overridden since v1.*.*-223
+    @ApiStatus.ScheduledForRemoval(inVersion = "2.0.0")
+    override fun setOffsets(offsets: IntArray?, index: Int): Int {
+      return index
     }
 
     companion object {

@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
+import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
 import org.zowe.kotlinsdk.ExecData
 import org.zowe.kotlinsdk.JESApi
 import org.zowe.kotlinsdk.Job

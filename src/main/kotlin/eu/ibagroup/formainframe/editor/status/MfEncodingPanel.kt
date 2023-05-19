@@ -18,6 +18,8 @@ import com.intellij.openapi.wm.impl.status.EncodingPanel
 import eu.ibagroup.formainframe.editor.isMfVirtualFile
 import eu.ibagroup.formainframe.editor.zoweExplorerInstalled
 
+// This code should not be as described below in Zowe repo
+// Change MF to ZoweMF
 const val MF_ENCODING_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.ENCODING_PANEL
 
 /**
@@ -25,6 +27,7 @@ const val MF_ENCODING_PANEL_WIDGET = "MF" + StatusBar.StandardWidgets.ENCODING_P
  */
 class MfEncodingPanel(project: Project): EncodingPanel(project) {
 
+  // This code should not be present in Zowe repo
   /**
    * Returns the state of the widget for correct display in the status bar.
    * Always displayed except when the zowe-explorer plugin is installed.
