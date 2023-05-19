@@ -21,7 +21,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "1.0.2-231"
+version = "1.0.2-232-eap"
 val remoteRobotVersion = "0.11.18"
 
 repositories {
@@ -73,7 +73,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2023.1")
+  version.set("232.5150-EAP-CANDIDATE-SNAPSHOT")
 }
 
 tasks {
@@ -85,8 +85,8 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set("231.8109")
-    untilBuild.set("231.*")
+    sinceBuild.set("232.5150")
+    untilBuild.set("232.*")
     changeNotes.set(
       """
       <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.3
