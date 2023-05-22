@@ -22,7 +22,7 @@ import javax.swing.BoxLayout
  */
 class CollectedConfigurable(
   val configurables: List<BoundSearchableConfigurable>
-): BoundSearchableConfigurable("Connections", "mainframe") {
+) : BoundSearchableConfigurable("Connections", "mainframe") {
 
   /** Min width of one configuration panel inside. */
   private val PANEL_MIN_HEIGHT = 240
@@ -32,8 +32,12 @@ class CollectedConfigurable(
     mainPanel.layout = BoxLayout(mainPanel, BoxLayout.Y_AXIS)
     configurables.forEach {
       val p = it.createComponent()
-      p.minimumSize = Dimension(p.width, PANEL_MIN_HEIGHT)
-      p.preferredSize = Dimension(p.width, PANEL_MIN_HEIGHT)
+      // TODO: use next line instead in v1.*.*-223 and greater:
+      // p.minimumSize = Dimension(p.width, PANEL_MIN_HEIGHT)
+      p?.minimumSize = Dimension(p?.width ?: 0, PANEL_MIN_HEIGHT)
+      // TODO: use next line instead in v1.*.*-223 and greater:
+      // p.preferredSize = Dimension(p.width, PANEL_MIN_HEIGHT)
+      p?.preferredSize = Dimension(p?.width ?: 0, PANEL_MIN_HEIGHT)
       mainPanel.add(p)
     }
     return mainPanel
