@@ -27,12 +27,13 @@ import eu.ibagroup.formainframe.utils.sendTopic
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.set
 import kotlin.concurrent.withLock
+import kotlin.streams.toList // TODO: remove in v1.*.*-223 and greater
 
 /**
  * Abstract class that represents a base fetch provider for fetching remote files.
  * @param dataOpsManager instance of DataOpsManager service.
  */
-abstract class RemoteFileFetchProviderBase<Connection: ConnectionConfigBase, Request : Any, Response : Any, File : VirtualFile>(
+abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Request : Any, Response : Any, File : VirtualFile>(
   private val dataOpsManager: DataOpsManager
 ) : FileFetchProvider<Request, RemoteQuery<Connection, Request, Unit>, File> {
 
@@ -104,7 +105,10 @@ abstract class RemoteFileFetchProviderBase<Connection: ConnectionConfigBase, Req
    * @param progressIndicator the progress indicator to cancel the fetch process in case the user wants to
    * @return fetched files
    */
-  private fun getFetchedFiles(query: RemoteQuery<Connection, Request, Unit>, progressIndicator: ProgressIndicator): List<File> {
+  private fun getFetchedFiles(
+    query: RemoteQuery<Connection, Request, Unit>,
+    progressIndicator: ProgressIndicator
+  ): List<File> {
     val fetched = fetchResponse(query, progressIndicator)
     return runWriteActionOnWriteThread {
       fetched.mapNotNull {
