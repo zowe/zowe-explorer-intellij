@@ -9,6 +9,7 @@
  */
 package eu.ibagroup.formainframe.dataops.operations.mover
 
+import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
@@ -80,5 +81,15 @@ class SequentialToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
       toDatasetName = destinationAttributes.name,
       memberName = memberName
     )
+  }
+
+  override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
+    runCatching {
+      super.run(operation, progressIndicator)
+    }.onFailure {
+      if (it.message?.contains("data set is empty") == false) {
+        throw it
+      }
+    }
   }
 }
