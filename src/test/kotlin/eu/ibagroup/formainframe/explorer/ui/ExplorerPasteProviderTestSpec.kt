@@ -99,11 +99,11 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
       every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBuffer
 
       every { mockedFileExplorerView.isCut } returns AtomicBoolean(true)
-      every { mockedFileExplorerView.ignoreVFileDeleteEvents } returns AtomicBoolean(false)
+      every { mockedFileExplorerView.ignoreVFSChangeEvents } returns AtomicBoolean(false)
       every { mockedFileExplorerView.copyPasteSupport } returns mockedCopyPasterProvider
 
       mockkObject(FileExplorerContentProvider)
-      mockkObject(FileExplorerContentProvider::getInstance)
+      //mockkObject(FileExplorerContentProvider::getInstance)
       every { FileExplorerContentProvider.getInstance().getExplorerView(any() as Project) } returns mockedFileExplorerView
 
       var isPastePerformed : Boolean
@@ -538,6 +538,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
           )
         } returns
             mutableListOf(Pair(mockedSourceFile, mockedSourceFile))
+        every { mockedSourceFile.findChild(any() as String) } returns null
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
@@ -728,6 +729,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceFile1 = mockk<MFVirtualFile>()
         val mockedSourceAttributes1 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile1.name } returns "test1"
+        every { mockedSourceFile1.isDirectory } returns false
         every { mockedSourceAttributes1.isPastePossible } returns false
         every { mockedSourceAttributes1.isDirectory } returns false
         every { mockedSourceNodeData1.node } returns mockedSourceNode1
@@ -740,6 +742,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceFile2 = mockk<MFVirtualFile>()
         val mockedSourceAttributes2 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile2.name } returns "test2"
+        every { mockedSourceFile2.isDirectory } returns true
         every { mockedSourceAttributes2.isPastePossible } returns false
         every { mockedSourceAttributes2.isDirectory } returns false
         every { mockedSourceNodeData2.node } returns mockedSourceNode2
@@ -752,6 +755,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceFile3 = mockk<MFVirtualFile>()
         val mockedSourceAttributes3 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile3.name } returns "test1"
+        every { mockedSourceFile3.isDirectory } returns false
         every { mockedSourceAttributes3.isPastePossible } returns false
         every { mockedSourceAttributes3.isDirectory } returns false
         every { mockedSourceNodeData3.node } returns mockedSourceNode3
@@ -788,8 +792,9 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceFile6 = mockk<MFVirtualFile>()
         val mockedSourceAttributes6 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile6.name } returns "test1"
+        every { mockedSourceFile6.isDirectory } returns true
         every { mockedSourceAttributes6.isPastePossible } returns false
-        every { mockedSourceAttributes6.isDirectory } returns false
+        every { mockedSourceAttributes6.isDirectory } returns true
         every { mockedSourceNodeData6.node } returns mockedSourceNode6
         every { mockedSourceNodeData6.file } returns mockedSourceFile6
         every { mockedSourceNodeData6.attributes } returns mockedSourceAttributes6
@@ -797,18 +802,25 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         // children of target
         val childDestinationVirtualFile1 = mockk<VirtualFile>()
         every { childDestinationVirtualFile1.name } returns "test1"
+        every { childDestinationVirtualFile1.isDirectory } returns true
         val childDestinationVirtualFile2 = mockk<MFVirtualFile>()
         every { childDestinationVirtualFile2.name } returns "test_mf_file"
         val childDestMFFile2Attr = mockk<RemoteUssAttributes>()
+        val childDestinationVirtualFile3 = mockk<VirtualFile>()
+        every { childDestinationVirtualFile3.name } returns "test2"
+        every { childDestinationVirtualFile3.isDirectory } returns false
 
         // target to paste
         val mockedTargetFile1 = mockk<VirtualFile>()
         val mockedTargetFile2 = mockk<MFVirtualFile>()
+        val mockedTargetFile3 = mockk<VirtualFile>()
         val mockedTargetFile2Attributes = mockk<RemoteUssAttributes>()
         val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
         val mockedNodeTarget = mockk<PsiDirectoryNode>()
         every { mockedTargetFile1.name } returns "test_folder"
         every { mockedTargetFile1.children } returns arrayOf(childDestinationVirtualFile1)
+        every { mockedTargetFile3.name } returns "test_folder2"
+        every { mockedTargetFile3.children } returns arrayOf(childDestinationVirtualFile3)
         every { mockedTargetFile2.name } returns "test_mf_folder"
         every { mockedTargetFile2.children } returns arrayOf(childDestinationVirtualFile2)
         every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
@@ -856,11 +868,16 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         } returns
             mutableListOf(Pair(mockedTargetFile1, mockedSourceFile1), Pair(mockedTargetFile1, mockedSourceFile2), Pair(mockedTargetFile1, mockedSourceFile3),
               Pair(mockedTargetFile1, mockedSourceFile4), Pair(mockedTargetFile1, mockedSourceFile5), Pair(mockedTargetFile1, mockedSourceFile6),
-              Pair(mockedTargetFile2, mockedSourceFile1), Pair(mockedTargetFile2, mockedSourceFile2), Pair(mockedTargetFile2, mockedSourceFile3)
+              Pair(mockedTargetFile2, mockedSourceFile1), Pair(mockedTargetFile2, mockedSourceFile2), Pair(mockedTargetFile2, mockedSourceFile3),
+              Pair(mockedTargetFile3, mockedSourceFile2)
               )
+
+        every { mockedTargetFile1.findChild(any() as String) } returns childDestinationVirtualFile1
+        every { mockedTargetFile3.findChild(any() as String) } returns childDestinationVirtualFile3
 
         every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile1) } returns null
         every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile2) } returns childDestMFFile2Attr
+        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile3) } returns null
         every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile1) } returns mockedSourceAttributes1
         every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile2) } returns mockedSourceAttributes2
         every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile3) } returns mockedSourceAttributes3
@@ -869,6 +886,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile6) } returns mockedSourceAttributes6
         every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile1) } returns null
         every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile2) } returns mockedTargetFile2Attributes
+        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile3) } returns null
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
