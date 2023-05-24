@@ -29,6 +29,8 @@ class JesWsNode(
   workingSet, project, parent, treeStructure
 ), MFNode, RefreshableNode {
 
+  override val regularTooltip = "JES Working Set"
+
   override fun update(presentation: PresentationData) {
     presentation.addText(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     when {
