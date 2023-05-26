@@ -53,12 +53,14 @@ const val IDENTICAL_MASKS_MESSAGE = "You cannot add several identical masks to t
 const val EMPTY_DATASET_MESSAGE = "You are going to create a Working Set that doesn't fetch anything"
 const val TEXT_FIELD_LENGTH_MESSAGE = "Text field must not exceed 8 characters."
 const val MEMBER_NAME_LENGTH_MESSAGE = "Member name must not exceed 8 characters."
+const val FILE_NAME_LENGTH_MESSAGE = "Filename must not exceed 255 characters."
 const val MEMBER_EMPTY_NAME_MESSAGE = "This field must not be blank"
 const val INVALID_MEMBER_NAME_MESSAGE = "Member name should contain only A-Z a-z 0-9 or national characters"
 const val INVALID_MEMBER_NAME_BEGINNING_MESSAGE = "Member name should start with A-Z a-z or national characters"
 const val JOB_ID_LENGTH_MESSAGE = "Job ID length must be 8 characters."
 const val TEXT_FIELD_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z, 0-9, *, %."
 const val JOBID_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z, 0-9"
+const val FILE_RESRVED_SYMBOL_MESSAGE = "Filename must not contain reserved '/' symbol."
 const val PREFIX_OWNER_JOBID_MESSAGE = "You must provide either an owner and a prefix or a job ID."
 const val IDENTICAL_FILTERS_MESSAGE = "You cannot add several identical job filters to table"
 const val DATASET_NAME_LENGTH_MESSAGE = "Dataset name cannot exceed 44 characters"
@@ -115,6 +117,8 @@ val invalidJobsFiltersMap = mapOf(
 )
 
 val viewTree = byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")
+
+enum class UssFileType { File, Directory }
 
 /**
  * Waits 60 seconds for the button to be enabled and then clicks on it.
@@ -923,12 +927,11 @@ fun checkErrorNotification(
 
 /**
  * Creates uss file or directory for provided mask name
- * @param fileType must contain "File" or "Directory" value to specify desired file type
  */
 fun createUssFile(
     ussMaskName: String,
     fileName: String,
-    fileType: String,
+    fileType: UssFileType,
     projectName: String,
     fixtureStack: MutableList<Locator>,
     remoteRobot: RemoteRobot
@@ -939,11 +942,11 @@ fun createUssFile(
             find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
         }
         actionMenu(remoteRobot, "New").click()
-        actionMenuItem(remoteRobot, fileType).click()
+        actionMenuItem(remoteRobot, fileType.name).click()
         createUssFileDialog(fixtureStack) {
             createFile(fileName, "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
             clickButton("OK")
-            Thread.sleep(5000)
+            Thread.sleep(1000)
         }
     }
 }
