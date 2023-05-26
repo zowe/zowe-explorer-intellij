@@ -37,6 +37,8 @@ abstract class WorkingSetNode<Connection: ConnectionConfigBase, MaskType>(
 ), MFNode, RefreshableNode {
   protected var cachedChildrenInternal: MutableCollection<out AbstractTreeNode<*>>? = null
 
+  abstract val regularTooltip: String
+
   val cachedChildren: MutableCollection<out AbstractTreeNode<*>>
     get() = cachedChildrenInternal ?: mutableListOf()
 
@@ -50,7 +52,7 @@ abstract class WorkingSetNode<Connection: ConnectionConfigBase, MaskType>(
    */
   protected fun regular(presentation: PresentationData) {
     presentation.setIcon(regularIcon)
-    presentation.tooltip = "Working set"
+    presentation.tooltip = regularTooltip
   }
 
   /**

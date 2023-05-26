@@ -30,6 +30,8 @@ class FilesWorkingSetNode(
 
   private val valueForFilesWS = value as FilesWorkingSet
 
+  override val regularTooltip = "Files Working Set"
+
   override fun update(presentation: PresentationData) {
     presentation.addText(valueForFilesWS.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     when {
