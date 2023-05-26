@@ -40,6 +40,15 @@ class RenameDialog(project: Project?,
 ) : DialogWrapper(project),
   StatefulComponent<String> {
 
+    companion object {
+
+      // TODO: Remove when it becomes possible to mock class constructor with init section.
+      /** Wrapper for init() method. It is necessary only for test purposes for now. */
+      private fun initialize(init: () -> Unit) {
+        init()
+      }
+    }
+
   private val node = selectedNode.node
 
   /**
@@ -62,7 +71,7 @@ class RenameDialog(project: Project?,
    */
   init {
     title = if (currentAction is DuplicateMemberAction) "Duplicate $type" else "Rename $type"
-    init()
+    initialize { init() }
   }
 
   /**
