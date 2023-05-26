@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.ReloadableEventHandler
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.isTheSameAs
+import kotlin.streams.toList // TODO: remove in v1.*.*-223 and greater
 
 /** Stateful class to represent the plugin configs sandbox */
 data class SandboxState(
@@ -129,10 +130,10 @@ class ConfigSandboxImpl : ConfigSandbox {
 
   /** Fully initialized config sandbox crudable object */
   override val crudable by lazy {
-      makeCrudableWithoutListeners(true, { state.credentials }) { state.configState }
-        .configureCrudable {
-          eventHandler = this@ConfigSandboxImpl.eventHandler
-        }
+    makeCrudableWithoutListeners(true, { state.credentials }) { state.configState }
+      .configureCrudable {
+        eventHandler = this@ConfigSandboxImpl.eventHandler
+      }
   }
 
   /** Registers collection for config class in [ConfigStateV2.collections] in [state] and [initialState]. */
