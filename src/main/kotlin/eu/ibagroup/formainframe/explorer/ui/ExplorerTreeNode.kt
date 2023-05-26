@@ -34,6 +34,7 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 

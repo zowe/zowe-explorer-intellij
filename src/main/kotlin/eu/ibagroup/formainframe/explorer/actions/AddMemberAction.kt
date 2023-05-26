@@ -26,6 +26,7 @@ import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /** Class that represents "Add member" action */
