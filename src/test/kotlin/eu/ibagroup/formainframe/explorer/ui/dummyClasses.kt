@@ -39,6 +39,10 @@ open class TestFileEditorManager : FileEditorManager() {
     TODO("Not yet implemented")
   }
 
+  override fun openFile(file: VirtualFile): MutableList<FileEditor> {
+    TODO("Not yet implemented")
+  }
+
   override fun closeFile(file: VirtualFile) {
     TODO("Not yet implemented")
   }
@@ -56,6 +60,10 @@ open class TestFileEditorManager : FileEditorManager() {
   }
 
   override fun getOpenFiles(): Array<VirtualFile> {
+    TODO("Not yet implemented")
+  }
+
+  override fun getOpenFilesWithRemotes(): MutableList<VirtualFile> {
     TODO("Not yet implemented")
   }
 
