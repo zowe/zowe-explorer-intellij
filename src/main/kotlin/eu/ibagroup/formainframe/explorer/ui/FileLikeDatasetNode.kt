@@ -24,7 +24,6 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
