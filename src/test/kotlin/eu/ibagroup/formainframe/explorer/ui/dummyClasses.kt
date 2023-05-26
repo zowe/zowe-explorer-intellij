@@ -30,9 +30,10 @@ import javax.swing.JComponent
 import javax.swing.JTextField
 
 open class TestFileEditorManager : FileEditorManager() {
-  override fun getComposite(file: VirtualFile): FileEditorComposite? {
-    TODO("Not yet implemented")
-  }
+//  TODO: needed in 1.*.*-223 and greater
+//  override fun getComposite(file: VirtualFile): FileEditorComposite? {
+//    TODO("Not yet implemented")
+//  }
 
   override fun openFile(file: VirtualFile, focusEditor: Boolean): Array<FileEditor> {
     TODO("Not yet implemented")
