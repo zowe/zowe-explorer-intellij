@@ -29,7 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Duration
 
 /**
- * Tests allocating datasets with valid and invalid inputs.
+ * Tests migrating and recalling dataset.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
