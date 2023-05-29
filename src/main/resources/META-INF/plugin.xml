@@ -423,6 +423,28 @@ Example of how to see the output:<br/>
                 class="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"
                 text="Directory" icon="AllIcons.Nodes.Folder"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.ByName"
+                class="eu.ibagroup.formainframe.explorer.actions.SortByNameAction"
+                text="Name"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.ByType"
+                class="eu.ibagroup.formainframe.explorer.actions.SortByTypeAction"
+                text="Type"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.ByModificationDate"
+                class="eu.ibagroup.formainframe.explorer.actions.SortByModificationDateAction"
+                text="Last Modification Date"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.AscendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.SortByAscendingOrderAction"
+                text="Ascending"
+                icon="AllIcons.Chooser.Bottom"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.DescendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.SortByDescendingOrderAction"
+                text="Descending"
+                icon="AllIcons.Chooser.Top"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.AddMemberAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddMemberAction" text="Member"
                 icon="ForMainframeIcons.MemberIcon"
@@ -561,6 +583,19 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
         </group>
 
+        <group id="eu.ibagroup.formainframe.actions.SortActionGroup"
+               description="Sort items"
+               text="Sort"
+               class="eu.ibagroup.formainframe.explorer.actions.SortActionGroup"
+               popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ByName"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ByType"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ByModificationDate"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.AscendingOrder"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.DescendingOrder"/>
+        </group>
+
         <group id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"
                icon="AllIcons.General.Add"
                popup="true">
@@ -592,6 +627,8 @@ Example of how to see the output:<br/>
             <reference id="$Cut"/>
             <reference id="$Copy"/>
             <reference id="$Paste"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.actions.SortActionGroup"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>

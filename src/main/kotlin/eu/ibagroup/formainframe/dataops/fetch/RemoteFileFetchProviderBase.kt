@@ -15,9 +15,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.Query
-import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService
 import eu.ibagroup.formainframe.utils.castOrNull
@@ -164,7 +162,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
     progressIndicator: ProgressIndicator
   ) {
     runCatching {
-      val files = getFetchedFiles(query, progressIndicator)
+
+      val files: List<File> = getFetchedFiles(query, progressIndicator)
 
       // Cleans up attributes of invalid files
       cache[query]
@@ -231,6 +230,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
    */
   private fun cleanCacheInternal(query: RemoteQuery<Connection, Request, Unit>, sendTopic: Boolean) {
     cacheState.remove(query)
+    cache.remove(query)
     if (sendTopic) {
       sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onCacheCleaned(query)
     }
