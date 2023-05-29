@@ -572,7 +572,7 @@ class CancelHoldReleaseJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files3",
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+            { MockResponse().setBody(replaceInJson(statusJson, mapOf(Pair("hostName", mockServer.hostName),
                     Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
                     Pair("jobStatus", jobStatus.name)))) }
         )
