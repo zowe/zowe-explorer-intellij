@@ -169,7 +169,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
       throwable = t
     }
     if (throwable != null) {
-      log.error("Failed to move remote file")
+      log.info("Failed to move remote file")
       throw throwable
     }
     log.info("Remote ile has been moved successfully")

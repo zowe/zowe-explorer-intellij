@@ -12,8 +12,6 @@ package jes
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
-import auxiliary.components.actionMenu
-import auxiliary.components.actionMenuItem
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.*
@@ -49,7 +47,6 @@ class CancelHoldReleaseJobTest {
     private val fileName = "job_rc0.txt"
 
     private enum class JobAction { SUBMIT, CANCEL, HOLD, RELEASE }
-    private enum class JobStatus { ACTIVE, INPUT, OUTPUT }
 
     private var mapListDatasets = mutableMapOf<String, String>()
     private var listMembersInDataset = mutableListOf<String>()
@@ -61,25 +58,14 @@ class CancelHoldReleaseJobTest {
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         startMockServer()
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_info",
-            { it?.requestLine?.contains("zosmf/info") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_resttopology",
-            { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        createConnection(
+        createValidConnectionWithMock(
+            testInfo,
+            connectionName,
             projectName,
             fixtureStack,
             closableFixtureCollector,
-            connectionName,
-            true,
-            remoteRobot,
-            "https://${mockServer.hostName}:${mockServer.port}"
+            remoteRobot
         )
         createWS(remoteRobot)
         responseDispatcher.injectEndpoint(
@@ -456,12 +442,12 @@ class CancelHoldReleaseJobTest {
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName)
                 clickButton("OK")
-                Thread.sleep(3000)
+                Thread.sleep(500)
                 find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
                     EMPTY_DATASET_MESSAGE
                 )
                 clickButton("OK")
-                Thread.sleep(3000)
+                Thread.sleep(500)
             }
             closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
         }
@@ -476,6 +462,9 @@ class CancelHoldReleaseJobTest {
         createMemberAndPasteContentWithMock(testInfo, datasetName, jobName, fileName, remoteRobot)
     }
 
+    /**
+     * Creates member in dataset and pastes content from buffer.
+     */
     private fun createMemberAndPasteContentWithMock(
         testInfo: TestInfo, datasetName: String,
         memberName: String, fileName: String, remoteRobot: RemoteRobot
@@ -503,56 +492,18 @@ class CancelHoldReleaseJobTest {
             { MockResponse().setBody("") }
         )
 
-        createEmptyMember(datasetName, memberName, remoteRobot)
+        createEmptyDatasetMember(
+            datasetName, memberName, projectName, fixtureStack, remoteRobot
+        )
         isFirstRequest = false
-        pasteContent(memberName, remoteRobot)
+        pasteContent(memberName, projectName, fixtureStack, remoteRobot)
         Thread.sleep(3000)
         isFirst = false
     }
 
-    private fun createEmptyMember(
-        datasetName: String,
-        memberName: String,
-        remoteRobot: RemoteRobot
-    ) =
-        with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    fileExplorer.click()
-                    find<ComponentFixture>(viewTree).findAllText(datasetName).last().rightClick()
-                }
-                actionMenu(remoteRobot, "New").click()
-                actionMenuItem(remoteRobot, "Member").click()
-                dialog("Create Member") {
-                    find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberName
-                }
-                clickButton("OK")
-            }
-        }
-
-    private fun pasteContent(
-        memberName: String,
-        remoteRobot: RemoteRobot
-    ) =
-        with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    find<ComponentFixture>(viewTree).findAllText(memberName).last().doubleClick()
-                    Thread.sleep(2000)
-                }
-                with(textEditor()) {
-                    keyboard {
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_V)
-                        Thread.sleep(2000)
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_S)
-                        Thread.sleep(2000)
-                        hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
-                    }
-                }
-            }
-        }
-
-
+    /**
+     * Creates json for dataset list to display it in File Explorer.
+     */
     private fun buildFinalListDatasetJson(): String {
         var result = "{}"
         if (mapListDatasets.isNotEmpty()) {
@@ -561,14 +512,17 @@ class CancelHoldReleaseJobTest {
                 listDatasetsJson += it.value
             }
             result = listDatasetsJson.dropLast(1) + "],\n" +
-                    "  \"returnedRows\": ${mapListDatasets.size},\n" +
-                    "  \"totalRows\": ${mapListDatasets.size},\n" +
-                    "  \"JSONversion\": 1\n" +
-                    "}"
+                "  \"returnedRows\": ${mapListDatasets.size},\n" +
+                "  \"totalRows\": ${mapListDatasets.size},\n" +
+                "  \"JSONversion\": 1\n" +
+                "}"
         }
         return result
     }
 
+    /**
+     * Creates json for dataset members to display it in File Explorer.
+     */
     private fun buildListMembersJson(): String {
         var members = "[ "
         if (listMembersInDataset.isNotEmpty()) {
@@ -578,6 +532,10 @@ class CancelHoldReleaseJobTest {
         return "{\"items\":$members,\"returnedRows\": ${listMembersInDataset.size},\"JSONversion\": 1}"
     }
 
+
+    /**
+     * Submits job on mock server.
+     */
     private fun submitJobWithMock(
         testInfo: TestInfo,
         datasetName: String,
@@ -585,8 +543,8 @@ class CancelHoldReleaseJobTest {
         jobStatus: JobStatus,
         remoteRobot: RemoteRobot
     ) = with(remoteRobot) {
-        val spoolFileContent= "mock/getSpoolFileContentRC00.txt"
-        val rc= "CC 0000"
+        val spoolFileContent = "mock/getSpoolFileContentRC00.txt"
+        val rc = "CC 0000"
         val statusJson: String = when (jobStatus) {
             JobStatus.ACTIVE -> "getActiveStatus"
             else -> "getStatus"
@@ -614,7 +572,7 @@ class CancelHoldReleaseJobTest {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restjobs_files3",
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+            { MockResponse().setBody(replaceInJson(statusJson, mapOf(Pair("hostName", mockServer.hostName),
                     Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
                     Pair("jobStatus", jobStatus.name)))) }
         )
@@ -622,48 +580,30 @@ class CancelHoldReleaseJobTest {
         responseDispatcher.removeAllEndpoints()
     }
 
-    private fun setBodyJobSubmit(jobName: String, jobStatus: JobStatus): String {
-        return "{\n" +
-                "  \"owner\": \"${ZOS_USERID.uppercase()}\",\n" +
-                "  \"phase\": 14,\n" +
-                "  \"subsystem\": \"JES2\",\n" +
-                "  \"phase-name\": \"Job is actively executing\",\n" +
-                "  \"job-correlator\": \"J0007380S0W1....DB23523B.......:\",\n" +
-                "  \"type\": \"JOB\",\n" +
-                "  \"url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A\",\n" +
-                "  \"jobid\": \"JOB07380\",\n" +
-                "  \"class\": \"B\",\n" +
-                "  \"files-url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A/files\",\n" +
-                "  \"jobname\": \"${jobName}\",\n" +
-                "  \"status\": \"${jobStatus}\",\n" +
-                "  \"retcode\": null\n" +
-                "}\n"
-    }
-
     private fun setBodyJobCancelled(jobName: String): String {
         return "{\n" +
-                "\"jobid\":\"JOB07380\",\n" +
-                "\"jobname\":\"$jobName\",\n" +
-                "\"original-jobid\":\"JOB07380\",\n" +
-                "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
-                "\"member\":\"JES2\",\n" +
-                "\"sysname\":\"SY1\",\n" +
-                "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
-                "\"status\":\"0\",\n" +
-                "\"retcode\":\"CANCELED\"\n" +
-                "}"
+            "\"jobid\":\"JOB07380\",\n" +
+            "\"jobname\":\"$jobName\",\n" +
+            "\"original-jobid\":\"JOB07380\",\n" +
+            "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
+            "\"member\":\"JES2\",\n" +
+            "\"sysname\":\"SY1\",\n" +
+            "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
+            "\"status\":\"0\",\n" +
+            "\"retcode\":\"CANCELED\"\n" +
+            "}"
     }
 
     private fun setBodyJobHeldOrReleased(jobName: String): String {
         return "{\n" +
-                "\"jobid\":\"JOB07380\",\n" +
-                "\"jobname\":\"$jobName\",\n" +
-                "\"original-jobid\":\"JOB07380\",\n" +
-                "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
-                "\"member\":\"JES2\",\n" +
-                "\"sysname\":\"SY1\",\n" +
-                "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
-                "\"status\":\"0\"\n" +
-                "}"
+            "\"jobid\":\"JOB07380\",\n" +
+            "\"jobname\":\"$jobName\",\n" +
+            "\"original-jobid\":\"JOB07380\",\n" +
+            "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
+            "\"member\":\"JES2\",\n" +
+            "\"sysname\":\"SY1\",\n" +
+            "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
+            "\"status\":\"0\"\n" +
+            "}"
     }
 }

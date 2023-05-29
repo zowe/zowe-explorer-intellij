@@ -10,7 +10,6 @@
 
 import kotlinx.kover.api.KoverTaskExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.io.File
 
 plugins {
   id("org.jetbrains.intellij") version "1.13.0"
@@ -24,8 +23,9 @@ apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
 version = "1.1.0"
-val remoteRobotVersion = "0.11.16"
+val remoteRobotVersion = "0.11.18"
 val okHttp3Version = "4.10.0"
+val kotestVersion = "5.5.5"
 
 repositories {
   mavenCentral()
@@ -70,8 +70,8 @@ dependencies {
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
   testImplementation("io.mockk:mockk:1.13.2")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
-  testImplementation("io.kotest:kotest-assertions-core:5.5.5")
-  testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
+  testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
+  testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
   testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
@@ -176,7 +176,7 @@ tasks {
       events("passed", "skipped", "failed")
     }
 
-    ignoreFailures = true
+//    ignoreFailures = true
 
     finalizedBy("koverHtmlReport")
     systemProperty("idea.force.use.core.classloader", "true")
@@ -185,8 +185,9 @@ tasks {
     afterSuite(
       KotlinClosure2<TestDescriptor, TestResult, Unit>({ desc, result ->
         if (desc.parent == null) { // will match the outermost suite
-          val output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
-                  "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+          val output =
+            "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
+              "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
           val fileName = "./build/reports/tests/${result.resultType}.txt"
           File(fileName).writeText(output)
         }

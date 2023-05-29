@@ -113,7 +113,7 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
       t
     }
     if (throwable != null) {
-      log.error("Failed to move dataset")
+      log.info("Failed to move dataset")
       throw throwable
     }
     log.info("Dataset has been moved successfully")

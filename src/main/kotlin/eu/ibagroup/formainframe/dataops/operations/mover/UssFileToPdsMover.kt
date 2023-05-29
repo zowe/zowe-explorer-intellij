@@ -113,7 +113,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
           log.info("Rollback proceeded successfully")
           CallException(deleteResponse, "Cannot $opName $from to $to. Rollback proceeded successfully.")
         } else {
-          log.error("Rollback failed")
+          log.info("Rollback failed")
           CallException(deleteResponse, "Cannot $opName $from to $to. Rollback failed.")
         }
       }
@@ -139,7 +139,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
       }
     }
     if (throwable != null) {
-      log.error("Failed to move USS file")
+      log.info("Failed to move USS file")
       throw throwable
     }
     log.info("USS file has been moved successfully")

@@ -113,9 +113,6 @@ Example of how to see the output:<br/>
 
         <listener class="eu.ibagroup.formainframe.editor.FileEditorEventsListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-
-        <listener class="eu.ibagroup.formainframe.editor.FileSelectionChangeListener"
-                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="eu.ibagroup.formainframe">
@@ -294,6 +291,8 @@ Example of how to see the output:<br/>
         <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
 
         <postStartupActivity implementation="eu.ibagroup.formainframe.config.ConfigStartupActivity"/>
+
+        <postStartupActivity implementation="eu.ibagroup.formainframe.editor.ProjectStartupActivity"/>
 
         <applicationConfigurable id="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"
                                  displayName="For Mainframe"

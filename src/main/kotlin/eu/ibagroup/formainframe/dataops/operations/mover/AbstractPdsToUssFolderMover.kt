@@ -87,7 +87,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
       log.info("Rollback proceeded successfully")
       throwable = if (prevResponse == null) Exception() else CallException(prevResponse, msg)
     } else if (!isCanceled && !responseRollback.isSuccessful) {
-      log.error("Rollback failed")
+      log.info("Rollback failed")
       throwable = CallException(responseRollback, "Cannot $opName $sourceName to ${destinationPath}. Rollback failed.")
     }
     return throwable

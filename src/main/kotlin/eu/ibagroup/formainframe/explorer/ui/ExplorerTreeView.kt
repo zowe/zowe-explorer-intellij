@@ -39,6 +39,8 @@ import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.explorer.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
+import eu.ibagroup.formainframe.vfs.MFBulkFileListener
+import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import org.jetbrains.concurrency.AsyncPromise
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
@@ -82,6 +84,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
   internal val myTree: Tree
   internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
   internal val ignoreVFileDeleteEvents = AtomicBoolean(false)
+  internal val ignoreVFSChangeEvents = AtomicBoolean(false)
 
   protected val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
 
@@ -201,27 +204,41 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
       topic = VirtualFileManager.VFS_CHANGES,
       handler = object : BulkFileListener {
         override fun after(events: MutableList<out VFileEvent>) {
+          events.forEach {
+            if (
+              it is VFilePropertyChangeEvent &&
+              VirtualFile.PROP_NAME == it.propertyName &&
+              (FileContentUtilCore.FORCE_RELOAD_REQUESTOR == it.requestor || it.oldValue != it.newValue)
+            ) {
+              val editorEx =
+                EditorUtil.getEditorEx(FileEditorManager.getInstance(project).getSelectedEditor(it.file))
+              editorEx?.let { editor ->
+                val editorHighlighterUpdater =
+                  EditorHighlighterUpdater(project, parentDisposable, editor, it.file)
+                editorHighlighterUpdater.updateHighlighters()
+              }
+            }
+          }
+        }
+      },
+      disposable = this
+    )
+    subscribe(
+      componentManager = ApplicationManager.getApplication(),
+      topic = MFVirtualFileSystem.MF_VFS_CHANGES_TOPIC,
+      handler = object : MFBulkFileListener {
+        override fun after(events: List<VFileEvent>) {
           events
             .mapNotNull {
               val nodes = myFsTreeStructure.findByVirtualFile(it.file ?: return@mapNotNull null)
               when {
-                it is VFileContentChangeEvent -> {
-                  nodes
+                this@ExplorerTreeView
+                  .ignoreVFSChangeEvents
+                  .compareAndSet(true, true) -> {
+                  null
                 }
 
-                it is VFilePropertyChangeEvent -> {
-                  if (
-                    VirtualFile.PROP_NAME == it.propertyName &&
-                    FileContentUtilCore.FORCE_RELOAD_REQUESTOR == it.requestor || it.oldValue != it.newValue
-                  ) {
-                    val editorEx =
-                      EditorUtil.getEditorEx(FileEditorManager.getInstance(project).getSelectedEditor(it.file))
-                    editorEx?.let { editor ->
-                      val editorHighlighterUpdater =
-                        EditorHighlighterUpdater(project, parentDisposable, editor, it.file)
-                      editorHighlighterUpdater.updateHighlighters()
-                    }
-                  }
+                it is VFileContentChangeEvent || it is VFilePropertyChangeEvent -> {
                   nodes
                 }
 

@@ -36,7 +36,7 @@ class ConnectionManager {
   private var fixtureStack = mutableListOf<Locator>()
   private val wantToClose = listOf(
     "Settings Dialog", "Add Connection Dialog", "Error Creating Connection Dialog",
-    "Edit Connection Dialog","Add JES Working Set Dialog"
+    "Edit Connection Dialog", "Add JES Working Set Dialog"
   )
   private val projectName = "untitled"
 

@@ -29,7 +29,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Duration
 
-
 /**
  * Tests creating, editing and deleting working sets and masks from context menu.
  */
@@ -448,12 +447,12 @@ class WorkingSetViaContextMenuTest {
             val newConnectionName = "new $connectionName"
             responseDispatcher.injectEndpoint(
                 "${testInfo.displayName}_info",
-                { it?.requestLine?.contains("zosmf/info") ?: false},
+                { it?.requestLine?.contains("zosmf/info") ?: false },
                 { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
             )
             responseDispatcher.injectEndpoint(
                 "${testInfo.displayName}_resttopology",
-                { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false},
+                { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
                 { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
             )
             createConnection(
