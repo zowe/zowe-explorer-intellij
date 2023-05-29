@@ -25,7 +25,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 
 /**
- * Tests viewing dataset and uss file properties.
+ * Tests allocating uss file and directory with valid and invalid parameters.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -58,8 +58,7 @@ class CreateUssFileAndDirTest {
             "\"group\":\"OMVSGRP\", \"mtime\":\"2015-09-15T02:38:29\"},"
 
     /**
-     * Opens the project and Explorer, clears test environment, creates working set with dataset and uss masks,
-     * allocates dataset and pds with member, creates uss file and directory.
+     * Opens the project and Explorer, clears test environment, creates uss mask.
      */
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -126,7 +125,7 @@ class CreateUssFileAndDirTest {
     }
 
     /**
-     * Test to check if member properties in opened dialog and expected values are matching
+     * Test to create uss file with valid parameters
      */
     @Test
     @Order(1)
@@ -153,7 +152,7 @@ class CreateUssFileAndDirTest {
     }
 
     /**
-     * Test to check if dataset properties in opened dialog and expected values are matching
+     * Test to create uss file with too long name
      */
     @Test
     @Order(2)
@@ -183,7 +182,7 @@ class CreateUssFileAndDirTest {
     }
 
     /**
-     * Test to check if pds properties in opened dialog and expected values are matching
+     * Test to create uss file with invalid name
      */
     @Test
     @Order(3)
@@ -213,7 +212,7 @@ class CreateUssFileAndDirTest {
     }
 
     /**
-     * Test to check if uss file properties in opened dialog and expected values are matching
+     * Test to create uss file when file with the same name already exists
      */
     @Test
     @Order(4)
@@ -247,6 +246,9 @@ class CreateUssFileAndDirTest {
         }
     }
 
+    /**
+     * Test to create uss directory with valid parameters
+     */
     @Test
     @Order(5)
     fun testCreateUssDir(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -272,7 +274,7 @@ class CreateUssFileAndDirTest {
     }
 
     /**
-     * Test to check if uss directory properties in opened dialog and expected values are matching
+     * Test to create uss file when directory with the same name already exists
      */
     @Test
     @Order(6)
@@ -306,6 +308,9 @@ class CreateUssFileAndDirTest {
         }
     }
 
+    /**
+     * Test to create uss directory with too long name
+     */
     @Test
     @Order(7)
     fun testCreateUssDirWithLongName(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -333,6 +338,9 @@ class CreateUssFileAndDirTest {
         }
     }
 
+    /**
+     * Test to create uss directory with invalid name
+     */
     @Test
     @Order(8)
     fun testCreateUssDirWithReservedSymbol(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -360,6 +368,9 @@ class CreateUssFileAndDirTest {
         }
     }
 
+    /**
+     * Test to create uss directory when file with the same name already exists
+     */
     @Test
     @Order(9)
     fun testCreateUssDirWithExistingFileName(remoteRobot: RemoteRobot) = with(remoteRobot) {
@@ -392,6 +403,9 @@ class CreateUssFileAndDirTest {
         }
     }
 
+    /**
+     * Test to create uss directory when directory with the same name already exists
+     */
     @Test
     @Order(10)
     fun testCreateUssDirWithExistingDirName(remoteRobot: RemoteRobot) = with(remoteRobot) {
