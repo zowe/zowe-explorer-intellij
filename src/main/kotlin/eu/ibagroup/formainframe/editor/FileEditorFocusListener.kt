@@ -19,10 +19,13 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListener
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
+import eu.ibagroup.formainframe.utils.isComponentUnderMouse
 import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import java.awt.event.FocusEvent
+import javax.swing.SwingUtilities
 
 /**
  * File editor focus listener.
@@ -35,21 +38,30 @@ class FileEditorFocusListener: FocusChangeListener {
    * If the file has been changed, then an auto sync event is fired.
    * @param editor the editor in which the file is open.
    */
-  override fun focusLost(editor: Editor) {
-    val configService = service<ConfigService>()
-    if (configService.isAutoSyncEnabled) {
-      val project = editor.project
-      project?.let {
-        val file = (editor as? EditorEx)?.virtualFile
-        if (file is MFVirtualFile && file.isWritable) {
-          val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(project))
-          val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
-          val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
-          val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
-          val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-          if (!(currentContent contentEquals previousContent) && needToUpload) {
-            runWriteActionInEdtAndWait { syncProvider.saveDocument() }
-            sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, DataOpsManager.instance.componentManager).sync(file)
+  override fun focusLost(editor: Editor, event: FocusEvent) {
+    val mouseClickInEditor = editor.component.isComponentUnderMouse()
+    if (!mouseClickInEditor) {
+      event.oppositeComponent?.let { focusedComponent ->
+        val point = focusedComponent.locationOnScreen
+        SwingUtilities.convertPointFromScreen(point, editor.component)
+        if (editor.component.contains(point)) {
+          return
+        }
+      }
+      if (ConfigService.instance.isAutoSyncEnabled) {
+        val project = editor.project
+        project?.let {
+          val file = (editor as? EditorEx)?.virtualFile
+          if (file is MFVirtualFile && file.isWritable) {
+            val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(project))
+            val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
+            val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+            val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
+            val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
+            if (!(currentContent contentEquals previousContent) && needToUpload) {
+              runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+              sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, DataOpsManager.instance.componentManager).sync(file)
+            }
           }
         }
       }

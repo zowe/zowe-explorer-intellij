@@ -39,18 +39,18 @@ abstract class MFContentAdapterBase<Attributes : FileAttributes>(
 
   /**
    * Prepares content for uploading to the mainframe using virtual file attributes.
-   * @param content content bytes to adapt.
+   * @param content content to adapt.
    * @param attributes attributes of the file whose content will be adapted.
-   * @return adapted content bytes.
+   * @return adapted bytes.
    */
-  abstract fun adaptContentToMainframe(content: ByteArray, attributes: Attributes): ByteArray
+  abstract fun <T>adaptContentToMainframe(content: T, attributes: Attributes): T
 
   /**
    * Prepares content for uploading to the mainframe using virtual file instance.
    * @see MFContentAdapter.prepareContentToMainframe
    */
   @Suppress("UNCHECKED_CAST")
-  override fun prepareContentToMainframe(content: ByteArray, file: VirtualFile): ByteArray {
+  override fun <T>prepareContentToMainframe(content: T, file: VirtualFile): T {
     val attributes = dataOpsManager.tryToGetAttributes(file) ?: return content
     return if (attributes.`is`(attributesClass)) adaptContentToMainframe(content, attributes as Attributes) else content
   }

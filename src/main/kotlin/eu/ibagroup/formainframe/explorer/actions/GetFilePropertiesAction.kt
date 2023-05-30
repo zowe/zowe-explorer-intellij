@@ -19,7 +19,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
@@ -78,27 +77,15 @@ class GetFilePropertiesAction : AnAction() {
                   }
                 }
               }
-              val newAttributes = dialog.state.ussAttributes
-              if (!virtualFile.isDirectory && oldCharset != newAttributes.charset) {
-                val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(virtualFile)
-                val syncProvider = DocumentedSyncProvider(virtualFile)
-                val contentEncodingMode = if (contentSynchronizer?.isFileSyncPossible(syncProvider) == false) {
-                  showReloadCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
-                } else {
-                  showReloadConvertCancelDialog(virtualFile.name, newAttributes.charset.name(), e.project)
-                }
-                if (contentEncodingMode == null) {
+              val charset = attributes.charset
+              if (!virtualFile.isDirectory && oldCharset != charset) {
+                val changed = changeFileEncodingAction(virtualFile, attributes, charset)
+                if (!changed) {
                   attributes.charset = oldCharset
-                } else {
-                  updateFileTag(newAttributes)
-                  if (contentEncodingMode == ContentEncodingMode.CONVERT) {
-                    saveIn(e.project, virtualFile, newAttributes.charset)
-                  }
-                  if (contentEncodingMode == ContentEncodingMode.RELOAD) {
-                    reloadIn(e.project, virtualFile, newAttributes.charset)
-                  }
                 }
               }
+            } else {
+              attributes.charset = oldCharset
             }
           }
 

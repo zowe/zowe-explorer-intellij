@@ -375,6 +375,12 @@ Example of how to see the output:<br/>
         <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="eu.ibagroup.formainframe.editor.status.MfEncodingPanelWidgetFactory"
                                 order="after eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory, before powerStatus"/>
+
+        <!-- TODO: define attribute language="" in v1.*.*-223 and greater -->
+        <localInspection shortName="MFLossyEncoding" displayName="MF lossy encoding"
+                         groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="eu.ibagroup.formainframe.editor.inspection.MFLossyEncodingInspection"/>
     </extensions>
 
     <actions>
