@@ -14,11 +14,15 @@ import com.google.gson.Gson
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
 import eu.ibagroup.formainframe.config.ConfigDeclaration
+import java.awt.Component
+import java.awt.MouseInfo
+import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
+import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 import kotlin.streams.toList // TODO: remove in v1.*.*-223 and greater
@@ -260,4 +264,16 @@ fun debounce(delayInterval: Long, block: () -> Unit): () -> Unit {
       }
     }
   }
+}
+
+// TODO: remove in v1.*.*-223 and greater
+fun Component.isComponentUnderMouse(): Boolean {
+  if (mousePosition != null) {
+    return true
+  }
+  val pointerInfo = MouseInfo.getPointerInfo() ?: return false
+  val location = pointerInfo.location
+  SwingUtilities.convertPointFromScreen(location, this)
+  val bounds = Rectangle(0, 0, width, height)
+  return bounds.contains(location)
 }
