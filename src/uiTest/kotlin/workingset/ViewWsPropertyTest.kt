@@ -150,9 +150,9 @@ class ViewWsPropertyTest {
         allocateDataSet(wsName, dsName, projectName, fixtureStack, remoteRobot)
         mapListDatasetMembers[memberName] = memList
         allocateMemberForPDS(pdsName, memberName, projectName, fixtureStack, remoteRobot)
-        createUssFile(ussMaskName, ussFileName,"File", projectName, fixtureStack, remoteRobot)
+        createUssFile(ussMaskName, ussFileName, UssFileType.File, projectName, fixtureStack, remoteRobot)
         mapListUssFiles[ussFileName] = fileList
-        createUssFile(ussMaskName, ussDirName,"Directory", projectName, fixtureStack, remoteRobot)
+        createUssFile(ussMaskName, ussDirName, UssFileType.Directory, projectName, fixtureStack, remoteRobot)
         mapListUssFiles[ussDirName] = dirList
         ideFrameImpl(projectName, fixtureStack) {
             explorer {
