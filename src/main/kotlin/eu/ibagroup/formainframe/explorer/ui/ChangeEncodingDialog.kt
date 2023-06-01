@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.DialogWrapper
@@ -87,6 +88,10 @@ class ChangeEncodingDialog(
     val actions = mutableListOf<Action>()
     val reloadAction = object : DialogWrapperAction(IdeBundle.message("button.reload")) {
       override fun doAction(e: ActionEvent?) {
+        if (safeToReload == Magic8.NO_WAY && !showReloadAnywayDialog()) {
+          doCancelAction()
+          return
+        }
         if (contentSynchronizer?.isFileUploadNeeded(syncProvider) == true) {
           runWriteActionInEdtAndWait {
             syncProvider.saveDocument()
@@ -106,6 +111,10 @@ class ChangeEncodingDialog(
     reloadAction.putValue(Action.MNEMONIC_KEY, 'R'.code)
     val convertAction = object : DialogWrapperAction(IdeBundle.message("button.convert")) {
       override fun doAction(e: ActionEvent?) {
+        if (safeToConvert == Magic8.NO_WAY && !showConvertAnywayDialog()) {
+          doCancelAction()
+          return
+        }
         attributes.charset = charset
         updateFileTag(attributes)
         saveIn(null, virtualFile, charset)
@@ -123,5 +132,45 @@ class ChangeEncodingDialog(
     actions.add(cancelAction)
     cancelAction.putValue(DEFAULT_ACTION, true)
     return actions.toTypedArray()
+  }
+
+  /**
+   * Show dialog on reload that warns the user if the content and the selected encoding are incompatible.
+   * @return true if reload anyway or false otherwise.
+   */
+  private fun showReloadAnywayDialog(): Boolean {
+    val result = Messages.showDialog(
+      XmlStringUtil.wrapInHtml(
+        IdeBundle.message(
+          "dialog.title.file.0.can.t.be.reloaded",
+          virtualFile.name,
+          charset.displayName(),
+          "<br><br>Current encoding: '" + virtualFile.charset.displayName() + "'."
+        )
+      ),
+      IdeBundle.message("incompatible.encoding.dialog.title", charset.displayName()),
+      arrayOf(IdeBundle.message("button.reload.anyway"), CommonBundle.getCancelButtonText()),
+      1,
+      AllIcons.General.WarningDialog
+    )
+    return result == 0
+  }
+
+  /**
+   * Show dialog on convert that warns the user if the content and the selected encoding are incompatible.
+   * @return true if convert anyway or false otherwise.
+   */
+  private fun showConvertAnywayDialog(): Boolean {
+    val result = Messages.showDialog(
+      XmlStringUtil.wrapInHtml(
+        IdeBundle.message("encoding.do.not.convert.message", charset.displayName()) + "<br><br>" +
+        IdeBundle.message("encoding.unsupported.characters.message", charset.displayName())
+      ),
+      IdeBundle.message("incompatible.encoding.dialog.title", charset.displayName()),
+      arrayOf(IdeBundle.message("button.convert.anyway"), CommonBundle.getCancelButtonText()),
+      1,
+      AllIcons.General.WarningDialog
+    )
+    return result == 0
   }
 }

@@ -14,10 +14,6 @@ import com.intellij.codeInspection.*
 import com.intellij.ide.DataManager
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.properties.charset.Native2AsciiCharset
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.Project
@@ -25,7 +21,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
@@ -34,7 +29,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.utils.createCharsetsActionGroup
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import java.awt.Component
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.Charset
@@ -198,28 +192,12 @@ class MFLossyEncodingInspection : LocalInspectionTool() {
       endElement: PsiElement
     ) {
       val virtualFile = file.virtualFile
-      val dataContext = createDataContext(editor, editor?.component, virtualFile, project)
+      val dataContext = DataManager.getInstance().getDataContext(editor?.component)
       val group = createCharsetsActionGroup(virtualFile, attributes)
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(
         "", group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false
       )
       popup.showInBestPositionFor(dataContext)
-    }
-
-    companion object {
-      fun createDataContext(
-        editor: Editor?,
-        component: Component?,
-        selectedFile: VirtualFile?,
-        project: Project
-      ): DataContext {
-        return SimpleDataContext.builder()
-          .setParent(DataManager.getInstance().getDataContext(component))
-          .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor?.component)
-          .add(CommonDataKeys.PROJECT, project)
-          .add(CommonDataKeys.VIRTUAL_FILE, selectedFile)
-          .build()
-      }
     }
   }
 }
