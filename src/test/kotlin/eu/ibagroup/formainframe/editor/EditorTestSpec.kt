@@ -45,9 +45,7 @@ import eu.ibagroup.formainframe.editor.inspection.MFLossyEncodingInspection
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.utils.isComponentUnderMouse
-import eu.ibagroup.formainframe.utils.sendTopic
-import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
@@ -122,6 +120,13 @@ class EditorTestSpec : ShouldSpec({
     mockkConstructor(DocumentedSyncProvider::class)
     every { anyConstructed<DocumentedSyncProvider>().saveDocument() } returns Unit
 
+    mockkStatic(::checkEncodingCompatibility)
+
+    mockkStatic(::showSaveAnywayDialog)
+
+    val charsetMock = mockk<Charset>()
+    every { virtualFileMock.charset } returns charsetMock
+
     var isSynced = false
     val sendTopicRef: (Topic<AutoSyncFileListener>, ComponentManager) -> AutoSyncFileListener = ::sendTopic
     mockkStatic(sendTopicRef as KFunction<*>)
@@ -153,6 +158,8 @@ class EditorTestSpec : ShouldSpec({
       currentBytes = byteArrayOf(116, 101, 120, 116)
       every { anyConstructed<DocumentedSyncProvider>().retrieveCurrentContent() } answers { currentBytes }
 
+      every { checkEncodingCompatibility(virtualFileMock, projectMock) } returns true
+
       isSynced = false
     }
 
@@ -164,6 +171,26 @@ class EditorTestSpec : ShouldSpec({
 
       assertSoftly { isSynced shouldBe true }
 
+    }
+    should("perform auto file sync when focus is lost and encoding is incompatible but user saves anyway") {
+      currentBytes = byteArrayOf(116, 101, 120, 116, 33)
+
+      every { checkEncodingCompatibility(virtualFileMock, projectMock) } returns false
+      every { showSaveAnywayDialog(charsetMock) } returns true
+
+      fileEditorFocusListener.focusLost(editorMock, focusEventMock)
+
+      assertSoftly { isSynced shouldBe true }
+    }
+    should("not perform auto file sync when focus is lost and encoding is incompatible") {
+      currentBytes = byteArrayOf(116, 101, 120, 116, 33)
+
+      every { checkEncodingCompatibility(virtualFileMock, projectMock) } returns false
+      every { showSaveAnywayDialog(charsetMock) } returns false
+
+      fileEditorFocusListener.focusLost(editorMock, focusEventMock)
+
+      assertSoftly { isSynced shouldBe false }
     }
     should("not perform auto file sync when focus it lost as it is already synced") {
       fileEditorFocusListener.focusLost(editorMock, focusEventMock)

@@ -10,6 +10,9 @@
 
 package eu.ibagroup.formainframe.utils
 
+import com.intellij.CommonBundle
+import com.intellij.codeInspection.InspectionEngine
+import com.intellij.codeInspection.InspectionManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -18,11 +21,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingUtil.Magic8
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiManager
+import com.intellij.xml.util.XmlStringUtil
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
@@ -210,3 +217,44 @@ fun createCharsetsActionGroup(virtualFile: VirtualFile, attributes: RemoteUssAtt
 
   return group
 }
+
+/**
+ * Checks the compatibility of the content and the current encoding before saving the file.
+ * @return true if compatible or false otherwise.
+ */
+fun checkEncodingCompatibility(file: VirtualFile, project: Project): Boolean {
+  var compatible = true
+  val psiFile = PsiManager.getInstance(project).findFile(file)
+  psiFile?.let {
+    val inspectionProfile = InspectionProjectProfileManager.getInstance(project).currentProfile
+    val inspectionTool = inspectionProfile.getInspectionTool("MFLossyEncoding", project)
+    inspectionTool?.let { tool ->
+      val inspectionManager = InspectionManager.getInstance(project)
+      val descriptors =
+        InspectionEngine.runInspectionOnFile(it, tool, inspectionManager.createNewGlobalContext())
+      if (descriptors.isNotEmpty()) {
+        compatible = false
+      }
+    }
+  }
+  return compatible
+}
+
+/**
+ * Show dialog on save that warns the user if the content and the selected encoding are incompatible.
+ * @return true if saves anyway or false otherwise.
+ */
+fun showSaveAnywayDialog(charset: Charset): Boolean {
+  val result = Messages.showDialog(
+    XmlStringUtil.wrapInHtml(
+      IdeBundle.message("encoding.unsupported.characters.message", charset.displayName()) +
+      "<br><br>Content may change after saving."
+    ),
+    IdeBundle.message("incompatible.encoding.dialog.title", charset.displayName()),
+    arrayOf("Save Anyway", CommonBundle.getCancelButtonText()),
+    1,
+    AllIcons.General.WarningDialog
+  )
+  return result == 0
+}
+

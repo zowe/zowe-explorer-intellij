@@ -19,10 +19,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListener
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
-import eu.ibagroup.formainframe.utils.isComponentUnderMouse
-import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.sendTopic
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.event.FocusEvent
 import javax.swing.SwingUtilities
@@ -59,6 +56,10 @@ class FileEditorFocusListener: FocusChangeListener {
             val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
             val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
             if (!(currentContent contentEquals previousContent) && needToUpload) {
+              val incompatibleEncoding = !checkEncodingCompatibility(file, project)
+              if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
+                return
+              }
               runWriteActionInEdtAndWait { syncProvider.saveDocument() }
               sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, DataOpsManager.instance.componentManager).sync(file)
             }

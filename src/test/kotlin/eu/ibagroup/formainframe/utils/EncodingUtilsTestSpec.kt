@@ -10,13 +10,24 @@
 
 package eu.ibagroup.formainframe.utils
 
+import com.intellij.codeInspection.GlobalInspectionContext
+import com.intellij.codeInspection.InspectionEngine
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingUtil.Magic8
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
@@ -39,6 +50,8 @@ import java.nio.charset.Charset
 import java.nio.charset.CharsetDecoder
 import java.nio.charset.CharsetEncoder
 import java.nio.charset.UnsupportedCharsetException
+import javax.swing.Icon
+import kotlin.reflect.full.declaredFunctions
 
 class EncodingUtilsTestSpec: ShouldSpec({
   beforeSpec {
@@ -71,8 +84,10 @@ class EncodingUtilsTestSpec: ShouldSpec({
     val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
     every { contentSynchronizerMock.successfulContentStorage(any()) } returns bytes
 
+    val charsetName = "charsetName"
     val charsetMock = mockk<Charset>()
-    every { charsetMock.name() } returns "charsetName"
+    every { charsetMock.name() } returns charsetName
+    every { charsetMock.displayName() } returns charsetName
 
     val virtualFileMock = mockk<VirtualFile>()
     every { virtualFileMock.name } returns "fileName"
@@ -119,6 +134,29 @@ class EncodingUtilsTestSpec: ShouldSpec({
     mockkConstructor(ChangeEncodingDialog::class)
     every { anyConstructed<ChangeEncodingDialog>().show() } returns Unit
 
+    val projectMock = mockk<Project>()
+    val psiFileMock = mockk<PsiFile>()
+    every { PsiManager.getInstance(projectMock).findFile(virtualFileMock) } returns psiFileMock
+
+    val inspectionProfileMock = mockk<InspectionProfileImpl>()
+    every { InspectionProjectProfileManager.getInstance(projectMock).currentProfile } returns inspectionProfileMock
+
+    val inspectionToolMock = mockk<InspectionToolWrapper<*, *>>()
+    every { inspectionProfileMock.getInspectionTool(any(), projectMock) } returns inspectionToolMock
+
+    val inspectionManagerMock = mockk<InspectionManager>()
+    mockkStatic(InspectionManager::getInstance)
+    every { InspectionManager.getInstance(projectMock) } returns inspectionManagerMock
+
+    val globalInspectionContextMock = mockk<GlobalInspectionContext>()
+    every { inspectionManagerMock.createNewGlobalContext() } returns globalInspectionContextMock
+
+    mockkStatic(InspectionEngine::runInspectionOnFile)
+
+    val showDialogRef = Messages::class.declaredFunctions
+      .first { it.name == "showDialog" && it.parameters.size == 5 }
+    mockkStatic(showDialogRef)
+
     beforeEach {
       dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
@@ -132,6 +170,10 @@ class EncodingUtilsTestSpec: ShouldSpec({
       every { encoderMock.encode(any()) } returns bytesByf
 
       isEncodingSet = false
+
+      every {
+        InspectionEngine.runInspectionOnFile(psiFileMock, inspectionToolMock, globalInspectionContextMock)
+      } returns emptyList()
     }
 
     // saveIn
@@ -307,6 +349,40 @@ class EncodingUtilsTestSpec: ShouldSpec({
       val actual = createCharsetsActionGroup(virtualFileMock, attributesMock)
 
       assertSoftly { actual.childrenCount shouldBe 6 }
+    }
+    // checkEncodingCompatibility
+    should("check encoding compatibility on save if encoding is compatible") {
+      val actual = checkEncodingCompatibility(virtualFileMock, projectMock)
+
+      assertSoftly { actual shouldBe true }
+    }
+    should("check encoding compatibility on save if encoding is incompatible") {
+      every {
+        InspectionEngine.runInspectionOnFile(psiFileMock, inspectionToolMock, globalInspectionContextMock)
+      } returns listOf(mockk<ProblemDescriptor>())
+
+      val actual = checkEncodingCompatibility(virtualFileMock, projectMock)
+
+      assertSoftly { actual shouldBe false }
+    }
+    // showSaveAnywayDialog
+    should("show save anyway dialog when user clicks save anyway") {
+      every {
+        Messages.showDialog(any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any<Icon>())
+      } returns 0
+
+      val actual = showSaveAnywayDialog(charsetMock)
+
+      assertSoftly { actual shouldBe true }
+    }
+    should("show save anyway dialog when user clicks cancel") {
+      every {
+        Messages.showDialog(any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any<Icon>())
+      } returns 1
+
+      val actual = showSaveAnywayDialog(charsetMock)
+
+      assertSoftly { actual shouldBe false }
     }
 
     unmockkAll()
