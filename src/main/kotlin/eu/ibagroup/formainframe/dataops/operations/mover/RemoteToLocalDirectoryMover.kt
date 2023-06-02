@@ -112,14 +112,15 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     try {
       if (fetchRemoteChildren(sourceFile, connectionConfig, progressIndicator)) {
         var createdDir: VirtualFile? = null
+        val newName = operation.newName ?: sourceFile.name
         runWriteActionInEdtAndWait {
           if (operation.forceOverwriting) {
-            destFile.children.filter { it.name == sourceFile.name && it.isDirectory }.forEach { it.delete(this) }
+            destFile.children.filter { it.name == newName && it.isDirectory }.forEach { it.delete(this) }
           }
-          createdDir = destFile.createChildDirectory(this, sourceFile.name)
+          createdDir = destFile.createChildDirectory(this, newName)
         }
         val createdDirNotNull =
-          createdDir ?: return IllegalArgumentException("Cannot create directory ${sourceFile.name}")
+          createdDir ?: return IllegalArgumentException("Cannot create directory ${newName}")
         sourceFile.children?.forEach {
           runCatching {
             dataOpsManager.performOperation(
