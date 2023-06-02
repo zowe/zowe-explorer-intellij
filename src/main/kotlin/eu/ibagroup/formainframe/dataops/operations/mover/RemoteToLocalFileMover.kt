@@ -64,7 +64,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
   ): Throwable? {
     val sourceFile = operation.source
     val destFile = operation.destination
-    val newFileName = operation.newName
+    val newFileName = operation.newName ?: sourceFile.name
     val sourceFileAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
       ?: return IllegalArgumentException("Cannot find attributes for file ${sourceFile.name}")
 

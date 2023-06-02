@@ -99,7 +99,7 @@ class FileExplorerView(
   private var myDropTarget: DnDTarget?
   private var isDropTargetRegistered = false
 
-  internal val isCut = AtomicBoolean(true)
+  internal val isCut = AtomicBoolean(false)
 
   private val cutCopyPredicate: (NodeData<*>) -> Boolean = {
     it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isConfigUssPath)
