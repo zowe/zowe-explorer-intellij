@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
@@ -24,6 +25,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.CONFIGS_CHANGED
@@ -33,6 +35,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.editor.ChangeContentService
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
@@ -196,12 +199,34 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
     if (t is ProcessCanceledException) {
       return
     }
+    lateinit var title: String
+    lateinit var details: String
+
+    if (t is CallException) {
+      title = (t.errorParams?.getOrDefault("message", t.headMessage) as String).replaceFirstChar { it.uppercase() }
+      if (title.contains(".")) {
+        title = title.split(".")[0]
+      }
+      details = t.errorParams["details"]?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
+    } else {
+      title = t.message ?: t.toString()
+      details = "Unknown error"
+    }
+
     Notification(
       EXPLORER_NOTIFICATION_GROUP_ID,
-      "Error in plugin For Mainframe",
-      t.message ?: t.toString(),
+      title,
+      details,
       NotificationType.ERROR
-    ).let {
+    ).addAction(object : NotificationAction("More") {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        Messages.showErrorDialog(
+          project,
+          t.message ?: t.toString(),
+          title
+        )
+      }
+    }).let {
       Notifications.Bus.notify(it)
     }
   }
