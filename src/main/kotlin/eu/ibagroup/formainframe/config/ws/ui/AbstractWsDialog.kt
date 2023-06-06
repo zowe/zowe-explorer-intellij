@@ -100,6 +100,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
               wsConfigClass
             )
           }
+          .focused()
       }
       row {
         label("Specify connection")

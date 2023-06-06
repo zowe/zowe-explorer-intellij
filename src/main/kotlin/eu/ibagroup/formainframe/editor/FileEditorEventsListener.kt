@@ -28,6 +28,8 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
  */
 class FileEditorEventsListener : FileEditorManagerListener {
 
+  private val focusListener = FileEditorFocusListener()
+
   /**
    * Adds the file editor focus listener [FileEditorFocusListener] after the file is opened.
    * @param source the source file editor manager to get the editor in which the file is open.
@@ -35,7 +37,6 @@ class FileEditorEventsListener : FileEditorManagerListener {
    */
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
     val editor = source.selectedTextEditor as? EditorEx
-    val focusListener = FileEditorFocusListener()
     editor?.addFocusListener(focusListener)
     super.fileOpened(source, file)
   }

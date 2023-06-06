@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.editor.DocumentChangeListener
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.nio.charset.Charset
@@ -99,6 +100,7 @@ class DocumentedSyncProvider(
           it.write(content)
         }
         loadNewContent(content)
+        getDocument()?.addDocumentListener(DocumentChangeListener())
       }.onFailure {
         isInitialContentSet.set(false)
       }
