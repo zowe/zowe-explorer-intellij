@@ -15,7 +15,7 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
-import eu.ibagroup.formainframe.utils.service // TODO: remove in 1.0.2-223 and greater
+import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
 import eu.ibagroup.r2z.ExecData
 import eu.ibagroup.r2z.JESApi
 import eu.ibagroup.r2z.Job
