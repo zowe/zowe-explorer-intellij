@@ -223,11 +223,16 @@ class AllocateLikeAction : AnAction() {
       allocationParameters.volumeSerial = datasetInfo.volumeSerial
       allocationParameters.deviceType = datasetInfo.deviceType
       allocationParameters.dsnType = datasetInfo.dsnameType
-      allocationParameters.primaryAllocation = datasetInfo.sizeInTracks ?: 100
-      allocationParameters.secondaryAllocation = (datasetInfo.sizeInTracks ?: 100) / 2
+      allocationParameters.primaryAllocation =
+        if (datasetInfo.spaceUnits == SpaceUnits.CYLINDERS) {
+          (datasetInfo.sizeInTracks ?: 15) / 15
+        } else {
+          datasetInfo.sizeInTracks ?: 100
+        }
+      allocationParameters.secondaryAllocation = allocationParameters.primaryAllocation / 2
       allocationParameters.directoryBlocks =
         if (datasetInfo.datasetOrganization == DatasetOrganization.PO || datasetInfo.datasetOrganization == DatasetOrganization.POE) {
-          (datasetInfo.sizeInTracks ?: 100) / 3
+          allocationParameters.primaryAllocation / 3
         } else {
           0
         }
