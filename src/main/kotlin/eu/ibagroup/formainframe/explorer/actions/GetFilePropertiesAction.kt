@@ -67,13 +67,10 @@ class GetFilePropertiesAction : AnAction() {
                         ),
                         progressIndicator = it
                       )
-                    }
-                      .onSuccess {
-                        node.parent?.cleanCacheIfPossible(cleanBatchedQuery = false)
-                      }
-                      .onFailure { t ->
+                    }.onFailure { t ->
                         view.explorer.reportThrowable(t, e.project)
-                      }
+                    }
+                    node.parent?.cleanCacheIfPossible(cleanBatchedQuery = false)
                   }
                 }
               }
