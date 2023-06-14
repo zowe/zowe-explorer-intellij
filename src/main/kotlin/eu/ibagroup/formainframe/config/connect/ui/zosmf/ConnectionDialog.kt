@@ -27,8 +27,6 @@ import eu.ibagroup.formainframe.config.connect.*
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialog
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialogState
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.operations.InfoOperation
-import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
 import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.runTask
@@ -98,6 +96,7 @@ class ConnectionDialog(
               runCatching {
                 service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
               }.onSuccess {
+                state.owner = whoAmI(newTestedConnConfig) ?: ""
                 val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
                 state.zVersion = when (systemInfo.zosVersion) {
                   "04.25.00" -> ZVersion.ZOS_2_2
@@ -334,14 +333,14 @@ class ConnectionDialog(
     if (state.mode == DialogMode.UPDATE) {
       state.connectionName = lastSuccessfulState.connectionName
       state.connectionUrl = lastSuccessfulState.connectionUrl
-      state.username = username(lastSuccessfulState.connectionConfig)
-      state.password = password(lastSuccessfulState.connectionConfig)
+      state.username = getUsername(lastSuccessfulState.connectionConfig)
+      state.password = getPassword(lastSuccessfulState.connectionConfig)
       state.isAllowSsl = lastSuccessfulState.isAllowSsl
       state.zVersion = lastSuccessfulState.zVersion
       CredentialService.instance.setCredentials(
         connectionConfigUuid = lastSuccessfulState.connectionUuid,
-        username = username(lastSuccessfulState.connectionConfig),
-        password = password(lastSuccessfulState.connectionConfig)
+        username = getUsername(lastSuccessfulState.connectionConfig),
+        password = getPassword(lastSuccessfulState.connectionConfig)
       )
     }
   }

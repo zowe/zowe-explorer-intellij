@@ -91,6 +91,9 @@ interface ConfigService : PersistentStateComponent<ConfigStateV2> {
 
   /** Inserts all configs from old state in a new one if they were not migrated before. */
   fun migrateOldConfigState(state: ConfigState)
+
+  /** Update the contents of the old config if the config structure has not been changed. */
+  fun updateOldConfigs()
 }
 
 val configCrudable: Crudable

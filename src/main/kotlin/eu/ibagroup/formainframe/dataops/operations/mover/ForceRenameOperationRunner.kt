@@ -22,7 +22,7 @@ import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
+import eu.ibagroup.formainframe.vfs.sendMFVfsChangesTopic
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 
@@ -86,7 +86,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
               ), progressIndicator
             )
           }
-          sendVfsChangesTopic()
+          sendMFVfsChangesTopic()
         } else {
           children?.forEach {
             if (it.isDirectory && it.name == operation.newName) {
@@ -114,7 +114,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
                       operation.explorer
                     ), progressIndicator
                   )
-                  sendVfsChangesTopic()
+                  sendMFVfsChangesTopic()
                 }
               } else {
                 throw RuntimeException(
