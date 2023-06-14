@@ -69,13 +69,14 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     var throwable: Throwable? = null
     val sourceFile = operation.source
     val destFile = operation.destination
+    val newName = operation.newName ?: sourceFile.name
     val destAttributes = operation.destinationAttributes.castOrNull<RemoteUssAttributes>()
       ?: return IllegalStateException("No attributes found for destination directory \'${destFile.name}\'.")
 
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
       ?: return Throwable("No connection for destination directory found.")
 
-    val pathToFile = destAttributes.path + "/" + sourceFile.name
+    val pathToFile = destAttributes.path + "/" + newName
 
     val contentToUpload = sourceFile.contentsToByteArray().toMutableList()
     val xIBMDataType =
@@ -92,9 +93,9 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     }.execute()
 
     if (!response.isSuccessful) {
-      throwable = CallException(response, "Cannot upload data to ${destAttributes.path}${sourceFile.name}")
+      throwable = CallException(response, "Cannot upload data to ${destAttributes.path}${newName}")
     } else {
-      destFile.children.firstOrNull { it.name == sourceFile.name }?.let { file ->
+      destFile.children.firstOrNull { it.name == newName }?.let { file ->
         runWriteActionInEdtAndWait {
           val syncProvider = DocumentedSyncProvider(file, { _, _, _ -> false }, { th -> throwable = th })
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)

@@ -35,18 +35,18 @@ import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
-import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
-import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
-import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
 import eu.ibagroup.formainframe.explorer.actions.GetJobPropertiesAction
 import eu.ibagroup.formainframe.explorer.actions.PurgeJobAction
+import eu.ibagroup.formainframe.explorer.actions.RenameAction
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
 import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
@@ -343,6 +343,8 @@ class ExplorerTestSpec : ShouldSpec({
         }
       }
     }
+
+    unmockkAll()
   }
 
   context("explorer module: ui/ExplorerPasteProvider") {
@@ -352,11 +354,575 @@ class ExplorerTestSpec : ShouldSpec({
     should("perform paste declining conflicts") {}
   }
   context("explorer module: actions/RenameAction") {
+    val renameAction = RenameAction()
+
+    lateinit var crudableMock: Crudable
+
+    val selectedNodesMock = mockk<List<NodeData<ConnectionConfig>>>()
+    val fileExplorerViewMock = mockk<FileExplorerView>()
+    every { fileExplorerViewMock.mySelectedNodesData } returns selectedNodesMock
+
+    lateinit var presentationText: String
+    var isEnabledAndVisible = false
+
+    val anActionEventMock = mockk<AnActionEvent>()
+    every { anActionEventMock.presentation.isEnabledAndVisible = any<Boolean>() } answers {
+      isEnabledAndVisible = firstArg<Boolean>()
+      every { anActionEventMock.presentation.isEnabledAndVisible } returns isEnabledAndVisible
+    }
+    every { anActionEventMock.presentation.text = any<String>() } answers {
+      presentationText = firstArg<String>()
+    }
+    every { anActionEventMock.project } returns mockk()
+
+    val selectedNodeMock = mockk<NodeData<ConnectionConfig>>()
+    every { selectedNodesMock[0] } returns selectedNodeMock
+
+    val virtualFileMock = mockk<MFVirtualFile>()
+    every { virtualFileMock.name } returns "fileName"
+
+    val explorerMock = mockk<Explorer<ConnectionConfig, *>>()
+    every { explorerMock.componentManager } returns ApplicationManager.getApplication()
+    every { explorerMock.reportThrowable(any(), any()) } returns Unit
+
+    val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+
+    var updated = false
+    var renamed = false
+
+    beforeEach {
+      presentationText = ""
+      isEnabledAndVisible = false
+
+      every { anActionEventMock.getExplorerView<FileExplorerView>() } returns fileExplorerViewMock
+
+      every { selectedNodesMock.size } returns 1
+
+      every { selectedNodeMock.node } returns mockk()
+      every { selectedNodeMock.file } returns virtualFileMock
+      every { selectedNodeMock.attributes } returns mockk()
+
+      renamed = false
+      dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+          return mockk()
+        }
+
+        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+          renamed = true
+          @Suppress("UNCHECKED_CAST")
+          return Unit as R
+        }
+      }
+
+      mockkObject(RenameDialog)
+      every { RenameDialog["initialize"](any<() -> Unit>()) } returns Unit
+
+      mockkConstructor(RenameDialog::class)
+      every { anyConstructed<RenameDialog>().showAndGet() } returns true
+
+      val configServiceMock = mockk<ConfigService>()
+      mockkObject(ConfigService)
+      every { ConfigService.instance } returns configServiceMock
+
+      crudableMock = mockk<Crudable>()
+      every { configServiceMock.crudable } returns crudableMock
+
+      updated = false
+      every { crudableMock.update(any()) } answers {
+        updated = true
+        mockk()
+      }
+
+      mockkStatic(ExplorerTreeNode<ConnectionConfig, *>::cleanCacheIfPossible)
+    }
+    afterEach {
+      unmockkAll()
+    }
+
     // actionPerformed
-    should("perform rename on dataset") {}
-    should("perform rename on dataset member") {}
-    should("perform rename on USS file") {}
-    should("perform rename on USS directory") {}
+    context("rename dataset mask") {
+      val dsMaskMock = mockk<DSMask>()
+      every { dsMaskMock.mask } returns "ZOSMFAD*"
+
+      val dsMaskNodeMock = mockk<DSMaskNode>()
+      every { dsMaskNodeMock.value } returns dsMaskMock
+
+      val uuid = "uuid"
+      val filesWSMock = mockk<FilesWorkingSet>()
+      every { filesWSMock.uuid } returns uuid
+
+      beforeEach {
+        every { selectedNodeMock.node } returns dsMaskNodeMock
+        every { dsMaskNodeMock.parent?.value } returns filesWSMock
+      }
+
+      should("perform rename on dataset mask") {
+        var filesWSConfig = FilesWorkingSetConfig(
+          "", "", mutableListOf(DSMask("ZOSMFAD*", mutableListOf())), mutableListOf()
+        )
+        every { crudableMock.getByUniqueKey<FilesWorkingSetConfig>(uuid) } returns filesWSConfig
+
+        val state = "ZOSMF*"
+        every { anyConstructed<RenameDialog>().state } returns state
+
+        every { crudableMock.update(any()) } answers {
+          filesWSConfig = firstArg<FilesWorkingSetConfig>()
+          mockk()
+        }
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        val actual = (filesWSConfig.dsMasks as MutableList<DSMask>)[0].mask
+
+        assertSoftly { actual shouldBe state }
+      }
+      should("not perform rename on dataset mask if dialog is closed") {
+        every { anyConstructed<RenameDialog>().showAndGet() } returns false
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { updated shouldBe false }
+      }
+      should("not perform rename on dataset mask if parent node is null") {
+        every { dsMaskNodeMock.parent } returns null
+
+        var throwable: Throwable? = null
+        runCatching {
+          renameAction.actionPerformed(anActionEventMock)
+        }.onFailure {
+          throwable = it
+        }
+
+        val expected =
+          NullPointerException("null cannot be cast to non-null type eu.ibagroup.formainframe.explorer.FilesWorkingSet")
+
+        assertSoftly {
+          throwable shouldBe expected
+          updated shouldBe false
+        }
+      }
+      should("not perform rename on dataset mask if working set is not found") {
+        every { crudableMock.getByUniqueKey<FilesWorkingSetConfig>(uuid) } returns null
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { updated shouldBe false }
+      }
+      should("not perform rename on dataset mask if list of DS masks is empty") {
+        val filesWSConfig = FilesWorkingSetConfig(
+          "", "", mutableListOf(), mutableListOf()
+        )
+        every { crudableMock.getByUniqueKey<FilesWorkingSetConfig>(uuid) } returns filesWSConfig
+
+        var throwable: Throwable? = null
+        runCatching {
+          renameAction.actionPerformed(anActionEventMock)
+        }.onFailure {
+          throwable = it
+        }
+
+        val expected = IndexOutOfBoundsException("Index 0 out of bounds for length 0")
+
+        assertSoftly {
+          throwable shouldBe expected
+          updated shouldBe false
+        }
+      }
+      should("not perform rename on dataset mask if selected mask is not found in list of DS masks") {
+        val filesWSConfig = FilesWorkingSetConfig(
+          "", "", mutableListOf(DSMask("ZOSMF*", mutableListOf())), mutableListOf()
+        )
+        every { crudableMock.getByUniqueKey<FilesWorkingSetConfig>(uuid) } returns filesWSConfig
+
+        var throwable: Throwable? = null
+        runCatching {
+          renameAction.actionPerformed(anActionEventMock)
+        }.onFailure {
+          throwable = it
+        }
+
+        val expected = IndexOutOfBoundsException("Index 0 out of bounds for length 0")
+
+        assertSoftly {
+          throwable shouldBe expected
+          updated shouldBe false
+        }
+      }
+    }
+    context("rename dataset") {
+      val libraryNodeMock = mockk<LibraryNode>()
+      every { libraryNodeMock.explorer } returns explorerMock
+
+      val attributes = mockk<RemoteDatasetAttributes>()
+      every { attributes.datasetInfo.name } returns "dataset"
+
+      beforeEach {
+        every { selectedNodeMock.node } returns libraryNodeMock
+        every { selectedNodeMock.attributes } returns attributes
+
+        every { libraryNodeMock.virtualFile } returns virtualFileMock
+        every { libraryNodeMock.parent?.cleanCacheIfPossible(any()) } returns Unit
+      }
+
+      should("perform rename on dataset") {
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe true }
+      }
+      should("not perform rename on dataset if dialog is closed") {
+        every { anyConstructed<RenameDialog>().showAndGet() } returns false
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe false }
+      }
+      should("not perform rename on dataset if virtual file is null") {
+        every { (libraryNodeMock as ExplorerTreeNode<ConnectionConfig, *>).virtualFile } returns null
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe false }
+      }
+    }
+    context("rename dataset member") {
+      val fileLikeDSNodeMock = mockk<FileLikeDatasetNode>()
+      every { fileLikeDSNodeMock.explorer } returns explorerMock
+      every { fileLikeDSNodeMock.virtualFile } returns virtualFileMock
+
+      val attributes = mockk<RemoteMemberAttributes>()
+      every { attributes.info.name } returns "member"
+
+      beforeEach {
+        every { selectedNodeMock.node } returns fileLikeDSNodeMock
+        every { selectedNodeMock.attributes } returns attributes
+
+        every { fileLikeDSNodeMock.parent?.cleanCacheIfPossible(any()) } returns Unit
+      }
+
+      should("perform rename on dataset member") {
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe true }
+      }
+      should("not perform rename on dataset member if attributes is null") {
+        every { selectedNodeMock.attributes } returns null
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe false }
+      }
+    }
+    context("rename USS file") {
+      val ussFileNodeMock = mockk<UssFileNode>()
+      every { ussFileNodeMock.explorer } returns explorerMock
+
+      val attributes = mockk<RemoteUssAttributes>()
+      every { attributes.name } returns "ussFile"
+      every { attributes.isDirectory } returns false
+
+      beforeEach {
+        every { selectedNodeMock.node } returns ussFileNodeMock
+        every { selectedNodeMock.attributes } returns attributes
+
+        every { ussFileNodeMock.parent?.cleanCacheIfPossible(any()) } returns Unit
+      }
+
+      should("perform rename on USS file") {
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe true }
+      }
+      should("perform rename on USS file but don't clean cache if parent node is null") {
+        every { ussFileNodeMock.parent } returns null
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe true }
+      }
+      should("not perform rename on USS file if dialog is closed") {
+        every { anyConstructed<RenameDialog>().showAndGet() } returns false
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe false }
+      }
+      should("not perform rename on USS file if virtual file is null") {
+        every { selectedNodeMock.file } returns null
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe false }
+      }
+    }
+    context("rename USS directory") {
+      val ussDirNodeMock = mockk<UssDirNode>()
+      every { ussDirNodeMock.explorer } returns explorerMock
+      every { ussDirNodeMock.isConfigUssPath } returns false
+
+      val attributes = mockk<RemoteUssAttributes>()
+      every { attributes.name } returns "ussDir"
+      every { attributes.isDirectory } returns true
+
+      beforeEach {
+        every { selectedNodeMock.node } returns ussDirNodeMock
+        every { selectedNodeMock.attributes } returns attributes
+
+        every { ussDirNodeMock.parent?.cleanCacheIfPossible(any()) } returns Unit
+      }
+
+      should("perform rename on USS directory") {
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe true }
+      }
+      should("not perform rename on USS directory if operation throws an exception") {
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            throw Exception("Exception message")
+          }
+        }
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { renamed shouldBe false }
+      }
+    }
+    context("rename USS mask") {
+      val ussDirNodeMock = mockk<UssDirNode>()
+      every { ussDirNodeMock.explorer } returns explorerMock
+      every { ussDirNodeMock.isConfigUssPath } returns true
+      every { ussDirNodeMock.value.path } returns "/u/ZOSMFAD"
+
+      val uuid = "uuid"
+      val filesWSMock = mockk<FilesWorkingSet>()
+      every { filesWSMock.uuid } returns uuid
+
+      beforeEach {
+        every { selectedNodeMock.node } returns ussDirNodeMock
+
+        every { ussDirNodeMock.parent?.value } returns filesWSMock
+      }
+
+      should("perform rename on USS mask") {
+        var filesWSConfig = FilesWorkingSetConfig(
+          "", "", mutableListOf(), mutableListOf(UssPath("/u/ZOSMFAD"))
+        )
+        every { crudableMock.getByUniqueKey<FilesWorkingSetConfig>(uuid) } returns filesWSConfig
+
+        val state = "/u/ZOSMF"
+        every { anyConstructed<RenameDialog>().state } returns state
+
+        every { crudableMock.update(any()) } answers {
+          filesWSConfig = firstArg<FilesWorkingSetConfig>()
+          mockk()
+        }
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        val actual = (filesWSConfig.ussPaths as MutableList<UssPath>)[0].path
+
+        assertSoftly { actual shouldBe state }
+      }
+      should("not perform rename on USS mask if dialog is closed") {
+        every { anyConstructed<RenameDialog>().showAndGet() } returns false
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { updated shouldBe false }
+      }
+      should("not perform rename on USS mask if parent node is null") {
+        every { ussDirNodeMock.parent } returns null
+
+        var throwable: Throwable? = null
+        runCatching {
+          renameAction.actionPerformed(anActionEventMock)
+        }.onFailure {
+          throwable = it
+        }
+
+        val expected =
+          NullPointerException("null cannot be cast to non-null type eu.ibagroup.formainframe.explorer.FilesWorkingSet")
+
+        assertSoftly {
+          throwable shouldBe expected
+          updated shouldBe false
+        }
+      }
+      should("not perform rename on USS mask if working set is not found") {
+        every { crudableMock.getByUniqueKey<FilesWorkingSetConfig>(uuid) } returns null
+
+        renameAction.actionPerformed(anActionEventMock)
+
+        assertSoftly { updated shouldBe false }
+      }
+      should("not perform rename on USS mask if list of USS masks is empty") {
+        val filesWSConfig = FilesWorkingSetConfig(
+          "", "", mutableListOf(), mutableListOf()
+        )
+        every { crudableMock.getByUniqueKey<FilesWorkingSetConfig>(uuid) } returns filesWSConfig
+
+        var throwable: Throwable? = null
+        runCatching {
+          renameAction.actionPerformed(anActionEventMock)
+        }.onFailure {
+          throwable = it
+        }
+
+        val expected = IndexOutOfBoundsException("Index 0 out of bounds for length 0")
+
+        assertSoftly {
+          throwable shouldBe expected
+          updated shouldBe false
+        }
+      }
+      should("not perform rename on USS mask if selected mask is not found in list of USS masks") {
+        val filesWSConfig = FilesWorkingSetConfig(
+          "", "", mutableListOf(), mutableListOf(UssPath("/u/ZOSMF"))
+        )
+        every { crudableMock.getByUniqueKey<FilesWorkingSetConfig>(uuid) } returns filesWSConfig
+
+        var throwable: Throwable? = null
+        runCatching {
+          renameAction.actionPerformed(anActionEventMock)
+        }.onFailure {
+          throwable = it
+        }
+
+        val expected = IndexOutOfBoundsException("Index 0 out of bounds for length 0")
+
+        assertSoftly {
+          throwable shouldBe expected
+          updated shouldBe false
+        }
+      }
+    }
+    should("not perform rename action if explorer view is null") {
+      every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
+
+      renameAction.actionPerformed(anActionEventMock)
+
+      assertSoftly { updated shouldBe false }
+    }
+    should("not perform rename action if selected node is not a DS mask, dataset, dataset member, USS mask, USS directory or USS file") {
+      renameAction.actionPerformed(anActionEventMock)
+
+      assertSoftly { updated shouldBe false }
+    }
+
+    // update
+    should("rename action is enabled and visible") {
+      renameAction.update(anActionEventMock)
+    }
+    should("rename action is enabled and visible if selected node file is null") {
+      every { selectedNodeMock.file } returns null
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly { isEnabledAndVisible shouldBe true }
+    }
+    should("rename action is enabled and visible if file attributes are not dataset attributes") {
+      dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+          return null
+        }
+      }
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly { isEnabledAndVisible shouldBe true }
+    }
+    should("rename action is enabled and visible if selected node is dataset mask") {
+      every { selectedNodeMock.node } returns mockk<DSMaskNode>()
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly {
+        isEnabledAndVisible shouldBe true
+        presentationText shouldBe "Edit"
+      }
+    }
+    should("rename action is enabled and visible if selected node is USS mask") {
+      val ussDirNodeMock = mockk<UssDirNode>()
+      every { ussDirNodeMock.isConfigUssPath } returns true
+
+      every { selectedNodeMock.node } returns ussDirNodeMock
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly {
+        isEnabledAndVisible shouldBe true
+        presentationText shouldBe "Edit"
+      }
+    }
+    should("rename action is enabled and visible if selected node is USS directory") {
+      val ussDirNodeMock = mockk<UssDirNode>()
+      every { ussDirNodeMock.isConfigUssPath } returns false
+
+      every { selectedNodeMock.node } returns ussDirNodeMock
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly {
+        isEnabledAndVisible shouldBe true
+        presentationText shouldBe "Rename"
+      }
+    }
+    should("rename action is not enabled and not visible if explorer view is null") {
+      every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly { isEnabledAndVisible shouldBe false }
+    }
+    should("rename action is not enabled and not visible if selected nodes size grater than one") {
+      every { selectedNodesMock.size } returns 2
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly { isEnabledAndVisible shouldBe false }
+    }
+    should("rename action is not enabled and not visible if selected node is 'files working set' node") {
+      every { selectedNodeMock.node } returns mockk<FilesWorkingSetNode>()
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly { isEnabledAndVisible shouldBe false }
+    }
+    should("rename action is not enabled and not visible if selected node is 'loading' node") {
+      every { selectedNodeMock.node } returns mockk<LoadingNode<ConnectionConfig>>()
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly { isEnabledAndVisible shouldBe false }
+    }
+    should("rename action is not enabled and not visible if selected node is 'load more' mode") {
+      every { selectedNodeMock.node } returns mockk<LoadMoreNode<ConnectionConfig>>()
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly { isEnabledAndVisible shouldBe false }
+    }
+    should("rename action is not enabled and not visible if dataset is migrated") {
+      dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+          val attributesMock = mockk<RemoteDatasetAttributes>()
+          every { attributesMock.isMigrated } returns true
+          return attributesMock
+        }
+      }
+
+      renameAction.update(anActionEventMock)
+
+      assertSoftly { isEnabledAndVisible shouldBe false }
+    }
+
+    // isDumbAware
+    should("action is dumb aware") {
+      val actual = renameAction.isDumbAware
+
+      assertSoftly { actual shouldBe true }
+    }
   }
   context("explorer module: actions/PurgeJobAction") {
     context("actionPerformed") {
@@ -376,6 +942,7 @@ class ExplorerTestSpec : ShouldSpec({
           "id"
         )
       )
+      mockkObject(gson)
       every { gson.fromJson(any() as String, Job::class.java) } returns job
 
       mockkObject(CredentialService)

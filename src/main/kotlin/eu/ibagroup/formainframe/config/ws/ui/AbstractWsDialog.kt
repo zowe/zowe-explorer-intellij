@@ -32,7 +32,6 @@ import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateWorkingSetName
 import java.awt.Dimension
 import javax.swing.JComponent
-import kotlin.streams.toList // TODO: remove in v1.*.*-223 and greater
 
 /**
  * Abstract class for displaying configuration dialog of single Working Set.
@@ -100,6 +99,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
               wsConfigClass
             )
           }
+          .focused()
       }
       row {
         label("Specify connection")

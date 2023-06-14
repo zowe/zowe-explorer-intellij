@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.editor.DocumentChangeListener
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.editor.FileContentChangeListener
 import java.io.IOException
@@ -136,7 +135,6 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
         changeFileEncodingTo(syncProvider.file, currentCharset)
         initLineSeparator(syncProvider)
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
-        runReadActionInEdtAndWait { syncProvider.getDocument()?.addDocumentListener(DocumentChangeListener()) }
         fetchedAtLeastOnce.add(syncProvider)
       } else {
 
@@ -184,18 +182,5 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
    */
   override fun isFileUploadNeeded(syncProvider: SyncProvider): Boolean {
     return needToUpload.firstOrNull { syncProvider == it } != null
-  }
-
-  /**
-   * Base implementation of [ContentSynchronizer.isFileSyncPossible] method for each content synchronizer.
-   */
-  override fun isFileSyncPossible(syncProvider: SyncProvider): Boolean {
-    val attributes = attributesService.getAttributes(syncProvider.file) ?: return false
-    runCatching {
-      uploadNewContent(attributes, successfulContentStorage(syncProvider), null)
-    }.onFailure {
-      return false
-    }
-    return true
   }
 }

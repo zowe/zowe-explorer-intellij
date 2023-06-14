@@ -21,7 +21,6 @@ import java.util.stream.Stream
 import java.util.stream.StreamSupport
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
-import kotlin.streams.toList // TODO: remove in v1.*.*-223 and greater
 
 
 /**

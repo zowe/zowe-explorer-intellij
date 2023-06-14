@@ -15,7 +15,7 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.config.connect.username
+import eu.ibagroup.formainframe.config.connect.getUsername
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.config.Presets
@@ -82,7 +82,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
             datasetName = operation.request.datasetName,
             memberName = operation.request.memberName,
             content = if (operation.request.presets == Presets.PDS_WITH_EMPTY_MEMBER) byteArrayOf()
-              else getSampleJclMemberContent(username(operation.connectionConfig)).encodeToByteArray()
+              else getSampleJclMemberContent(getUsername(operation.connectionConfig)).encodeToByteArray()
           ).cancelByIndicator(progressIndicator).execute()
           if (!memberResponse.isSuccessful) {
             throwable = CallException(

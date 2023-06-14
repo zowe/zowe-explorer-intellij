@@ -68,11 +68,11 @@ class ChangeContentServiceImpl : ChangeContentService {
       adaptContentFunc = debounce(500) {
         adaptContentFunc = null
         val contentAdapter = dataOpsManager.getMFContentAdapter(file)
-        val currentContent = editor.document.text.toByteArray(file.charset)
+        val currentContent = editor.document.text
         val adaptedContent = contentAdapter.prepareContentToMainframe(currentContent, file)
         runWriteActionInEdt {
           CommandProcessor.getInstance().runUndoTransparentAction {
-            editor.document.setText(adaptedContent.toString(file.charset))
+            editor.document.setText(adaptedContent)
           }
         }
       }

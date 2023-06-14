@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.ReloadableEventHandler
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.isTheSameAs
-import kotlin.streams.toList // TODO: remove in v1.*.*-223 and greater
 
 /** Stateful class to represent the plugin configs sandbox */
 data class SandboxState(
