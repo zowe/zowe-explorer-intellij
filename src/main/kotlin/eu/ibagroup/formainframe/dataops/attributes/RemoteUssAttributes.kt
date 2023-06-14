@@ -14,6 +14,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.getOwner
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import eu.ibagroup.formainframe.utils.Copyable
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
 import org.zowe.kotlinsdk.FileMode
 import org.zowe.kotlinsdk.FileModeValue
@@ -170,4 +171,14 @@ data class RemoteUssAttributes(
   override val isPastePossible: Boolean
     get() = isDirectory
 
+}
+
+/**
+ * Util function to cast FileAttributes to RemoteUssAttributes or throw exception.
+ * @throws IllegalArgumentException
+ * @return source attributes that was cast to RemoteUssAttributes.
+ */
+fun FileAttributes?.toUssAttributes(fileName: String): RemoteUssAttributes {
+  return castOrNull<RemoteUssAttributes>()
+    ?: throw IllegalArgumentException("Cannot find attributes for file \"${fileName}\"")
 }

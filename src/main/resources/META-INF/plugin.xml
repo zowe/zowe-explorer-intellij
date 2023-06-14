@@ -214,7 +214,7 @@ Example of how to see the output:<br/>
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileToUssDirMoverFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMoverFactory"/>
 
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileToPdsMoverFactory"/>
@@ -343,7 +343,8 @@ Example of how to see the output:<br/>
                             testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestAnalyticsServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
-                            serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestCredentialsServiceImpl"/>
 
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
@@ -354,7 +355,8 @@ Example of how to see the output:<br/>
                             testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
-                            serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.analytics.PolicyProvider"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.PolicyProviderImpl"/>
