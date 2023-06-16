@@ -29,8 +29,6 @@ import java.util.stream.Collectors
 import kotlin.collections.set
 import kotlin.concurrent.withLock
 
-//import kotlin.streams.toList // TODO: remove in v1.*.*-223 and greater
-
 /**
  * Abstract class that represents a base fetch provider for fetching remote files.
  * @param dataOpsManager instance of DataOpsManager service.
