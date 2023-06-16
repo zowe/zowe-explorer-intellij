@@ -17,7 +17,6 @@ import eu.ibagroup.formainframe.config.ConfigDeclaration
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
-import java.util.stream.Collectors
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
 import kotlin.concurrent.thread
@@ -38,10 +37,7 @@ fun loadConfigClass(className: String): Class<*>? {
 
 /** Transform the stream to the mutable list */
 fun <E> Stream<E>.toMutableList(): MutableList<E> {
-  // TODO: remove in v1.*.*-223 and greater
-  return this.collect(Collectors.toList()).toMutableList()
-  // TODO: use in v1.*.*-223 and greater
-//  return this.toList().toMutableList()
+  return this.toList().toMutableList()
 }
 
 /** Transform the value to the specified class or return null if the cast is not possible */
