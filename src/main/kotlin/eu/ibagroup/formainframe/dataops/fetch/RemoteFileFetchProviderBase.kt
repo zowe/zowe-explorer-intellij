@@ -25,8 +25,11 @@ import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.util.concurrent.locks.ReentrantLock
+import java.util.stream.Collectors
 import kotlin.collections.set
 import kotlin.concurrent.withLock
+
+//import kotlin.streams.toList // TODO: remove in v1.*.*-223 and greater
 
 /**
  * Abstract class that represents a base fetch provider for fetching remote files.
@@ -172,7 +175,10 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
           // TODO: does not work correctly on datasets (check VOLSER)
           oldFile.isValid && files.none { compareOldAndNewFile(oldFile, it) }
         }
-        ?.toList()
+        // TODO: remove in v1.*.*-223 and greater
+        ?.collect(Collectors.toList())
+        // TODO: use in v1.*.*-223 and greater
+//        ?.toList()
         ?.apply {
           runWriteActionOnWriteThread {
             forEach { cleanupUnusedFile(it, query) }
