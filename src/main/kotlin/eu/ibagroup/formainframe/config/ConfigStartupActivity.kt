@@ -27,6 +27,7 @@ class ConfigStartupActivity: PostStartupActivity() {
       service<OldConfigService>().state?.let { oldState ->
         migrateOldConfigState(oldState)
       }
+      updateOldConfigs()
     }
   }
 }

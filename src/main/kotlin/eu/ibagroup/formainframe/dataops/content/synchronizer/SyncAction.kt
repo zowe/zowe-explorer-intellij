@@ -20,8 +20,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
 import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
 class SyncAction : DumbAwareAction() {
@@ -63,6 +65,8 @@ class SyncAction : DumbAwareAction() {
    */
   override fun actionPerformed(e: AnActionEvent) {
     val vFile = getSupportedVirtualFile(e) ?: return
+    val incompatibleEncoding = e.project?.let { !checkEncodingCompatibility(vFile, it) } ?: false
+    if (incompatibleEncoding && !showSaveAnywayDialog(vFile.charset)) return
     val editor = getEditor(e) ?: return
     val syncProvider = DocumentedSyncProvider(vFile, SaveStrategy.default(e.project))
     runBackgroundableTask(

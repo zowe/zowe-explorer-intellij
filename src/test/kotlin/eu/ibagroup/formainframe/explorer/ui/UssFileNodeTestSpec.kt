@@ -10,26 +10,22 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
+import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.TreeAnchorizer
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.Caret
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileNavigator
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
-import com.intellij.openapi.ui.InputValidator
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.ui.showYesNoDialog
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
-import com.intellij.util.Function
-import com.intellij.util.PairFunction
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
@@ -37,12 +33,10 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SyncProvider
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.explorer.UIComponentManager
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.*
 import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.isBeingEditingNow
+import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import io.kotest.assertions.assertSoftly
@@ -52,9 +46,7 @@ import io.kotest.matchers.string.shouldContain
 import io.mockk.*
 import java.awt.Component
 import javax.swing.Icon
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JTextField
+import javax.swing.tree.TreePath
 
 class UssFileNodeTestSpec : ShouldSpec({
   beforeSpec {
@@ -373,6 +365,223 @@ class UssFileNodeTestSpec : ShouldSpec({
         assertSoftly { isNavigatePerformed shouldBe false }
         assertSoftly { isOnSyncSuccessTriggered shouldBe false }
         assertSoftly { isOpenFileCalled shouldBe true }
+      }
+    }
+
+    context("UssFileNode update") {
+      var textAdded = false
+      var updatePerformed = false
+
+      beforeEach {
+        textAdded = false
+        updatePerformed = false
+      }
+
+      val virtualFileMock = mockk<MFVirtualFile>()
+      val mockedProject = mockk<Project>()
+      val parentNode = mockk<UssDirNode>()
+      val explorerUnit = mockk<ExplorerUnit<ConnectionConfig>>()
+      val explorer = mockk<FileExplorer>()
+      every { explorerUnit.explorer } returns explorer
+      val treeStructure = mockk<ExplorerTreeStructureBase>()
+      every { treeStructure.registerNode(any()) } just Runs
+
+      mockkObject(UIComponentManager)
+      every {
+        UIComponentManager
+          .INSTANCE
+          .getExplorer<FileExplorer>(any())
+      } returns explorer
+
+      val explorerContentProviderMock = mockk<FileExplorerContentProvider>()
+
+      every {
+        UIComponentManager
+          .INSTANCE
+          .getExplorerContentProvider(explorer::class.java)
+      } returns explorerContentProviderMock
+
+      val mockedUssNode = UssFileNode(virtualFileMock, mockedProject, parentNode, explorerUnit, treeStructure)
+      val ussFileMockToSpy = spyk(mockedUssNode, recordPrivateCalls = true)
+      every { ussFileMockToSpy["shouldUpdateData"]() } returns true
+      every { ussFileMockToSpy["shouldPostprocess"]() } returns false
+      every { ussFileMockToSpy["shouldApply"]() } returns true
+      every { ussFileMockToSpy["apply"](any() as PresentationData, any() as PresentationData) } answers {
+        textAdded = true
+        updatePerformed = true
+        true
+      }
+      every { ussFileMockToSpy.virtualFile } returns virtualFileMock
+      every { ussFileMockToSpy.value } returns virtualFileMock
+
+      context("ExplorerTreeNode.updateMainTitleUsingCutBuffer") {
+        every { virtualFileMock.presentableName } returns "test"
+        every { virtualFileMock.isValid } returns false
+        every { explorer.nullableProject } returns mockedProject
+
+        should("perform an update of the node if virtual file in the cut buffer and navigate is true") {
+          every { explorerContentProviderMock.isFileInCutBuffer(virtualFileMock) } returns true
+          every { ussFileMockToSpy.navigating } returns true
+          ussFileMockToSpy.update()
+
+          assertSoftly {
+            textAdded shouldBe true
+            updatePerformed shouldBe true
+          }
+        }
+
+        should("perform an update of the node if virtual file in the cut buffer and navigate is false") {
+          every { ussFileMockToSpy.navigating } returns false
+          ussFileMockToSpy.update()
+
+          assertSoftly {
+            textAdded shouldBe true
+            updatePerformed shouldBe true
+          }
+        }
+
+        should("perform an update of the node if virtual file is not in the cut buffer") {
+          every { explorerContentProviderMock.isFileInCutBuffer(virtualFileMock) } returns false
+          every { ussFileMockToSpy.navigating } returns true
+          ussFileMockToSpy.update()
+
+          assertSoftly {
+            textAdded shouldBe true
+            updatePerformed shouldBe true
+          }
+        }
+
+        should("perform an update of the node if content provider is null") {
+          val explorerUnitToTest = mockk<ExplorerUnit<ConnectionConfig>>()
+          val explorerToTest = mockk<FileExplorer>()
+          every { explorerUnitToTest.explorer } returns explorerToTest
+          every {
+            UIComponentManager
+              .INSTANCE
+              .getExplorerContentProvider(explorerToTest::class.java)
+          } returns null
+          val mockedUssNodeToTest = UssFileNode(virtualFileMock, mockedProject, parentNode, explorerUnitToTest, treeStructure)
+          val ussFileMockToSpyTest = spyk(mockedUssNodeToTest, recordPrivateCalls = true)
+          every { ussFileMockToSpyTest["shouldUpdateData"]() } returns true
+          every { ussFileMockToSpyTest["shouldPostprocess"]() } returns false
+          every { ussFileMockToSpyTest["shouldApply"]() } returns true
+          every { ussFileMockToSpyTest["apply"](any() as PresentationData, any() as PresentationData) } answers {
+            textAdded = true
+            updatePerformed = true
+            true
+          }
+          every { explorerToTest.nullableProject } returns mockedProject
+          every { ussFileMockToSpyTest.virtualFile } returns virtualFileMock
+          every { ussFileMockToSpyTest.value } returns virtualFileMock
+          ussFileMockToSpyTest.update()
+
+          assertSoftly {
+            textAdded shouldBe true
+            updatePerformed shouldBe true
+          }
+        }
+
+        should("get virtual file of the USS file node") {
+          val actual = ussFileMockToSpy.virtualFile
+
+          assertSoftly {
+            actual shouldBe virtualFileMock
+          }
+        }
+
+        should("get children of the USS file node") {
+          val expected = mutableListOf<AbstractTreeNode<*>>()
+          val actual = ussFileMockToSpy.children
+
+          assertSoftly {
+            actual shouldBe expected
+          }
+        }
+      }
+    }
+
+    context("create ExplorerTreeNode abstraction and cover remaining methods and calls") {
+      val virtualFileMock = mockk<MFVirtualFile>()
+      val mockedProject = mockk<Project>()
+      val parentNode = null
+      val explorer = mockk<FileExplorer>()
+      val treeStructure = mockk<ExplorerTreeStructureBase>()
+      every { treeStructure.registerNode(any()) } just Runs
+
+      val objectMock = object: ExplorerTreeNode<ConnectionConfig, MFVirtualFile>(virtualFileMock, mockedProject, parentNode, explorer, treeStructure) {
+        override fun update(presentation: PresentationData) {
+          return
+        }
+
+        override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
+          return mutableListOf()
+        }
+      }
+
+      val nodeToSpy = spyk(objectMock, recordPrivateCalls = true)
+
+      context("miscellaneous tests") {
+        should("get null virtual file of the node") {
+          val actual = nodeToSpy.virtualFile
+          assertSoftly {
+            actual shouldBe null
+          }
+        }
+        should("get view settings of the node") {
+          val actual = nodeToSpy.settings
+          assertSoftly {
+            actual shouldBe treeStructure
+          }
+        }
+        should("can navigate") {
+          val actual = nodeToSpy.canNavigate()
+          assertSoftly {
+            actual shouldBe false
+          }
+        }
+        should("can navigate to source") {
+          val actual = nodeToSpy.canNavigateToSource()
+          assertSoftly {
+            actual shouldBe false
+          }
+        }
+        should("get path of the node if parent is null") {
+          val actual = nodeToSpy.path
+          val expected = TreePath(listOf(nodeToSpy).toTypedArray())
+          assertSoftly {
+            actual shouldBe expected
+          }
+        }
+        should("get path of the node if parent is not null") {
+          val objectParentMock = object: ExplorerTreeNode<ConnectionConfig, MFVirtualFile>(virtualFileMock, mockedProject, parentNode, explorer, treeStructure) {
+            override fun update(presentation: PresentationData) {
+              return
+            }
+
+            override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
+              return mutableListOf()
+            }
+          }
+
+          mockkObject(objectParentMock, recordPrivateCalls = true)
+
+          val objectMockToTest = object: ExplorerTreeNode<ConnectionConfig, MFVirtualFile>(virtualFileMock, mockedProject, objectParentMock, explorer, treeStructure) {
+            override fun update(presentation: PresentationData) {
+              return
+            }
+
+            override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
+              return mutableListOf()
+            }
+          }
+
+          val nodeToSpyTest = spyk(objectMockToTest, recordPrivateCalls = true)
+          val actual = nodeToSpyTest.path
+          val expected = TreePath(listOf(objectParentMock, nodeToSpyTest).toTypedArray())
+          assertSoftly {
+            actual shouldBe expected
+          }
+        }
       }
     }
   }

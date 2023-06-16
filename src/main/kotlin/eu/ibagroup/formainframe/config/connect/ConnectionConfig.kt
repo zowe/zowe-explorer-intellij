@@ -31,6 +31,9 @@ class ConnectionConfig : ConnectionConfigBase {
   @Column
   var zVersion = ZVersion.ZOS_2_1
 
+  @Column
+  var owner = ""
+
 
 
   constructor()
@@ -40,12 +43,14 @@ class ConnectionConfig : ConnectionConfigBase {
     name: String,
     url: String,
     isAllowSelfSigned: Boolean,
-    zVersion: ZVersion
+    zVersion: ZVersion,
+    owner: String = ""
   ) : super(uuid) {
     this.name = name
     this.url = url
     this.isAllowSelfSigned = isAllowSelfSigned
     this.zVersion = zVersion
+    this.owner = owner
   }
 
   override fun equals(other: Any?): Boolean {
@@ -59,6 +64,7 @@ class ConnectionConfig : ConnectionConfigBase {
     if (url != other.url) return false
     if (isAllowSelfSigned != other.isAllowSelfSigned) return false
     if (zVersion != other.zVersion) return false
+    if (owner != other.owner) return false
 
     return true
   }
@@ -69,11 +75,12 @@ class ConnectionConfig : ConnectionConfigBase {
     result = 31 * result + url.hashCode()
     result = 31 * result + isAllowSelfSigned.hashCode()
     result = 31 * result + zVersion.hashCode()
+    result = 31 * result + owner.hashCode()
     return result
   }
 
   override fun toString(): String {
-    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, zVersion=$zVersion)"
+    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, zVersion=$zVersion, owner=$owner)"
   }
 
 }

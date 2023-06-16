@@ -28,6 +28,8 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
  */
 class FileEditorEventsListener : FileEditorManagerListener {
 
+  private val focusListener = FileEditorFocusListener()
+
   /**
    * Adds the file editor focus listener [FileEditorFocusListener] after the file is opened.
    * @param source the source file editor manager to get the editor in which the file is open.
@@ -35,7 +37,6 @@ class FileEditorEventsListener : FileEditorManagerListener {
    */
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
     val editor = source.selectedTextEditor as? EditorEx
-    val focusListener = FileEditorFocusListener()
     editor?.addFocusListener(focusListener)
     super.fileOpened(source, file)
   }
@@ -63,9 +64,13 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
       val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
       val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
       val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-      if (!(currentContent contentEquals previousContent) && needToUpload)
+      if (!(currentContent contentEquals previousContent) && needToUpload) {
+        val incompatibleEncoding = !checkEncodingCompatibility(file, source.project)
         if (!configService.isAutoSyncEnabled) {
           if (showSyncOnCloseDialog(file.name, source.project)) {
+            if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
+              return
+            }
             runModalTask(
               title = "Syncing ${file.name}",
               project = source.project,
@@ -78,9 +83,13 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
             }
           }
         } else {
+          if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
+            return
+          }
           runWriteActionInEdtAndWait { syncProvider.saveDocument() }
           sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, DataOpsManager.instance.componentManager).sync(file)
         }
+      }
     }
     super.beforeFileClosed(source, file)
   }

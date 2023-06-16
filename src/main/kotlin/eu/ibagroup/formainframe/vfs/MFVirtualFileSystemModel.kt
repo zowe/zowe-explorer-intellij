@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.jetbrains.rd.util.ConcurrentHashMap
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -36,7 +37,9 @@ class FsOperationException(operationName: String, file: MFVirtualFile) : IOExcep
   "Cannot perform $operationName on ${file.path}"
 )
 
-internal fun sendVfsChangesTopic() = sendTopic(MFVirtualFileSystem.MF_VFS_CHANGES_TOPIC)
+internal fun sendVfsChangesTopic() = sendTopic(VirtualFileManager.VFS_CHANGES)
+
+internal fun sendMFVfsChangesTopic() = sendTopic(MFVirtualFileSystem.MF_VFS_CHANGES_TOPIC)
 
 enum class FSEdgeType {
   DIR, SOFT_LINK, HARD_LINK;
@@ -196,7 +199,7 @@ class MFVirtualFileSystemModel {
         if (vFile.children?.size != 0) {
           vFile.children?.forEach { it: MFVirtualFile -> deleteFile(requestor, it) }
         }
-        sendVfsChangesTopic().before(event)
+        sendMFVfsChangesTopic().before(event)
         if (fsGraph.removeEdge(parent, vFile) != null && fsGraph.removeVertex(vFile)) {
           val storageId = fileIdToStorageIdMap[vFile.id]
           if (storageId != null) {
@@ -210,7 +213,7 @@ class MFVirtualFileSystemModel {
             if (lastChar == MFVirtualFileSystem.SEPARATOR) parent.path + vFile.name
             else parent.path + MFVirtualFileSystem.SEPARATOR + vFile.name
           initialContentConditions.remove(vFile)
-          sendVfsChangesTopic().after(event)
+          sendMFVfsChangesTopic().after(event)
           return@deleteFile
         }
       }
@@ -250,7 +253,7 @@ class MFVirtualFileSystemModel {
         VFileMoveEvent(requestor, vFile, newParent)
       }
     )
-    sendVfsChangesTopic().before(event)
+    sendMFVfsChangesTopic().before(event)
     var adding: MFVirtualFile? = null
     validWriteLock(vFile, newParent) {
       val oldParent = vFile.parent
@@ -265,7 +268,7 @@ class MFVirtualFileSystemModel {
           }
           when {
             alreadyExistingFile != null && copyName != null && oldParent == newParent && replace -> {
-              sendVfsChangesTopic().after(event)
+              sendMFVfsChangesTopic().after(event)
               return vFile
             }
 
@@ -290,7 +293,7 @@ class MFVirtualFileSystemModel {
         }
       }
     }
-    return adding?.also { sendVfsChangesTopic().after(event) }
+    return adding?.also { sendMFVfsChangesTopic().after(event) }
       ?: throw FsOperationException(if (copyName != null) "copy" else "move", vFile)
   }
 
@@ -303,13 +306,13 @@ class MFVirtualFileSystemModel {
   @Throws(IOException::class)
   fun renameFile(requestor: Any?, vFile: MFVirtualFile, newName: String) {
     val event = listOf(VFilePropertyChangeEvent(requestor, vFile, VirtualFile.PROP_NAME, vFile.name, newName, false))
-    sendVfsChangesTopic().before(event)
+    sendMFVfsChangesTopic().before(event)
     vFile.validReadLock {
       if (vFile.filenameInternal != newName) {
         vFile.filenameInternal = newName
       }
     }
-    sendVfsChangesTopic().after(event)
+    sendMFVfsChangesTopic().after(event)
   }
 
   @Throws(IOException::class)
@@ -338,7 +341,7 @@ class MFVirtualFileSystemModel {
     }
     @Suppress("UnstableApiUsage")
     val event = listOf(VFileCreateEvent(requestor, vDir, name, attributes.isDirectory, attributes, null, false, null))
-    sendVfsChangesTopic().before(event)
+    sendMFVfsChangesTopic().before(event)
     val file = vDir.validWriteLock {
       if (!vDir.isDirectory) {
         throw NotDirectoryException(vDir.path)
@@ -357,7 +360,7 @@ class MFVirtualFileSystemModel {
       }
     }
     runCatching {
-      sendVfsChangesTopic().after(event)
+      sendMFVfsChangesTopic().after(event)
     }
     return file
   }
@@ -439,9 +442,9 @@ class MFVirtualFileSystemModel {
             false
           )
         )
-        sendVfsChangesTopic().before(event)
+        sendMFVfsChangesTopic().before(event)
         file.isWritableInternal = writableFlag
-        sendVfsChangesTopic().after(event)
+        sendMFVfsChangesTopic().after(event)
       }
     }
   }
@@ -612,6 +615,7 @@ class MFVirtualFileSystemModel {
             val event = listOf(
               VFileContentChangeEvent(requestor, file, oldModStamp, timeStamp, false)
             )
+            // When the output stream changes, the contents of the file change, so you need to send vfs changes topic
             sendVfsChangesTopic().before(event)
             assertWriteAllowed()
             file.validWriteLock {

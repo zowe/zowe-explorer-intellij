@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.formainframe.vfs.sendVfsChangesTopic
+import eu.ibagroup.formainframe.vfs.sendMFVfsChangesTopic
 import org.zowe.kotlinsdk.*
 
 /**
@@ -81,7 +81,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               toDatasetName = operation.newName
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              sendVfsChangesTopic()
+              sendMFVfsChangesTopic()
             } else {
               throw CallException(response, "Unable to rename the selected dataset")
             }
@@ -114,7 +114,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 memberName = operation.newName
               ).cancelByIndicator(progressIndicator).execute()
               if (response.isSuccessful) {
-                sendVfsChangesTopic()
+                sendMFVfsChangesTopic()
               } else {
                 throw CallException(response, "Unable to duplicate the selected member")
               }
@@ -131,7 +131,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 memberName = operation.newName
               ).cancelByIndicator(progressIndicator).execute()
               if (response.isSuccessful) {
-                sendVfsChangesTopic()
+                sendMFVfsChangesTopic()
               } else {
                 throw CallException(response, "Unable to rename the selected member")
               }
@@ -158,7 +158,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               filePath = FilePath("$parentDirPath/${operation.newName}")
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              sendVfsChangesTopic()
+              sendMFVfsChangesTopic()
             } else {
               throw CallException(response, "Unable to rename the selected file or directory")
             }

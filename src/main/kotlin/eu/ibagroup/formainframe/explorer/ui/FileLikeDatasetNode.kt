@@ -16,6 +16,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.toMutableSmartList
@@ -46,20 +47,21 @@ class FileLikeDatasetNode(
   }
 
   override fun update(presentation: PresentationData) {
-    val attributes = service<DataOpsManager>().tryToGetAttributes(value)
-    when (attributes) {
+    when (val attributes = service<DataOpsManager>().tryToGetAttributes(value)) {
       is RemoteDatasetAttributes -> {
         if (this.navigating) {
           presentation.setIcon(AnimatedIcon.Default())
         } else {
-          presentation.setIcon(
-            if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(
-              AllIcons.FileTypes.Any_type,
-              "DS"
+          presentation.apply {
+            setIcon(
+              if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(
+                AllIcons.FileTypes.Any_type,
+                "DS"
+              )
             )
-          )
+            if (attributes.isMigrated) forcedTextForeground = JBColor.GRAY
+          }
         }
-
       }
 
       is RemoteMemberAttributes -> {
