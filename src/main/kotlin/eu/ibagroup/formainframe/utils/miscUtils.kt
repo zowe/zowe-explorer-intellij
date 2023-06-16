@@ -22,7 +22,6 @@ import java.util.stream.StreamSupport
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 
-
 /**
  * Finds class loader for specified class and tries to load the class.
  * @param className name of the class to load.

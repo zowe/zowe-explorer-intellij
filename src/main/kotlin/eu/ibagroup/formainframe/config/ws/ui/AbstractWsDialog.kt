@@ -56,7 +56,6 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
   abstract val wsConfigClass: Class<out WSConfig>
   abstract val connectionClass: Class<out Connection>
 
-
   private val connectionComboBoxModel by lazy { CollectionComboBoxModel(crudable.getAll(connectionClass).toList()) }
 
   /**

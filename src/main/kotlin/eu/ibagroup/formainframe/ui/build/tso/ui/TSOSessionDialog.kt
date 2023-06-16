@@ -13,20 +13,23 @@ package eu.ibagroup.formainframe.ui.build.tso.ui
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.utils.crudable.getAll
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateForPositiveInteger
 import org.zowe.kotlinsdk.TsoCodePage
 import java.awt.Dimension
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JTextField
-import kotlin.streams.toList
 
 /**
  * Class represents the TSO session creation dialog with its initial default values
@@ -61,13 +64,13 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
         comboBox(
           model = connectionComboBoxModel,
           renderer = SimpleListCellRenderer.create("") { it?.name }
-          ).bindItem(state::connectionConfig.toNullableProperty())
+        ).bindItem(state::connectionConfig.toNullableProperty())
           .also {
             connectionBox = it.component
             resizableRow()
             it.verticalAlign(VerticalAlign.FILL)
             it.horizontalAlign(HorizontalAlign.FILL)
-        }
+          }
       }
       row {
         label("Logon procedure")
@@ -220,13 +223,13 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
  * Data class represents the initial state of the dialog. It sets the default parameters for the TSO session.
  */
 data class TSOSessionParams(
-  var connectionConfig : ConnectionConfig = configCrudable.getAll(ConnectionConfig::class.java).findFirst().get(),
-  var logonproc : String = "DBSPROCC",
-  var charset : String = "697",
-  var codepage : TsoCodePage = TsoCodePage.IBM_1047,
-  var rows : String = "24",
-  var cols : String = "80",
-  var acct : String = "ACCT#",
-  var usergroup : String = "GROUP1",
-  var region : String = "64000"
+  var connectionConfig: ConnectionConfig = configCrudable.getAll(ConnectionConfig::class.java).findFirst().get(),
+  var logonproc: String = "DBSPROCC",
+  var charset: String = "697",
+  var codepage: TsoCodePage = TsoCodePage.IBM_1047,
+  var rows: String = "24",
+  var cols: String = "80",
+  var acct: String = "ACCT#",
+  var usergroup: String = "GROUP1",
+  var region: String = "64000"
 )

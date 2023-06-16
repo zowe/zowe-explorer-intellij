@@ -218,6 +218,7 @@ class ConfigSandboxImpl : ConfigSandbox {
             }
           }
       } else {
+        configCrudable.getAll(clazz).collect(Collectors.toList())
         configCrudable.getAll(clazz).toList()
       }
       listOfNotNull(classToList(clazz, state), classToList(clazz, initialState))
