@@ -10,9 +10,12 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
-import com.intellij.ide.util.treeView.AbstractTreeNode
+import eu.ibagroup.formainframe.dataops.SortQueryKeys
 
 /**
- * interface which represents any USS Node. Extents USS sortable Node which implements children nodes sorting method
+ * Interface which represents any USS sortable Node
+ * @param Node - Nodes type to sort
  */
-interface UssNode : UssSortableNode<AbstractTreeNode<*>>
+interface UssSortableNode<Node> {
+  fun List<Node>.sortChildrenNodes(sortKeys: List<SortQueryKeys>): List<Node> = mutableListOf()
+}
