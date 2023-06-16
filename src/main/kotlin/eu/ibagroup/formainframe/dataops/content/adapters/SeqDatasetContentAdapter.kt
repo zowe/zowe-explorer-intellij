@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops.content.adapters
 
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
@@ -43,7 +44,8 @@ class SeqDatasetContentAdapter(
    * for configuration (for V and VB it first 4 columns on each row, for VA - first 5).
    * @see MFContentAdapterBase.adaptContentToMainframe
    */
-  override fun adaptContentToMainframe(content: ByteArray, attributes: RemoteDatasetAttributes): ByteArray {
+  @Suppress("UNCHECKED_CAST")
+  override fun <T>adaptContentToMainframe(content: T, attributes: RemoteDatasetAttributes): T {
     var lrecl = attributes.datasetInfo.recordLength ?: 80
     if (attributes.hasVariableFormatRecords()) {
       lrecl -= 4
@@ -51,7 +53,14 @@ class SeqDatasetContentAdapter(
     if (attributes.hasVariablePrintFormatRecords()) {
       lrecl -= 1
     }
-    return transferLinesByLRecl(content, lrecl)
+
+    content.castOrNull<String>()?.let {
+      return transferLinesByLRecl(it, lrecl) as T
+    }
+    content.castOrNull<ByteArray>()?.let {
+      return transferLinesByLRecl(String(it), lrecl).toByteArray() as T
+    }
+    return content
   }
 
   /**
@@ -60,7 +69,7 @@ class SeqDatasetContentAdapter(
    */
   override fun adaptContentFromMainframe(content: ByteArray, attributes: RemoteDatasetAttributes): ByteArray {
     if (attributes.hasVariablePrintFormatRecords()) {
-      return removeFirstCharacter(content)
+      return removeFirstCharacter(String(content)).toByteArray()
     }
     return content
   }

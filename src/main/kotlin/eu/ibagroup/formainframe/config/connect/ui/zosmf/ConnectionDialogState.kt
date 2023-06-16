@@ -31,17 +31,19 @@ data class ConnectionDialogState(
   override var password: String = "",
   var isAllowSsl: Boolean = false,
   var zVersion: ZVersion = ZVersion.ZOS_2_1,
+  var owner: String = "",
   override var mode: DialogMode = DialogMode.CREATE
 ) : ConnectionDialogStateBase<ConnectionConfig>() {
 
   override var connectionConfig
-    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion)
+    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion, owner)
     set(value) {
       connectionUuid = value.uuid
       connectionName = value.name
       connectionUrl = value.url
       isAllowSsl = value.isAllowSelfSigned
       zVersion = value.zVersion
+      owner = value.owner
     }
 
 
@@ -59,7 +61,8 @@ data class ConnectionDialogState(
       connectionUrl = connectionUrl,
       username = username,
       password = password,
-      isAllowSsl = isAllowSsl
+      isAllowSsl = isAllowSsl,
+      owner = owner
     )
   }
 }
@@ -81,6 +84,7 @@ fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
     username = credentials.username,
     password = credentials.password,
     isAllowSsl = this.isAllowSelfSigned,
-    zVersion = this.zVersion
+    zVersion = this.zVersion,
+    owner = this.owner
   )
 }

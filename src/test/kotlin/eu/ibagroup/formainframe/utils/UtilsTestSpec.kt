@@ -797,10 +797,4 @@ class UtilsTestSpec : ShouldSpec({
       }
     }
   }
-  context("utils module: EncodingUtil") {
-    // saveIn
-    should("convert file content to new encoding") {}
-    // reloadIn
-    should("reload file content to new encoding") {}
-  }
 })
