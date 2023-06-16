@@ -19,6 +19,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.rd.util.UUID
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.connect.whoAmI
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
@@ -162,6 +163,11 @@ class ConfigServiceImpl : ConfigService {
 
       // acceptOldConfigs()
     }
+  }
+
+  /** Fills the owner tag, if it is empty, with the value obtained from the TSO request. */
+  override fun updateOldConfigs() {
+    myState.get<ConnectionConfig>()?.filter { it.owner.isEmpty() }?.forEach { it.owner = whoAmI(it) ?: "" }
   }
 
   /**

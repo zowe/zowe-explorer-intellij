@@ -12,21 +12,22 @@ package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.PostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
 /**
  * Activity to prepare configs.
  * @author Valiantsin Krus.
  */
-class ConfigStartupActivity: PostStartupActivity() {
+class ConfigStartupActivity: ProjectActivity {
 
   /** Registers all config classes and migrate configs to state v2. */
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     service<ConfigService>().apply {
       registerAllConfigClasses()
       service<OldConfigService>().state?.let { oldState ->
         migrateOldConfigState(oldState)
       }
+      updateOldConfigs()
     }
   }
 }

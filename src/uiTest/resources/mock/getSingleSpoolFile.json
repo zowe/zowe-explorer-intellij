@@ -1,0 +1,18 @@
+[
+  {
+    "recfm": "UA",
+    "records-url": "https:\/\/hostName:port\/zosmf\/restjobs\/jobs\/JOB07380S0W1....DB9E6D9D.......%3A\/files\/2\/records",
+    "stepname": "STEP1",
+    "subsystem": "JES2",
+    "job-correlator": "JOB07380S0W1....DB9E6D9D.......:",
+    "byte-count": 0,
+    "lrecl": 133,
+    "jobid": "JOB07380",
+    "ddname": "spoolFileName",
+    "id": 2,
+    "record-count": 2,
+    "class": "K",
+    "jobname": "jobName",
+    "procstep": null
+  }
+]
