@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.dataops
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
+import eu.ibagroup.formainframe.explorer.ui.UssNode
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
 /**
@@ -20,6 +21,25 @@ data class UnitRemoteQueryImpl<Connection: ConnectionConfigBase, R>(
   override val request: R,
   override val connectionConfig: Connection
 ) : RemoteQuery<Connection, R, Unit> {
+  val sortKeys = mutableListOf(SortQueryKeys.DATE, SortQueryKeys.ASCENDING)
+  var requester: UssNode? = null
   override val resultClass: Class<out Unit>
     get() = UNIT_CLASS
+}
+
+/**
+ * Enum class represents the sorting keys which is currently enabled for particular Node
+ */
+enum class SortQueryKeys(private val sortType: String) {
+  NAME("name"),
+  TYPE("type"),
+  DATE("date"),
+  NONE("none"),
+  ASCENDING("ascending"),
+  DESCENDING("descending");
+
+  override fun toString(): String {
+    return sortType
+  }
+
 }
