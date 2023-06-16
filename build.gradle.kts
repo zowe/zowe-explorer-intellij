@@ -139,7 +139,7 @@ tasks {
         if (desc.parent == null) { // will match the outermost suite
           val output =
             "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
-              "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+                "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
           val fileName = "./build/reports/tests/${result.resultType}.txt"
           File(fileName).writeText(output)
         }
