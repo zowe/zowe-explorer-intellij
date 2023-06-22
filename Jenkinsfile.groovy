@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 def jiraSite = 'jira-iba'
-def gitCredentialsId = 'jenkins-gitlab-key'
+def gitCredentialsId = 'e92a3d13-efc3-47d7-955f-a78ad9d7faac'
 //def gitUrl = 'https://code.iby.scdc.io/ijmp/for-mainframe.git'
 def gitUrl = 'git@code.iby.scdc.io:ijmp/for-mainframe.git'
 def resultFileName = ''
@@ -21,11 +21,8 @@ properties([gitLabConnection('code.iby.scdc.io-connection')])
 //     def xml = new XmlSlurper().parseText(xmlFile)
 //     println xml.'idea-version'.'@since-build'
 //     xml.'idea-version'.'@since-build' =  '203.7148.72'
-
 //     def w = new StringWriter()
 //     XmlUtil.serialize(xml, w)
-
-
 //     return w.toString()
 // }
 
@@ -40,7 +37,7 @@ pipeline {
     }
     tools {
         gradle 'Default'
-        jdk 'Java 17'
+        jdk 'Java 11'
     }
     stages {
         stage('Initial checkup') {
@@ -87,6 +84,7 @@ pipeline {
                     // To change Gradle version - Jenkins/Manage Jenkins/Global Tool Configuration
                     // sh 'gradle -v'
                     sh 'gradle wrapper'
+                    sh './gradlew -v'
                     sh './gradlew test'
                     sh './gradlew buildPlugin'
                 }
