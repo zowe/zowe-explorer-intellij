@@ -37,7 +37,7 @@ pipeline {
     }
     tools {
         gradle 'Default'
-        jdk 'Java 11'
+        jdk 'Java 17'
     }
     stages {
         stage('Initial checkup') {
