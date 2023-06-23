@@ -71,7 +71,7 @@ class UssSortActionHolderTestSpec : ShouldSpec({
     }
     val mockedActionEvent = mockk<AnActionEvent>()
     every { mockedActionEvent.presentation } returns mockk()
-    every { mockedActionEvent.presentation.putClientProperty<Boolean>(any(), any()) } just Runs
+    every { mockedActionEvent.presentation.putClientProperty(any() as String, any() as Boolean) } just Runs
     // isFromContextMenu is marked as deprecated
     every { mockedActionEvent.isFromContextMenu } returns false
     every { mockedActionEvent.presentation.isEnabledAndVisible = true } just Runs
