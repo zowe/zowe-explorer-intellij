@@ -27,14 +27,14 @@ private val grayscaleIcon = IconUtil.desaturate(regularIcon)
 private val errorIcon = LayeredIcon(grayscaleIcon, errorIconElement)
 
 /** Base implementation of working set tree node */
-abstract class WorkingSetNode<Connection: ConnectionConfigBase, MaskType>(
+abstract class WorkingSetNode<Connection : ConnectionConfigBase, MaskType>(
   workingSet: WorkingSet<Connection, MaskType>,
   project: Project,
   parent: ExplorerTreeNode<Connection, *>,
   treeStructure: ExplorerTreeStructureBase
 ) : ExplorerUnitTreeNodeBase<Connection, WorkingSet<Connection, MaskType>, WorkingSet<Connection, MaskType>>(
   workingSet, project, parent, workingSet, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
   protected var cachedChildrenInternal: MutableCollection<out AbstractTreeNode<*>>? = null
 
   abstract val regularTooltip: String
