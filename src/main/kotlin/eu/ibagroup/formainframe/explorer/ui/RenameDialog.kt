@@ -18,38 +18,42 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction
 import eu.ibagroup.formainframe.explorer.actions.RenameAction
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.validateDatasetNameOnInput
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateMemberName
+import eu.ibagroup.formainframe.utils.validateUssFileName
+import eu.ibagroup.formainframe.utils.validateUssFileNameAlreadyExists
 import javax.swing.JComponent
 import javax.swing.JTextField
 
 /**
  * Base class to create an instance of rename dialog object
  * @param type represents a virtual file type - file or directory
- * @param selectedNode represents the current node object
+ * @param selectedNodeData represents the current node object
  * @param currentAction represents the current action to be performed - rename or force rename
  * @param state represents the current state
  */
-class RenameDialog(project: Project?,
-                   type: String,
-                   private val selectedNode: NodeData<*>,
-                   private val currentAction: AnAction,
-                   override var state: String
+class RenameDialog(
+  project: Project?,
+  type: String,
+  private val selectedNodeData: NodeData<*>,
+  private val currentAction: AnAction,
+  override var state: String
 ) : DialogWrapper(project),
   StatefulComponent<String> {
 
-    companion object {
+  companion object {
 
-      // TODO: Remove when it becomes possible to mock class constructor with init section.
-      /** Wrapper for init() method. It is necessary only for test purposes for now. */
-      private fun initialize(init: () -> Unit) {
-        init()
-      }
+    // TODO: Remove when it becomes possible to mock class constructor with init section.
+    /** Wrapper for init() method. It is necessary only for test purposes for now. */
+    private fun initialize(init: () -> Unit) {
+      init()
     }
+  }
 
-  private val node = selectedNode.node
+  private val node = selectedNodeData.node
 
   /**
    * Creates UI component of the object
@@ -60,7 +64,7 @@ class RenameDialog(project: Project?,
         label("New name: ")
         textField()
           .bindText(this@RenameDialog::state)
-          .validationOnApply { validateOnBlank(it) ?: validateOnInput(it) }
+          .validationOnApply { validateForBlank(it) ?: validateOnInput(it) }
           .apply { focused() }
       }
     }
@@ -75,17 +79,11 @@ class RenameDialog(project: Project?,
   }
 
   /**
-   * Sets validation rules for text field
+   * Validate a new name for the selected node component
    */
   private fun validateOnInput(component: JTextField): ValidationInfo? {
-    val attributes = selectedNode.attributes
+    val attributes = selectedNodeData.attributes
     when (node) {
-      is DSMaskNode -> {
-        return validateDatasetMask(component.text, component) ?: validateWorkingSetMaskName(
-          component,
-          node.parent?.value as FilesWorkingSet
-        )
-      }
       is LibraryNode, is FileLikeDatasetNode -> {
         return if (attributes is RemoteDatasetAttributes) {
           validateDatasetNameOnInput(component)
@@ -93,36 +91,16 @@ class RenameDialog(project: Project?,
           validateMemberName(component)
         }
       }
-      is UssDirNode -> {
-        return if (node.isConfigUssPath) {
-          validateUssMask(component.text, component) ?: validateWorkingSetMaskName(
-            component,
-            node.parent?.value as FilesWorkingSet
-          )
-        } else {
-          if (currentAction is RenameAction) {
-            validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNode)
-          } else {
-            validateUssFileName(component)
-          }
-        }
-      }
-      is UssFileNode -> {
+
+      is UssDirNode, is UssFileNode -> {
         return if (currentAction is RenameAction) {
-          validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNode)
+          validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNodeData)
         } else {
           validateUssFileName(component)
         }
       }
     }
     return null
-  }
-
-  /**
-   * Sets validation rule on blank for text field
-   */
-  private fun validateOnBlank(component: JTextField): ValidationInfo? {
-    return validateForBlank(component)
   }
 
 }

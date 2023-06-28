@@ -26,7 +26,7 @@ class FilesWorkingSetNode(
   treeStructure: ExplorerTreeStructureBase
 ) : WorkingSetNode<ConnectionConfig, DSMask>(
   workingSet, project, parent, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
 
   private val valueForFilesWS = value as FilesWorkingSet
 

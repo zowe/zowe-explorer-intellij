@@ -32,7 +32,7 @@ import icons.ForMainframeIcons
 
 private val migratedIcon = AllIcons.FileTypes.Any_type
 
-/** Datasets and USS files representation as file node in the explorer tree view */
+/** PS dataset or a PDS dataset member representation as file node in the explorer tree view */
 class FileLikeDatasetNode(
   file: MFVirtualFile,
   project: Project,
@@ -41,7 +41,7 @@ class FileLikeDatasetNode(
   treeStructure: ExplorerTreeStructureBase
 ) : ExplorerUnitTreeNodeBase<ConnectionConfig, MFVirtualFile, ExplorerUnit<ConnectionConfig>>(
   file, project, parent, unit, treeStructure
-), MFNode {
+) {
 
   override fun isAlwaysLeaf(): Boolean {
     return !value.isDirectory
