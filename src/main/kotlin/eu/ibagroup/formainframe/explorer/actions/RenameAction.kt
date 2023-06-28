@@ -19,161 +19,153 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
-import eu.ibagroup.formainframe.config.configCrudable
-import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.utils.clone
-import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
- * Class which represents a rename action
+ * Class which represents a "Rename" action.
+ * The action is shown and triggered only on [UssFileNode], [UssDirNode] (not a USS mask),
+ * [LibraryNode] and [FileLikeDatasetNode] node types
  */
 class RenameAction : AnAction() {
 
   /**
-   * Overloaded method of AnAction abstract class. Tells what to do if an action was submitted
-   */
-  override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getExplorerView<FileExplorerView>() ?: return
-    val selectedNode = view.mySelectedNodesData[0]
-    val node = selectedNode.node
-    var initialState = ""
-    if (node is DSMaskNode) {
-      initialState = (selectedNode.node.value as DSMask).mask
-      val dialog = RenameDialog(e.project, "Dataset Mask", selectedNode, this, initialState)
-      if (dialog.showAndGet()) {
-        val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
-        val wsToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentValue.uuid)?.clone()
-        if (wsToUpdate != null) {
-          wsToUpdate.dsMasks.filter { it.mask == initialState }[0].mask = dialog.state.uppercase()
-          configCrudable.update(wsToUpdate)
-        }
-      }
-    } else if (node is LibraryNode || node is FileLikeDatasetNode) {
-      val attributes = selectedNode.attributes ?: return
-      var type = ""
-      if (attributes is RemoteDatasetAttributes) {
-        initialState = attributes.datasetInfo.name
-        type = "Dataset"
-      } else if (attributes is RemoteMemberAttributes) {
-        initialState = attributes.info.name
-        type = "Member"
-      }
-      val dialog = RenameDialog(e.project, type, selectedNode, this, initialState)
-      val file = node.virtualFile
-      if (dialog.showAndGet() && file != null) {
-        runRenameOperation(e.project, file, attributes, dialog.state, node)
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
-      }
-    } else if (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath) {
-      initialState = selectedNode.node.value.path
-      val dialog = RenameDialog(e.project, "USS Mask", selectedNode, this, initialState)
-      if (dialog.showAndGet()) {
-        val parentValue = selectedNode.node.parent?.value as FilesWorkingSet
-        val wsToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentValue.uuid)?.clone()
-        if (wsToUpdate != null) {
-          wsToUpdate.ussPaths.filter { it.path == initialState }[0].path = dialog.state
-          configCrudable.update(wsToUpdate)
-        }
-      }
-
-    } else if (selectedNode.node is UssDirNode || selectedNode.node is UssFileNode) {
-      val attributes = selectedNode.attributes as RemoteUssAttributes
-      val file = selectedNode.file
-      val dialog = RenameDialog(
-        e.project,
-        if (attributes.isDirectory) "Directory" else "File",
-        selectedNode,
-        this,
-        attributes.name
-      )
-      if (dialog.showAndGet() && file != null) {
-        runRenameOperation(e.project, file, attributes, dialog.state, node)
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
-      }
-    }
-  }
-
-  /**
    * Method to run rename operation. It passes the control to rename operation runner
-   * @param project - current project
-   * @param file - a virtual file to be renamed
-   * @param attributes - remote attributes of the given virtual file
-   * @param newName - a new name of the virtual file in VFS
-   * @param node - an instance of explorer unit
+   * @param project the current project
+   * @param file the virtual file to be renamed
+   * @param type the type of the virtual file to be renamed
+   * @param attributes remote attributes of the given virtual file
+   * @param newName a new name of the virtual file in VFS
+   * @param node an instance of the explorer node
    * @throws any throwable during the processing of the request
    * @return Void
    */
   private fun runRenameOperation(
     project: Project?,
     file: VirtualFile,
+    type: String,
     attributes: FileAttributes,
     newName: String,
     node: ExplorerTreeNode<*, *>
   ) {
     runBackgroundableTask(
-      title = "Renaming file ${file.name} to $newName",
+      title = "Renaming $type ${file.name} to $newName",
       project = project,
       cancellable = true
     ) {
       runCatching {
-        node.explorer.componentManager.service<DataOpsManager>().performOperation(
-          operation = RenameOperation(
-            file = file,
-            attributes = attributes,
-            newName = newName
-          ),
-          progressIndicator = it
-        )
-      }.onSuccess {
-        node.parent?.cleanCacheIfPossible(cleanBatchedQuery = true)
-      }.onFailure {
-        node.explorer.reportThrowable(it, project)
+        node.explorer.componentManager
+          .service<DataOpsManager>()
+          .performOperation(
+            operation = RenameOperation(
+              file = file,
+              attributes = attributes,
+              newName = newName
+            ),
+            progressIndicator = it
+          )
+      }
+        .onSuccess {
+          node.parent?.cleanCacheIfPossible(cleanBatchedQuery = true)
+        }
+        .onFailure {
+          node.explorer.reportThrowable(it, project)
+        }
+    }
+  }
+
+  /**
+   * Run "Rename" action on the selected element.
+   * Runs only on [UssFileNode], [UssDirNode] (not a USS mask), [LibraryNode] or [FileLikeDatasetNode] node types
+   */
+  override fun actionPerformed(e: AnActionEvent) {
+    val view = e.getExplorerView<FileExplorerView>() ?: return
+    val selectedNodeData = view.mySelectedNodesData[0]
+    val node = selectedNodeData.node
+    if (
+      node is LibraryNode ||
+      node is FileLikeDatasetNode ||
+      (node is UssDirNode && !node.isUssMask) ||
+      node is UssFileNode
+    ) {
+      val attributes = selectedNodeData.attributes ?: return
+      val type: String
+      val state: String
+      val file: MFVirtualFile?
+      when (attributes) {
+        is RemoteDatasetAttributes -> {
+          type = "Dataset"
+          state = attributes.datasetInfo.name
+          file = node.virtualFile
+        }
+
+        is RemoteMemberAttributes -> {
+          type = "Member"
+          state = attributes.info.name
+          file = node.virtualFile
+        }
+
+        is RemoteUssAttributes -> {
+          type = if (attributes.isDirectory) "Directory" else "File"
+          state = attributes.name
+          file = selectedNodeData.file
+        }
+
+        else -> {
+          throw Exception("Error during rename action execution: Unknown attributes type. $attributes")
+        }
+      }
+      val dialog = RenameDialog(e.project, type, selectedNodeData, this, state)
+      if (dialog.showAndGet() && file != null) {
+        runRenameOperation(e.project, file, type, attributes, dialog.state, node)
+        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
       }
     }
   }
 
   /**
-   * Method determines if an action is visible for particular virtual file in VFS
+   * Make "Rename" action visible if a context menu is called.
+   * The "Rename" action will be visible if:
+   * 1. A context menu is triggered in a [FileExplorerView]
+   * 2. Selected only one node
+   * 3. The node is a [UssFileNode], [UssDirNode] (not a USS mask), [LibraryNode] or [FileLikeDatasetNode]
+   * 4. The node is a non-migrated dataset
    */
   override fun update(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val selectedNodes = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1) {
-      val node = selectedNodes[0].node
-      if (node is FilesWorkingSetNode || node is LoadingNode || node is LoadMoreNode) {
-        false
-      } else {
-        val file = selectedNodes[0].file
-        var isMigrated = false
-        if (file != null) {
-          val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
-          isMigrated = attributes?.isMigrated ?: false
-        }
-        !isMigrated
-      }
-    } else {
-      false
+    val selectedNodesData = view.mySelectedNodesData
+    if (selectedNodesData.size != 1) {
+      e.presentation.isEnabledAndVisible = false
+      return
     }
-    if (e.presentation.isEnabledAndVisible) {
-      val selectedNode = selectedNodes[0]
-      if (selectedNode.node is DSMaskNode || (selectedNode.node is UssDirNode && selectedNode.node.isConfigUssPath)) {
-        e.presentation.text = "Edit"
-      } else {
-        e.presentation.text = "Rename"
+    val node = selectedNodesData[0].node
+    if (
+      node !is UssFileNode &&
+      (node !is UssDirNode || node.isUssMask) &&
+      node !is LibraryNode &&
+      node !is FileLikeDatasetNode
+    ) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val file = selectedNodesData[0].file
+    if (file != null) {
+      val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
+      if (attributes?.isMigrated == true) {
+        e.presentation.isEnabledAndVisible = false
+        return
       }
     }
+    e.presentation.isEnabledAndVisible = true
   }
 
   /**

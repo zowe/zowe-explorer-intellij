@@ -78,8 +78,8 @@ class ForceRenameAction : AnAction() {
           if (it is UssFileNode && it.value.filenameInternal == text) {
             val confirmTemplate =
               "You are going to rename file $virtualFilePath \n" +
-                "into existing one. This operation cannot be undone. \n" +
-                "Would you like to proceed?"
+                  "into existing one. This operation cannot be undone. \n" +
+                  "Would you like to proceed?"
             return Messages.showOkCancelDialog(
               confirmTemplate,
               "Warning",
@@ -178,7 +178,7 @@ class ForceRenameAction : AnAction() {
     val selectedNodes = view.mySelectedNodesData
     e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1) {
       val node = selectedNodes[0].node
-      (node is UssDirNode && !node.isConfigUssPath) || node is UssFileNode
+      (node is UssDirNode && !node.isUssMask) || node is UssFileNode
     } else {
       false
     }

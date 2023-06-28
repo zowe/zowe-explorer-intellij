@@ -14,8 +14,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
+import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
@@ -40,10 +40,10 @@ private val segmentLengthErrorText = "Each name segment (qualifier) is 1 to 8 ch
 private val charactersLengthExceededErrorText = "Dataset name cannot exceed 44 characters"
 private val segmentCharsErrorText =
   "$segmentLengthErrorText," +
-    "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
-    "\nThe remaining seven characters are either alphabetic," +
-    "\nnumeric (0 - 9), national, a hyphen (-)." +
-    "\nName segments are separated by a period (.)"
+      "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
+      "\nThe remaining seven characters are either alphabetic," +
+      "\nnumeric (0 - 9), national, a hyphen (-)." +
+      "\nName segments are separated by a period (.)"
 private val jobIdRegex = Regex("[A-Za-z0-9]+")
 private val volserRegex = Regex("[A-Za-z0-9]{1,6}")
 private val firstLetterRegex = Regex("[A-Z@\$#a-z]")
@@ -120,18 +120,21 @@ fun <WSConfig : WorkingSetConfig> validateWorkingSetName(
 }
 
 /**
- * Validate working set mask name not to be the same as the existing one
+ * Validate working set mask name not to be the same as the existing one.
+ * Validation is skipped if the name of the mask stays the same as the previous one
  * @param component the component to check the working set mask name
- * @param ws working set to check the existing masks
+ * @param state the mask state with working set inside
  */
-fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
-  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.uppercase())
-    || ws.ussPaths.map { it.path }.contains(component.text)
+fun validateWorkingSetMaskName(component: JTextField, state: MaskStateWithWS): ValidationInfo? {
+  val textToCheck = if (state.type == MaskType.ZOS) component.text.uppercase() else component.text
+  val sameMaskName = state.mask == textToCheck
+  val maskAlreadyExists = state.ws.masks.map { it.mask }.contains(component.text.uppercase())
+      || state.ws.ussPaths.map { it.path }.contains(component.text)
 
-  return if (maskAlreadyExists) {
+  return if (!sameMaskName && maskAlreadyExists) {
     ValidationInfo(
       "You must provide unique mask in working set. Working Set " +
-        "\"${ws.name}\" already has mask - ${component.text}", component
+          "\"${state.ws.name}\" already has mask - ${component.text}", component
     )
   } else {
     null
@@ -378,7 +381,7 @@ fun validateJobFilter(
  */
 fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData<*>): ValidationInfo? {
   val text: String = component.text
-  val childrenNodesFromParent = selectedNode.node.parent?.children
+  val childrenNodesFromParent = selectedNode.node.parent?.children?.filter { it != selectedNode.node }
   when (selectedNode.node) {
     is UssFileNode -> {
       childrenNodesFromParent?.forEach {
@@ -480,7 +483,10 @@ fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
  */
 fun validateForGreaterOrEqualValue(component: JTextField, value: Int): ValidationInfo? {
   return if ((component.text.toIntOrNull() ?: -1) < value) {
-    ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number greater than or equal to $value", component)
+    ValidationInfo(
+      if (value == 0) "Enter a positive number" else "Enter a number greater than or equal to $value",
+      component
+    )
   } else {
     null
   }

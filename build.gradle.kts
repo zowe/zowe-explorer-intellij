@@ -12,7 +12,7 @@ import kotlinx.kover.api.KoverTaskExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("org.jetbrains.intellij") version "1.13.0"
+  id("org.jetbrains.intellij") version "1.14.2"
   kotlin("jvm") version "1.7.10"
   java
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
@@ -33,13 +33,7 @@ repositories {
     url = uri("https://zowe.jfrog.io/zowe/libs-release")
   }
   maven {
-    url = uri("http://10.221.23.186:8082/repository/internal/")
-    isAllowInsecureProtocol = true
-    credentials {
-      username = "admin"
-      password = "password123"
-    }
-    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     flatDir {
       dir("libs")
     }
