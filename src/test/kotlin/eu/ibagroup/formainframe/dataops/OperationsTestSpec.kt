@@ -11,7 +11,10 @@
 package eu.ibagroup.formainframe.dataops
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
@@ -21,12 +24,15 @@ import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.dataops.attributes.*
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.LF_LINE_SEPARATOR
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMover
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
+import eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMover
 import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl
 import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.changeFileEncodingTo
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.utils.setUssFileTag
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -35,16 +41,15 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkStatic
+import io.mockk.*
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.XIBMDataType
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import retrofit2.Response
+import java.io.File
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
 inline fun mockkRequesters(
@@ -126,11 +131,59 @@ class OperationsTestSpec : ShouldSpec({
     // SequentialToPdsMover.canRun
     should("return true when we try to move sequential dataset to the not sequential dataset") {}
     should("return false when we try to move sequential dataset to another sequential dataset") {}
-    // RemoteToLocalFileMover.canRun
-    should("return true when we try to move USS file to a local folder") {}
-    should("return false when we try to move USS file to a local file") {}
-    // RemoteToLocalFileMover.run
-    should("move a remote USS binary file to a local folder") {}
+    context("RemoteToLocalFileMover") {
+      val remoteToLocalFileMover = spyk(RemoteToLocalFileMover(mockk()))
+
+      val fileMockk = mockk<File>()
+      val virtualFileMockk = mockk<VirtualFile>()
+      val charsetMockk = mockk<Charset>()
+      every { virtualFileMockk.charset } returns charsetMockk
+      every { virtualFileMockk.detectedLineSeparator } returns LF_LINE_SEPARATOR
+
+      var encodingChanged = false
+      var lineSeparatorChanged = false
+
+      beforeEach {
+        encodingChanged = false
+        lineSeparatorChanged = false
+
+        mockkStatic(LocalFileSystem::getInstance)
+        every { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileMockk) } returns mockk()
+
+        mockkStatic(::changeFileEncodingTo)
+        every { changeFileEncodingTo(any(), charsetMockk) } answers {
+          encodingChanged = true
+        }
+
+        mockkStatic(LoadTextUtil::changeLineSeparators)
+        every { LoadTextUtil.changeLineSeparators(null, any(), LF_LINE_SEPARATOR, any()) } answers {
+          lineSeparatorChanged = true
+        }
+      }
+      afterEach {
+        unmockkAll()
+      }
+
+      val setCreatedFileParamsRef = remoteToLocalFileMover::class.java.declaredMethods
+        .first { it.name == "setCreatedFileParams" }
+      setCreatedFileParamsRef.trySetAccessible()
+
+      // canRun
+      should("return true when we try to move USS file to a local folder") {}
+      should("return false when we try to move USS file to a local file") {}
+      // run
+      should("move a remote USS binary file to a local folder") {}
+      // setCreatedFileParams
+      should("set parameters for created file in local system") {
+        setCreatedFileParamsRef.invoke(remoteToLocalFileMover, fileMockk, virtualFileMockk)
+
+        assertSoftly {
+          encodingChanged shouldBe true
+          lineSeparatorChanged shouldBe true
+        }
+
+      }
+    }
     // RemoteToLocalDirectoryMoverFactory.canRun
     should("return true when we try to move USS folder to a local folder") {}
     should("return false when we try to move USS folder to a local file") {}

@@ -34,7 +34,7 @@ class DSMaskNode(
   treeStructure: ExplorerTreeStructureBase
 ) : RemoteMFFileFetchNode<ConnectionConfig, DSMask, DSMask, FilesWorkingSet>(
   dsMask, project, parent, workingSet, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
 
   override fun update(presentation: PresentationData) {
     presentation.addText(value.mask, SimpleTextAttributes.REGULAR_ATTRIBUTES)
