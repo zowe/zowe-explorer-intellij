@@ -33,7 +33,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val contentFactory = ContentFactory.getInstance()
-    UIComponentManager.INSTANCE.getExplorerContentProviders<Explorer<*>>().forEach {
+    UIComponentManager.INSTANCE.getExplorerContentProviders().forEach {
       val content = contentFactory
         .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)
       toolWindow.contentManager.addContent(content)

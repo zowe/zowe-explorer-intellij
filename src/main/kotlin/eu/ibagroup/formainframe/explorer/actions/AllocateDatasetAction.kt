@@ -46,12 +46,7 @@ import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.service
-import org.zowe.kotlinsdk.AllocationUnit
-import org.zowe.kotlinsdk.DatasetOrganization
-import org.zowe.kotlinsdk.DsnameType
-import org.zowe.kotlinsdk.RecordFormat
-import org.zowe.kotlinsdk.SpaceUnits
+import org.zowe.kotlinsdk.*
 
 /**
  * Action class for dataset allocation with parameters chosen by user
