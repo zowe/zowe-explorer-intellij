@@ -18,7 +18,10 @@ import com.intellij.ide.dnd.DnDTarget
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runModalTask
@@ -101,7 +104,7 @@ class FileExplorerView(
   internal val isCut = AtomicBoolean(false)
 
   private val cutCopyPredicate: (NodeData<*>) -> Boolean = {
-    it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isConfigUssPath)
+    it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isUssMask)
   }
 
   /**
@@ -449,7 +452,7 @@ class FileExplorerView(
             it.unit.removeMask(it.value)
           }
         }
-      selected.map { it.node }.filter { it is UssDirNode && it.isConfigUssPath }
+      selected.map { it.node }.filter { it is UssDirNode && it.isUssMask }
         .filter { explorer.isUnitPresented((it as UssDirNode).unit) }
         .forEach {
           val node = it as UssDirNode
@@ -471,7 +474,7 @@ class FileExplorerView(
         }
       val nodeDataAndPaths = selected
         .filterNot {
-          it.node is FilesWorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isConfigUssPath)
+          it.node is FilesWorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isUssMask)
         }.mapNotNull {
           Pair(it, it.file?.getParentsChain() ?: return@mapNotNull null)
         }
@@ -534,7 +537,7 @@ class FileExplorerView(
       return selected.any {
         it.node is FilesWorkingSetNode
             || it.node is DSMaskNode
-            || (it.node is UssDirNode && it.node.isConfigUssPath)
+            || (it.node is UssDirNode && it.node.isUssMask)
             || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
       }
     }
@@ -580,7 +583,7 @@ class FileExplorerView(
  * Class containing together node, corresponding file and its attributes.
  * @author Viktar Mushtsin.
  */
-data class NodeData<Connection: ConnectionConfigBase>(
+data class NodeData<Connection : ConnectionConfigBase>(
   val node: ExplorerTreeNode<Connection, *>,
   val file: MFVirtualFile?,
   val attributes: FileAttributes?

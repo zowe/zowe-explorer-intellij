@@ -33,7 +33,16 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.AllocationDialog
+import eu.ibagroup.formainframe.explorer.ui.DSMaskNode
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.FileFetchNode
+import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
+import eu.ibagroup.formainframe.explorer.ui.FilesWorkingSetNode
+import eu.ibagroup.formainframe.explorer.ui.LibraryNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
@@ -53,15 +62,23 @@ class AllocateDatasetAction : AnAction() {
   }
 
   /**
-   * Determines if dataset allocation is possible for chosen object
+   * Determines if dataset allocation is possible for chosen object.
+   * Shows the action if:
+   * 1. It is a [FileExplorerView]
+   * 2. The first selected node is [FilesWorkingSetNode], [DSMaskNode], [LibraryNode] or [FileLikeDatasetNode]
    */
   override fun update(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val selected = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = selected.getOrNull(0)?.node is MFNode
+    val selectedNodesData = view.mySelectedNodesData
+    val node = selectedNodesData.getOrNull(0)?.node
+    if (node !is FilesWorkingSetNode && node !is DSMaskNode && node !is LibraryNode && node !is FileLikeDatasetNode) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isEnabledAndVisible = true
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 
@@ -265,8 +282,8 @@ class AllocateLikeAction : AnAction() {
     }
     val selected = view.mySelectedNodesData
     e.presentation.isEnabledAndVisible = selected.size == 1
-      && selected[0].attributes is RemoteDatasetAttributes
-      && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
+        && selected[0].attributes is RemoteDatasetAttributes
+        && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 
