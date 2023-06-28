@@ -32,7 +32,7 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "eu.ibagroup"
-version = "1.1.0-223"
+version = "1.1.0-231"
 val remoteRobotVersion = "0.11.18"
 val okHttp3Version = "4.10.0"
 val kotestVersion = "5.5.5"
@@ -88,7 +88,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.3")
+  version.set("2023.1")
 }
 
 tasks {
@@ -100,8 +100,8 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set("223.7571")
-    untilBuild.set("223.*")
+    sinceBuild.set("231.8109")
+    untilBuild.set("231.*")
     changeNotes.set(
       """
       <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.3
