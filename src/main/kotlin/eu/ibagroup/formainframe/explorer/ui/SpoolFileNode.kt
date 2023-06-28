@@ -34,7 +34,7 @@ class SpoolFileNode(
   treeStructure: ExplorerTreeStructureBase
 ) : ExplorerUnitTreeNodeBase<ConnectionConfig, MFVirtualFile, ExplorerUnit<ConnectionConfig>>(
   file, project, parent, unit, treeStructure
-), MFNode {
+) {
   override fun update(presentation: PresentationData) {
     val attributes = service<DataOpsManager>().tryToGetAttributes(value) as? RemoteSpoolFileAttributes
     val spoolFile = attributes?.info

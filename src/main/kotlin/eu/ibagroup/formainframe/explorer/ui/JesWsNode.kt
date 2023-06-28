@@ -27,7 +27,7 @@ class JesWsNode(
   treeStructure: ExplorerTreeStructureBase
 ) : WorkingSetNode<ConnectionConfig, JobsFilter>(
   workingSet, project, parent, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
 
   override val regularTooltip = "JES Working Set"
 
