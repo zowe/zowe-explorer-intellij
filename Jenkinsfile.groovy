@@ -7,11 +7,8 @@
  *
  * Copyright IBA Group 2020
  */
-
-import groovy.xml.XmlUtil
-
 def jiraSite = 'jira-iba'
-def gitCredentialsId = 'jenkins-gitlab-key'
+def gitCredentialsId = 'e92a3d13-efc3-47d7-955f-a78ad9d7faac'
 //def gitUrl = 'https://code.iby.scdc.io/ijmp/for-mainframe.git'
 def gitUrl = 'git@code.iby.scdc.io:ijmp/for-mainframe.git'
 def resultFileName = ''
@@ -21,18 +18,16 @@ properties([gitLabConnection('code.iby.scdc.io-connection')])
 
 // @NonCPS
 // def changeVersion(String xmlFile) {
+
 //     def xml = new XmlSlurper().parseText(xmlFile)
 //     println xml.'idea-version'.'@since-build'
 //     xml.'idea-version'.'@since-build' =  '203.7148.72'
-
 //     def w = new StringWriter()
 //     XmlUtil.serialize(xml, w)
-
-
 //     return w.toString()
 // }
 
-pipeline{
+pipeline {
     agent any
     triggers {
         gitlab(triggerOnPush: true, triggerOnMergeRequest: true, skipWorkInProgressMergeRequest: true,
@@ -41,32 +36,32 @@ pipeline{
     options {
         disableConcurrentBuilds()
     }
-    tools{
+    tools {
         gradle 'Default'
+        jdk 'Java 11'
     }
-    stages{
-        stage('Initial checkup'){
-            steps{
+    stages {
+        stage('Initial checkup') {
+            steps {
                 sh 'java -version'
             }
         }
-        stage('Get Jira Ticket'){
-            steps{
+        stage('Get Jira Ticket') {
+            steps {
                 echo gitlabBranch
-                script{
-                    if(gitlabBranch.equals("development")){
+                script {
+                    if (gitlabBranch.equals("development")) {
                         jiraTicket = 'development'
-                    } else if(gitlabBranch.equals("zowe-development")) {
+                    } else if (gitlabBranch.equals("zowe-development")) {
                         jiraTicket = 'zowe-development'
-                    } else if(gitlabBranch.contains("release")){
+                    } else if (gitlabBranch.contains("release")) {
                         jiraTicket = gitlabBranch
                     } else {
-                        def pattern = ~ /(?i)ijmp-\d+/
+                        def pattern = ~/(?i)ijmp-\d+/
                         def matcher = gitlabBranch =~ pattern
                         if (matcher.find()) {
                             jiraTicket = matcher[0].toUpperCase()
-                        }
-                        else {
+                        } else {
                             jiraTicket = "null"
                             echo "Jira ticket name wasn't found!"
                         }
@@ -75,28 +70,30 @@ pipeline{
                 echo "Jira ticket: $jiraTicket"
             }
         }
-        stage('Clone Branch'){
-            steps{
+        stage('Clone Branch') {
+            steps {
                 cleanWs()
                 sh "ls -la"
                 git branch: "$gitlabBranch", credentialsId: "$gitCredentialsId", url: "$gitUrl"
             }
         }
-        stage('Build Plugin IDEA'){
-            steps{
+        stage('Build Plugin IDEA') {
+            steps {
                 // sh 'sudo chmod +x /etc/profile.d/gradle.sh'
                 // sh 'sudo -s source /etc/profile.d/gradle.sh'
                 withGradle {
                     // To change Gradle version - Jenkins/Manage Jenkins/Global Tool Configuration
                     // sh 'gradle -v'
                     sh 'gradle wrapper'
+                    sh './gradlew -v'
+                    sh './gradlew test'
                     sh './gradlew buildPlugin'
                 }
             }
         }
-        stage('Move to the AWS - IDEA'){
-            steps{
-                script{
+        stage('Move to the AWS - IDEA') {
+            steps {
+                script {
                     resultFileName = sh(returnStdout: true, script: "cd build/distributions/ && ls").trim()
                 }
                 sh """
@@ -116,19 +113,19 @@ pipeline{
                 fi
                 """
             }
-            post{
+            post {
                 success {
-                    script{
-                        if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
-                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built. You can download your build from the following link http://10.221.23.186/ijmp-plugin/$jiraTicket/idea/$resultFileName.", site:"$jiraSite"
+                    script {
+                        if (!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
+                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built. You can download your build from the following link http://10.222.240.3/ijmp-plugin/$jiraTicket/idea/$resultFileName.", site: "$jiraSite"
                         }
 
                     }
                 }
                 failure {
-                    script{
-                        if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
-                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site:"$jiraSite"
+                    script {
+                        if (!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
+                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.222.240.3:8080/job/BuildPluginPipeline/", site: "$jiraSite"
                         }
                     }
                 }
@@ -184,7 +181,6 @@ pipeline{
 
 
     }
-
 
 
 }

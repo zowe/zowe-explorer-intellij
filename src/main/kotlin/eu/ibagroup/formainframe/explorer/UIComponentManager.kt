@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 
 /** UI component manager service interface */
 interface UIComponentManager : Disposable {
@@ -20,10 +21,10 @@ interface UIComponentManager : Disposable {
     val INSTANCE = ApplicationManager.getApplication().getService(UIComponentManager::class.java)
   }
 
-  fun <E : Explorer<*>> getExplorerContentProviders(): List<ExplorerContentProvider<E>>
+  fun getExplorerContentProviders(): List<ExplorerContentProvider<*, *>>
 
-  fun <E : Explorer<*>> getExplorerContentProvider(clazz: Class<out E>): ExplorerContentProvider<E>
+  fun <E : Explorer<*, *>> getExplorerContentProvider(clazz: Class<out E>): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>>?
 
-  fun <E : Explorer<*>> getExplorer(clazz: Class<out E>): E
+  fun <E : Explorer<*, *>> getExplorer(clazz: Class<out E>): E
 
 }

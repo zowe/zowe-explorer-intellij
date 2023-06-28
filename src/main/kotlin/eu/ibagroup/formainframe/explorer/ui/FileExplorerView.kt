@@ -18,7 +18,10 @@ import com.intellij.ide.dnd.DnDTarget
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runModalTask
@@ -30,6 +33,8 @@ import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.makeNodeDataFromTreePath
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
@@ -57,7 +62,6 @@ import kotlin.concurrent.withLock
  * Data key for extracting current instance of FileExplorerView.
  * @see FileExplorerView
  */
-val FILE_EXPLORER_VIEW = DataKey.create<FileExplorerView>("fileExplorerView")
 
 const val FILE_EXPLORER_CONTEXT_MENU = "File Explorer"
 
@@ -77,13 +81,13 @@ const val FILE_EXPLORER_CONTEXT_MENU = "File Explorer"
  * @author Valiantsin Krus
  */
 class FileExplorerView(
-  explorer: Explorer<FilesWorkingSet>,
+  explorer: Explorer<ConnectionConfig, FilesWorkingSet>,
   project: Project,
   parentDisposable: Disposable,
   contextMenu: ActionGroup,
-  rootNodeProvider: (explorer: Explorer<FilesWorkingSet>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
+  rootNodeProvider: (explorer: Explorer<ConnectionConfig, FilesWorkingSet>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<ConnectionConfig, *>,
   cutProviderUpdater: (List<VirtualFile>) -> Unit
-) : ExplorerTreeView<FilesWorkingSet, FilesWorkingSetConfig>(
+) : ExplorerTreeView<ConnectionConfig, FilesWorkingSet, FilesWorkingSetConfig>(
   explorer,
   project,
   parentDisposable,
@@ -91,16 +95,17 @@ class FileExplorerView(
   rootNodeProvider,
   cutProviderUpdater
 ) {
+  override val contextMenuPlace = FILE_EXPLORER_CONTEXT_MENU
   internal val copyPasteSupport = ExplorerCopyPasteSupport(project)
 
   private var myDragSource: DnDSource?
   private var myDropTarget: DnDTarget?
   private var isDropTargetRegistered = false
 
-  internal val isCut = AtomicBoolean(true)
+  internal val isCut = AtomicBoolean(false)
 
-  private val cutCopyPredicate: (NodeData) -> Boolean = {
-    it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isConfigUssPath)
+  private val cutCopyPredicate: (NodeData<*>) -> Boolean = {
+    it.attributes?.isCopyPossible == true && (!isCut.get() || it.node !is UssDirNode || !it.node.isUssMask)
   }
 
   /**
@@ -135,11 +140,11 @@ class FileExplorerView(
 
     /** buffer of files to copy */
     @Volatile
-    var copyPasteBuffer = LinkedList<NodeData>()
+    var copyPasteBuffer = LinkedList<NodeData<*>>()
 
     /** buffer of files that was dragged. */
     @Volatile
-    var dragAndDropCopyPasteBuffer = LinkedList<NodeData>()
+    var dragAndDropCopyPasteBuffer = LinkedList<NodeData<ConnectionConfig>>()
 
     /** Checks if copy/cut action can be enabled and visible. */
     private fun isCopyCutEnabledAndVisible(dataContext: DataContext): Boolean {
@@ -151,7 +156,7 @@ class FileExplorerView(
      * Removes nodes data from copy paste buffer by predicate
      * @param removePredicate predicate which will decide is node data need to be deleted.
      */
-    fun removeFromBuffer(removePredicate: (NodeData) -> Boolean = { true }) {
+    fun removeFromBuffer(removePredicate: (NodeData<*>) -> Boolean = { true }) {
       val copyPasteBuffer = copyPasteSupport.copyPasteBuffer
       synchronized(copyPasteBuffer) {
         copyPasteBuffer.removeIf(removePredicate)
@@ -326,7 +331,7 @@ class FileExplorerView(
      * @param sourceNodesData list of nodes data of files to copy.
      * @return true if paste is possible or false otherwise.
      */
-    internal fun isPastePossible(destinationFiles: List<VirtualFile>?, sourceNodesData: List<NodeData>): Boolean {
+    internal fun isPastePossible(destinationFiles: List<VirtualFile>?, sourceNodesData: List<NodeData<*>>): Boolean {
       return isPastePossibleForFiles(destinationFiles, sourceNodesData.mapNotNull { it.file })
     }
 
@@ -342,9 +347,9 @@ class FileExplorerView(
           makeNodeDataFromTreePath(
             explorer,
             it
-          ).let { nodeData -> if (nodeData.file is VirtualFile) nodeData.file else null }
+          )?.let { nodeData -> if (nodeData.file is VirtualFile) nodeData.file else null }
         },
-        sourcePaths.map { makeNodeDataFromTreePath(explorer, it) }
+        sourcePaths.mapNotNull { makeNodeDataFromTreePath(explorer, it) }
       )
     }
 
@@ -439,11 +444,16 @@ class FileExplorerView(
               icon = AllIcons.General.QuestionDialog
             )
           ) {
-            it.cleanCache(recursively = true, cleanFetchProviderCache = true, cleanBatchedQuery = true, sendTopic = false)
+            it.cleanCache(
+              recursively = true,
+              cleanFetchProviderCache = true,
+              cleanBatchedQuery = true,
+              sendTopic = false
+            )
             it.unit.removeMask(it.value)
           }
         }
-      selected.map { it.node }.filter { it is UssDirNode && it.isConfigUssPath }
+      selected.map { it.node }.filter { it is UssDirNode && it.isUssMask }
         .filter { explorer.isUnitPresented((it as UssDirNode).unit) }
         .forEach {
           val node = it as UssDirNode
@@ -454,13 +464,18 @@ class FileExplorerView(
               icon = AllIcons.General.QuestionDialog
             )
           ) {
-            node.cleanCache(recursively = true, cleanFetchProviderCache = true, cleanBatchedQuery = true, sendTopic = false)
+            node.cleanCache(
+              recursively = true,
+              cleanFetchProviderCache = true,
+              cleanBatchedQuery = true,
+              sendTopic = false
+            )
             node.unit.removeUssPath(node.value)
           }
         }
       val nodeDataAndPaths = selected
         .filterNot {
-          it.node is FilesWorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isConfigUssPath)
+          it.node is FilesWorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isUssMask)
         }.mapNotNull {
           Pair(it, it.file?.getParentsChain() ?: return@mapNotNull null)
         }
@@ -500,8 +515,15 @@ class FileExplorerView(
                 indicator.fraction = indicator.fraction + 1.0 / files.size
               }
             nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }.distinctBy { it.path }
-              .filterIsInstance<FileFetchNode<*, *, *, *, *>>()
-              .forEach { it.cleanCache(recursively = it is UssDirNode, cleanBatchedQuery = true, cleanFetchProviderCache = true, sendTopic = true) }
+              .filterIsInstance<FileFetchNode<*, *, *, *, *, *>>()
+              .forEach {
+                it.cleanCache(
+                  recursively = it is UssDirNode,
+                  cleanBatchedQuery = true,
+                  cleanFetchProviderCache = true,
+                  sendTopic = true
+                )
+              }
           }
         }
       }
@@ -515,9 +537,9 @@ class FileExplorerView(
       }
       return selected.any {
         it.node is FilesWorkingSetNode
-          || it.node is DSMaskNode
-          || (it.node is UssDirNode && it.node.isConfigUssPath)
-          || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
+            || it.node is DSMaskNode
+            || (it.node is UssDirNode && it.node.isUssMask)
+            || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
       }
     }
   }
@@ -551,7 +573,7 @@ class FileExplorerView(
       PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> copyPasteSupport.cutProvider
       PlatformDataKeys.PASTE_PROVIDER.`is`(dataId) -> copyPasteSupport.pasteProvider
       PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> deleteProvider
-      FILE_EXPLORER_VIEW.`is`(dataId) -> this
+      EXPLORER_VIEW.`is`(dataId) -> this
       else -> null
     }
   }
@@ -562,11 +584,11 @@ class FileExplorerView(
  * Class containing together node, corresponding file and its attributes.
  * @author Viktar Mushtsin.
  */
-data class NodeData(
-  val node: ExplorerTreeNode<*>,
+data class NodeData<Connection : ConnectionConfigBase>(
+  val node: ExplorerTreeNode<Connection, *>,
   val file: MFVirtualFile?,
   val attributes: FileAttributes?
 )
 
 /** Type alias for fetch node with any possible generic types. */
-typealias FetchNode = FileFetchNode<*, *, *, *, *>
+typealias FetchNode = FileFetchNode<*, *, *, *, *, *>

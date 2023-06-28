@@ -23,30 +23,31 @@ import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.common.ui.tableWithToolbar
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.Crudable
-import eu.ibagroup.formainframe.utils.crudable.getAll
-import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import eu.ibagroup.formainframe.utils.nullable
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateWorkingSetName
 import java.awt.Dimension
+import java.util.stream.Collectors
 import javax.swing.JComponent
-import kotlin.streams.toList
 
 /**
  * Abstract class for displaying configuration dialog of single Working Set.
- * @param WSConfig Implementation class of WorkingSetConfig
- * @see WorkingSetConfig
- * @param TableRow Class with data for each column of filters/masks table (for example mask, system type, ...)
- * @param WSDState Implementation of AbstractWsDialogState
- * @see AbstractWsDialogState
+ * @param Connection The system (such as zosmf, cics etc.) connection class to work with (see [ConnectionConfigBase]).
+ * @param WSConfig Implementation class of [WorkingSetConfig].
+ * @param TableRow Class with data for each column of filters/masks table (for example mask, system type, ...).
+ * @param WSDState Implementation of [AbstractWsDialogState].
  * @param crudable Crudable instance to change data in after dialog applied.
- * @param wsdStateClass Instance of Class for WSDState
- * @param state Instance of WSDState
- * @param initialState Initial state of dialog. (used only working set name from initial state ???)
+ * @param wsdStateClass Instance of Class for WSDState.
+ * @property state Instance of WSDState.
+ * @property initialState Initial state of dialog. (used only working set name from initial state ???).
  * @author Valiantsin Krus
  * @author Viktar Mushtsin
  */
-abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
+abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : WorkingSetConfig, TableRow, WSDState : AbstractWsDialogState<WSConfig, TableRow>>(
   crudable: Crudable,
   wsdStateClass: Class<out WSDState>,
   override var state: WSDState,
@@ -54,8 +55,14 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
 ) : DialogWrapper(false), StatefulComponent<WSDState> {
 
   abstract val wsConfigClass: Class<out WSConfig>
+  abstract val connectionClass: Class<out Connection>
 
-  private val connectionComboBoxModel = CollectionComboBoxModel(crudable.getAll<ConnectionConfig>().toList())
+  // TODO: remove in v1.*.*-223 and greater
+  private val connectionComboBoxModel by lazy {
+    CollectionComboBoxModel(crudable.getAll(connectionClass).collect(Collectors.toList()))
+  }
+  // TODO: use in v1.*.*-223 and greater
+//  private val connectionComboBoxModel by lazy { CollectionComboBoxModel(crudable.getAll(connectionClass).toList()) }
 
   /**
    * Name of masks table.
@@ -97,15 +104,16 @@ abstract class AbstractWsDialog<WSConfig : WorkingSetConfig, TableRow, WSDState 
               wsConfigClass
             )
           }
+          .focused()
       }
       row {
         label("Specify connection")
         comboBox(connectionComboBoxModel, SimpleListCellRenderer.create("") { it?.name })
           .bindItem(
             {
-              return@bindItem crudable.getByUniqueKey<ConnectionConfig>(state.connectionUuid)
-                ?: if (!crudable.getAll<ConnectionConfig>().isEmpty()) {
-                  crudable.getAll<ConnectionConfig>().findAnyNullable()?.also {
+              return@bindItem crudable.getByUniqueKey(connectionClass, state.connectionUuid).nullable
+                ?: if (!crudable.getAll(connectionClass).isEmpty()) {
+                  crudable.getAll(connectionClass).findAny().nullable?.also {
                     state.connectionUuid = it.uuid
                   }
                 } else {

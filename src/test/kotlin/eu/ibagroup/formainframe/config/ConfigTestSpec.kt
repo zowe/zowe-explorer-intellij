@@ -10,28 +10,82 @@
 
 package eu.ibagroup.formainframe.config
 
-import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogState
-import eu.ibagroup.formainframe.config.connect.ui.ConnectionsTableModel
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import eu.ibagroup.formainframe.config.connect.*
+import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialogState
+import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionsTableModel
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.Operation
+import eu.ibagroup.formainframe.dataops.operations.TsoOperation
+import eu.ibagroup.formainframe.dataops.operations.TsoOperationMode
+import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.ui.build.tso.TSOWindowFactory
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.*
+import org.zowe.kotlinsdk.MessageType
+import org.zowe.kotlinsdk.TsoData
+import org.zowe.kotlinsdk.TsoResponse
+import org.zowe.kotlinsdk.annotations.ZVersion
+import kotlin.reflect.KFunction
 
 class ConfigTestSpec : ShouldSpec({
+  beforeSpec {
+    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
+    val factory = IdeaTestFixtureFactory.getFixtureFactory()
+    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
+    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
+    val fixture = fixtureBuilder.fixture
+    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
+      fixture,
+      LightTempDirTestFixtureImpl(true)
+    )
+    myFixture.setUp()
+  }
+  afterSpec {
+    clearAllMocks()
+  }
   context("config module: connect") {
     context("ui/ConnectionsTableModel") {
 
       lateinit var crudable: Crudable
       lateinit var connTab: ConnectionsTableModel
 
+      fun mockConfigService() {
+        val mockConfigServiceInstance = mockk<ConfigService>()
+        every { mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java) } returns ZOSMFConnectionConfigDeclaration(crudable)
+        every { mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java) } returns CredentialsConfigDeclaration(crudable)
+
+        mockkObject(ConfigService)
+        every { ConfigService.instance } returns mockConfigServiceInstance
+      }
+
       beforeEach {
-        val sandboxState = SandboxState()
+        val configCollections: MutableMap<String, MutableList<*>> = mutableMapOf(
+          Pair(ConnectionConfig::class.java.name, mutableListOf<ConnectionConfig>()),
+          Pair(FilesWorkingSetConfig::class.java.name, mutableListOf<ConnectionConfig>()),
+          Pair(JesWorkingSetConfig::class.java.name, mutableListOf<ConnectionConfig>()),
+        )
+        val sandboxState = SandboxState(ConfigStateV2(configCollections))
+
         crudable =
           makeCrudableWithoutListeners(true, { sandboxState.credentials }) { sandboxState.configState }
         connTab = ConnectionsTableModel(crudable)
+        mockConfigService()
       }
+
 
       val connectionDialogState = ConnectionDialogState(
         connectionName = "a", connectionUrl = "https://a.com", username = "a", password = "a"
@@ -124,6 +178,118 @@ class ConfigTestSpec : ShouldSpec({
             connTab[0].connectionUuid shouldNotBe connectionDialogState.connectionUuid
           }
         }
+      }
+    }
+    context("connectUtils") {
+      val connectionConfig = ConnectionConfig()
+
+      val explorerMock = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
+      every { explorerMock.componentManager } returns ApplicationManager.getApplication()
+
+      val dataOpsManagerService =
+        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+
+      beforeEach {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            val tsoResponse = TsoResponse(
+              servletKey = "servletKey",
+              tsoData = listOf(TsoData())
+            )
+            if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
+              tsoResponse.tsoData = listOf(
+                TsoData(tsoMessage = MessageType("", "ZOSMFAD  "))
+              )
+            }
+            @Suppress("UNCHECKED_CAST")
+            return tsoResponse as R
+          }
+        }
+
+        mockkObject(TSOWindowFactory)
+        every { TSOWindowFactory.getTsoMessageQueue(any()) } answers {
+          TsoResponse(
+            tsoData = listOf(
+              TsoData(tsoPrompt = MessageType(""))
+            )
+          )
+        }
+
+        val getUsernameRef: (ConnectionConfig) -> String = ::getUsername
+        mockkStatic(getUsernameRef as KFunction<*>)
+        every { getUsername(any<ConnectionConfig>()) } returns "ZOSMF"
+      }
+      afterEach {
+        unmockkAll()
+      }
+
+      // whoAmI
+      should("get the owner by TSO request") {
+
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe "ZOSMFAD" }
+      }
+      should("do not get the owner by TSO request if servlet key is null") {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return TsoResponse() as R
+          }
+        }
+
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe null }
+      }
+      should("do not get the owner by TSO request if servlet key is empty") {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return TsoResponse(servletKey = "") as R
+          }
+        }
+
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe null }
+      }
+      should("do not get the owner by TSO request if send message request fails") {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            val tsoResponse = TsoResponse(
+              servletKey = "servletKey",
+              tsoData = listOf(TsoData())
+            )
+            if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
+              throw Exception("Failed to send message")
+            }
+            @Suppress("UNCHECKED_CAST")
+            return tsoResponse as R
+          }
+        }
+
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe null }
+      }
+
+      // getOwner
+      should("get owner by connection config when owner is not empty") {
+        val owner = getOwner(
+          ConnectionConfig(
+            "", "", "", true, ZVersion.ZOS_2_3, "ZOSMFAD")
+        )
+
+        assertSoftly { owner shouldBe "ZOSMFAD" }
+      }
+      should("get owner by connection config when owner is empty") {
+        val owner = getOwner(
+          ConnectionConfig(
+            "", "", "", true, ZVersion.ZOS_2_3, "")
+        )
+
+        assertSoftly { owner shouldBe "ZOSMF" }
       }
     }
     context("Credentials.hashCode") {

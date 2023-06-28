@@ -11,7 +11,7 @@
 package eu.ibagroup.formainframe.dataops.operations
 
 import eu.ibagroup.formainframe.dataops.Operation
-import eu.ibagroup.r2z.TsoResponse
+import org.zowe.kotlinsdk.TsoResponse
 
 /**
  * Class which represents any TSO operation, e.g. start new TSO session
@@ -29,6 +29,9 @@ class TsoOperation(var state: Any,
   : Operation<TsoResponse> {
 
   override val resultClass = TsoResponse::class.java
+  override fun toString(): String {
+    return "TsoOperation(state=$state, mode=$mode, messageType=$messageType, messageData=$messageData, message=$message, resultClass=$resultClass)"
+  }
 }
 
 /**

@@ -33,12 +33,25 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.AllocationDialog
+import eu.ibagroup.formainframe.explorer.ui.DSMaskNode
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.FileFetchNode
+import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
+import eu.ibagroup.formainframe.explorer.ui.FilesWorkingSetNode
+import eu.ibagroup.formainframe.explorer.ui.LibraryNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
-import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
-import eu.ibagroup.r2z.*
+import eu.ibagroup.formainframe.utils.service
+import org.zowe.kotlinsdk.AllocationUnit
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.DsnameType
+import org.zowe.kotlinsdk.RecordFormat
+import org.zowe.kotlinsdk.SpaceUnits
 
 /**
  * Action class for dataset allocation with parameters chosen by user
@@ -54,15 +67,23 @@ class AllocateDatasetAction : AnAction() {
   }
 
   /**
-   * Determines if dataset allocation is possible for chosen object
+   * Determines if dataset allocation is possible for chosen object.
+   * Shows the action if:
+   * 1. It is a [FileExplorerView]
+   * 2. The first selected node is [FilesWorkingSetNode], [DSMaskNode], [LibraryNode] or [FileLikeDatasetNode]
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val selected = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible = selected.getOrNull(0)?.node is MFNode
+    val selectedNodesData = view.mySelectedNodesData
+    val node = selectedNodesData.getOrNull(0)?.node
+    if (node !is FilesWorkingSetNode && node !is DSMaskNode && node !is LibraryNode && node !is FileLikeDatasetNode) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isEnabledAndVisible = true
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 
@@ -80,14 +101,14 @@ class AllocateDatasetAction : AnAction() {
  * @param initialState contains state/parameters with which dataset should be allocated
  */
 private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationParams = DatasetAllocationParams()) {
-  val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+  val view = e.getExplorerView<FileExplorerView>() ?: return
   val parentNode = view.mySelectedNodesData[0].node
-  if (parentNode is ExplorerUnitTreeNodeBase<*, *> && parentNode.unit is FilesWorkingSet) {
+  if (parentNode is ExplorerUnitTreeNodeBase<*, *, *> && parentNode.unit is FilesWorkingSet) {
     val workingSet = parentNode.unit
     val config = parentNode.unit.connectionConfig
     if (config != null) {
       showUntilDone(initialState, { initState ->
-        AllocationDialog(project = e.project, initState)
+        AllocationDialog(project = e.project, config, initState)
       }) {
         val state = postProcessState(it)
         var res = false
@@ -109,11 +130,11 @@ private fun doAllocateAction(e: AnActionEvent, initialState: DatasetAllocationPa
           }
             .onSuccess {
               res = true
-              var p: ExplorerTreeNode<*>? = parentNode
+              var p: ExplorerTreeNode<*, *>? = parentNode
               while (p !is DSMaskNode) {
                 p = p?.parent ?: break
               }
-              val nodeToClean = p?.castOrNull<FileFetchNode<*,*,*,*,*>>()
+              val nodeToClean = p?.castOrNull<FileFetchNode<*, *, *, *, *, *>>()
               nodeToClean?.let { cleanInvalidateOnExpand(nodeToClean, view) }
 
               var nodeCleaned = false
@@ -208,7 +229,7 @@ class AllocateLikeAction : AnAction() {
    * runs allocate dataset like operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -260,14 +281,14 @@ class AllocateLikeAction : AnAction() {
    * Determines if dataset allocation is possible for chosen object
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
     val selected = view.mySelectedNodesData
     e.presentation.isEnabledAndVisible = selected.size == 1
-      && selected[0].attributes is RemoteDatasetAttributes
-      && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
+        && selected[0].attributes is RemoteDatasetAttributes
+        && !(selected[0].attributes as RemoteDatasetAttributes).isMigrated
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 

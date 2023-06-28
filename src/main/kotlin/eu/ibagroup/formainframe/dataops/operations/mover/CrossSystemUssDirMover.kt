@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops.operations.mover
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -22,12 +23,9 @@ import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 
 /**
  * Factory for registering CrossSystemUssDirMover in Intellij IoC container.
@@ -59,6 +57,8 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
             operation.commonUrls(dataOpsManager).isEmpty()
   }
 
+  override val log = log<CrossSystemUssDirMover>()
+
   /**
    * Proceeds move/copy of uss directory to uss directory between different systems.
    * @param operation requested operation
@@ -73,7 +73,6 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
       ?: return IllegalStateException("No connection for destination directory \'${destAttributes.path}\' found.")
 
-
     if (sourceFile is MFVirtualFile) {
       val sourceAttributes = operation.sourceAttributes.castOrNull<RemoteUssAttributes>()
         ?: return IllegalStateException("No attributes found for destination directory \'${destFile.name}\'.")
@@ -82,7 +81,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
       val sourceQuery = UnitRemoteQueryImpl(UssQuery(sourceAttributes.path), sourceConnectionConfig)
       val sourceFileFetchProvider = dataOpsManager
-        .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, MFVirtualFile>(
+        .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
           UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
         )
       sourceFileFetchProvider.reload(sourceQuery)
@@ -149,12 +148,15 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS directory ${operation.source.name} to ${operation.destination.path}")
       proceedDirMove(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.info("Failed to move USS directory")
       throw throwable
     }
+    log.info("USS directory has been moved successfully")
   }
 }

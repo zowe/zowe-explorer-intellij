@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.util.IconUtil
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -42,12 +43,12 @@ private fun withSlashIfNeeded(ussPath: UssPath): String {
 class UssDirNode(
   ussPath: UssPath,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: FilesWorkingSet,
   treeStructure: ExplorerTreeStructureBase,
   private var vFile: MFVirtualFile? = null,
   private val isRootNode: Boolean = false
-) : RemoteMFFileFetchNode<UssPath, UssQuery, FilesWorkingSet>(
+) : RemoteMFFileFetchNode<ConnectionConfig, UssPath, UssQuery, FilesWorkingSet>(
   ussPath, project, parent, workingSet, treeStructure
 ), UssNode, RefreshableNode {
 
@@ -57,9 +58,9 @@ class UssDirNode(
     super.init()
   }
 
-  val isConfigUssPath = vFile == null
+  val isUssMask = vFile == null
 
-  override val query: RemoteQuery<UssQuery, Unit>?
+  override val query: RemoteQuery<ConnectionConfig, UssQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
       return if (connectionConfig != null) {
@@ -97,7 +98,7 @@ class UssDirNode(
 
   override val requestClass = UssQuery::class.java
 
-  override fun makeFetchTaskTitle(query: RemoteQuery<UssQuery, Unit>): String {
+  override fun makeFetchTaskTitle(query: RemoteQuery<ConnectionConfig, UssQuery, Unit>): String {
     return "Fetching USS listings for ${query.request.path}"
   }
 
@@ -110,9 +111,11 @@ class UssDirNode(
       isRootNode -> {
         AllIcons.Nodes.Module
       }
+
       vFile != null -> {
         IconUtil.getIcon(vFile!!, 0, project)
       }
+
       else -> {
         AllIcons.Nodes.Folder
       }
@@ -121,9 +124,11 @@ class UssDirNode(
       isRootNode -> {
         value.path
       }
+
       vFile != null -> {
         vFile!!.presentableName
       }
+
       else -> {
         value.path.split("/").last()
       }

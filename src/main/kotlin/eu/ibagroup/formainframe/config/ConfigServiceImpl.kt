@@ -14,14 +14,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.rd.util.UUID
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.connect.whoAmI
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.*
+import eu.ibagroup.formainframe.utils.loadConfigClass
 import eu.ibagroup.formainframe.utils.runIfTrue
 import java.nio.file.Paths
 import java.time.Duration
@@ -40,16 +44,16 @@ internal inline fun Crudable.configureCrudable(block: CrudableLists.() -> Unit):
 
 /** Config service state class. Describes all the interactions with the plugin configs */
 @State(
-  name = "by.iba.connector.services.ConfigService",
-  storages = [Storage(value = "iba_connector_config.xml", exportable = true)]
+  name = "eu.ibagroup.connector.services.ConfigService",
+  storages = [Storage(value = "iba_connector_config_v2.xml", exportable = true)]
 )
 class ConfigServiceImpl : ConfigService {
 
   companion object {
-    private val myState = ConfigState()
+    private val myState = ConfigStateV2()
   }
 
-  override fun getState(): ConfigState {
+  override fun getState(): ConfigStateV2 {
     return myState
   }
 
@@ -57,9 +61,8 @@ class ConfigServiceImpl : ConfigService {
    * Load current config state
    * @param state the state to load
    */
-  override fun loadState(state: ConfigState) {
+  override fun loadState(state: ConfigStateV2) {
     XmlSerializerUtil.copyBean(state, myState)
-    acceptOldConfigs()
   }
 
   override val eventHandler = ConfigEventHandler()
@@ -70,6 +73,13 @@ class ConfigServiceImpl : ConfigService {
     .configureCrudable {
       eventHandler = this@ConfigServiceImpl.eventHandler
     }
+
+  /** List of registered config declarations */
+  private val configDeclarations: List<ConfigDeclaration<out Any>> by lazy {
+    ConfigDeclaration.EP.extensionList.map {
+      it.buildConfigDeclaration(crudable)
+    }
+  }
 
   override var isAutoSyncEnabled: Boolean
     get() = state.settings.isAutoSyncEnabled
@@ -83,14 +93,88 @@ class ConfigServiceImpl : ConfigService {
       state.settings.batchSize = value
     }
 
+
+  /**
+   * Finds [ConfigDeclaration] for specified class through registered extension points (see [configDeclarations]).
+   * @param rowClass config class instance for which to find [ConfigDeclaration].
+   * @throws IllegalArgumentException if no config declaration found for passed class.
+   * @return config declaration instance.
+   */
+  @Suppress("UNCHECKED_CAST")
+  override fun <T : Any> getConfigDeclaration(rowClass: Class<out T>): ConfigDeclaration<T> {
+    val result = configDeclarations.firstOrNull { it.clazz == rowClass }
+      ?: throw IllegalArgumentException("No configDeclaration found for class ${rowClass::class.java}.")
+    return result as ConfigDeclaration<T>
+  }
+
+  /** Creates collection for config class in state (see [ConfigService.registerConfigClass]). */
+  override fun <T> registerConfigClass(clazz: Class<out T>) {
+    if (!state.collections.containsKey(clazz.name)) {
+      state.collections[clazz.name] = mutableListOf<T>()
+    }
+    service<ConfigSandbox>().registerConfigClass(clazz)
+  }
+
+  /**
+   * Creates collection for each class of registered config declarations.
+   * @see ConfigService.registerAllConfigClasses
+   */
+  override fun registerAllConfigClasses() {
+    configDeclarations.forEach { registerConfigClass(it.clazz) }
+  }
+
+  /** Returns keys of [ConfigStateV2.collections]. see [ConfigService.getRegisteredConfigClasses] */
+  override fun getRegisteredConfigClasses(): List<Class<*>> {
+    return state.collections.keys.mapNotNull { loadConfigClass(it) }
+  }
+
+  /** Returns registered in IoC container config declarations. see [ConfigService.getRegisteredConfigDeclarations] */
+  override fun getRegisteredConfigDeclarations(): List<ConfigDeclaration<*>> {
+    return configDeclarations.toList()
+  }
+
+  /**
+   * Migrates configurations from old [ConfigState] to the new one [ConfigStateV2].
+   * @param state instance of old [ConfigState].
+   */
+  override fun migrateOldConfigState(state: ConfigState) {
+    if (!state.migrated) {
+      myState.settings = state.settings.clone()
+
+      val newConnections = myState.get<ConnectionConfig>()
+      val newFilesWorkingSets = myState.get<FilesWorkingSetConfig>()
+      val newJesWorkingSets = myState.get<JesWorkingSetConfig>()
+
+      val connectionsToAdd = state.connections.filter { con ->
+        newConnections?.find { it.uuid == con.uuid } == null
+      }
+      val filesWorkingSetsToAdd = state.filesWorkingSets.filter { ws ->
+        newFilesWorkingSets?.find { it.uuid == ws.uuid } == null
+      }
+      val jesWorkingSetsToAdd = state.jesWorkingSets.filter { ws ->
+        newJesWorkingSets?.find { it.uuid == ws.uuid } == null
+      }
+
+      newConnections?.addAll(connectionsToAdd)
+      newFilesWorkingSets?.addAll(filesWorkingSetsToAdd)
+      newJesWorkingSets?.addAll(jesWorkingSetsToAdd)
+
+      state.migrated = true
+
+      // acceptOldConfigs()
+    }
+  }
+
+  /** Fills the owner tag, if it is empty, with the value obtained from the TSO request. */
+  override fun updateOldConfigs() {
+    myState.get<ConnectionConfig>()?.filter { it.owner.isEmpty() }?.forEach { it.owner = whoAmI(it) ?: "" }
+  }
+
   /**
    * Adapt all configs in old style to the new one and update config file.
    * Notice: update of the file happens only when the config is changed by user (e.g.: mask change, job filter change, mask add)
    */
   private fun acceptOldConfigs() {
-    myState.connections = myState.connections.toMutableList()
-    myState.jesWorkingSets = myState.jesWorkingSets.toMutableList()
-    myState.filesWorkingSets = myState.filesWorkingSets.toMutableList()
 
     val configLocation =
       Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, "iba_connector_config.xml")
@@ -104,99 +188,6 @@ class ConfigServiceImpl : ConfigService {
   }
 }
 
-/**
- * Filter decider class, that provides the count of rows by a specific column value, provided by the row parameter
- * @param crudable the crudable object to get the rows from
- * @param row the row parameter with the column value to get rows by
- */
-private class FilterDecider(
-  private val crudable: Crudable,
-  private val row: Any
-) : ConfigClassActionDecider<Long>() {
-
-  /** Get the count of the ConnectionConfig rows by the filtering row name */
-  override fun onConnectionConfig(): Long {
-    return crudable.getByColumnLambda(row as ConnectionConfig) { it.name }.count()
-  }
-
-  /** Get the count of the FilesWorkingSetConfig rows by the filtering row name */
-  override fun onFilesWorkingSetConfig(): Long {
-    return crudable.getByColumnLambda(row as FilesWorkingSetConfig) { it.name }.count()
-  }
-
-  /** Get the count of the JesWorkingSetConfig rows by the filtering row UUID */
-  override fun onJesWorkingSetConfig(): Long {
-    return crudable.getByColumnLambda(row as JesWorkingSetConfig) { it.uuid }.count()
-  }
-
-  override fun onCredentials(): Long {
-    return 0
-  }
-
-  override fun onElse(): Long {
-    return -1
-  }
-}
-
-/**
- * Update filter decider to check whether the row can be updated, corresponding to the conditions for the specific class
- * @param crudable the crudable object to get rows from
- * @param currentRow the row to update
- * @param updatingRow the row object with the updates
- */
-private class UpdateFilterDecider(
-  crudable: Crudable,
-  private val currentRow: Any,
-  private val updatingRow: Any
-) : ConfigClassActionDecider<Boolean>() {
-  private val filterSwitcher = FilterDecider(crudable, updatingRow)
-
-  /**
-   * Check if the ConnectionConfig row update can be proceeded.
-   * The update is possible either when any of the properties are equal to the same current row property,
-   * or if there is no any rows in the config
-   */
-  override fun onConnectionConfig(): Boolean {
-    return if (currentRow is ConnectionConfig && updatingRow is ConnectionConfig) {
-      filterSwitcher.onConnectionConfig() == 0L
-        || updatingRow.name == currentRow.name
-        || updatingRow.zVersion == currentRow.zVersion
-        || updatingRow.url == currentRow.url
-        || updatingRow.isAllowSelfSigned == currentRow.isAllowSelfSigned
-    } else false
-  }
-
-  /**
-   * Check if the FilesWorkingSetConfig row update can be proceeded.
-   * The update is possible either when names of the updating row and the current row are the same,
-   * or if there is no any rows in the config
-   */
-  override fun onFilesWorkingSetConfig(): Boolean {
-    return if (currentRow is FilesWorkingSetConfig && updatingRow is FilesWorkingSetConfig) {
-      filterSwitcher.onFilesWorkingSetConfig() == 0L || updatingRow.name == currentRow.name
-    } else false
-  }
-
-  /**
-   * Check if the JesWorkingSetConfig row update can be proceeded.
-   * The update is possible either when UUIDs of the updating row and the current row are the same,
-   * or if there is no any rows in the config
-   */
-  override fun onJesWorkingSetConfig(): Boolean {
-    return if (currentRow is JesWorkingSetConfig && updatingRow is JesWorkingSetConfig) {
-      filterSwitcher.onJesWorkingSetConfig() == 0L || updatingRow.uuid == currentRow.uuid
-    } else false
-  }
-
-  override fun onCredentials(): Boolean {
-    return true
-  }
-
-  override fun onElse(): Boolean {
-    return false
-  }
-
-}
 
 /**
  * Make the raw crudable for the config service, that will give all the configs by the state getter.
@@ -208,41 +199,29 @@ private class UpdateFilterDecider(
 internal fun makeCrudableWithoutListeners(
   withCredentials: Boolean,
   credentialsGetter: () -> MutableList<Credentials> = { mutableListOf() },
-  stateGetter: () -> ConfigState,
+  stateGetter: () -> ConfigStateV2,
 ): Crudable {
-  return CrudableListsBuilder {
-    object : ConfigClassActionDecider<MutableList<*>?>() {
-      override fun onConnectionConfig(): MutableList<*> {
-        return stateGetter().connections
+  val crudableLists = CrudableLists(
+    addFilter = object: AddFilter {
+      override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
+        return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
       }
-
-      override fun onFilesWorkingSetConfig(): MutableList<*> {
-        return stateGetter().filesWorkingSets
+    },
+    updateFilter = object: UpdateFilter {
+      override operator fun <T: Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
+        return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
       }
-
-      override fun onCredentials(): MutableList<*>? {
-        return withCredentials.runIfTrue {
+    },
+    nextUuidProvider = { UUID.randomUUID().toString() },
+    getListByClass = {
+      if (it == Credentials::class.java) {
+        withCredentials.runIfTrue {
           credentialsGetter()
         }
-      }
-
-      override fun onJesWorkingSetConfig(): MutableList<*> {
-        return stateGetter().jesWorkingSets
-      }
-
-      override fun onElse(): MutableList<*>? {
-        return null
-      }
-    }(it)
-  }
-    .withNextUuidProvider { UUID.randomUUID().toString() }
-    .apply crudable@{
-      addFilter = AddFilter { rowClass, row ->
-        FilterDecider(this, row)(rowClass) == 0L
-      }
-      updateFilter = UpdateFilter { clazz, currentRow, updatingRow ->
-        UpdateFilterDecider(this, currentRow, updatingRow)(clazz)
+      } else {
+        stateGetter().get(it)
       }
     }
-    .let { ConcurrentCrudable(it, SimpleReadWriteAdapter()) }
+  )
+  return ConcurrentCrudable(crudableLists, SimpleReadWriteAdapter())
 }

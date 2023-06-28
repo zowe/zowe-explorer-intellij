@@ -35,8 +35,8 @@ class CrudableListsBuilder(
  */
 open class CrudableLists(
   var eventHandler: EventHandler? = null,
-  var addFilter: AddFilter = AddFilter { _, _ -> true },
-  var updateFilter: UpdateFilter = UpdateFilter { _, _, _ -> true },
+  var addFilter: AddFilter = object: AddFilter {},
+  var updateFilter: UpdateFilter = object: UpdateFilter {},
   val nextUuidProvider: (Class<*>) -> Any,
   val getListByClass: (Class<*>) -> MutableList<*>?
 ) : Crudable {

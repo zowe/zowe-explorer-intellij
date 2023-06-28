@@ -14,15 +14,16 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
+import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
-import eu.ibagroup.r2z.DatasetOrganization
+import org.zowe.kotlinsdk.DatasetOrganization
 import javax.swing.JComponent
+import javax.swing.JPasswordField
 import javax.swing.JTextField
 
 private val urlRegex = Regex("^(https?|http)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")
@@ -39,10 +40,10 @@ private val segmentLengthErrorText = "Each name segment (qualifier) is 1 to 8 ch
 private val charactersLengthExceededErrorText = "Dataset name cannot exceed 44 characters"
 private val segmentCharsErrorText =
   "$segmentLengthErrorText," +
-    "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
-    "\nThe remaining seven characters are either alphabetic," +
-    "\nnumeric (0 - 9), national, a hyphen (-)." +
-    "\nName segments are separated by a period (.)"
+      "\nthe first of which must be alphabetic (A to Z) or national (# @ \$)." +
+      "\nThe remaining seven characters are either alphabetic," +
+      "\nnumeric (0 - 9), national, a hyphen (-)." +
+      "\nName segments are separated by a period (.)"
 private val jobIdRegex = Regex("[A-Za-z0-9]+")
 private val volserRegex = Regex("[A-Za-z0-9]{1,6}")
 private val firstLetterRegex = Regex("[A-Z@\$#a-z]")
@@ -56,6 +57,15 @@ private val memberRegex = Regex("[A-Z@$#a-z][A-Z@#\$a-z0-9]{0,7}")
  */
 fun validateForBlank(text: String, component: JComponent): ValidationInfo? {
   return if (text.isBlank()) ValidationInfo("This field must not be blank", component) else null
+}
+
+/**
+ * Validate new password
+ * @param password new password
+ * @param component confirm password component
+ */
+fun validateForPassword(password: String, component: JPasswordField): ValidationInfo? {
+  return if (password != component.text) ValidationInfo("Passwords do not match", component) else null
 }
 
 /**
@@ -110,18 +120,21 @@ fun <WSConfig : WorkingSetConfig> validateWorkingSetName(
 }
 
 /**
- * Validate working set mask name not to be the same as the existing one
+ * Validate working set mask name not to be the same as the existing one.
+ * Validation is skipped if the name of the mask stays the same as the previous one
  * @param component the component to check the working set mask name
- * @param ws working set to check the existing masks
+ * @param state the mask state with working set inside
  */
-fun validateWorkingSetMaskName(component: JTextField, ws: FilesWorkingSet): ValidationInfo? {
-  val maskAlreadyExists = ws.masks.map { it.mask }.contains(component.text.uppercase())
-    || ws.ussPaths.map { it.path }.contains(component.text)
+fun validateWorkingSetMaskName(component: JTextField, state: MaskStateWithWS): ValidationInfo? {
+  val textToCheck = if (state.type == MaskType.ZOS) component.text.uppercase() else component.text
+  val sameMaskName = state.mask == textToCheck
+  val maskAlreadyExists = state.ws.masks.map { it.mask }.contains(component.text.uppercase())
+      || state.ws.ussPaths.map { it.path }.contains(component.text)
 
-  return if (maskAlreadyExists) {
+  return if (!sameMaskName && maskAlreadyExists) {
     ValidationInfo(
       "You must provide unique mask in working set. Working Set " +
-        "\"${ws.name}\" already has mask - ${component.text}", component
+          "\"${state.ws.name}\" already has mask - ${component.text}", component
     )
   } else {
     null
@@ -366,9 +379,9 @@ fun validateJobFilter(
  * @param component the component to check the USS file name and show the warning for
  * @param selectedNode the selected node to check whether it is a file or a directory
  */
-fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData): ValidationInfo? {
+fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeData<*>): ValidationInfo? {
   val text: String = component.text
-  val childrenNodesFromParent = selectedNode.node.parent?.children
+  val childrenNodesFromParent = selectedNode.node.parent?.children?.filter { it != selectedNode.node }
   when (selectedNode.node) {
     is UssFileNode -> {
       childrenNodesFromParent?.forEach {
@@ -415,10 +428,10 @@ fun validateDataset(
   averageBlockLength: JTextField,
   advancedParameters: JTextField
 ): ValidationInfo? {
-  return validateDatasetNameOnInput(datasetName) ?: validateForGreaterValue(primaryAllocation, 1)
-  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterValue(directoryBlocks, 1).takeIf {
+  return validateDatasetNameOnInput(datasetName) ?: validateForGreaterOrEqualValue(primaryAllocation, 1)
+  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterOrEqualValue(directoryBlocks, 1).takeIf {
     datasetOrganization == DatasetOrganization.PO
-  } ?: validateForGreaterValue(recordLength, 1) ?: validateForPositiveInteger(blockSize)
+  } ?: validateForGreaterOrEqualValue(recordLength, 1) ?: validateForPositiveInteger(blockSize)
   ?: validateForPositiveInteger(averageBlockLength) ?: validateVolser(advancedParameters)
 }
 
@@ -460,17 +473,20 @@ fun validateVolser(component: JTextField): ValidationInfo? {
  * @param component the component with the number to validate
  */
 fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
-  return validateForGreaterValue(component, 0)
+  return validateForGreaterOrEqualValue(component, 0)
 }
 
 /**
- * Validate the component value is greater than the provided value
+ * Validate the component value is greater than or equal to the provided value
  * @param component the component to check the value
  * @param value the value to check that the component's value is greater
  */
-fun validateForGreaterValue(component: JTextField, value: Int): ValidationInfo? {
+fun validateForGreaterOrEqualValue(component: JTextField, value: Int): ValidationInfo? {
   return if ((component.text.toIntOrNull() ?: -1) < value) {
-    ValidationInfo(if (value == 0) "Enter a positive number" else "Enter a number greater than or equal to $value", component)
+    ValidationInfo(
+      if (value == 0) "Enter a positive number" else "Enter a number greater than or equal to $value",
+      component
+    )
   } else {
     null
   }

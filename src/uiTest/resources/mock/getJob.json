@@ -1,0 +1,20 @@
+[
+  {
+    "jobid":"JOB07380",
+    "jobname":"jobName",
+    "subsystem":null,
+    "owner":"USER",
+    "status":"jobStatus",
+    "type":"JOB",
+    "class":"A",
+    "retcode":"retCode",
+    "phase-name": "PHASE1",
+    "job-correlator": "JOB07380S0W1....DB9E6D9D.......:",
+    "url":"https:\/\/hostName:port\/zosmf\/restjobs\/jobs\/jobName\/JOB07380",
+    "files-url":"https:\/\/hostName:port\/zosmf\/restjobs\/jobs\/jobName\/JOB07380\/files",
+    "exec-system": "SY1",
+    "exec-submitted": "2018-11-03T09:05:15.000Z",
+    "exec-started": "2018-11-03T09:05:18.010Z",
+    "exec-ended": "2018-11-03T09:05:25.332Z"
+  }
+]

@@ -18,12 +18,14 @@ import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.analytics.events.FileType
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
@@ -37,14 +39,14 @@ class AddMemberAction : AnAction() {
    * @param e an action event to get the file explorer view and the project
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     var currentNode = view.mySelectedNodesData[0].node
     DataOpsManager.instance
     if (currentNode !is FetchNode) {
       currentNode = currentNode.parent ?: return
       if (currentNode !is LibraryNode) return
     }
-    if ((currentNode as ExplorerUnitTreeNodeBase<*, *>).unit is FilesWorkingSet) {
+    if ((currentNode as ExplorerUnitTreeNodeBase<ConnectionConfig, *, out ExplorerUnit<ConnectionConfig>>).unit is FilesWorkingSet) {
       val connectionConfig = currentNode.unit.connectionConfig
       val dataOpsManager = currentNode.explorer.componentManager.service<DataOpsManager>()
       if (currentNode is LibraryNode && connectionConfig != null) {
@@ -108,7 +110,7 @@ class AddMemberAction : AnAction() {
    * @param e an action event to get the presentation so show and the file explorer view
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

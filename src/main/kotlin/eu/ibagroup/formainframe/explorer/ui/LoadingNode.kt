@@ -13,15 +13,16 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.ide.IdeBundle.message
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.explorer.Explorer
 
 /** Node that is displayed when no content is loaded yet */
-class LoadingNode(
+class LoadingNode<Connection: ConnectionConfigBase>(
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  explorer: Explorer<*>,
+  parent: ExplorerTreeNode<Connection, *>,
+  explorer: Explorer<Connection, *>,
   treeStructure: ExplorerTreeStructureBase
-) : InfoNodeBase(project, parent, explorer, treeStructure) {
+) : InfoNodeBase<Connection>(project, parent, explorer, treeStructure) {
 
   override val text: String = message("treenode.loading")
 

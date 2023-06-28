@@ -13,31 +13,29 @@ import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.attributes.toUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.setUssFileTag
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Factory for registering CrossSystemMemberOrUssFileToUssDirMover in Intellij IoC container.
- * @see CrossSystemMemberOrUssFileToUssDirMover
+ * @see CrossSystemMemberOrUssFileOrSequentialToUssDirMover
  * @author Valiantsin Krus
  */
-class CrossSystemMemberOrUssFileToUssDirMoverFactory : OperationRunnerFactory {
+class CrossSystemMemberOrUssFileOrSequentialToUssDirMoverFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
-    return CrossSystemMemberOrUssFileToUssDirMover(dataOpsManager)
+    return CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager)
   }
 }
 
@@ -45,7 +43,7 @@ class CrossSystemMemberOrUssFileToUssDirMoverFactory : OperationRunnerFactory {
  * Implements copying of member or uss file to uss directory between different systems.
  * @author Valiantsin Krus
  */
-class CrossSystemMemberOrUssFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
+class CrossSystemMemberOrUssFileOrSequentialToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
   /**
    * Checks that source is member or uss file, dest is uss directory, and they are located inside different systems.
@@ -53,23 +51,17 @@ class CrossSystemMemberOrUssFileToUssDirMover(val dataOpsManager: DataOpsManager
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
-            operation.destination.isDirectory &&
-            (operation.sourceAttributes is RemoteMemberAttributes || operation.sourceAttributes is RemoteUssAttributes) &&
-            operation.destinationAttributes is RemoteUssAttributes &&
-            operation.source is MFVirtualFile &&
-            operation.destination is MFVirtualFile &&
-            operation.commonUrls(dataOpsManager).isEmpty()
+      operation.destination.isDirectory &&
+      (operation.sourceAttributes is RemoteMemberAttributes
+          || operation.sourceAttributes is RemoteUssAttributes
+          || operation.sourceAttributes is RemoteDatasetAttributes) &&
+      operation.destinationAttributes is RemoteUssAttributes &&
+      operation.source is MFVirtualFile &&
+      operation.destination is MFVirtualFile &&
+      operation.commonUrls(dataOpsManager).isEmpty()
   }
 
-  /**
-   * Util function to cast FileAttributes to RemoteUssAttributes or throw exception.
-   * @throws IllegalArgumentException
-   * @return source attributes that was cast to RemoteUssAttributes.
-   */
-  private fun FileAttributes?.toUssAttributes(fileName: String): RemoteUssAttributes {
-    return castOrNull<RemoteUssAttributes>()
-      ?: throw IllegalArgumentException("Cannot find attributes for file \"${fileName}\"")
-  }
+  override val log = log<CrossSystemMemberOrUssFileOrSequentialToUssDirMover>()
 
   /**
    * Proceeds move/copy of member or uss file to uss directory between different systems.
@@ -125,12 +117,15 @@ class CrossSystemMemberOrUssFileToUssDirMover(val dataOpsManager: DataOpsManager
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS file ${operation.source.name} to USS directory ${operation.destination.path}")
       proceedCrossSystemMoveCopy(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.info("Failed to move USS file")
       throw throwable
     }
+    log.info("USS file has been moved successfully")
   }
 }

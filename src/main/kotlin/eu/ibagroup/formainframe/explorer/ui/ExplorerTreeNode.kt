@@ -27,6 +27,7 @@ import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
@@ -39,11 +40,11 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
 /** Base class to implement the basic interactions with an explorer node */
-abstract class ExplorerTreeNode<Value : Any>(
+abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
   value: Value,
   project: Project,
-  val parent: ExplorerTreeNode<*>?,
-  val explorer: Explorer<*>,
+  val parent: ExplorerTreeNode<Connection, *>?,
+  val explorer: Explorer<Connection, *>,
   protected val treeStructure: ExplorerTreeStructureBase
 ) : AbstractTreeNode<Value>(project, value), SettingsProvider {
 
@@ -77,7 +78,7 @@ abstract class ExplorerTreeNode<Value : Any>(
 
   protected fun updateMainTitleUsingCutBuffer(text: String, presentationData: PresentationData) {
     val file = virtualFile ?: return
-    val textAttributes = if (contentProvider.isFileInCutBuffer(file)) {
+    val textAttributes = if (contentProvider?.isFileInCutBuffer(file) == true) {
       SimpleTextAttributes.GRAYED_ATTRIBUTES
     } else {
       SimpleTextAttributes.REGULAR_ATTRIBUTES
@@ -98,8 +99,6 @@ abstract class ExplorerTreeNode<Value : Any>(
           icon = AllIcons.General.WarningDialog
         )
         runBackgroundableTask("Navigating to ${file.name}") { indicator ->
-
-
           if (doSync) {
             val onThrowableHandler: (Throwable) -> Unit = {
               if (it.message?.contains("Client is not authorized for file access") == true) {
@@ -163,7 +162,7 @@ abstract class ExplorerTreeNode<Value : Any>(
     return descriptor?.canNavigateToSource() ?: super.canNavigateToSource()
   }
 
-  private val pathList: List<ExplorerTreeNode<*>>
+  private val pathList: List<ExplorerTreeNode<Connection, *>>
     get() = if (parent != null) {
       parent.pathList + this
     } else {

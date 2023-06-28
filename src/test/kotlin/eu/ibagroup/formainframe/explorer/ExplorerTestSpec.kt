@@ -10,22 +10,32 @@
 
 package eu.ibagroup.formainframe.explorer
 
-import com.intellij.ide.util.treeView.TreeAnchorizer
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.Disposable
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeStructureBase
-import eu.ibagroup.formainframe.explorer.ui.UssFileNode
-import eu.ibagroup.formainframe.utils.isBeingEditingNow
-import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
+import eu.ibagroup.formainframe.config.ConfigService
+import eu.ibagroup.formainframe.config.ConfigStateV2
+import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.makeCrudableWithoutListeners
+import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.UssPath
+import eu.ibagroup.formainframe.utils.gson
+import eu.ibagroup.formainframe.utils.optional
+import eu.ibagroup.formainframe.utils.toMutableList
+import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
-import io.mockk.*
+import io.kotest.matchers.shouldBe
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import java.util.*
+import java.util.stream.Stream
 
 class ExplorerTestSpec : ShouldSpec({
   beforeSpec {
@@ -44,110 +54,279 @@ class ExplorerTestSpec : ShouldSpec({
     clearAllMocks()
   }
   context("explorer module: FilesWorkingSetImpl") {
-    // addUssPath
-    should("add USS path to a config") {}
-    // deleteUssPath
-    should("delete USS path from a config") {}
+
+    context("addUssPath") {
+      val mockedCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
+      val uuid1 = "uuid1"
+      mockkObject(ConfigService)
+      every { ConfigService.instance.crudable } returns mockk()
+      every { configCrudable } returns mockk()
+      mockkObject(gson)
+
+      val mockedFilesWSConfig = mockk<FilesWorkingSetConfig>()
+      every { mockedFilesWSConfig.uuid } returns uuid1
+      every { mockedFilesWSConfig.name } returns "filesWSuuid1"
+      every { mockedFilesWSConfig.connectionConfigUuid } returns "connUuid"
+      every { mockedFilesWSConfig.dsMasks } returns mutableListOf(DSMask("ZOSMFAD.*", mutableListOf()))
+      every { mockedFilesWSConfig.ussPaths } returns mutableListOf()
+
+      every { gson.toJson(any() as FilesWorkingSetConfig) } returns "mocked_config_to_copy"
+
+      val clonedConfig = FilesWorkingSetConfig(
+        uuid1, "filesWSuuid1", "connUuid",
+        mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+        mutableListOf()
+      )
+      every { gson.fromJson(any() as String, FilesWorkingSetConfig::class.java) } returns clonedConfig
+      mockkObject(clonedConfig)
+
+      every { mockedCrud.getAll(FilesWorkingSetConfig::class.java) } returns Stream.of(
+        FilesWorkingSetConfig(
+          uuid1,
+          "filesWSuuid1",
+          "connUuid",
+          mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+          mutableListOf(UssPath("/u/test1"))
+        ),
+        FilesWorkingSetConfig(
+          uuid1,
+          "filesWSuuid1",
+          "connUuid",
+          mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+          mutableListOf()
+        )
+      )
+
+      fun getMockedFilesWorkingSetConfigNotNull(): FilesWorkingSetConfig {
+        return mockedFilesWSConfig
+      }
+
+      fun getMockedFilesWorkingSetConfigNull(): FilesWorkingSetConfig? {
+        return null
+      }
+
+      val mockedFileExplorer =
+        mockk<AbstractExplorerBase<ConnectionConfig, FilesWorkingSetImpl, FilesWorkingSetConfig>>()
+      val mockedDisposable = mockk<Disposable>()
+      val expectedValues = mockedCrud.getAll(FilesWorkingSetConfig::class.java).toMutableList()
+
+      var actual1: Optional<FilesWorkingSetConfig>? = null
+      every { configCrudable.update(any() as FilesWorkingSetConfig) } answers {
+        actual1 =
+          FilesWorkingSetConfig(
+            uuid1,
+            "filesWSuuid1",
+            "connUuid",
+            mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+            mutableListOf(UssPath("/u/test1"))
+          ).optional
+        actual1
+      }
+
+      // addUssPath when clone and collection.add succeeds
+      should("add USS path to a config") {
+        val filesWorkingSetImpl1 = spyk(
+          FilesWorkingSetImpl(
+            uuid1,
+            mockedFileExplorer, { getMockedFilesWorkingSetConfigNotNull() },
+            mockedDisposable
+          )
+        )
+
+        every { clonedConfig.ussPaths.add(any() as UssPath) } answers {
+          true
+        }
+
+        filesWorkingSetImpl1.addUssPath(UssPath("/u/test1"))
+
+        val expected = expectedValues[0].optional
+
+        assertSoftly {
+          actual1 shouldBe expected
+        }
+      }
+
+      // addUssPath when clone succeeds but collection.add is not
+      should("add USS path to a config if collection.add is not succeeded") {
+        val filesWorkingSetImpl1 = spyk(
+          FilesWorkingSetImpl(
+            uuid1,
+            mockedFileExplorer, { getMockedFilesWorkingSetConfigNotNull() },
+            mockedDisposable
+          )
+        )
+        every { clonedConfig.ussPaths.add(any() as UssPath) } answers {
+          false
+        }
+
+        filesWorkingSetImpl1.addUssPath(UssPath("/u/test1"))
+        val actual2 = clonedConfig.optional
+        val expected = expectedValues[1].optional
+
+        assertSoftly {
+          actual2 shouldBe expected
+        }
+      }
+
+      // addUssPath with null config
+      should("not add USS path to a config as working set config is null") {
+        val filesWorkingSetImpl2 = spyk(
+          FilesWorkingSetImpl(
+            uuid1,
+            mockedFileExplorer, { getMockedFilesWorkingSetConfigNull() },
+            mockedDisposable
+          )
+        )
+
+        filesWorkingSetImpl2.addUssPath(UssPath("/u/test2"))
+        val actual3 = clonedConfig.optional
+        val expected = expectedValues[1].optional
+
+        assertSoftly {
+          actual3 shouldBe expected
+        }
+      }
+    }
+
+    context("removeUssPath") {
+      val mockedCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
+      val uuid1 = "uuid1"
+      mockkObject(ConfigService)
+      every { ConfigService.instance.crudable } returns mockk()
+      every { configCrudable } returns mockk()
+      mockkObject(gson)
+
+      val mockedFilesWSConfig = mockk<FilesWorkingSetConfig>()
+      every { mockedFilesWSConfig.uuid } returns uuid1
+      every { mockedFilesWSConfig.name } returns "filesWSuuid1"
+      every { mockedFilesWSConfig.connectionConfigUuid } returns "connUuid"
+      every { mockedFilesWSConfig.dsMasks } returns mutableListOf(DSMask("ZOSMFAD.*", mutableListOf()))
+      every { mockedFilesWSConfig.ussPaths } returns mutableListOf(UssPath("/u/uss_path_to_remove"))
+
+      every { gson.toJson(any() as FilesWorkingSetConfig) } returns "mocked_config_to_copy"
+
+      val clonedConfig = FilesWorkingSetConfig(
+        uuid1,
+        "filesWSuuid1",
+        "connUuid",
+        mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+        mutableListOf(UssPath("/u/uss_path_to_remove"))
+      )
+      every { gson.fromJson(any() as String, FilesWorkingSetConfig::class.java) } returns clonedConfig
+      mockkObject(clonedConfig)
+
+      every { mockedCrud.getAll(FilesWorkingSetConfig::class.java) } returns Stream.of(
+        FilesWorkingSetConfig(
+          uuid1, "filesWSuuid1", "connUuid",
+          mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+          mutableListOf()
+        ),
+        FilesWorkingSetConfig(
+          uuid1, "filesWSuuid1", "connUuid",
+          mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+          mutableListOf(UssPath("/u/uss_path_to_remove"))
+        )
+      )
+
+      fun getMockedFilesWorkingSetConfigNotNull(): FilesWorkingSetConfig {
+        return mockedFilesWSConfig
+      }
+
+      fun getMockedFilesWorkingSetConfigNull(): FilesWorkingSetConfig? {
+        return null
+      }
+
+      val mockedFileExplorer =
+        mockk<AbstractExplorerBase<ConnectionConfig, FilesWorkingSetImpl, FilesWorkingSetConfig>>()
+      val mockedDisposable = mockk<Disposable>()
+      val expectedValues = mockedCrud.getAll(FilesWorkingSetConfig::class.java).toMutableList()
+
+      var actual4: Optional<FilesWorkingSetConfig>? = null
+      every { configCrudable.update(any() as FilesWorkingSetConfig) } answers {
+        actual4 =
+          FilesWorkingSetConfig(
+            uuid1,
+            "filesWSuuid1",
+            "connUuid",
+            mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+            mutableListOf()
+          ).optional
+        actual4
+      }
+
+      // removeUssPath when clone and collection.remove succeeds
+      should("remove USS path from a config") {
+        val filesWorkingSetImpl1 = spyk(
+          FilesWorkingSetImpl(
+            uuid1,
+            mockedFileExplorer, { getMockedFilesWorkingSetConfigNotNull() },
+            mockedDisposable
+          )
+        )
+
+        every { clonedConfig.ussPaths.remove(any() as UssPath) } answers {
+          true
+        }
+
+        filesWorkingSetImpl1.removeUssPath(UssPath("/u/uss_path_to_remove"))
+
+        val expected = expectedValues[0].optional
+
+        assertSoftly {
+          actual4 shouldBe expected
+        }
+      }
+
+      // removeUssPath when clone succeeds but collection.remove is not
+      should("remove USS path from a config if collection.remove is not succeeded") {
+        val filesWorkingSetImpl1 = spyk(
+          FilesWorkingSetImpl(
+            uuid1,
+            mockedFileExplorer, { getMockedFilesWorkingSetConfigNotNull() },
+            mockedDisposable
+          )
+        )
+        every { clonedConfig.ussPaths.remove(any() as UssPath) } answers {
+          false
+        }
+
+        filesWorkingSetImpl1.removeUssPath(UssPath("/u/uss_path_to_remove"))
+        val actual5 = clonedConfig.optional
+        val expected = expectedValues[1].optional
+
+        assertSoftly {
+          actual5 shouldBe expected
+        }
+      }
+
+      // removeUssPath with null config
+      should("not remove USS path from a config as working set config is null") {
+        val filesWorkingSetImpl2 = spyk(
+          FilesWorkingSetImpl(
+            uuid1,
+            mockedFileExplorer, { getMockedFilesWorkingSetConfigNull() },
+            mockedDisposable
+          )
+        )
+
+        filesWorkingSetImpl2.removeUssPath(UssPath("/u/uss_path_to_remove"))
+        val actual6 = clonedConfig.optional
+        val expected = expectedValues[1].optional
+
+        assertSoftly {
+          actual6 shouldBe expected
+        }
+      }
+    }
+
+    unmockkAll()
   }
-  context("explorer module: ui/FileExplorerViewDropTarget") {
-    // drop
-    should("perform paste from project files to the mainframe files") {}
-    should("perform paste from mainframe files to the project files") {}
-    should("perform paste from mainframe z/OS datasets to the USS files") {}
-    should("perform paste from mainframe USS files to the datasets") {}
-    should("perform paste from mainframe USS files of the first mainframe to the USS files of the other") {}
-    // update
-    should("highlight places where paste is possible") {}
-  }
+
   context("explorer module: ui/ExplorerPasteProvider") {
     // performPaste
     should("perform paste without conflicts") {}
     should("perform paste accepting conflicts") {}
     should("perform paste declining conflicts") {}
-  }
-  context("explorer module: ui/UssFileNode") {
-
-    context("navigate") {
-      val requestFocus = true
-
-      mockkObject(MFVirtualFileSystem)
-      every { MFVirtualFileSystem.instance } returns mockk()
-
-      val fileMock = mockk<MFVirtualFile>()
-      every { fileMock.isDirectory } returns false
-      every { fileMock.isReadable } returns true
-      every { fileMock.name } returns "navigate test"
-      mockkStatic(VirtualFile::isBeingEditingNow)
-      every { fileMock.isBeingEditingNow() } returns false
-
-      val projectMock = mockk<Project>()
-
-      val treeStructureMock = mockk<ExplorerTreeStructureBase>()
-      every { treeStructureMock.registerNode(any()) } returns mockk()
-
-      mockkStatic(TreeAnchorizer::class)
-      every { TreeAnchorizer.getService().createAnchor(any()) } returns mockk()
-
-      mockkObject(UIComponentManager)
-      every { UIComponentManager.INSTANCE.getExplorerContentProvider<Explorer<WorkingSet<UssFileNode>>>(any()) } returns mockk()
-      val explorerTreeNodeMock = mockk<ExplorerTreeNode<*>>()
-
-      mockkObject(DataOpsManager)
-      every { DataOpsManager.instance } returns mockk()
-
-      val explorer = mockk<Explorer<WorkingSet<*>>>()
-      every { explorer.componentManager } returns ApplicationManager.getApplication()
-
-      val explorerUnitMock = mockk<ExplorerUnit>()
-      every { explorerUnitMock.explorer } returns explorer
-
-      val ussFileNode = spyk(
-        UssFileNode(
-          fileMock,
-          projectMock,
-          explorerTreeNodeMock,
-          explorerUnitMock,
-          treeStructureMock
-        )
-      )
-      every { ussFileNode.virtualFile } returns fileMock
-
-      var updatesCount = 0
-      var isNavigatePerformed = false
-      every {
-        ussFileNode.update()
-      } answers {
-        updatesCount++
-        if (updatesCount == 2) {
-          isNavigatePerformed = true
-        }
-        false
-      }
-
-      should("perform navigate on file") {
-        ussFileNode.navigate(requestFocus)
-        assert(isNavigatePerformed)
-      }
-      should("perform navigate on file with failure due to permission denied") {}
-      should("perform navigate on file with failure due to error") {}
-    }
-  }
-  context("explorer module: actions/RenameAction") {
-    // actionPerformed
-    should("perform rename on dataset") {}
-    should("perform rename on dataset member") {}
-    should("perform rename on USS file") {}
-    should("perform rename on USS directory") {}
-  }
-  context("explorer module: actions/PurgeJobAction") {
-    // actionPerformed
-    should("perform purge on job successfully") {}
-    should("perform purge on job with error") {}
-  }
-  context("explorer module: actions/GetJobPropertiesAction") {
-    // actionPerformed
-    should("get job properties") {}
-    should("get spool file properties") {}
   }
   context("explorer module: actions/GetFilePropertiesAction") {
     // actionPerformed

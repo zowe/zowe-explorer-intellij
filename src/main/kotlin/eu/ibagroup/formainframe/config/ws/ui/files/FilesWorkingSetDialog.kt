@@ -15,6 +15,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ComboBoxCellEditor
 import eu.ibagroup.formainframe.common.ui.*
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.MaskState
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
@@ -39,7 +40,7 @@ import javax.swing.table.TableCellRenderer
 class FilesWorkingSetDialog(
   crudable: Crudable,
   state: FilesWorkingSetDialogState
-) : AbstractWsDialog<FilesWorkingSetConfig, MaskState, FilesWorkingSetDialogState>(
+) : AbstractWsDialog<ConnectionConfig, FilesWorkingSetConfig, MaskState, FilesWorkingSetDialogState>(
   crudable,
   FilesWorkingSetDialogState::class.java,
   state
@@ -49,6 +50,8 @@ class FilesWorkingSetDialog(
   override val tableTitle = "DS Masks included in Working Set"
   override val wsNameLabel = "Working Set Name"
   private val comboBoxMap = HashMap<MaskState, ComboBoxCellEditor>()
+
+  override val connectionClass = ConnectionConfig::class.java
 
   /**
    * Class for representation File Mask column in Files Working Set table.

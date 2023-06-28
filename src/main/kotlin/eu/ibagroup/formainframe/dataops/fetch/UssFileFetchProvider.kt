@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops.fetch
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
@@ -21,8 +22,8 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.SymlinkMode
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.SymlinkMode
 
 /**
  * Query with uss file to fetch children
@@ -47,7 +48,7 @@ private val log = log<UssFileFetchProvider>()
  */
 class UssFileFetchProvider(
   dataOpsManager: DataOpsManager
-) : RemoteAttributedFileFetchBase<UssQuery, RemoteUssAttributes, MFVirtualFile>(dataOpsManager) {
+) : RemoteAttributedFileFetchBase<ConnectionConfig, UssQuery, RemoteUssAttributes, MFVirtualFile>(dataOpsManager) {
 
   override val requestClass = UssQuery::class.java
 
@@ -58,7 +59,7 @@ class UssFileFetchProvider(
    * @see RemoteAttributedFileFetchBase.fetchResponse
    */
   override fun fetchResponse(
-    query: RemoteQuery<UssQuery, Unit>,
+    query: RemoteQuery<ConnectionConfig, UssQuery, Unit>,
     progressIndicator: ProgressIndicator
   ): Collection<RemoteUssAttributes> {
     log.info("Fetching USS Lists for $query")
@@ -106,7 +107,7 @@ class UssFileFetchProvider(
    * Clears attributes of unused uss file
    * @see RemoteAttributedFileFetchBase.cleanupUnusedFile
    */
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<UssQuery, Unit>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<ConnectionConfig, UssQuery, Unit>) {
     log.info("About to clean-up file=$file, query=$query")
     attributesService.clearAttributes(file)
     file.delete(this)

@@ -78,26 +78,26 @@ interface CredentialService {
 fun getInstance(): CredentialService = ApplicationManager.getApplication().getService(CredentialService::class.java)
 
 /**
- * Returns username of particular connection config
- * @param connectionConfig id of connection config
- * @return username of connection config
+ * Returns username of particular connection config.
+ * @param connectionConfig connection config instance.
+ * @return username of connection config.
  */
-fun username(connectionConfig: ConnectionConfig): String {
+fun <Connection: ConnectionConfigBase> getUsername(connectionConfig: Connection): String {
   return CredentialService.instance.getUsernameByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
     connectionConfig
   )
 }
 
 /**
- * Returns password of particular connection config
- * @param connectionConfig id of connection config
- * @return password of particular connection config
+ * Returns password of particular connection config.
+ * @param connectionConfig connection config instance.
+ * @return password of particular connection config.
  */
-fun password(connectionConfig: ConnectionConfig): String {
+fun <Connection: ConnectionConfigBase> getPassword(connectionConfig: Connection): String {
   return CredentialService.instance.getPasswordByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
     connectionConfig
   )
 }
 
 val ConnectionConfig.authToken: String
-  get() = Credentials.basic(username(this), password(this))
+  get() = Credentials.basic(getUsername(this), getPassword(this))

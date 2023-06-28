@@ -12,8 +12,8 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.SpoolFile
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.SpoolFile
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Implementation of DependentFileAttributes for working with spool files of the job.

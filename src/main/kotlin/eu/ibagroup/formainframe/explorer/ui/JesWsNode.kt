@@ -15,6 +15,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 
@@ -22,11 +23,13 @@ import eu.ibagroup.formainframe.explorer.JesWorkingSet
 class JesWsNode(
   workingSet: JesWorkingSet,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   treeStructure: ExplorerTreeStructureBase
-) : WorkingSetNode<JobsFilter>(
+) : WorkingSetNode<ConnectionConfig, JobsFilter>(
   workingSet, project, parent, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
+
+  override val regularTooltip = "JES Working Set"
 
   override fun update(presentation: PresentationData) {
     presentation.addText(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)

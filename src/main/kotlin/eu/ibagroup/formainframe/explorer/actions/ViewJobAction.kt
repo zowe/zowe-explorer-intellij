@@ -15,8 +15,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JobNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
@@ -26,9 +27,9 @@ class ViewJobAction : AnAction() {
 
   /** View a process of running job on click in the JES Explorer */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node
-    if (node is ExplorerTreeNode<*>) {
+    if (node is ExplorerTreeNode<*, *>) {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
@@ -52,7 +53,7 @@ class ViewJobAction : AnAction() {
 
   /** Able to click only on a Job Node */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

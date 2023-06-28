@@ -13,7 +13,7 @@ package eu.ibagroup.formainframe.dataops.content.adapters
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.r2z.RecordFormat
+import org.zowe.kotlinsdk.RecordFormat
 
 /**
  * Abstraction with utils methods to perform adapting content for files with record length restriction.
@@ -60,14 +60,13 @@ abstract class LReclContentAdapter<Attributes : FileAttributes>(
    * ld!
    * ---------------
    *
-   * @param content content bytes of the file to adapt.
+   * @param content content string of the file to adapt.
    * @param lrecl record length of the file.
-   * @return content bytes with transferred lines.
+   * @return content string with transferred lines.
    */
-  protected fun transferLinesByLRecl(content: ByteArray, lrecl: Int): ByteArray {
-    val contentString = String(content)
+  protected fun transferLinesByLRecl(content: String, lrecl: Int): String {
     val lineSeparatorRegex = "\r\n|\n|\r"
-    val contentRows = contentString.split(Regex(lineSeparatorRegex))
+    val contentRows = content.split(Regex(lineSeparatorRegex))
     val resultRows = mutableListOf<String>()
     contentRows.forEach {
       if (it.length <= lrecl) {
@@ -82,22 +81,21 @@ abstract class LReclContentAdapter<Attributes : FileAttributes>(
       }
     }
     val resultContent = resultRows.joinToString("\n")
-    return resultContent.toByteArray()
+    return resultContent
   }
 
   /**
    * Removes first character on each line of the content.
-   * @param content content bytes of file to adapt.
-   * @return content bytes without first character on each line.
+   * @param content content string of file to adapt.
+   * @return content string without first character on each line.
    */
-  protected fun removeFirstCharacter(content: ByteArray): ByteArray {
-    val contentString = String(content)
-    val contentRows = contentString.split(Regex("\n|\r|\r\n"))
+  protected fun removeFirstCharacter(content: String): String {
+    val contentRows = content.split(Regex("\n|\r|\r\n"))
     val resultRows = mutableListOf<String>()
     contentRows.forEach {
       resultRows.add(it.slice(IntRange(1, it.length - 1)))
     }
     val resultContent = resultRows.joinToString("\n")
-    return resultContent.toByteArray()
+    return resultContent
   }
 }

@@ -35,11 +35,11 @@ interface MFContentAdapter {
 
   /**
    * Prepares content for uploading to the mainframe using virtual file instance.
-   * @param content content bytes to adapt.
+   * @param content content to adapt.
    * @param file file whose content will be adapted.
-   * @return adapted content bytes.
+   * @return adapted content.
    */
-  fun prepareContentToMainframe(content: ByteArray, file: VirtualFile): ByteArray
+  fun <T>prepareContentToMainframe(content: T, file: VirtualFile): T
 
   /**
    * Prepares content for uploading from mainframe to Intellij content storage using virtual file.

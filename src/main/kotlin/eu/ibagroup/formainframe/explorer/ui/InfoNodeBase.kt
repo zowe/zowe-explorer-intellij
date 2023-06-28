@@ -14,6 +14,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.explorer.Explorer
 
 private val singletonList = mutableListOf<AbstractTreeNode<*>>()
@@ -23,13 +24,13 @@ private val any = Any()
  * Specific information node, that is not related to any mainframe nodes.
  * Represents the basic interactions with it, when there is a warning, error or some other information appears in the explorer tree
  */
-abstract class InfoNodeBase(
+abstract class InfoNodeBase<Connection: ConnectionConfigBase>(
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  explorer: Explorer<*>,
+  parent: ExplorerTreeNode<Connection, *>,
+  explorer: Explorer<Connection, *>,
   treeStructure: ExplorerTreeStructureBase
 ) :
-  ExplorerTreeNode<Any>(any, project, parent, explorer, treeStructure) {
+  ExplorerTreeNode<Connection, Any>(any, project, parent, explorer, treeStructure) {
 
   override fun isAlwaysLeaf(): Boolean {
     return true

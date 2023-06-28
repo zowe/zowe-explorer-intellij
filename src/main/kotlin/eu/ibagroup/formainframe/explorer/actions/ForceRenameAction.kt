@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -37,7 +38,7 @@ class ForceRenameAction : AnAction() {
    * Called when force rename is chosen from context menu
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0]
     if (selectedNode.node is UssDirNode || selectedNode.node is UssFileNode) {
       val attributes = selectedNode.attributes as RemoteUssAttributes
@@ -68,7 +69,7 @@ class ForceRenameAction : AnAction() {
    * @param text represents an existing file name in VFS with name conflict
    * @param selectedNode represents a virtual file object in VFS
    */
-  private fun showConfirmDialogIfNecessary(text: String, selectedNode: NodeData): Int {
+  private fun showConfirmDialogIfNecessary(text: String, selectedNode: NodeData<*>): Int {
     val childrenNodesFromParent = selectedNode.node.parent?.children
     val virtualFilePath = selectedNode.node.virtualFile?.canonicalPath
     when (selectedNode.node) {
@@ -77,8 +78,8 @@ class ForceRenameAction : AnAction() {
           if (it is UssFileNode && it.value.filenameInternal == text) {
             val confirmTemplate =
               "You are going to rename file $virtualFilePath \n" +
-                "into existing one. This operation cannot be undone. \n" +
-                "Would you like to proceed?"
+                  "into existing one. This operation cannot be undone. \n" +
+                  "Would you like to proceed?"
             return Messages.showOkCancelDialog(
               confirmTemplate,
               "Warning",
@@ -122,11 +123,11 @@ class ForceRenameAction : AnAction() {
    */
   private fun runRenameOperation(
     project: Project?,
-    explorer: Explorer<*>,
+    explorer: Explorer<ConnectionConfig, *>,
     file: MFVirtualFile,
     attributes: FileAttributes,
     newName: String,
-    node: ExplorerTreeNode<*>,
+    node: ExplorerTreeNode<ConnectionConfig, *>,
     override: Boolean
   ) {
     runBackgroundableTask(
@@ -170,14 +171,14 @@ class ForceRenameAction : AnAction() {
    * Determines for which nodes the force rename action is visible in the context menu
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
     val selectedNodes = view.mySelectedNodesData
     e.presentation.isEnabledAndVisible = if (selectedNodes.size == 1) {
       val node = selectedNodes[0].node
-      (node is UssDirNode && !node.isConfigUssPath) || node is UssFileNode
+      (node is UssDirNode && !node.isUssMask) || node is UssFileNode
     } else {
       false
     }

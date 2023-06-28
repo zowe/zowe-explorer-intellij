@@ -19,14 +19,11 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.applyIfNotNull
-import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Factory for registering LocalFileToUssDirMover in Intellij IoC container.
@@ -58,6 +55,8 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
   }
 
+  override val log = log<LocalFileToUssDirMover>()
+
   /**
    * Proceeds move/copy of file from local file system to remote uss directory.
    * @param operation requested operation.
@@ -70,13 +69,14 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     var throwable: Throwable? = null
     val sourceFile = operation.source
     val destFile = operation.destination
+    val newName = operation.newName ?: sourceFile.name
     val destAttributes = operation.destinationAttributes.castOrNull<RemoteUssAttributes>()
       ?: return IllegalStateException("No attributes found for destination directory \'${destFile.name}\'.")
 
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
       ?: return Throwable("No connection for destination directory found.")
 
-    val pathToFile = destAttributes.path + "/" + sourceFile.name
+    val pathToFile = destAttributes.path + "/" + newName
 
     val contentToUpload = sourceFile.contentsToByteArray().toMutableList()
     val xIBMDataType =
@@ -93,9 +93,9 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     }.execute()
 
     if (!response.isSuccessful) {
-      throwable = CallException(response, "Cannot upload data to ${destAttributes.path}${sourceFile.name}")
+      throwable = CallException(response, "Cannot upload data to ${destAttributes.path}${newName}")
     } else {
-      destFile.children.firstOrNull { it.name == sourceFile.name }?.let { file ->
+      destFile.children.firstOrNull { it.name == newName }?.let { file ->
         runWriteActionInEdtAndWait {
           val syncProvider = DocumentedSyncProvider(file, { _, _, _ -> false }, { th -> throwable = th })
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
@@ -119,12 +119,15 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable = try {
+      log.info("Trying to move local file ${operation.source.name} to USS directory ${operation.destination.path}")
       proceedLocalUpload(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.info("Failed to move local file")
       throw throwable
     }
+    log.info("Local file has been moved successfully")
   }
 }

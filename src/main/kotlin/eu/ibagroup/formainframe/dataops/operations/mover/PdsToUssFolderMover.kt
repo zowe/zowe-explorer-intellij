@@ -20,11 +20,12 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.CopyDataUSS
-import eu.ibagroup.r2z.DataAPI
-import eu.ibagroup.r2z.FilePath
-import eu.ibagroup.r2z.XIBMBpxkAutoCvt
+import org.zowe.kotlinsdk.CopyDataUSS
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.XIBMBpxkAutoCvt
 import retrofit2.Response
 
 /**
@@ -59,6 +60,8 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
             && operation.commonUrls(dataOpsManager).isNotEmpty()
   }
 
+  override val log = log<PdsToUssFolderMover<VFile>>()
+
   /**
    * Implements copying member inside 1 system.
    * @see AbstractPdsToUssFolderMover.canRun
@@ -90,6 +93,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {
       try {
+        log.info("Trying to move PDS ${operation.source.name} to USS folder ${operation.destination.path} on ${requester.connectionConfig.url}")
         throwable = proceedPdsMove(requester.connectionConfig, requester.connectionConfig, operation, progressIndicator)
         break
       } catch (t: Throwable) {
@@ -97,7 +101,9 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
       }
     }
     if (throwable != null) {
+      log.info("Failed to move PDS")
       throw throwable
     }
+    log.info("PDS has been moved successfully")
   }
 }

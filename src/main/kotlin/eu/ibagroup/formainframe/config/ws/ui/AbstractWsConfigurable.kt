@@ -15,14 +15,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel
-import eu.ibagroup.formainframe.common.ui.CrudableTableModel
-import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
-import eu.ibagroup.formainframe.common.ui.ValidatingTableView
-import eu.ibagroup.formainframe.common.ui.tableWithToolbar
+import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.*
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.isThe
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 
 /**
  * Abstract class for Working Set configurables.
@@ -67,12 +66,28 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
   }
 
   /**
+   * Registers custom mouse listeners for the specified WS table view (Files WS or JES WS)
+   * @param wsTable - working set table view instance
+   * @return An instance of MouseAdapter
+   */
+  private fun registerMouseListeners(wsTable : ValidatingTableView<WSConfig>): MouseAdapter = object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) {
+      if (e.clickCount == 2) {
+        wsTable.selectedObject?.let { selected ->
+          createEditDialog(selected.toDialogStateAbstract())
+        }
+      }
+    }
+  }
+
+  /**
    * Creates panel with table containing Working Set List inside.
    * @return formed DialogPanel.
    */
   override fun createPanel(): DialogPanel {
     wsTable = ValidatingTableView(wsTableModel, disposable!!).apply {
       rowHeight = DEFAULT_ROW_HEIGHT
+      addMouseListener(registerMouseListeners(this))
     }
 
     ApplicationManager.getApplication()

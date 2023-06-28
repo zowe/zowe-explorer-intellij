@@ -21,9 +21,9 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperation
 import eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperationParams
-import eu.ibagroup.r2z.FileTagList
-import eu.ibagroup.r2z.TagAction
-import eu.ibagroup.r2z.UssFileDataType
+import org.zowe.kotlinsdk.FileTagList
+import org.zowe.kotlinsdk.TagAction
+import org.zowe.kotlinsdk.UssFileDataType
 import okhttp3.ResponseBody
 import okhttp3.internal.indexOfNonWhitespace
 import java.nio.charset.Charset
@@ -51,7 +51,7 @@ fun getUssFileTagCharset(attributes: RemoteUssAttributes): Charset? {
   val responseBody = listUssFileTag(attributes)
   val body = responseBody?.string()
   if (body?.isNotEmpty() == true) {
-    val stdout = eu.ibagroup.r2z.gson.fromJson(body, FileTagList::class.java).stdout[0]
+    val stdout = org.zowe.kotlinsdk.gson.fromJson(body, FileTagList::class.java).stdout[0]
     if (stdout.indexOf("t ") > -1) {
       val startPos = stdout.indexOfNonWhitespace(1)
       val endPos = stdout.indexOf(' ', startPos)

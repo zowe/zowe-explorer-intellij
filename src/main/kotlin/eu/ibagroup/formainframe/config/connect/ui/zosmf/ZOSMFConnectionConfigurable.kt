@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.connect.ui
+package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -29,10 +29,12 @@ import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.toMutableList
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 
 /** Create and manage Connections tab in settings */
 @Suppress("DialogTitleCapitalization")
-class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {
+class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections", "mainframe") {
 
   var openAddDialog = false
 
@@ -87,6 +89,8 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
 
   /** Remove connections with the warning before they are deleted */
   private fun removeConnectionsWithWarning(selectedConfigs: List<ConnectionDialogState>) {
+
+    // TODO: Find working sets for connection using templated way without specific implementation.
     val filesWorkingSets = sandboxCrudable.getAll<FilesWorkingSetConfig>().toMutableList()
     val filesWsUsages = filesWorkingSets.filter { filesWsConfig ->
       selectedConfigs.any { state -> filesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
@@ -128,6 +132,21 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
 
   private var panel: DialogPanel? = null
 
+  /**
+   * Registers custom mouse listeners for the connections table view
+   * @param connectionsTable - connections table view object
+   * @return An instance of MouseAdapter
+   */
+  private fun registerMouseListeners(connectionsTable : ValidatingTableView<ConnectionDialogState>): MouseAdapter = object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) {
+      if (e.clickCount == 2) {
+        connectionsTable.selectedObject?.let {
+          editConnection()
+        }
+      }
+    }
+  }
+
   /** Create Connections panel in settings */
   override fun createPanel(): DialogPanel {
     val tableModel = ConnectionsTableModel(sandboxCrudable)
@@ -136,6 +155,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
     val table = ValidatingTableView(tableModel, disposable!!)
       .apply {
         rowHeight = DEFAULT_ROW_HEIGHT
+        addMouseListener(registerMouseListeners(this))
       }
 
     connectionsTable = table
@@ -155,7 +175,7 @@ class ConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connections",
       })
 
     return panel {
-      group("Connections", false) {
+      group("z/OSMF Connections", false) {
         row {
           tableWithToolbar(table) {
             configureDecorator {

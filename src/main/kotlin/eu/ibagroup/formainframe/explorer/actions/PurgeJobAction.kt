@@ -16,9 +16,9 @@ import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
 import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
-import eu.ibagroup.r2z.ExecData
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.Job
+import org.zowe.kotlinsdk.ExecData
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.Job
 
 /** An action to purge a job */
 class PurgeJobAction : AnAction() {
@@ -32,7 +32,7 @@ class PurgeJobAction : AnAction() {
    * After completion shows a notification
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: e.getData(JOBS_LOG_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -40,7 +40,7 @@ class PurgeJobAction : AnAction() {
     var connectionConfig: ConnectionConfig? = null
     if (view is JesExplorerView) {
       val node = view.mySelectedNodesData.getOrNull(0)?.node
-      if (node is ExplorerTreeNode<*>) {
+      if (node is ExplorerTreeNode<*, *>) {
         val virtualFile = node.virtualFile
         if (virtualFile != null) {
           val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
@@ -116,7 +116,7 @@ class PurgeJobAction : AnAction() {
    * @param jobInfo - job info for particular job
    * @return Void
    */
-  private fun waitJobReleasedAndRefresh(jobParentNode: ExplorerTreeNode<*>, jobInfo: Job) {
+  private fun waitJobReleasedAndRefresh(jobParentNode: ExplorerTreeNode<ConnectionConfig, *>, jobInfo: Job) {
     if (jobParentNode is JesFilterNode) {
       val query = jobParentNode.query
       if (query != null) {
@@ -140,7 +140,7 @@ class PurgeJobAction : AnAction() {
    * or from the JES Explorer by clicking on the corresponding job
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: e.getData(JOBS_LOG_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: e.getData(JOBS_LOG_VIEW) ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

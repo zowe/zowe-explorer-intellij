@@ -20,9 +20,10 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.ReleaseJobRequest
-import eu.ibagroup.r2z.ReleaseJobRequestBody
+import eu.ibagroup.formainframe.utils.log
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.ReleaseJobRequest
+import org.zowe.kotlinsdk.ReleaseJobRequestBody
 import retrofit2.Response
 
 /** Factory for release job operation runner */
@@ -38,6 +39,8 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
   override val operationClass = ReleaseJobOperation::class.java
 
   override val resultClass = ReleaseJobRequest::class.java
+
+  override val log = log<ReleaseJobOperationRunner>()
 
   override fun canRun(operation: ReleaseJobOperation): Boolean {
     return true
@@ -84,15 +87,23 @@ class ReleaseJobOperationRunner : OperationRunner<ReleaseJobOperation, ReleaseJo
 open class ReleaseJobOperationParams
 
 /** Job Name and Job Id are used */
-class BasicReleaseJobParams(val jobName: String, val jobId: String) : ReleaseJobOperationParams()
+class BasicReleaseJobParams(val jobName: String, val jobId: String) : ReleaseJobOperationParams() {
+  override fun toString(): String {
+    return "BasicReleaseJobParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /** Correlator is used */
-class CorrelatorReleaseJobParams(val correlator: String) : ReleaseJobOperationParams()
+class CorrelatorReleaseJobParams(val correlator: String) : ReleaseJobOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorReleaseJobParams(correlator='$correlator')"
+  }
+}
 
 /** Class for release job operation */
 data class ReleaseJobOperation(
   override val request: ReleaseJobOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<ReleaseJobOperationParams, ReleaseJobRequest> {
+) : RemoteQuery<ConnectionConfig, ReleaseJobOperationParams, ReleaseJobRequest> {
   override val resultClass = ReleaseJobRequest::class.java
 }

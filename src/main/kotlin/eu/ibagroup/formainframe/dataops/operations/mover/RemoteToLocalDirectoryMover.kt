@@ -23,6 +23,7 @@ import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
+import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -76,7 +77,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     if (attributes is RemoteDatasetAttributes) {
       val sourceQuery = UnitRemoteQueryImpl(LibraryQuery(file as MFVirtualFile), connectionConfig)
       val sourceFileFetchProvider = dataOpsManager
-        .getFileFetchProvider<LibraryQuery, RemoteQuery<LibraryQuery, Unit>, VFile>(
+        .getFileFetchProvider<LibraryQuery, RemoteQuery<ConnectionConfig, LibraryQuery, Unit>, VFile>(
           LibraryQuery::class.java, RemoteQuery::class.java, vFileClass
         )
       sourceFileFetchProvider.reload(sourceQuery, progressIndicator)
@@ -84,7 +85,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     } else if (attributes is RemoteUssAttributes) {
       val sourceQuery = UnitRemoteQueryImpl(UssQuery(attributes.path), connectionConfig)
       val sourceFileFetchProvider = dataOpsManager
-        .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, VFile>(
+        .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, VFile>(
           UssQuery::class.java, RemoteQuery::class.java, vFileClass
         )
       sourceFileFetchProvider.reload(sourceQuery, progressIndicator)
@@ -92,6 +93,8 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     }
     throw IllegalArgumentException("Children of file ${file.name} cannot be fetched.")
   }
+
+  override val log = log<RemoteToLocalDirectoryMover<VFile>>()
 
   /**
    * Proceeds download of remote uss directory to local file system.
@@ -109,14 +112,15 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
     try {
       if (fetchRemoteChildren(sourceFile, connectionConfig, progressIndicator)) {
         var createdDir: VirtualFile? = null
+        val newName = operation.newName ?: sourceFile.name
         runWriteActionInEdtAndWait {
           if (operation.forceOverwriting) {
-            destFile.children.filter { it.name == sourceFile.name && it.isDirectory }.forEach { it.delete(this) }
+            destFile.children.filter { it.name == newName && it.isDirectory }.forEach { it.delete(this) }
           }
-          createdDir = destFile.createChildDirectory(this, sourceFile.name)
+          createdDir = destFile.createChildDirectory(this, newName)
         }
         val createdDirNotNull =
-          createdDir ?: return IllegalArgumentException("Cannot create directory ${sourceFile.name}")
+          createdDir ?: return IllegalArgumentException("Cannot create directory ${newName}")
         sourceFile.children?.forEach {
           runCatching {
             dataOpsManager.performOperation(
@@ -150,12 +154,14 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable? = null
     try {
-      val attributes = dataOpsManager.tryToGetAttributes(operation.source) as MFRemoteFileAttributes<*>
+      log.info("Trying to move remote file ${operation.source.name} to local directory ${operation.destination.path}")
+      val attributes = dataOpsManager.tryToGetAttributes(operation.source) as MFRemoteFileAttributes<*, *>
       if (attributes.requesters.isEmpty()) {
         throw IllegalArgumentException("Cannot get system information of file ${operation.source.name}")
       }
       for (requester in attributes.requesters) {
-        throwable = proceedLocalMoveCopy(operation, requester.connectionConfig, progressIndicator)
+        val connectionConfig = requester.connectionConfig as ConnectionConfig
+        throwable = proceedLocalMoveCopy(operation, connectionConfig, progressIndicator)
         if (throwable != null) {
           throw throwable
         }
@@ -164,7 +170,9 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
       throwable = t
     }
     if (throwable != null) {
+      log.info("Failed to move remote file")
       throw throwable
     }
+    log.info("Remote ile has been moved successfully")
   }
 }

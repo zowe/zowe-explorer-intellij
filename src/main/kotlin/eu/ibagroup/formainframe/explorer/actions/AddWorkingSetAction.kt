@@ -20,7 +20,6 @@ import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
 import eu.ibagroup.formainframe.config.ws.ui.FilesWorkingSetDialogState
 import eu.ibagroup.formainframe.config.ws.ui.files.FilesWorkingSetDialog
 import eu.ibagroup.formainframe.config.ws.ui.initEmptyUuids
-import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_CONTEXT_MENU
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getAll
@@ -31,7 +30,6 @@ import eu.ibagroup.formainframe.utils.crudable.getAll
  * @author Valiantsin Krus
  */
 class AddWorkingSetAction : AddWsActionBase() {
-  override val explorerView = FILE_EXPLORER_VIEW
   override val presentationTextInExplorer = "Working Set"
   override val defaultPresentationText = "Create Working Set"
 
@@ -39,7 +37,7 @@ class AddWorkingSetAction : AddWsActionBase() {
    * Creates dialog for Files Working Set.
    * @see AddWsActionBase.createDialog
    */
-  override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
+  override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
     return FilesWorkingSetDialog(configCrudable, FilesWorkingSetDialogState().initEmptyUuids(configCrudable))
   }
 

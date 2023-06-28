@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.dataops.operations
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.UnitOperation
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
@@ -19,9 +20,11 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
  * @param file represents a virtual file on which rename will be performed.
  * @param attributes represents a file attributes of the given virtual file.
  * @param newName a new name of the file in VFS.
+ * @param requester a requester for this operation
  */
 data class RenameOperation(
   val file: VirtualFile,
   val attributes: FileAttributes,
-  val newName: String
+  val newName: String,
+  val requester: AnAction? = null
 ) : UnitOperation

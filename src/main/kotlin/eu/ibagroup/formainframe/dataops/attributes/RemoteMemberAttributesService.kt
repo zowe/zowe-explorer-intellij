@@ -13,8 +13,8 @@ package eu.ibagroup.formainframe.dataops.attributes
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
-import eu.ibagroup.r2z.Member
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.Member
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Factory for registering RemoteMemberAttributesService

@@ -17,12 +17,12 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.*
-import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.XIBMDataType
+import org.zowe.kotlinsdk.XIBMDataType
 
 /**
  * Base class implementation of the change content mode action
@@ -30,7 +30,7 @@ import eu.ibagroup.r2z.XIBMDataType
 class ChangeContentModeAction : ToggleAction() {
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return false
+    val view = e.getExplorerView<FileExplorerView>() ?: return false
     return getMappedNodes(view)
       .mapNotNull {
         view.explorer.componentManager.service<DataOpsManager>()
@@ -73,7 +73,7 @@ class ChangeContentModeAction : ToggleAction() {
    * Selected means that content mode has been changed to binary for particular virtual file
    */
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     if (showConfirmDialog(state) == Messages.CANCEL) {
       return
     } else {
@@ -146,7 +146,7 @@ class ChangeContentModeAction : ToggleAction() {
    */
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

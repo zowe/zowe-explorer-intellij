@@ -12,14 +12,15 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.AddMaskDialog
+import eu.ibagroup.formainframe.explorer.ui.AddOrEditMaskDialog
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
-import eu.ibagroup.formainframe.explorer.ui.FILE_EXPLORER_VIEW
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.MaskType
 
 /** Action to add USS or z/OS mask */
@@ -27,11 +28,11 @@ class AddMaskAction : AnAction() {
 
   /** Add mask when the dialog is fulfilled    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
 
     val ws = getUnits(view).firstOrNull() ?: return
-    val initialState = MaskStateWithWS(ws)
-    val dialog = AddMaskDialog(e.project, initialState)
+    val initialState = MaskStateWithWS(ws = ws)
+    val dialog = AddOrEditMaskDialog(e.project, "Create Mask", initialState)
     if (dialog.showAndGet()) {
       val state = dialog.state
       when (state.type) {
@@ -47,7 +48,7 @@ class AddMaskAction : AnAction() {
 
   /** Decides to show action or not */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -58,7 +59,7 @@ class AddMaskAction : AnAction() {
   private fun getUnits(view: FileExplorerView): List<FilesWorkingSet> {
     return view.mySelectedNodesData
       .map { it.node }
-      .filterIsInstance<ExplorerUnitTreeNodeBase<*, FilesWorkingSet>>()
+      .filterIsInstance<ExplorerUnitTreeNodeBase<ConnectionConfig, *, FilesWorkingSet>>()
       .map { it.unit }
       .distinct()
   }

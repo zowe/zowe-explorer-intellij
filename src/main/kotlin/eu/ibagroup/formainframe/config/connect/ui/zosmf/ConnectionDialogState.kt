@@ -8,44 +8,46 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.config.connect.ui
+package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogStateBase
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.annotations.ZVersion
 
 /**
  * Data class which represents state for connection dialog
  */
 data class ConnectionDialogState(
-  var connectionUuid: String = "",
-  var connectionName: String = "",
-  var connectionUrl: String = "",
+  override var connectionUuid: String = "",
+  override var connectionName: String = "",
+  override var connectionUrl: String = "",
   /*var apiMeditationLayer: String = "",*/
-  var username: String = "",
-  var password: String = "",
+  override var username: String = "",
+  override var password: String = "",
   var isAllowSsl: Boolean = false,
   var zVersion: ZVersion = ZVersion.ZOS_2_1,
+  var owner: String = "",
   override var mode: DialogMode = DialogMode.CREATE
-) : DialogState, Cloneable {
+) : ConnectionDialogStateBase<ConnectionConfig>() {
 
-  var connectionConfig
-    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion)
+  override var connectionConfig
+    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion, owner)
     set(value) {
       connectionUuid = value.uuid
       connectionName = value.name
       connectionUrl = value.url
       isAllowSsl = value.isAllowSelfSigned
       zVersion = value.zVersion
+      owner = value.owner
     }
 
 
-  var credentials
+  override var credentials
     get() = Credentials(connectionUuid, username, password)
     set(value) {
       username = value.username
@@ -59,7 +61,8 @@ data class ConnectionDialogState(
       connectionUrl = connectionUrl,
       username = username,
       password = password,
-      isAllowSsl = isAllowSsl
+      isAllowSsl = isAllowSsl,
+      owner = owner
     )
   }
 }
@@ -72,7 +75,7 @@ fun ConnectionDialogState.initEmptyUuids(crudable: Crudable): ConnectionDialogSt
 fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
 
   val credentials = crudable.getByUniqueKey<Credentials>(this.uuid) ?: Credentials().apply {
-    this.connectionConfigUuid = this@toDialogState.uuid
+    this.configUuid = this@toDialogState.uuid
   }
   return ConnectionDialogState(
     connectionUuid = this.uuid,
@@ -81,6 +84,7 @@ fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
     username = credentials.username,
     password = credentials.password,
     isAllowSsl = this.isAllowSelfSigned,
-    zVersion = this.zVersion
+    zVersion = this.zVersion,
+    owner = this.owner
   )
 }

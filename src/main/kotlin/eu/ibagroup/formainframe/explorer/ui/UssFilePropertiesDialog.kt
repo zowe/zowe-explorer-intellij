@@ -10,7 +10,6 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
-import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ComboBox
@@ -26,7 +25,7 @@ import javax.swing.JComponent
 import com.intellij.ui.dsl.builder.*
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import eu.ibagroup.formainframe.utils.getSupportedEncodings
-import eu.ibagroup.r2z.*
+import org.zowe.kotlinsdk.*
 import java.nio.charset.Charset
 
 /** Class for USS file properties dialog */
@@ -108,20 +107,16 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
       }
       if (!state.ussAttributes.isDirectory && state.fileIsBeingEditingNow) {
         row {
-          label("File encoding:").widthGroup(sameWidthGroup)
+          label("File encoding: ").widthGroup(sameWidthGroup)
           comboBox = comboBox(getSupportedEncodings())
             .bindItem(state.ussAttributes::charset.toNullableProperty())
             .horizontalAlign(HorizontalAlign.FILL)
         }
         row {
-          button("Reset Default Encoding", EmptyAction()) //TODO: EmptyAction()?
-            .widthGroup(sameWidthGroup)
-            .applyToComponent {
-              addActionListener {
-                state.ussAttributes.charset = DEFAULT_BINARY_CHARSET
-                comboBox.component.item = DEFAULT_BINARY_CHARSET
-              }
-            }
+          button("Reset Default Encoding") {
+            state.ussAttributes.charset = DEFAULT_BINARY_CHARSET
+            comboBox.component.item = DEFAULT_BINARY_CHARSET
+          }.widthGroup(sameWidthGroup)
         }
       }
       if (state.ussAttributes.isSymlink) {

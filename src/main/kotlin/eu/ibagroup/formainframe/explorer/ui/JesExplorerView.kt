@@ -13,9 +13,9 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
@@ -24,7 +24,6 @@ import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
  * Data key for extracting current instance of JesExplorerView.
  * @see JesExplorerView
  */
-val JES_EXPLORER_VIEW = DataKey.create<JesExplorerView>("jesExplorerView")
 
 const val JES_EXPLORER_CONTEXT_MENU = "JES Explorer"
 
@@ -40,13 +39,13 @@ const val JES_EXPLORER_CONTEXT_MENU = "JES Explorer"
  * @author Valiantsin Krus
  */
 class JesExplorerView(
-  explorer: Explorer<JesWorkingSetImpl>,
+  explorer: Explorer<ConnectionConfig, JesWorkingSetImpl>,
   project: Project,
   parentDisposable: Disposable,
   contextMenu: ActionGroup,
-  rootNodeProvider: (Explorer<*>, Project, ExplorerTreeStructureBase) -> ExplorerTreeNode<*>,
+  rootNodeProvider: (Explorer<ConnectionConfig, *>, Project, ExplorerTreeStructureBase) -> ExplorerTreeNode<ConnectionConfig, *>,
   cutProviderUpdater: (List<VirtualFile>) -> Unit
-) : ExplorerTreeView<JesWorkingSetImpl, JesWorkingSetConfig>(
+) : ExplorerTreeView<ConnectionConfig, JesWorkingSetImpl, JesWorkingSetConfig>(
   explorer,
   project,
   parentDisposable,
@@ -54,6 +53,8 @@ class JesExplorerView(
   rootNodeProvider,
   cutProviderUpdater
 ) {
+
+  override val contextMenuPlace = JES_EXPLORER_CONTEXT_MENU
 
   /**
    * Provides data in data context. Intellij understands the context
@@ -69,7 +70,7 @@ class JesExplorerView(
     return when {
       CommonDataKeys.NAVIGATABLE.`is`(dataId) -> if (mySelectedNodesData.isNotEmpty()) mySelectedNodesData[0].node else null
       CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.map { it.node }.toTypedArray()
-      JES_EXPLORER_VIEW.`is`(dataId) -> this
+      EXPLORER_VIEW.`is`(dataId) -> this
       else -> null
     }
   }

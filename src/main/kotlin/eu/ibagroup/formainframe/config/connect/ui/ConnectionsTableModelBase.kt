@@ -7,27 +7,33 @@
  *
  * Copyright IBA Group 2020
  */
-
 package eu.ibagroup.formainframe.config.connect.ui
 
 import eu.ibagroup.formainframe.common.ui.CrudableTableModel
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.MergedCollections
-import eu.ibagroup.formainframe.utils.crudable.getAll
-import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
 import eu.ibagroup.formainframe.utils.toMutableList
 
-/** Connections table model. Provides operations on connection entries of the table */
-class ConnectionsTableModel(
-  crudable: Crudable
+/**
+ * Base implementation of table model to display connections (z/OSMF, CICS and etc.).
+ * @param crudable crudable from which to get connections.
+ * @param connectionUrlColumnName name of the column to display connection url.
+ * @author Valiantsin Krus
+ */
+abstract class ConnectionsTableModelBase<ConnectionConfig : ConnectionConfigBase, ConnectionDialogState : ConnectionDialogStateBase<ConnectionConfig>>(
+  crudable: Crudable,
+  connectionUrlColumnName: String = "z/OSMF URL"
 ) : CrudableTableModel<ConnectionDialogState>(
   crudable,
   ConnectionNameColumn(),
-  ConnectionUrlColumn(),
+  ConnectionUrlColumn(connectionUrlColumnName),
   ConnectionUsernameColumn()
 ) {
+  abstract val connectionConfigClass: Class<out ConnectionConfig>
+
+  abstract fun connectionToDialogState(connectionConfig: ConnectionConfig, crudable: Crudable): ConnectionDialogState
 
   /**
    * Get connections from the crudable object
@@ -35,8 +41,8 @@ class ConnectionsTableModel(
    * @return connection configs list
    */
   override fun fetch(crudable: Crudable): MutableList<ConnectionDialogState> {
-    return crudable.getAll<ConnectionConfig>().map {
-      it.toDialogState(crudable)
+    return crudable.getAll(connectionConfigClass).map {
+      connectionToDialogState(it, crudable)
     }.toMutableList()
   }
 
@@ -75,7 +81,7 @@ class ConnectionsTableModel(
    */
   override fun onAdd(crudable: Crudable, value: ConnectionDialogState): Boolean {
     return with(crudable) {
-      value.connectionUuid = crudable.nextUniqueValue<ConnectionConfig, String>()
+      value.connectionUuid = crudable.nextUniqueValue(connectionConfigClass)
       listOf(
         add(value.credentials),
         add(value.connectionConfig)
@@ -90,34 +96,16 @@ class ConnectionsTableModel(
    */
   override fun onApplyingMergedCollection(crudable: Crudable, merged: MergedCollections<ConnectionDialogState>) {
     listOf(
-      Pair(Credentials::class.java, ConnectionDialogState::credentials),
-      Pair(ConnectionConfig::class.java, ConnectionDialogState::connectionConfig)
+      Pair(Credentials::class.java) { it: ConnectionDialogState -> it.credentials },
+      Pair(Credentials::class.java) { it: ConnectionDialogState -> it.connectionConfig },
     ).forEach { pair ->
       crudable.applyMergedCollections(
         pair.first, MergedCollections(
-          toAdd = merged.toAdd.map { pair.second.get(it) },
-          toUpdate = merged.toUpdate.map { pair.second.get(it) },
-          toDelete = merged.toDelete.map { pair.second.get(it) }
+          toAdd = merged.toAdd.map { pair.second(it) },
+          toUpdate = merged.toUpdate.map { pair.second(it) },
+          toDelete = merged.toDelete.map { pair.second(it) }
         )
       )
     }
-  }
-
-  /**
-   * Set the item for the row
-   * @param row the row number to update
-   * @param item the item to set to the row
-   */
-  override fun set(row: Int, item: ConnectionDialogState) {
-    get(row).isAllowSsl = item.isAllowSsl
-    get(row).password = item.password
-    get(row).zVersion = item.zVersion
-    super.set(row, item)
-  }
-
-  override val clazz = ConnectionDialogState::class.java
-
-  init {
-    initialize()
   }
 }

@@ -15,22 +15,23 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.xmlb.annotations.Attribute
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import javax.swing.JComponent
 
-abstract class ExplorerContentProviderFactory<E : Explorer<*>> {
-  abstract fun buildComponent(): ExplorerContentProvider<E>
+abstract class ExplorerContentProviderFactory<Connection: ConnectionConfigBase, E : Explorer<Connection, *>> {
+  abstract fun buildComponent(): ExplorerContentProvider<Connection, E>
 
   @Attribute
   open var index: Int = 0
 }
 
 /** Explorer content provider interface to represent the basic fields needed to be initialized */
-interface ExplorerContentProvider<E : Explorer<*>> {
+interface ExplorerContentProvider<Connection: ConnectionConfigBase, E : Explorer<Connection, *>> {
 
   companion object {
     @JvmField
     val EP =
-      ExtensionPointName.create<ExplorerContentProviderFactory<*>>("eu.ibagroup.formainframe.explorerContentProvider")
+      ExtensionPointName.create<ExplorerContentProviderFactory<*, *>>("eu.ibagroup.formainframe.explorerContentProvider")
   }
 
   val explorer: E

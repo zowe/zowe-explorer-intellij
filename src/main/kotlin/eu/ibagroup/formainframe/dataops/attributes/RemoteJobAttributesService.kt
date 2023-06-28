@@ -11,12 +11,12 @@
 package eu.ibagroup.formainframe.dataops.attributes
 
 import com.intellij.util.SmartList
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.mergeWith
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.createAttributes
-import eu.ibagroup.r2z.Job
-
+import org.zowe.kotlinsdk.Job
 
 const val JOBS_FOLDER_NAME = "Jobs"
 
@@ -38,7 +38,7 @@ class RemoteJobAttributesServiceFactory : AttributesServiceFactory {
  */
 class RemoteJobAttributesService(
   dataOpsManager: DataOpsManager
-) : MFRemoteAttributesServiceBase<RemoteJobAttributes>(dataOpsManager) {
+) : MFRemoteAttributesServiceBase<ConnectionConfig, RemoteJobAttributes>(dataOpsManager) {
   override val attributesClass = RemoteJobAttributes::class.java
   override val subFolderName = JOBS_FOLDER_NAME
 

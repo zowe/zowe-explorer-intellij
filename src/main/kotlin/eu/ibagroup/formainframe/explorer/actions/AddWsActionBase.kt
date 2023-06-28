@@ -13,7 +13,6 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.IdeFocusManager
 import eu.ibagroup.formainframe.config.ConfigService
@@ -21,7 +20,6 @@ import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialogState
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
@@ -29,7 +27,6 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  */
 abstract class AddWsActionBase : AnAction() {
 
-  abstract val explorerView: DataKey<out ExplorerTreeView<*, *>>
 
   /** Shows add Working Set dialog (for files or for jobs) */
   override fun actionPerformed(e: AnActionEvent) {
@@ -57,7 +54,7 @@ abstract class AddWsActionBase : AnAction() {
    * @see Crudable
    * @see ConfigService
    */
-  abstract fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>>
+  abstract fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, *, out AbstractWsDialogState<out WorkingSetConfig, *>>
 
   override fun isDumbAware(): Boolean {
     return true

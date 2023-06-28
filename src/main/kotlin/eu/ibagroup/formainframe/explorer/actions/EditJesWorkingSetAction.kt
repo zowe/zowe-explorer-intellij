@@ -20,8 +20,9 @@ import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.jes.JesWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.jes.toDialogState
-import eu.ibagroup.formainframe.explorer.ui.JES_EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JesWsNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 
@@ -35,7 +36,7 @@ class EditJesWorkingSetAction: AnAction() {
    * runs the edit JES working set operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
     val node = view.mySelectedNodesData[0].node
     if (node is JesWsNode) {
       val workingSetConfig =
@@ -63,7 +64,7 @@ class EditJesWorkingSetAction: AnAction() {
    * Determines which objects are JES working sets and therefore can be edited
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

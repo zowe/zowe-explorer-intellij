@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops.fetch
 
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.api
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -23,9 +24,9 @@ import eu.ibagroup.formainframe.utils.asMutableList
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import eu.ibagroup.r2z.ExecData
-import eu.ibagroup.r2z.JESApi
-import eu.ibagroup.r2z.annotations.ZVersion
+import org.zowe.kotlinsdk.ExecData
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.annotations.ZVersion
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -45,7 +46,7 @@ private val log = log<JobFetchProvider>()
  * @author Valiantsin Krus
  */
 class JobFetchProvider(dataOpsManager: DataOpsManager) :
-  RemoteAttributedFileFetchBase<JobsFilter, RemoteJobAttributes, MFVirtualFile>(dataOpsManager) {
+  RemoteAttributedFileFetchBase<ConnectionConfig, JobsFilter, RemoteJobAttributes, MFVirtualFile>(dataOpsManager) {
 
   override val requestClass = JobsFilter::class.java
 
@@ -58,7 +59,7 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
    * @see RemoteFileFetchProviderBase.fetchResponse
    */
   override fun fetchResponse(
-    query: RemoteQuery<JobsFilter, Unit>,
+    query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>,
     progressIndicator: ProgressIndicator
   ): Collection<RemoteJobAttributes> {
     log.info("Fetching Job Lists for $query")
@@ -132,7 +133,7 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
    * Clears or update attributes of unused job file if needed.
    * @see RemoteFileFetchProviderBase.cleanupUnusedFile
    */
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<JobsFilter, Unit>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>) {
     val deletingFileAttributes = attributesService.getAttributes(file)
     log.info("Cleaning-up file attributes $deletingFileAttributes")
     if (deletingFileAttributes != null) {

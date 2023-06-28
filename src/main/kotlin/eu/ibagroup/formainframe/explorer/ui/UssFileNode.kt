@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.IconUtil
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -23,10 +24,10 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 class UssFileNode(
   file: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  unit: ExplorerUnit,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
+  unit: ExplorerUnit<ConnectionConfig>,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(
+) : ExplorerUnitTreeNodeBase<ConnectionConfig, MFVirtualFile, ExplorerUnit<ConnectionConfig>>(
   file, project, parent, unit, treeStructure
 ), UssNode {
 

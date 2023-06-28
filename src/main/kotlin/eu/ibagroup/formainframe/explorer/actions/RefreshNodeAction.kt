@@ -24,8 +24,7 @@ class RefreshNodeAction : AnAction() {
    * Overloaded method of AnAction abstract class. Tells what to do if an action was submitted
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: e.getData(JES_EXPLORER_VIEW)
-    view ?: return
+    val view = e.getData(EXPLORER_VIEW) ?: return
 
     val selected = view.mySelectedNodesData
 
@@ -38,7 +37,7 @@ class RefreshNodeAction : AnAction() {
           view.getNodesByQueryAndInvalidate(query)
         }
 
-        is WorkingSetNode<*> -> {
+        is WorkingSetNode<*, *> -> {
           node.cachedChildren.filterIsInstance<FetchNode>()
             .forEach {
               it.cleanCache(cleanBatchedQuery = true)
@@ -57,7 +56,7 @@ class RefreshNodeAction : AnAction() {
    * Method determines if an action is visible for particular virtual file in VFS
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: e.getData(JES_EXPLORER_VIEW)
+    val view = e.getData(EXPLORER_VIEW)
 
     view ?: let {
       e.presentation.isEnabledAndVisible = false
