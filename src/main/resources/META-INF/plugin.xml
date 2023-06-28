@@ -123,7 +123,8 @@ Example of how to see the output:<br/>
 
         <configDeclaration implementation="eu.ibagroup.formainframe.config.ws.JesWorkingSetConfigDeclarationFactory"/>
 
-        <configDeclaration implementation="eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclarationFactory"/>
+        <configDeclaration
+                implementation="eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclarationFactory"/>
 
         <attributesService
                 implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesServiceFactory"/>
@@ -515,6 +516,10 @@ Example of how to see the output:<br/>
                 icon="ForMainframeIcons.DatasetMask"
                 text="Mask"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditMaskAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditMaskAction"
+                text="Edit"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"
                 icon="ForMainframeIcons.JclDirectory"
@@ -644,6 +649,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditMaskAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"/>
             <separator/>
             <reference id="$Delete"/>

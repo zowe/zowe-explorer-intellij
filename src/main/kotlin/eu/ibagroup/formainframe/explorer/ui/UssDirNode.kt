@@ -61,7 +61,7 @@ class UssDirNode(
   /** Stores the sorted nodes for particular Node */
   private var sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 
-  val isConfigUssPath = vFile == null
+  val isUssMask = vFile == null
 
   override val query: RemoteQuery<ConnectionConfig, UssQuery, Unit>?
     get() {
@@ -114,9 +114,11 @@ class UssDirNode(
       isRootNode -> {
         AllIcons.Nodes.Module
       }
+
       vFile != null -> {
         IconUtil.getIcon(vFile!!, 0, project)
       }
+
       else -> {
         AllIcons.Nodes.Folder
       }
@@ -125,9 +127,11 @@ class UssDirNode(
       isRootNode -> {
         value.path
       }
+
       vFile != null -> {
         vFile!!.presentableName
       }
+
       else -> {
         value.path.split("/").last()
       }

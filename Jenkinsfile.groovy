@@ -18,6 +18,7 @@ properties([gitLabConnection('code.iby.scdc.io-connection')])
 
 // @NonCPS
 // def changeVersion(String xmlFile) {
+
 //     def xml = new XmlSlurper().parseText(xmlFile)
 //     println xml.'idea-version'.'@since-build'
 //     xml.'idea-version'.'@since-build' =  '203.7148.72'
@@ -116,7 +117,7 @@ pipeline {
                 success {
                     script {
                         if (!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
-                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built. You can download your build from the following link http://10.221.23.186/ijmp-plugin/$jiraTicket/idea/$resultFileName.", site: "$jiraSite"
+                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built. You can download your build from the following link http://10.222.240.3/ijmp-plugin/$jiraTicket/idea/$resultFileName.", site: "$jiraSite"
                         }
 
                     }
@@ -124,7 +125,7 @@ pipeline {
                 failure {
                     script {
                         if (!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
-                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site: "$jiraSite"
+                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.222.240.3:8080/job/BuildPluginPipeline/", site: "$jiraSite"
                         }
                     }
                 }
