@@ -55,14 +55,9 @@ class ChangeEncodingDialog(
 
   private val message: String
 
-  private val possibleToConvert: Boolean
-
-  private val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
-
-  private val syncProvider = DocumentedSyncProvider(virtualFile)
+  private val possibleToConvert = attributes.isWritable
 
   init {
-    possibleToConvert = contentSynchronizer?.isFileSyncPossible(syncProvider) == true
     if (possibleToConvert) {
       title = message("encoding.reload.or.convert.dialog.title", virtualFile.name, charset.name())
       message = message("encoding.reload.or.convert.dialog.message", virtualFile.name, charset.name())
@@ -92,6 +87,8 @@ class ChangeEncodingDialog(
           doCancelAction()
           return
         }
+        val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
+        val syncProvider = DocumentedSyncProvider(virtualFile)
         if (contentSynchronizer?.isFileUploadNeeded(syncProvider) == true) {
           runWriteActionInEdtAndWait {
             syncProvider.saveDocument()

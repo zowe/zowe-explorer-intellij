@@ -27,8 +27,6 @@ import eu.ibagroup.formainframe.config.connect.*
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialog
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialogState
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.operations.InfoOperation
-import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
 import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.runTask
@@ -144,6 +142,9 @@ class ConnectionDialog(
               }
             addAnyway
           } else {
+            runTask(title = "Retrieving user information", project = project) {
+              state.owner = whoAmI(newTestedConnConfig) ?: ""
+            }
             true
           }
         }
@@ -334,14 +335,14 @@ class ConnectionDialog(
     if (state.mode == DialogMode.UPDATE) {
       state.connectionName = lastSuccessfulState.connectionName
       state.connectionUrl = lastSuccessfulState.connectionUrl
-      state.username = username(lastSuccessfulState.connectionConfig)
-      state.password = password(lastSuccessfulState.connectionConfig)
+      state.username = getUsername(lastSuccessfulState.connectionConfig)
+      state.password = getPassword(lastSuccessfulState.connectionConfig)
       state.isAllowSsl = lastSuccessfulState.isAllowSsl
       state.zVersion = lastSuccessfulState.zVersion
       CredentialService.instance.setCredentials(
         connectionConfigUuid = lastSuccessfulState.connectionUuid,
-        username = username(lastSuccessfulState.connectionConfig),
-        password = password(lastSuccessfulState.connectionConfig)
+        username = getUsername(lastSuccessfulState.connectionConfig),
+        password = getPassword(lastSuccessfulState.connectionConfig)
       )
     }
   }

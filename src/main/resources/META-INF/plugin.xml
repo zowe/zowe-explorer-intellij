@@ -123,7 +123,8 @@ Example of how to see the output:<br/>
 
         <configDeclaration implementation="eu.ibagroup.formainframe.config.ws.JesWorkingSetConfigDeclarationFactory"/>
 
-        <configDeclaration implementation="eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclarationFactory"/>
+        <configDeclaration
+                implementation="eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclarationFactory"/>
 
         <attributesService
                 implementation="eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesServiceFactory"/>
@@ -214,7 +215,7 @@ Example of how to see the output:<br/>
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileToUssDirMoverFactory"/>
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMoverFactory"/>
 
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileToPdsMoverFactory"/>
@@ -343,7 +344,8 @@ Example of how to see the output:<br/>
                             testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestAnalyticsServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
-                            serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestCredentialsServiceImpl"/>
 
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
@@ -354,7 +356,8 @@ Example of how to see the output:<br/>
                             testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
-                            serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.analytics.PolicyProvider"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.PolicyProviderImpl"/>
@@ -491,6 +494,10 @@ Example of how to see the output:<br/>
                 icon="ForMainframeIcons.DatasetMask"
                 text="Mask"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.EditMaskAction"
+                class="eu.ibagroup.formainframe.explorer.actions.EditMaskAction"
+                text="Edit"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddJobsFilterAction"
                 icon="ForMainframeIcons.JclDirectory"
@@ -605,6 +612,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.EditMaskAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"/>
             <separator/>
             <reference id="$Delete"/>

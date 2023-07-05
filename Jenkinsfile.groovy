@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 def jiraSite = 'jira-iba'
-def gitCredentialsId = 'jenkins-gitlab-key'
+def gitCredentialsId = 'e92a3d13-efc3-47d7-955f-a78ad9d7faac'
 //def gitUrl = 'https://code.iby.scdc.io/ijmp/for-mainframe.git'
 def gitUrl = 'git@code.iby.scdc.io:ijmp/for-mainframe.git'
 def resultFileName = ''
@@ -18,14 +18,12 @@ properties([gitLabConnection('code.iby.scdc.io-connection')])
 
 // @NonCPS
 // def changeVersion(String xmlFile) {
+
 //     def xml = new XmlSlurper().parseText(xmlFile)
 //     println xml.'idea-version'.'@since-build'
 //     xml.'idea-version'.'@since-build' =  '203.7148.72'
-
 //     def w = new StringWriter()
 //     XmlUtil.serialize(xml, w)
-
-
 //     return w.toString()
 // }
 
@@ -40,7 +38,7 @@ pipeline {
     }
     tools {
         gradle 'Default'
-        jdk 'Java 17'
+        jdk 'Java 11'
     }
     stages {
         stage('Initial checkup') {
@@ -87,6 +85,7 @@ pipeline {
                     // To change Gradle version - Jenkins/Manage Jenkins/Global Tool Configuration
                     // sh 'gradle -v'
                     sh 'gradle wrapper'
+                    sh './gradlew -v'
                     sh './gradlew test'
                     sh './gradlew buildPlugin'
                 }
@@ -118,7 +117,7 @@ pipeline {
                 success {
                     script {
                         if (!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
-                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built. You can download your build from the following link http://10.221.23.186/ijmp-plugin/$jiraTicket/idea/$resultFileName.", site: "$jiraSite"
+                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch was successfully built. You can download your build from the following link http://10.222.240.3/ijmp-plugin/$jiraTicket/idea/$resultFileName.", site: "$jiraSite"
                         }
 
                     }
@@ -126,7 +125,7 @@ pipeline {
                 failure {
                     script {
                         if (!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
-                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site: "$jiraSite"
+                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.222.240.3:8080/job/BuildPluginPipeline/", site: "$jiraSite"
                         }
                     }
                 }
