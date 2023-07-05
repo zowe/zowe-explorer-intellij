@@ -140,6 +140,24 @@ class TSOWindowFactory : ToolWindowFactory {
       }
       return message
     }
+
+    /**
+     * Method is used to get all messages in queue for particular TSO session
+     * @param session - TSO session config wrapper instance
+     * @return an instance of TSO response
+     * @throws Exception if operation is not successful
+     */
+    fun getTsoMessageQueue(session: TSOConfigWrapper) : TsoResponse {
+      runCatching {
+        service<DataOpsManager>().performOperation(
+          TsoOperation(
+            state = session,
+            mode = TsoOperationMode.GET_MESSAGES
+          )
+        )
+      }.onSuccess { return it }.onFailure { throw it }
+      return TsoResponse()
+    }
   }
 
   /**
@@ -187,24 +205,6 @@ class TSOWindowFactory : ToolWindowFactory {
    */
   override fun shouldBeAvailable(project: Project): Boolean {
     return false
-  }
-
-  /**
-   * Method is used to get all messages in queue for particular TSO session
-   * @param session - TSO session config wrapper instance
-   * @return an instance of TSO response
-   * @throws Exception if operation is not successful
-   */
-  private fun getTsoMessageQueue(session: TSOConfigWrapper) : TsoResponse {
-    runCatching {
-      service<DataOpsManager>().performOperation(
-        TsoOperation(
-          state = session,
-          mode = TsoOperationMode.GET_MESSAGES
-        )
-      )
-    }.onSuccess { return it }.onFailure { throw it }
-    return TsoResponse()
   }
 
   /**

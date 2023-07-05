@@ -41,7 +41,7 @@ class JobNode(
   treeStructure: ExplorerTreeStructureBase
 ) : RemoteMFFileFetchNode<ConnectionConfig, MFVirtualFile, JobQuery, JesWorkingSet>(
   library, project, parent, workingSet, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
   override fun makeFetchTaskTitle(query: RemoteQuery<ConnectionConfig, JobQuery, Unit>): String {
     return "Fetching members for ${query.request.library.name}"
   }

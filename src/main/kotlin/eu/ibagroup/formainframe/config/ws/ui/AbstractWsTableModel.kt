@@ -29,7 +29,7 @@ import eu.ibagroup.formainframe.utils.toMutableList
  * @param crudable Crudable instance to change data.
  * @author Valiantsin Krus
  */
-abstract class AbstractWsTableModel<Connection: ConnectionConfigBase, WSConfig : WorkingSetConfig>(
+abstract class AbstractWsTableModel<Connection : ConnectionConfigBase, WSConfig : WorkingSetConfig>(
   crudable: Crudable,
   connectionClass: Class<out Connection>,
   connectionColumnName: String = message("configurable.ws.tables.ws.url.name")
@@ -40,7 +40,12 @@ abstract class AbstractWsTableModel<Connection: ConnectionConfigBase, WSConfig :
       WSNameColumn { this.items },
       WSConnectionNameColumn<Connection, WSConfig>(crudable, connectionClass),
       WSUsernameColumn { crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username },
-      UrlColumn(connectionColumnName) { crudable.getByUniqueKey(connectionClass, it.connectionConfigUuid).nullable?.url }
+      UrlColumn(connectionColumnName) {
+        crudable.getByUniqueKey(
+          connectionClass,
+          it.connectionConfigUuid
+        ).nullable?.url
+      }
     )
   }
 
