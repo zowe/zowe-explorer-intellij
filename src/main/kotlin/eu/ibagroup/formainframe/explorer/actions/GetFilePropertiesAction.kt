@@ -12,7 +12,6 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -111,5 +110,14 @@ class GetFilePropertiesAction : AnAction() {
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
       && (node is UssFileNode || node is FileLikeDatasetNode || node is LibraryNode || node is UssDirNode)
+
+    // Mark the migrated dataset properties unavailable for clicking
+    if (node != null && (node is FileLikeDatasetNode || node is LibraryNode)) {
+      val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
+      val datasetAttributes = node.virtualFile?.let { dataOpsManager.tryToGetAttributes(it) }
+      if (datasetAttributes is RemoteDatasetAttributes && datasetAttributes.isMigrated) {
+        e.presentation.isEnabled = false
+      }
+    }
   }
 }

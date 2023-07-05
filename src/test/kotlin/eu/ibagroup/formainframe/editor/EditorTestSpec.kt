@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.Project
+// import com.intellij.openapi.ui.isComponentUnderMouse // TODO: needed in v1.*.*-223 and greater
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil

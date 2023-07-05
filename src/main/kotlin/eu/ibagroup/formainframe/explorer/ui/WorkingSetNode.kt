@@ -18,7 +18,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
-import eu.ibagroup.formainframe.config.connect.username
+import eu.ibagroup.formainframe.config.connect.getUsername
 import eu.ibagroup.formainframe.explorer.WorkingSet
 
 private val regularIcon = AllIcons.Nodes.Project
@@ -27,14 +27,14 @@ private val grayscaleIcon = IconUtil.desaturate(regularIcon)
 private val errorIcon = LayeredIcon(grayscaleIcon, errorIconElement)
 
 /** Base implementation of working set tree node */
-abstract class WorkingSetNode<Connection: ConnectionConfigBase, MaskType>(
+abstract class WorkingSetNode<Connection : ConnectionConfigBase, MaskType>(
   workingSet: WorkingSet<Connection, MaskType>,
   project: Project,
   parent: ExplorerTreeNode<Connection, *>,
   treeStructure: ExplorerTreeStructureBase
 ) : ExplorerUnitTreeNodeBase<Connection, WorkingSet<Connection, MaskType>, WorkingSet<Connection, MaskType>>(
   workingSet, project, parent, workingSet, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
   protected var cachedChildrenInternal: MutableCollection<out AbstractTreeNode<*>>? = null
 
   abstract val regularTooltip: String
@@ -82,7 +82,7 @@ abstract class WorkingSetNode<Connection: ConnectionConfigBase, MaskType>(
   protected fun addInfo(presentation: PresentationData) {
     val connectionConfig = value.connectionConfig ?: return
     val url = value.connectionConfig?.url ?: return
-    val username = username(connectionConfig)
+    val username = getUsername(connectionConfig)
     presentation.addText(" $username on ${connectionConfig.name} [${url}]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }
 }
