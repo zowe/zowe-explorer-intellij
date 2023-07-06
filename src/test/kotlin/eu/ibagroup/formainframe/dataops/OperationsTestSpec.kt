@@ -10,9 +10,95 @@
 
 package eu.ibagroup.formainframe.dataops
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import eu.ibagroup.formainframe.api.ZosmfApi
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.LF_LINE_SEPARATOR
+import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
+import eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMover
+import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
+import eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMover
+import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl
+import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.changeFileEncodingTo
+import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.formainframe.utils.setUssFileTag
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.mockk.*
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.XIBMDataType
+import org.zowe.kotlinsdk.annotations.ZVersion
+import retrofit2.Call
+import retrofit2.Response
+import java.io.File
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
+
+inline fun mockkRequesters(
+  attributes: MFRemoteFileAttributes<*, *>,
+  connectionId: String,
+  connectionConfigToRequester: (ConnectionConfig) -> Requester<*>
+) {
+  val connection = ConnectionConfig("ID$connectionId", connectionId, "URL$connectionId", true, ZVersion.ZOS_2_1)
+  every { attributes.requesters } returns mutableListOf(connectionConfigToRequester(connection))
+}
+
+inline fun <reified S: FileAttributes, reified D: MFRemoteFileAttributes<*, *>> prepareBareOperation(
+  isCrossystem: Boolean = false,
+  sourceConnectionConfigToRequester: (ConnectionConfig) -> Requester<*>,
+  destConnectionConfigToRequester: (ConnectionConfig) -> Requester<*>
+): MoveCopyOperation {
+  val sourceAttributes = mockk<S>()
+  val destAttributes = mockk<D>()
+  if (sourceAttributes is MFRemoteFileAttributes<*, *>) {
+    mockkRequesters(sourceAttributes, "A", sourceConnectionConfigToRequester)
+  }
+  mockkRequesters(destAttributes, if (isCrossystem) "B" else "A", destConnectionConfigToRequester)
+  return MoveCopyOperation(
+    mockk<MFVirtualFile>(),
+    sourceAttributes,
+    mockk<MFVirtualFile>(),
+    destAttributes,
+    isMove = false,
+    forceOverwriting = false,
+    newName = null
+  )
+}
 
 class OperationsTestSpec : ShouldSpec({
+  beforeSpec {
+    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
+    val factory = IdeaTestFixtureFactory.getFixtureFactory()
+    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
+    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
+    val fixture = fixtureBuilder.fixture
+    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
+      fixture,
+      LightTempDirTestFixtureImpl(true)
+    )
+    myFixture.setUp()
+  }
+  afterSpec {
+    clearAllMocks()
+  }
   context("dataops module: operations/ZOSIntoOperationRunner") {
     context("run") {
       should("perform Info operation") {}
@@ -25,6 +111,12 @@ class OperationsTestSpec : ShouldSpec({
     should("perform dataset member rename") {}
   }
   context("dataops module: operations/mover") {
+    val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+    val zosmfApi = ApplicationManager.getApplication().service<ZosmfApi>() as TestZosmfApiImpl
+    beforeEach {
+      dataOpsManager.testInstance = mockk()
+      zosmfApi.testInstance = mockk()
+    }
     // UssToUssFileMover.canRun
     should("return true when we try to move USS file to USS folder") {}
     should("return false when we try to move USS file to USS file") {}
@@ -39,11 +131,59 @@ class OperationsTestSpec : ShouldSpec({
     // SequentialToPdsMover.canRun
     should("return true when we try to move sequential dataset to the not sequential dataset") {}
     should("return false when we try to move sequential dataset to another sequential dataset") {}
-    // RemoteToLocalFileMover.canRun
-    should("return true when we try to move USS file to a local folder") {}
-    should("return false when we try to move USS file to a local file") {}
-    // RemoteToLocalFileMover.run
-    should("move a remote USS binary file to a local folder") {}
+    context("RemoteToLocalFileMover") {
+      val remoteToLocalFileMover = spyk(RemoteToLocalFileMover(mockk()))
+
+      val fileMockk = mockk<File>()
+      val virtualFileMockk = mockk<VirtualFile>()
+      val charsetMockk = mockk<Charset>()
+      every { virtualFileMockk.charset } returns charsetMockk
+      every { virtualFileMockk.detectedLineSeparator } returns LF_LINE_SEPARATOR
+
+      var encodingChanged = false
+      var lineSeparatorChanged = false
+
+      beforeEach {
+        encodingChanged = false
+        lineSeparatorChanged = false
+
+        mockkStatic(LocalFileSystem::getInstance)
+        every { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileMockk) } returns mockk()
+
+        mockkStatic(::changeFileEncodingTo)
+        every { changeFileEncodingTo(any(), charsetMockk) } answers {
+          encodingChanged = true
+        }
+
+        mockkStatic(LoadTextUtil::changeLineSeparators)
+        every { LoadTextUtil.changeLineSeparators(null, any(), LF_LINE_SEPARATOR, any()) } answers {
+          lineSeparatorChanged = true
+        }
+      }
+      afterEach {
+        unmockkAll()
+      }
+
+      val setCreatedFileParamsRef = remoteToLocalFileMover::class.java.declaredMethods
+        .first { it.name == "setCreatedFileParams" }
+      setCreatedFileParamsRef.trySetAccessible()
+
+      // canRun
+      should("return true when we try to move USS file to a local folder") {}
+      should("return false when we try to move USS file to a local file") {}
+      // run
+      should("move a remote USS binary file to a local folder") {}
+      // setCreatedFileParams
+      should("set parameters for created file in local system") {
+        setCreatedFileParamsRef.invoke(remoteToLocalFileMover, fileMockk, virtualFileMockk)
+
+        assertSoftly {
+          encodingChanged shouldBe true
+          lineSeparatorChanged shouldBe true
+        }
+
+      }
+    }
     // RemoteToLocalDirectoryMoverFactory.canRun
     should("return true when we try to move USS folder to a local folder") {}
     should("return false when we try to move USS folder to a local file") {}
@@ -81,6 +221,200 @@ class OperationsTestSpec : ShouldSpec({
     should("return false when we try to move a PDS from one system to a USS file from the other system") {}
     // CrossSystemPdsToUssDirMover.run
     should("move a PDS from one system to a USS folder from the other system") {}
+    // CrossSystemMemberOrUssFileOrSequentialToUssDirMover.canRun
+    should("return true/false when we try to move a UssFile/Member/PS from one system to a USS folder from the other system") {
+      // SOURCE IS PDS
+      // everything is ok.
+      var op = prepareBareOperation<RemoteDatasetAttributes, RemoteUssAttributes>(
+        true, { MaskedRequester(it, DSMask()) }, { UssRequester(it) }
+      )
+      every { op.source.isDirectory } returns false
+      every { op.destination.isDirectory } returns true
+
+      var result = CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).canRun(op)
+      assertSoftly { result shouldBe true }
+
+      // destination is not a directory
+      every { op.destination.isDirectory } returns false
+      result = CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).canRun(op)
+      assertSoftly { result shouldBe false }
+
+      // not a crosssystem copy
+      op = prepareBareOperation<RemoteDatasetAttributes, RemoteUssAttributes>(
+        false, { MaskedRequester(it, DSMask()) }, { UssRequester(it) }
+      )
+      every { op.source.isDirectory } returns false
+      every { op.destination.isDirectory } returns true
+      result = CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).canRun(op)
+      assertSoftly { result shouldBe false }
+
+      // SOURCE IS MEMBER
+      op = prepareBareOperation<RemoteMemberAttributes, RemoteUssAttributes>(
+        false, { MaskedRequester(it, DSMask()) }, { UssRequester(it) }
+      )
+
+      every { (op.sourceAttributes as RemoteMemberAttributes).parentFile } returns mockk()
+      val libraryAttributes = mockk<RemoteDatasetAttributes>()
+      mockkRequesters(libraryAttributes, "B") { MaskedRequester(it, DSMask()) }
+
+      val attributesService = mockk<RemoteDatasetAttributesService>()
+      every { attributesService.getAttributes(any() as MFVirtualFile) } returns libraryAttributes
+      every {
+        dataOpsManager.testInstance.getAttributesService(libraryAttributes::class.java, any() as Class<MFVirtualFile>)
+      } returns attributesService
+
+      every { op.source.isDirectory } returns false
+      every { op.destination.isDirectory } returns true
+
+      result = CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).canRun(op)
+      assertSoftly { result shouldBe true }
+
+      // SOURCE IS USS FILE
+      op = prepareBareOperation<RemoteUssAttributes, RemoteUssAttributes>(
+        true, { MaskedRequester(it, DSMask()) }, { UssRequester(it) }
+      )
+      every { op.source.isDirectory } returns false
+      every { op.destination.isDirectory } returns true
+
+      result = CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).canRun(op)
+      assertSoftly { result shouldBe true }
+
+    }
+    // CrossSystemMemberOrUssFileOrSequentialToUssDirMover.run
+    should("move a PDS/Member/PS from one system to a USS folder from the other system") {
+      var op = prepareBareOperation<RemoteUssAttributes, RemoteUssAttributes>(
+        true, { MaskedRequester(it, DSMask()) }, { UssRequester(it) }
+      )
+      var sourceSynchronized = false
+      var contentUploaded = false
+      every { op.destination.name } returns "testDestination"
+      every { (op.destinationAttributes as RemoteUssAttributes).path } returns "/path/to"
+      every { op.destination.path } returns "/path/to"
+
+      every { op.source.name } returns "testSource"
+      if (op.sourceAttributes is RemoteUssAttributes) {
+        every { (op.sourceAttributes as RemoteUssAttributes).isSymlink } returns false
+      }
+      every { op.source.charset } returns StandardCharsets.UTF_8
+      every { op.source.contentsToByteArray() } answers {
+        assertSoftly { sourceSynchronized shouldBe true }
+        "Test Content!!!".toByteArray()
+      }
+
+      val contentSynchronizer = mockk<ContentSynchronizer>()
+      every {
+        contentSynchronizer.synchronizeWithRemote(any() as DocumentedSyncProvider, any() as ProgressIndicator)
+      } answers {
+        sourceSynchronized = true
+      }
+      every { dataOpsManager.getContentSynchronizer(any() as MFVirtualFile) } returns contentSynchronizer
+
+
+      val api = mockk<DataAPI>()
+      val call = mockk<Call<Void>>()
+      every {
+        api.writeToUssFile(
+          authorizationToken = any() as String,
+          filePath = any() as FilePath,
+          body = any() as ByteArray,
+          xIBMDataType = any() as XIBMDataType
+        )
+      } answers {
+        assertSoftly {
+          sourceSynchronized shouldBe true
+          args[2].castOrNull<XIBMDataType>()?.type shouldBe XIBMDataType.Type.BINARY
+          args[5].castOrNull<FilePath>()?.toString() shouldBe "path/to/testSource"
+          args[6].castOrNull<ByteArray>() shouldBe op.source.contentsToByteArray()
+        }
+        contentUploaded = true
+        call
+      }
+      val response = mockk<Response<Void>>()
+      every { response.isSuccessful } returns true
+      every { call.execute() } returns response
+      val requesters = (op.destinationAttributes as RemoteUssAttributes).requesters
+      every {
+        zosmfApi.testInstance.getApiWithBytesConverter(DataAPI::class.java, requesters[0].connectionConfig)
+      } returns api
+
+      mockkStatic("eu.ibagroup.formainframe.utils.UssFileTagUtilsKt")
+      every { setUssFileTag(any() as String, any() as String, any() as ConnectionConfig) } returns Unit
+
+      // SUCCESSFUL CASE WITH USS FILE AS SOURCE
+      CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).run(op)
+      assertSoftly {
+        contentUploaded shouldBe true
+      }
+
+      // SUCCESSFUL CASE FOR MOVE OPERATION
+      op = MoveCopyOperation(
+        op.source,
+        op.sourceAttributes,
+        op.destination,
+        op.destinationAttributes,
+        true,
+        op.forceOverwriting,
+        op.newName
+      )
+      var sourceDeleted = false
+      every {
+        dataOpsManager.testInstance.performOperation(any() as DeleteOperation, any() as ProgressIndicator)
+      } answers {
+        assertSoftly {
+          firstArg<DeleteOperation>().file shouldBe op.source
+        }
+        sourceDeleted = true
+      }
+      every { dataOpsManager.testInstance.tryToGetAttributes(any() as MFVirtualFile) } returns op.destinationAttributes
+      CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).run(op)
+      assertSoftly { sourceDeleted shouldBe true }
+
+      // FAIL CASE WHEN THE SOURCE USS FILE IS SYMLINK
+      sourceSynchronized = false
+      contentUploaded = false
+      every { (op.sourceAttributes as RemoteUssAttributes).isSymlink } returns true
+      every { (op.sourceAttributes as RemoteUssAttributes).symlinkTarget } returns "testTarget"
+      val exception = shouldThrow<IllegalArgumentException> {
+        CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).run(op)
+      }
+      exception.message shouldContain "Impossible to move symlink."
+      assertSoftly {
+        sourceSynchronized shouldBe false
+        contentUploaded shouldBe false
+      }
+
+      // SUCCESSFUL CASE WITH SEQUENTIAL DATASET AS SOURCE
+      val sourceDatasetAttributes = mockk<RemoteDatasetAttributes>()
+      op = MoveCopyOperation(
+        op.source,
+        sourceDatasetAttributes,
+        op.destination,
+        op.destinationAttributes,
+        op.isMove,
+        op.forceOverwriting,
+        op.newName
+      )
+      CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).run(op)
+      assertSoftly {
+        contentUploaded shouldBe true
+      }
+
+      // SUCCESSFUL CASE WITH MEMBER AS SOURCE
+      val sourceMemberAttributes = mockk<RemoteMemberAttributes>()
+      op = MoveCopyOperation(
+        op.source,
+        sourceMemberAttributes,
+        op.destination,
+        op.destinationAttributes,
+        op.isMove,
+        op.forceOverwriting,
+        op.newName
+      )
+      CrossSystemMemberOrUssFileOrSequentialToUssDirMover(dataOpsManager).run(op)
+      assertSoftly {
+        contentUploaded shouldBe true
+      }
+    }
   }
   context("dataops module: operations/jobs") {
     // SubmitOperationRunner.run

@@ -20,7 +20,8 @@ import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.ReloadableEventHandler
 import eu.ibagroup.formainframe.utils.isThe
 import eu.ibagroup.formainframe.utils.isTheSameAs
-import kotlin.streams.toList // TODO: remove in v1.*.*-223 and greater
+import java.util.stream.Collectors
+
 
 /** Stateful class to represent the plugin configs sandbox */
 data class SandboxState(
@@ -211,7 +212,10 @@ class ConfigSandboxImpl : ConfigSandbox {
         service<ConfigService>()
           .getRegisteredConfigDeclarations()
           .filter { it.useCredentials }
-          .flatMap { configCrudable.getAll(it.clazz).toList() }
+          // TODO: remove in v1.*.*-223 and greater
+          .flatMap { configCrudable.getAll(it.clazz).collect(Collectors.toList()) }
+          // TODO: use in v1.*.*-223 and greater
+//          .flatMap { configCrudable.getAll(it.clazz).toList() }
           .filterIsInstance<EntityWithUuid>()
           .map {
             with(CredentialService.instance) {
@@ -219,7 +223,10 @@ class ConfigSandboxImpl : ConfigSandbox {
             }
           }
       } else {
-        configCrudable.getAll(clazz).toList()
+        // TODO: remove in v1.*.*-223 and greater
+        configCrudable.getAll(clazz).collect(Collectors.toList())
+        // TODO: use in v1.*.*-223 and greater
+//        configCrudable.getAll(clazz).toList()
       }
       listOfNotNull(classToList(clazz, state), classToList(clazz, initialState))
         .forEach { list ->

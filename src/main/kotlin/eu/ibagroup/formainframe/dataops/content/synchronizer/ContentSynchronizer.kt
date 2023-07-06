@@ -69,12 +69,4 @@ interface ContentSynchronizer {
    */
   fun isFileUploadNeeded(syncProvider: SyncProvider): Boolean
 
-  /**
-   * Checks if it is possible to synchronize the file with MF.
-   * Trying to upload file content into MF.
-   * @param syncProvider instance of [SyncProvider] class that contains the necessary data to check.
-   * @return true if it is possible to sync the file or false otherwise.
-   */
-  fun isFileSyncPossible(syncProvider: SyncProvider): Boolean
-
 }

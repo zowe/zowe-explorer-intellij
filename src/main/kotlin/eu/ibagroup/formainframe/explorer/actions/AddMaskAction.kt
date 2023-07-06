@@ -17,7 +17,7 @@ import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.AddMaskDialog
+import eu.ibagroup.formainframe.explorer.ui.AddOrEditMaskDialog
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
@@ -31,8 +31,8 @@ class AddMaskAction : AnAction() {
     val view = e.getExplorerView<FileExplorerView>() ?: return
 
     val ws = getUnits(view).firstOrNull() ?: return
-    val initialState = MaskStateWithWS(ws)
-    val dialog = AddMaskDialog(e.project, initialState)
+    val initialState = MaskStateWithWS(ws = ws)
+    val dialog = AddOrEditMaskDialog(e.project, "Create Mask", initialState)
     if (dialog.showAndGet()) {
       val state = dialog.state
       when (state.type) {

@@ -115,8 +115,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
           return contentSynchronizerMock
         }
       }
-      every { contentSynchronizerMock.isFileSyncPossible(any()) } returns true
-      every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns false
+      every { attributesMock.isWritable } returns true
 
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(
@@ -155,7 +154,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       assertSoftly { actions.size shouldBe 3 }
     }
     should("create actions when conversion is not possible") {
-      every { contentSynchronizerMock.isFileSyncPossible(any()) } returns false
+      every { attributesMock.isWritable } returns false
 
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(

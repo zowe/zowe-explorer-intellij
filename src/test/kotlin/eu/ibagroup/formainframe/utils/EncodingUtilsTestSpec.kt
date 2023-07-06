@@ -303,7 +303,7 @@ class EncodingUtilsTestSpec: ShouldSpec({
     // changeFileEncodingAction
     should("change file encoding action by reload button") {
       every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns false
-      every { contentSynchronizerMock.isFileSyncPossible(any()) } returns true
+      every { attributesMock.isWritable } returns true
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns ChangeEncodingDialog.RELOAD_EXIT_CODE
 
@@ -313,7 +313,7 @@ class EncodingUtilsTestSpec: ShouldSpec({
     }
     should("change file encoding action by convert button") {
       every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns false
-      every { contentSynchronizerMock.isFileSyncPossible(any()) } returns true
+      every { attributesMock.isWritable } returns true
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns ChangeEncodingDialog.CONVERT_EXIT_CODE
 
@@ -323,7 +323,7 @@ class EncodingUtilsTestSpec: ShouldSpec({
     }
     should("change file encoding action by cancel button") {
       every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns false
-      every { contentSynchronizerMock.isFileSyncPossible(any()) } returns true
+      every { attributesMock.isWritable } returns true
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns 1
 

@@ -34,7 +34,7 @@ class JesFilterNode(
   treeStructure: ExplorerTreeStructureBase
 ) : RemoteMFFileFetchNode<ConnectionConfig, JobsFilter, JobsFilter, JesWorkingSet>(
   jobsFilter, project, parent, workingSet, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
 
   override val query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>?
     get() {
