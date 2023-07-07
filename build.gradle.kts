@@ -149,10 +149,11 @@ tasks {
         }
       })
     )
-    reports {
-      xml.required.set(true)
-      xml.outputLocation.set(File("${buildDir}/reports/jacoco.xml"))
-    }
+// TODO: setup Kover
+//    reports {
+//      xml.required.set(true)
+//      xml.outputLocation.set(File("${buildDir}/reports/jacoco.xml"))
+//    }
   }
 
   val createOpenApiSourceJar by registering(Jar::class) {
