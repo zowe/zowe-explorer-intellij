@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.dataops.attributes
 
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.utils.clone
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
@@ -27,7 +28,7 @@ data class RemoteDatasetAttributes(
   val datasetInfo: Dataset,
   override val url: String,
   override val requesters: MutableList<MaskedRequester>
-) : MFRemoteFileAttributes<MaskedRequester> {
+) : MFRemoteFileAttributes<ConnectionConfig, MaskedRequester> {
 
   /**
    * Clones current instance of dataset attributes.

@@ -11,6 +11,7 @@
 package org.zowe.explorer.dataops.attributes
 
 import com.intellij.openapi.util.io.FileAttributes
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -33,7 +34,7 @@ private fun String.trimUrl(): String {
  * Base abstract service class to handle attributes on virtual file
  * @param dataOpsManager data ops manager to get component manager
  */
-abstract class MFRemoteAttributesServiceBase<Attributes : MFRemoteFileAttributes<*>>(
+abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, Attributes : MFRemoteFileAttributes<Connection, *>>(
   val dataOpsManager: DataOpsManager
 ) : AttributesService<Attributes, MFVirtualFile> {
 

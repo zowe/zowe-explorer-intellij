@@ -13,6 +13,7 @@ package org.zowe.explorer.dataops.fetch
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.BatchedRemoteQuery
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
@@ -32,7 +33,7 @@ import org.zowe.explorer.utils.castOrNull
  */
 abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseItem : Any, Request : Any, Response : FileAttributes, File : VirtualFile>(
   dataOpsManager: DataOpsManager
-) : RemoteAttributedFileFetchBase<Request, Response, File>(dataOpsManager) {
+) : RemoteAttributedFileFetchBase<ConnectionConfig, Request, Response, File>(dataOpsManager) {
 
   abstract val log: Logger
 
@@ -45,7 +46,7 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
    * @return collection of batch responses.
    */
   override fun fetchResponse(
-    query: RemoteQuery<Request, Unit>,
+    query: RemoteQuery<ConnectionConfig, Request, Unit>,
     progressIndicator: ProgressIndicator
   ): Collection<Response> {
     var fetchedItems: List<BatchedItem<ResponseItem>>? = emptyList()
@@ -112,7 +113,7 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
    * @return response with batch response list inside.
    */
   abstract fun fetchBatch(
-    query: RemoteQuery<Request, Unit>,
+    query: RemoteQuery<ConnectionConfig, Request, Unit>,
     progressIndicator: ProgressIndicator,
     start: String?
   ): retrofit2.Response<ResponseList>
@@ -132,7 +133,7 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
    * @param batchedItem item that was created in converting process for BatchedBody.
    * @return created attributes.
    */
-  abstract fun buildAttributes(query: RemoteQuery<Request, Unit>, batchedItem: BatchedItem<ResponseItem>): Response
+  abstract fun buildAttributes(query: RemoteQuery<ConnectionConfig, Request, Unit>, batchedItem: BatchedItem<ResponseItem>): Response
 }
 
 /**

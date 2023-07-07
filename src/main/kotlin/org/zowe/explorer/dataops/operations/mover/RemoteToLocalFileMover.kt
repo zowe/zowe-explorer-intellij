@@ -9,17 +9,24 @@
  */
 package org.zowe.explorer.dataops.operations.mover
 
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.content.synchronizer.LF_LINE_SEPARATOR
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.utils.changeFileEncodingTo
+import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.runReadActionInEdtAndWait
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.XIBMDataType
+import java.io.File
 import java.nio.file.Paths
 
 /**
@@ -50,6 +57,8 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
             operation.destination.isDirectory
   }
 
+  override val log = log<RemoteToLocalFileMover>()
+
   /**
    * Proceeds download of remote uss file to local file system.
    * @param operation requested operation.
@@ -61,7 +70,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
   ): Throwable? {
     val sourceFile = operation.source
     val destFile = operation.destination
-    val newFileName = operation.newName
+    val newFileName = operation.newName ?: sourceFile.name
     val sourceFileAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
       ?: return IllegalArgumentException("Cannot find attributes for file ${sourceFile.name}")
 
@@ -76,24 +85,44 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       ?: return IllegalArgumentException("Cannot find synchronizer for file ${sourceFile.name}")
     val syncProvider = DocumentedSyncProvider(sourceFile)
 
-    if (!sourceFile.fileType.isBinary) {
-      sourceFileAttributes.contentMode = XIBMDataType(XIBMDataType.Type.TEXT)
-    } else {
+    if (sourceFile.fileType.isBinary || sourceFileAttributes is RemoteUssAttributes) {
       sourceFileAttributes.contentMode = XIBMDataType(XIBMDataType.Type.BINARY)
+    } else {
+      sourceFileAttributes.contentMode = XIBMDataType(XIBMDataType.Type.TEXT)
     }
     contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
+    val sourceContent = contentSynchronizer.successfulContentStorage(syncProvider)
 
     runWriteActionInEdtAndWait {
       if (operation.forceOverwriting) {
-        destFile.children.filter { it.name === (newFileName?: sourceFile.name) && !it.isDirectory }.forEach { it.delete(this) }
+        destFile.children.filter { it.name === (newFileName) && !it.isDirectory }.forEach { it.delete(this) }
       }
     }
-    val createdFileJava = Paths.get(destFile.path, newFileName?: sourceFile.name).toFile().apply { createNewFile() }
-    createdFileJava.writeBytes(sourceFile.contentsToByteArray())
+    val createdFileJava = Paths.get(destFile.path, newFileName).toFile().apply { createNewFile() }
+    createdFileJava.writeBytes(sourceContent)
+    if (!sourceFile.fileType.isBinary) {
+      setCreatedFileParams(createdFileJava, sourceFile)
+    }
     runReadActionInEdtAndWait {
       destFile.refresh(false, false)
     }
     return null
+  }
+
+  /**
+   * Sets parameters (charset, line separator) for created file to be the same as the parameters of source file.
+   * @param createdFileJava created java file
+   * @param sourceFile source virtual file
+   */
+  private fun setCreatedFileParams(createdFileJava: File, sourceFile: VirtualFile) {
+    val createdVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createdFileJava)
+    createdVirtualFile?.let {
+      changeFileEncodingTo(it, sourceFile.charset)
+      val lineSeparator = sourceFile.detectedLineSeparator ?: LF_LINE_SEPARATOR
+      runWriteActionInEdtAndWait {
+        LoadTextUtil.changeLineSeparators(null, it, lineSeparator, it)
+      }
+    }
   }
 
   /**
@@ -104,12 +133,15 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     var throwable: Throwable?
     try {
+      log.info("Trying to move remote file ${operation.source.name} to local file ${operation.destination.name}")
       throwable = proceedLocalMoveCopy(operation, progressIndicator)
     } catch (t: Throwable) {
       throwable = t
     }
     if (throwable != null) {
+      log.info("Failed to move remote file")
       throw throwable
     }
+    log.info("Remote file has been moved successfully")
   }
 }

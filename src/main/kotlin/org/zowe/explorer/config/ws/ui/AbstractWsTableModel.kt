@@ -10,32 +10,35 @@
 
 package org.zowe.explorer.config.ws.ui
 
+import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.CrudableTableModel
-import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.MergedCollections
 import org.zowe.explorer.utils.crudable.getByUniqueKey
+import org.zowe.explorer.utils.nullable
 import org.zowe.explorer.utils.toMutableList
 
 /**
  * Abstract table model for table in configurations
  * for Working Sets (e.g. JES Working Set, Files Working Set).
- * @param WSConfig WorkingSetConfig implementation class.
- * @see org.zowe.explorer.config.ws.FilesWorkingSetConfig
- * @see org.zowe.explorer.config.ws.JesWorkingSetConfig
+ * @param Connection The system (such as zosmf, cics etc.) connection class to work with (see [ConnectionConfigBase]).
+ * @param WSConfig Implementation class of [WorkingSetConfig].
  * @param crudable Crudable instance to change data.
  * @author Valiantsin Krus
  */
-abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
-  crudable: Crudable
+abstract class AbstractWsTableModel<Connection : ConnectionConfigBase, WSConfig : WorkingSetConfig>(
+  crudable: Crudable,
+  connectionClass: Class<out Connection>,
+  connectionColumnName: String = message("configurable.ws.tables.ws.url.name")
 ) : CrudableTableModel<WSConfig>(crudable) {
 
   init {
     columnInfos = arrayOf(
       WSNameColumn { this.items },
-      WSConnectionNameColumn<WSConfig>(crudable),
+      WSConnectionNameColumn<Connection, WSConfig>(crudable, connectionClass),
       WSUsernameColumn(
         { crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username },
         {
@@ -44,7 +47,12 @@ abstract class AbstractWsTableModel<WSConfig : WorkingSetConfig>(
           if (connectionConfig?.zoweConfigPath == null) username else "*".repeat(username?.length ?: 0)
         }
       ),
-      UrlColumn { crudable.getByUniqueKey<ConnectionConfig>(it.connectionConfigUuid)?.url }
+      UrlColumn(connectionColumnName) {
+        crudable.getByUniqueKey(
+          connectionClass,
+          it.connectionConfigUuid
+        ).nullable?.url
+      }
     )
   }
 

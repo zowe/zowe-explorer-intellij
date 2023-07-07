@@ -13,7 +13,6 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.IdeFocusManager
 import org.zowe.explorer.config.ConfigService
@@ -21,7 +20,6 @@ import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.config.ws.ui.AbstractWsDialog
 import org.zowe.explorer.config.ws.ui.AbstractWsDialogState
-import org.zowe.explorer.explorer.ui.ExplorerTreeView
 import org.zowe.explorer.utils.crudable.Crudable
 
 /**
@@ -29,7 +27,6 @@ import org.zowe.explorer.utils.crudable.Crudable
  */
 abstract class AddWsActionBase : AnAction() {
 
-  abstract val explorerView: DataKey<out ExplorerTreeView<*, *>>
 
   /** Shows add Working Set dialog (for files or for jobs) */
   override fun actionPerformed(e: AnActionEvent) {
@@ -57,7 +54,7 @@ abstract class AddWsActionBase : AnAction() {
    * @see Crudable
    * @see ConfigService
    */
-  abstract fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>>
+  abstract fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, *, out AbstractWsDialogState<out WorkingSetConfig, *>>
 
   override fun isDumbAware(): Boolean {
     return true

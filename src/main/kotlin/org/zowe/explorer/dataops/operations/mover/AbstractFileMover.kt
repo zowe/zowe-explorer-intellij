@@ -10,6 +10,7 @@
 package org.zowe.explorer.dataops.operations.mover
 
 import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.utils.log
 
 /** Class to represent a file mover abstraction */
 abstract class AbstractFileMover : OperationRunner<MoveCopyOperation, Unit> {
@@ -17,5 +18,7 @@ abstract class AbstractFileMover : OperationRunner<MoveCopyOperation, Unit> {
   override val operationClass = MoveCopyOperation::class.java
 
   override val resultClass = Unit::class.java
+
+  override val log = log<MoveCopyOperation>()
 
 }

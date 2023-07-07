@@ -18,28 +18,42 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.explorer.actions.DuplicateMemberAction
 import org.zowe.explorer.explorer.actions.RenameAction
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.utils.validateDatasetNameOnInput
+import org.zowe.explorer.utils.validateForBlank
+import org.zowe.explorer.utils.validateMemberName
+import org.zowe.explorer.utils.validateUssFileName
+import org.zowe.explorer.utils.validateUssFileNameAlreadyExists
 import javax.swing.JComponent
 import javax.swing.JTextField
 
 /**
  * Base class to create an instance of rename dialog object
  * @param type represents a virtual file type - file or directory
- * @param selectedNode represents the current node object
+ * @param selectedNodeData represents the current node object
  * @param currentAction represents the current action to be performed - rename or force rename
  * @param state represents the current state
  */
-class RenameDialog(project: Project?,
-                   type: String,
-                   private val selectedNode: NodeData,
-                   private val currentAction: AnAction,
-                   override var state: String
+class RenameDialog(
+  project: Project?,
+  type: String,
+  private val selectedNodeData: NodeData<*>,
+  private val currentAction: AnAction,
+  override var state: String
 ) : DialogWrapper(project),
   StatefulComponent<String> {
 
-  private val node = selectedNode.node
+  companion object {
+
+    // TODO: Remove when it becomes possible to mock class constructor with init section.
+    /** Wrapper for init() method. It is necessary only for test purposes for now. */
+    private fun initialize(init: () -> Unit) {
+      init()
+    }
+  }
+
+  private val node = selectedNodeData.node
 
   /**
    * Creates UI component of the object
@@ -50,7 +64,7 @@ class RenameDialog(project: Project?,
         label("New name: ")
         textField()
           .bindText(this@RenameDialog::state)
-          .validationOnInput { validateOnInput(it) ?: validateOnBlank(it) }
+          .validationOnApply { validateForBlank(it) ?: validateOnInput(it) }
           .apply { focused() }
       }
     }
@@ -60,22 +74,16 @@ class RenameDialog(project: Project?,
    * Initialization of the object. It's called first
    */
   init {
-    title = "Rename $type"
-    init()
+    title = if (currentAction is DuplicateMemberAction) "Duplicate $type" else "Rename $type"
+    initialize { init() }
   }
 
   /**
-   * Sets validation rules for text field
+   * Validate a new name for the selected node component
    */
   private fun validateOnInput(component: JTextField): ValidationInfo? {
-    val attributes = selectedNode.attributes
+    val attributes = selectedNodeData.attributes
     when (node) {
-      is DSMaskNode -> {
-        return validateDatasetMask(component.text, component) ?: validateWorkingSetMaskName(
-          component,
-          node.parent?.value as FilesWorkingSet
-        )
-      }
       is LibraryNode, is FileLikeDatasetNode -> {
         return if (attributes is RemoteDatasetAttributes) {
           validateDatasetNameOnInput(component)
@@ -83,36 +91,16 @@ class RenameDialog(project: Project?,
           validateMemberName(component)
         }
       }
-      is UssDirNode -> {
-        return if (node.isConfigUssPath) {
-          validateUssMask(component.text, component) ?: validateWorkingSetMaskName(
-            component,
-            node.parent?.value as FilesWorkingSet
-          )
-        } else {
-          if (currentAction is RenameAction) {
-            validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNode)
-          } else {
-            validateUssFileName(component)
-          }
-        }
-      }
-      is UssFileNode -> {
+
+      is UssDirNode, is UssFileNode -> {
         return if (currentAction is RenameAction) {
-          validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNode)
+          validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNodeData)
         } else {
           validateUssFileName(component)
         }
       }
     }
     return null
-  }
-
-  /**
-   * Sets validation rule on blank for text field
-   */
-  private fun validateOnBlank(component: JTextField): ValidationInfo? {
-    return validateForBlank(component)
   }
 
 }

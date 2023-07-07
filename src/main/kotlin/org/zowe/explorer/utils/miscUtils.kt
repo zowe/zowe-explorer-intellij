@@ -13,18 +13,39 @@ package org.zowe.explorer.utils
 import com.google.gson.Gson
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
+import org.zowe.explorer.config.ConfigDeclaration
+import java.awt.Component
+import java.awt.MouseInfo
+import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
+import java.util.stream.Collectors
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
+import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
-import kotlin.streams.toList
+
+/**
+ * Finds class loader for specified class and tries to load the class.
+ * @param className name of the class to load.
+ * @return desired class instance, that is controlled by 1 of available class loaders
+ *         or null if desired class is not found or something went wrong.
+ */
+fun loadConfigClass(className: String): Class<*>? {
+  val configClassLoaders = ConfigDeclaration.EP.extensionList.map { it.javaClass.classLoader }
+  return configClassLoaders.firstNotNullOfOrNull { classLoader ->
+    runCatching { classLoader.loadClass(className) }.getOrNull()
+  }
+}
 
 /** Transform the stream to the mutable list */
 fun <E> Stream<E>.toMutableList(): MutableList<E> {
-  return this.toList().toMutableList()
+  // TODO: remove in v1.*.*-223 and greater
+  return this.collect(Collectors.toList()).toMutableList()
+  // TODO: use in v1.*.*-223 and greater
+//  return this.toList().toMutableList()
 }
 
 /** Transform the value to the specified class or return null if the cast is not possible */
@@ -245,4 +266,16 @@ fun debounce(delayInterval: Long, block: () -> Unit): () -> Unit {
       }
     }
   }
+}
+
+// TODO: remove in v1.*.*-223 and greater
+fun Component.isComponentUnderMouse(): Boolean {
+  if (mousePosition != null) {
+    return true
+  }
+  val pointerInfo = MouseInfo.getPointerInfo() ?: return false
+  val location = pointerInfo.location
+  SwingUtilities.convertPointFromScreen(location, this)
+  val bounds = Rectangle(0, 0, width, height)
+  return bounds.contains(location)
 }

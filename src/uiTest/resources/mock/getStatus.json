@@ -1,0 +1,15 @@
+{
+  "jobid":"JOB07380",
+  "jobname":"jobName",
+  "subsystem":"JES2",
+  "owner":"USER",
+  "status":"jobStatus",
+  "type":"STC",
+  "class":"STC",
+  "retcode":"retCode",
+  "url":"https:\/\/hostName:port\/zosmf\/restjobs\/jobs\/JOB07380SY1.....CE35BDE8.......%3A",
+  "files-url":"https:\/\/hostName:port\/zosmf\/restjobs\/jobs\/JOB07380SY1.....CE35BDE8.......%3A\/files",
+  "job-correlator":"JOB07380SY1.....CE35BDE8.......:",
+  "phase":"20",
+  "phase-name":"Job is on the hard copy queue"
+}

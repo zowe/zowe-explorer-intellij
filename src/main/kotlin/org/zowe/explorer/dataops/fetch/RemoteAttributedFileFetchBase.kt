@@ -11,6 +11,7 @@
 package org.zowe.explorer.dataops.fetch
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.AttributesService
 import org.zowe.explorer.dataops.attributes.FileAttributes
@@ -19,9 +20,9 @@ import org.zowe.explorer.dataops.attributes.FileAttributes
  * Common abstract class which represents attributed virtual file in VFS.
  * Every virtual file object with attributes in explorer(WS, JES) extends this class
  */
-abstract class RemoteAttributedFileFetchBase<Request : Any, Response : FileAttributes, File : VirtualFile>(
+abstract class RemoteAttributedFileFetchBase<Connection: ConnectionConfigBase, Request : Any, Response : FileAttributes, File : VirtualFile>(
   dataOpsManager: DataOpsManager
-) : RemoteFileFetchProviderBase<Request, Response, File>(dataOpsManager) {
+) : RemoteFileFetchProviderBase<Connection, Request, Response, File>(dataOpsManager) {
 
   protected val attributesService: AttributesService<Response, File>
           by lazy { dataOpsManager.getAttributesService(responseClass, vFileClass) }

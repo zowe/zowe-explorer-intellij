@@ -16,8 +16,9 @@ import org.zowe.explorer.config.ws.JobFilterStateWithWS
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.explorer.ui.EditJobsFilterDialog
-import org.zowe.explorer.explorer.ui.JES_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.explorer.ui.JesFilterNode
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 
@@ -26,7 +27,7 @@ class EditJobsFilterAction : JobsFilterAction() {
 
   /** Save changes when the dialog is fulfilled */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
 
     val node = view.mySelectedNodesData.getOrNull(0)?.node
     if (node is JesFilterNode) {

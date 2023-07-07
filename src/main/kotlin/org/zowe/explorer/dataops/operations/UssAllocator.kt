@@ -17,6 +17,7 @@ import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.CreateUssFile
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
@@ -56,6 +57,8 @@ data class UssAllocationOperation(
 class UssAllocator : Allocator<UssAllocationOperation> {
 
   override val operationClass = UssAllocationOperation::class.java
+
+  override val log = log<UssAllocator>()
 
   /**
    * Runs an uss allocation operation

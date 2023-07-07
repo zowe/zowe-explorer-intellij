@@ -17,6 +17,7 @@ import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.DataAPI
 
 /**
@@ -42,6 +43,8 @@ data class MemberAllocationOperation(
 class MemberAllocator : Allocator<MemberAllocationOperation> {
 
   override val operationClass = MemberAllocationOperation::class.java
+
+  override val log = log<MemberAllocator>()
 
   /**
    * Runs a member allocation operation

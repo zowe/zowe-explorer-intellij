@@ -11,6 +11,7 @@
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.JobFilterStateWithWS
 import org.zowe.explorer.explorer.ui.*
@@ -25,13 +26,13 @@ class AddJobsFilterAction : JobsFilterAction() {
    * Is node conforms to the JesFilterNode and the JesWsNode types
    * @param node the node to check
    */
-  override fun isNodeConformsToType(node: ExplorerTreeNode<*>?): Boolean {
+  override fun isNodeConformsToType(node: ExplorerTreeNode<ConnectionConfig, *>?): Boolean {
     return super.isNodeConformsToType(node) || node is JesWsNode
   }
 
   /** Opens AddJobsFilterDialog and saves result. */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
 
     val ws = getUnits(view).firstOrNull() ?: return
     val owner = ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""

@@ -13,6 +13,7 @@ package org.zowe.explorer.dataops.content.adapters
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
+import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
@@ -44,7 +45,8 @@ class MemberContentAdapter(
    * for configuration (for V and VB it first 4 columns on each row, for VA - first 5).
    * @see MFContentAdapterBase.adaptContentToMainframe
    */
-  override fun adaptContentToMainframe(content: ByteArray, attributes: RemoteMemberAttributes): ByteArray {
+  @Suppress("UNCHECKED_CAST")
+  override fun <T>adaptContentToMainframe(content: T, attributes: RemoteMemberAttributes): T {
     val pdsAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
     var lrecl = pdsAttributes.datasetInfo.recordLength ?: 80
     if (pdsAttributes.hasVariableFormatRecords()) {
@@ -53,7 +55,14 @@ class MemberContentAdapter(
     if (pdsAttributes.hasVariablePrintFormatRecords()) {
       lrecl -= 1
     }
-    return transferLinesByLRecl(content, lrecl)
+
+    content.castOrNull<String>()?.let {
+      return transferLinesByLRecl(it, lrecl) as T
+    }
+    content.castOrNull<ByteArray>()?.let {
+      return transferLinesByLRecl(String(it), lrecl).toByteArray() as T
+    }
+    return content
   }
 
   /**
@@ -63,7 +72,7 @@ class MemberContentAdapter(
   override fun adaptContentFromMainframe(content: ByteArray, attributes: RemoteMemberAttributes): ByteArray {
     val pdsAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
     if (pdsAttributes.hasVariablePrintFormatRecords()) {
-      return removeFirstCharacter(content)
+      return removeFirstCharacter(String(content)).toByteArray()
     }
     return content
   }

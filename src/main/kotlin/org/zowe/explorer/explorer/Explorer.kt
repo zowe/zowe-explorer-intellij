@@ -30,6 +30,7 @@ import org.zowe.explorer.config.CONFIGS_CHANGED
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.CREDENTIALS_CHANGED
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.connect.CredentialsListener
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.editor.ChangeContentService
@@ -46,27 +47,27 @@ import kotlin.concurrent.write
  * @author Kiril Branavitski
  * @author Viktar Mushtsin
  */
-interface ExplorerListener {
+interface ExplorerListener{
   /**
    * Handler for update event for units.
    * @param explorer explorer units of which was updated.
    * @param unit unit that was updated.
    */
-  fun onChanged(explorer: Explorer<*>, unit: ExplorerUnit)
+  fun <Connection: ConnectionConfigBase> onChanged(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>)
 
   /**
    * Handler for create event for units.
    * @param explorer explorer units of which was created.
    * @param unit unit that was created.
    */
-  fun onAdded(explorer: Explorer<*>, unit: ExplorerUnit)
+  fun <Connection: ConnectionConfigBase> onAdded(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>)
 
   /**
    * Handler for delete event for units.
    * @param explorer explorer units of which was deleted.
    * @param unit unit that was deleted.
    */
-  fun onDeleted(explorer: Explorer<*>, unit: ExplorerUnit)
+  fun <Connection: ConnectionConfigBase> onDeleted(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>)
 }
 
 /**
@@ -74,7 +75,7 @@ interface ExplorerListener {
  * @author Kiril Branavitski
  * @author Viktar Mushtsin
  */
-interface ExplorerFactory<U : WorkingSet<*>, E : Explorer<U>> {
+interface ExplorerFactory<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>, E : Explorer<Connection, U>> {
   fun buildComponent(): E
 }
 
@@ -89,11 +90,11 @@ val UNITS_CHANGED = Topic.create("unitsChanged", ExplorerListener::class.java)
  * Abstract class for working with explorer logical representation.
  * @author Viktar Mushtsin
  */
-interface Explorer<U : WorkingSet<*>> {
+interface Explorer<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>> {
 
   companion object {
     @JvmField
-    val EP = ExtensionPointName.create<ExplorerFactory<*, *>>("org.zowe.explorer.explorer")
+    val EP = ExtensionPointName.create<ExplorerFactory<ConnectionConfig, *, *>>("org.zowe.explorer.explorer")
   }
 
   val units: MutableCollection<U>
@@ -101,7 +102,7 @@ interface Explorer<U : WorkingSet<*>> {
 
   fun disposeUnit(unit: U)
 
-  fun isUnitPresented(unit: ExplorerUnit): Boolean
+  fun isUnitPresented(unit: ExplorerUnit<Connection>): Boolean
 
   val componentManager: ComponentManager
 
@@ -135,7 +136,7 @@ interface Explorer<U : WorkingSet<*>> {
    * @param unit unit which can be used for showing additional information in notification.
    * @param project project for which to show notification.
    */
-  fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?)
+  fun reportThrowable(t: Throwable, unit: ExplorerUnit<Connection>, project: Project?)
 }
 
 /**
@@ -144,7 +145,8 @@ interface Explorer<U : WorkingSet<*>> {
  * @author Kiril Branavitski
  * @author Valiantsin Krus
  */
-abstract class AbstractExplorerBase<U : WorkingSet<*>, UnitConfig : EntityWithUuid> : Explorer<U>, Disposable {
+abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>, UnitConfig : EntityWithUuid>
+  : Explorer<Connection, U>, Disposable {
 
   val lock = ReentrantReadWriteLock()
 
@@ -172,7 +174,7 @@ abstract class AbstractExplorerBase<U : WorkingSet<*>, UnitConfig : EntityWithUu
    * @param unit unit to find.
    * @return true if unit was found and false otherwise.
    */
-  override fun isUnitPresented(unit: ExplorerUnit): Boolean {
+  override fun isUnitPresented(unit: ExplorerUnit<Connection>): Boolean {
     return unit.`is`(unitClass) && units.contains(unit)
   }
 
@@ -212,7 +214,7 @@ abstract class AbstractExplorerBase<U : WorkingSet<*>, UnitConfig : EntityWithUu
   }
 
   /** @see Explorer.reportThrowable */
-  override fun reportThrowable(t: Throwable, unit: ExplorerUnit, project: Project?) {
+  override fun reportThrowable(t: Throwable, unit: ExplorerUnit<Connection>, project: Project?) {
     reportThrowable(t, project)
   }
 
@@ -261,8 +263,9 @@ abstract class AbstractExplorerBase<U : WorkingSet<*>, UnitConfig : EntityWithUu
     })
     subscribe(CREDENTIALS_CHANGED, disposable, CredentialsListener { uuid ->
       lock.read {
-        val found = units.find { it.connectionConfig?.uuid == uuid }
-        sendTopic(UNITS_CHANGED).onChanged(this@AbstractExplorerBase, found ?: return@CredentialsListener)
+        units.filter { it.connectionConfig?.uuid == uuid }.forEach {
+          sendTopic(UNITS_CHANGED).onChanged(this@AbstractExplorerBase, it)
+        }
       }
     })
   }

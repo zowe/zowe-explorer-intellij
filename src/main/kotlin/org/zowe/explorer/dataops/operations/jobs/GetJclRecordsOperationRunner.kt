@@ -41,6 +41,8 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
 
   override val resultClass = ByteArray::class.java
 
+  override val log = log<GetJclRecordsOperationRunner>()
+
   /**
    * Runs a get jcl records operation
    *
@@ -99,12 +101,20 @@ open class GetJclRecordsOperationParams
 /**
  * Class which contains parameters job name and job id for get jcl records operation
  */
-class BasicGetJclRecordsParams(val jobName: String, val jobId: String) : GetJclRecordsOperationParams()
+class BasicGetJclRecordsParams(val jobName: String, val jobId: String) : GetJclRecordsOperationParams() {
+  override fun toString(): String {
+    return "BasicGetJclRecordsParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /**
  * Class which contains parameter job correlator for get jcl records operation
  */
-class CorrelatorGetJclRecordsParams(val jobCorrelator: String) : GetJclRecordsOperationParams()
+class CorrelatorGetJclRecordsParams(val jobCorrelator: String) : GetJclRecordsOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorGetJclRecordsParams(jobCorrelator='$jobCorrelator')"
+  }
+}
 
 /**
  * Data class that represents all information needed to send get jcl records operation request
@@ -114,6 +124,6 @@ class CorrelatorGetJclRecordsParams(val jobCorrelator: String) : GetJclRecordsOp
 data class GetJclRecordsOperation(
   override val request: GetJclRecordsOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<GetJclRecordsOperationParams, ByteArray> {
+) : RemoteQuery<ConnectionConfig, GetJclRecordsOperationParams, ByteArray> {
   override val resultClass = ByteArray::class.java
 }

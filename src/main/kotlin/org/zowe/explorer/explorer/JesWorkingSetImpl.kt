@@ -13,6 +13,7 @@ package org.zowe.explorer.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.utils.clone
@@ -20,15 +21,16 @@ import org.zowe.explorer.utils.clone
 /** JES working set implementation */
 class JesWorkingSetImpl(
   override val uuid: String,
-  jesExplorer: AbstractExplorerBase<JesWorkingSetImpl, JesWorkingSetConfig>,
+  jesExplorer: AbstractExplorerBase<ConnectionConfig, JesWorkingSetImpl, JesWorkingSetConfig>,
   workingSetConfigProvider: (String) -> JesWorkingSetConfig?,
   parentDisposable: Disposable
-) : WorkingSetBase<JobsFilter, WorkingSet<*>, JesWorkingSetConfig>(
+) : WorkingSetBase<ConnectionConfig, JobsFilter, JesWorkingSetConfig>(
   uuid,
   jesExplorer,
   workingSetConfigProvider
 ), JesWorkingSet {
   override val wsConfigClass = JesWorkingSetConfig::class.java
+  override val connectionConfigClass = ConnectionConfig::class.java
 
   override fun JesWorkingSetConfig.masks(): MutableCollection<JobsFilter> = this.jobsFilters
 

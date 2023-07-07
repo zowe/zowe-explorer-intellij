@@ -13,6 +13,7 @@ package org.zowe.explorer.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.UssPath
@@ -22,16 +23,17 @@ import kotlin.concurrent.withLock
 /** USS files and datasets working set implementation */
 class FilesWorkingSetImpl(
   override val uuid: String,
-  fileExplorer: AbstractExplorerBase<FilesWorkingSetImpl, FilesWorkingSetConfig>,
-  private val workingSetConfigProvider: (String) -> FilesWorkingSetConfig?,
+  fileExplorer: AbstractExplorerBase<ConnectionConfig, FilesWorkingSetImpl, FilesWorkingSetConfig>,
+  workingSetConfigProvider: (String) -> FilesWorkingSetConfig?,
   parentDisposable: Disposable
-) : WorkingSetBase<DSMask, WorkingSet<*>, FilesWorkingSetConfig>(
+) : WorkingSetBase<ConnectionConfig, DSMask, FilesWorkingSetConfig>(
   uuid,
   fileExplorer,
   workingSetConfigProvider
 ), FilesWorkingSet {
 
   override val wsConfigClass = FilesWorkingSetConfig::class.java
+  override val connectionConfigClass = ConnectionConfig::class.java
 
   override fun FilesWorkingSetConfig.masks() = this.dsMasks
 

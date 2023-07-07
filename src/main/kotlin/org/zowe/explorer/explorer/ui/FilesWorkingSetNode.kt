@@ -14,6 +14,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.explorer.FilesWorkingSet
 
@@ -21,13 +22,15 @@ import org.zowe.explorer.explorer.FilesWorkingSet
 class FilesWorkingSetNode(
   workingSet: FilesWorkingSet,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   treeStructure: ExplorerTreeStructureBase
-) : WorkingSetNode<DSMask>(
+) : WorkingSetNode<ConnectionConfig, DSMask>(
   workingSet, project, parent, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
 
   private val valueForFilesWS = value as FilesWorkingSet
+
+  override val regularTooltip = "Files Working Set"
 
   override fun update(presentation: PresentationData) {
     presentation.addText(valueForFilesWS.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)

@@ -10,7 +10,9 @@
 
 package org.zowe.explorer.config.ws
 
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.utils.crudable.annotations.Column
+import org.zowe.explorer.utils.crudable.annotations.ForeignKey
 import org.zowe.explorer.utils.isTheSameAs
 
 /**
@@ -23,13 +25,15 @@ class JesWorkingSetConfig : WorkingSetConfig {
   @Column
   var jobsFilters: MutableCollection<JobsFilter> = mutableListOf()
 
+  @Column
+  @ForeignKey(ConnectionConfig::class)
+  override var connectionConfigUuid: String = ""
+
   constructor() : super()
 
-  constructor(name: String, connectionConfigUuid: String, jobsFilters: MutableCollection<JobsFilter>) : super(
-    name,
-    connectionConfigUuid
-  ) {
+  constructor(name: String, connectionConfigUuid: String, jobsFilters: MutableCollection<JobsFilter>) : super(name) {
     this.jobsFilters = jobsFilters
+    this.connectionConfigUuid = connectionConfigUuid
   }
 
   constructor(
@@ -37,8 +41,9 @@ class JesWorkingSetConfig : WorkingSetConfig {
     name: String,
     connectionConfigUuid: String,
     jobsFilters: MutableCollection<JobsFilter>
-  ) : super(name, connectionConfigUuid, uuid) {
+  ) : super(name, uuid) {
     this.jobsFilters = jobsFilters
+    this.connectionConfigUuid = connectionConfigUuid
   }
 
   override fun equals(other: Any?): Boolean {

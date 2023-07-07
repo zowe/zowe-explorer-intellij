@@ -18,8 +18,10 @@ import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.explorer.actions.DuplicateMemberAction
 import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.explorer.vfs.sendVfsChangesTopic
+import org.zowe.explorer.utils.log
+import org.zowe.explorer.vfs.sendMFVfsChangesTopic
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.MoveUssFile
@@ -34,6 +36,7 @@ class RenameOperationRunnerFactory : OperationRunnerFactory {
   }
 }
 
+
 /**
  * Class which represents rename operation runner
  */
@@ -42,6 +45,8 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
   override val operationClass = RenameOperation::class.java
 
   override val resultClass = Unit::class.java
+
+  override val log = log<RenameOperationRunner>()
 
   /**
    * Determined if operation can be run on selected object
@@ -79,7 +84,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               toDatasetName = operation.newName
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              sendVfsChangesTopic()
+              sendMFVfsChangesTopic()
             } else {
               throw CallException(response, "Unable to rename the selected dataset")
             }
@@ -97,21 +102,42 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
         parentAttributes.requesters.map {
           try {
             progressIndicator.checkCanceled()
-            val response = api<DataAPI>(it.connectionConfig).renameDatasetMember(
-              authorizationToken = it.connectionConfig.authToken,
-              body = RenameData(
-                fromDataset = RenameData.FromDataset(
-                  oldDatasetName = parentAttributes.datasetInfo.name,
-                  oldMemberName = attributes.info.name
-                )
-              ),
-              toDatasetName = parentAttributes.datasetInfo.name,
-              memberName = operation.newName
-            ).cancelByIndicator(progressIndicator).execute()
-            if (response.isSuccessful) {
-              sendVfsChangesTopic()
+            log.info("Checking for duplicate names in dataset ${parentAttributes.datasetInfo.name}")
+            if (operation.requester is DuplicateMemberAction) {
+              val response = api<DataAPI>(it.connectionConfig).copyToDatasetMember(
+                authorizationToken = it.connectionConfig.authToken,
+                body = CopyDataZOS.CopyFromDataset(
+                  dataset = CopyDataZOS.CopyFromDataset.Dataset(
+                    parentAttributes.datasetInfo.name,
+                    attributes.info.name
+                  ),
+                  replace = true
+                ),
+                toDatasetName = parentAttributes.datasetInfo.name,
+                memberName = operation.newName
+              ).cancelByIndicator(progressIndicator).execute()
+              if (response.isSuccessful) {
+                sendMFVfsChangesTopic()
+              } else {
+                throw CallException(response, "Unable to duplicate the selected member")
+              }
             } else {
-              throw CallException(response, "Unable to rename the selected member")
+              val response = api<DataAPI>(it.connectionConfig).renameDatasetMember(
+                authorizationToken = it.connectionConfig.authToken,
+                body = RenameData(
+                  fromDataset = RenameData.FromDataset(
+                    oldDatasetName = parentAttributes.datasetInfo.name,
+                    oldMemberName = attributes.info.name
+                  )
+                ),
+                toDatasetName = parentAttributes.datasetInfo.name,
+                memberName = operation.newName
+              ).cancelByIndicator(progressIndicator).execute()
+              if (response.isSuccessful) {
+                sendMFVfsChangesTopic()
+              } else {
+                throw CallException(response, "Unable to rename the selected member")
+              }
             }
           } catch (e: Throwable) {
             if (e is CallException) {
@@ -135,7 +161,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               filePath = FilePath("$parentDirPath/${operation.newName}")
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              sendVfsChangesTopic()
+              sendMFVfsChangesTopic()
             } else {
               throw CallException(response, "Unable to rename the selected file or directory")
             }

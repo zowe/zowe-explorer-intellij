@@ -8,46 +8,47 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.config.connect.ui
+package org.zowe.explorer.config.connect.ui.zosmf
 
 import org.zowe.explorer.common.ui.DialogMode
-import org.zowe.explorer.common.ui.DialogState
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
+import org.zowe.explorer.config.connect.ui.ConnectionDialogStateBase
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.crudable.nextUniqueValue
 import org.zowe.kotlinsdk.annotations.ZVersion
-import java.util.*
 
 /**
  * Data class which represents state for connection dialog
  */
 data class ConnectionDialogState(
-  var connectionUuid: String = "",
-  var connectionName: String = "",
-  var connectionUrl: String = "",
+  override var connectionUuid: String = "",
+  override var connectionName: String = "",
+  override var connectionUrl: String = "",
   /*var apiMeditationLayer: String = "",*/
-  var username: String = "",
-  var password: String = "",
+  override var username: String = "",
+  override var password: String = "",
   var isAllowSsl: Boolean = false,
   var zVersion: ZVersion = ZVersion.ZOS_2_1,
   var zoweConfigPath: String? = null,
+  var owner: String = "",
   override var mode: DialogMode = DialogMode.CREATE
-) : DialogState, Cloneable {
+) : ConnectionDialogStateBase<ConnectionConfig>() {
 
-  var connectionConfig
-    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion, zoweConfigPath)
+  override var connectionConfig
+    get() = ConnectionConfig(connectionUuid, connectionName, connectionUrl, isAllowSsl, zVersion, zoweConfigPath, owner)
     set(value) {
       connectionUuid = value.uuid
       connectionName = value.name
       connectionUrl = value.url
       isAllowSsl = value.isAllowSelfSigned
       zVersion = value.zVersion
+      owner = value.owner
     }
 
 
-  var credentials
+  override var credentials
     get() = Credentials(connectionUuid, username, password)
     set(value) {
       username = value.username
@@ -77,7 +78,8 @@ data class ConnectionDialogState(
       username = username,
       password = password,
       isAllowSsl = isAllowSsl,
-      zoweConfigPath = zoweConfigPath
+      zoweConfigPath = zoweConfigPath,
+      owner = owner
     )
   }
 }
@@ -89,7 +91,7 @@ fun ConnectionDialogState.initEmptyUuids(crudable: Crudable): ConnectionDialogSt
 
 fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
   val credentials = crudable.getByUniqueKey<Credentials>(this.uuid) ?: Credentials().apply {
-    this.connectionConfigUuid = this@toDialogState.uuid
+    this.configUuid = this@toDialogState.uuid
   }
   return ConnectionDialogState(
     connectionUuid = this.uuid,
@@ -99,6 +101,7 @@ fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
     password = credentials.password,
     isAllowSsl = this.isAllowSelfSigned,
     zVersion = this.zVersion,
-    zoweConfigPath = this.zoweConfigPath
+    zoweConfigPath = this.zoweConfigPath,
+    owner = this.owner
   )
 }

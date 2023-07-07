@@ -17,6 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteSpoolFileAttributes
 import org.zowe.explorer.explorer.ExplorerUnit
@@ -28,12 +29,12 @@ private val spoolFileIcon = AllIcons.FileTypes.Text
 class SpoolFileNode(
   file: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  unit: ExplorerUnit,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
+  unit: ExplorerUnit<ConnectionConfig>,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(
+) : ExplorerUnitTreeNodeBase<ConnectionConfig, MFVirtualFile, ExplorerUnit<ConnectionConfig>>(
   file, project, parent, unit, treeStructure
-), MFNode {
+) {
   override fun update(presentation: PresentationData) {
     val attributes = service<DataOpsManager>().tryToGetAttributes(value) as? RemoteSpoolFileAttributes
     val spoolFile = attributes?.info

@@ -10,7 +10,6 @@
 
 package org.zowe.explorer.config.connect
 
-import org.zowe.explorer.utils.crudable.EntityWithUuid
 import org.zowe.explorer.utils.crudable.annotations.Column
 import org.zowe.kotlinsdk.annotations.ZVersion
 
@@ -18,13 +17,13 @@ import org.zowe.kotlinsdk.annotations.ZVersion
  * Class which represents connection config.
  * Instances of this class are saved and can be reloaded after Intellij closed.
  */
-class ConnectionConfig : EntityWithUuid {
+class ConnectionConfig : ConnectionConfigBase {
 
   @Column
-  var name = ""
+  override var name = ""
 
   @Column
-  var url = ""
+  override var url = ""
 
   @Column
   var isAllowSelfSigned = true
@@ -35,6 +34,8 @@ class ConnectionConfig : EntityWithUuid {
   @Column
   var zoweConfigPath: String? = null
 
+  var owner = ""
+
   constructor() {}
 
   constructor(
@@ -43,13 +44,15 @@ class ConnectionConfig : EntityWithUuid {
     url: String,
     isAllowSelfSigned: Boolean,
     zVersion: ZVersion,
-    zoweConfigPath: String? = null
+    zoweConfigPath: String? = null,
+    owner: String = ""
   ) : super(uuid) {
     this.name = name
     this.url = url
     this.isAllowSelfSigned = isAllowSelfSigned
     this.zVersion = zVersion
     this.zoweConfigPath = zoweConfigPath
+    this.owner = owner
   }
 
   override fun equals(other: Any?): Boolean {
@@ -64,6 +67,7 @@ class ConnectionConfig : EntityWithUuid {
     if (isAllowSelfSigned != other.isAllowSelfSigned) return false
     if (zVersion != other.zVersion) return false
     if (zoweConfigPath != other.zoweConfigPath) return false
+    if (owner != other.owner) return false
 
     return true
   }
@@ -75,11 +79,12 @@ class ConnectionConfig : EntityWithUuid {
     result = 31 * result + isAllowSelfSigned.hashCode()
     result = 31 * result + zVersion.hashCode()
     result = 31 * result + zoweConfigPath.hashCode()
+    result = 31 * result + owner.hashCode()
     return result
   }
 
   override fun toString(): String {
-    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, zVersion=$zVersion, zoweConfigPath=$zoweConfigPath)"
+    return "ConnectionConfig(name='$name', url='$url', isAllowSelfSigned=$isAllowSelfSigned, zVersion=$zVersion, zoweConfigPath=$zoweConfigPath, owner=$owner)"
   }
 
 }

@@ -13,38 +13,38 @@ package org.zowe.explorer.config.ws.ui
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ComboBoxCellEditor
 import org.zowe.explorer.common.message
-import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.crudable.getByUniqueKey
-import org.zowe.explorer.utils.findAnyNullable
+import org.zowe.explorer.utils.nullable
 import org.zowe.explorer.utils.toMutableList
 import javax.swing.table.TableCellEditor
 
 /**
  * Class which represents working set connection name column in working set table model
  */
-class WSConnectionNameColumn<WSConfig : WorkingSetConfig>(private val crudable: Crudable) :
+class WSConnectionNameColumn<Connection: ConnectionConfigBase, WSConfig : WorkingSetConfig>(private val crudable: Crudable, val connectionClass: Class<out Connection>) :
   ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.connection.name")) {
 
   inner class ConnectionTableCellEditor : ComboBoxCellEditor() {
     override fun getComboBoxItems(): MutableList<String> {
-      return crudable.getAll<ConnectionConfig>()
+      return crudable.getAll(connectionClass)
         .map { it.name }
         .toMutableList()
     }
   }
 
   override fun setValue(item: WSConfig, value: String) {
-    crudable.find<ConnectionConfig> { it.name == value }.findAnyNullable()?.let {
+    crudable.find(connectionClass) { it.name == value }.findAny().nullable?.let {
       item.connectionConfigUuid = it.uuid
     }
   }
 
   override fun valueOf(item: WSConfig): String {
-    return crudable.getByUniqueKey<ConnectionConfig>(item.connectionConfigUuid)?.name ?: ""
+    return crudable.getByUniqueKey(connectionClass, item.connectionConfigUuid).nullable?.name ?: ""
   }
 
   override fun isCellEditable(item: WSConfig): Boolean {

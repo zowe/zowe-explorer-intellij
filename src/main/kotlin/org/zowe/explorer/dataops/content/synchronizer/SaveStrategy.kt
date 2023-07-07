@@ -12,11 +12,9 @@ package org.zowe.explorer.dataops.content.synchronizer
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
-import org.zowe.explorer.config.ConfigService
 
 /**
  * Functional interface to decide if file content can be uploaded or should be updated from mainframe.
@@ -72,7 +70,7 @@ fun interface SaveStrategy {
 
     /**
      * Creates a default save strategy with "yes/no" dialog when the last fetched bytes are different from the remote bytes.
-     * It uploads changes in case the current bytes are different from the remote bytes and autosync is enabled
+     * It uploads changes in case the current bytes are different from the remote bytes
      * @param project project instance to show dialog in
      * @return instance of default [SaveStrategy]
      */
@@ -81,7 +79,7 @@ fun interface SaveStrategy {
         requestPermissionToUploadOnDiff(
           project,
           f,
-          service<ConfigService>().isAutoSyncEnabled,
+          false,
           (lastSuccessfulState contentEquals remoteBytes)
         )
       }

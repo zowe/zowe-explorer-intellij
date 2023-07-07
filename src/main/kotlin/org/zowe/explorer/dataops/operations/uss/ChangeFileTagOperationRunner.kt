@@ -20,6 +20,7 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.*
 import okhttp3.ResponseBody
 
@@ -39,6 +40,8 @@ class ChangeFileTagOperationRunner: OperationRunner<ChangeFileTagOperation, Resp
   override val operationClass = ChangeFileTagOperation::class.java
 
   override val resultClass = ResponseBody::class.java
+
+  override val log = log<ChangeFileTagOperationRunner>()
 
   /**
    * Runs a change file tag operation.
@@ -92,7 +95,11 @@ class ChangeFileTagOperationParams(
   val action: TagAction,
   val type: UssFileDataType? = null,
   val codeSet: String? = null
-)
+) {
+  override fun toString(): String {
+    return "ChangeFileTagOperationParams(filePath='$filePath', action=$action, type=$type, codeSet=$codeSet)"
+  }
+}
 
 /**
  * Data class that represents all information needed to send change file tag request
@@ -102,6 +109,6 @@ class ChangeFileTagOperationParams(
 data class ChangeFileTagOperation(
   override val request: ChangeFileTagOperationParams,
   override val connectionConfig: ConnectionConfig
-): RemoteQuery<ChangeFileTagOperationParams, ResponseBody> {
+): RemoteQuery<ConnectionConfig, ChangeFileTagOperationParams, ResponseBody> {
   override val resultClass = ResponseBody::class.java
 }

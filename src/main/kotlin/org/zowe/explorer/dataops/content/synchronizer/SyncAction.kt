@@ -20,8 +20,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.utils.checkEncodingCompatibility
 import org.zowe.explorer.utils.runReadActionInEdtAndWait
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.showSaveAnywayDialog
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
 class SyncAction : DumbAwareAction() {
@@ -63,6 +65,8 @@ class SyncAction : DumbAwareAction() {
    */
   override fun actionPerformed(e: AnActionEvent) {
     val vFile = getSupportedVirtualFile(e) ?: return
+    val incompatibleEncoding = e.project?.let { !checkEncodingCompatibility(vFile, it) } ?: false
+    if (incompatibleEncoding && !showSaveAnywayDialog(vFile.charset)) return
     val editor = getEditor(e) ?: return
     val syncProvider = DocumentedSyncProvider(vFile, SaveStrategy.default(e.project))
     runBackgroundableTask(

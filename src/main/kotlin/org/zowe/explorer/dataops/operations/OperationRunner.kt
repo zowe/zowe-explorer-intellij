@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.dataops.operations
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,6 +27,8 @@ interface OperationRunner<O : Operation<R>, R : Any> {
   val operationClass: Class<out O>
 
   val resultClass: Class<out R>
+
+  val log: Logger
 
   /** Determines if an operation can be run on selected object. */
   fun canRun(operation: O): Boolean

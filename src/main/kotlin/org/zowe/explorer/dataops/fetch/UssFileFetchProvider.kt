@@ -13,6 +13,7 @@ package org.zowe.explorer.dataops.fetch
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
@@ -47,7 +48,7 @@ private val log = log<UssFileFetchProvider>()
  */
 class UssFileFetchProvider(
   dataOpsManager: DataOpsManager
-) : RemoteAttributedFileFetchBase<UssQuery, RemoteUssAttributes, MFVirtualFile>(dataOpsManager) {
+) : RemoteAttributedFileFetchBase<ConnectionConfig, UssQuery, RemoteUssAttributes, MFVirtualFile>(dataOpsManager) {
 
   override val requestClass = UssQuery::class.java
 
@@ -58,7 +59,7 @@ class UssFileFetchProvider(
    * @see RemoteAttributedFileFetchBase.fetchResponse
    */
   override fun fetchResponse(
-    query: RemoteQuery<UssQuery, Unit>,
+    query: RemoteQuery<ConnectionConfig, UssQuery, Unit>,
     progressIndicator: ProgressIndicator
   ): Collection<RemoteUssAttributes> {
     log.info("Fetching USS Lists for $query")
@@ -106,7 +107,7 @@ class UssFileFetchProvider(
    * Clears attributes of unused uss file
    * @see RemoteAttributedFileFetchBase.cleanupUnusedFile
    */
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<UssQuery, Unit>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<ConnectionConfig, UssQuery, Unit>) {
     log.info("About to clean-up file=$file, query=$query")
     attributesService.clearAttributes(file)
     file.delete(this)

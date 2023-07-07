@@ -164,32 +164,14 @@ class MFVirtualFile internal constructor(
 
   override fun getId() = fileId
 
-  /** Get file extension */
-  override fun getExtension(): String {
-    return if (name.contains('.')) {
-      name.split(".").last()
-    } else {
-      name
-    }
-  }
-
   /** Get file type */
   override fun getFileType(): FileType {
-    return if (this.name == this.extension) {
+    val fileType = super.getFileType()
+    return if (fileType is UnknownFileType) {
       PlainTextFileType.INSTANCE
     } else {
-      val fileType = super.getFileType()
-      if (fileType is UnknownFileType) {
-        PlainTextFileType.INSTANCE
-      } else {
-        fileType
-      }
+      fileType
     }
-  }
-
-  /** Get file name without its extension */
-  override fun getNameWithoutExtension(): String {
-    return name.split(".").dropLast(1).joinToString(separator = ".")
   }
 
   @Suppress("UNCHECKED_CAST")

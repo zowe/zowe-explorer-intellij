@@ -20,9 +20,10 @@ import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.operations.jobs.SubmitFilePathOperationParams
 import org.zowe.explorer.dataops.operations.jobs.SubmitJobOperation
-import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
 import org.zowe.explorer.explorer.ui.UssFileNode
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.ui.build.jobs.JOB_ADDED_TOPIC
 import org.zowe.explorer.utils.formMfPath
 import org.zowe.explorer.utils.sendTopic
@@ -37,7 +38,7 @@ class SubmitJobAction : AnAction() {
    * runs the submit operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -91,7 +92,7 @@ class SubmitJobAction : AnAction() {
    * Determines which objects on mainframe can be submitted
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

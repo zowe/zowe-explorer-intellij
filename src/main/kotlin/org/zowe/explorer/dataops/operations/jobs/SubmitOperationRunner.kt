@@ -20,6 +20,7 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.JESApi
 import org.zowe.kotlinsdk.SubmitFileNameBody
 import org.zowe.kotlinsdk.SubmitJobRequest
@@ -31,6 +32,8 @@ import retrofit2.Response
 class SubmitOperationRunner : OperationRunner<SubmitJobOperation, SubmitJobRequest> {
 
   override val operationClass = SubmitJobOperation::class.java
+
+  override val log = log<SubmitOperationRunner>()
 
   /**
    * Sends submit request to mainframe and checks return code of request
@@ -100,13 +103,21 @@ open class SubmitOperationParams
  * Class which contains parameters for submit operation by file path
  * @param submitFilePath path to file which contains code that should be submitted on mainframe
  */
-class SubmitFilePathOperationParams(val submitFilePath: String) : SubmitOperationParams()
+class SubmitFilePathOperationParams(val submitFilePath: String) : SubmitOperationParams() {
+  override fun toString(): String {
+    return "SubmitFilePathOperationParams(submitFilePath='$submitFilePath')"
+  }
+}
 
 /**
  * Class which contains parameters for submit operation by job jcl
  * @param jobJcl code that should be submitted on mainframe
  */
-class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams()
+class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams() {
+  override fun toString(): String {
+    return "SubmitJobJclOperationParams(jobJcl='$jobJcl')"
+  }
+}
 
 /**
  * Data class which represents all info that is needed to execute submit operation
@@ -116,6 +127,6 @@ class SubmitJobJclOperationParams(val jobJcl: String) : SubmitOperationParams()
 data class SubmitJobOperation(
   override val request: SubmitOperationParams,
   override val connectionConfig: ConnectionConfig,
-) : RemoteQuery<SubmitOperationParams, SubmitJobRequest> {
+) : RemoteQuery<ConnectionConfig, SubmitOperationParams, SubmitJobRequest> {
   override val resultClass = SubmitJobRequest::class.java
 }

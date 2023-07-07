@@ -8,7 +8,14 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.explorer.ui
+package org.zowe.explorer.config.connect.ui
 
-interface MFNode {
-}
+/**
+ * Data class which represents state for change password dialog
+ */
+data class ChangePasswordDialogState(
+  var username: String = "",
+  var oldPassword: String = "",
+  var newPassword: String = "",
+  var confirmPassword: String = ""
+)

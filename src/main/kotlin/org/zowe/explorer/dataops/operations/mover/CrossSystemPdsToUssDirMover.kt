@@ -59,6 +59,8 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
       operation.commonUrls(dataOpsManager).isEmpty()
   }
 
+  override val log = log<CrossSystemPdsToUssDirMover>()
+
   /**
    * Implements copying member from one system to another.
    * @see AbstractPdsToUssFolderMover.canRun
@@ -107,12 +109,15 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
       val destConnectionConfig = destAttributes.requesters.firstOrNull()?.connectionConfig
         ?: throw IllegalStateException("Cannot find connection for dest USS folder '${destAttributes.path}'.")
 
+      log.info("Trying to move PDS ${operation.source.name} from ${sourceConnectionConfig.url} to USS directory ${operation.destinationAttributes.path} on ${destConnectionConfig.url}")
       proceedPdsMove(sourceConnectionConfig, destConnectionConfig, operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.info("Failed to move dataset")
       throw throwable
     }
+    log.info("Dataset has been moved successfully")
   }
 }

@@ -9,18 +9,19 @@
  */
 package org.zowe.explorer.dataops.operations.mover
 
+import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.Requester
+import org.zowe.explorer.dataops.attributes.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.getParentsChain
 import org.zowe.kotlinsdk.CopyDataZOS
 import org.zowe.kotlinsdk.DataAPI
-import retrofit2.Call
 
 /**
  * Factory for registering SequentialToPdsMover in Intellij IoC container.
@@ -37,7 +38,7 @@ class SequentialToPdsMoverFactory : OperationRunnerFactory {
  * Implements copying of sequential data set to partitioned data set inside 1 system.
  * @author Viktar Mushtsin
  */
-class SequentialToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(dataOpsManager) {
+class SequentialToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
   /**
    * Checks that source is sequential data set, destination is partitioned data set,
@@ -57,20 +58,21 @@ class SequentialToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
    * Builds call for copying sequential data set to partitioned data set.
    * @see DefaultFileMover.buildCall
    */
-  override fun buildCall(
+  private fun proceedMoveCopyToPds(
+    connectionConfig: ConnectionConfig,
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, ConnectionConfig>
-  ): Call<Void> {
+    progressIndicator: ProgressIndicator
+  ): Throwable? {
     val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
     var memberName: String
     val dataset = (operation.sourceAttributes as RemoteDatasetAttributes).also {
       memberName = it.name.split(".").last()
     }
-    return api<DataAPI>(
-      url = requesterWithUrl.second.url,
-      isAllowSelfSigned = requesterWithUrl.second.isAllowSelfSigned
+    val response = api<DataAPI>(
+      url = connectionConfig.url,
+      isAllowSelfSigned = connectionConfig.isAllowSelfSigned
     ).copyToDatasetMember(
-      authorizationToken = requesterWithUrl.first.connectionConfig.authToken,
+      authorizationToken = connectionConfig.authToken,
       body = CopyDataZOS.CopyFromDataset(
         dataset = CopyDataZOS.CopyFromDataset.Dataset(
           datasetName = dataset.name
@@ -79,6 +81,39 @@ class SequentialToPdsMover(dataOpsManager: DataOpsManager) : DefaultFileMover(da
       ),
       toDatasetName = destinationAttributes.name,
       memberName = memberName
-    )
+    ).cancelByIndicator(progressIndicator).execute()
+
+    if (!response.isSuccessful && response.errorBody()?.string()?.contains("data set is empty") == true) {
+      if (operation.isMove) {
+        val deleteResponse = api<DataAPI>(
+            url = connectionConfig.url,
+            isAllowSelfSigned = connectionConfig.isAllowSelfSigned
+        ).deleteDataset(
+            authorizationToken = connectionConfig.authToken,
+            datasetName = dataset.name
+        ).cancelByIndicator(progressIndicator).execute()
+        if (!deleteResponse.isSuccessful) {
+          return CallException(deleteResponse, "Cannot delete source dataset '${dataset.name}'.")
+        }
+      }
+    } else if (!response.isSuccessful) {
+      return CallException(response, "Cannot move dataset '${dataset.name}'.")
+    }
+    return null
+  }
+
+  override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
+    var throwable: Throwable? = null
+    for ((requester, _) in operation.commonUrls(dataOpsManager)) {
+      try {
+        throwable = proceedMoveCopyToPds(requester.connectionConfig, operation, progressIndicator)
+        break
+      } catch (t: Throwable) {
+        throwable = t
+      }
+    }
+    if (throwable != null) {
+      throw throwable
+    }
   }
 }

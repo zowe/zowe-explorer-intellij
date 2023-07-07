@@ -16,6 +16,7 @@ import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.SystemsApi
 import org.zowe.kotlinsdk.SystemsResponse
 
@@ -34,6 +35,7 @@ class InfoOperationRunnerFactory : OperationRunnerFactory {
 class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
   override val operationClass = InfoOperation::class.java
   override val resultClass = SystemsResponse::class.java
+  override val log = log<InfoOperationRunner>()
 
   /**
    * Determined if operation can be run on selected object

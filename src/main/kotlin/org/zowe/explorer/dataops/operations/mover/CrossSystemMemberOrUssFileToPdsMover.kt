@@ -13,7 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.apiWithBytesConverter
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.addNewLine
@@ -51,18 +51,23 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return !operation.source.isDirectory &&
-            operation.destination.isDirectory &&
-            operation.destinationAttributes is RemoteDatasetAttributes &&
-            operation.destination is MFVirtualFile &&
-            (operation.source !is MFVirtualFile || operation.commonUrls(dataOpsManager).isEmpty())
+      operation.destination.isDirectory &&
+      operation.destinationAttributes is RemoteDatasetAttributes &&
+      operation.destination is MFVirtualFile &&
+      (operation.source !is MFVirtualFile || operation.commonUrls(dataOpsManager).isEmpty())
   }
+
+  override val log = log<CrossSystemMemberOrUssFileToPdsMover>()
 
   /**
    * Proceeds move/copy of member or uss file to partitioned data set between different systems.
    * @param operation requested operation.
    * @param progressIndicator indicator that will show progress of copying/moving in UI.
    */
-  private fun proceedCrossSystemMoveCopy(operation: MoveCopyOperation, progressIndicator: ProgressIndicator): Throwable? {
+  private fun proceedCrossSystemMoveCopy(
+    operation: MoveCopyOperation,
+    progressIndicator: ProgressIndicator
+  ): Throwable? {
     var throwable: Throwable? = null
     val sourceFile = operation.source
     val destFile = operation.destination
@@ -131,12 +136,15 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS file ${operation.source.name} to PDS ${operation.destination.name}")
       proceedCrossSystemMoveCopy(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.info("Failed to move USS file")
       throw throwable
     }
+    log.info("USS file has been moved successfully")
   }
 }

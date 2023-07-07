@@ -14,10 +14,10 @@ import org.zowe.explorer.explorer.ExplorerViewSettings
 
 class FileExplorerTreeStructureProvider : ExplorerTreeStructureProvider() {
   override fun modifyOurs(
-    parent: ExplorerTreeNode<*>,
-    children: Collection<ExplorerTreeNode<*>>,
+    parent: ExplorerTreeNode<*, *>,
+    children: Collection<ExplorerTreeNode<*, *>>,
     settings: ExplorerViewSettings
-  ): MutableCollection<ExplorerTreeNode<*>> {
+  ): MutableCollection<ExplorerTreeNode<*, *>> {
     return children.toMutableList()
   }
 }

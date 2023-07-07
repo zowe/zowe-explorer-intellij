@@ -10,31 +10,43 @@
 
 package org.zowe.explorer.utils
 
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.ui.components.JBTextField
-import org.zowe.explorer.config.ConfigState
+import org.zowe.explorer.config.ConfigStateV2
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.makeCrudableWithoutListeners
 import org.zowe.explorer.config.ws.DSMask
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JobsFilter
+import org.zowe.explorer.config.ws.MaskStateWithWS
 import org.zowe.explorer.config.ws.UssPath
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.config.*
 import org.zowe.explorer.explorer.ui.NodeData
 import org.zowe.explorer.explorer.ui.UssDirNode
 import org.zowe.explorer.explorer.ui.UssFileNode
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
-import org.zowe.kotlinsdk.DatasetOrganization
-import org.zowe.kotlinsdk.annotations.ZVersion
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.spyk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.*
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.annotations.ZVersion
+import retrofit2.Call
+import retrofit2.Response
+import java.time.Duration
+import java.time.Instant.now
 import java.util.stream.Stream
 import javax.swing.JTextField
 
@@ -80,7 +92,7 @@ class UtilsTestSpec : ShouldSpec({
     }
     context("validateConnectionName") {
       val jTextField = JTextField()
-      val mockCrud = spyk(makeCrudableWithoutListeners(false) { ConfigState() })
+      val mockCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
 
       should("validate connection name when there are no other connections") {
         jTextField.text = "a"
@@ -146,7 +158,7 @@ class UtilsTestSpec : ShouldSpec({
     }
     context("validateWorkingSetName") {
       val jTextField = JTextField()
-      val mockCrud = spyk(makeCrudableWithoutListeners(false) { ConfigState() })
+      val mockCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
 
       should("validate working set name when there are no other working sets") {
         jTextField.text = "a1"
@@ -166,8 +178,8 @@ class UtilsTestSpec : ShouldSpec({
         val initialConName = null
 
         every { mockCrud.getAll(WorkingSetConfig::class.java) } returns Stream.of(
-          WorkingSetConfig(uuid = "ws", name = "a", connectionConfigUuid = "con"),
-          WorkingSetConfig(uuid = "ws1", name = "a1", connectionConfigUuid = "con1")
+          FilesWorkingSetConfig("ws", "a", "con", mutableListOf(), mutableListOf()),
+          FilesWorkingSetConfig("ws1", "a1", "con1", mutableListOf(), mutableListOf())
         )
 
         val actual = validateWorkingSetName(jTextField, initialConName, mockCrud, WorkingSetConfig::class.java)
@@ -182,8 +194,8 @@ class UtilsTestSpec : ShouldSpec({
         val initialConName = "a1"
 
         every { mockCrud.getAll(WorkingSetConfig::class.java) } returns Stream.of(
-          WorkingSetConfig(uuid = "ws", name = "a", connectionConfigUuid = "con"),
-          WorkingSetConfig(uuid = "ws1", name = "a1", connectionConfigUuid = "con1")
+          FilesWorkingSetConfig("ws", "a", "con", mutableListOf(), mutableListOf()),
+          FilesWorkingSetConfig("ws1", "a1", "con1", mutableListOf(), mutableListOf())
         )
 
         val actual = validateWorkingSetName(jTextField, initialConName, mockCrud, WorkingSetConfig::class.java)
@@ -200,6 +212,7 @@ class UtilsTestSpec : ShouldSpec({
     context("validateWorkingSetMaskName") {
       val jTextField = JTextField()
       val mockWs = mockk<FilesWorkingSet>()
+      val mockMaskStateWithWs = mockk<MaskStateWithWS>()
 
       should("validate working set mask name when there are no other working set masks") {
         jTextField.text = "/a1"
@@ -207,7 +220,11 @@ class UtilsTestSpec : ShouldSpec({
         every { mockWs.ussPaths } returns listOf()
         every { mockWs.masks } returns listOf()
 
-        val actual = validateWorkingSetMaskName(jTextField, mockWs)
+        every { mockMaskStateWithWs.ws } returns mockWs
+        every { mockMaskStateWithWs.mask } returns ""
+        every { mockMaskStateWithWs.type } returns MaskType.ZOS
+
+        val actual = validateWorkingSetMaskName(jTextField, mockMaskStateWithWs)
         val expected = null
 
         assertSoftly {
@@ -220,7 +237,11 @@ class UtilsTestSpec : ShouldSpec({
         every { mockWs.ussPaths } returns listOf(UssPath("/path1"), UssPath("/path2"))
         every { mockWs.masks } returns listOf(DSMask("MASK1", mutableListOf<String>()))
 
-        val actual = validateWorkingSetMaskName(jTextField, mockWs)
+        every { mockMaskStateWithWs.ws } returns mockWs
+        every { mockMaskStateWithWs.mask } returns ""
+        every { mockMaskStateWithWs.type } returns MaskType.ZOS
+
+        val actual = validateWorkingSetMaskName(jTextField, mockMaskStateWithWs)
         val expected = null
 
         assertSoftly {
@@ -234,11 +255,51 @@ class UtilsTestSpec : ShouldSpec({
         every { mockWs.masks } returns listOf(DSMask("MASK.MASK", mutableListOf<String>()))
         every { mockWs.name } returns "Ws name"
 
-        val actual = validateWorkingSetMaskName(jTextField, mockWs)
+        every { mockMaskStateWithWs.ws } returns mockWs
+        every { mockMaskStateWithWs.mask } returns ""
+        every { mockMaskStateWithWs.type } returns MaskType.USS
+
+        val actual = validateWorkingSetMaskName(jTextField, mockMaskStateWithWs)
         val expected = ValidationInfo(
           "You must provide unique mask in working set. Working Set " +
-            "\"${mockWs.name}\" already has mask - ${jTextField.text}", jTextField
+              "\"${mockWs.name}\" already has mask - ${jTextField.text}", jTextField
         )
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate working set mask name when the mask name is not changed") {
+        jTextField.text = "/path1"
+
+        every { mockWs.ussPaths } returns listOf(UssPath("/path1"), UssPath("/path2"))
+        every { mockWs.masks } returns listOf(DSMask("MASK.MASK", mutableListOf<String>()))
+        every { mockWs.name } returns "Ws name"
+
+        every { mockMaskStateWithWs.ws } returns mockWs
+        every { mockMaskStateWithWs.mask } returns "/path1"
+        every { mockMaskStateWithWs.type } returns MaskType.USS
+
+        val actual = validateWorkingSetMaskName(jTextField, mockMaskStateWithWs)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate working set mask name when the mask name is not changed (dataset mask)") {
+        jTextField.text = "MASK.name"
+
+        every { mockWs.ussPaths } returns listOf()
+        every { mockWs.masks } returns listOf(DSMask("MASK.NAME", mutableListOf()))
+        every { mockWs.name } returns "Ws name"
+
+        every { mockMaskStateWithWs.ws } returns mockWs
+        every { mockMaskStateWithWs.mask } returns "MASK.NAME"
+        every { mockMaskStateWithWs.type } returns MaskType.ZOS
+
+        val actual = validateWorkingSetMaskName(jTextField, mockMaskStateWithWs)
+        val expected = null
 
         assertSoftly {
           actual shouldBe expected
@@ -377,7 +438,8 @@ class UtilsTestSpec : ShouldSpec({
       should("validate wrong URL") {
         component.text = "wrong url\""
         val actual = validateZosmfUrl(component)
-        val expected = ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
+        val expected =
+          ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
 
         assertSoftly {
           actual shouldBe expected
@@ -541,8 +603,10 @@ class UtilsTestSpec : ShouldSpec({
     }
     context("validateUssFileNameAlreadyExists") {
       val jTextField = JTextField()
-      val mockFileNode = mockk<UssFileNode>()
-      val mockDirNode = mockk<UssDirNode>()
+      val mockFileNode1 = mockk<UssFileNode>()
+      val mockFileNode2 = mockk<UssFileNode>()
+      val mockDirNode1 = mockk<UssDirNode>()
+      val mockDirNode2 = mockk<UssDirNode>()
       mockkObject(MFVirtualFileSystem)
       every { MFVirtualFileSystem.instance } returns mockk()
       val mockVirtualFile = mockk<MFVirtualFile>()
@@ -552,14 +616,14 @@ class UtilsTestSpec : ShouldSpec({
 
         val mockNode = spyk(
           NodeData(
-            node = mockFileNode,
+            node = mockFileNode1,
             file = mockVirtualFile,
             attributes = null
           )
         )
 
-        every { mockFileNode.parent?.children } returns listOf(mockFileNode)
-        every { mockFileNode.value.filenameInternal } returns "filename"
+        every { mockFileNode1.parent?.children } returns listOf(mockFileNode1)
+        every { mockFileNode1.value.filenameInternal } returns "filename"
 
         val actual = validateUssFileNameAlreadyExists(jTextField, mockNode)
         val expected = null
@@ -569,21 +633,29 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
       should("validate that the USS file name is already exist") {
-        jTextField.text = "filename"
+        jTextField.text = "filename2"
 
-        val mockNode = spyk(
+        val mockNode1 = spyk(
           NodeData(
-            node = mockFileNode,
+            node = mockFileNode1,
+            file = mockVirtualFile,
+            attributes = null
+          )
+        )
+        val mockNode2 = spyk(
+          NodeData(
+            node = mockFileNode2,
             file = mockVirtualFile,
             attributes = null
           )
         )
 
-        every { mockFileNode.parent?.children } returns listOf(mockFileNode)
-        every { mockFileNode.value.filenameInternal } returns "filename"
+        every { mockFileNode1.parent?.children } returns listOf(mockFileNode1, mockFileNode2)
+        every { mockFileNode1.value.filenameInternal } returns "filename1"
+        every { mockFileNode2.value.filenameInternal } returns "filename2"
 
 
-        val actual = validateUssFileNameAlreadyExists(jTextField, mockNode)
+        val actual = validateUssFileNameAlreadyExists(jTextField, mockNode1)
         val expected =
           ValidationInfo("Filename already exists. Please specify another filename.", jTextField).asWarning()
 
@@ -591,25 +663,76 @@ class UtilsTestSpec : ShouldSpec({
           actual shouldBe expected
         }
       }
-      should("validate that the USS directory name is already exist") {
-        jTextField.text = "dirname"
+      should("validate that the USS file name is the same as the previous one") {
+        jTextField.text = "filename1"
 
-        val mockNode = spyk(
+        val mockNode1 = spyk(
           NodeData(
-            node = mockDirNode,
+            node = mockFileNode1,
             file = mockVirtualFile,
             attributes = null
           )
         )
 
-        every { mockDirNode.parent?.children } returns listOf(mockDirNode)
-        every { mockDirNode.value.path } returns "dirname"
+        every { mockFileNode1.parent?.children } returns listOf(mockFileNode1)
+        every { mockFileNode1.value.filenameInternal } returns "filename1"
 
-        val actual = validateUssFileNameAlreadyExists(jTextField, mockNode)
+
+        val actual = validateUssFileNameAlreadyExists(jTextField, mockNode1)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the USS directory name is already exist") {
+        jTextField.text = "dirname2"
+
+        val mockNode1 = spyk(
+          NodeData(
+            node = mockDirNode1,
+            file = mockVirtualFile,
+            attributes = null
+          )
+        )
+        val mockNode2 = spyk(
+          NodeData(
+            node = mockDirNode2,
+            file = mockVirtualFile,
+            attributes = null
+          )
+        )
+
+        every { mockDirNode1.parent?.children } returns listOf(mockDirNode1, mockDirNode2)
+        every { mockDirNode1.value.path } returns "dirname1"
+        every { mockDirNode2.value.path } returns "dirname2"
+
+        val actual = validateUssFileNameAlreadyExists(jTextField, mockNode1)
         val expected = ValidationInfo(
           "Directory name already exists. Please specify another directory name.",
           jTextField
         ).asWarning()
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate that the USS directory name is the same as the previous one") {
+        jTextField.text = "dirname1"
+
+        val mockNode1 = spyk(
+          NodeData(
+            node = mockDirNode1,
+            file = mockVirtualFile,
+            attributes = null
+          )
+        )
+
+        every { mockDirNode1.parent?.children } returns listOf(mockDirNode1)
+        every { mockDirNode1.value.path } returns "dirname1"
+
+        val actual = validateUssFileNameAlreadyExists(jTextField, mockNode1)
+        val expected = null
 
         assertSoftly {
           actual shouldBe expected
@@ -674,29 +797,29 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
     }
-    context("validateForGreaterValue") {
+    context("validateForGreaterOrEqualValue") {
       val component = JTextField()
 
-      should("validate that the number is greater than the provided one") {
+      should("validate that the number is greater than or equal to the provided one") {
         component.text = "15"
         val value = 10
-        val actual = validateForGreaterValue(component, value)
+        val actual = validateForGreaterOrEqualValue(component, value)
         val expected = null
 
         assertSoftly {
           actual shouldBe expected
         }
       }
-      // should("validate that the number is not greater than the provided one") {
-      //   component.text = "5"
-      //   val value = 10
-      //   val actual = validateForGreaterValue(component, value)
-      //   val expected = ValidationInfo("Enter a number grater than $value", component)
+      should("validate that the number is not greater than or equal to the provided one") {
+        component.text = "5"
+        val value = 10
+        val actual = validateForGreaterOrEqualValue(component, value)
+        val expected = ValidationInfo("Enter a number greater than or equal to $value", component)
 
-      //   assertSoftly {
-      //     actual shouldBe expected
-      //   }
-      // }
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
     }
     context("validateMemberName") {
       val component = JTextField()
@@ -731,11 +854,65 @@ class UtilsTestSpec : ShouldSpec({
     }
   }
   context("utils module: retrofitUtils") {
-    // cancelByIndicator
-    should("cancel the call on the progress indicator finish") {}
+    context("cancelByIndicator") {
+      lateinit var delegate: ProgressIndicatorEx
+
+      val mockCall = mockk<Call<Any>>()
+      val mockProgressIndicatorEx = mockk<ProgressIndicatorEx>()
+
+      every { mockProgressIndicatorEx.addStateDelegate(any()) } answers {
+        delegate = firstArg()
+      }
+
+      should("cancel the call due to progress indicator is cancelled") {
+        var isCancelDelegateCalled = false
+
+        every { mockCall.cancel() } answers {
+          isCancelDelegateCalled = true
+        }
+
+        mockCall.cancelByIndicator(mockProgressIndicatorEx)
+        delegate.cancel()
+
+        assertFalse(delegate.wasStarted())
+        assertThrows(UnsupportedOperationException::class.java) { delegate.addStateDelegate(mockk()) }
+        assert(isCancelDelegateCalled)
+      }
+      should("not cancel the call when the processing is finished") {
+        every { mockCall.execute() } returns Response.success("Success")
+        val taskInfo = mockk<TaskInfo>()
+        val result = mockCall.cancelByIndicator(mockProgressIndicatorEx).execute()
+
+        val mockProgressIndicator = mockk<ProgressIndicator>()
+        val result2 = mockCall.cancelByIndicator(mockProgressIndicator)
+
+        delegate.processFinish()
+        delegate.finish(taskInfo)
+        assertEquals(mockCall, result2)
+        assertTrue(delegate.isFinished(taskInfo))
+        assert(result.isSuccessful)
+      }
+    }
   }
   context("utils module: miscUtils") {
-    // debounce
-    should("run a block of code after the debounce action") {}
+    lateinit var test: String
+    lateinit var duration: Duration
+
+    should("run a block of code after the debounce action") {
+
+      withContext(Dispatchers.IO) {
+        val started = now()
+        debounce(500) {
+          duration = Duration.between(started, now())
+          test = "debounce block"
+        }.invoke()
+        Thread.sleep(1000)
+      }
+
+      assertSoftly {
+        test shouldBe "debounce block"
+        duration.toMillis() shouldBeGreaterThan 500
+      }
+    }
   }
 })

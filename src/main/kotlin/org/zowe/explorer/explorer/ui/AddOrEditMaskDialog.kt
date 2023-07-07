@@ -20,16 +20,32 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.config.ws.MaskStateWithWS
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.utils.MaskType
+import org.zowe.explorer.utils.validateDatasetMask
+import org.zowe.explorer.utils.validateForBlank
+import org.zowe.explorer.utils.validateUssMask
+import org.zowe.explorer.utils.validateWorkingSetMaskName
 import java.awt.Dimension
 import javax.swing.JComponent
 
-class AddMaskDialog(project: Project?, override var state: MaskStateWithWS) : DialogWrapper(project),
-  StatefulComponent<MaskStateWithWS> {
+/**
+ * Dialog to add a new or edit an existing mask
+ */
+class AddOrEditMaskDialog(project: Project?, dialogTitle: String, override var state: MaskStateWithWS) :
+  DialogWrapper(project), StatefulComponent<MaskStateWithWS> {
+
+  companion object {
+
+    // TODO: Remove when it becomes possible to mock class constructor with init section.
+    /** Wrapper for init() method. It is necessary only for test purposes for now. */
+    private fun initialize(init: () -> Unit) {
+      init()
+    }
+  }
 
   init {
-    title = "Create Mask"
-    init()
+    title = dialogTitle
+    initialize { init() }
   }
 
   override fun createCenterPanel(): JComponent {
@@ -79,11 +95,14 @@ class AddMaskDialog(project: Project?, override var state: MaskStateWithWS) : Di
             null
           }
           .validationOnApply {
-            validateForBlank(it.text, it)
-              ?: validateWorkingSetMaskName(it, state.ws) ?: if (state.type == MaskType.ZOS)
+            var validationResult = validateForBlank(it.text, it) ?: validateWorkingSetMaskName(it, state)
+            if (validationResult == null) {
+              validationResult = if (state.type == MaskType.ZOS)
                 validateDatasetMask(it.text, component)
               else
                 validateUssMask(it.text, it)
+            }
+            validationResult
           }
           .apply { focused() }
           .apply {

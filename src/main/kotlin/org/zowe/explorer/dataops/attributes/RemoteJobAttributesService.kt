@@ -11,6 +11,7 @@
 package org.zowe.explorer.dataops.attributes
 
 import com.intellij.util.SmartList
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.mergeWith
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -38,7 +39,7 @@ class RemoteJobAttributesServiceFactory : AttributesServiceFactory {
  */
 class RemoteJobAttributesService(
   dataOpsManager: DataOpsManager
-) : MFRemoteAttributesServiceBase<RemoteJobAttributes>(dataOpsManager) {
+) : MFRemoteAttributesServiceBase<ConnectionConfig, RemoteJobAttributes>(dataOpsManager) {
   override val attributesClass = RemoteJobAttributes::class.java
   override val subFolderName = JOBS_FOLDER_NAME
 

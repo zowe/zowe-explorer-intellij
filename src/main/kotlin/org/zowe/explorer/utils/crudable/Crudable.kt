@@ -39,12 +39,12 @@ inline fun <reified E : Any, reified V : Any> Crudable.nextUniqueValue(): V {
   return this.nextUniqueValue(E::class.java)
 }
 
-fun interface AddFilter {
-  operator fun invoke(clazz: Class<*>, addingRow: Any): Boolean
+interface AddFilter {
+  operator fun <T: Any> invoke(clazz: Class<out T>, addingRow: T): Boolean = true
 }
 
-fun interface UpdateFilter {
-  operator fun invoke(clazz: Class<*>, currentRow: Any, updatingRow: Any): Boolean
+interface UpdateFilter {
+  operator fun <T: Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean = true
 }
 
 /**

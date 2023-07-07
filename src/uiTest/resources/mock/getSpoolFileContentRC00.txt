@@ -1,0 +1,14 @@
+1                       J E S 2  J O B  L O G  --  S Y S T E M  S 0 W 1  --  N O D E  S 0 W 1
+0
+ 11.00.03 JOB07380 ---- TUESDAY,   14 MAR 2023 ----
+ 11.00.03 JOB07380  IRR010I  USERID USER      IS ASSIGNED TO THIS JOB.
+ 11.00.03 JOB07380  ICH70001I USER      LAST ACCESS AT 10:59:50 ON TUESDAY, MARCH 14, 2023
+ 11.00.03 JOB07380  $HASP373 TEST1    STARTED - INIT 1    - CLASS A        - SYS S0W1
+ 11.00.03 JOB07380  IEF403I TEST1 - STARTED - TIME=11.00.03
+ 11.00.05 JOB07380  -                                      -----TIMINGS (MINS.)------                          -----PAGING COUNTS----
+ 11.00.05 JOB07380  -STEPNAME PROCSTEP    RC   EXCP   CONN       TCB       SRB  CLOCK          SERV  WORKLOAD  PAGE  SWAP   VIO SWAPS
+ 11.00.05 JOB07380  -STEP0001             00    209      0       .00       .00     .0                BATCH        0     0     0     0
+ 11.00.05 JOB07380  -S1                   00     44      0       .00       .00     .0             2  BATCH        0     0     0     0
+ 11.00.05 JOB07380  IEF404I TEST1 - ENDED - TIME=11.00.05
+ 11.00.05 JOB07380  -TEST1    ENDED.  NAME-                     TOTAL TCB CPU TIME=      .00 TOTAL ELAPSED TIME=    .0
+ 11.00.05 JOB07380  $HASP395 TEST1    ENDED - RC=0000

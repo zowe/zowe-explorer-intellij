@@ -15,9 +15,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.utils.*
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.editor.DocumentChangeListener
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.editor.FileContentChangeListener
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -136,7 +135,6 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
         changeFileEncodingTo(syncProvider.file, currentCharset)
         initLineSeparator(syncProvider)
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
-        runReadActionInEdtAndWait { syncProvider.getDocument()?.addDocumentListener(DocumentChangeListener()) }
         fetchedAtLeastOnce.add(syncProvider)
       } else {
 
@@ -184,18 +182,5 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
    */
   override fun isFileUploadNeeded(syncProvider: SyncProvider): Boolean {
     return needToUpload.firstOrNull { syncProvider == it } != null
-  }
-
-  /**
-   * Base implementation of [ContentSynchronizer.isFileSyncPossible] method for each content synchronizer.
-   */
-  override fun isFileSyncPossible(syncProvider: SyncProvider): Boolean {
-    val attributes = attributesService.getAttributes(syncProvider.file) ?: return false
-    runCatching {
-      uploadNewContent(attributes, successfulContentStorage(syncProvider), null)
-    }.onFailure {
-      return false
-    }
-    return true
   }
 }

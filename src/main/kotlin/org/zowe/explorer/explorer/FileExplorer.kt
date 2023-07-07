@@ -12,6 +12,7 @@ package org.zowe.explorer.explorer
 
 import com.intellij.openapi.Disposable
 import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.rwLocked
@@ -19,12 +20,12 @@ import java.util.stream.Collectors
 
 const val EXPLORER_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.ExplorerNotificationGroup"
 
-class FileExplorerFactory : ExplorerFactory<FilesWorkingSetImpl, FileExplorer> {
+class FileExplorerFactory : ExplorerFactory<ConnectionConfig, FilesWorkingSetImpl, FileExplorer> {
   override fun buildComponent(): FileExplorer = FileExplorer()
 }
 
 /** USS files and datasets explorer implementation */
-class FileExplorer : AbstractExplorerBase<FilesWorkingSetImpl, FilesWorkingSetConfig>() {
+class FileExplorer : AbstractExplorerBase<ConnectionConfig, FilesWorkingSetImpl, FilesWorkingSetConfig>() {
   override fun FilesWorkingSetConfig.toUnit(parentDisposable: Disposable): FilesWorkingSetImpl {
     return FilesWorkingSetImpl(
       uuid = uuid,

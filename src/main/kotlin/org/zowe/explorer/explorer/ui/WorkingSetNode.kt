@@ -17,7 +17,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
-import org.zowe.explorer.config.connect.username
+import org.zowe.explorer.config.connect.ConnectionConfigBase
+import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.explorer.WorkingSet
 
 private val regularIcon = AllIcons.Nodes.Project
@@ -26,15 +27,17 @@ private val grayscaleIcon = IconUtil.desaturate(regularIcon)
 private val errorIcon = LayeredIcon(grayscaleIcon, errorIconElement)
 
 /** Base implementation of working set tree node */
-abstract class WorkingSetNode<MaskType>(
-  workingSet: WorkingSet<MaskType>,
+abstract class WorkingSetNode<Connection : ConnectionConfigBase, MaskType>(
+  workingSet: WorkingSet<Connection, MaskType>,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<Connection, *>,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<WorkingSet<MaskType>, WorkingSet<MaskType>>(
+) : ExplorerUnitTreeNodeBase<Connection, WorkingSet<Connection, MaskType>, WorkingSet<Connection, MaskType>>(
   workingSet, project, parent, workingSet, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
   protected var cachedChildrenInternal: MutableCollection<out AbstractTreeNode<*>>? = null
+
+  abstract val regularTooltip: String
 
   val cachedChildren: MutableCollection<out AbstractTreeNode<*>>
     get() = cachedChildrenInternal ?: mutableListOf()
@@ -49,7 +52,7 @@ abstract class WorkingSetNode<MaskType>(
    */
   protected fun regular(presentation: PresentationData) {
     presentation.setIcon(regularIcon)
-    presentation.tooltip = "Working set"
+    presentation.tooltip = regularTooltip
   }
 
   /**
@@ -79,7 +82,7 @@ abstract class WorkingSetNode<MaskType>(
   protected fun addInfo(presentation: PresentationData) {
     val connectionConfig = value.connectionConfig ?: return
     val url = value.connectionConfig?.url ?: return
-    val username = username(connectionConfig)
+    val username = getUsername(connectionConfig)
     val formedUsername = if (connectionConfig.zoweConfigPath == null) username else "*".repeat(username.length)
     presentation.addText(" $formedUsername on ${connectionConfig.name} [${url}]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }

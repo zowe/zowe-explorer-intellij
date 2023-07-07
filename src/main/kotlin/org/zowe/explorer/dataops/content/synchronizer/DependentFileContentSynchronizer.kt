@@ -13,6 +13,7 @@ package org.zowe.explorer.dataops.content.synchronizer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.DependentFileAttributes
 import org.zowe.explorer.dataops.attributes.MFRemoteFileAttributes
@@ -23,9 +24,9 @@ import java.io.IOException
 /** Abstract content synchronizer class for the files that are dependent for others */
 abstract class DependentFileContentSynchronizer<
         VFile : VirtualFile,
-        InfoType, R : Requester,
+        InfoType, R : Requester<ConnectionConfig>,
         Attributes : DependentFileAttributes<InfoType, VFile>,
-        ParentAttributes : MFRemoteFileAttributes<R>
+        ParentAttributes : MFRemoteFileAttributes<ConnectionConfig, R>
         >(dataOpsManager: DataOpsManager, private val log: Logger) :
   RemoteAttributedContentSynchronizer<Attributes>(dataOpsManager) {
 
@@ -109,14 +110,14 @@ abstract class DependentFileContentSynchronizer<
   abstract fun executeGetContentRequest(
     attributes: Attributes,
     parentAttributes: ParentAttributes,
-    requester: Requester,
+    requester: Requester<ConnectionConfig>,
     progressIndicator: ProgressIndicator?
   ): retrofit2.Response<*>
 
   abstract fun executePutContentRequest(
     attributes: Attributes,
     parentAttributes: ParentAttributes,
-    requester: Requester,
+    requester: Requester<ConnectionConfig>,
     newContentBytes: ByteArray,
     progressIndicator: ProgressIndicator?
   ): retrofit2.Response<Void>?

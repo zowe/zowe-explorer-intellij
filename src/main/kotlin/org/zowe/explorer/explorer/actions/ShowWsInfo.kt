@@ -12,7 +12,8 @@ package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.getExplorerView
 
 /** Action class to represent the action that will show a working set contents on the action is performed */
 class ShowWsInfo : ToggleAction() {
@@ -23,7 +24,7 @@ class ShowWsInfo : ToggleAction() {
    * @return true if the working set contents are shown
    */
   override fun isSelected(e: AnActionEvent): Boolean {
-    return e.getData(FILE_EXPLORER_VIEW)?.myFsTreeStructure?.showWorkingSetInfo == true
+    return e.getExplorerView<FileExplorerView>()?.myFsTreeStructure?.showWorkingSetInfo == true
   }
 
   /**
@@ -32,7 +33,7 @@ class ShowWsInfo : ToggleAction() {
    * @param state a variable to represent the toggle selection action
    */
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -45,7 +46,7 @@ class ShowWsInfo : ToggleAction() {
   /** Show the action until there is a file explorer view present */
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.getData(FILE_EXPLORER_VIEW) != null
+    e.presentation.isEnabledAndVisible = e.getExplorerView<FileExplorerView>() != null
   }
 
 }

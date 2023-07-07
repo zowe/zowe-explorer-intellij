@@ -34,6 +34,7 @@ class DeleteRunnerFactory : OperationRunnerFactory {
 class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   OperationRunner<DeleteOperation, Unit> {
   override val operationClass = DeleteOperation::class.java
+  override val log = log<DeleteOperationRunner>()
 
   /**
    * Run "Delete" operation.

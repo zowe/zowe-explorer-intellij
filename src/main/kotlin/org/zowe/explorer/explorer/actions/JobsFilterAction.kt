@@ -12,6 +12,7 @@ package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.JesWorkingSet
 import org.zowe.explorer.explorer.ui.*
 
@@ -25,13 +26,13 @@ abstract class JobsFilterAction : AnAction() {
    * Is node conforms to the JesFilterNode type
    * @param node the node to check
    */
-  open fun isNodeConformsToType(node: ExplorerTreeNode<*>?): Boolean {
+  open fun isNodeConformsToType(node: ExplorerTreeNode<ConnectionConfig, *>?): Boolean {
     return node is JesFilterNode
   }
 
   /** Decides to show action or not */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -43,7 +44,7 @@ abstract class JobsFilterAction : AnAction() {
   /** Finds JES working set units for selected nodes in explorer */
   protected fun getUnits(view: JesExplorerView): List<JesWorkingSet> {
     return view.mySelectedNodesData.map { it.node }
-      .filterIsInstance<ExplorerUnitTreeNodeBase<*, JesWorkingSet>>()
+      .filterIsInstance<ExplorerUnitTreeNodeBase<ConnectionConfig, *, JesWorkingSet>>()
       .map { it.unit }
       .distinct()
   }
