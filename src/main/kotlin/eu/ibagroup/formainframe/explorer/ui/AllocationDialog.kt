@@ -14,6 +14,7 @@ import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -98,7 +99,15 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             DatasetOrganization.PS,
             DatasetOrganization.PO,
             DatasetOrganization.POE
-          )
+          ),
+          SimpleListCellRenderer.create("") {
+            when (it) {
+              DatasetOrganization.PS -> "Sequential (PS)"
+              DatasetOrganization.PO -> "Partitioned (PO)"
+              DatasetOrganization.POE -> "Partitioned Extended (PO-E)"
+              else -> ""
+            }
+          }
         )
           .bindItem(state.allocationParameters::datasetOrganization.toNullableProperty())
           .also { datasetOrganizationBox = it.component }
