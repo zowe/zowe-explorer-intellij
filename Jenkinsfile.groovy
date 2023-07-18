@@ -128,7 +128,7 @@ pipeline{
                 failure {
                     script{
                         if(!jiraTicket.contains('release') && !'development'.equals(jiraTicket) && !'zowe-development'.equals(jiraTicket) && !"null".equals(jiraTicket)) {
-                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for Intellij IDEA. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site:"$jiraSite"
+                            jiraAddComment idOrKey: "$jiraTicket", comment: "Hello! It's jenkins. Your push in branch failed to build for IntelliJ IDEA™. You can get console output by the following link http://10.221.23.186:8080/job/BuildPluginPipeline/", site:"$jiraSite"
                         }
                     }
                 }
