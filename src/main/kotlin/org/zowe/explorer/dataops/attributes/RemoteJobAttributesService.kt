@@ -103,9 +103,9 @@ class RemoteJobAttributesService(
    * Continues path chain with path of the job specified in the order subsystem -> jobName -> jobId.
    * Look at example below.
    *
-   * Base path: For Mainframe -> <connection> -> Jobs
+   * Base path: Zowe Explorer -> <connection> -> Jobs
    * Job: subsystem = JES2, jobName = TESTJOB, jobId = TST00001
-   * Result path: For Mainframe -> <connection> -> Jobs -> JES2 -> TESTJOB -> TST00001
+   * Result path: Zowe Explorer -> <connection> -> Jobs -> JES2 -> TESTJOB -> TST00001
    */
   override fun continuePathChain(attributes: RemoteJobAttributes): List<PathElementSeed> {
     return listOf(
