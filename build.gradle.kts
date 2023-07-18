@@ -31,7 +31,7 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "1.0.2-232-eap"
+version = "1.0.3-232-eap"
 val remoteRobotVersion = "0.11.18"
 
 repositories {
@@ -96,27 +96,12 @@ tasks {
     untilBuild.set("232.*")
     changeNotes.set(
       """
-      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.3
+      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ IDEA™ version less than 2022.1
       <br>
       <br>
-      <b>New features:</b>
+      <b>Minor changes:</b>
       <ul>
-        <li>Returned support for IntelliJ 2022.1</li>
-        <li>Focus on dataset name field in allocation dialog</li>
-      </ul>
-      <br>
-      <b>Fixed bugs:</b>
-      <ul>
-        <li>Memory leak bug</li>
-        <li>GitHub issue #132: IDE internal error - NPE</li>
-        <li>Access denied error when copy from remote to local file when local has folder with the same name</li>
-        <li>Paste to dataset with LRECL does not move exceeding characters to a new line</li>
-        <li>USS file with 0 permissions is not accessible and no error message displayed</li>
-        <li>Refresh does not work for job filter with one job after purge</li>
-        <li>Name conflict message if move uss-file from folder to mask and then back</li>
-        <li>File cash conflict</li>
-        <li>Cancel button does not work for TSO connection test during</li>
-        <li>Unknown file type after delete member after move</li>
+        <li>The plug-in's description and name update</li>
       </ul>"""
     )
   }
