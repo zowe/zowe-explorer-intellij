@@ -21,19 +21,13 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "1.0.2-221"
+version = "1.0.3-221"
 val remoteRobotVersion = "0.11.18"
 
 repositories {
   mavenCentral()
   maven {
-    url = uri("http://10.221.23.186:8082/repository/internal/")
-    isAllowInsecureProtocol = true
-    credentials {
-      username = "admin"
-      password = "password123"
-    }
-    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     flatDir {
       dir("libs")
     }
