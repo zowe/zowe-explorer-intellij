@@ -1,6 +1,10 @@
-# IntelliJ Plugin Changelog
+# For Mainframe plug-in for IntelliJ IDEA™ Changelog
 
-All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
+All notable changes to the For Mainframe plug-in for IntelliJ IDEA™ will be documented in this file.
+
+## `1.0.3 (2023-07-19)`
+
+* Feature: The plug-in's description and name update
 
 ## `1.0.2 (2023-06-13)`
 
@@ -22,7 +26,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## `1.0.1 (2023-04-18)`
 
-* Feature: Support for IntelliJ 2023.1
+* Feature: Support for IntelliJ IDEA™ IDE v2023.1
 
 
 * Bugfix: File is not displayed after folder moved inside another folder ([46e2fca8](https://github.com/zowe/zowe-explorer-intellij/commit/46e2fca8))
@@ -44,7 +48,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## `1.0.0 (2023-03-13)`
 
-* Breaking: Java 17 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.3
+* Breaking: Java 17 usage introduced. Plugin requires to use it with IntelliJ IDEA™ IDE version >= 2022.3
 
 
 * Feature: GitHub issue #31: Support for CHMOD operation ([3a166173](https://github.com/zowe/zowe-explorer-intellij/commit/3a166173))
@@ -78,7 +82,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Strange behavior of automatic reload and batch_size ([b4c5c2a6](https://github.com/zowe/zowe-explorer-intellij/commit/b4c5c2a6))
 * Bugfix: Skip files copy files anyway ([237061ea](https://github.com/zowe/zowe-explorer-intellij/commit/237061ea))
 * Bugfix: GitHub issue #107: I can't edit USS files ([1ff98872](https://github.com/zowe/zowe-explorer-intellij/commit/1ff98872))
-* Bugfix: GitHub issue #108: Incompatible with IntelliJ 2022.3 ([9ae290d5](https://github.com/zowe/zowe-explorer-intellij/commit/9ae290d5))
+* Bugfix: GitHub issue #108: Incompatible with IntelliJ IDEA™ IDEs v2022.3 ([9ae290d5](https://github.com/zowe/zowe-explorer-intellij/commit/9ae290d5))
 * Bugfix: IDE error with UnsupportedEncodingException for some encodings ([06695658](https://github.com/zowe/zowe-explorer-intellij/commit/06695658))
 * Bugfix: Impossible to close uss-file with write permission after changing encoding ([06695658](https://github.com/zowe/zowe-explorer-intellij/commit/06695658))
 * Bugfix: There is no warning if copy/paste from remote to local ([11c4a90e](https://github.com/zowe/zowe-explorer-intellij/commit/11c4a90e))
@@ -126,7 +130,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## `0.7.0 (2022-10-31)`
 
-* Breaking: Kotlin DSL v2 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.1
+* Breaking: Kotlin DSL v2 usage introduced. Plugin requires to use it with IntelliJ IDEA™ IDE version >= 2022.1
 
 
 * Feature: Configurable batch size to load filter

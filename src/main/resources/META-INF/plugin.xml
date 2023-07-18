@@ -15,6 +15,8 @@
     </vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
+<b>If you are going to use or are using a plugin in Android Studio, please write to us: YKirkorava@ibagroup.eu</b>
+<br>
 Smart and Interactive Mainframe code editing tool that brings support for browsing, editing and creating data on z/OS via <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services">z/OSMF REST API</a>.<br/>
 IBA Group team of <b>mainframe enthusiasts</b> are actively developing new features for the open-source "For Mainframe" plugin.
 We keep improving existing features that help you to:<br/>
@@ -26,11 +28,11 @@ We keep improving existing features that help you to:<br/>
   <li>Edit datasets, files and members. Smart auto-save will keep your content both in the editor and on the mainframe in-sync.</li>
   <li>Create multiple connections to different z/OS systems.</li>
   <li>Perform all available operations with Jobs.</li>
-  <li>Highlight all IntelliJ supported languages automatically and recognize them once opened from the mainframe.</li>
+  <li>Highlight all IntelliJ IDEA™ platform supported languages automatically and recognize them once opened from the mainframe.</li>
 </ul><br/>
 To start using the plugin:<br/>
 <ul>
-  <li>Install the plugin in your Intellij based IDE.</li>
+  <li>Install the plugin in your IntelliJ IDEA™ platform based IDE.</li>
   <li>Contact your RACF administrator so that your user is in the <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf">IZUUSER  RACF group</a></li>
   <li>You are ready to go! Start working with z/OS from the IDE.</li>
 </ul></br>

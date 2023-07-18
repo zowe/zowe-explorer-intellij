@@ -19,7 +19,7 @@ Using our plugin you will be able to:
 
 To start using the plugin:
 
-* Install the plugin in your Intellij based IDE.
+* Install the plugin in your IntelliJ IDEA™ platform based IDE.
 * Contact your RACF administrator so that your user is in
   the [IZUUSER RACF group](https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf)
 * You are ready to go! Start working with z/OS from the IDE.
@@ -30,7 +30,7 @@ To start using the plugin:
 
 ## Introduction
 
-"For Mainframe" is an IntelliJ plugin dedicated to facilitate working with z/OS datasets through providing a possibility
+"For Mainframe" is an plug-in for IntelliJ IDEA™ dedicated to facilitate working with z/OS datasets through providing a possibility
 to work with them in the IDE.
 
 ## Getting started
@@ -117,8 +117,8 @@ working set tree.
 
 ## Requirements
 
-- IntelliJ IDEA version 2022.3 and later (Community will be enough)
-- Java SDK 17 (IntelliJ built-in)
+- IntelliJ IDEA™ platform IDE version 2022.3 and later (Community will be enough)
+- Java SDK 17 (IntelliJ IDEA™ platform IDE's built-in)
 
 ## Setup steps
 
@@ -128,7 +128,7 @@ working set tree.
 
 - Three options of working with the plugin are available:
     - **Run plugin** - run the plugin in development mode
-    - **Package plugin** - make a zip portable package to install it in IntelliJ IDEA or publish somewhere
+    - **Package plugin** - make a zip portable package to install it in IntelliJ IDEA™ platform IDE or publish somewhere
     - **Run tests** - run plugin tests to check the codebase with automated tests
 - Proceed to [Contribution Guidelines](#how-to-contribute) to develop some new functionality for the project.
 
@@ -165,9 +165,9 @@ If you have any questions, related to the project development, further plans or 
 some of the communication chanels:
 
 * [For Mainframe Slack channel in IBA workspace](https://iba-mainframe-tools.slack.com/archives/C01V4MZL9DH)
-* [Zowe Explorer IntelliJ Slack channel in Open Mainframe Project workspace](https://openmainframeproject.slack.com/archives/C020BGPSU0M)
+* [Zowe Explorer IntelliJ team Slack channel in Open Mainframe Project workspace](https://openmainframeproject.slack.com/archives/C020BGPSU0M)
 * [For Mainframe GitHub (create or review issues)](https://github.com/for-mainframe/For-Mainframe/issues)
-* [Zowe Explorer IntelliJ GitHub (create or review issues)](https://github.com/zowe/zowe-explorer-intellij/issues)
+* [Zowe Explorer IntelliJ team GitHub (create or review issues)](https://github.com/zowe/zowe-explorer-intellij/issues)
 * Email to: <a href="mailto:ukalesnikau@ibagroup.eu">Uladzislau Kalesnikau (Team Lead of the IJMP)</a>
 * Email to: <a href="mailto:vkrus@ibagroup.eu">Valiantsin Krus (Tech Lead of the IJMP)</a>
 
