@@ -26,7 +26,7 @@ import java.awt.event.KeyEvent
 import java.time.Duration
 
 /**
- * The representation of the Configurable Editor, which is the For Mainframe section in the Settings Dialog.
+ * The representation of the Configurable Editor, which is the Zowe Explorer section in the Settings Dialog.
  */
 @FixtureName("ConfigurableEditor")
 class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
@@ -140,7 +140,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
 }
 
 /**
- * Calls the Configurable Editor, which is the For Mainframe section in the Settings Dialog.
+ * Calls the Configurable Editor, which is the Zowe Explorer section in the Settings Dialog.
  */
 fun ContainerFixture.configurableEditor(function: ConfigurableEditor.() -> Unit) {
     find<ConfigurableEditor>(ConfigurableEditor.xPath(), Duration.ofSeconds(60)).apply(function)
