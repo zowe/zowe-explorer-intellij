@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -27,7 +28,6 @@ import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
 class SyncAction : DumbAwareAction() {
-
   /**
    * Get a virtual file on which the event was triggered
    * @param e the event to get the virtual file
@@ -99,6 +99,14 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
+    val isDumbMode = ActionUtil.isDumbMode(e.project)
+    val editor = getEditor(e) ?: return
+    if (!isDumbMode && file.isWritable) {
+      editor.document.setReadOnly(false)
+    } else {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
     val syncProvider = DocumentedSyncProvider(file)
     val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
@@ -110,4 +118,10 @@ class SyncAction : DumbAwareAction() {
         && needToUpload
   }
 
+  /**
+   * Determines if an action is dumb aware or not
+   */
+  override fun isDumbAware(): Boolean {
+    return true
+  }
 }
