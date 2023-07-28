@@ -16,14 +16,17 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.getUsername
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
-import eu.ibagroup.formainframe.explorer.config.*
+import eu.ibagroup.formainframe.explorer.config.Presets
 import eu.ibagroup.formainframe.utils.validateDataset
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateMemberName
@@ -61,7 +64,15 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       row {
         label("Choose preset: ")
           .widthGroup(sameWidthLabelsGroup)
-        comboBox(listOf(Presets.CUSTOM_DATASET, Presets.SEQUENTIAL_DATASET, Presets.PDS_DATASET, Presets.PDS_WITH_EMPTY_MEMBER, Presets.PDS_WITH_SAMPLE_JCL_MEMBER))
+        comboBox(
+          listOf(
+            Presets.CUSTOM_DATASET,
+            Presets.SEQUENTIAL_DATASET,
+            Presets.PDS_DATASET,
+            Presets.PDS_WITH_EMPTY_MEMBER,
+            Presets.PDS_WITH_SAMPLE_JCL_MEMBER
+          )
+        )
           .bindItem(state::presets.toNullableProperty())
           .also { presetsBox = it.component }
           .widthGroup(sameWidthComboBoxGroup)
@@ -72,8 +83,9 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::datasetName)
-          .also { datasetNameField = it.component
-            datasetNameField.text = HLQ
+          .also {
+            datasetNameField = it.component
+            datasetNameField.text = "${HLQ}.<CHANGEME>"
           }
           .onApply { state.datasetName = state.datasetName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -84,8 +96,9 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::memberName)
-          .also { memberNameField = it.component
-          memberNameField.text = "SAMPLE"
+          .also {
+            memberNameField = it.component
+            memberNameField.text = "SAMPLE"
           }
           .onApply { state.memberName = state.memberName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -285,7 +298,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
    * @param preset - a chosen preset from UI
    * @return Void
    */
-  private fun doPresetAssignment(preset : Presets) {
+  private fun doPresetAssignment(preset: Presets) {
     val dataContainer = Presets.initDataClass(preset)
     memberNameField.text = "SAMPLE"
     datasetOrganizationBox.selectedItem = dataContainer.datasetOrganization
@@ -315,8 +328,8 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       blockSizeField,
       averageBlockLengthField,
       advancedParametersField
-    ) ?: validateForBlank(memberNameField) ?:
-    validateMemberName(memberNameField)
+    ) ?: validateForBlank(memberNameField)
+      ?: validateMemberName(memberNameField)
   }
 
   override fun getPreferredFocusedComponent(): JComponent? {
