@@ -299,6 +299,9 @@ Example of how to see the output:<br/>
                                  displayName="For Mainframe"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
 
+        <requiredForSmartModeStartupActivity
+                implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncToolbarProvider"/>
+
         <editorFloatingToolbarProvider
                 implementation="eu.ibagroup.formainframe.dataops.content.synchronizer.SyncToolbarProvider"/>
 
