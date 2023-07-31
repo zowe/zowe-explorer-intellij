@@ -17,12 +17,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
-import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -57,6 +54,12 @@ class UssDirNode(
   init {
     super.init()
   }
+
+  /** Field which holds and identifies the current sort keys for particular Node, be default Nodes are sorted by Data in Ascending order */
+  var currentSortQueryKeysList = mutableListOf(SortQueryKeys.DATE, SortQueryKeys.ASCENDING)
+
+  /** Stores the sorted nodes for particular Node */
+  private var sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 
   val isUssMask = vFile == null
 
@@ -93,7 +96,7 @@ class UssDirNode(
         } else {
           UssFileNode(it, notNullProject, this@UssDirNode, unit, treeStructure)
         }
-      } ?: listOf()
+      }?.sortChildrenNodes(currentSortQueryKeysList) ?: listOf()
   }
 
   override val requestClass = UssQuery::class.java
@@ -145,4 +148,85 @@ class UssDirNode(
     return vFile
   }
 
+  /**
+   * Method sorts the children nodes regarding the sort keys are currently enabled
+   * @param sortKeys - Sort keys to check
+   * @return list of sorted nodes
+   */
+  override fun List<AbstractTreeNode<*>>.sortChildrenNodes(sortKeys: List<SortQueryKeys>): List<AbstractTreeNode<*>> {
+    if (sortKeys.contains(SortQueryKeys.NAME)) {
+      if (sortKeys.contains(SortQueryKeys.ASCENDING)) {
+        return this.sortedBy {
+          when (it) {
+            is UssDirNode -> it.vFile?.filenameInternal
+            is UssFileNode -> it.virtualFile.filenameInternal
+            else -> null
+          }
+        }.also { sortedNodes = it }
+      } else {
+        return this.sortedByDescending {
+          when (it) {
+            is UssDirNode -> it.vFile?.filenameInternal
+            is UssFileNode -> it.virtualFile.filenameInternal
+            else -> null
+          }
+        }.also { sortedNodes = it }
+      }
+    } else if (sortKeys.contains(SortQueryKeys.TYPE)) {
+      val listToReturn = mutableListOf<AbstractTreeNode<*>>()
+      val dirs = mutableListOf<UssDirNode>()
+      val files = mutableListOf<UssFileNode>()
+      val sortedDirs: List<UssDirNode>
+      val sortedFiles: List<UssFileNode>
+      this.forEach {
+        when (it) {
+          is UssDirNode -> dirs.add(it)
+          is UssFileNode -> files.add(it)
+        }
+      }
+      return if (sortKeys.contains(SortQueryKeys.ASCENDING)) {
+        sortedDirs = dirs.sortedBy { it.vFile?.filenameInternal }
+        sortedFiles = files.sortedBy { it.virtualFile.filenameInternal }
+        listToReturn.addAll(sortedDirs)
+        listToReturn.addAll(sortedFiles)
+        listToReturn.also { sortedNodes = it }
+      } else {
+        sortedDirs = dirs.sortedByDescending { it.vFile?.filenameInternal }
+        sortedFiles = files.sortedByDescending { it.virtualFile.filenameInternal }
+        listToReturn.addAll(sortedDirs)
+        listToReturn.addAll(sortedFiles)
+        listToReturn.also { sortedNodes = it }
+      }
+    } else if (sortKeys.contains(SortQueryKeys.DATE)) {
+
+      fun select(node: AbstractTreeNode<*>) : String? {
+        return when (node) {
+          is UssDirNode -> {
+            node.virtualFile?.let { vFile -> attributesService.getAttributes(vFile) }?.modificationTime
+          }
+          is UssFileNode -> {
+            attributesService.getAttributes(node.virtualFile)?.modificationTime
+          }
+          else -> null
+        }
+      }
+
+      return if (sortKeys.contains(SortQueryKeys.ASCENDING)) {
+        this.sortedBy {
+          return@sortedBy select(it)
+        }.also { sortedNodes = it }
+      } else {
+        this.sortedByDescending {
+          return@sortedByDescending select(it)
+        }.also { sortedNodes = it }
+      }
+    } else {
+      return this
+    }
+  }
+
+  fun sortChildrenForTestInternal(sortKeys: List<SortQueryKeys>): (List<AbstractTreeNode<*>>) -> List<AbstractTreeNode<*>> = { it.sortChildrenNodes(sortKeys) }
 }
+
+fun sortChildrenForTest(listToSort: List<AbstractTreeNode<*>>, sortKeys: List<SortQueryKeys>): UssDirNode.() -> List<AbstractTreeNode<*>>
+    = { sortChildrenForTestInternal(sortKeys).invoke(listToSort) }
