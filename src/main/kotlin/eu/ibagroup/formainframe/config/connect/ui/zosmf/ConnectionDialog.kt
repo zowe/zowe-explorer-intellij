@@ -96,6 +96,7 @@ class ConnectionDialog(
               runCatching {
                 service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
               }.onSuccess {
+                state.owner = whoAmI(newTestedConnConfig) ?: ""
                 val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
                 state.zVersion = when (systemInfo.zosVersion) {
                   "04.25.00" -> ZVersion.ZOS_2_2
@@ -142,9 +143,6 @@ class ConnectionDialog(
               }
             addAnyway
           } else {
-            runTask(title = "Retrieving user information", project = project) {
-              state.owner = whoAmI(newTestedConnConfig) ?: ""
-            }
             true
           }
         }
