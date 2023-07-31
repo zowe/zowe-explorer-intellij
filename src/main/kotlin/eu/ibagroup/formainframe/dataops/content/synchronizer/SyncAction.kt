@@ -14,17 +14,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
-import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
+import eu.ibagroup.formainframe.utils.*
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
 class SyncAction : DumbAwareAction() {
@@ -54,8 +51,8 @@ class SyncAction : DumbAwareAction() {
    * Get an editor on which the event was triggered
    * @param e the event to get the editor
    */
-  private fun getEditor(e: AnActionEvent): Editor? {
-    return e.getData(CommonDataKeys.EDITOR)
+  private fun getEditor(e: AnActionEvent): EditorEx? {
+    return e.getData(CommonDataKeys.EDITOR).castOrNull()
   }
 
   /**
@@ -99,14 +96,18 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
-    val isDumbMode = ActionUtil.isDumbMode(e.project)
     val editor = getEditor(e) ?: return
+
+    // TODO: remove in v1.*.*-223 and greater
+    val isDumbMode = ActionUtil.isDumbMode(e.project)
     if (!isDumbMode && file.isWritable) {
       editor.document.setReadOnly(false)
+      editor.isViewer = false
     } else {
       e.presentation.isEnabledAndVisible = false
       return
     }
+
     val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
     val syncProvider = DocumentedSyncProvider(file)
     val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }

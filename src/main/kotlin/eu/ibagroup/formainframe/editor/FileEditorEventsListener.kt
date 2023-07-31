@@ -38,14 +38,21 @@ class FileEditorEventsListener : FileEditorManagerListener {
    */
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
     val editor = source.selectedTextEditor as? EditorEx
+
+    // TODO: remove in v1.*.*-223 and greater
     if (editor != null) {
       editor.addFocusListener(focusListener)
       val isDumbMode = ActionUtil.isDumbMode(editor.project)
       if (isDumbMode) {
         editor.document.setReadOnly(true)
+        editor.isViewer = true
       }
       super.fileOpened(source, file)
     }
+
+    // TODO: use in v1.*.*-223 and greater
+    //editor?.addFocusListener(focusListener)
+    //super.fileOpened(source, file)
   }
 }
 
