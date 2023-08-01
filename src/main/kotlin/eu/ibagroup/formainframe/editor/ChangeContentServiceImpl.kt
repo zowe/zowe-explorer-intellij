@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ReadOnlyModificationException
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapter
@@ -72,7 +73,11 @@ class ChangeContentServiceImpl : ChangeContentService {
         val adaptedContent = contentAdapter.prepareContentToMainframe(currentContent, file)
         runWriteActionInEdt {
           CommandProcessor.getInstance().runUndoTransparentAction {
-            editor.document.setText(adaptedContent)
+            try {
+              editor.document.setText(adaptedContent)
+            } catch (e: ReadOnlyModificationException) {
+              return@runUndoTransparentAction
+            }
           }
         }
       }
