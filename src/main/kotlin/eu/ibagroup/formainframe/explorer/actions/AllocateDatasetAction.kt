@@ -237,7 +237,7 @@ class AllocateLikeAction : AnAction() {
     val datasetInfo = (selected[0].attributes as RemoteDatasetAttributes).datasetInfo
     val initialState = DatasetAllocationParams().apply {
       allocationParameters.datasetOrganization = datasetInfo.datasetOrganization ?: DatasetOrganization.PS
-      allocationParameters.allocationUnit = spaceUnitsToAllocationUnits(datasetInfo.spaceUnits) ?: AllocationUnit.TRK
+      allocationParameters.allocationUnit = datasetInfo.spaceUnits?.let { spaceUnitsToAllocationUnits(it) } ?: AllocationUnit.TRK
       allocationParameters.blockSize = datasetInfo.blockSize
       allocationParameters.recordLength = datasetInfo.recordLength
       allocationParameters.recordFormat = datasetInfo.recordFormat ?: RecordFormat.FB
@@ -257,24 +257,23 @@ class AllocateLikeAction : AnAction() {
   }
 
   /**
-   * Transforms info about space units of existing datasets to format that is suitable for allocation operation
+   * Transforms info about space units of existing datasets to format that is suitable for allocation operation.
+   * For allocation, z/OSMF provides only TRACKS and CYLINDERS, other units will be changed to TRACKS
    * @param spaceUnits space units info of existing dataset
    * @return processed info about space units
    */
-  private fun spaceUnitsToAllocationUnits(spaceUnits: SpaceUnits?): AllocationUnit? {
-    if (spaceUnits == SpaceUnits.TRACKS) {
-      return AllocationUnit.TRK
+  private fun spaceUnitsToAllocationUnits(spaceUnits: SpaceUnits): AllocationUnit {
+    return when (spaceUnits) {
+      SpaceUnits.TRACKS -> AllocationUnit.TRK
+      SpaceUnits.CYLINDERS -> AllocationUnit.CYL
+      else -> {
+        Messages.showWarningDialog(
+          "Allocation unit ${spaceUnits.name} is not supported by z/OSMF. It will be changed to TRACKS.",
+          "Allocation Unit Will Be Changed"
+        )
+        AllocationUnit.TRK
+      }
     }
-    if (spaceUnits == SpaceUnits.CYLINDERS) {
-      return AllocationUnit.CYL
-    }
-    if (spaceUnits == SpaceUnits.BLOCKS) {
-      Messages.showWarningDialog(
-        "Allocation unit BLK is not supported. It will be changed to TRK.",
-        "Allocation Unit Will Be Changed"
-      )
-    }
-    return null
   }
 
   /**
