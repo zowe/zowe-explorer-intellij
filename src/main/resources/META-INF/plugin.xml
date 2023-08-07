@@ -100,9 +100,6 @@ Thank you for considering IBA Group for your mainframe needs.
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
         <listener class="org.zowe.explorer.editor.FileEditorEventsListener"
-                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
-
-        <listener class="org.zowe.explorer.editor.FileEditorEventsListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
@@ -203,9 +200,6 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
-
-        <operationRunner
-                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileToUssDirMoverFactory"/>
 
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMoverFactory"/>

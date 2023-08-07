@@ -17,6 +17,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.nextUniqueValue
 import java.io.File
 import java.nio.file.Files
@@ -39,9 +41,9 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
    */
   private fun convertOldConnectionIds(oldConfigFile: File) {
     val crudable = ConfigService.instance.crudable
-    val connections = ConfigService.instance.state?.connections?.toMutableList() ?: emptyList()
-    val filesWorkingSets = ConfigService.instance.state?.filesWorkingSets?.toMutableList() ?: emptyList()
-    val jesWorkingSets = ConfigService.instance.state?.jesWorkingSets?.toMutableList() ?: emptyList()
+    val connections = ConfigService.instance.state?.get<ConnectionConfig>()?.toMutableList() ?: emptyList()
+    val filesWorkingSets = ConfigService.instance.state?.get<FilesWorkingSetConfig>()?.toMutableList() ?: emptyList()
+    val jesWorkingSets = ConfigService.instance.state?.get<JesWorkingSetConfig>()?.toMutableList() ?: emptyList()
 
     val oldDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(oldConfigFile)
     val oldConnectionIds = oldDocument.documentElement.getConnectionIds()
