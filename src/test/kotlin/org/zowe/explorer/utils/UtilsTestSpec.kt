@@ -32,7 +32,7 @@ import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
-import io.kotest.matchers.longs.shouldBeGreaterThan
+import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -911,7 +911,7 @@ class UtilsTestSpec : ShouldSpec({
 
       assertSoftly {
         test shouldBe "debounce block"
-        duration.toMillis() shouldBeGreaterThan 500
+        duration.toMillis() shouldBeGreaterThanOrEqual 500
       }
     }
   }

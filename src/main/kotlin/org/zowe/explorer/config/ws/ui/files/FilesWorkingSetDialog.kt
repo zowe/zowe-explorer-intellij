@@ -14,21 +14,23 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ComboBoxCellEditor
-import org.zowe.explorer.common.ui.*
+import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
+import org.zowe.explorer.common.ui.DialogMode
+import org.zowe.explorer.common.ui.ValidatingCellRenderer
+import org.zowe.explorer.common.ui.ValidatingColumnInfo
+import org.zowe.explorer.common.ui.ValidatingListTableModel
+import org.zowe.explorer.common.ui.ValidatingTableView
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.MaskState
 import org.zowe.explorer.config.ws.ui.AbstractWsDialog
 import org.zowe.explorer.config.ws.ui.FilesWorkingSetDialogState
 import org.zowe.explorer.utils.MaskType
 import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.validateDatasetMask
 import org.zowe.explorer.utils.validateForBlank
-import org.zowe.explorer.utils.validateUssMask
-import javax.swing.JComponent
-import javax.swing.JTable
-import javax.swing.table.TableCellEditor
-import javax.swing.table.TableCellRenderer
 
 /**
  * Dialog of Files Working Set configurations.
@@ -38,7 +40,7 @@ import javax.swing.table.TableCellRenderer
  * @author Viktar Mushtsin
  */
 class FilesWorkingSetDialog(
-  crudable: Crudable,
+  private val crudable: Crudable,
   state: FilesWorkingSetDialogState
 ) : AbstractWsDialog<ConnectionConfig, FilesWorkingSetConfig, MaskState, FilesWorkingSetDialogState>(
   crudable,
@@ -231,6 +233,12 @@ class FilesWorkingSetDialog(
     }
   }
 
-  override fun emptyTableRow(): MaskState = MaskState()
+  /**
+   * Returns mask state with predefined mask name as "<HLQ>.*"
+   */
+  override fun emptyTableRow(): MaskState {
+    val config = crudable.getByUniqueKey<ConnectionConfig>(state.connectionUuid)
+    return MaskState(if (config != null) "${getUsername(config)}.*" else "")
+  }
 
 }

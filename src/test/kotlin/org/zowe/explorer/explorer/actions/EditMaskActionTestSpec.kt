@@ -16,6 +16,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.MaskState
@@ -68,6 +69,7 @@ class EditMaskActionTestSpec : ShouldSpec({
     val explorerTreeNodeMock = mockk<ExplorerTreeNode<ConnectionConfig, *>>()
     val filesWorkingSetMock = mockk<FilesWorkingSet>()
     val configServiceMock = mockk<ConfigService>()
+    val credentialServiceMock = mockk<CredentialService>()
     val crudableMock = mockk<Crudable>()
     val filesWorkingSetConfigMock = mockk<FilesWorkingSetConfig>()
 
@@ -86,6 +88,7 @@ class EditMaskActionTestSpec : ShouldSpec({
       every { anActionEventMock.getExplorerView<FileExplorerView>() } returns fileExplorerViewMock
 
       every { filesWorkingSetMock.uuid } returns uuid
+      every { filesWorkingSetMock.connectionConfig } returns null
       every { explorerTreeNodeMock.value } returns filesWorkingSetMock
 
       every {
@@ -95,6 +98,10 @@ class EditMaskActionTestSpec : ShouldSpec({
       mockkObject(ConfigService)
       every { ConfigService.instance } returns configServiceMock
       every { configServiceMock.crudable } returns crudableMock
+
+      mockkObject(CredentialService)
+      every { CredentialService.instance } returns credentialServiceMock
+      every { credentialServiceMock.getUsernameByKey(any<String>()) } returns "test"
 
       every { anActionEventMock.project } returns mockk()
 

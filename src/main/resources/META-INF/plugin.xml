@@ -297,6 +297,9 @@ Thank you for considering IBA Group for your mainframe needs.
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
 
+        <requiredForSmartModeStartupActivity
+                implementation="org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider"/>
+
         <editorFloatingToolbarProvider
                 implementation="org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider"/>
 

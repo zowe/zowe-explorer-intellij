@@ -43,7 +43,16 @@ abstract class ExplorerContentProviderBase<Connection: ConnectionConfigBase, E :
   abstract val actionGroup: ActionGroup
   abstract val place: String
 
-  fun buildActionToolbar() = ActionManager.getInstance().createActionToolbar(place, actionGroup, true)
+  /**
+   * Should build toolbar component that will be located at above the explorer view.
+   * @param target target component ([SimpleToolWindowPanel] by default) inside which the toolbar will be located.
+   * @return toolbar component instance.
+   */
+  open fun buildActionToolbar(target: JComponent?): JComponent {
+    return ActionManager.getInstance().createActionToolbar(place, actionGroup, true).apply {
+      targetComponent = target
+    }.component
+  }
 
   /**
    * Build the explorer content vertical panel
@@ -54,14 +63,10 @@ abstract class ExplorerContentProviderBase<Connection: ConnectionConfigBase, E :
     return object : SimpleToolWindowPanel(true, true), Disposable {
 
       private var builtContent: JComponent? = null
-      private val actionToolbar = buildActionToolbar()
 
       init {
         Disposer.register(parentDisposable, this)
-        actionToolbar.let {
-          it.targetComponent = this
-          toolbar = it.component
-        }
+        toolbar = buildActionToolbar(this)
         setContent(buildContent(this, project).also { builtContent = it })
       }
 

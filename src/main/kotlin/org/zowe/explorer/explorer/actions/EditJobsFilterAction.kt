@@ -10,20 +10,24 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.JobFilterStateWithWS
 import org.zowe.explorer.config.ws.JobsFilter
-import org.zowe.explorer.config.ws.JesWorkingSetConfig
+import org.zowe.explorer.explorer.JesWorkingSet
 import org.zowe.explorer.explorer.ui.EditJobsFilterDialog
+import org.zowe.explorer.explorer.ui.ExplorerTreeView
 import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.explorer.ui.JesFilterNode
 import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
+import org.zowe.explorer.utils.getSelectedNodesWorkingSets
 
 /** Action to edit job filter in JES working set tree view */
-class EditJobsFilterAction : JobsFilterAction() {
+class EditJobsFilterAction : AnAction() {
 
   /** Save changes when the dialog is fulfilled */
   override fun actionPerformed(e: AnActionEvent) {
@@ -31,7 +35,8 @@ class EditJobsFilterAction : JobsFilterAction() {
 
     val node = view.mySelectedNodesData.getOrNull(0)?.node
     if (node is JesFilterNode) {
-      val ws = getUnits(view).firstOrNull() ?: return
+      val workingSets = getSelectedNodesWorkingSets<JesWorkingSet>(view as ExplorerTreeView<*, *, *>)
+      val ws = workingSets.firstOrNull() ?: return
       val prefix = node.value.prefix
       val owner = node.value.owner
       val jobId = node.value.jobId
@@ -55,6 +60,27 @@ class EditJobsFilterAction : JobsFilterAction() {
         }
       }
     }
+  }
+
+  /**
+   * Decides to show the edit jobs filter action or not.
+   * Shows the action if:
+   * 1. Explorer view is not null
+   * 2. Only one item selected
+   * 3. The selected item is a [JesFilterNode]
+   */
+  override fun update(e: AnActionEvent) {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val selected = view.mySelectedNodesData
+    if (selected.size != 1) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val node = selected[0].node
+    e.presentation.isEnabledAndVisible = node is JesFilterNode
   }
 
 }

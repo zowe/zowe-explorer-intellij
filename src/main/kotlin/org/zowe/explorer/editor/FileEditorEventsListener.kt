@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.editor
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -37,8 +38,21 @@ class FileEditorEventsListener : FileEditorManagerListener {
    */
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
     val editor = source.selectedTextEditor as? EditorEx
-    editor?.addFocusListener(focusListener)
-    super.fileOpened(source, file)
+
+    // TODO: remove in v1.*.*-223 and greater
+    if (editor != null) {
+      editor.addFocusListener(focusListener)
+      val isDumbMode = ActionUtil.isDumbMode(editor.project)
+      if (isDumbMode) {
+        editor.document.setReadOnly(true)
+        editor.isViewer = true
+      }
+      super.fileOpened(source, file)
+    }
+
+    // TODO: use in v1.*.*-223 and greater
+    //editor?.addFocusListener(focusListener)
+    //super.fileOpened(source, file)
   }
 }
 

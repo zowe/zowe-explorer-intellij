@@ -81,7 +81,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
   var mySelectedNodesData: List<NodeData<Connection>> by rwLocked(listOf())
   internal val myFsTreeStructure: CommonExplorerTreeStructure<Explorer<Connection, U>>
   internal val myStructure: StructureTreeModel<CommonExplorerTreeStructure<Explorer<Connection, U>>>
-  internal val myTree: Tree
+  val myTree: Tree
   internal val myNodesToInvalidateOnExpand = hashSetOf<Any>()
   internal val ignoreVFileDeleteEvents = AtomicBoolean(false)
   internal val ignoreVFSChangeEvents = AtomicBoolean(false)
@@ -97,7 +97,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
    * @param [invalidate] invalidate the nodes if the parameter is true. True by default
    * @return the nodes found by the query
    */
-  internal fun getNodesByQueryAndInvalidate(
+  fun getNodesByQueryAndInvalidate(
     query: Query<*, *>,
     collapse: Boolean = false,
     invalidate: Boolean = true

@@ -19,6 +19,8 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.StatefulComponent
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.config.ws.MaskStateWithWS
 import org.zowe.explorer.utils.MaskType
 import org.zowe.explorer.utils.validateDatasetMask
@@ -27,12 +29,21 @@ import org.zowe.explorer.utils.validateUssMask
 import org.zowe.explorer.utils.validateWorkingSetMaskName
 import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.JTextField
 
 /**
  * Dialog to add a new or edit an existing mask
  */
-class AddOrEditMaskDialog(project: Project?, dialogTitle: String, override var state: MaskStateWithWS) :
+class AddOrEditMaskDialog(
+  project: Project?,
+  dialogTitle: String,
+  config: ConnectionConfig?,
+  override var state: MaskStateWithWS
+) :
   DialogWrapper(project), StatefulComponent<MaskStateWithWS> {
+
+  private lateinit var maskField: JTextField
+  private val HLQ = if (config != null) getUsername(config) else null
 
   companion object {
 
@@ -86,6 +97,12 @@ class AddOrEditMaskDialog(project: Project?, dialogTitle: String, override var s
           .widthGroup(sameWidthGroup)
         textField()
           .bindText(state::mask)
+          .also {
+            maskField = it.component
+            if (maskField.text == "") {
+              maskField.text = if (HLQ != null) "${HLQ}.*" else ""
+            }
+          }
           .validationOnInput {
             if (!state.isTypeSelectedManually) {
               state.type = if (it.text.contains("/")) MaskType.USS else MaskType.ZOS

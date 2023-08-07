@@ -14,6 +14,10 @@ import com.google.gson.Gson
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
 import org.zowe.explorer.config.ConfigDeclaration
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.explorer.WorkingSet
+import org.zowe.explorer.explorer.ui.ExplorerTreeView
+import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
 import java.awt.Component
 import java.awt.MouseInfo
 import java.awt.Rectangle
@@ -278,4 +282,17 @@ fun Component.isComponentUnderMouse(): Boolean {
   SwingUtilities.convertPointFromScreen(location, this)
   val bounds = Rectangle(0, 0, width, height)
   return bounds.contains(location)
+}
+
+/**
+ * Get all distinct working sets for the selected nodes.
+ * In case the items belong to different working sets, it returns all the distinct working sets
+ * @param view the view where the nodes are selected
+ */
+fun <U : WorkingSet<ConnectionConfig, *>> getSelectedNodesWorkingSets(view: ExplorerTreeView<*, *, *>): List<U> {
+  return view.mySelectedNodesData
+    .map { it.node }
+    .filterIsInstance<ExplorerUnitTreeNodeBase<ConnectionConfig, *, U>>()
+    .map { it.unit }
+    .distinct()
 }

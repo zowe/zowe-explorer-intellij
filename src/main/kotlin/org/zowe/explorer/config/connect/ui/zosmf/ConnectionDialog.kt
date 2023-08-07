@@ -23,16 +23,15 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.showUntilDone
+import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.*
 import org.zowe.explorer.config.connect.ui.ChangePasswordDialog
 import org.zowe.explorer.config.connect.ui.ChangePasswordDialogState
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.*
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
-import org.zowe.explorer.utils.runTask
-import org.zowe.explorer.utils.validateConnectionName
-import org.zowe.explorer.utils.validateForBlank
-import org.zowe.explorer.utils.validateZosmfUrl
+import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
@@ -314,6 +313,16 @@ class ConnectionDialog(
                         val relativePoint = RelativePoint(this, Point(this.width / 2, this.height))
                         balloon.show(relativePoint, Balloon.Position.below)
                       }
+
+                      configCrudable.getAll<ConnectionConfig>().filter { it.url == state.connectionUrl }
+                        .filter { CredentialService.instance.getUsernameByKey(it.uuid) == state.username }
+                        .forEach {
+                          CredentialService.instance.setCredentials(
+                            connectionConfigUuid = it.uuid,
+                            username = state.username,
+                            password = state.password
+                          )
+                        }
                     }
                     true
                   }

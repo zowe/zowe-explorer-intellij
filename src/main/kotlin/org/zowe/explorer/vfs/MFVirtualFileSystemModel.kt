@@ -11,6 +11,7 @@
 package org.zowe.explorer.vfs
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileAttributes
@@ -28,10 +29,13 @@ import org.jgrapht.Graphs
 import org.jgrapht.graph.DirectedMultigraph
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
+import java.nio.file.InvalidPathException
 import java.nio.file.NotDirectoryException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Condition
+
+private val log = logger<MFVirtualFileSystemModel>()
 
 class FsOperationException(operationName: String, file: MFVirtualFile) : IOException(
   "Cannot perform $operationName on ${file.path}"
@@ -616,7 +620,11 @@ class MFVirtualFileSystemModel {
               VFileContentChangeEvent(requestor, file, oldModStamp, timeStamp, false)
             )
             // When the output stream changes, the contents of the file change, so you need to send vfs changes topic
-            sendVfsChangesTopic().before(event)
+            try {
+              sendVfsChangesTopic().before(event)
+            } catch (ignored: InvalidPathException) {
+              log.warn(ignored)
+            }
             assertWriteAllowed()
             file.validWriteLock {
               super.close()
@@ -626,7 +634,11 @@ class MFVirtualFileSystemModel {
                 initialContentConditions.remove(file)
               }
             }
+            try {
             sendVfsChangesTopic().after(event)
+            } catch (ignored: InvalidPathException) {
+              log.warn(ignored)
+            }
           }
         }
       }

@@ -14,15 +14,19 @@ import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.selectedValueMatches
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.dataops.operations.DatasetAllocationParams
-import org.zowe.explorer.explorer.config.*
+import org.zowe.explorer.explorer.config.Presets
 import org.zowe.explorer.utils.validateDataset
 import org.zowe.explorer.utils.validateForBlank
 import org.zowe.explorer.utils.validateMemberName
@@ -60,7 +64,15 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       row {
         label("Choose preset: ")
           .widthGroup(sameWidthLabelsGroup)
-        comboBox(listOf(Presets.CUSTOM_DATASET, Presets.SEQUENTIAL_DATASET, Presets.PDS_DATASET, Presets.PDS_WITH_EMPTY_MEMBER, Presets.PDS_WITH_SAMPLE_JCL_MEMBER))
+        comboBox(
+          listOf(
+            Presets.CUSTOM_DATASET,
+            Presets.SEQUENTIAL_DATASET,
+            Presets.PDS_DATASET,
+            Presets.PDS_WITH_EMPTY_MEMBER,
+            Presets.PDS_WITH_SAMPLE_JCL_MEMBER
+          )
+        )
           .bindItem(state::presets.toNullableProperty())
           .also { presetsBox = it.component }
           .widthGroup(sameWidthComboBoxGroup)
@@ -71,8 +83,9 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::datasetName)
-          .also { datasetNameField = it.component
-            datasetNameField.text = HLQ
+          .also {
+            datasetNameField = it.component
+            datasetNameField.text = "${HLQ}.<CHANGEME>"
           }
           .onApply { state.datasetName = state.datasetName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -83,8 +96,9 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .widthGroup(sameWidthLabelsGroup)
         textField()
           .bindText(state::memberName)
-          .also { memberNameField = it.component
-          memberNameField.text = "SAMPLE"
+          .also {
+            memberNameField = it.component
+            memberNameField.text = "SAMPLE"
           }
           .onApply { state.memberName = state.memberName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -98,7 +112,15 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             DatasetOrganization.PS,
             DatasetOrganization.PO,
             DatasetOrganization.POE
-          )
+          ),
+          SimpleListCellRenderer.create("") {
+            when (it) {
+              DatasetOrganization.PS -> "Sequential (PS)"
+              DatasetOrganization.PO -> "Partitioned (PO)"
+              DatasetOrganization.POE -> "Partitioned Extended (PO-E)"
+              else -> ""
+            }
+          }
         )
           .bindItem(state.allocationParameters::datasetOrganization.toNullableProperty())
           .also { datasetOrganizationBox = it.component }
@@ -276,7 +298,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
    * @param preset - a chosen preset from UI
    * @return Void
    */
-  private fun doPresetAssignment(preset : Presets) {
+  private fun doPresetAssignment(preset: Presets) {
     val dataContainer = Presets.initDataClass(preset)
     memberNameField.text = "SAMPLE"
     datasetOrganizationBox.selectedItem = dataContainer.datasetOrganization
@@ -306,8 +328,8 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       blockSizeField,
       averageBlockLengthField,
       advancedParametersField
-    ) ?: validateForBlank(memberNameField) ?:
-    validateMemberName(memberNameField)
+    ) ?: validateForBlank(memberNameField)
+      ?: validateMemberName(memberNameField)
   }
 
   override fun getPreferredFocusedComponent(): JComponent? {
