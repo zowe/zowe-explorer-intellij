@@ -40,10 +40,10 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
    * @param oldConfigFile old config file to get connection IDs.
    */
   private fun convertOldConnectionIds(oldConfigFile: File) {
-    val crudable = ConfigService.instance.crudable
-    val connections = ConfigService.instance.state?.get<ConnectionConfig>()?.toMutableList() ?: emptyList()
-    val filesWorkingSets = ConfigService.instance.state?.get<FilesWorkingSetConfig>()?.toMutableList() ?: emptyList()
-    val jesWorkingSets = ConfigService.instance.state?.get<JesWorkingSetConfig>()?.toMutableList() ?: emptyList()
+    val crudable = OldConfigService.instance.crudable
+    val connections = OldConfigService.instance.state?.get<ConnectionConfig>()?.toMutableList() ?: emptyList()
+    val filesWorkingSets = OldConfigService.instance.state?.get<FilesWorkingSetConfig>()?.toMutableList() ?: emptyList()
+    val jesWorkingSets = OldConfigService.instance.state?.get<JesWorkingSetConfig>()?.toMutableList() ?: emptyList()
 
     val oldDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(oldConfigFile)
     val oldConnectionIds = oldDocument.documentElement.getConnectionIds()
