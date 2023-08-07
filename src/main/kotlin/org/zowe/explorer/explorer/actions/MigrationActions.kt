@@ -25,8 +25,9 @@ import org.zowe.explorer.dataops.operations.migration.RecallOperationParams
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.ExplorerTreeNode
 import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
-import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /**

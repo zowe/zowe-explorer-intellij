@@ -15,7 +15,7 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.CallException
+import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
@@ -47,11 +47,11 @@ class SequentialToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMov
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.destinationAttributes is RemoteDatasetAttributes
-            && operation.destination.isDirectory
-            && !operation.source.isDirectory
-            && operation.sourceAttributes is RemoteDatasetAttributes
-            && operation.commonUrls(dataOpsManager).isNotEmpty()
-            && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
+        && operation.destination.isDirectory
+        && !operation.source.isDirectory
+        && operation.sourceAttributes is RemoteDatasetAttributes
+        && operation.commonUrls(dataOpsManager).isNotEmpty()
+        && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
 
   /**
@@ -86,11 +86,11 @@ class SequentialToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMov
     if (!response.isSuccessful && response.errorBody()?.string()?.contains("data set is empty") == true) {
       if (operation.isMove) {
         val deleteResponse = api<DataAPI>(
-            url = connectionConfig.url,
-            isAllowSelfSigned = connectionConfig.isAllowSelfSigned
+          url = connectionConfig.url,
+          isAllowSelfSigned = connectionConfig.isAllowSelfSigned
         ).deleteDataset(
-            authorizationToken = connectionConfig.authToken,
-            datasetName = dataset.name
+          authorizationToken = connectionConfig.authToken,
+          datasetName = dataset.name
         ).cancelByIndicator(progressIndicator).execute()
         if (!deleteResponse.isSuccessful) {
           return CallException(deleteResponse, "Cannot delete source dataset '${dataset.name}'.")

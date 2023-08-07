@@ -23,6 +23,7 @@ import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.applyIfNotNull
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
@@ -51,12 +52,12 @@ class CrossSystemPdsToUssDirMover(dataOpsManager: DataOpsManager) : AbstractPdsT
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
-      operation.destination.isDirectory &&
-      operation.destinationAttributes is RemoteUssAttributes &&
-      operation.sourceAttributes is RemoteDatasetAttributes &&
-      operation.source is MFVirtualFile &&
-      operation.destination is MFVirtualFile &&
-      operation.commonUrls(dataOpsManager).isEmpty()
+        operation.destination.isDirectory &&
+        operation.destinationAttributes is RemoteUssAttributes &&
+        operation.sourceAttributes is RemoteDatasetAttributes &&
+        operation.source is MFVirtualFile &&
+        operation.destination is MFVirtualFile &&
+        operation.commonUrls(dataOpsManager).isEmpty()
   }
 
   override val log = log<CrossSystemPdsToUssDirMover>()

@@ -16,10 +16,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.dataops.attributes.AttributesService
+import org.zowe.explorer.dataops.attributes.FileAttributes
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributesService
 import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.sendTopic
-import org.zowe.explorer.utils.service // TODO: remove in v1.*.*-223 and greater
+import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.XIBMDataType
 
@@ -95,6 +100,7 @@ class ChangeContentModeAction : ToggleAction() {
               sendTopic(AttributesService.FILE_CONTENT_CHANGED, DataOpsManager.instance.componentManager)
                 .onUpdate(oldAttributes, newAttributes, vFile)
             }
+
             else -> {
               val newAttributes = oldAttributes.apply {
                 if (state) {
@@ -129,8 +135,8 @@ class ChangeContentModeAction : ToggleAction() {
     val mode = if (state) "binary" else "plain text"
     val confirmTemplate =
       "You are going to switch the file content to $mode. \n" +
-              "The file content will be loaded from mainframe in $mode format. \n" +
-              "Would you like to proceed?"
+          "The file content will be loaded from mainframe in $mode format. \n" +
+          "Would you like to proceed?"
     return Messages.showOkCancelDialog(
       confirmTemplate,
       "Warning",

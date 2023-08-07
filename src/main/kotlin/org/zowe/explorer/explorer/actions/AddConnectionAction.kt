@@ -17,11 +17,13 @@ import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.content.ContentManagerUtil
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.config.connect.ui.ConnectionDialog
-import org.zowe.explorer.config.connect.ui.ConnectionDialogState
-import org.zowe.explorer.config.connect.ui.initEmptyUuids
+import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialog
+import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
+import org.zowe.explorer.config.connect.ui.zosmf.initEmptyUuids
 import org.zowe.explorer.explorer.hints.Hint
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.utils.castOrNull
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
@@ -76,7 +78,7 @@ private fun showHint(e: AnActionEvent) {
         else -> null
       }
       val text = "Now you can add working set to browse<br> $content.<br>" +
-              "<a href\"\">Click here to add...</a>"
+          "<a href\"\">Click here to add...</a>"
       val hyperlinkAction = when (view) {
         is FileExplorerView -> {
           { AddWorkingSetAction().actionPerformed(e) }

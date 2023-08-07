@@ -22,17 +22,25 @@ import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.ValidatingTableView
 import org.zowe.explorer.common.ui.tableWithToolbar
-import org.zowe.explorer.config.*
+import org.zowe.explorer.config.SandboxListener
+import org.zowe.explorer.config.applySandbox
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
+import org.zowe.explorer.config.isSandboxModified
+import org.zowe.explorer.config.rollbackSandbox
+import org.zowe.explorer.config.sandboxCrudable
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
+import org.zowe.explorer.utils.runWriteActionOnWriteThread
 import org.zowe.explorer.utils.toMutableList
+import org.zowe.kotlinsdk.zowe.config.ZoweConfig
+import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.net.URI
 
 /** Create and manage Connections tab in settings */
 @Suppress("DialogTitleCapitalization")
@@ -185,15 +193,16 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
    * @param connectionsTable - connections table view object
    * @return An instance of MouseAdapter
    */
-  private fun registerMouseListeners(connectionsTable : ValidatingTableView<ConnectionDialogState>): MouseAdapter = object : MouseAdapter() {
-    override fun mouseClicked(e: MouseEvent) {
-      if (e.clickCount == 2) {
-        connectionsTable.selectedObject?.let {
-          editConnection()
+  private fun registerMouseListeners(connectionsTable: ValidatingTableView<ConnectionDialogState>): MouseAdapter =
+    object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        if (e.clickCount == 2) {
+          connectionsTable.selectedObject?.let {
+            editConnection()
+          }
         }
       }
     }
-  }
 
   /** Create Connections panel in settings */
   override fun createPanel(): DialogPanel {
@@ -285,7 +294,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   /** Check are the Credentials and Connections sandboxes modified */
   override fun isModified(): Boolean {
     return isSandboxModified<Credentials>()
-      || isSandboxModified<ConnectionConfig>()
+        || isSandboxModified<ConnectionConfig>()
   }
 
   override fun cancel() {

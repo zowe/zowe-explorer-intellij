@@ -22,6 +22,7 @@ import org.zowe.explorer.explorer.actions.DuplicateMemberAction
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.sendMFVfsChangesTopic
+import org.zowe.kotlinsdk.CopyDataZOS
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.MoveUssFile
@@ -97,6 +98,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           }
         }
       }
+
       is RemoteMemberAttributes -> {
         val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
         parentAttributes.requesters.map {
@@ -148,6 +150,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           }
         }
       }
+
       is RemoteUssAttributes -> {
         val parentDirPath = attributes.parentDirPath
         attributes.requesters.map {

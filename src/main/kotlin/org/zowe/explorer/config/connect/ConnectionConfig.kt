@@ -32,7 +32,7 @@ class ConnectionConfig : ConnectionConfigBase {
   var zVersion = ZVersion.ZOS_2_1
 
   @Column
-  var zoweConfigPath: String? = null
+  override var zoweConfigPath: String? = null
 
   var owner = ""
 

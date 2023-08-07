@@ -31,6 +31,11 @@ import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.validateDatasetMask
 import org.zowe.explorer.utils.validateForBlank
+import org.zowe.explorer.utils.validateUssMask
+import javax.swing.JComponent
+import javax.swing.JTable
+import javax.swing.table.TableCellEditor
+import javax.swing.table.TableCellRenderer
 
 /**
  * Dialog of Files Working Set configurations.

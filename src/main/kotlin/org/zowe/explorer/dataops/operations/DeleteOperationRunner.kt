@@ -16,10 +16,15 @@ import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.UnitOperation
-import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.dataops.attributes.FileAttributes
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.attributes.getLibraryAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
+import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.runWriteActionInEdt
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath

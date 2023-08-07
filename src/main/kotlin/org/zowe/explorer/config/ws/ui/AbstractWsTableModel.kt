@@ -12,6 +12,7 @@ package org.zowe.explorer.config.ws.ui
 
 import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.CrudableTableModel
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.WorkingSetConfig

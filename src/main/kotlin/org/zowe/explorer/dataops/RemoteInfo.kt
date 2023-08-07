@@ -9,13 +9,13 @@
  */
 package org.zowe.explorer.dataops
 
-import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 
 /**
  * Interface which represents remote info and holds connection config object almost for every remote query
  * @param Connection The system (such as zosmf, cics etc.) connection class to work with (see [ConnectionConfigBase]).
  */
-interface RemoteInfo<Connection: ConnectionConfigBase> {
+interface RemoteInfo<Connection : ConnectionConfigBase> {
 
   val connectionConfig: Connection
 

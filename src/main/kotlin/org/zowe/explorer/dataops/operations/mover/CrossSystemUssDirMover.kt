@@ -26,9 +26,15 @@ import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.applyIfNotNull
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
-import org.zowe.kotlinsdk.*
+import org.zowe.kotlinsdk.CreateUssFile
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FileMode
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.FileType
+import org.zowe.kotlinsdk.UssFile
 
 /**
  * Factory for registering CrossSystemUssDirMover in Intellij IoC container.
@@ -53,11 +59,11 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
-            operation.sourceAttributes is RemoteUssAttributes &&
-            operation.destination.isDirectory &&
-            operation.destination is MFVirtualFile &&
-            dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes &&
-            operation.commonUrls(dataOpsManager).isEmpty()
+        operation.sourceAttributes is RemoteUssAttributes &&
+        operation.destination.isDirectory &&
+        operation.destination is MFVirtualFile &&
+        dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes &&
+        operation.commonUrls(dataOpsManager).isEmpty()
   }
 
   override val log = log<CrossSystemUssDirMover>()

@@ -20,6 +20,7 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
 
@@ -35,7 +36,7 @@ class GetJclRecordsOperationRunnerFactory : OperationRunnerFactory {
 /**
  * Class which represents get jcl records operation runner
  */
-class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, ByteArray> {
+class GetJclRecordsOperationRunner : OperationRunner<GetJclRecordsOperation, ByteArray> {
 
   override val operationClass = GetJclRecordsOperation::class.java
 
@@ -56,7 +57,7 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
   override fun run(operation: GetJclRecordsOperation, progressIndicator: ProgressIndicator): ByteArray {
     progressIndicator.checkCanceled()
 
-    val response : Response<ByteArray> = when (operation.request) {
+    val response: Response<ByteArray> = when (operation.request) {
       is BasicGetJclRecordsParams -> {
         apiWithBytesConverter<JESApi>(operation.connectionConfig).getJCLRecords(
           basicCredentials = operation.connectionConfig.authToken,
@@ -64,12 +65,14 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
           jobName = operation.request.jobName
         ).cancelByIndicator(progressIndicator).execute()
       }
+
       is CorrelatorGetJclRecordsParams -> {
         apiWithBytesConverter<JESApi>(operation.connectionConfig).getJCLRecords(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.jobCorrelator
         ).cancelByIndicator(progressIndicator).execute()
       }
+
       else -> throw Exception("Method with such parameters not found")
     }
     val body = response.body()

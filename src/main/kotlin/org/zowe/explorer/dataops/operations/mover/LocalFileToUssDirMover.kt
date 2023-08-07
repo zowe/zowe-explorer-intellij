@@ -22,6 +22,7 @@ import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.applyIfNotNull
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.DataAPI
@@ -52,10 +53,10 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source is VirtualFileSystemEntry &&
-      !operation.source.isDirectory &&
-      operation.destination.isDirectory &&
-      operation.destination is MFVirtualFile &&
-      dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
+        !operation.source.isDirectory &&
+        operation.destination.isDirectory &&
+        operation.destination is MFVirtualFile &&
+        dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes
   }
 
   override val log = log<LocalFileToUssDirMover>()

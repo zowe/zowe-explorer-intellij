@@ -23,8 +23,12 @@ abstract class ConnectionConfigBase : EntityWithUuid {
   /** Connection url. Could be annotated with [Column] in implementation. */
   abstract val url: String
 
+  // TODO: make ZoweConnectionConfig abstraction and refactor respectively
+  /** Zowe Team Config v2 path. Could be annotated with [Column] in implementation. */
+  abstract val zoweConfigPath: String?
+
   constructor()
 
-  constructor(uuid: String): super(uuid)
+  constructor(uuid: String) : super(uuid)
 
 }
