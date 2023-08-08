@@ -17,8 +17,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.nextUniqueValue
 import java.io.File
 import java.nio.file.Files
@@ -40,10 +38,10 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
    * @param oldConfigFile old config file to get connection IDs.
    */
   private fun convertOldConnectionIds(oldConfigFile: File) {
-    val crudable = OldConfigService.instance.crudable
-    val connections = OldConfigService.instance.state?.get<ConnectionConfig>()?.toMutableList() ?: emptyList()
-    val filesWorkingSets = OldConfigService.instance.state?.get<FilesWorkingSetConfig>()?.toMutableList() ?: emptyList()
-    val jesWorkingSets = OldConfigService.instance.state?.get<JesWorkingSetConfig>()?.toMutableList() ?: emptyList()
+    val crudable = ConfigService.instance.crudable
+    val connections = OldConfigService.instance.state?.connections?.toMutableList() ?: emptyList()
+    val filesWorkingSets = OldConfigService.instance.state?.filesWorkingSets?.toMutableList() ?: emptyList()
+    val jesWorkingSets = OldConfigService.instance.state?.jesWorkingSets?.toMutableList() ?: emptyList()
 
     val oldDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(oldConfigFile)
     val oldConnectionIds = oldDocument.documentElement.getConnectionIds()
@@ -54,10 +52,10 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
       val jesWsToConvert = jesWorkingSets.filter { jws -> jws.connectionConfigUuid == it.uuid }
       val username = CredentialService.instance.getUsernameByKey(it.uuid) ?: ""
       val password = CredentialService.instance.getPasswordByKey(it.uuid) ?: ""
-      crudable.delete(it.uuid)
+      crudable.deleteByUniqueKey(ConnectionConfig::class.java, it.uuid)
       it.uuid = crudable.nextUniqueValue<ConnectionConfig, String>()
       CredentialService.instance.setCredentials(it.uuid, username, password)
-      crudable.add(it.uuid)
+      crudable.add(it)
       filesWsToConvert.forEach { fws ->
         fws.connectionConfigUuid = it.uuid
         crudable.update(fws)
@@ -73,7 +71,7 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
    * Converts the old version config to the new version config
    */
   private fun convertOldVersionConfig() {
-    val newConfigStorageName = "org.zowe.explorer.config.ConfigService"
+    val newConfigStorageName = "org.zowe.explorer.config.OldConfigService"
     val oldConfigStorageName = "by.iba.connector.services.ConfigService"
     val oldConfigName = "iba_connector_config.xml"
     val newConfigName = "zowe_explorer_intellij_config.xml"
@@ -94,7 +92,7 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
           Files.write(newConfigFile.toPath(), newContent.toByteArray(charset))
         }
       }
-      service<IComponentStore>().reloadState(ConfigServiceImpl::class.java)
+      service<IComponentStore>().reloadState(OldConfigServiceImpl::class.java)
       convertOldConnectionIds(oldConfigFile)
     }
   }

@@ -12,6 +12,11 @@ package org.zowe.explorer.config
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
+import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.crudable.annotations.Contains
 
 /**
  * Config service to read old configs.
@@ -20,7 +25,16 @@ import com.intellij.openapi.components.PersistentStateComponent
 interface OldConfigService : PersistentStateComponent<ConfigState> {
   companion object {
     @JvmStatic
-    val instance: ConfigService
-      get() = ApplicationManager.getApplication().getService(ConfigService::class.java)
+    val instance: OldConfigService
+      get() = ApplicationManager.getApplication().getService(OldConfigService::class.java)
   }
+
+  @get:Contains(
+    entities = [
+      FilesWorkingSetConfig::class,
+      ConnectionConfig::class,
+      JesWorkingSetConfig::class
+    ]
+  )
+  val crudable: Crudable
 }

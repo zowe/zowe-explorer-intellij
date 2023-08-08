@@ -199,7 +199,7 @@ class ConfigServiceImpl : ConfigService {
 internal fun makeCrudableWithoutListeners(
   withCredentials: Boolean,
   credentialsGetter: () -> MutableList<Credentials> = { mutableListOf() },
-  stateGetter: () -> ConfigStateV2,
+  stateGetter: () -> ConfigStateV2
 ): Crudable {
   val crudableLists = CrudableLists(
     addFilter = object: AddFilter {
