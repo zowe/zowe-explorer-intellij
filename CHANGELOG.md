@@ -35,11 +35,11 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Feature: Unit tests ([019bef00](https://github.com/zowe/zowe-explorer-intellij/commit/019bef00), [fa903c1c](https://github.com/zowe/zowe-explorer-intellij/commit/fa903c1c), [709a5e2f](https://github.com/zowe/zowe-explorer-intellij/commit/709a5e2f), [07ecd283](https://github.com/zowe/zowe-explorer-intellij/commit/07ecd283), [93febb62](https://github.com/zowe/zowe-explorer-intellij/commit/93febb62), [517c2cff](https://github.com/zowe/zowe-explorer-intellij/commit/517c2cff), [29cd85e4](https://github.com/zowe/zowe-explorer-intellij/commit/29cd85e4), [3850fcec](https://github.com/zowe/zowe-explorer-intellij/commit/3850fcec), [5646963e](https://github.com/zowe/zowe-explorer-intellij/commit/5646963e), [be3b5086](https://github.com/zowe/zowe-explorer-intellij/commit/be3b5086), [5043f5da](https://github.com/zowe/zowe-explorer-intellij/commit/5043f5da), [fdf67e1c](https://github.com/zowe/zowe-explorer-intellij/commit/fdf67e1c))
 
 
+* Bugfix: GitHub issue #138: Job is identified as successful while it ends with RC=12 ([99491858](https://github.com/zowe/zowe-explorer-intellij/commit/99491858))
 * Bugfix: Tooltip on JES Working set shows 'Working set' ([9937c128](https://github.com/zowe/zowe-explorer-intellij/commit/9937c128))
 * Bugfix: "debounce" test is failed sometimes ([8bb98da8](https://github.com/zowe/zowe-explorer-intellij/commit/8bb98da8))
 * Bugfix: Allocate like strange behavior ([a0bf3da4](https://github.com/zowe/zowe-explorer-intellij/commit/a0bf3da4))
 * Bugfix: Change permissions: incorrect permissions shown after change failure ([2143e4ba](https://github.com/zowe/zowe-explorer-intellij/commit/2143e4ba))
-* Bugfix: GitHub issue #138: Job is identified as successful while it ends with RC=12 ([99491858](https://github.com/zowe/zowe-explorer-intellij/commit/99491858))
 * Bugfix: Empty pds is not deleted after its move to pds ([e88f830f](https://github.com/zowe/zowe-explorer-intellij/commit/e88f830f))
 * Bugfix: It shows that the job is still running after successfull purge ([d4a4289e](https://github.com/zowe/zowe-explorer-intellij/commit/d4a4289e))
 * Bugfix: Errors for several actions in JES Explorer ([3496acc1](https://github.com/zowe/zowe-explorer-intellij/commit/3496acc1))
