@@ -35,7 +35,7 @@ import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
-import org.zowe.explorer.utils.service
+import org.zowe.explorer.utils.service // TODO: remove in v1.*.*-223 and later
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.DsnameType
