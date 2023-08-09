@@ -19,10 +19,20 @@ import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.getAttributesService
-import org.zowe.explorer.dataops.operations.*
+import org.zowe.explorer.dataops.operations.DeleteMemberOperation
+import org.zowe.explorer.dataops.operations.DeleteMemberOperationParams
+import org.zowe.explorer.dataops.operations.MemberAllocationOperation
+import org.zowe.explorer.dataops.operations.MemberAllocationParams
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.AddMemberDialog
+import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
+import org.zowe.explorer.explorer.ui.FetchNode
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
+import org.zowe.explorer.explorer.ui.LibraryNode
+import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /** Class that represents "Add member" action */
