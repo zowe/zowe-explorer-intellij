@@ -14,7 +14,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
-// import com.intellij.openapi.ui.isComponentUnderMouse // TODO: needed in v1.*.*-223 and greater
+import com.intellij.openapi.ui.isComponentUnderMouse
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.content.synchronizer.AutoSyncFileListener

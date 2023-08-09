@@ -31,7 +31,6 @@ import org.zowe.explorer.utils.nullable
 import org.zowe.explorer.utils.validateForBlank
 import org.zowe.explorer.utils.validateWorkingSetName
 import java.awt.Dimension
-import java.util.stream.Collectors
 import javax.swing.JComponent
 
 /**

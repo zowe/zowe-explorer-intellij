@@ -25,7 +25,6 @@ import org.zowe.explorer.utils.runIfTrue
 import org.zowe.explorer.utils.runWriteActionOnWriteThread
 import org.zowe.explorer.utils.sendTopic
 import java.util.concurrent.locks.ReentrantLock
-import java.util.stream.Collectors
 import kotlin.collections.set
 import kotlin.concurrent.withLock
 

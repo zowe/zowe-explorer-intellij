@@ -21,7 +21,6 @@ import org.zowe.explorer.utils.crudable.ReloadableEventHandler
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
 import org.zowe.explorer.utils.isTheSameAs
-import java.util.stream.Collectors
 
 
 /** Stateful class to represent the plugin configs sandbox */

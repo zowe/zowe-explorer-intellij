@@ -27,7 +27,6 @@ import org.zowe.explorer.utils.validateForBlank
 import org.zowe.explorer.utils.validateForPositiveInteger
 import org.zowe.kotlinsdk.TsoCodePage
 import java.awt.Dimension
-import java.util.stream.Collectors
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -224,13 +223,13 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
  * Data class represents the initial state of the dialog. It sets the default parameters for the TSO session.
  */
 data class TSOSessionParams(
-  var connectionConfig : ConnectionConfig = configCrudable.getAll(ConnectionConfig::class.java).findFirst().get(),
-  var logonproc : String = "DBSPROCC",
-  var charset : String = "697",
-  var codepage : TsoCodePage = TsoCodePage.IBM_1047,
-  var rows : String = "24",
-  var cols : String = "80",
-  var acct : String = "ACCT#",
-  var usergroup : String = "GROUP1",
-  var region : String = "64000"
+  var connectionConfig: ConnectionConfig = configCrudable.getAll(ConnectionConfig::class.java).findFirst().get(),
+  var logonproc: String = "DBSPROCC",
+  var charset: String = "697",
+  var codepage: TsoCodePage = TsoCodePage.IBM_1047,
+  var rows: String = "24",
+  var cols: String = "80",
+  var acct: String = "ACCT#",
+  var usergroup: String = "GROUP1",
+  var region: String = "64000"
 )

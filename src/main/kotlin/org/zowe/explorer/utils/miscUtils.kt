@@ -18,16 +18,11 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.explorer.ui.ExplorerTreeView
 import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
-import java.awt.Component
-import java.awt.MouseInfo
-import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
-import java.util.stream.Collectors
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
-import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 
