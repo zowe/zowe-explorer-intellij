@@ -213,10 +213,7 @@ class ConfigSandboxImpl : ConfigSandbox {
         service<ConfigService>()
           .getRegisteredConfigDeclarations()
           .filter { it.useCredentials }
-          // TODO: remove in v1.*.*-223 and greater
-          .flatMap { configCrudable.getAll(it.clazz).collect(Collectors.toList()) }
-          // TODO: use in v1.*.*-223 and greater
-//          .flatMap { configCrudable.getAll(it.clazz).toList() }
+          .flatMap { configCrudable.getAll(it.clazz).toList() }
           .filterIsInstance<EntityWithUuid>()
           .map {
             with(CredentialService.instance) {
@@ -224,10 +221,7 @@ class ConfigSandboxImpl : ConfigSandbox {
             }
           }
       } else {
-        // TODO: remove in v1.*.*-223 and greater
-        configCrudable.getAll(clazz).collect(Collectors.toList())
-        // TODO: use in v1.*.*-223 and greater
-//        configCrudable.getAll(clazz).toList()
+        configCrudable.getAll(clazz).toList()
       }
       listOfNotNull(classToList(clazz, state), classToList(clazz, initialState))
         .forEach { list ->

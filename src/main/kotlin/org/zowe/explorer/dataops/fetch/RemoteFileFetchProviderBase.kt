@@ -173,10 +173,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
           // TODO: does not work correctly on datasets (check VOLSER)
           oldFile.isValid && files.none { compareOldAndNewFile(oldFile, it) }
         }
-        // TODO: remove in v1.*.*-223 and greater
-        ?.collect(Collectors.toList())
-        // TODO: use in v1.*.*-223 and greater
-//        ?.toList()
+        ?.toList()
         ?.apply {
           runWriteActionOnWriteThread {
             forEach { cleanupUnusedFile(it, query) }

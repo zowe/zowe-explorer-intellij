@@ -57,12 +57,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
   abstract val wsConfigClass: Class<out WSConfig>
   abstract val connectionClass: Class<out Connection>
 
-  // TODO: remove in v1.*.*-223 and greater
-  private val connectionComboBoxModel by lazy {
-    CollectionComboBoxModel(crudable.getAll(connectionClass).collect(Collectors.toList()))
-  }
-  // TODO: use in v1.*.*-223 and greater
-//  private val connectionComboBoxModel by lazy { CollectionComboBoxModel(crudable.getAll(connectionClass).toList()) }
+  private val connectionComboBoxModel by lazy { CollectionComboBoxModel(crudable.getAll(connectionClass).toList()) }
 
   /**
    * Name of masks table.

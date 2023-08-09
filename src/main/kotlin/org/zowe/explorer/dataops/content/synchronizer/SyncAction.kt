@@ -98,16 +98,6 @@ class SyncAction : DumbAwareAction() {
     }
     val editor = getEditor(e) ?: return
 
-    // TODO: remove in v1.*.*-223 and greater
-    val isDumbMode = ActionUtil.isDumbMode(e.project)
-    if (!isDumbMode && file.isWritable) {
-      editor.document.setReadOnly(false)
-      editor.isViewer = false
-    } else {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-
     val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
     val syncProvider = DocumentedSyncProvider(file)
     val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }

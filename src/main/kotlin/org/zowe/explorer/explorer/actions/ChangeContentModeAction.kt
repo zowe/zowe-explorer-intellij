@@ -24,7 +24,6 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributesService
 import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.sendTopic
-import org.zowe.explorer.utils.service // TODO: remove in v1.*.*-223 and later
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.XIBMDataType
 

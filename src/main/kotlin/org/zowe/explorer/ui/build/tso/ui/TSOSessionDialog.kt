@@ -50,12 +50,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
   private lateinit var regionField: JTextField
   private lateinit var connectionBox: JComboBox<ConnectionConfig>
 
-  // TODO: remove in v1.*.*-223 and greater
-  private var connectionComboBoxModel =
-    CollectionComboBoxModel(configCrudable.getAll<ConnectionConfig>().collect(Collectors.toList()))
-
-  // TODO: use in v1.*.*-223 and greater
-//  private var connectionComboBoxModel = CollectionComboBoxModel(configCrudable.getAll<ConnectionConfig>().toList())
+  private var connectionComboBoxModel = CollectionComboBoxModel(configCrudable.getAll<ConnectionConfig>().toList())
   private var codepageComboBoxModel = CollectionComboBoxModel(TsoCodePage.values().toList())
 
   /**
