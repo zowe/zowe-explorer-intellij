@@ -12,7 +12,7 @@ package org.zowe.explorer.explorer
 
 import com.intellij.util.containers.orNull
 import org.zowe.explorer.config.configCrudable
-import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.runIfTrue
@@ -25,13 +25,14 @@ import kotlin.concurrent.withLock
  * @param uuid the UUID of the working set for config
  * @param definedExplorer the explorer object defined by an implementation
  */
-abstract class WorkingSetBase<MaskType, WS : WorkingSet<*>, WSConfig : WorkingSetConfig>(
+abstract class WorkingSetBase<Connection: ConnectionConfigBase, MaskType, WSConfig : WorkingSetConfig>(
   override val uuid: String,
-  definedExplorer: AbstractExplorerBase<out WorkingSet<*>, WSConfig>,
+  definedExplorer: AbstractExplorerBase<Connection, out WorkingSet<Connection, *>, WSConfig>,
   private val workingSetConfigProvider: (String) -> WSConfig?,
-) : WorkingSet<MaskType> {
+) : WorkingSet<Connection, MaskType> {
 
   abstract val wsConfigClass: Class<out WSConfig>
+  abstract val connectionConfigClass: Class<out Connection>
 
   override val explorer = definedExplorer
 
@@ -52,11 +53,11 @@ abstract class WorkingSetBase<MaskType, WS : WorkingSet<*>, WSConfig : WorkingSe
   override val name
     get() = workingSetConfig?.name ?: ""
 
-  override val connectionConfig: ConnectionConfig?
+  override val connectionConfig: Connection?
     get() = lock.withLock {
       workingSetConfig
         ?.let {
-          return@withLock configCrudable.getByForeignKey(it, ConnectionConfig::class.java)?.orNull()
+          return@withLock configCrudable.getByForeignKey(it, connectionConfigClass)?.orNull()
         }
     }
 

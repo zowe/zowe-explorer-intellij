@@ -21,6 +21,7 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.dataops.operations.RemoteUnitOperation
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.HRecall
 
@@ -44,6 +45,8 @@ class RecallOperationRunner : MigrationRunner<RecallOperation> {
   }
 
   override val operationClass = RecallOperation::class.java
+
+  override val log = log<RecallOperationRunner>()
 
   /**
    * Runs a recall operation

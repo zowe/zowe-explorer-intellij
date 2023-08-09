@@ -13,15 +13,17 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.common.message
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.explorer.Explorer
 
-class ErrorNode(
+/** Representation of errors in tree. It is node that will display error message highlighted with red color. */
+class ErrorNode<Connection: ConnectionConfigBase>(
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  explorer: Explorer<*>,
+  parent: ExplorerTreeNode<Connection, *>,
+  explorer: Explorer<Connection, *>,
   treeStructure: ExplorerTreeStructureBase,
   override var text: String = message("title.error")
-) : InfoNodeBase(project, parent, explorer, treeStructure) {
+) : InfoNodeBase<Connection>(project, parent, explorer, treeStructure) {
 
   override val textAttributes: SimpleTextAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES
 

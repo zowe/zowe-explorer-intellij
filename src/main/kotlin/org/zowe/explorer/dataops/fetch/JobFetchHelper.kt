@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.dataops.fetch
 
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.attributes.JobsRequester
@@ -24,7 +25,7 @@ import org.zowe.kotlinsdk.Job
  * @param query - jobs query for particular tree in JES Explorer
  * @param jobAttributes - remote job attributes to be updated
  */
-class JobFetchHelper(private val query: RemoteQuery<JobsFilter, Unit>, private val jobAttributes: RemoteJobAttributes) : Thread() {
+class JobFetchHelper(private val query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>, private val jobAttributes: RemoteJobAttributes) : Thread() {
 
   private val startKeyword = "STARTED"
   private val endKeyword = "ENDED"

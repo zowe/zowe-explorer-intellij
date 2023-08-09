@@ -17,8 +17,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.*
-import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
 import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.XIBMDataType
@@ -29,7 +29,7 @@ import org.zowe.kotlinsdk.XIBMDataType
 class ChangeContentModeAction : ToggleAction() {
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return false
+    val view = e.getExplorerView<FileExplorerView>() ?: return false
     return getMappedNodes(view)
       .mapNotNull {
         view.explorer.componentManager.service<DataOpsManager>()
@@ -72,7 +72,7 @@ class ChangeContentModeAction : ToggleAction() {
    * Selected means that content mode has been changed to binary for particular virtual file
    */
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     if (showConfirmDialog(state) == Messages.CANCEL) {
       return
     } else {
@@ -95,6 +95,7 @@ class ChangeContentModeAction : ToggleAction() {
               sendTopic(AttributesService.FILE_CONTENT_CHANGED, DataOpsManager.instance.componentManager)
                 .onUpdate(oldAttributes, newAttributes, vFile)
             }
+
             else -> {
               val newAttributes = oldAttributes.apply {
                 if (state) {
@@ -129,8 +130,8 @@ class ChangeContentModeAction : ToggleAction() {
     val mode = if (state) "binary" else "plain text"
     val confirmTemplate =
       "You are going to switch the file content to $mode. \n" +
-              "The file content will be loaded from mainframe in $mode format. \n" +
-              "Would you like to proceed?"
+          "The file content will be loaded from mainframe in $mode format. \n" +
+          "Would you like to proceed?"
     return Messages.showOkCancelDialog(
       confirmTemplate,
       "Warning",
@@ -145,7 +146,7 @@ class ChangeContentModeAction : ToggleAction() {
    */
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

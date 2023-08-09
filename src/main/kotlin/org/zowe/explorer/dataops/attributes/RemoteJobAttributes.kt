@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.dataops.attributes
 
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.utils.clone
 import org.zowe.kotlinsdk.Job
 import org.zowe.kotlinsdk.XIBMDataType
@@ -26,7 +27,7 @@ data class RemoteJobAttributes(
   val jobInfo: Job,
   override val url: String,
   override val requesters: MutableList<JobsRequester>,
-) : MFRemoteFileAttributes<JobsRequester> {
+) : MFRemoteFileAttributes<ConnectionConfig, JobsRequester> {
   override val name: String
     get() = jobInfo.jobName
 

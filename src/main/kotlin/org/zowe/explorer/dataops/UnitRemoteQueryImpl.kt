@@ -10,16 +10,16 @@
 
 package org.zowe.explorer.dataops
 
-import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.utils.UNIT_CLASS
 
 /**
  * Class which represents Unit type of the Result of remote query
  */
-data class UnitRemoteQueryImpl<R>(
+data class UnitRemoteQueryImpl<Connection: ConnectionConfigBase, R>(
   override val request: R,
-  override val connectionConfig: ConnectionConfig
-) : RemoteQuery<R, Unit> {
+  override val connectionConfig: Connection
+) : RemoteQuery<Connection, R, Unit> {
   override val resultClass: Class<out Unit>
     get() = UNIT_CLASS
 }

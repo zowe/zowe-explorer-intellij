@@ -20,8 +20,9 @@ import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.ui.files.FilesWorkingSetDialog
 import org.zowe.explorer.config.ws.ui.files.toDialogState
-import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.FilesWorkingSetNode
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 
@@ -35,7 +36,7 @@ class EditFilesWorkingSetAction : AnAction() {
    * Opens the working set table with elements to edit
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     when (val node = view.mySelectedNodesData[0].node) {
       is FilesWorkingSetNode -> {
         val workingSetConfig =
@@ -69,7 +70,7 @@ class EditFilesWorkingSetAction : AnAction() {
    * Determines which objects are working sets and therefore can be edited
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

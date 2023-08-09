@@ -20,8 +20,9 @@ import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.ui.jes.JesWsDialog
 import org.zowe.explorer.config.ws.ui.jes.toDialogState
-import org.zowe.explorer.explorer.ui.JES_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.explorer.ui.JesWsNode
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 
@@ -35,7 +36,7 @@ class EditJesWorkingSetAction: AnAction() {
    * runs the edit JES working set operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
     val node = view.mySelectedNodesData[0].node
     if (node is JesWsNode) {
       val workingSetConfig =
@@ -63,7 +64,7 @@ class EditJesWorkingSetAction: AnAction() {
    * Determines which objects are JES working sets and therefore can be edited
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

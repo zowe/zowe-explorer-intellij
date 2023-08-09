@@ -8,6 +8,7 @@
  * Copyright IBA Group 2020
  */
 
+import kotlinx.kover.api.KoverTaskExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript {
@@ -18,10 +19,10 @@ buildscript {
 
 plugins {
   id("org.sonarqube") version "3.3"
-  id("org.jetbrains.intellij") version "1.13.0"
+  id("org.jetbrains.intellij") version "1.14.2"
   kotlin("jvm") version "1.7.10"
   java
-  jacoco
+  id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
 
 val sonarLinksCi: String by project
@@ -31,8 +32,10 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "1.0.3-231"
+version = "1.1.0-231"
 val remoteRobotVersion = "0.11.18"
+val okHttp3Version = "4.10.0"
+val kotestVersion = "5.5.5"
 
 repositories {
   mavenCentral()
@@ -61,7 +64,7 @@ dependencies {
   implementation(group = "com.squareup.retrofit2", name = "retrofit", version = "2.9.0")
   implementation("com.squareup.retrofit2:converter-gson:2.9.0")
   implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
-  implementation("com.squareup.okhttp3:okhttp:4.10.0")
+  implementation("com.squareup.okhttp3:okhttp:$okHttp3Version")
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20")
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
@@ -69,14 +72,16 @@ dependencies {
   implementation("com.starxg:java-keytar:1.0.0")
   implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
-  testImplementation("io.mockk:mockk:1.13.2")
-  testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
-  testImplementation("io.kotest:kotest-assertions-core:5.5.2")
-  testImplementation("io.kotest:kotest-runner-junit5:5.5.2")
+  testImplementation("io.mockk:mockk:1.13.5")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
+  testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
+  testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
-  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.0")
+  testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
+  testImplementation("com.squareup.okhttp3:okhttp-tls:$okHttp3Version")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
 }
 
 intellij {
@@ -112,26 +117,46 @@ tasks {
       events("passed", "skipped", "failed")
     }
 
-    configure<JacocoTaskExtension> {
-      isIncludeNoLocationClasses = true
-      excludes = listOf("jdk.internal.*")
-    }
+//    ignoreFailures = true
 
-    finalizedBy("jacocoTestReport")
-  }
+    finalizedBy("koverHtmlReport")
+    systemProperty("idea.force.use.core.classloader", "true")
+    systemProperty("idea.use.core.classloader.for.plugin.path", "true")
 
-  jacocoTestReport {
-    classDirectories.setFrom(
-      files(classDirectories.files.map {
-        fileTree(it) {
-          exclude("${buildDir}/instrumented/**")
+    afterSuite(
+      KotlinClosure2<TestDescriptor, TestResult, Unit>({ desc, result ->
+        if (desc.parent == null) { // will match the outermost suite
+          val output =
+            "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
+                "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+          val fileName = "./build/reports/tests/${result.resultType}.txt"
+          File(fileName).writeText(output)
         }
       })
     )
-    reports {
-      xml.required.set(true)
-      xml.outputLocation.set(File("${buildDir}/reports/jacoco.xml"))
+// TODO: setup Kover
+//    reports {
+//      xml.required.set(true)
+//      xml.outputLocation.set(File("${buildDir}/reports/jacoco.xml"))
+//    }
+  }
+
+  val createOpenApiSourceJar by registering(Jar::class) {
+    // Java sources
+    from(sourceSets.main.get().java) {
+      include("**/org/zowe/explorer/**/*.java")
     }
+    // Kotlin sources
+    from(kotlin.sourceSets.main.get().kotlin) {
+      include("**/org/zowe/explorer/**/*.kt")
+    }
+    destinationDirectory.set(layout.buildDirectory.dir("libs"))
+    archiveClassifier.set("src")
+  }
+
+  buildPlugin {
+    dependsOn(createOpenApiSourceJar)
+    from(createOpenApiSourceJar) { into("lib/src") }
   }
 }
 
@@ -169,9 +194,15 @@ val uiTest = task<Test>("uiTest") {
   classpath = sourceSets["uiTest"].runtimeClasspath
   useJUnitPlatform() {
     excludeTags("FirstTime")
+    excludeTags("SmokeTest")
   }
   testLogging {
     events("passed", "skipped", "failed")
+  }
+  extensions.configure(KoverTaskExtension::class) {
+    // set to true to disable instrumentation of this task,
+    // Kover reports will not depend on the results of its execution
+    isDisabled.set(true)
   }
 }
 
@@ -189,6 +220,38 @@ val firstTimeUiTest = task<Test>("firstTimeUiTest") {
   testLogging {
     events("passed", "skipped", "failed")
   }
+  extensions.configure(KoverTaskExtension::class) {
+    // set to true to disable instrumentation of this task,
+    // Kover reports will not depend on the results of its execution
+    isDisabled.set(true)
+  }
+}
+
+/**
+ * Runs the smoke ui test
+ */
+val SmokeUiTest = task<Test>("smokeUiTest") {
+  description = "Gets rid of license agreement, etc."
+  group = "verification"
+  testClassesDirs = sourceSets["uiTest"].output.classesDirs
+  classpath = sourceSets["uiTest"].runtimeClasspath
+  useJUnitPlatform() {
+    includeTags("SmokeTest")
+  }
+  testLogging {
+    events("passed", "skipped", "failed")
+  }
+  extensions.configure(KoverTaskExtension::class) {
+    // set to true to disable instrumentation of this task,
+    // Kover reports will not depend on the results of its execution
+    isDisabled.set(true)
+  }
+}
+
+tasks {
+  withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  }
 }
 
 tasks.downloadRobotServerPlugin {
@@ -198,15 +261,4 @@ tasks.downloadRobotServerPlugin {
 tasks.runIdeForUiTests {
   systemProperty("idea.trust.all.projects", "true")
   systemProperty("ide.show.tips.on.startup.default.value", "false")
-}
-
-tasks {
-  withType<Copy> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-  }
-}
-
-tasks.test {
-  systemProperty("idea.force.use.core.classloader", "true")
-  systemProperty("idea.use.core.classloader.for.plugin.path", "true")
 }

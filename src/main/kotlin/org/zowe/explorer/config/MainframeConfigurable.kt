@@ -10,18 +10,15 @@
 
 package org.zowe.explorer.config
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
-import org.zowe.explorer.config.connect.ui.ConnectionConfigurable
 import org.zowe.explorer.config.settings.ui.SettingsConfigurable
-import org.zowe.explorer.config.ws.ui.files.FilesWSConfigurable
-import org.zowe.explorer.config.ws.ui.jes.JesWsConfigurable
 
 /**
  * Main UI class to build configurables for project and set them to appropriate place
  */
 class MainframeConfigurable : TabbedConfigurable() {
-  var preferredConfigurableClass: Class<*>? = null
 
   /**
    * Method which is called to display project name in Intellij
@@ -30,22 +27,20 @@ class MainframeConfigurable : TabbedConfigurable() {
     return "Zowe Explorer"
   }
 
-  private lateinit var connectionConfigurable: ConnectionConfigurable
-  private lateinit var wsConfigurable: FilesWSConfigurable
-  private lateinit var jesWsConfigurable: JesWsConfigurable
-  private lateinit var settingsConfigurable: SettingsConfigurable
 
   /**
    * Method to create all existed configurables and initialize them
    * @return List of configurable items
    */
   override fun createConfigurables(): MutableList<Configurable> {
-    return mutableListOf(
-      ConnectionConfigurable().also { connectionConfigurable = it },
-      FilesWSConfigurable().also { wsConfigurable = it },
-      JesWsConfigurable().also { jesWsConfigurable = it },
-      SettingsConfigurable().also { settingsConfigurable = it }
-    )
+    val configService = service<ConfigService>()
+    return configService
+      .getRegisteredConfigDeclarations()
+      .sortedBy { it.configPriority }
+      .mapNotNull { it.getConfigurable() as Configurable? }
+      .distinct()
+      .toMutableList()
+      .apply { add(SettingsConfigurable()) }
   }
 
   /**
@@ -71,18 +66,4 @@ class MainframeConfigurable : TabbedConfigurable() {
     configurables.forEach { it.cancel() }
   }
 
-  /**
-   * Method to create configurable tabs and add(represent) them in UI
-   */
-  override fun createConfigurableTabs() {
-    super.createConfigurableTabs().also {
-      myTabbedPane.selectedIndex = when (preferredConfigurableClass) {
-        SettingsConfigurable::class.java -> 4
-        JesWsConfigurable::class.java -> 3
-        FilesWSConfigurable::class.java -> 2
-        ConnectionConfigurable::class.java -> 1
-        else -> 0
-      }
-    }
-  }
 }

@@ -36,7 +36,7 @@ class MoveCopyOperation(
   val isMove: Boolean,
   val forceOverwriting: Boolean,
   val newName: String?,
-  val explorer: Explorer<*>? = null
+  val explorer: Explorer<ConnectionConfig, *>? = null
 ) : UnitOperation {
   constructor(
     source: VirtualFile,
@@ -45,7 +45,7 @@ class MoveCopyOperation(
     forceOverwriting: Boolean,
     newName: String?,
     dataOpsManager: DataOpsManager,
-    explorer: Explorer<*>? = null
+    explorer: Explorer<ConnectionConfig, *>? = null
   ) : this(
     source = source,
     sourceAttributes = dataOpsManager.tryToGetAttributes(source),
@@ -56,6 +56,10 @@ class MoveCopyOperation(
     newName = newName,
     explorer = explorer
   )
+
+  override fun toString(): String {
+    return "MoveCopyOperation(source=$source, sourceAttributes=$sourceAttributes, destination=$destination, destinationAttributes=$destinationAttributes, isMove=$isMove, forceOverwriting=$forceOverwriting, newName=$newName, explorer=$explorer)"
+  }
 }
 
 /**
@@ -65,13 +69,13 @@ class MoveCopyOperation(
  * @return collection that contains pairs of requester and connection config values.
  */
 @Suppress("UNCHECKED_CAST")
-fun MoveCopyOperation.commonUrls(dataOpsManager: DataOpsManager): Collection<Pair<Requester, ConnectionConfig>> {
+fun MoveCopyOperation.commonUrls(dataOpsManager: DataOpsManager): Collection<Pair<Requester<ConnectionConfig>, ConnectionConfig>> {
   val sourceAttributesPrepared = if (sourceAttributes is RemoteMemberAttributes) {
     sourceAttributes.getLibraryAttributes(dataOpsManager)
       ?: throw IllegalArgumentException("Cannot find lib attributes")
   } else {
     sourceAttributes
   }
-  return (sourceAttributesPrepared as MFRemoteFileAttributes<Requester>)
-    .findCommonUrlConnections(destinationAttributes as MFRemoteFileAttributes<Requester>)
+  return (sourceAttributesPrepared as MFRemoteFileAttributes<ConnectionConfig, Requester<ConnectionConfig>>)
+    .findCommonUrlConnections(destinationAttributes as MFRemoteFileAttributes<ConnectionConfig, Requester<ConnectionConfig>>)
 }

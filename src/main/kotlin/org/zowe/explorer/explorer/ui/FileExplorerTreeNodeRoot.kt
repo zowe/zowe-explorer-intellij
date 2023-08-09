@@ -13,19 +13,17 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FilesWorkingSet
 
-/**
- * File Explorer root node, where the information about the connection is situated.
- * Provides interaction with the root node
- */
+/** File Explorer root node, that is hidden, but aggregates all nodes in JES Explorer. */
 class FileExplorerTreeNodeRoot(
-  explorer: Explorer<FilesWorkingSet>,
+  explorer: Explorer<ConnectionConfig, FilesWorkingSet>,
   project: Project,
   treeStructure: ExplorerTreeStructureBase
 ) :
-  ExplorerTreeNode<Explorer<FilesWorkingSet>>(explorer, project, null, explorer, treeStructure) {
+  ExplorerTreeNode<ConnectionConfig, Explorer<ConnectionConfig, FilesWorkingSet>>(explorer, project, null, explorer, treeStructure) {
 
   override fun isAlwaysExpand(): Boolean {
     return true

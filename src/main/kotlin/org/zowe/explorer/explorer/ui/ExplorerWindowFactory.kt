@@ -10,13 +10,19 @@
 
 package org.zowe.explorer.explorer.ui
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
-import org.zowe.explorer.explorer.Explorer
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.content.synchronizer.AutoSyncFileListener
+import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.explorer.UIComponentManager
+import org.zowe.explorer.utils.subscribe
 
 /** Explorer window. This is the main class to represent the plugin */
 class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
@@ -27,14 +33,26 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val contentFactory = ContentFactory.getInstance()
-    UIComponentManager.INSTANCE.getExplorerContentProviders<Explorer<*>>().forEach {
+    UIComponentManager.INSTANCE.getExplorerContentProviders().forEach {
       val content = contentFactory
         .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)
       toolWindow.contentManager.addContent(content)
     }
   }
 
-  override fun init(toolWindow: ToolWindow) {}
+  override fun init(toolWindow: ToolWindow) {
+    subscribe(AutoSyncFileListener.AUTO_SYNC_FILE, object: AutoSyncFileListener {
+      override fun sync(file: VirtualFile) {
+        val dataOpsManager = service<DataOpsManager>()
+        if (dataOpsManager.isSyncSupported(file)) {
+          val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
+          runBackgroundableTask("Synchronizing file ${file.name} with mainframe") { indicator ->
+            contentSynchronizer.synchronizeWithRemote(DocumentedSyncProvider(file), indicator)
+          }
+        }
+      }
+    })
+  }
 
   override fun shouldBeAvailable(project: Project): Boolean {
     return true

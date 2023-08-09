@@ -93,6 +93,8 @@ Thank you for considering IBA Group for your mainframe needs.
         <extensionPoint name="explorer"
                         interface="org.zowe.explorer.explorer.ExplorerFactory"/>
 
+        <extensionPoint name="configDeclaration"
+                        interface="org.zowe.explorer.config.ConfigDeclarationFactory"/>
     </extensionPoints>
 
     <applicationListeners>
@@ -100,13 +102,19 @@ Thank you for considering IBA Group for your mainframe needs.
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
         <listener class="org.zowe.explorer.editor.FileEditorEventsListener"
-                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
-
-        <listener class="org.zowe.explorer.dataops.content.synchronizer.MFAutoSaveDocumentListener"
-                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
 
     <extensions defaultExtensionNs="org.zowe.explorer">
+
+        <configDeclaration implementation="org.zowe.explorer.config.connect.ConnectionConfigDeclarationFactory"/>
+
+        <configDeclaration implementation="org.zowe.explorer.config.ws.FilesWorkingSetConfigDeclarationFactory"/>
+
+        <configDeclaration implementation="org.zowe.explorer.config.ws.JesWorkingSetConfigDeclarationFactory"/>
+
+        <configDeclaration
+                implementation="org.zowe.explorer.config.connect.CredentialsConfigDeclarationFactory"/>
 
         <attributesService
                 implementation="org.zowe.explorer.dataops.attributes.RemoteDatasetAttributesServiceFactory"/>
@@ -196,7 +204,7 @@ Thank you for considering IBA Group for your mainframe needs.
                 implementation="org.zowe.explorer.dataops.operations.mover.LocalFileToUssDirMoverFactory"/>
 
         <operationRunner
-                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileToUssDirMoverFactory"/>
+                implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMoverFactory"/>
 
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileToPdsMoverFactory"/>
@@ -238,6 +246,9 @@ Thank you for considering IBA Group for your mainframe needs.
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperationRunnerFactory"/>
 
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.ChangePasswordOperationRunnerFactory"/>
+
         <operationRunner implementation="org.zowe.explorer.dataops.operations.TsoOperationRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
@@ -274,11 +285,19 @@ Thank you for considering IBA Group for your mainframe needs.
         <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
 
+        <postStartupActivity implementation="org.zowe.explorer.config.ConfigStartupActivity"/>
+
         <postStartupActivity implementation="org.zowe.explorer.editor.ProjectStartupActivity"/>
 
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
+
+        <requiredForSmartModeStartupActivity
+                implementation="org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider"/>
+
+        <requiredForSmartModeStartupActivity
+                implementation="org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider"/>
 
         <editorFloatingToolbarProvider
                 implementation="org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider"/>
@@ -315,6 +334,10 @@ Thank you for considering IBA Group for your mainframe needs.
         <applicationService preload="true" serviceInterface="org.zowe.explorer.config.ConfigService"
                             serviceImplementation="org.zowe.explorer.config.ConfigServiceImpl"/>
 
+        <applicationService preload="true" serviceInterface="org.zowe.explorer.config.OldConfigService"
+                            serviceImplementation="org.zowe.explorer.config.OldConfigServiceImpl"
+                            testServiceImplementation="org.zowe.explorer.testServiceImpl.TestCredentialsServiceImpl"/>
+
         <applicationService serviceInterface="org.zowe.explorer.config.connect.CredentialService"
                             serviceImplementation="org.zowe.explorer.config.connect.CredentialServiceImpl"/>
 
@@ -326,7 +349,8 @@ Thank you for considering IBA Group for your mainframe needs.
                             testServiceImplementation="org.zowe.explorer.testServiceImpl.TestDataOpsManagerImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.api.ZosmfApi"
-                            serviceImplementation="org.zowe.explorer.api.ZosmfApiImpl"/>
+                            serviceImplementation="org.zowe.explorer.api.ZosmfApiImpl"
+                            testServiceImplementation="org.zowe.explorer.testServiceImpl.TestZosmfApiImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.explorer.UIComponentManager"
                             serviceImplementation="org.zowe.explorer.explorer.UIComponentManagerImpl"/>
@@ -346,7 +370,12 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
-                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory, before PowerSaveMode"/>
+                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory, before powerStatus"/>
+
+        <localInspection shortName="ZoweMFLossyEncoding" displayName="Zowe MF lossy encoding"
+                         groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
+                         enabledByDefault="true" level="WARNING" language=""
+                         implementationClass="org.zowe.explorer.editor.inspection.MFLossyEncodingInspection"/>
     </extensions>
 
     <actions>
@@ -434,6 +463,14 @@ Thank you for considering IBA Group for your mainframe needs.
             <keyboard-shortcut first-keystroke="shift F2" keymap="$default"/>
         </action>
 
+        <action id="org.zowe.explorer.explorer.actions.DuplicateMemberAction"
+                class="org.zowe.explorer.explorer.actions.DuplicateMemberAction"
+                text="Duplicate"
+                use-shortcut-of="EditorDuplicate"
+                icon="AllIcons.Actions.Copy">
+            <keyboard-shortcut first-keystroke="F3" keymap="$default"/>
+        </action>
+
         <action id="org.zowe.explorer.explorer.actions.EditJobsFilterAction"
                 class="org.zowe.explorer.explorer.actions.EditJobsFilterAction"
                 text="Edit"/>
@@ -448,6 +485,10 @@ Thank you for considering IBA Group for your mainframe needs.
                 class="org.zowe.explorer.explorer.actions.AddMaskAction"
                 icon="ForMainframeIcons.DatasetMask"
                 text="Mask"/>
+
+        <action id="org.zowe.explorer.explorer.actions.EditMaskAction"
+                class="org.zowe.explorer.explorer.actions.EditMaskAction"
+                text="Edit"/>
 
         <action id="org.zowe.explorer.explorer.actions.AddJobsFilterAction"
                 class="org.zowe.explorer.explorer.actions.AddJobsFilterAction"
@@ -563,6 +604,8 @@ Thank you for considering IBA Group for your mainframe needs.
             <reference id="org.zowe.explorer.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="org.zowe.explorer.explorer.actions.RenameAction"/>
             <reference id="org.zowe.explorer.explorer.actions.ForceRenameAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.EditMaskAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.DuplicateMemberAction"/>
             <separator/>
             <reference id="$Delete"/>
             <separator/>

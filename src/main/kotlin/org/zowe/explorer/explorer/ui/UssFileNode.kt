@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.IconUtil
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.vfs.MFVirtualFile
 
@@ -23,10 +24,10 @@ import org.zowe.explorer.vfs.MFVirtualFile
 class UssFileNode(
   file: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  unit: ExplorerUnit,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
+  unit: ExplorerUnit<ConnectionConfig>,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(
+) : ExplorerUnitTreeNodeBase<ConnectionConfig, MFVirtualFile, ExplorerUnit<ConnectionConfig>>(
   file, project, parent, unit, treeStructure
 ), UssNode {
 

@@ -10,17 +10,17 @@
 
 package org.zowe.explorer.explorer
 
-import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 
 /** Interface to represent base unit in explorer */
-interface ExplorerUnit {
+interface ExplorerUnit<Connection: ConnectionConfigBase> {
 
   val name: String
 
   val uuid: String
 
-  val connectionConfig: ConnectionConfig?
+  val connectionConfig: Connection?
 
-  val explorer: Explorer<*>
+  val explorer: Explorer<Connection, *>
 
 }

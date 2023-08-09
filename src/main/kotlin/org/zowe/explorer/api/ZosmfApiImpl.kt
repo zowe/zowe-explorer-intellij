@@ -130,7 +130,7 @@ private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
       it.request().newBuilder().addHeader("X-CSRF-ZOSMF-HEADER", "").build().let { request ->
         it.proceed(request)
       }
-    }.connectionSpecs(mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+    }.connectionSpecs(mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT))
 }
 
 /**

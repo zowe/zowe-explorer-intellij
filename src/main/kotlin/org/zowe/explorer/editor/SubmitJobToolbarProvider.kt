@@ -12,6 +12,7 @@ package org.zowe.explorer.editor
 
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 
+
 private const val ACTION_GROUP = "org.zowe.explorer.explorer.actions.SubmitJobToolbarActionGroup"
 
 /**

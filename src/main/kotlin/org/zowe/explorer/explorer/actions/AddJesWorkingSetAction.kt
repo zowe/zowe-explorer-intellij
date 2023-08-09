@@ -21,7 +21,6 @@ import org.zowe.explorer.config.ws.ui.JesWorkingSetDialogState
 import org.zowe.explorer.config.ws.ui.initEmptyUuids
 import org.zowe.explorer.config.ws.ui.jes.JesWsDialog
 import org.zowe.explorer.explorer.ui.FILE_EXPLORER_CONTEXT_MENU
-import org.zowe.explorer.explorer.ui.JES_EXPLORER_VIEW
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getAll
 
@@ -31,7 +30,6 @@ import org.zowe.explorer.utils.crudable.getAll
  * @author Valiantsin Krus
  */
 class AddJesWorkingSetAction : AddWsActionBase() {
-  override val explorerView = JES_EXPLORER_VIEW
   override val presentationTextInExplorer = "JES Working Set"
   override val defaultPresentationText = "Create JES Working Set"
 
@@ -39,7 +37,7 @@ class AddJesWorkingSetAction : AddWsActionBase() {
    * Creates dialog for JES Working Set.
    * @see AddWsActionBase.createDialog
    */
-  override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
+  override fun createDialog(configCrudable: Crudable): AbstractWsDialog<*, *, *, out AbstractWsDialogState<out WorkingSetConfig, *>> {
     return JesWsDialog(configCrudable, JesWorkingSetDialogState().initEmptyUuids(configCrudable))
   }
 

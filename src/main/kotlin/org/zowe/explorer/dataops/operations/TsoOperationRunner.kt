@@ -18,6 +18,7 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
 import org.zowe.explorer.ui.build.tso.ui.TSOSessionParams
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoApi
 import org.zowe.kotlinsdk.TsoData
@@ -42,6 +43,7 @@ class TsoOperationRunnerFactory : OperationRunnerFactory {
 class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
   override val operationClass = TsoOperation::class.java
   override val resultClass = TsoResponse::class.java
+  override val log = log<TsoOperationRunner>()
 
   /**
    * Method determines if an operation can run

@@ -20,8 +20,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.config.connect.password
-import org.zowe.explorer.config.connect.username
+import org.zowe.explorer.config.connect.getPassword
+import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
@@ -192,8 +192,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val zowePassword = zoweConfig.password ?: return ZoweConfigState.ERROR
 
     return if (existingConnection == newConnection &&
-      username(newConnection) == zoweUsername &&
-      password(newConnection) == zowePassword
+      getUsername(newConnection) == zoweUsername &&
+      getPassword(newConnection) == zowePassword
     ) {
       ZoweConfigState.SYNCHRONIZED
     } else {

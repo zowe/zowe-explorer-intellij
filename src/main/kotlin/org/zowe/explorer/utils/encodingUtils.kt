@@ -10,17 +10,36 @@
 
 package org.zowe.explorer.utils
 
+import com.intellij.CommonBundle
+import com.intellij.codeInspection.InspectionEngine
+import com.intellij.codeInspection.InspectionManager
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.components.service
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingManager
+import com.intellij.openapi.vfs.encoding.EncodingUtil.Magic8
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiManager
+import com.intellij.xml.util.XmlStringUtil
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
+import org.zowe.explorer.explorer.ui.ChangeEncodingDialog
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
 import java.nio.charset.Charset
+import javax.swing.Icon
 
 /**
  * Save document file content in new encoding (convert).
@@ -29,21 +48,24 @@ import java.nio.charset.Charset
  * @param charset new encoding.
  */
 fun saveIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
+  val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile) ?: return
   val syncProvider = DocumentedSyncProvider(virtualFile)
+  val fileUploadNeeded = contentSynchronizer.isFileUploadNeeded(syncProvider)
+  val document = syncProvider.getDocument() ?: return
+  syncProvider.saveDocument()
+  val bytes = contentSynchronizer.successfulContentStorage(syncProvider)
+  val text = if (fileUploadNeeded) document.text
+  else LoadTextUtil.getTextByBinaryPresentation(bytes, virtualFile).toString()
+  EncodingManager.getInstance().setEncoding(virtualFile, charset)
+  virtualFile.charset = charset
   runWriteActionInEdtAndWait {
-    syncProvider.saveDocument()
-    EncodingManager.getInstance().setEncoding(virtualFile, charset)
-    virtualFile.charset = charset
-    val document = syncProvider.getDocument()
-    document?.let {
-      LoadTextUtil.write(
-        project,
-        virtualFile,
-        virtualFile,
-        document.text,
-        document.modificationStamp
-      )
-    }
+    LoadTextUtil.write(
+      project,
+      virtualFile,
+      virtualFile,
+      text,
+      document.modificationStamp
+    )
   }
 }
 
@@ -56,76 +78,182 @@ fun saveIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
 fun reloadIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
   val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.syncOnOpen(project))
   runWriteActionInEdtAndWait {
-    syncProvider.saveDocument()
     EncodingManager.getInstance().setEncoding(virtualFile, charset)
-    val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(virtualFile)
+    virtualFile.charset = charset
+    val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
     contentSynchronizer?.synchronizeWithRemote(syncProvider)
-    LoadTextUtil.clearCharsetAutoDetectionReason(virtualFile)
   }
 }
 
 /** Changes the file encoding to the specified one. */
 fun changeFileEncodingTo(file: VirtualFile, charset: Charset) {
   runWriteActionInEdtAndWait {
-    file.charset = charset
     EncodingManager.getInstance().setEncoding(file, charset)
+    file.charset = charset
   }
 }
 
-enum class ContentEncodingMode(val value: String) {
-  CONVERT("CONVERT"),
-  RELOAD("RELOAD")
-}
-
-/**
- * Dialog for selecting content encoding mode (reload, convert or cancel).
- * @param fileName name of the file.
- * @param encodingName name of the file encoding.
- * @param project the project to show dialog.
- * @return content encoding mode [ContentEncodingMode] or null.
- */
-fun showReloadConvertCancelDialog(fileName: String, encodingName: String, project: Project?): ContentEncodingMode? {
-  val result = Messages.showDialog(
-    project,
-    "The encoding you've chosen ('${encodingName}') may change the contents of '${fileName}'.<br>"
-    + "Do you want to<br>"
-    + "1. <b>Reload</b> the file from remote in the new encoding '${encodingName}' and overwrite contents " +
-    "(may not display correctly) or<br>"
-    + "2. <b>Convert</b> the text and overwrite file in the new encoding?<br>",
-    "${fileName}: Reload or Convert to $encodingName",
-    arrayOf("Reload", "Convert", "Cancel"),
-    2,
-    AllIcons.General.QuestionDialog,
-    null
-  )
-  return when (result) {
-    0 -> ContentEncodingMode.RELOAD
-    1 -> ContentEncodingMode.CONVERT
-    else -> null
+/** Checks if it is safe to reload file in the specified encoding. */
+fun isSafeToReloadIn(virtualFile: VirtualFile, text: String, bytes: ByteArray, charset: Charset): Magic8 {
+  return try {
+    val decoder = charset.newDecoder()
+    val result = decoder.decode(ByteBuffer.wrap(bytes)).toString()
+    val lineSeparator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, null)
+    val textToSave = StringUtil.convertLineSeparators(result, lineSeparator)
+    if (StringUtil.equals(textToSave, text)) {
+      Magic8.ABSOLUTELY
+    } else {
+      Magic8.WELL_IF_YOU_INSIST
+    }
+  } catch (e: Exception) {
+    Magic8.NO_WAY
   }
 }
 
+/** Checks if it is safe to convert file to the specified encoding. */
+fun isSafeToConvertTo(virtualFile: VirtualFile, text: String, charset: Charset): Magic8 {
+  return try {
+    val encoder = charset.newEncoder()
+    val lineSeparator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, null)
+    val textToSave = StringUtilRt.convertLineSeparators(text, lineSeparator)
+    encoder.encode(CharBuffer.wrap(textToSave))
+    Magic8.ABSOLUTELY
+  } catch (e: Exception) {
+    Magic8.NO_WAY
+  }
+}
+
+/** Data class that represents info about safe encoding change. */
+data class EncodingInspection(
+  val safeToReload: Magic8,
+  val safeToConvert: Magic8
+)
+
 /**
- * Dialog for selecting content encoding mode (reload or cancel).
- * @param fileName name of the file.
- * @param encodingName name of the file encoding.
- * @param project the project to show dialog.
- * @return content encoding mode [ContentEncodingMode] or null.
+ * Checks if it is safe to change file encoding to the specified one.
+ * @see isSafeToReloadIn
+ * @see isSafeToConvertTo
  */
-fun showReloadCancelDialog(fileName: String, encodingName: String, project: Project?): ContentEncodingMode? {
+fun inspectSafeEncodingChange(virtualFile: VirtualFile, charset: Charset): EncodingInspection {
+  val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
+  val syncProvider = DocumentedSyncProvider(virtualFile)
+  val fileNotSynced = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
+  val text = syncProvider.getDocument()?.text
+    ?: throw IllegalArgumentException("Cannot get document text")
+  val bytes = if (fileNotSynced) syncProvider.retrieveCurrentContent()
+  else contentSynchronizer?.successfulContentStorage(syncProvider)
+    ?: throw IllegalArgumentException("Cannot get content bytes")
+  val safeToReload = isSafeToReloadIn(virtualFile, text, bytes, charset)
+  val safeToConvert = isSafeToConvertTo(virtualFile, text, charset)
+  return EncodingInspection(safeToReload, safeToConvert)
+}
+
+/**
+ * Change file encoding action that invokes the change encoding dialog.
+ * @return true if changed or false otherwise.
+ */
+fun changeFileEncodingAction(virtualFile: VirtualFile, attributes: RemoteUssAttributes, charset: Charset): Boolean {
+  val encodingInspection = inspectSafeEncodingChange(virtualFile, charset)
+  val safeToReload = encodingInspection.safeToReload
+  val safeToConvert = encodingInspection.safeToConvert
+  val dialog = ChangeEncodingDialog(virtualFile, attributes, charset, safeToReload, safeToConvert)
+  dialog.show()
+  return dialog.exitCode == ChangeEncodingDialog.RELOAD_EXIT_CODE || dialog.exitCode == ChangeEncodingDialog.CONVERT_EXIT_CODE
+}
+
+/**
+ * Creates a group of actions to change the file encoding.
+ * Checks if it is safe to change the encoding and sorts the actions by the possibility of change.
+ */
+fun createCharsetsActionGroup(virtualFile: VirtualFile, attributes: RemoteUssAttributes): DefaultActionGroup {
+  val group = DefaultActionGroup()
+
+  val action: (charset: Charset, icon: Icon?) -> DumbAwareAction = { charset, icon ->
+    object : DumbAwareAction(charset.name(), null, icon) {
+      override fun actionPerformed(e: AnActionEvent) {
+        changeFileEncodingAction(virtualFile, attributes, charset)
+      }
+
+      override fun update(e: AnActionEvent) {
+        e.presentation.icon = icon
+        super.update(e)
+      }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    }
+  }
+
+  fun getActionPriority(action: DumbAwareAction): Int {
+    return when (action.templatePresentation.icon) {
+      AllIcons.General.Error -> 2
+      AllIcons.General.Warning -> 1
+      else -> 0
+    }
+  }
+
+  val comparator = Comparator { action1: DumbAwareAction, action2: DumbAwareAction ->
+    getActionPriority(action1) - getActionPriority(action2)
+  }
+
+  val sortedCharsetActions = getSupportedEncodings().filter { it != virtualFile.charset }
+    .map {
+      val encodingInspection = inspectSafeEncodingChange(virtualFile, it)
+      val safeToReload = encodingInspection.safeToReload
+      val safeToConvert = encodingInspection.safeToConvert
+      val icon = if (safeToConvert == Magic8.NO_WAY && safeToReload == Magic8.NO_WAY) AllIcons.General.Error
+      else if (safeToConvert == Magic8.NO_WAY) AllIcons.General.Warning
+      else null
+      action(it, icon)
+    }
+    .sortedWith(comparator)
+
+  val favoriteCharsetsSize = 5
+  val favoriteCharsets = sortedCharsetActions.subList(0, favoriteCharsetsSize)
+  favoriteCharsets.forEach { group.add(it) }
+  val moreCharsets = sortedCharsetActions.subList(favoriteCharsetsSize, sortedCharsetActions.size)
+  val more = DefaultActionGroup.createPopupGroup { IdeBundle.message("action.text.more") }
+  moreCharsets.forEach { more.add(it) }
+  group.add(more)
+
+  return group
+}
+
+/**
+ * Checks the compatibility of the content and the current encoding before saving the file.
+ * @return true if compatible or false otherwise.
+ */
+fun checkEncodingCompatibility(file: VirtualFile, project: Project): Boolean {
+  var compatible = true
+  val psiFile = PsiManager.getInstance(project).findFile(file)
+  psiFile?.let {
+    val inspectionProfile = InspectionProjectProfileManager.getInstance(project).currentProfile
+    val inspectionTool = inspectionProfile.getInspectionTool("ZoweMFLossyEncoding", project)
+    inspectionTool?.let { tool ->
+      val inspectionManager = InspectionManager.getInstance(project)
+      val descriptors =
+        InspectionEngine.runInspectionOnFile(it, tool, inspectionManager.createNewGlobalContext())
+      if (descriptors.isNotEmpty()) {
+        compatible = false
+      }
+    }
+  }
+  return compatible
+}
+
+/**
+ * Show dialog on save that warns the user if the content and the selected encoding are incompatible.
+ * @return true if saves anyway or false otherwise.
+ */
+fun showSaveAnywayDialog(charset: Charset): Boolean {
   val result = Messages.showDialog(
-    project,
-    "The encoding you've chosen ('${encodingName}') may change the contents of '${fileName}'.<br>"
-    + "Do you want to <b>Reload</b> the file from remote in the new encoding '${encodingName}' and overwrite contents " +
-    "(may not display correctly).<br>",
-    "${fileName}: Reload to $encodingName",
-    arrayOf("Reload", "Cancel"),
+    XmlStringUtil.wrapInHtml(
+      IdeBundle.message("encoding.unsupported.characters.message", charset.displayName()) +
+      "<br><br>Content may change after saving."
+    ),
+    IdeBundle.message("incompatible.encoding.dialog.title", charset.displayName()),
+    arrayOf("Save Anyway", CommonBundle.getCancelButtonText()),
     1,
-    AllIcons.General.QuestionDialog,
-    null
+    AllIcons.General.WarningDialog
   )
-  return when (result) {
-    0 -> ContentEncodingMode.RELOAD
-    else -> null
-  }
+  return result == 0
 }

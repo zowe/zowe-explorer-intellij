@@ -54,7 +54,7 @@ abstract class CreateUssEntityAction : AnAction() {
    * Runs uss allocation operation.
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val selected = view.mySelectedNodesData[0]
     val selectedNode = selected.node
     val node = if (selectedNode is UssFileNode) {
@@ -63,8 +63,9 @@ abstract class CreateUssEntityAction : AnAction() {
       selectedNode.takeIf { it is UssDirNode }
     } ?: return
     val file = node.virtualFile
-    if (node is ExplorerUnitTreeNodeBase<*, *>) {
-      val connectionConfig = node.unit.connectionConfig ?: return
+    // TODO: Why is it highlighted ???
+    if (node is ExplorerUnitTreeNodeBase<*, *, *>) {
+      val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
       val dataOpsManager = node.unit.explorer.componentManager.service<DataOpsManager>()
       val filePath = if (file != null) {
         dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
@@ -100,7 +101,7 @@ abstract class CreateUssEntityAction : AnAction() {
               )
 
               val fileFetchProvider = dataOpsManager
-                .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, MFVirtualFile>(
+                .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
                   UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
                 )
               ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }
@@ -161,7 +162,7 @@ abstract class CreateUssEntityAction : AnAction() {
    * Makes action visible only if one node (uss file or uss directory) is selected.
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

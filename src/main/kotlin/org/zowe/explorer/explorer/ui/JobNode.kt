@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.STYLE_BOLD
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.UnitRemoteQueryImpl
@@ -35,19 +36,19 @@ private val jobIcon = AllIcons.Nodes.Folder
 class JobNode(
   library: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: JesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<MFVirtualFile, JobQuery, JesWorkingSet>(
+) : RemoteMFFileFetchNode<ConnectionConfig, MFVirtualFile, JobQuery, JesWorkingSet>(
   library, project, parent, workingSet, treeStructure
-), MFNode, RefreshableNode {
-  override fun makeFetchTaskTitle(query: RemoteQuery<JobQuery, Unit>): String {
+), RefreshableNode {
+  override fun makeFetchTaskTitle(query: RemoteQuery<ConnectionConfig, JobQuery, Unit>): String {
     return "Fetching members for ${query.request.library.name}"
   }
 
   private val jobJclNotAvailable = "JCL NOT AVAILABLE"
 
-  override val query: RemoteQuery<JobQuery, Unit>?
+  override val query: RemoteQuery<ConnectionConfig, JobQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
 

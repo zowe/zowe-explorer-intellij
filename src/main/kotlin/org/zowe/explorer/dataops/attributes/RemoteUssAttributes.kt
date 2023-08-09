@@ -11,10 +11,13 @@
 package org.zowe.explorer.dataops.attributes
 
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.getOwner
 import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import org.zowe.explorer.utils.Copyable
+import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.clone
 import org.zowe.kotlinsdk.FileMode
+import org.zowe.kotlinsdk.FileModeValue
 import org.zowe.kotlinsdk.UssFile
 import org.zowe.kotlinsdk.XIBMDataType
 import java.nio.charset.Charset
@@ -72,7 +75,7 @@ data class RemoteUssAttributes(
   val groupId: String? = null,
   val modificationTime: String? = null,
   val symlinkTarget: String? = null
-) : MFRemoteFileAttributes<UssRequester>, Copyable {
+) : MFRemoteFileAttributes<ConnectionConfig, UssRequester>, Copyable {
 
   /**
    * Constructor for creating uss attributes object
@@ -112,12 +115,10 @@ data class RemoteUssAttributes(
   val parentDirPath
     get() = path.substring(1).split(USS_DELIMITER).dropLast(1).joinToString(separator = USS_DELIMITER)
 
-  val isWritable: Boolean = true
-    /* Commented out because the user may not be the owner of the file, but have write permissions
-    https://github.com/zowe/zowe-explorer-intellij/issues/107
+  val isWritable: Boolean
     get() {
       val hasFileOwnerInRequesters = requesters.any {
-        runCatching { username(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
+        runCatching { getOwner(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
       }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
@@ -129,14 +130,11 @@ data class RemoteUssAttributes(
               || mode == FileModeValue.READ_WRITE.mode
               || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
-    */
 
-  val isReadable: Boolean = true
-    /* Commented out because the user may not be the owner of the file, but have read permissions
-    https://github.com/zowe/zowe-explorer-intellij/issues/107
+  val isReadable: Boolean
     get() {
       val hasFileOwnerInRequesters = requesters.any {
-        runCatching { username(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
+        runCatching { getOwner(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
       }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
@@ -148,13 +146,10 @@ data class RemoteUssAttributes(
               || mode == FileModeValue.READ_EXECUTE.mode
               || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
-    */
 
-  val isExecutable: Boolean = true
-    /* Commented out because the user may not be the owner of the file, but have execute permissions
-    https://github.com/zowe/zowe-explorer-intellij/issues/107
+  val isExecutable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any { username(it.connectionConfig).equals(owner, ignoreCase = true) }
+      val hasFileOwnerInRequesters = requesters.any { getOwner(it.connectionConfig).equals(owner, ignoreCase = true) }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
       } else {
@@ -165,7 +160,6 @@ data class RemoteUssAttributes(
               || mode == FileModeValue.WRITE_EXECUTE.mode
               || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
-    */
 
   var charset: Charset = DEFAULT_BINARY_CHARSET
 
@@ -177,4 +171,14 @@ data class RemoteUssAttributes(
   override val isPastePossible: Boolean
     get() = isDirectory
 
+}
+
+/**
+ * Util function to cast FileAttributes to RemoteUssAttributes or throw exception.
+ * @throws IllegalArgumentException
+ * @return source attributes that was cast to RemoteUssAttributes.
+ */
+fun FileAttributes?.toUssAttributes(fileName: String): RemoteUssAttributes {
+  return castOrNull<RemoteUssAttributes>()
+    ?: throw IllegalArgumentException("Cannot find attributes for file \"${fileName}\"")
 }

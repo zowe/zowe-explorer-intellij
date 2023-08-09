@@ -1,0 +1,143 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
+package org.zowe.explorer.explorer.actions
+
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.ws.DSMask
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.MaskState
+import org.zowe.explorer.config.ws.MaskStateWithWS
+import org.zowe.explorer.config.ws.UssPath
+import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.explorer.ui.AddOrEditMaskDialog
+import org.zowe.explorer.explorer.ui.DSMaskNode
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.UssDirNode
+import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.utils.MaskType
+import org.zowe.explorer.utils.clone
+import org.zowe.explorer.utils.crudable.getByUniqueKey
+
+/**
+ * Class which represents an "Edit" action.
+ * The action is shown and triggered only on [DSMaskNode] and [UssDirNode] (a USS mask) node types
+ */
+class EditMaskAction : AnAction() {
+
+  /**
+   * Edit changed dataset mask. Will remove the mask from dataset masks list and add it to USS paths list
+   * if the mask type changed
+   * @param initialName the initial mask name
+   * @param wsConfToUpdate the working set config the mask belongs to, that should be updated
+   * @param changedMaskState the changed mask state with new parameters inside
+   * @return [FilesWorkingSetConfig]
+   */
+  private fun editChangedDSMask(
+    initialName: String,
+    wsConfToUpdate: FilesWorkingSetConfig,
+    changedMaskState: MaskStateWithWS
+  ): FilesWorkingSetConfig {
+    val maskToChange = wsConfToUpdate.dsMasks.filter { it.mask == initialName }[0]
+    if (changedMaskState.type == MaskType.USS) {
+      wsConfToUpdate.dsMasks.remove(maskToChange)
+      wsConfToUpdate.ussPaths.add(UssPath(changedMaskState.mask))
+    } else {
+      wsConfToUpdate.dsMasks.filter { it.mask == initialName }[0].mask = changedMaskState.mask.uppercase()
+    }
+    return wsConfToUpdate
+  }
+
+  /**
+   * Edit changed USS path. Will remove the mask from USS paths list and add it to dataset masks list
+   * if the mask type changed
+   * @param initialName the initial mask name
+   * @param wsConfToUpdate the working set config the mask belongs to, that should be updated
+   * @param changedMaskState the changed mask state with new parameters inside
+   * @return [FilesWorkingSetConfig]
+   */
+  private fun editChangedUssPath(
+    initialName: String,
+    wsConfToUpdate: FilesWorkingSetConfig,
+    changedMaskState: MaskStateWithWS
+  ): FilesWorkingSetConfig {
+    val maskToChange = wsConfToUpdate.ussPaths.filter { it.path == initialName }[0]
+    if (changedMaskState.type == MaskType.ZOS) {
+      wsConfToUpdate.ussPaths.remove(maskToChange)
+      wsConfToUpdate.dsMasks.add(DSMask(changedMaskState.mask.uppercase(), mutableListOf(), ""))
+    } else {
+      wsConfToUpdate.ussPaths.filter { it.path == initialName }[0].path = changedMaskState.mask
+    }
+    return wsConfToUpdate
+  }
+
+  /**
+   * Run "Edit" action on the selected element.
+   * Runs only on [DSMaskNode] and [UssDirNode] (a USS mask) node types
+   */
+  override fun actionPerformed(e: AnActionEvent) {
+    val view = e.getExplorerView<FileExplorerView>() ?: return
+    val selectedNodeData = view.mySelectedNodesData[0]
+    val node = selectedNodeData.node
+
+    if (node is DSMaskNode || (node is UssDirNode && node.isUssMask)) {
+      val parentWS = node.parent?.value as FilesWorkingSet
+      var wsConfToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentWS.uuid)?.clone()
+      if (wsConfToUpdate != null) {
+        val initialState =
+          if (node is DSMaskNode) MaskState(mask = node.value.mask, type = MaskType.ZOS)
+          else MaskState(mask = (node as UssDirNode).value.path, type = MaskType.USS)
+        val initialStateWithWS = MaskStateWithWS(initialState, parentWS)
+        val dialog = AddOrEditMaskDialog(e.project, "Edit Mask", parentWS.connectionConfig, initialStateWithWS)
+        if (dialog.showAndGet()) {
+          val changedMaskState = dialog.state
+          wsConfToUpdate =
+            if (node is DSMaskNode) editChangedDSMask(initialState.mask, wsConfToUpdate, changedMaskState)
+            else editChangedUssPath(initialState.mask, wsConfToUpdate, changedMaskState)
+
+          configCrudable.update(wsConfToUpdate)
+        }
+      }
+    }
+  }
+
+  /**
+   * Make "Edit" action visible if a context menu is called.
+   * The "Edit" action will be visible if:
+   * 1. A context menu is triggered in a [FileExplorerView]
+   * 2. Selected only one node
+   * 3. The node is a [DSMaskNode], [UssDirNode] (a USS mask)
+   */
+  override fun update(e: AnActionEvent) {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val selectedNodesData = view.mySelectedNodesData
+    if (selectedNodesData.size != 1) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val node = selectedNodesData[0].node
+    if (node !is DSMaskNode && (node !is UssDirNode || !node.isUssMask)) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+  }
+
+  /**
+   * Determines if an action is dumb aware
+   */
+  override fun isDumbAware(): Boolean {
+    return true
+  }
+}

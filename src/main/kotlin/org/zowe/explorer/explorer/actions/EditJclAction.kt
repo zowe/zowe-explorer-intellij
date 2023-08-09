@@ -22,11 +22,10 @@ import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.operations.jobs.BasicGetJclRecordsParams
 import org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperation
-import org.zowe.explorer.explorer.ui.JES_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.explorer.ui.JobNode
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.changeFileEncodingTo
-import org.zowe.explorer.dataops.operations.jobs.*
-import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 
@@ -45,7 +44,7 @@ class EditJclAction : AnAction() {
    * Opens the file in editor
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
     val selected = view.mySelectedNodesData.getOrNull(0)
     val node = selected?.node
     if (node is JobNode) {
@@ -109,7 +108,7 @@ class EditJclAction : AnAction() {
    * Makes action visible only for job context menu in JES explorer
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

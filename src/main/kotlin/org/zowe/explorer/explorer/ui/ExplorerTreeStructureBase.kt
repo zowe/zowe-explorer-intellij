@@ -22,16 +22,16 @@ import org.zowe.explorer.explorer.ExplorerViewSettings
  * @param project the project where the tree structure should be visible
  */
 abstract class ExplorerTreeStructureBase(
-  protected val explorer: Explorer<*>,
+  protected val explorer: Explorer<*, *>,
   protected val project: Project
 ) : AbstractTreeStructureBase(project), ExplorerViewSettings {
 
-  abstract fun registerNode(node: ExplorerTreeNode<*>)
+  abstract fun registerNode(node: ExplorerTreeNode<*, *>)
 
-  abstract fun <V : Any> findByValue(value: V): Collection<ExplorerTreeNode<V>>
+  abstract fun <V : Any> findByValue(value: V): Collection<ExplorerTreeNode<*, V>>
 
-  abstract fun findByPredicate(predicate: (ExplorerTreeNode<*>) -> Boolean): Collection<ExplorerTreeNode<*>>
+  abstract fun findByPredicate(predicate: (ExplorerTreeNode<*, *>) -> Boolean): Collection<ExplorerTreeNode<*, *>>
 
-  abstract fun findByVirtualFile(file: VirtualFile): Collection<ExplorerTreeNode<*>>
+  abstract fun findByVirtualFile(file: VirtualFile): Collection<ExplorerTreeNode<*, *>>
 
 }

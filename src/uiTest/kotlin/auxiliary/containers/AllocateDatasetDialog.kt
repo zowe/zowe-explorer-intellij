@@ -40,30 +40,33 @@ open class AllocateDatasetDialog(
         directory: Int,
         recordFormat: String,
         recordLength: Int,
-        blockSize: Int
+        blockSize: Int,
+        averageBlockLength: Int = 0
     ) {
         findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']"))[0].text = datasetName
-        findAll<ComboBoxFixture>(byXpath("//div[@class='ComboBox']"))[0].selectItem(datasetOrganization)
+        findAll<ComboBoxFixture>(byXpath("//div[@class='ComboBox']"))[1].selectItem(datasetOrganization)
 
         val datasetTextParams = findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']"))
         val datasetComboBoxParams = findAll<ComboBoxFixture>(byXpath("//div[@class='ComboBox']"))
 
-        datasetComboBoxParams[1].selectItem(allocationUnit)
+        datasetComboBoxParams[2].selectItem(allocationUnit)
         datasetTextParams[1].text = primaryAllocation.toString()
         datasetTextParams[2].text = secondaryAllocation.toString()
-        datasetComboBoxParams[2].selectItem(recordFormat)
+        datasetComboBoxParams[3].selectItem(recordFormat)
 
         if (datasetOrganization == "PS") {
             datasetTextParams[3].text = recordLength.toString()
             datasetTextParams[4].text = blockSize.toString()
+            datasetTextParams[5].text = averageBlockLength.toString()
         } else {
             datasetTextParams[3].text = directory.toString()
             datasetTextParams[4].text = recordLength.toString()
             datasetTextParams[5].text = blockSize.toString()
+            datasetTextParams[6].text = averageBlockLength.toString()
         }
     }
 
-    //TODO add allocate dataset with advanced parameters
+    //TODO add allocate dataset with advanced parameters when switched tp mock
 
     /**
      * The close function, which is used to close the dialog in the tear down method.

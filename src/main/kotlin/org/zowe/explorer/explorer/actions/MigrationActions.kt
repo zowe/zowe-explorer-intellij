@@ -25,16 +25,17 @@ import org.zowe.explorer.dataops.operations.migration.RecallOperationParams
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.ExplorerTreeNode
 import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
-import org.zowe.explorer.explorer.ui.FILE_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * Get data for explorer node
  * @return Pair of [MFVirtualFile] and [ConnectionConfig]
  */
-fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, ConnectionConfig>? {
-  return if (node is ExplorerUnitTreeNodeBase<*, *> && node.unit is FilesWorkingSet) {
+fun getRequestDataForNode(node: ExplorerTreeNode<*, *>): Pair<VirtualFile, ConnectionConfig>? {
+  return if (node is ExplorerUnitTreeNodeBase<*, *, *> && node.unit is FilesWorkingSet) {
     val file = node.virtualFile
     val config = node.unit.connectionConfig
     if (file != null && config != null) {
@@ -50,7 +51,7 @@ fun getRequestDataForNode(node: ExplorerTreeNode<*>): Pair<VirtualFile, Connecti
  * Clean cache for explorer nodes
  * @see ExplorerTreeNode
  */
-private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*>>) {
+private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*, *>>) {
   val uniqueParentNodes = nodes.map { it.parent }.distinct()
   uniqueParentNodes.forEach { it?.cleanCacheIfPossible(cleanBatchedQuery = true) }
 }
@@ -65,7 +66,7 @@ class RecallAction : DumbAwareAction() {
    * Runs recall operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW)
+    val view = e.getExplorerView<FileExplorerView>()
     if (view != null) {
       val triples = view.mySelectedNodesData.mapNotNull { getRequestDataForNode(it.node) }
       val operations: List<RecallOperation> = triples.map {
@@ -95,7 +96,7 @@ class RecallAction : DumbAwareAction() {
    * Determines if recall operation is possible for chosen object
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -119,7 +120,7 @@ class MigrateAction : DumbAwareAction() {
    * Runs migrate operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW)
+    val view = e.getExplorerView<FileExplorerView>()
     if (view != null) {
       val triples = view.mySelectedNodesData.mapNotNull { getRequestDataForNode(it.node) }
       val operations: List<MigrateOperation> = triples.map {
@@ -148,7 +149,7 @@ class MigrateAction : DumbAwareAction() {
    * Determines if migrate operation is possible for chosen object
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

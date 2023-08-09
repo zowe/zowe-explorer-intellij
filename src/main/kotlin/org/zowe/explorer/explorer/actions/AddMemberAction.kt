@@ -12,16 +12,27 @@ package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.getAttributesService
-import org.zowe.explorer.dataops.operations.*
+import org.zowe.explorer.dataops.operations.DeleteMemberOperation
+import org.zowe.explorer.dataops.operations.DeleteMemberOperationParams
+import org.zowe.explorer.dataops.operations.MemberAllocationOperation
+import org.zowe.explorer.dataops.operations.MemberAllocationParams
+import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.AddMemberDialog
+import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
+import org.zowe.explorer.explorer.ui.FetchNode
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
+import org.zowe.explorer.explorer.ui.LibraryNode
+import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /** Class that represents "Add member" action */
@@ -32,14 +43,14 @@ class AddMemberAction : AnAction() {
    * @param e an action event to get the file explorer view and the project
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     var currentNode = view.mySelectedNodesData[0].node
     DataOpsManager.instance
     if (currentNode !is FetchNode) {
       currentNode = currentNode.parent ?: return
       if (currentNode !is LibraryNode) return
     }
-    if ((currentNode as ExplorerUnitTreeNodeBase<*, *>).unit is FilesWorkingSet) {
+    if ((currentNode as ExplorerUnitTreeNodeBase<ConnectionConfig, *, out ExplorerUnit<ConnectionConfig>>).unit is FilesWorkingSet) {
       val connectionConfig = currentNode.unit.connectionConfig
       val dataOpsManager = currentNode.explorer.componentManager.service<DataOpsManager>()
       if (currentNode is LibraryNode && connectionConfig != null) {
@@ -102,14 +113,14 @@ class AddMemberAction : AnAction() {
    * @param e an action event to get the presentation so show and the file explorer view
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(FILE_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
     val selected = view.mySelectedNodesData.getOrNull(0)
     e.presentation.isEnabledAndVisible = selected?.node is LibraryNode || (
-      selected?.node is FileLikeDatasetNode && selected.attributes is RemoteMemberAttributes
-      )
+        selected?.node is FileLikeDatasetNode && selected.attributes is RemoteMemberAttributes
+        )
   }
 
 }

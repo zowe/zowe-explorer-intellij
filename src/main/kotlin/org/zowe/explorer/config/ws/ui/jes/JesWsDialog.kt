@@ -13,9 +13,10 @@ package org.zowe.explorer.config.ws.ui.jes
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import org.zowe.explorer.common.ui.*
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.JobFilterState
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.ui.AbstractWsDialog
 import org.zowe.explorer.config.ws.ui.JesWorkingSetDialogState
 import org.zowe.explorer.utils.crudable.Crudable
@@ -31,12 +32,14 @@ import javax.swing.JTextField
 class JesWsDialog(
   crudable: Crudable,
   state: JesWorkingSetDialogState
-) : AbstractWsDialog<JesWorkingSetConfig, JobFilterState, JesWorkingSetDialogState>(
+) : AbstractWsDialog<ConnectionConfig, JesWorkingSetConfig, JobFilterState, JesWorkingSetDialogState>(
   crudable,
   JesWorkingSetDialogState::class.java,
   state
 ) {
   override val wsConfigClass = JesWorkingSetConfig::class.java
+  override val connectionClass = ConnectionConfig::class.java
+
 
   /**
    * TableView with Job Prefix, Owner, JobId columns for representation of jobs filters.

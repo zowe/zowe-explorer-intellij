@@ -23,6 +23,8 @@ import org.zowe.explorer.config.*
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.isThe
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 
 /**
  * Abstract class for Working Set configurables.
@@ -67,12 +69,28 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
   }
 
   /**
+   * Registers custom mouse listeners for the specified WS table view (Files WS or JES WS)
+   * @param wsTable - working set table view instance
+   * @return An instance of MouseAdapter
+   */
+  private fun registerMouseListeners(wsTable : ValidatingTableView<WSConfig>): MouseAdapter = object : MouseAdapter() {
+    override fun mouseClicked(e: MouseEvent) {
+      if (e.clickCount == 2) {
+        wsTable.selectedObject?.let { selected ->
+          createEditDialog(selected.toDialogStateAbstract())
+        }
+      }
+    }
+  }
+
+  /**
    * Creates panel with table containing Working Set List inside.
    * @return formed DialogPanel.
    */
   override fun createPanel(): DialogPanel {
     wsTable = ValidatingTableView(wsTableModel, disposable!!).apply {
       rowHeight = DEFAULT_ROW_HEIGHT
+      addMouseListener(registerMouseListeners(this))
     }
 
     ApplicationManager.getApplication()

@@ -29,6 +29,9 @@ class TsoOperation(var state: Any,
   : Operation<TsoResponse> {
 
   override val resultClass = TsoResponse::class.java
+  override fun toString(): String {
+    return "TsoOperation(state=$state, mode=$mode, messageType=$messageType, messageData=$messageData, message=$message, resultClass=$resultClass)"
+  }
 }
 
 /**

@@ -30,6 +30,16 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
     init()
   }
 
+  companion object {
+
+    // TODO: Remove when it becomes possible to mock class constructor with init section.
+    /** wrapper for constructor. It is necessary only for test purposes for now. */
+    @JvmStatic
+    fun create(project: Project?, state: SpoolFileState): SpoolFilePropertiesDialog =
+        SpoolFilePropertiesDialog(project, state)
+
+  }
+
   /** Create spool file properties dialog and fill text fields with received spool file's state*/
   override fun createCenterPanel(): JComponent {
     val spoolFile = state.remoteSpoolFileAttributes.info

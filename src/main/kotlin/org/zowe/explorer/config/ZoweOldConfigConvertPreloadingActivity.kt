@@ -38,9 +38,9 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
    */
   private fun convertOldConnectionIds(oldConfigFile: File) {
     val crudable = ConfigService.instance.crudable
-    val connections = ConfigService.instance.state?.connections?.toMutableList() ?: emptyList()
-    val filesWorkingSets = ConfigService.instance.state?.filesWorkingSets?.toMutableList() ?: emptyList()
-    val jesWorkingSets = ConfigService.instance.state?.jesWorkingSets?.toMutableList() ?: emptyList()
+    val connections = OldConfigService.instance.state?.connections?.toMutableList() ?: emptyList()
+    val filesWorkingSets = OldConfigService.instance.state?.filesWorkingSets?.toMutableList() ?: emptyList()
+    val jesWorkingSets = OldConfigService.instance.state?.jesWorkingSets?.toMutableList() ?: emptyList()
 
     val oldDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(oldConfigFile)
     val oldConnectionIds = oldDocument.documentElement.getConnectionIds()
@@ -51,10 +51,10 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
       val jesWsToConvert = jesWorkingSets.filter { jws -> jws.connectionConfigUuid == it.uuid }
       val username = CredentialService.instance.getUsernameByKey(it.uuid) ?: ""
       val password = CredentialService.instance.getPasswordByKey(it.uuid) ?: ""
-      crudable.delete(it.uuid)
+      crudable.deleteByUniqueKey(ConnectionConfig::class.java, it.uuid)
       it.uuid = crudable.nextUniqueValue<ConnectionConfig, String>()
       CredentialService.instance.setCredentials(it.uuid, username, password)
-      crudable.add(it.uuid)
+      crudable.add(it)
       filesWsToConvert.forEach { fws ->
         fws.connectionConfigUuid = it.uuid
         crudable.update(fws)
@@ -70,7 +70,7 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
    * Converts the old version config to the new version config
    */
   private fun convertOldVersionConfig() {
-    val newConfigStorageName = "org.zowe.explorer.config.ConfigService"
+    val newConfigStorageName = "org.zowe.explorer.config.OldConfigService"
     val oldConfigStorageName = "by.iba.connector.services.ConfigService"
     val oldConfigName = "iba_connector_config.xml"
     val newConfigName = "zowe_explorer_intellij_config.xml"
@@ -91,7 +91,7 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
           Files.write(newConfigFile.toPath(), newContent.toByteArray(charset))
         }
       }
-      service<IComponentStore>().reloadState(ConfigServiceImpl::class.java)
+      service<IComponentStore>().reloadState(OldConfigServiceImpl::class.java)
       convertOldConnectionIds(oldConfigFile)
     }
   }

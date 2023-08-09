@@ -20,6 +20,7 @@ import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.DialogState
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.HasMigrated
 import javax.swing.JComponent
 
@@ -94,7 +95,14 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Organization: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.datasetOrganization?.toString() ?: "")
+            .text(
+              when (dataset.datasetOrganization) {
+                DatasetOrganization.PS -> "Sequential (PS)"
+                DatasetOrganization.PO -> "Partitioned (PO)"
+                DatasetOrganization.POE -> "Partitioned Extended (PO-E)"
+                else -> ""
+              }
+            )
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }

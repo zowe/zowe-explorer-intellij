@@ -12,6 +12,7 @@ package org.zowe.explorer.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.apiWithBytesConverter
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.JobsRequester
@@ -61,7 +62,7 @@ class SpoolFileContentSynchronizer(
   override fun executeGetContentRequest(
     attributes: RemoteSpoolFileAttributes,
     parentAttributes: RemoteJobAttributes,
-    requester: Requester,
+    requester: Requester<ConnectionConfig>,
     progressIndicator: ProgressIndicator?
   ): Response<ByteArray> {
     return apiWithBytesConverter<JESApi>(requester.connectionConfig).getSpoolFileRecords(
@@ -77,7 +78,7 @@ class SpoolFileContentSynchronizer(
   override fun executePutContentRequest(
     attributes: RemoteSpoolFileAttributes,
     parentAttributes: RemoteJobAttributes,
-    requester: Requester,
+    requester: Requester<ConnectionConfig>,
     newContentBytes: ByteArray,
     progressIndicator: ProgressIndicator?
   ): Response<Void>? = null

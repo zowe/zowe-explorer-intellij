@@ -62,7 +62,7 @@ class SequentialToUssFolderMover(dataOpsManager: DataOpsManager) : DefaultFileMo
    */
   override fun buildCall(
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, ConnectionConfig>
+    requesterWithUrl: Pair<Requester<ConnectionConfig>, ConnectionConfig>
   ): Call<Void> {
     val destinationAttributes = operation.destinationAttributes as RemoteUssAttributes
     val dataset = operation.sourceAttributes as RemoteDatasetAttributes
