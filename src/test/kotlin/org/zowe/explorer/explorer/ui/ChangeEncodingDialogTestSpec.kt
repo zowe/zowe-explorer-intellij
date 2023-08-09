@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.ui
 
+import com.intellij.collaboration.ui.util.getName
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -204,8 +205,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
-      val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
+      val reloadAction = actions?.first { it.getName() == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
       assertSoftly { expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE }
@@ -215,8 +215,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
-      val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
+      val reloadAction = actions?.first { it.getName() == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
       assertSoftly { expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE }
@@ -247,8 +246,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
-      val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
+      val reloadAction = actions?.first { it.getName() == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
       assertSoftly { expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE }
@@ -279,8 +277,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
-      val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
+      val reloadAction = actions?.first { it.getName() == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
       assertSoftly { expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE }
@@ -304,8 +301,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
-      val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
+      val reloadAction = actions?.first { it.getName() == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
       assertSoftly { expectedExitCode shouldBe DialogWrapper.CANCEL_EXIT_CODE }
@@ -316,8 +312,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       every { saveIn(any(), virtualFileMock, charsetMock) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
-      val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
+      val convertAction = actions?.first { it.getName() == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 
       assertSoftly { expectedExitCode shouldBe ChangeEncodingDialog.CONVERT_EXIT_CODE }
@@ -348,8 +343,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
-      val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
+      val convertAction = actions?.first { it.getName() == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 
       assertSoftly { expectedExitCode shouldBe ChangeEncodingDialog.CONVERT_EXIT_CODE }
@@ -373,8 +367,7 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
-      val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
+      val convertAction = actions?.first { it.getName() == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 
       assertSoftly { expectedExitCode shouldBe DialogWrapper.CANCEL_EXIT_CODE }
