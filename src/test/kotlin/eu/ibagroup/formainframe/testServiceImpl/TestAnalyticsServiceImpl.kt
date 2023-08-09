@@ -13,7 +13,7 @@ package eu.ibagroup.formainframe.testServiceImpl
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.AnalyticsEvent
 
-class TestAnalyticsServiceImpl : AnalyticsService {
+open class TestAnalyticsServiceImpl : AnalyticsService {
 
   /**
    * Test instance for the AnalyticsService.
