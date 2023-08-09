@@ -15,6 +15,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.explorer.JesWorkingSet
 
@@ -22,11 +23,13 @@ import org.zowe.explorer.explorer.JesWorkingSet
 class JesWsNode(
   workingSet: JesWorkingSet,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   treeStructure: ExplorerTreeStructureBase
-) : WorkingSetNode<JobsFilter>(
+) : WorkingSetNode<ConnectionConfig, JobsFilter>(
   workingSet, project, parent, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
+
+  override val regularTooltip = "JES Working Set"
 
   override fun update(presentation: PresentationData) {
     presentation.addText(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)

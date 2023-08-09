@@ -20,6 +20,7 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
 
@@ -35,11 +36,13 @@ class GetJclRecordsOperationRunnerFactory : OperationRunnerFactory {
 /**
  * Class which represents get jcl records operation runner
  */
-class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, ByteArray> {
+class GetJclRecordsOperationRunner : OperationRunner<GetJclRecordsOperation, ByteArray> {
 
   override val operationClass = GetJclRecordsOperation::class.java
 
   override val resultClass = ByteArray::class.java
+
+  override val log = log<GetJclRecordsOperationRunner>()
 
   /**
    * Runs a get jcl records operation
@@ -54,7 +57,7 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
   override fun run(operation: GetJclRecordsOperation, progressIndicator: ProgressIndicator): ByteArray {
     progressIndicator.checkCanceled()
 
-    val response : Response<ByteArray> = when (operation.request) {
+    val response: Response<ByteArray> = when (operation.request) {
       is BasicGetJclRecordsParams -> {
         apiWithBytesConverter<JESApi>(operation.connectionConfig).getJCLRecords(
           basicCredentials = operation.connectionConfig.authToken,
@@ -62,12 +65,14 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
           jobName = operation.request.jobName
         ).cancelByIndicator(progressIndicator).execute()
       }
+
       is CorrelatorGetJclRecordsParams -> {
         apiWithBytesConverter<JESApi>(operation.connectionConfig).getJCLRecords(
           basicCredentials = operation.connectionConfig.authToken,
           jobCorrelator = operation.request.jobCorrelator
         ).cancelByIndicator(progressIndicator).execute()
       }
+
       else -> throw Exception("Method with such parameters not found")
     }
     val body = response.body()
@@ -99,12 +104,20 @@ open class GetJclRecordsOperationParams
 /**
  * Class which contains parameters job name and job id for get jcl records operation
  */
-class BasicGetJclRecordsParams(val jobName: String, val jobId: String) : GetJclRecordsOperationParams()
+class BasicGetJclRecordsParams(val jobName: String, val jobId: String) : GetJclRecordsOperationParams() {
+  override fun toString(): String {
+    return "BasicGetJclRecordsParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /**
  * Class which contains parameter job correlator for get jcl records operation
  */
-class CorrelatorGetJclRecordsParams(val jobCorrelator: String) : GetJclRecordsOperationParams()
+class CorrelatorGetJclRecordsParams(val jobCorrelator: String) : GetJclRecordsOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorGetJclRecordsParams(jobCorrelator='$jobCorrelator')"
+  }
+}
 
 /**
  * Data class that represents all information needed to send get jcl records operation request
@@ -114,6 +127,6 @@ class CorrelatorGetJclRecordsParams(val jobCorrelator: String) : GetJclRecordsOp
 data class GetJclRecordsOperation(
   override val request: GetJclRecordsOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<GetJclRecordsOperationParams, ByteArray> {
+) : RemoteQuery<ConnectionConfig, GetJclRecordsOperationParams, ByteArray> {
   override val resultClass = ByteArray::class.java
 }

@@ -10,36 +10,46 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.JobFilterStateWithWS
+import org.zowe.explorer.explorer.JesWorkingSet
 import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.utils.getSelectedNodesWorkingSets
 
 /**
  * Action for adding Job Filter from UI.
  * @author Valiantsin Krus
  */
-class AddJobsFilterAction : JobsFilterAction() {
-
-  /**
-   * Is node conforms to the JesFilterNode and the JesWsNode types
-   * @param node the node to check
-   */
-  override fun isNodeConformsToType(node: ExplorerTreeNode<*>?): Boolean {
-    return super.isNodeConformsToType(node) || node is JesWsNode
-  }
+class AddJobsFilterAction : AnAction() {
 
   /** Opens AddJobsFilterDialog and saves result. */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
-
-    val ws = getUnits(view).firstOrNull() ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
+    val workingSets = getSelectedNodesWorkingSets<JesWorkingSet>(view as ExplorerTreeView<*, *, *>)
+    val ws = workingSets.firstOrNull() ?: return
     val owner = ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""
     val initialState = JobFilterStateWithWS(ws = ws, owner = owner)
     val dialog = AddJobsFilterDialog(e.project, initialState)
     if (dialog.showAndGet()) {
       ws.addMask(dialog.state.toJobsFilter())
     }
+  }
+
+  /**
+   * Decides to show the add jobs filter action or not.
+   * Shows the action if:
+   * 1. Explorer view is not null
+   * 2. Item(s) from them same JES working set is(are) selected
+   */
+  override fun update(e: AnActionEvent) {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val workingSets = getSelectedNodesWorkingSets<JesWorkingSet>(view as ExplorerTreeView<*, *, *>)
+    e.presentation.isEnabledAndVisible = workingSets.size == 1
   }
 
 }

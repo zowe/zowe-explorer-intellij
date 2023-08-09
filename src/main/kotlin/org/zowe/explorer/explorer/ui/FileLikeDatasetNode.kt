@@ -16,9 +16,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.toMutableSmartList
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
@@ -29,36 +31,37 @@ import icons.ForMainframeIcons
 
 private val migratedIcon = AllIcons.FileTypes.Any_type
 
-/** Datasets and USS files representation as file node in the explorer tree view */
+/** PS dataset or a PDS dataset member representation as file node in the explorer tree view */
 class FileLikeDatasetNode(
   file: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  unit: ExplorerUnit,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
+  unit: ExplorerUnit<ConnectionConfig>,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<MFVirtualFile, ExplorerUnit>(
+) : ExplorerUnitTreeNodeBase<ConnectionConfig, MFVirtualFile, ExplorerUnit<ConnectionConfig>>(
   file, project, parent, unit, treeStructure
-), MFNode {
+) {
 
   override fun isAlwaysLeaf(): Boolean {
     return !value.isDirectory
   }
 
   override fun update(presentation: PresentationData) {
-    val attributes = service<DataOpsManager>().tryToGetAttributes(value)
-    when (attributes) {
+    when (val attributes = service<DataOpsManager>().tryToGetAttributes(value)) {
       is RemoteDatasetAttributes -> {
         if (this.navigating) {
           presentation.setIcon(AnimatedIcon.Default())
         } else {
-          presentation.setIcon(
-            if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(
-              AllIcons.FileTypes.Any_type,
-              "DS"
+          presentation.apply {
+            setIcon(
+              if (value.isDirectory) ForMainframeIcons.DatasetMask else if (attributes.isMigrated) migratedIcon else IconUtil.addText(
+                AllIcons.FileTypes.Any_type,
+                "DS"
+              )
             )
-          )
+            if (attributes.isMigrated) forcedTextForeground = JBColor.GRAY
+          }
         }
-
       }
 
       is RemoteMemberAttributes -> {

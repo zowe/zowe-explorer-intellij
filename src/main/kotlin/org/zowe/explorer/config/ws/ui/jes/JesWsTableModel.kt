@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.config.ws.ui.jes
 
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.ui.AbstractWsTableModel
 import org.zowe.explorer.utils.crudable.Crudable
@@ -19,7 +20,8 @@ import org.zowe.explorer.utils.crudable.Crudable
  * @see AbstractWsTableModel
  * @author Valiantsin Krus
  */
-class JesWsTableModel(crudable: Crudable) : AbstractWsTableModel<JesWorkingSetConfig>(crudable) {
+class JesWsTableModel(crudable: Crudable)
+  : AbstractWsTableModel<ConnectionConfig, JesWorkingSetConfig>(crudable, ConnectionConfig::class.java) {
 
   override fun set(row: Int, item: JesWorkingSetConfig) {
     get(row).jobsFilters = item.jobsFilters

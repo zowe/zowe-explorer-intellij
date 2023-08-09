@@ -13,6 +13,7 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.utils.castOrNull
@@ -22,20 +23,20 @@ import org.zowe.explorer.utils.castOrNull
  * @param filesLeft - count of files that was not fetched yet.
  * @author Valiantsin Krus
  */
-class LoadMoreNode(
+class LoadMoreNode<Connection: ConnectionConfigBase>(
   project: Project,
-  parent: ExplorerTreeNode<*>,
-  explorer: Explorer<*>,
+  parent: ExplorerTreeNode<Connection, *>,
+  explorer: Explorer<Connection, *>,
   treeStructure: ExplorerTreeStructureBase,
   filesLeft: Int? = null
-) : InfoNodeBase(project, parent, explorer, treeStructure) {
+) : InfoNodeBase<Connection>(project, parent, explorer, treeStructure) {
   override val text = if (filesLeft == null) "load more" else "load more - $filesLeft items left"
   override val textAttributes: SimpleTextAttributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
 
   /** Loads next batch of files. */
   override fun navigate(requestFocus: Boolean) {
     val view = FileExplorerContentProvider.getInstance().getExplorerView(project) ?: return
-    val parentNode = parent?.castOrNull<FileFetchNode<*, *, *, *, *>>() ?: return
+    val parentNode = parent?.castOrNull<FileFetchNode<*, *, *, *, *, *>>() ?: return
     val query = parentNode.query ?: return
     parentNode.needToLoadMore = true
 

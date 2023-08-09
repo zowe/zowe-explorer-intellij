@@ -22,6 +22,7 @@ import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.getParentsChain
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.CopyDataUSS
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
@@ -50,6 +51,8 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
             && operation.commonUrls(dataOpsManager).isNotEmpty()
             && !operation.destination.getParentsChain().containsAll(operation.source.getParentsChain())
   }
+
+  override val log = log<UssToUssFileMover>()
 
   /**
    * Proceeds move/copy of uss file to uss directory

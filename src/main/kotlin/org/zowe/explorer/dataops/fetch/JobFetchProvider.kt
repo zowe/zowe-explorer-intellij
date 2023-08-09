@@ -12,6 +12,7 @@ package org.zowe.explorer.dataops.fetch
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.dataops.DataOpsManager
@@ -45,7 +46,7 @@ private val log = log<JobFetchProvider>()
  * @author Valiantsin Krus
  */
 class JobFetchProvider(dataOpsManager: DataOpsManager) :
-  RemoteAttributedFileFetchBase<JobsFilter, RemoteJobAttributes, MFVirtualFile>(dataOpsManager) {
+  RemoteAttributedFileFetchBase<ConnectionConfig, JobsFilter, RemoteJobAttributes, MFVirtualFile>(dataOpsManager) {
 
   override val requestClass = JobsFilter::class.java
 
@@ -58,7 +59,7 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
    * @see RemoteFileFetchProviderBase.fetchResponse
    */
   override fun fetchResponse(
-    query: RemoteQuery<JobsFilter, Unit>,
+    query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>,
     progressIndicator: ProgressIndicator
   ): Collection<RemoteJobAttributes> {
     log.info("Fetching Job Lists for $query")
@@ -132,7 +133,7 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
    * Clears or update attributes of unused job file if needed.
    * @see RemoteFileFetchProviderBase.cleanupUnusedFile
    */
-  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<JobsFilter, Unit>) {
+  override fun cleanupUnusedFile(file: MFVirtualFile, query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>) {
     val deletingFileAttributes = attributesService.getAttributes(file)
     log.info("Cleaning-up file attributes $deletingFileAttributes")
     if (deletingFileAttributes != null) {

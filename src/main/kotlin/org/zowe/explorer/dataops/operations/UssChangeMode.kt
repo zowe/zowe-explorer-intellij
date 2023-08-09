@@ -17,6 +17,7 @@ import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.ChangeMode
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
@@ -55,6 +56,7 @@ class UssChangeMode : OperationRunner<UssChangeModeOperation, Unit> {
 
   override val operationClass = UssChangeModeOperation::class.java
   override val resultClass = Unit::class.java
+  override val log = log<UssChangeMode>()
 
   /**
    * Runs an uss change mode operation

@@ -11,6 +11,7 @@
 package org.zowe.explorer.dataops.attributes
 
 import com.intellij.util.SmartList
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.mergeWith
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -34,7 +35,7 @@ class RemoteDatasetAttributesServiceFactory : AttributesServiceFactory {
  */
 class RemoteDatasetAttributesService(
   dataOpsManager: DataOpsManager
-) : MFRemoteAttributesServiceBase<RemoteDatasetAttributes>(dataOpsManager) {
+) : MFRemoteAttributesServiceBase<ConnectionConfig, RemoteDatasetAttributes>(dataOpsManager) {
 
   override val attributesClass = RemoteDatasetAttributes::class.java
 

@@ -20,9 +20,11 @@ import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.keyboard
 import io.kotest.assertions.throwables.shouldThrow
+import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import java.awt.event.KeyEvent
+import java.io.File
 
 /**
  * Tests purging jobs and check results.
@@ -41,21 +43,52 @@ class PurgeJobTest {
 
     private val wsName = "WS1"
     private val jwsName = "JWS1"
-    private val datasetName = "$ZOS_USERID.PURGE.JOBS"
+    private val datasetName = "$ZOS_USERID.PURGE.JOBS".uppercase()
 
     private val filesList = mutableListOf("job_rc0.txt", "job_jcl_error.txt", "job_abend_s806.txt")
     private val filePath = System.getProperty("user.dir") + "/src/uiTest/resources/"
+    private var mapListDatasets = mutableMapOf<String, String>()
+    private var listMembersInDataset = mutableListOf<String>()
 
     /**
      * Opens the project and Explorer, clears test environment, creates working set and dataset.
      */
     @BeforeAll
-    fun setUpAll(remoteRobot: RemoteRobot) {
+    fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+        startMockServer()
         setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        createConnection(projectName, fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
+        createValidConnectionWithMock(
+            testInfo,
+            connectionName,
+            projectName,
+            fixtureStack,
+            closableFixtureCollector,
+            remoteRobot
+        )
         createWS(remoteRobot)
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_${datasetName}_restfiles_post",
+            { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${datasetName}") ?: false },
+            { MockResponse().setBody("{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":1,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255}") }
+        )
+        mapListDatasets[datasetName] = listDS(datasetName, "PDS", "PO")
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restfiles",
+            {
+                it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName}")
+                    ?: false
+            },
+            { MockResponse().setBody(buildFinalListDatasetJson()) }
+        )
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restfiles_listmembers",
+            { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${datasetName}/member") ?: false },
+            {
+                MockResponse().setBody(buildListMembersJson())
+            }
+        )
         allocatePDSAndCreateMask(wsName, datasetName, projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        createJobs(remoteRobot)
+        createJobs(testInfo, remoteRobot)
         createJWS(remoteRobot)
     }
 
@@ -63,8 +96,22 @@ class PurgeJobTest {
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun tearDownAll(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restfiles",
+            {
+                it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName.uppercase()}")
+                    ?: false
+            },
+            { MockResponse().setBody("{}") }
+        )
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_delete",
+            { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/${datasetName.uppercase()}") ?: false },
+            { MockResponse().setBody("{}") }
+        )
         deleteDataset(datasetName, projectName, fixtureStack, remoteRobot)
+        mockServer.shutdown()
         clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
         ideFrameImpl(projectName, fixtureStack) {
             close()
@@ -76,6 +123,7 @@ class PurgeJobTest {
      */
     @AfterEach
     fun tearDown(remoteRobot: RemoteRobot) {
+        responseDispatcher.removeAllEndpoints()
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
 
@@ -85,9 +133,9 @@ class PurgeJobTest {
      */
     @Test
     @Order(1)
-    fun testPurgeJobViaActionButtonInTerminal(remoteRobot: RemoteRobot) {
+    fun testPurgeJobViaActionButtonInTerminal(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         for (i in 1..3) {
-            doPurgeJobTestViaActionButton("TEST$i", remoteRobot)
+            doPurgeJobTestViaActionButton(testInfo, "TEST$i", remoteRobot)
         }
     }
 
@@ -98,12 +146,13 @@ class PurgeJobTest {
      */
     @Test
     @Order(2)
-    fun testPurgeJobViaContextMenuInExplorer(remoteRobot: RemoteRobot) {
+    fun testPurgeJobViaContextMenuInExplorer(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         for (i in 1..3) {
-            doPurgeJobTestViaContextMenu("TEST$i", remoteRobot)
+            doPurgeJobTestViaContextMenu(testInfo, "TEST$i", remoteRobot)
         }
     }
 
+    // TODO: eliminate ZOS_USERID
     /**
      * Creates working set.
      */
@@ -114,9 +163,9 @@ class PurgeJobTest {
             Triple("TEST3", ZOS_USERID, "")
         )
         ideFrameImpl(projectName, fixtureStack) {
-            createJesWorkingSetFromActionButton(closableFixtureCollector,fixtureStack)
+            createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
-                addJesWorkingSet(jwsName, connectionName, filters)
+                addJesWorkingSet(jwsName, connectionName, ZOS_USERID, filters)
                 clickButton("OK")
                 Thread.sleep(5000)
             }
@@ -127,36 +176,52 @@ class PurgeJobTest {
     /**
      * Purges job via action button, checks notifications.
      */
-    private fun doPurgeJobTestViaActionButton(jobName: String, remoteRobot: RemoteRobot) =
+    private fun doPurgeJobTestViaActionButton(testInfo: TestInfo, jobName: String, remoteRobot: RemoteRobot) =
         with(remoteRobot) {
-            submitJob(jobName, projectName, fixtureStack, remoteRobot)
-            Thread.sleep(20000)
+            var isFirstRequest = true
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_delete_${jobName}",
+                { it?.requestLine?.contains("DELETE /zosmf/restjobs/jobs/${jobName}/JOB07380") ?: false && isFirstRequest },
+                { MockResponse().setBody("{}").setBody(setBodyJobPurged(jobName)) }
+            )
+
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_delete_${jobName}_2",
+                { it?.requestLine?.contains("DELETE /zosmf/restjobs/jobs/${jobName}/JOB07380") ?: false && !isFirstRequest },
+                { MockResponse().setBody("{}").setResponseCode(400) }
+            )
+            submitJobWithMock(testInfo, datasetName, jobName, remoteRobot)
+            Thread.sleep(2000)
             val jobId = getJobIdFromPanel(remoteRobot)
             checkNotificationJobSubmitted(jobName, remoteRobot)
             purgeJobFromTerminal(remoteRobot)
-            Thread.sleep(10000)
+            isFirstRequest = false
+            Thread.sleep(2000)
             checkNotificationJobPurged(jobName, jobId, true, remoteRobot)
             purgeJobFromTerminal(remoteRobot)
-            Thread.sleep(10000)
+            Thread.sleep(2000)
             checkNotificationJobPurged(jobName, jobId, false, remoteRobot)
             closeTabInJobsPanel(jobName, remoteRobot)
+            responseDispatcher.removeAllEndpoints()
         }
 
     /**
      * Purges job via context menu, checks notifications.
      */
-    private fun doPurgeJobTestViaContextMenu(jobName: String, remoteRobot: RemoteRobot) =
+    private fun doPurgeJobTestViaContextMenu(testInfo: TestInfo, jobName: String, remoteRobot: RemoteRobot) =
         with(remoteRobot) {
-            submitJob(jobName, projectName, fixtureStack, remoteRobot)
-            Thread.sleep(20000)
+
+            submitJobWithMock(testInfo, datasetName, jobName, remoteRobot)
+            Thread.sleep(2000)
             val jobId = getJobIdFromPanel(remoteRobot)
             checkNotificationJobSubmitted(jobName, remoteRobot)
             closeTabInJobsPanel(jobName, remoteRobot)
-            purgeJobFromExplorer(jobName, jobId, remoteRobot)
-            Thread.sleep(15000)
+            purgeJobFromExplorer(testInfo, jobName, jobId, remoteRobot)
+            Thread.sleep(3000)
             checkNotificationJobPurged(jobName, jobId, true, remoteRobot)
             checkJobsOutputWasDeletedJWSRefreshed(jobName, jobId, remoteRobot)
             closeFilterInExplorer(Triple(jobName, ZOS_USERID, ""), projectName, fixtureStack, remoteRobot)
+            responseDispatcher.removeAllEndpoints()
         }
 
     /**
@@ -191,12 +256,12 @@ class PurgeJobTest {
     /**
      * Creates jobs in dataset.
      */
-    private fun createJobs(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    private fun createJobs(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
         var n = 1
         filesList.forEach {
             openLocalFileAndCopyContent(filePath + it, projectName, fixtureStack, remoteRobot)
             Thread.sleep(3000)
-            createMemberAndPasteContent(datasetName, "TEST$n", projectName, fixtureStack, remoteRobot)
+            createMemberAndPasteContentWithMock(testInfo, datasetName, "TEST$n", it, remoteRobot)
             n++
         }
     }
@@ -233,21 +298,68 @@ class PurgeJobTest {
     /**
      * Purges job via context menu.
      */
-    private fun purgeJobFromExplorer(jobName: String, jobId: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                jesExplorer.click()
+    private fun purgeJobFromExplorer(testInfo: TestInfo, jobName: String, jobId: String, remoteRobot: RemoteRobot) =
+        with(remoteRobot) {
+            var isFirstRequest = true
+            val rc = when (jobName) {
+                "TEST1" -> {
+                    "CC 0000"
+                }
+
+                "TEST2" -> {
+                    "JCL ERROR"
+                }
+
+                else -> {
+                    "ABEND S806"
+                }
             }
-        }
-        openJobFilterInExplorer(Triple(jobName, ZOS_USERID, ""), "", projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                find<ComponentFixture>(viewTree).findAllText { it.text.startsWith("$jobName ($jobId)") }.first()
-                    .rightClick()
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_delete_${jobName}",
+                { it?.requestLine?.contains("DELETE /zosmf/restjobs/jobs/${jobName}/JOB07380") ?: false },
+                { MockResponse().setBody("{}").setBody(setBodyJobPurged(jobName)) }
+            )
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_${jobName}_restjobs",
+                {
+                    it?.requestLine?.contains("/zosmf/restjobs/jobs?owner=${ZOS_USERID.uppercase()}&prefix=${jobName}")
+                            ?: false && isFirstRequest
+                },
+                { MockResponse().setBody(replaceInJson("getJob", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", "OUTPUT")))).setResponseCode(200) }
+            )
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_${jobName}_restjobs2",
+                {
+                    it?.requestLine?.contains("/zosmf/restjobs/jobs?owner=${ZOS_USERID.uppercase()}&prefix=${jobName}")
+                            ?: false && !isFirstRequest
+                },
+                { MockResponse().setBody("[]") }
+            )
+            responseDispatcher.injectEndpoint(
+                "${testInfo.displayName}_${jobName}_restjobs3",
+                { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/${jobName}/JOB07380/files HTTP") ?: false },
+                { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", "")))).setResponseCode(200) }
+            )
+            ideFrameImpl(projectName, fixtureStack) {
+                explorer {
+                    jesExplorer.click()
+                }
             }
-            actionMenuItem(remoteRobot, "Purge Job").click()
+            openJobFilterInExplorer(Triple(jobName, ZOS_USERID, ""), "", projectName, fixtureStack, remoteRobot)
+            isFirstRequest = false
+            ideFrameImpl(projectName, fixtureStack) {
+                explorer {
+                    find<ComponentFixture>(viewTree).findAllText { it.text.startsWith("$jobName ($jobId)") }.first()
+                        .rightClick()
+                }
+                actionMenuItem(remoteRobot, "Purge Job").click()
+            }
+
         }
-    }
 
 
     /**
@@ -291,5 +403,151 @@ class PurgeJobTest {
                 .click()
             find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
         }
+    }
+
+    private fun buildFinalListDatasetJson(): String {
+        var result = "{}"
+        if (mapListDatasets.isNotEmpty()) {
+            var listDatasetsJson = "{\"items\":["
+            mapListDatasets.forEach {
+                listDatasetsJson += it.value
+            }
+            result = listDatasetsJson.dropLast(1) + "],\n" +
+                    "  \"returnedRows\": ${mapListDatasets.size},\n" +
+                    "  \"totalRows\": ${mapListDatasets.size},\n" +
+                    "  \"JSONversion\": 1\n" +
+                    "}"
+        }
+        return result
+    }
+
+    private fun buildListMembersJson(): String {
+        var members = "[ "
+        if (listMembersInDataset.isNotEmpty()) {
+            listMembersInDataset.forEach { members += "{\"member\": \"${it}\"}," }
+        }
+        members = members.dropLast(1) + "]"
+        return "{\"items\":$members,\"returnedRows\": ${listMembersInDataset.size},\"JSONversion\": 1}"
+    }
+
+    private fun createMemberAndPasteContentWithMock(
+        testInfo: TestInfo, datasetName: String,
+        memberName: String, fileName: String, remoteRobot: RemoteRobot
+    ) {
+        var isFirstRequest = true
+        listMembersInDataset.add(memberName)
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_${memberName}in${datasetName}_restfiles",
+            { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${datasetName}(${memberName})") ?: false && isFirstRequest },
+            { MockResponse().setBody("") }
+        )
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_fill_${memberName}_restfiles",
+            { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${datasetName}(${memberName})") ?: false && !isFirstRequest },
+            { MockResponse().setBody(File(filePath + fileName).readText(Charsets.UTF_8)) }
+        )
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restfiles_listmembers1",
+            { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${datasetName}/member") ?: false },
+            { MockResponse().setBody(buildListMembersJson()) }
+        )
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restfiles_getmember1",
+            { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${datasetName}($memberName)") ?: false },
+            { MockResponse().setBody("") }
+        )
+
+        createEmptyDatasetMember(datasetName, memberName, projectName, fixtureStack, remoteRobot)
+        isFirstRequest = false
+        pasteContent(memberName, projectName, fixtureStack, remoteRobot)
+        Thread.sleep(3000)
+    }
+
+    /**
+     * Submits job on mock server and sets OUTPUT job status.
+     */
+    private fun submitJobWithMock(
+        testInfo: TestInfo,
+        datasetName: String,
+        jobName: String,
+        remoteRobot: RemoteRobot
+    ) = with(remoteRobot) {
+        val spoolFileContent: String
+        val rc: String
+        when (jobName) {
+            "TEST1" -> {
+                spoolFileContent = "mock/getSpoolFileContentRC00.txt"
+                rc = "CC 0000"
+            }
+
+            "TEST2" -> {
+                spoolFileContent = "mock/getSpoolFileContentJCLError.txt"
+                rc = "JCL ERROR"
+            }
+
+            else -> {
+                spoolFileContent = "mock/getSpoolFileContentAbend.txt"
+                rc = "ABEND S806"
+            }
+        }
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}__restjobs",
+            { it?.requestLine?.contains("PUT /zosmf/restjobs/jobs") ?: false },
+            {
+                MockResponse().setBody("{\"file\":\"//'$datasetName($jobName)'\"}")
+                    .setBody(setBodyJobSubmit(jobName, JobStatus.ACTIVE))
+            }
+        )
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restjobs_files",
+            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files HTTP") ?: false },
+            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", ""))))}
+        )
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restjobs_files2",
+            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files/2/records") ?: false },
+            { MockResponse().setBody(File(filePath + spoolFileContent).readText(Charsets.UTF_8)) }
+        )
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restjobs_files3",
+            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
+            { MockResponse().setBody(replaceInJson("getStatus", mapOf(Pair("hostName", mockServer.hostName),
+                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
+                    Pair("jobStatus", "OUTPUT")))) }
+        )
+        submitJob(jobName, projectName, fixtureStack, remoteRobot)
+    }
+
+    private fun setBodyJobSubmit(jobName: String): String {
+        return "{\n" +
+                "  \"owner\": \"${ZOS_USERID.uppercase()}\",\n" +
+                "  \"phase\": 14,\n" +
+                "  \"subsystem\": \"JES2\",\n" +
+                "  \"phase-name\": \"Job is actively executing\",\n" +
+                "  \"job-correlator\": \"J0007380S0W1....DB23523B.......:\",\n" +
+                "  \"type\": \"JOB\",\n" +
+                "  \"url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A\",\n" +
+                "  \"jobid\": \"JOB07380\",\n" +
+                "  \"class\": \"B\",\n" +
+                "  \"files-url\": \"https://${mockServer.hostName}:${mockServer.port}/zosmf/restjobs/jobs/J0007380S0W1....DB23523B.......%3A/files\",\n" +
+                "  \"jobname\": \"${jobName}\",\n" +
+                "  \"status\": \"ACTIVE\",\n" +
+                "  \"retcode\": null\n" +
+                "}\n"
+    }
+
+    private fun setBodyJobPurged(jobName: String): String {
+        return "{\n" +
+                "  \"jobid\":\"JOB07380\",\n" +
+                "  \"jobname\":\"${jobName}\",\n" +
+                "  \"original-jobid\":\"JOB07380\",\n" +
+                "  \"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
+                "  \"member\":\"JES2\",\n" +
+                "  \"sysname\":\"SY1\",\n" +
+                "  \"job-correlator\":\"JOB07380SY1.....CC20F380.......:\",\n" +
+                "  \"status\":\"0\"\n" +
+                "}\n"
     }
 }

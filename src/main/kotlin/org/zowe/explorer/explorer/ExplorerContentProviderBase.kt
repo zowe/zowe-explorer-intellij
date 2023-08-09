@@ -18,6 +18,8 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
+import org.zowe.explorer.config.connect.ConnectionConfigBase
+import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.utils.getAncestorNodes
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
@@ -34,14 +36,23 @@ fun interface CutBufferListener {
 }
 
 /** Base implementation of explorer content provider */
-abstract class ExplorerContentProviderBase<E : Explorer<*>>(
+abstract class ExplorerContentProviderBase<Connection: ConnectionConfigBase, E : Explorer<Connection, *>>(
   val contextMenu: ActionGroup = ActionManager.getInstance().getAction("org.zowe.explorer.actions.ContextMenuGroup") as ActionGroup
-) : ExplorerContentProvider<E> {
+) : ExplorerContentProvider<Connection, E> {
 
   abstract val actionGroup: ActionGroup
   abstract val place: String
 
-  fun buildActionToolbar() = ActionManager.getInstance().createActionToolbar(place, actionGroup, true)
+  /**
+   * Should build toolbar component that will be located at above the explorer view.
+   * @param target target component ([SimpleToolWindowPanel] by default) inside which the toolbar will be located.
+   * @return toolbar component instance.
+   */
+  open fun buildActionToolbar(target: JComponent?): JComponent {
+    return ActionManager.getInstance().createActionToolbar(place, actionGroup, true).apply {
+      targetComponent = target
+    }.component
+  }
 
   /**
    * Build the explorer content vertical panel
@@ -52,15 +63,19 @@ abstract class ExplorerContentProviderBase<E : Explorer<*>>(
     return object : SimpleToolWindowPanel(true, true), Disposable {
 
       private var builtContent: JComponent? = null
-      private val actionToolbar = buildActionToolbar()
 
       init {
         Disposer.register(parentDisposable, this)
-        actionToolbar.let {
-          it.targetComponent = this
-          toolbar = it.component
-        }
+        toolbar = buildActionToolbar(this)
         setContent(buildContent(this, project).also { builtContent = it })
+      }
+
+      override fun getData(dataId: String): Any? {
+        val view = getExplorerView(project)
+        return when {
+          EXPLORER_VIEW.`is`(dataId) -> view
+          else -> null
+        }
       }
 
       override fun dispose() {
@@ -83,6 +98,12 @@ abstract class ExplorerContentProviderBase<E : Explorer<*>>(
   }
 
   abstract fun buildContent(parentDisposable: Disposable, project: Project): JComponent
+
+  /**
+   * Get selected explorer view.
+   * @param project the project that the view is in.
+   */
+  abstract fun getExplorerView(project: Project): ExplorerTreeView<*, *, *>?
 
   protected val lock = ReentrantLock()
 

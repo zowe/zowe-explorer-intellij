@@ -22,6 +22,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import org.zowe.explorer.common.ui.getVirtualFile
 import org.zowe.explorer.common.ui.makeNodeDataFromTreePath
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.attributes.*
 import org.zowe.explorer.explorer.Explorer
 import groovy.lang.Tuple4
@@ -42,7 +43,7 @@ val DRAGGED_FROM_PROJECT_FILES_ARRAY = DataKey.create<List<VirtualFile>>("Dragge
  */
 class FileExplorerViewDropTarget(
   private val myTree: Tree,
-  val explorer: Explorer<*>,
+  val explorer: Explorer<ConnectionConfig, *>,
   private val copyPasteSupport: FileExplorerView.ExplorerCopyPasteSupport
 ) : DnDNativeTarget {
 
@@ -58,10 +59,10 @@ class FileExplorerViewDropTarget(
     val sourceFilesAttributes = sources
       .mapNotNull { runCatching { makeNodeDataFromTreePath(explorer, it) }.getOrNull()?.attributes }
       .mapNotNull { if (it is RemoteMemberAttributes) it.getLibraryAttributes(service()) else it }
-      .mapNotNull { runCatching { it as MFRemoteFileAttributes<Requester> }.getOrNull() }
+      .mapNotNull { runCatching { it as MFRemoteFileAttributes<ConnectionConfig, Requester<ConnectionConfig>> }.getOrNull() }
 
     val targetAttributes = runCatching {
-      makeNodeDataFromTreePath(explorer, target).attributes as MFRemoteFileAttributes<Requester>
+      makeNodeDataFromTreePath(explorer, target)?.attributes as MFRemoteFileAttributes<ConnectionConfig, Requester<ConnectionConfig>>?
     }.getOrNull() ?: return false
 
     return sourceFilesAttributes.any {
@@ -130,16 +131,16 @@ class FileExplorerViewDropTarget(
         CommonDataKeys.PROJECT.name -> copyPasteSupport.project
         ExplorerDataKeys.NODE_DATA_ARRAY.name -> sourceTreePaths
           .mapNotNull { treePath ->
-            if ((treePath?.lastPathComponent as DefaultMutableTreeNode).userObject is ExplorerTreeNode<*>)
+            if ((treePath?.lastPathComponent as DefaultMutableTreeNode).userObject is ExplorerTreeNode<*, *>)
               makeNodeDataFromTreePath(explorer, treePath)
             else null
           }.toTypedArray()
 
         CommonDataKeys.VIRTUAL_FILE_ARRAY.name -> {
           if (sourcesTargetBounds.v4 == myTree) {
-            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2).file)
+            arrayOf(makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2)?.file).filterNotNull().toTypedArray()
           } else {
-            arrayOf(sourcesTargetBounds.v2.getVirtualFile())
+            arrayOf(sourcesTargetBounds.v2.getVirtualFile()).filterNotNull().toTypedArray()
           }
         }
 
@@ -202,12 +203,12 @@ class FileExplorerViewDropTarget(
       if (vFile == null) {
         false
       } else {
-        copyPasteSupport.isPastePossible(listOf(vFile), sources.map { makeNodeDataFromTreePath(explorer, it) })
+        copyPasteSupport.isPastePossible(listOf(vFile), sources.mapNotNull { makeNodeDataFromTreePath(explorer, it) })
       }
     } else if (!isCopiedFromRemote && sourcesTargetBounds.v4 == myTree) {
       val sourceFiles = sources.mapNotNull { it?.getVirtualFile() }
       val target =
-        makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2).file?.let { listOf(it) } ?: emptyList()
+        makeNodeDataFromTreePath(explorer, sourcesTargetBounds.v2)?.file?.let { listOf(it) } ?: emptyList()
       copyPasteSupport.isPastePossibleForFiles(target, sourceFiles)
     } else if (sourcesTargetBounds.v4 == myTree) {
       copyPasteSupport.isPastePossibleFromPath(listOf(sourcesTargetBounds.v2), sources.toList())

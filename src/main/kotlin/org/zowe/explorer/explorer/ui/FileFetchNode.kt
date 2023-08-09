@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tree.LeafState
 import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.common.message
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.dataops.BatchedRemoteQuery
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Query
@@ -31,14 +32,13 @@ import kotlin.concurrent.withLock
 /**
  * Abstract class to represent a tree node in explorer
  */
-/** Another unnecessary abstraction (?) to represent tree node */
-abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit>(
+abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit<Connection>>(
   value: Value,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<Connection, *>,
   unit: U,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerUnitTreeNodeBase<Value, U>(value, project, parent, unit, treeStructure) {
+) : ExplorerUnitTreeNodeBase<Connection, Value, U>(value, project, parent, unit, treeStructure) {
 
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
@@ -79,7 +79,7 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
   /**
    * Method to build a list of error nodes with specified error text
    */
-  private fun errorNode(text: String): List<ErrorNode> {
+  private fun errorNode(text: String): List<ErrorNode<Connection>> {
     return listOf(ErrorNode(notNullProject, this, explorer, treeStructure, text = text))
   }
 
@@ -105,6 +105,11 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
                 if (batchedQ?.fetchNeeded == true) {
                   val itemsLeft = batchedQ.totalRows?.let { it - batchedQ.alreadyFetched }
                   add(LoadMoreNode(notNullProject, this@FileFetchNode, explorer, treeStructure, itemsLeft))
+                }
+              }
+              .apply {
+                if (isEmpty()) {
+                  add(NoItemsFoundNode(notNullProject, this@FileFetchNode, explorer, treeStructure))
                 }
               }
               .also {
@@ -187,7 +192,7 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
     }
     if (recursively) {
       children?.forEach {
-        if (it is FileFetchNode<*, *, *, *, *>) {
+        if (it is FileFetchNode<*, *, *, *, *, *>) {
           it.cleanCache(cleanBatchedQuery = cleanBatchedQuery)
         }
       }
@@ -201,8 +206,8 @@ abstract class FileFetchNode<Value : Any, R : Any, Q : Query<R, Unit>, File : Vi
  * Method to call cleanCache() of desired instance of the tree node. Tree node should be an instance of FileFetchNode
  * @param cleanBatchedQuery value to indicate whether it is needed to clean batched query
  */
-fun ExplorerTreeNode<*>.cleanCacheIfPossible(cleanBatchedQuery: Boolean) {
-  if (this is FileFetchNode<*, *, *, *, *>) {
+fun ExplorerTreeNode<*, *>.cleanCacheIfPossible(cleanBatchedQuery: Boolean) {
+  if (this is FileFetchNode<*, *, *, *, *, *>) {
     cleanCache(cleanBatchedQuery = cleanBatchedQuery)
   }
 }

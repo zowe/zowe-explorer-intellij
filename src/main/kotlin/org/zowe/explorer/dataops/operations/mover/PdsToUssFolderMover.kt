@@ -20,6 +20,7 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.CopyDataUSS
 import org.zowe.kotlinsdk.DataAPI
@@ -59,6 +60,8 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
             && operation.commonUrls(dataOpsManager).isNotEmpty()
   }
 
+  override val log = log<PdsToUssFolderMover<VFile>>()
+
   /**
    * Implements copying member inside 1 system.
    * @see AbstractPdsToUssFolderMover.canRun
@@ -90,6 +93,7 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
     var throwable: Throwable? = null
     for ((requester, _) in operation.commonUrls(dataOpsManager)) {
       try {
+        log.info("Trying to move PDS ${operation.source.name} to USS folder ${operation.destination.path} on ${requester.connectionConfig.url}")
         throwable = proceedPdsMove(requester.connectionConfig, requester.connectionConfig, operation, progressIndicator)
         break
       } catch (t: Throwable) {
@@ -97,7 +101,9 @@ class PdsToUssFolderMover<VFile : VirtualFile>(
       }
     }
     if (throwable != null) {
+      log.info("Failed to move PDS")
       throw throwable
     }
+    log.info("PDS has been moved successfully")
   }
 }

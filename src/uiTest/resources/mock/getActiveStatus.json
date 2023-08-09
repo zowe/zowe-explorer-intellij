@@ -1,0 +1,25 @@
+{
+  "retcode": "null",
+  "jobname": "jobName",
+  "status": "ACTIVE",
+  "job-correlator": "JOB07380SY1.....CE35BDE8.......:",
+  "class": "STC",
+  "type": "STC",
+  "jobid": "JOB07380",
+  "url": "https:\/\/hostName:port\/zosmf\/restjobs\/jobs\/JOB07380SY1.....CE35BDE8.......%3A",
+  "phase-name": "Job is on the hard copy queue",
+  "step-data": [
+    {
+      "smfid": "SP21",
+      "active": true,
+      "step-number": 1,
+      "proc-step-name": "STARTING",
+      "step-name": "IEFPROC ",
+      "program-name": "BLSQPRMI"
+    }
+  ],
+  "owner": "USER",
+  "subsystem": "JES2",
+  "files-url": "https:\/\/hostName:port\/zosmf\/restjobs\/jobs\/JOB07380SY1.....CE35BDE8.......%3A\/files",
+  "phase": 20
+}

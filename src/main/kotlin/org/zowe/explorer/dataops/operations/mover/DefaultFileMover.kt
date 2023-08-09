@@ -19,9 +19,8 @@ import org.zowe.explorer.dataops.operations.DeleteOperation
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
+import org.zowe.explorer.utils.log
 import retrofit2.Call
-import retrofit2.Response
-import java.io.IOException
 
 /**
  * Abstract class that wraps logic of copying/moving of files inside
@@ -39,8 +38,10 @@ abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : 
    */
   abstract fun buildCall(
     operation: MoveCopyOperation,
-    requesterWithUrl: Pair<Requester, ConnectionConfig>
+    requesterWithUrl: Pair<Requester<ConnectionConfig>, ConnectionConfig>
   ): Call<Void>
+
+  override val log = log<DefaultFileMover>()
 
   /**
    * Starts operation execution. Throws throwable if something went wrong.
@@ -57,8 +58,8 @@ abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : 
       runCatching {
         buildCall(operation, it).cancelByIndicator(progressIndicator).execute()
       }.mapCatching {
+        val operationMessage = if (operation.isMove) "move" else "copy"
         if (!it.isSuccessful) {
-          val operationMessage = if (operation.isMove) "move" else "copy"
           throw CallException(it, "Cannot $operationMessage ${operation.source.name} to ${operation.destination.name}")
         } else {
           it

@@ -11,17 +11,18 @@
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.openapi.project.Project
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.vfs.MFVirtualFile
 
-abstract class RemoteMFFileFetchNode<Value : Any, R : Any, U : ExplorerUnit>(
+abstract class RemoteMFFileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : Any, U : ExplorerUnit<Connection>>(
   value: Value,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<Connection, *>,
   unit: U,
   treeStructure: ExplorerTreeStructureBase
-) : FileFetchNode<Value, R, RemoteQuery<R, Unit>, MFVirtualFile, U>(value, project, parent, unit, treeStructure){
+) : FileFetchNode<Connection, Value, R, RemoteQuery<Connection, R, Unit>, MFVirtualFile, U>(value, project, parent, unit, treeStructure){
 
   override val queryClass = RemoteQuery::class.java
 

@@ -14,18 +14,22 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.explorer.ui.ExplorerTreeView
 import org.zowe.explorer.explorer.ui.JesExplorerRootNode
 import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.utils.sendTopic
 import javax.swing.JComponent
 import kotlin.concurrent.withLock
 
-class JesExplorerContentProviderFactory : ExplorerContentProviderFactory<JesExplorer>() {
-  override fun buildComponent(): ExplorerContentProvider<JesExplorer> = JesExplorerContentProvider()
+
+/** Factory to register [JesExplorerContentProvider] in Intellij IoC container. */
+class JesExplorerContentProviderFactory : ExplorerContentProviderFactory<ConnectionConfig, JesExplorer>() {
+  override fun buildComponent(): ExplorerContentProvider<ConnectionConfig, JesExplorer> = JesExplorerContentProvider()
 }
 
 /** Class to provide content for JES Explorer */
-class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>(
+class JesExplorerContentProvider : ExplorerContentProviderBase<ConnectionConfig, JesExplorer>(
   contextMenu = ActionManager.getInstance().getAction("org.zowe.explorer.actions.JESContextMenuGroup") as ActionGroup
 ) {
 
@@ -34,6 +38,11 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>(
   override val isLockable: Boolean = false
   override val actionGroup: ActionGroup = ActionManager.getInstance().getAction("org.zowe.explorer.actions.JESActionBarGroup") as ActionGroup
   override val place: String = "JES Explorer"
+  private val jesExplorerViews = mutableMapOf<Project, JesExplorerView>()
+
+  override fun getExplorerView(project: Project): ExplorerTreeView<*, *, *>?  {
+    return jesExplorerViews[project]
+  }
 
   /**
    * Build the JES explorer content vertical panel
@@ -42,7 +51,7 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>(
    */
   override fun buildContent(parentDisposable: Disposable, project: Project): JComponent {
     return JesExplorerView(
-      explorer as Explorer<JesWorkingSetImpl>,
+      explorer as Explorer<ConnectionConfig, JesWorkingSetImpl>,
       project,
       parentDisposable,
       contextMenu,
@@ -55,6 +64,8 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<JesExplorer>(
         sendTopic(CutBufferListener.CUT_BUFFER_CHANGES, explorer.componentManager)
           .onUpdate(previousState, it)
       }
+    }.also {
+      jesExplorerViews[project] = it
     }
   }
 }

@@ -12,6 +12,7 @@ package org.zowe.explorer.dataops.operations.mover
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
@@ -25,9 +26,15 @@ import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.applyIfNotNull
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
-import org.zowe.kotlinsdk.*
+import org.zowe.kotlinsdk.CreateUssFile
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FileMode
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.FileType
+import org.zowe.kotlinsdk.UssFile
 
 /**
  * Factory for registering CrossSystemUssDirMover in Intellij IoC container.
@@ -52,12 +59,14 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
-            operation.sourceAttributes is RemoteUssAttributes &&
-            operation.destination.isDirectory &&
-            operation.destination is MFVirtualFile &&
-            dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes &&
-            operation.commonUrls(dataOpsManager).isEmpty()
+        operation.sourceAttributes is RemoteUssAttributes &&
+        operation.destination.isDirectory &&
+        operation.destination is MFVirtualFile &&
+        dataOpsManager.tryToGetAttributes(operation.destination) is RemoteUssAttributes &&
+        operation.commonUrls(dataOpsManager).isEmpty()
   }
+
+  override val log = log<CrossSystemUssDirMover>()
 
   /**
    * Proceeds move/copy of uss directory to uss directory between different systems.
@@ -73,7 +82,6 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     val destConnectionConfig = destAttributes.requesters.map { it.connectionConfig }.firstOrNull()
       ?: return IllegalStateException("No connection for destination directory \'${destAttributes.path}\' found.")
 
-
     if (sourceFile is MFVirtualFile) {
       val sourceAttributes = operation.sourceAttributes.castOrNull<RemoteUssAttributes>()
         ?: return IllegalStateException("No attributes found for destination directory \'${destFile.name}\'.")
@@ -82,7 +90,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
       val sourceQuery = UnitRemoteQueryImpl(UssQuery(sourceAttributes.path), sourceConnectionConfig)
       val sourceFileFetchProvider = dataOpsManager
-        .getFileFetchProvider<UssQuery, RemoteQuery<UssQuery, Unit>, MFVirtualFile>(
+        .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
           UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
         )
       sourceFileFetchProvider.reload(sourceQuery)
@@ -149,12 +157,15 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
    */
   override fun run(operation: MoveCopyOperation, progressIndicator: ProgressIndicator) {
     val throwable: Throwable? = try {
+      log.info("Trying to move USS directory ${operation.source.name} to ${operation.destination.path}")
       proceedDirMove(operation, progressIndicator)
     } catch (t: Throwable) {
       t
     }
     if (throwable != null) {
+      log.info("Failed to move USS directory")
       throw throwable
     }
+    log.info("USS directory has been moved successfully")
   }
 }

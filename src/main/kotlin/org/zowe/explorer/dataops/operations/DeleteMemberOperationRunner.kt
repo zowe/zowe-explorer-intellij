@@ -17,6 +17,7 @@ import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.DataAPI
 
 /**
@@ -36,6 +37,8 @@ class DeleteMemberOperationRunner: OperationRunner<DeleteMemberOperation, Unit> 
   override val operationClass = DeleteMemberOperation::class.java
 
   override val resultClass = Unit::class.java
+
+  override val log = log<DeleteMemberOperationRunner>()
 
   /**
    * Runs a dataset member delete operation.

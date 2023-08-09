@@ -28,7 +28,7 @@ class DefaultContentAdapter(dataOpsManager: DataOpsManager) : MFContentAdapterBa
    * Passes content to mainframe with no changes.
    * @see MFContentAdapterBase.adaptContentToMainframe
    */
-  override fun adaptContentToMainframe(content: ByteArray, attributes: FileAttributes): ByteArray = content
+  override fun <T>adaptContentToMainframe(content: T, attributes: FileAttributes): T = content
 
   /**
    * Passes content from mainframe to content storage with no changes.

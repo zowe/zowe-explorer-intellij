@@ -20,8 +20,9 @@ import org.zowe.explorer.dataops.operations.ForceRenameOperation
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
-import org.zowe.explorer.vfs.sendVfsChangesTopic
+import org.zowe.explorer.vfs.sendMFVfsChangesTopic
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 
@@ -42,6 +43,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
 
   override val operationClass = ForceRenameOperation::class.java
   override val resultClass = Unit::class.java
+  override val log = log<ForceRenameOperationRunner>()
 
   /**
    * Determines if an operation can be run on selected object
@@ -69,6 +71,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
     attributes.requesters.map { requester ->
       try {
         progressIndicator.checkCanceled()
+        log.info("Trying to force rename $fileName to ${operation.newName}")
         if (!sourceFile.isDirectory) {
           sourceFile.parent?.let {
             dataOpsManager.performOperation(
@@ -83,7 +86,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
               ), progressIndicator
             )
           }
-          sendVfsChangesTopic()
+          sendMFVfsChangesTopic()
         } else {
           children?.forEach {
             if (it.isDirectory && it.name == operation.newName) {
@@ -98,6 +101,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
                     "Remote exception occurred. Unable to rename source directory $fileName"
                   )
                 }
+                log.info("Creating USS file on $parentDirPath/${operation.newName}")
                 sourceFile.parent?.let {
                   dataOpsManager.performOperation(
                     MoveCopyOperation(
@@ -110,7 +114,7 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
                       operation.explorer
                     ), progressIndicator
                   )
-                  sendVfsChangesTopic()
+                  sendMFVfsChangesTopic()
                 }
               } else {
                 throw RuntimeException(
@@ -121,8 +125,10 @@ class ForceRenameOperationRunner(private val dataOpsManager: DataOpsManager) :
           }
         }
       } catch (e: Throwable) {
+        log.info("Failed to force rename file")
         throw RuntimeException(e)
       }
     }
+    log.info("Force rename operation has been completed successfully")
   }
 }

@@ -15,9 +15,13 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
-import org.zowe.explorer.dataops.*
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.BatchedRemoteQuery
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.fetch.LibraryQuery
+import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -27,14 +31,14 @@ import icons.ForMainframeIcons
 class LibraryNode(
   library: MFVirtualFile,
   project: Project,
-  parent: ExplorerTreeNode<*>,
+  parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: FilesWorkingSet,
   treeStructure: ExplorerTreeStructureBase
-) : RemoteMFFileFetchNode<MFVirtualFile, LibraryQuery, FilesWorkingSet>(
+) : RemoteMFFileFetchNode<ConnectionConfig, MFVirtualFile, LibraryQuery, FilesWorkingSet>(
   library, project, parent, workingSet, treeStructure
-), MFNode, RefreshableNode {
+), RefreshableNode {
 
-  override val query: RemoteQuery<LibraryQuery, Unit>?
+  override val query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
 
@@ -62,7 +66,7 @@ class LibraryNode(
     return value
   }
 
-  override fun makeFetchTaskTitle(query: RemoteQuery<LibraryQuery, Unit>): String {
+  override fun makeFetchTaskTitle(query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>): String {
     return "Fetching members for ${query.request.library.name}"
   }
 }

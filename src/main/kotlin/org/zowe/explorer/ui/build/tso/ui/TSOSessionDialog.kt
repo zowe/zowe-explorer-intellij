@@ -13,20 +13,24 @@ package org.zowe.explorer.ui.build.tso.ui
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.utils.crudable.getAll
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.utils.validateForBlank
+import org.zowe.explorer.utils.validateForPositiveInteger
 import org.zowe.kotlinsdk.TsoCodePage
 import java.awt.Dimension
+import java.util.stream.Collectors
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JTextField
-import kotlin.streams.toList
 
 /**
  * Class represents the TSO session creation dialog with its initial default values
@@ -46,7 +50,12 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
   private lateinit var regionField: JTextField
   private lateinit var connectionBox: JComboBox<ConnectionConfig>
 
-  private var connectionComboBoxModel = CollectionComboBoxModel(configCrudable.getAll<ConnectionConfig>().toList())
+  // TODO: remove in v1.*.*-223 and greater
+  private var connectionComboBoxModel =
+    CollectionComboBoxModel(configCrudable.getAll<ConnectionConfig>().collect(Collectors.toList()))
+
+  // TODO: use in v1.*.*-223 and greater
+//  private var connectionComboBoxModel = CollectionComboBoxModel(configCrudable.getAll<ConnectionConfig>().toList())
   private var codepageComboBoxModel = CollectionComboBoxModel(TsoCodePage.values().toList())
 
   /**
@@ -61,13 +70,13 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
         comboBox(
           model = connectionComboBoxModel,
           renderer = SimpleListCellRenderer.create("") { it?.name }
-          ).bindItem(state::connectionConfig.toNullableProperty())
+        ).bindItem(state::connectionConfig.toNullableProperty())
           .also {
             connectionBox = it.component
             resizableRow()
             it.verticalAlign(VerticalAlign.FILL)
             it.horizontalAlign(HorizontalAlign.FILL)
-        }
+          }
       }
       row {
         label("Logon procedure")

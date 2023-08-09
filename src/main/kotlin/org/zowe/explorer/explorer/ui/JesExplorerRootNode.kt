@@ -13,14 +13,15 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.JesWorkingSetImpl
 
-/** JES Explorer root node, where the information about the connection is situated */
+/** JES Explorer root node, that is hidden, but aggregates all nodes in JES Explorer. */
 class JesExplorerRootNode(
-  value: Explorer<*>, project: Project,
+  value: Explorer<ConnectionConfig, *>, project: Project,
   treeStructure: ExplorerTreeStructureBase
-) : ExplorerTreeNode<Explorer<*>>(
+) : ExplorerTreeNode<ConnectionConfig, Explorer<ConnectionConfig, *>>(
   value, project,
   null,
   value, treeStructure

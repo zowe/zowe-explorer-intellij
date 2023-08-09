@@ -70,15 +70,45 @@ We have two options of tests:
 1. UI tests - run with open IDE, make test of user-like interaction with the plugin;
 2. Unit tests - automated headless bundle to test plugin functions as if they were a separate pieces.
 
+### Environment configurations for UI tests:
+
+1. In IntelliJ Idea change Settings => Tools => Terminal Shell path parameter from PowerShell to Git Bash. Example: "C:
+   \Program Files\Git\usr\bin\bash.exe" --login -i
+2. Make Java version 17 available from command line (add to PATH)
+
+### To run UI tests:
+
+1. change values for ZOS_USERID, ZOS_PWD, CONNECTION_URL in src/uiTest/kotlin/auxiliary/utils.kt
+2. run the script uiTest.sh
+3. once IdeForUiTests started make it as main window on the screen and do not touch mouse anymore
+
+UI tests results: build/reports/tests/uiTest/index.html
+
+### To run smoke test:
+
+1. change values for ZOS_USERID, ZOS_PWD, CONNECTION_URL in src/uiTest/kotlin/auxiliary/utils.kt
+2. run the script smokeTest.sh
+3. if unit tests fail, smoke ui test will be skipped. When unit tests are successful, IdeForUiTests will be run
+4. once IdeForUiTests started make it as main window on the screen and do not touch mouse anymore
+
+Smoke test results: build/reports/tests/test/index.html with report for unit tests,
+build/reports/tests/SUCCESS(FAILURE).txt with quick summary for unit test run (file name depends on test run result),
+build/reports/tests/smokeUiTest/index.html with report for smoke UI test
+
 ### To run unit tests:
 
 "Unit tests" Gradle task: just run it as a configuration option.
 If you want to run a separate unit test, you should consider to use "Kotest" plugin.
 Firstly, you need to download it. Then, go to "Edit Configurations..." -> "Edit configuration templates..." -> "Kotest".
-In there, you need to enable VM options and add the following options:
+In there, you need to enable VM options and add the following lines:
 
 ```
--Didea.force.use.core.classloader=true --add-exports java.base/jdk.internal.vm=ALL-UNNAMED
+-Didea.force.use.core.classloader=true
+--add-opens=java.desktop/java.awt=ALL-UNNAMED
+--add-opens=java.desktop/sun.awt=ALL-UNNAMED
+--add-opens=java.desktop/java.awt.event=ALL-UNNAMED
+--add-opens=java.base/java.lang=ALL-UNNAMED
+--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED 
 ```
 
 After the "Kotest" is set up, just click on the green arrow near the test you want to run.

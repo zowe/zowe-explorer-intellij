@@ -34,7 +34,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
     /**
      * The connection table
      */
-    val conTab = tabLabel(remoteRobot, "z/OSMF Connections")
+    val conTab = tabLabel(remoteRobot, "Connections")
 
     /**
      * The Working Sets table

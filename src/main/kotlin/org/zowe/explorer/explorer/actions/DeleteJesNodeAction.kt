@@ -15,9 +15,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.showYesNoDialog
 import org.zowe.explorer.explorer.JesWorkingSetImpl
-import org.zowe.explorer.explorer.ui.JES_EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.explorer.ui.JesFilterNode
 import org.zowe.explorer.explorer.ui.JesWsNode
+import org.zowe.explorer.explorer.ui.getExplorerView
 
 /**
  * Action class for delete JES node action (working set or filter)
@@ -28,7 +29,7 @@ class DeleteJesNodeAction : AnAction() {
    * Called when delete JES element option is chosen from context menu
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: return
+    val view = e.getExplorerView<JesExplorerView>() ?: return
     val selected = view.mySelectedNodesData
     // Delete selected JES working sets
     selected
@@ -76,7 +77,7 @@ class DeleteJesNodeAction : AnAction() {
    * Determines which objects are JES nodes and therefore can be deleted
    */
   override fun update(e: AnActionEvent) {
-    val view = e.getData(JES_EXPLORER_VIEW) ?: let {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }

@@ -12,18 +12,20 @@ package org.zowe.explorer.explorer
 
 import com.intellij.openapi.Disposable
 import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.rwLocked
 import java.util.stream.Collectors
 
 
-class JesExplorerFactory : ExplorerFactory<JesWorkingSetImpl, JesExplorer> {
+/** Factory to register [JesExplorer] in Intellij IoC container. */
+class JesExplorerFactory : ExplorerFactory<ConnectionConfig, JesWorkingSetImpl, JesExplorer> {
   override fun buildComponent(): JesExplorer = JesExplorer()
 }
 
 /** JES Explorer implementation */
-class JesExplorer : AbstractExplorerBase<JesWorkingSetImpl, JesWorkingSetConfig>() {
+class JesExplorer : AbstractExplorerBase<ConnectionConfig, JesWorkingSetImpl, JesWorkingSetConfig>() {
   override val unitClass = JesWorkingSetImpl::class.java
   override val unitConfigClass = JesWorkingSetConfig::class.java
 
@@ -33,10 +35,9 @@ class JesExplorer : AbstractExplorerBase<JesWorkingSetImpl, JesWorkingSetConfig>
   )
 
   /**
-   * Creates a unit class (JesWorkingSetImpl) from config class (JesWorkingSetConfig).
-   * @see JesWorkingSetConfig
-   * @see JesWorkingSetImpl
+   * Creates a unit class [JesWorkingSetImpl] from config class [JesWorkingSetConfig].
    * @param parentDisposable disposable parent.
+   * @return desired instance of [JesWorkingSetImpl].
    */
   override fun JesWorkingSetConfig.toUnit(parentDisposable: Disposable): JesWorkingSetImpl {
     return JesWorkingSetImpl(

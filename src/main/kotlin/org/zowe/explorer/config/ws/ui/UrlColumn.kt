@@ -20,10 +20,10 @@ import javax.swing.table.TableCellRenderer
 /**
  * Class which represents column of url in GUI
  */
-@Suppress("DialogTitleCapitalization")
 class UrlColumn<WSConfig : WorkingSetConfig>(
+  connectionColumnName: String,
   private val getUrl: (WSConfig) -> String?
-) : ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.url.name")) {
+) : ColumnInfo<WSConfig, String>(connectionColumnName) {
 
   /**
    * Returns value of url of particular config

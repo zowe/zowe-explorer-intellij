@@ -15,14 +15,19 @@ import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 
 /**
+ * NOTE: This class is deprecated - use [ConfigStateV2]. Old configs will be inserted in this state
+ * and migrated to [ConfigStateV2].
+ *
  * State of all configs for plugin. It includes lists of connections, working sets and masks, other settings.
  * @author Viktar Mushtsin, Kiril Branavitski, Valiantsin Krus
  */
+@Deprecated("Use ConfigStateV2")
 data class ConfigState(
   var connections: MutableList<ConnectionConfig> = mutableListOf(),
   var filesWorkingSets: MutableList<FilesWorkingSetConfig> = mutableListOf(),
   var jesWorkingSets: MutableList<JesWorkingSetConfig> = mutableListOf(),
-  var settings: SettingsState = SettingsState()
+  var settings: SettingsState = SettingsState(),
+  var migrated: Boolean = false
 )
 
 /**

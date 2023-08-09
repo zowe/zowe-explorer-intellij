@@ -10,7 +10,9 @@
 
 package org.zowe.explorer.editor
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.progress.runModalTask
@@ -23,9 +25,42 @@ import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * File editor events listener.
- * Needed to handle before file events
+ * Needed to handle file editor events
  */
-class FileEditorEventsListener : FileEditorManagerListener.Before {
+class FileEditorEventsListener : FileEditorManagerListener {
+
+  private val focusListener = FileEditorFocusListener()
+
+  /**
+   * Adds the file editor focus listener [FileEditorFocusListener] after the file is opened.
+   * @param source the source file editor manager to get the editor in which the file is open.
+   * @param file the file that was opened.
+   */
+  override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+    val editor = source.selectedTextEditor as? EditorEx
+
+    // TODO: remove in v1.*.*-223 and greater
+    if (editor != null) {
+      editor.addFocusListener(focusListener)
+      val isDumbMode = ActionUtil.isDumbMode(editor.project)
+      if (isDumbMode) {
+        editor.document.setReadOnly(true)
+        editor.isViewer = true
+      }
+      super.fileOpened(source, file)
+    }
+
+    // TODO: use in v1.*.*-223 and greater
+    //editor?.addFocusListener(focusListener)
+    //super.fileOpened(source, file)
+  }
+}
+
+/**
+ * File editor before events listener.
+ * Needed to handle before file editor events
+ */
+class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
 
   private val dataOpsManager = service<DataOpsManager>()
 
@@ -37,15 +72,19 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
   override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
     val configService = service<ConfigService>()
     val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(source.project))
-    if (!configService.isAutoSyncEnabled) {
-      val attributes = dataOpsManager.tryToGetAttributes(file)
-      if (file is MFVirtualFile && file.isWritable && attributes != null) {
-        val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
-        val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
-        val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
-        val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-        if (!(currentContent contentEquals previousContent) && needToUpload) {
+    val attributes = dataOpsManager.tryToGetAttributes(file)
+    if (file is MFVirtualFile && file.isWritable && attributes != null) {
+      val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
+      val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+      val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
+      val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
+      if (!(currentContent contentEquals previousContent) && needToUpload) {
+        val incompatibleEncoding = !checkEncodingCompatibility(file, source.project)
+        if (!configService.isAutoSyncEnabled) {
           if (showSyncOnCloseDialog(file.name, source.project)) {
+            if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
+              return
+            }
             runModalTask(
               title = "Syncing ${file.name}",
               project = source.project,
@@ -57,10 +96,14 @@ class FileEditorEventsListener : FileEditorManagerListener.Before {
               }
             }
           }
+        } else {
+          if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
+            return
+          }
+          runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+          sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, DataOpsManager.instance.componentManager).sync(file)
         }
       }
-    } else {
-      syncProvider.saveDocument()
     }
     super.beforeFileClosed(source, file)
   }

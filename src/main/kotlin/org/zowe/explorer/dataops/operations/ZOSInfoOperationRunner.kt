@@ -5,6 +5,7 @@ import org.zowe.explorer.api.api
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.InfoAPI
 import org.zowe.kotlinsdk.InfoResponse
 
@@ -23,6 +24,7 @@ class ZOSInfoOperationRunnerFactory : OperationRunnerFactory {
 class ZOSInfoOperationRunner : OperationRunner<ZOSInfoOperation, InfoResponse> {
   override val operationClass = ZOSInfoOperation::class.java
   override val resultClass = InfoResponse::class.java
+  override val log = log<ZOSInfoOperationRunner>()
 
   /**
    * Method determines if an operation can be run

@@ -10,6 +10,7 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
 import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.CancelJobPurgeOutRequest
 import org.zowe.kotlinsdk.JESApi
 import retrofit2.Response
@@ -27,6 +28,8 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
   override val operationClass = PurgeJobOperation::class.java
 
   override val resultClass = CancelJobPurgeOutRequest::class.java
+
+  override val log = log<PurgeJobOperationRunner>()
 
   override fun canRun(operation: PurgeJobOperation): Boolean {
     return true
@@ -71,15 +74,23 @@ class PurgeJobOperationRunner : OperationRunner<PurgeJobOperation, CancelJobPurg
 open class PurgeJobOperationParams
 
 /** Job Name and Job Id are used */
-class BasicPurgeJobParams(val jobName: String, val jobId: String) : PurgeJobOperationParams()
+class BasicPurgeJobParams(val jobName: String, val jobId: String) : PurgeJobOperationParams() {
+  override fun toString(): String {
+    return "BasicPurgeJobParams(jobName='$jobName', jobId='$jobId')"
+  }
+}
 
 /** Correlator is used */
-class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams()
+class CorrelatorPurgeJobParams(val correlator: String) : PurgeJobOperationParams() {
+  override fun toString(): String {
+    return "CorrelatorPurgeJobParams(correlator='$correlator')"
+  }
+}
 
 /** Class for purge job operation */
 data class PurgeJobOperation(
   override val request: PurgeJobOperationParams,
   override val connectionConfig: ConnectionConfig
-) : RemoteQuery<PurgeJobOperationParams, CancelJobPurgeOutRequest> {
+) : RemoteQuery<ConnectionConfig, PurgeJobOperationParams, CancelJobPurgeOutRequest> {
   override val resultClass = CancelJobPurgeOutRequest::class.java
 }

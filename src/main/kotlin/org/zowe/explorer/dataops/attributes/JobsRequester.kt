@@ -22,4 +22,4 @@ import org.zowe.explorer.config.ws.JobsFilter
 class JobsRequester(
   override val connectionConfig: ConnectionConfig,
   val jobsFilter: JobsFilter
-) : Requester
+) : Requester<ConnectionConfig>
