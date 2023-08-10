@@ -343,7 +343,6 @@ Thank you for considering IBA Group for your mainframe needs.
                             serviceImplementation="org.zowe.explorer.config.connect.CredentialServiceImpl"
                             testServiceImplementation="org.zowe.explorer.testServiceImpl.TestCredentialsServiceImpl"/>
 
-
         <applicationService serviceInterface="org.zowe.explorer.config.ConfigSandbox"
                             serviceImplementation="org.zowe.explorer.config.ConfigSandboxImpl"/>
 
