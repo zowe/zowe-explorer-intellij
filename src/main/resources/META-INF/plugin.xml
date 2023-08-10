@@ -335,11 +335,11 @@ Thank you for considering IBA Group for your mainframe needs.
                             serviceImplementation="org.zowe.explorer.config.ConfigServiceImpl"/>
 
         <applicationService preload="true" serviceInterface="org.zowe.explorer.config.OldConfigService"
-                            serviceImplementation="org.zowe.explorer.config.OldConfigServiceImpl"
-                            testServiceImplementation="org.zowe.explorer.testServiceImpl.TestCredentialsServiceImpl"/>
+                            serviceImplementation="org.zowe.explorer.config.OldConfigServiceImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.config.connect.CredentialService"
-                            serviceImplementation="org.zowe.explorer.config.connect.CredentialServiceImpl"/>
+                            serviceImplementation="org.zowe.explorer.config.connect.CredentialServiceImpl"
+                            testServiceImplementation="org.zowe.explorer.testServiceImpl.TestCredentialsServiceImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.config.ConfigSandbox"
                             serviceImplementation="org.zowe.explorer.config.ConfigSandboxImpl"/>

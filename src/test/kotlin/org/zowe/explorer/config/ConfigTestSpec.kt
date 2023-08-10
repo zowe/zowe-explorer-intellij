@@ -15,9 +15,25 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
-import org.zowe.explorer.config.connect.*
+import io.kotest.assertions.assertSoftly
+import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.Credentials
+import org.zowe.explorer.config.connect.CredentialsConfigDeclaration
+import org.zowe.explorer.config.connect.ZOSMFConnectionConfigDeclaration
+import org.zowe.explorer.config.connect.getOwner
+import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionsTableModel
+import org.zowe.explorer.config.connect.whoAmI
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
@@ -30,11 +46,6 @@ import org.zowe.explorer.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.ui.build.tso.TSOWindowFactory
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.service
-import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.mockk.*
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.TsoResponse
@@ -65,8 +76,12 @@ class ConfigTestSpec : ShouldSpec({
 
       fun mockConfigService() {
         val mockConfigServiceInstance = mockk<ConfigService>()
-        every { mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java) } returns ZOSMFConnectionConfigDeclaration(crudable)
-        every { mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java) } returns CredentialsConfigDeclaration(crudable)
+        every { mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java) } returns ZOSMFConnectionConfigDeclaration(
+          crudable
+        )
+        every { mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java) } returns CredentialsConfigDeclaration(
+          crudable
+        )
 
         mockkObject(ConfigService)
         every { ConfigService.instance } returns mockConfigServiceInstance
@@ -278,7 +293,8 @@ class ConfigTestSpec : ShouldSpec({
       should("get owner by connection config when owner is not empty") {
         val owner = getOwner(
           ConnectionConfig(
-            "", "", "", true, ZVersion.ZOS_2_3, "ZOSMFAD")
+            "", "", "", true, ZVersion.ZOS_2_3, null, "ZOSMFAD"
+          )
         )
 
         assertSoftly { owner shouldBe "ZOSMFAD" }
@@ -286,7 +302,8 @@ class ConfigTestSpec : ShouldSpec({
       should("get owner by connection config when owner is empty") {
         val owner = getOwner(
           ConnectionConfig(
-            "", "", "", true, ZVersion.ZOS_2_3, "")
+            "", "", "", true, ZVersion.ZOS_2_3, null, ""
+          )
         )
 
         assertSoftly { owner shouldBe "ZOSMF" }

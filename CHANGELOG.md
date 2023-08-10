@@ -6,6 +6,59 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 
 * Feature: The plug-in's description and name update
 
+## `1.1.0 (2023-08-xx)`
+
+* Feature: GitHub issue #14: UX: Edit WS mask ([0d358d0d](https://github.com/zowe/zowe-explorer-intellij/commit/0d358d0d))
+* Feature: GitHub issue #23: Double click on a working set or connection ([e7f040d7](https://github.com/zowe/zowe-explorer-intellij/commit/e7f040d7))
+* Feature: GitHub issue #49: Plugin logging ([76b6b175](https://github.com/zowe/zowe-explorer-intellij/commit/76b6b175))
+* Feature: GitHub issue #52: Presets for creating datasets ([6b8a5ca6](https://github.com/zowe/zowe-explorer-intellij/commit/6b8a5ca6))
+* Feature: GitHub issue #111: "Rename" in dialog window should be "Edit" for DS and USS masks ([c39f7c01](https://github.com/zowe/zowe-explorer-intellij/commit/c39f7c01))
+* Feature: GitHub issue #112: Migrate all UI tests from real data usage to mock server ([531d0e94](https://github.com/zowe/zowe-explorer-intellij/commit/531d0e94))
+* Feature: GitHub issue #113: Change user password feature ([0706abcb](https://github.com/zowe/zowe-explorer-intellij/commit/0706abcb))
+* Feature: GitHub issue #122: "whoami" on connection creation ([23ad877b](https://github.com/zowe/zowe-explorer-intellij/commit/23ad877b))
+* Feature: GitHub issue #123: Implement "No items found" for USS and DS masks ([762827d0](https://github.com/zowe/zowe-explorer-intellij/commit/762827d0))
+* Feature: GitHub issue #124: Clarify DS organization ([361f5f0a](https://github.com/zowe/zowe-explorer-intellij/commit/361f5f0a))
+* Feature: GitHub issue #125: 80 LRECL by default ([62598726](https://github.com/zowe/zowe-explorer-intellij/commit/62598726))
+* Feature: GitHub issue #126: Copy + rename ([440b65d9](https://github.com/zowe/zowe-explorer-intellij/commit/440b65d9))
+* Feature: GitHub issue #130: JDK search index broken in IntelliJ after dataset is open
+* Feature: GitHub issue #136: CLEARTEXT communication not enabled for client ([a2958223](https://github.com/zowe/zowe-explorer-intellij/commit/a2958223))
+* Feature: GitHub issue #140: Exception in Zowe Explorer (1.0.2-221) for Android Studio(Android Studio Flamingo | 2022.2.1 Patch 2) ([3ce3813e](https://github.com/zowe/zowe-explorer-intellij/commit/3ce3813e))
+* Feature: GitHub issue #144: Incorrect encoding should not be changed directly, until a user is decided to change it when we suggest ([02ae0c62](https://github.com/zowe/zowe-explorer-intellij/commit/02ae0c62))
+* Feature: GitHub issue #145: Migrated dataset properties should not be visible if they are not available ([18b13ff1](https://github.com/zowe/zowe-explorer-intellij/commit/18b13ff1))
+* Feature: GitHub issue #146: Hints for creating working sets after connection is created ([dcd92dfa](https://github.com/zowe/zowe-explorer-intellij/commit/dcd92dfa))
+* Feature: GitHub issue #147: "Duplicate" for member ([1493f1e8](https://github.com/zowe/zowe-explorer-intellij/commit/1493f1e8))
+* Feature: GitHub issue #148: Warning about incompatible encodings ([3bd29c7a](https://github.com/zowe/zowe-explorer-intellij/commit/3bd29c7a))
+* Feature: Separate info and tso requests during connection test ([83aa6bf2](https://github.com/zowe/zowe-explorer-intellij/commit/83aa6bf2))
+* Feature: Rework configs in the plug-in to accept new configurables ([d0ff5b3d](https://github.com/zowe/zowe-explorer-intellij/commit/d0ff5b3d))
+* Feature: Rework file sync with MF ([c43b8198](https://github.com/zowe/zowe-explorer-intellij/commit/c43b8198))
+* Feature: Presets: improvement ([7255dfce](https://github.com/zowe/zowe-explorer-intellij/commit/7255dfce))
+* Feature: VFS_CHANGES to MF_VFS_CHANGES ([0dd8b1b4](https://github.com/zowe/zowe-explorer-intellij/commit/0dd8b1b4))
+* Feature: Change XML and JSON comparison on different plugin versions ([7f480747](https://github.com/zowe/zowe-explorer-intellij/commit/7f480747))
+* Feature: Substitute R2Z with Zowe Kotlin SDK ([df6d11c1](https://github.com/zowe/zowe-explorer-intellij/commit/df6d11c1))
+* Feature: Enhance configuration for CICS connections ([cfa94f88](https://github.com/zowe/zowe-explorer-intellij/commit/cfa94f88))
+* Feature: Unit tests ([019bef00](https://github.com/zowe/zowe-explorer-intellij/commit/019bef00), [fa903c1c](https://github.com/zowe/zowe-explorer-intellij/commit/fa903c1c), [709a5e2f](https://github.com/zowe/zowe-explorer-intellij/commit/709a5e2f), [07ecd283](https://github.com/zowe/zowe-explorer-intellij/commit/07ecd283), [93febb62](https://github.com/zowe/zowe-explorer-intellij/commit/93febb62), [517c2cff](https://github.com/zowe/zowe-explorer-intellij/commit/517c2cff), [29cd85e4](https://github.com/zowe/zowe-explorer-intellij/commit/29cd85e4), [3850fcec](https://github.com/zowe/zowe-explorer-intellij/commit/3850fcec), [5646963e](https://github.com/zowe/zowe-explorer-intellij/commit/5646963e), [be3b5086](https://github.com/zowe/zowe-explorer-intellij/commit/be3b5086), [5043f5da](https://github.com/zowe/zowe-explorer-intellij/commit/5043f5da), [fdf67e1c](https://github.com/zowe/zowe-explorer-intellij/commit/fdf67e1c))
+
+
+* Bugfix: GitHub issue #138: Job is identified as successful while it ends with RC=12 ([99491858](https://github.com/zowe/zowe-explorer-intellij/commit/99491858))
+* Bugfix: Tooltip on JES Working set shows 'Working set' ([9937c128](https://github.com/zowe/zowe-explorer-intellij/commit/9937c128))
+* Bugfix: "debounce" test is failed sometimes ([8bb98da8](https://github.com/zowe/zowe-explorer-intellij/commit/8bb98da8))
+* Bugfix: Allocate like strange behavior ([a0bf3da4](https://github.com/zowe/zowe-explorer-intellij/commit/a0bf3da4))
+* Bugfix: Change permissions: incorrect permissions shown after change failure ([2143e4ba](https://github.com/zowe/zowe-explorer-intellij/commit/2143e4ba))
+* Bugfix: Empty pds is not deleted after its move to pds ([e88f830f](https://github.com/zowe/zowe-explorer-intellij/commit/e88f830f))
+* Bugfix: It shows that the job is still running after successfull purge ([d4a4289e](https://github.com/zowe/zowe-explorer-intellij/commit/d4a4289e))
+* Bugfix: Errors for several actions in JES Explorer ([3496acc1](https://github.com/zowe/zowe-explorer-intellij/commit/3496acc1))
+* Bugfix: Error if move empty PS to PDS ([15b262c0](https://github.com/zowe/zowe-explorer-intellij/commit/15b262c0))
+* Bugfix: Password is changed only for one connection ([a52830c8](https://github.com/zowe/zowe-explorer-intellij/commit/a52830c8))
+* Bugfix: Userid for new ws/jws is not changed in FileExplorer/JesExplorer after changes in corresponding connection ([ea0c9706](https://github.com/zowe/zowe-explorer-intellij/commit/ea0c9706))
+* Bugfix: FileNotFoundException on configs search (The system cannot find the file specified) ([76badb81](https://github.com/zowe/zowe-explorer-intellij/commit/76badb81))
+* Bugfix: Content of uss-file is changed to UTF-8 while copying it from remote to local ([ed86553e](https://github.com/zowe/zowe-explorer-intellij/commit/ed86553e))
+* Bugfix: Copy/paste and DnD of PS dataset from one host to uss-folder on another host does not work ([1522e08a](https://github.com/zowe/zowe-explorer-intellij/commit/1522e08a))
+* Bugfix: validateForGreaterValue should show correct message ([f841692e](https://github.com/zowe/zowe-explorer-intellij/commit/f841692e))
+* Bugfix: JCL highlight does not work on mainframe files ([80c8288a](https://github.com/zowe/zowe-explorer-intellij/commit/80c8288a))
+* Bugfix: IDE error when rename member/dataset to existing one/to the same ([e8dbaa8a](https://github.com/zowe/zowe-explorer-intellij/commit/e8dbaa8a))
+* Bugfix: ClassCastException: class java.util.ArrayList cannot be cast to class com.intellij.openapi.vfs.VirtualFile ([cdc0a458](https://github.com/zowe/zowe-explorer-intellij/commit/cdc0a458))
+
+
 ## `1.0.2 (2023-06-13)`
 
 * Feature: Returned support for IntelliJ 2022.1 ([6329c788](https://github.com/zowe/zowe-explorer-intellij/commit/6329c788))
