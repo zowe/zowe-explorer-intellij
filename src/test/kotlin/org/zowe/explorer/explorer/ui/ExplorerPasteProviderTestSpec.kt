@@ -16,9 +16,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.messages.MessagesService
+import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -44,15 +44,22 @@ import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.*
-import java.awt.Component
-import java.lang.IllegalStateException
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.spyk
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
+import kotlin.reflect.KFunction
 
 class ExplorerPasteProviderTestSpec : ShouldSpec({
+
   beforeSpec {
     // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
     val factory = IdeaTestFixtureFactory.getFixtureFactory()
@@ -82,7 +89,8 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         ExplorerPasteProvider(), recordPrivateCalls = true
       )
 
-      var dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      var dataOpsManagerService =
+        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
       every { mockedFileExplorer.componentManager } returns ApplicationManager.getApplication()
       dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(mockedFileExplorer.componentManager) {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
@@ -106,11 +114,12 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
       mockkObject(FileExplorerContentProvider)
       //mockkObject(FileExplorerContentProvider::getInstance)
-      every { FileExplorerContentProvider.getInstance().getExplorerView(any() as Project) } returns mockedFileExplorerView
+      every {
+        FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
+      } returns mockedFileExplorerView
 
-      var isPastePerformed : Boolean
-      var exceptionIsThrown : Boolean
-      var isShowYesNoDialogCalled = false
+      var isPastePerformed: Boolean
+      var exceptionIsThrown: Boolean
       var isLockPerformed = false
       var isUnlockPerformed = false
       var isCallbackCalled = false
@@ -126,33 +135,10 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
       val mockedExplorerBase = mockk<AbstractExplorerBase<ConnectionConfig, FilesWorkingSet, FilesWorkingSetConfig>>()
       every { mockedFileExplorerView.explorer } returns mockedExplorerBase
 
-      every { mockedFileExplorerView.explorer.reportThrowable(any() as Throwable, mockedProject) } answers {
+      every { mockedFileExplorerView.explorer.reportThrowable(any<Throwable>(), mockedProject) } answers {
         exceptionIsThrown = true
         isPastePerformed = false
       }
-
-      mockkObject(MessagesService)
-      every {
-        MessagesService.getInstance()
-      } returns
-          object : TestMessagesService() {
-            override fun showMessageDialog(
-              project: Project?,
-              parentComponent: Component?,
-              message: String?,
-              title: String?,
-              options: Array<String>,
-              defaultOptionIndex: Int,
-              focusedOptionIndex: Int,
-              icon: Icon?,
-              doNotAskOption: DoNotAskOption?,
-              alwaysUseIdeaUI: Boolean,
-              helpId: String?
-            ): Int {
-              isShowYesNoDialogCalled = true
-              return 0
-            }
-          }
 
       val nodeToRefreshSource = mockk<UssDirNode>()
       val nodeToRefreshTarget = mockk<UssDirNode>()
@@ -298,7 +284,18 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
       }
 
       should("perform paste without conflicts USS file -> PDS without skipping") {
+        var isShowYesNoDialogCalled = false
         isPastePerformed = false
+
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
+        every {
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          isShowYesNoDialogCalled = true
+          true
+        }
+
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(true)
 
         // source to paste
@@ -352,77 +349,51 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
         every {
           mockedCopyPasterProvider.getDestinationSourceFilePairs(
-            any() as List<VirtualFile>,
-            any() as List<VirtualFile>,
-            any() as Boolean
+            any<List<VirtualFile>>(), any<List<VirtualFile>>(), any<Boolean>()
           )
-        } returns
-            mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
+        } returns mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowYesNoDialogCalled shouldBe true
           isPastePerformed shouldBe true
         }
       }
 
       should("perform paste without conflicts USS file -> PDS with skipping") {
+        var isShowYesNoDialogCalled = false
         isPastePerformed = false
 
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
         every {
-          MessagesService.getInstance()
-        } returns
-            object : TestMessagesService() {
-              override fun showMessageDialog(
-                project: Project?,
-                parentComponent: Component?,
-                message: String?,
-                title: String?,
-                options: Array<String>,
-                defaultOptionIndex: Int,
-                focusedOptionIndex: Int,
-                icon: Icon?,
-                doNotAskOption: DoNotAskOption?,
-                alwaysUseIdeaUI: Boolean,
-                helpId: String?
-              ): Int {
-                isShowYesNoDialogCalled = true
-                isPastePerformed = true
-                return 1
-              }
-            }
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          isShowYesNoDialogCalled = true
+          false
+        }
 
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(false)
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowYesNoDialogCalled shouldBe true
           isPastePerformed shouldBe true
         }
       }
 
       should("perform paste without conflicts PS file -> PDS without skipping") {
+        var isShowYesNoDialogCalled = false
         isPastePerformed = false
 
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
         every {
-          MessagesService.getInstance()
-        } returns
-            object : TestMessagesService() {
-              override fun showMessageDialog(
-                project: Project?,
-                parentComponent: Component?,
-                message: String?,
-                title: String?,
-                options: Array<String>,
-                defaultOptionIndex: Int,
-                focusedOptionIndex: Int,
-                icon: Icon?,
-                doNotAskOption: DoNotAskOption?,
-                alwaysUseIdeaUI: Boolean,
-                helpId: String?
-              ): Int {
-                isShowYesNoDialogCalled = true
-                return 0
-              }
-            }
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          isShowYesNoDialogCalled = true
+          true
+        }
 
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(true)
 
@@ -487,12 +458,38 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowYesNoDialogCalled shouldBe true
           isPastePerformed shouldBe true
         }
       }
 
       should("perform paste to the same USS folder with conflicts and not overwriting") {
+        var isShowYesNoDialogCalled = false
+        var isShowDialogCalled = false
         isPastePerformed = false
+
+        val showDialogMock: (
+          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+        ) -> Int = Messages::showDialog
+        mockkStatic(showDialogMock as KFunction<*>)
+        every {
+          showDialogMock(
+            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?, any()
+          )
+        } answers {
+          isShowDialogCalled = true
+          0
+        }
+
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
+        every {
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          isShowYesNoDialogCalled = true
+          true
+        }
+
         // source to paste
         val mockedSourceNodeData = mockk<NodeData<ConnectionConfig>>()
         val mockedSourceNode = mockk<UssFileNode>()
@@ -534,16 +531,15 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
         every {
           mockedCopyPasterProvider.getDestinationSourceFilePairs(
-            any() as List<VirtualFile>,
-            any() as List<VirtualFile>,
-            any() as Boolean
+            any<List<VirtualFile>>(), any<List<VirtualFile>>(), any<Boolean>()
           )
-        } returns
-            mutableListOf(Pair(mockedSourceFile, mockedSourceFile))
-        every { mockedSourceFile.findChild(any() as String) } returns null
+        } returns mutableListOf(Pair(mockedSourceFile, mockedSourceFile))
+        every { mockedSourceFile.findChild(any<String>()) } returns null
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowDialogCalled shouldBe true
+          isShowYesNoDialogCalled shouldBe true
           isPastePerformed shouldBe false
         }
       }
@@ -557,74 +553,72 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         }
       }
 
-      should("Declining move/download files") {
-        isPastePerformed = true
+      should("decline move/download files") {
+        var isShowYesNoDialogCalled = false
+        isPastePerformed = false
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
+
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
         every {
-          MessagesService.getInstance()
-        } returns
-            object : TestMessagesService() {
-              override fun showMessageDialog(
-                project: Project?,
-                parentComponent: Component?,
-                message: String?,
-                title: String?,
-                options: Array<String>,
-                defaultOptionIndex: Int,
-                focusedOptionIndex: Int,
-                icon: Icon?,
-                doNotAskOption: DoNotAskOption?,
-                alwaysUseIdeaUI: Boolean,
-                helpId: String?
-              ): Int {
-                isShowYesNoDialogCalled = true
-                isPastePerformed = false
-                return 1
-              }
-            }
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          isShowYesNoDialogCalled = true
+          false
+        }
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowYesNoDialogCalled shouldBe true
           isPastePerformed shouldBe false
         }
       }
 
-      should("Perform paste to the same USS folder with conflicts and accept overwriting") {
+      should("perform paste to the same USS folder with conflicts and accept overwriting") {
+        var isShowYesNoDialogCalled = false
+        var isShowDialogCalled = false
         isPastePerformed = false
-        every {
-          MessagesService.getInstance()
-        } returns
-            object : TestMessagesService() {
-              override fun showMessageDialog(
-                project: Project?,
-                parentComponent: Component?,
-                message: String?,
-                title: String?,
-                options: Array<String>,
-                defaultOptionIndex: Int,
-                focusedOptionIndex: Int,
-                icon: Icon?,
-                doNotAskOption: DoNotAskOption?,
-                alwaysUseIdeaUI: Boolean,
-                helpId: String?
-              ): Int {
-                isShowYesNoDialogCalled = true
-                return 0
-              }
-            }
 
-        mockkStatic(Messages::class)
-        every { Messages.showDialog(any() as Project, any() as String, any() as String, any() as Array<String>, any() as Int, any() as Icon, null) } returns 1
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
+        every {
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          isShowYesNoDialogCalled = true
+          true
+        }
+
+        val showDialogMock: (
+          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+        ) -> Int = Messages::showDialog
+        mockkStatic(showDialogMock as KFunction<*>)
+        every {
+          showDialogMock(
+            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?, any()
+          )
+        } answers {
+          isShowDialogCalled = true
+          1
+        }
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowYesNoDialogCalled shouldBe true
+          isShowDialogCalled shouldBe true
           isPastePerformed shouldBe true
         }
       }
 
       should("return if unrecognized dialog message") {
         isPastePerformed = true
-        mockkStatic(Messages::class)
-        every { Messages.showDialog(any() as Project, any() as String, any() as String, any() as Array<String>, any() as Int, any() as Icon, null) } answers {
+        val showDialogSpecificMock: (
+          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+        ) -> Int = Messages::showDialog
+        mockkStatic(showDialogSpecificMock as KFunction<*>)
+        every {
+          showDialogSpecificMock(
+            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?, any()
+          )
+        } answers {
           isPastePerformed = false
           3
         }
@@ -698,32 +692,34 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
       }
 
       should("perform paste with conflicts USS files (>5) -> Local folder + remote but declining download") {
+        var isShowYesNoDialogCalled = false
         isPastePerformed = true
+
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(false)
-        mockkStatic(Messages::class)
-        every { Messages.showDialog(any() as Project, any() as String, any() as String, any() as Array<String>, any() as Int, any() as Icon, null) } returns 1
+
+        val showDialogSpecificMock: (
+          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+        ) -> Int = Messages::showDialog
+        mockkStatic(showDialogSpecificMock as KFunction<*>)
         every {
-          MessagesService.getInstance()
-        } returns
-            object : TestMessagesService() {
-              override fun showMessageDialog(
-                project: Project?,
-                parentComponent: Component?,
-                message: String?,
-                title: String?,
-                options: Array<String>,
-                defaultOptionIndex: Int,
-                focusedOptionIndex: Int,
-                icon: Icon?,
-                doNotAskOption: DoNotAskOption?,
-                alwaysUseIdeaUI: Boolean,
-                helpId: String?
-              ): Int {
-                isShowYesNoDialogCalled = true
-                isPastePerformed = false
-                return 1
-              }
-            }
+          showDialogSpecificMock(
+            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?, any()
+          )
+        } answers {
+          isShowYesNoDialogCalled = true
+          isPastePerformed = false
+          1
+        }
+
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
+        every {
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          val dialogTitle = firstArg<String>()
+          isShowYesNoDialogCalled = true
+          !dialogTitle.contains("Downloading Files")
+        }
 
         // source1 to paste
         val mockedSourceNodeData1 = mockk<NodeData<ConnectionConfig>>()
@@ -819,10 +815,13 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedTargetFile2Attributes = mockk<RemoteUssAttributes>()
         val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
         val mockedNodeTarget = mockk<PsiDirectoryNode>()
+        every { mockedTargetFile1.parent } returns null
         every { mockedTargetFile1.name } returns "test_folder"
         every { mockedTargetFile1.children } returns arrayOf(childDestinationVirtualFile1)
+        every { mockedTargetFile3.parent } returns null
         every { mockedTargetFile3.name } returns "test_folder2"
         every { mockedTargetFile3.children } returns arrayOf(childDestinationVirtualFile3)
+        every { mockedTargetFile2.parent } returns null
         every { mockedTargetFile2.name } returns "test_mf_folder"
         every { mockedTargetFile2.children } returns arrayOf(childDestinationVirtualFile2)
         every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
@@ -835,7 +834,14 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val copyPasteNodeData4 = mockk<NodeData<*>>()
         val copyPasteNodeData5 = mockk<NodeData<*>>()
         val copyPasteNodeData6 = mockk<NodeData<*>>()
-        val copyPasteNodeDataList = listOf(copyPasteNodeData1, copyPasteNodeData2, copyPasteNodeData3, copyPasteNodeData4, copyPasteNodeData5, copyPasteNodeData6)
+        val copyPasteNodeDataList = listOf(
+          copyPasteNodeData1,
+          copyPasteNodeData2,
+          copyPasteNodeData3,
+          copyPasteNodeData4,
+          copyPasteNodeData5,
+          copyPasteNodeData6
+        )
         val mockedCopyPasteBuffer = LinkedList(copyPasteNodeDataList)
         every { copyPasteNodeData1.node } returns mockedSourceNode1
         every { copyPasteNodeData1.file } returns mockedSourceFile1
@@ -858,24 +864,31 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
 
         // selected node data ( always remote files )
-        every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData1, mockedSourceNodeData2, mockedSourceNodeData3,
-          mockedSourceNodeData4, mockedSourceNodeData5, mockedSourceNodeData6)
+        every { mockedFileExplorerView.mySelectedNodesData } returns listOf(
+          mockedSourceNodeData1, mockedSourceNodeData2, mockedSourceNodeData3,
+          mockedSourceNodeData4, mockedSourceNodeData5, mockedSourceNodeData6
+        )
 
         every {
           mockedCopyPasterProvider.getDestinationSourceFilePairs(
-            any() as List<VirtualFile>,
-            any() as List<VirtualFile>,
-            any() as Boolean
+            any<List<VirtualFile>>(), any<List<VirtualFile>>(), any<Boolean>()
           )
         } returns
-            mutableListOf(Pair(mockedTargetFile1, mockedSourceFile1), Pair(mockedTargetFile1, mockedSourceFile2), Pair(mockedTargetFile1, mockedSourceFile3),
-              Pair(mockedTargetFile1, mockedSourceFile4), Pair(mockedTargetFile1, mockedSourceFile5), Pair(mockedTargetFile1, mockedSourceFile6),
-              Pair(mockedTargetFile2, mockedSourceFile1), Pair(mockedTargetFile2, mockedSourceFile2), Pair(mockedTargetFile2, mockedSourceFile3),
+            mutableListOf(
+              Pair(mockedTargetFile1, mockedSourceFile1),
+              Pair(mockedTargetFile1, mockedSourceFile2),
+              Pair(mockedTargetFile1, mockedSourceFile3),
+              Pair(mockedTargetFile1, mockedSourceFile4),
+              Pair(mockedTargetFile1, mockedSourceFile5),
+              Pair(mockedTargetFile1, mockedSourceFile6),
+              Pair(mockedTargetFile2, mockedSourceFile1),
+              Pair(mockedTargetFile2, mockedSourceFile2),
+              Pair(mockedTargetFile2, mockedSourceFile3),
               Pair(mockedTargetFile3, mockedSourceFile2)
-              )
+            )
 
-        every { mockedTargetFile1.findChild(any() as String) } returns childDestinationVirtualFile1
-        every { mockedTargetFile3.findChild(any() as String) } returns childDestinationVirtualFile3
+        every { mockedTargetFile1.findChild(any<String>()) } returns childDestinationVirtualFile1
+        every { mockedTargetFile3.findChild(any<String>()) } returns childDestinationVirtualFile3
 
         every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile1) } returns null
         every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile2) } returns childDestMFFile2Attr
@@ -892,39 +905,32 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
-        every { mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) } returns arrayOf(mockedTargetFile1, mockedTargetFile2)
+        every {
+          mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+        } returns arrayOf(mockedTargetFile1, mockedTargetFile2)
         every { mockedDataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) } returns emptyList()
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowYesNoDialogCalled shouldBe true
           isPastePerformed shouldBe false
         }
       }
 
       should("perform paste without conflicts Local -> USS") {
+        var isShowYesNoDialogCalled = false
         isPastePerformed = false
+
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(true)
+
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
         every {
-          MessagesService.getInstance()
-        } returns
-            object : TestMessagesService() {
-              override fun showMessageDialog(
-                project: Project?,
-                parentComponent: Component?,
-                message: String?,
-                title: String?,
-                options: Array<String>,
-                defaultOptionIndex: Int,
-                focusedOptionIndex: Int,
-                icon: Icon?,
-                doNotAskOption: DoNotAskOption?,
-                alwaysUseIdeaUI: Boolean,
-                helpId: String?
-              ): Int {
-                isShowYesNoDialogCalled = true
-                return 0
-              }
-            }
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          isShowYesNoDialogCalled = true
+          true
+        }
 
         // source to paste
         val mockedSourceFile = mockk<VirtualFile>()
@@ -961,12 +967,9 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
         every {
           mockedCopyPasterProvider.getDestinationSourceFilePairs(
-            any() as List<VirtualFile>,
-            any() as List<VirtualFile>,
-            any() as Boolean
+            any<List<VirtualFile>>(), any<List<VirtualFile>>(), any<Boolean>()
           )
-        } returns
-            mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
+        } returns mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
 
         every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestMFFileAttr
         every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
@@ -979,12 +982,23 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowYesNoDialogCalled shouldBe true
           isPastePerformed shouldBe true
         }
       }
 
       should("perform operation throws error") {
+        var isShowYesNoDialogCalled = false
         exceptionIsThrown = false
+
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
+        every {
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          isShowYesNoDialogCalled = true
+          true
+        }
 
         dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
         every { mockedFileExplorer.componentManager } returns ApplicationManager.getApplication()
@@ -1047,15 +1061,13 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
         every {
           mockedCopyPasterProvider.getDestinationSourceFilePairs(
-            any() as List<VirtualFile>,
-            any() as List<VirtualFile>,
-            any() as Boolean
+            any<List<VirtualFile>>(), any<List<VirtualFile>>(), any<Boolean>()
           )
-        } returns
-            mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
+        } returns mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowYesNoDialogCalled shouldBe true
           exceptionIsThrown shouldBe true
         }
       }
@@ -1097,7 +1109,9 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
       should("paste is not enabled and possible if project is null") {
         var isPasteEnabled = true
         var isPastePossible = true
-        every { FileExplorerContentProvider.getInstance().getExplorerView(any() as Project) } returns mockedFileExplorerView
+        every {
+          FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
+        } returns mockedFileExplorerView
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } answers {
           isPasteEnabled = false
           isPastePossible = false
@@ -1139,7 +1153,9 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         }
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
         every { mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) } returns null
-        every { FileExplorerContentProvider.getInstance().getExplorerView(any() as Project) } returns mockedFileExplorerView
+        every {
+          FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
+        } returns mockedFileExplorerView
         mockedExplorerPasteProvider.isPasteEnabled(mockedDataContext)
         mockedExplorerPasteProvider.isPastePossible(mockedDataContext)
         assertSoftly {
@@ -1157,7 +1173,9 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
           true
         }
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
-        every { FileExplorerContentProvider.getInstance().getExplorerView(any() as Project) } returns mockedFileExplorerView
+        every {
+          FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
+        } returns mockedFileExplorerView
         mockedExplorerPasteProvider.isPasteEnabled(mockedDataContext)
         mockedExplorerPasteProvider.isPastePossible(mockedDataContext)
         assertSoftly {
@@ -1182,7 +1200,9 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         // prepare base mocks
 //        val mockedDataOpsManager = mockk<DataOpsManager>()
 //        every { dataOpsManagerService.testInstance } returns mockedDataOpsManager
-        every { FileExplorerContentProvider.getInstance().getExplorerView(any() as Project) } returns mockedFileExplorerView
+        every {
+          FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
+        } returns mockedFileExplorerView
         every { mockedFileExplorerView.copyPasteSupport } returns mockedCopyPasterProvider
         every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns emptyList()
 
@@ -1216,7 +1236,11 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
         // CopyPaste node buffer
 
-        fun addMockedSourceFile(fileName: String, isPastePossible: Boolean = false, isDirectory: Boolean = false): MFVirtualFile {
+        fun addMockedSourceFile(
+          fileName: String,
+          isPastePossible: Boolean = false,
+          isDirectory: Boolean = false
+        ): MFVirtualFile {
           val mockedSourceAttributes = mockk<RemoteUssAttributes>()
           val mockedSourceFile = mockk<MFVirtualFile>()
           every { mockedSourceFile.name } returns fileName
@@ -1264,11 +1288,11 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
         every {
           mockedCopyPasterProvider.getDestinationSourceFilePairs(
-              any() as List<VirtualFile>,
-              any() as List<VirtualFile>,
-              any() as Boolean
+            any() as List<VirtualFile>,
+            any() as List<VirtualFile>,
+            any() as Boolean
           )
-        } answers { copyPasteNodeDataList.mapNotNull { nodeData ->  nodeData.file?.let{ Pair(mockedTargetFile, it) } } }
+        } answers { copyPasteNodeDataList.mapNotNull { nodeData -> nodeData.file?.let { Pair(mockedTargetFile, it) } } }
 
         should("Skip 2 files one by one") {
           addMockedSourceFile("file.txt")
@@ -1281,11 +1305,19 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
           every {
             Messages.showYesNoDialog(
-                any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+              any() as Project?, any<String>(), any<String>(), any<String>(), any<String>(), any() as Icon?
             )
           } returns Messages.YES
           every {
-            Messages.showDialog(any() as Project?, any() as String, any() as String, any() as Array<String>, 0, any() as Icon?, null)
+            Messages.showDialog(
+              any() as Project?,
+              any() as String,
+              any() as String,
+              any() as Array<String>,
+              0,
+              any() as Icon?,
+              null
+            )
           } answers {
             if (!decideOptionSelected) {
               decideOptionSelected = true
@@ -1313,11 +1345,19 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
           every {
             Messages.showYesNoDialog(
-                any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+              any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
             )
           } returns Messages.YES
           every {
-            Messages.showDialog(any() as Project?, any() as String, any() as String, any() as Array<String>, 0, any() as Icon?, null)
+            Messages.showDialog(
+              any() as Project?,
+              any() as String,
+              any() as String,
+              any() as Array<String>,
+              0,
+              any() as Icon?,
+              null
+            )
           } answers {
             if (!decideOptionSelected) {
               decideOptionSelected = true
@@ -1367,11 +1407,19 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
           every {
             Messages.showYesNoDialog(
-                any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+              any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
             )
           } returns Messages.YES
           every {
-            Messages.showDialog(any() as Project?, any() as String, any() as String, any() as Array<String>, 0, any() as Icon?, null)
+            Messages.showDialog(
+              any() as Project?,
+              any() as String,
+              any() as String,
+              any() as Array<String>,
+              0,
+              any() as Icon?,
+              null
+            )
           } answers {
             if (!decideOptionSelected) {
               decideOptionSelected = true
@@ -1418,11 +1466,19 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
 
           every {
             Messages.showYesNoDialog(
-                any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+              any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
             )
           } returns Messages.YES
           every {
-            Messages.showDialog(any() as Project?, any() as String, any() as String, any() as Array<String>, 0, any() as Icon?, null)
+            Messages.showDialog(
+              any() as Project?,
+              any() as String,
+              any() as String,
+              any() as Array<String>,
+              0,
+              any() as Icon?,
+              null
+            )
           } answers {
             if (!decideOptionSelected) {
               decideOptionSelected = true
