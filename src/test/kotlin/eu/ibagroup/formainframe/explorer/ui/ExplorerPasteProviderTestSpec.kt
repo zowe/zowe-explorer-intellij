@@ -372,19 +372,6 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
           isShowYesNoDialogCalled = true
           false
         }
-//        val showDialogSpecificMock: (
-//          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
-//        ) -> Int = Messages::showDialog
-//        mockkStatic(showDialogSpecificMock as KFunction<*>)
-//        every {
-//          showDialogSpecificMock(
-//            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?, any()
-//          )
-//        } answers {
-//          isShowYesNoDialogCalled = true
-//          isPastePerformed = true
-//          1
-//        }
 
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(false)
 
