@@ -48,9 +48,9 @@ object ExplorerDataKeys {
  * @param destinationFile child of file to be copy to that have conflict with source file.
  * @author Valiantsin Krus
  */
-class ConflictResolution (
-    val sourceFile: VirtualFile,
-    val destinationFile: VirtualFile
+class ConflictResolution(
+  val sourceFile: VirtualFile,
+  val destinationFile: VirtualFile
 ) {
   private var overwrite: Boolean = false
   private var skip: Boolean = false
@@ -296,8 +296,8 @@ class ExplorerPasteProvider : PasteProvider {
           message = "${dialogMessagePrefix}Do you want to $dialogActionMessage these files?",
           project = project,
           icon = if (dialogTitlePrefix == "Moving") null else AllIcons.General.WarningDialog
-        ).let {
-          if (!it) {
+        ).let { proceed ->
+          if (!proceed) {
             copyPasteSupport.removeFromBuffer { nodeData ->
               nodeData.file?.let { fileNotNull -> sourceFiles.contains(fileNotNull) } ?: false
             }
@@ -340,7 +340,7 @@ class ExplorerPasteProvider : PasteProvider {
         )
       ) {
         conflictsResolutions.addAll(
-            ussToPdsWarnings.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } }
+          ussToPdsWarnings.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } }
         )
       }
       // specific conflicts resolution end
@@ -349,7 +349,7 @@ class ExplorerPasteProvider : PasteProvider {
         .map { destFile ->
           sourceFiles.mapNotNull { sourceFile ->
             val conflictResolution = conflictsResolutions
-                .find { it.sourceFile == sourceFile && it.destinationFile == destFile }
+              .find { it.sourceFile == sourceFile && it.destinationFile == destFile }
             if (conflictResolution?.shouldSkip() == true) {
               if (isDragAndDrop) {
                 copyPasteSupport.removeFromBuffer { it.file == sourceFile }
@@ -437,35 +437,35 @@ class ExplorerPasteProvider : PasteProvider {
 //    val overwriteDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
 
     val listOfAllConflicts = pasteDestinations
-        .mapNotNull { destFile ->
-          destFile.children
-              ?.map conflicts@{ destChild ->
-                val filteredSourceFiles = sourceFiles.filter { source ->
-                  val sourceAttributes = dataOpsManager.tryToGetAttributes(source)
-                  val destAttributes = dataOpsManager.tryToGetAttributes(destChild)
-                  if (
-                      destAttributes is RemoteMemberAttributes &&
-                      (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
-                  ) {
-                    val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).uppercase()
-                    if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
-                  } else if (
-                      destAttributes is RemoteMemberAttributes &&
-                      sourceAttributes is RemoteDatasetAttributes
-                  ) {
-                    sourceAttributes.name.split(".").last() == destChild.name
-                  } else {
-                    source.name == destChild.name
-                  }
-                }
-                val foundConflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-                if (filteredSourceFiles.isNotEmpty()) {
-                  filteredSourceFiles.forEach { foundConflict -> foundConflicts.add(Pair(destFile, foundConflict)) }
-                }
-                foundConflicts
+      .mapNotNull { destFile ->
+        destFile.children
+          ?.map conflicts@{ destChild ->
+            val filteredSourceFiles = sourceFiles.filter { source ->
+              val sourceAttributes = dataOpsManager.tryToGetAttributes(source)
+              val destAttributes = dataOpsManager.tryToGetAttributes(destChild)
+              if (
+                destAttributes is RemoteMemberAttributes &&
+                (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
+              ) {
+                val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).uppercase()
+                if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
+              } else if (
+                destAttributes is RemoteMemberAttributes &&
+                sourceAttributes is RemoteDatasetAttributes
+              ) {
+                sourceAttributes.name.split(".").last() == destChild.name
+              } else {
+                source.name == destChild.name
               }
-        }
-        .flatten()
+            }
+            val foundConflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
+            if (filteredSourceFiles.isNotEmpty()) {
+              filteredSourceFiles.forEach { foundConflict -> foundConflicts.add(Pair(destFile, foundConflict)) }
+            }
+            foundConflicts
+          }
+      }
+      .flatten()
     val conflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
     listOfAllConflicts.forEach { conflictList -> conflicts.addAll(conflictList) }
 
@@ -481,18 +481,18 @@ class ExplorerPasteProvider : PasteProvider {
 
     if (conflicts.isNotEmpty() || conflictsThatCannotBeOverwritten.isNotEmpty()) {
       val choice = Messages.showDialog(
-          project,
-          "Please, select",
-          "Name conflicts in ${conflicts.size + conflictsThatCannotBeOverwritten.size} file(s)",
-          arrayOf(
-              //"Decide for Each",
-              "Skip for All",
-              "Overwrite for All",
-              "Decide for Each"
-          ),
-          0,
-          AllIcons.General.QuestionDialog,
-          null
+        project,
+        "Please, select",
+        "Name conflicts in ${conflicts.size + conflictsThatCannotBeOverwritten.size} file(s)",
+        arrayOf(
+          //"Decide for Each",
+          "Skip for All",
+          "Overwrite for All",
+          "Decide for Each"
+        ),
+        0,
+        AllIcons.General.QuestionDialog,
+        null
       )
 
       when (choice) {
@@ -500,7 +500,7 @@ class ExplorerPasteProvider : PasteProvider {
         1 -> {
           result.addAll(conflicts.map { ConflictResolution(it.first, it.second).apply { resolveByOverwrite() } })
           result.addAll(
-              conflictsThatCannotBeOverwritten.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } }
+            conflictsThatCannotBeOverwritten.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } }
           )
           if (conflictsThatCannotBeOverwritten.isNotEmpty()) {
             val startMessage = "There are some conflicts that cannot be resolved:"
@@ -513,16 +513,17 @@ class ExplorerPasteProvider : PasteProvider {
               }
             }
             Messages.showDialog(
-                project,
-                createHtmlMessageWithItemsList(startMessage, conflictsToShow, finishMessage),
-                "Not Resolvable Conflicts",
-                arrayOf("Ok"),
-                0,
-                Messages.getErrorIcon(),
-                null
+              project,
+              createHtmlMessageWithItemsList(startMessage, conflictsToShow, finishMessage),
+              "Not Resolvable Conflicts",
+              arrayOf("Ok"),
+              0,
+              Messages.getErrorIcon(),
+              null
             )
           }
         }
+
         2 -> result.addAll(askUserAboutConflictResolution(conflicts, conflictsThatCannotBeOverwritten, project))
         else -> throw Exception("Selected option is not supported.")
       }
@@ -540,9 +541,9 @@ class ExplorerPasteProvider : PasteProvider {
    * @return List of [ConflictResolution] that indicates list of conflicts and how to resolve them.
    */
   private fun askUserAboutConflictResolution(
-      conflicts: List<Pair<VirtualFile, VirtualFile>>,
-      conflictsThatCannotBeOverwritten: List<Pair<VirtualFile, VirtualFile>>,
-      project: Project?
+    conflicts: List<Pair<VirtualFile, VirtualFile>>,
+    conflictsThatCannotBeOverwritten: List<Pair<VirtualFile, VirtualFile>>,
+    project: Project?
   ): List<ConflictResolution> {
     val result = mutableListOf<ConflictResolution>()
     val allConflicts = arrayListOf<Pair<VirtualFile, VirtualFile>>().apply {
@@ -572,12 +573,12 @@ class ExplorerPasteProvider : PasteProvider {
       if (!conflictsThatCannotBeOverwritten.contains(conflict)) {
         // Conflicts between text/binary files.
         val choice = Messages.showDialog(
-            project,
-            "Cannot move '${conflict.second.name}' to ${conflict.first.name}\n\n$newNameMessage",
-            "Name Conflict",
-            arrayOf("Skip", "Overwrite", "Use new name"),
-            0,
-            Messages.getWarningIcon()
+          project,
+          "Cannot move '${conflict.second.name}' to ${conflict.first.name}\n\n$newNameMessage",
+          "Name Conflict",
+          arrayOf("Skip", "Overwrite", "Use new name"),
+          0,
+          Messages.getWarningIcon()
         )
         val resolution = ConflictResolution(conflict.second, conflict.first)
         when (choice) {
@@ -595,12 +596,12 @@ class ExplorerPasteProvider : PasteProvider {
           "File '${conflict.second.name}' cannot replace directory '${conflict.second.name}'"
         }
         val choice = Messages.showDialog(
-            project,
-            "$messageToShow\n\n$newNameMessage",
-            "Name Conflict",
-            arrayOf("Skip", "Use new name"),
-            0,
-            Messages.getWarningIcon()
+          project,
+          "$messageToShow\n\n$newNameMessage",
+          "Name Conflict",
+          arrayOf("Skip", "Use new name"),
+          0,
+          Messages.getWarningIcon()
         )
         val resolution = ConflictResolution(conflict.second, conflict.first)
         when (choice) {
