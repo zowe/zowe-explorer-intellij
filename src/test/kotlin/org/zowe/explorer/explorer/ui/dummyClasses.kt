@@ -13,21 +13,15 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.EditorDataProvider
+import com.intellij.openapi.fileEditor.FileEditor
+//import com.intellij.openapi.fileEditor.FileEditorComposite // TODO: needed in 1.*.*-223 and greater
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorNavigatable
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DoNotAskOption
-import com.intellij.openapi.ui.InputValidator
-import com.intellij.openapi.ui.messages.MessagesService
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Function
-import com.intellij.util.PairFunction
-import java.awt.Component
-import javax.swing.Icon
-import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JTextField
 
 open class TestFileEditorManager : FileEditorManager() {
   override fun getComposite(file: VirtualFile): FileEditorComposite? {
@@ -119,147 +113,6 @@ open class TestFileEditorManager : FileEditorManager() {
   }
 
   override fun runWhenLoaded(editor: Editor, runnable: Runnable) {
-    TODO("Not yet implemented")
-  }
-
-}
-
-open class TestMessagesService : MessagesService {
-  override fun showChooseDialog(
-    project: Project?,
-    parentComponent: Component?,
-    message: String?,
-    title: String?,
-    values: Array<String?>?,
-    initialValue: String?,
-    icon: Icon?
-  ): Int {
-    TODO("Not yet implemented")
-  }
-
-  override fun showEditableChooseDialog(
-    message: String?,
-    title: String?,
-    icon: Icon?,
-    values: Array<String?>?,
-    initialValue: String?,
-    validator: InputValidator?
-  ): String? {
-    TODO("Not yet implemented")
-  }
-
-  override fun showErrorDialog(project: Project?, message: String?, title: String) {
-    TODO("Not yet implemented")
-  }
-
-  override fun showInputDialog(
-    project: Project?,
-    parentComponent: Component?,
-    message: String?,
-    title: String?,
-    icon: Icon?,
-    initialValue: String?,
-    validator: InputValidator?,
-    selection: TextRange?,
-    comment: String?
-  ): String? {
-    TODO("Not yet implemented")
-  }
-
-  override fun showInputDialogWithCheckBox(
-    message: String?,
-    title: String?,
-    checkboxText: String?,
-    checked: Boolean,
-    checkboxEnabled: Boolean,
-    icon: Icon?,
-    initialValue: String?,
-    validator: InputValidator?
-  ): Pair<String?, Boolean?> {
-    TODO("Not yet implemented")
-  }
-
-  override fun showMessageDialog(
-    project: Project?,
-    parentComponent: Component?,
-    message: String?,
-    title: String?,
-    options: Array<String>,
-    defaultOptionIndex: Int,
-    focusedOptionIndex: Int,
-    icon: Icon?,
-    doNotAskOption: DoNotAskOption?,
-    alwaysUseIdeaUI: Boolean,
-    helpId: String?
-  ): Int {
-    TODO("Not yet implemented")
-  }
-
-  override fun showMoreInfoMessageDialog(
-    project: Project?,
-    message: String?,
-    title: String?,
-    moreInfo: String?,
-    options: Array<String?>?,
-    defaultOptionIndex: Int,
-    focusedOptionIndex: Int,
-    icon: Icon?
-  ): Int {
-    TODO("Not yet implemented")
-  }
-
-  override fun showMultilineInputDialog(
-    project: Project?,
-    message: String?,
-    title: String?,
-    initialValue: String?,
-    icon: Icon?,
-    validator: InputValidator?
-  ): String? {
-    TODO("Not yet implemented")
-  }
-
-  override fun showPasswordDialog(
-    project: Project?,
-    message: String?,
-    title: String?,
-    icon: Icon?,
-    validator: InputValidator?
-  ): String? {
-    TODO("Not yet implemented")
-  }
-
-  override fun showPasswordDialog(
-    parentComponent: Component,
-    message: String?,
-    title: String?,
-    icon: Icon?,
-    validator: InputValidator?
-  ): CharArray? {
-    TODO("Not yet implemented")
-  }
-
-  override fun showTextAreaDialog(
-    textField: JTextField?,
-    title: String?,
-    dimensionServiceKey: String?,
-    parser: Function<in String?, out MutableList<String?>?>?,
-    lineJoiner: Function<in MutableList<String?>?, String?>?
-  ) {
-    TODO("Not yet implemented")
-  }
-
-  override fun showTwoStepConfirmationDialog(
-    message: String?,
-    title: String?,
-    options: Array<String?>?,
-    checkboxText: String?,
-    checked: Boolean,
-    defaultOptionIndex: Int,
-    focusedOptionIndex: Int,
-    icon: Icon?,
-    exitFunc: PairFunction<in Int?, in JCheckBox?, Int?>?
-  ): Int {
     TODO("Not yet implemented")
   }
 
