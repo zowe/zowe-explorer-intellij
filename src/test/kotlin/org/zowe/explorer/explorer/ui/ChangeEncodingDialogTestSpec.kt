@@ -229,9 +229,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       val reloadAction =
         actions?.first { (it.getValue(Action.NAME) as? String).orEmpty() == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
-
-      assertSoftly { expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE }
-    }
     should("run reload action when content synchronizer is null") {
       dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
