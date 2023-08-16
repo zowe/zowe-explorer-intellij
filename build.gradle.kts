@@ -159,6 +159,7 @@ tasks {
     finalizedBy("koverHtmlReport")
     systemProperty("idea.force.use.core.classloader", "true")
     systemProperty("idea.use.core.classloader.for.plugin.path", "true")
+    systemProperty("java.awt.headless", "true")
 
     afterSuite(
       KotlinClosure2<TestDescriptor, TestResult, Unit>({ desc, result ->
