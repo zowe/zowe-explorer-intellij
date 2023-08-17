@@ -23,7 +23,7 @@ apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
 version = "1.1.1-221"
-val remoteRobotVersion = "0.11.18"
+val remoteRobotVersion = "0.11.19"
 val okHttp3Version = "4.10.0"
 val kotestVersion = "5.5.5"
 
@@ -61,7 +61,7 @@ dependencies {
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
   implementation("com.segment.analytics.java:analytics:3.3.1")
-  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
+  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.3.0")
   testImplementation("io.mockk:mockk:1.13.5")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
   testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
