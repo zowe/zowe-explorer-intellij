@@ -1,0 +1,113 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+name: Build with Gradle + Deploy
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout of github repository
+      uses: actions/checkout@v3
+
+    - name: Setup of environment
+      uses: ./.github/actions/setup
+
+    - name: Check repopository content
+      shell: bash
+      run: pwd && ls -la
+
+    - name: Cache Gradle packages
+      uses: actions/cache@v1
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+        restore-keys: ${{ runner.os }}-gradle
+
+    - name: Build with Gradle
+      run: gradle wrapper && ./gradlew buildPlugin
+      shell: bash
+
+    - name: Run tests
+      run: ./gradlew test
+      shell: bash
+
+    - name: Sonarcloud scans
+      uses: ./.github/actions/sonar
+      env:
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+
+    - name: Publish built plugin
+      uses: actions/upload-artifact@v3
+      with:
+        name: builtPlugin
+        path: ./build/distributions/
+
+
+  deploy:
+    needs: build
+
+    runs-on: XBY_IJMP_machine
+
+    concurrency: test
+    environment:
+      name: test
+      url: http://178.172.233.157/plugin-builds/${{steps.extract_branch.outputs.BRANCH_NAME}}/${{ steps.generate_file_name.outputs.NEW_FILE_NAME }}
+
+    steps:
+    - name: Extract branch name
+      id: extract_branch
+      shell: bash
+      run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+
+    - name: Check current directory
+      shell: bash
+      run: pwd && ls -la
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: builtPlugin
+        path: ./build/distributions/
+
+    - name: Check plugin built availability
+      shell: bash
+      run: ls -la ./build/distributions
+
+    - name: Get name of build plugin archive
+      id: getting_file_name
+      shell: bash
+      run: >
+        CURRENT_FILE_NAME_PATH=$(echo $(find build -name "zowe-explorer*")) &&
+        echo "Name of current file: $CURRENT_FILE_NAME_PATH" &&
+        echo "CURRENT_FILE_NAME_PATH=$CURRENT_FILE_NAME_PATH" >> $GITHUB_OUTPUT
+
+    - name: Generate new name for built plugin
+      id: generate_file_name
+      shell: bash
+      run: >
+        TEMP_VAR=${{ steps.getting_file_name.outputs.CURRENT_FILE_NAME_PATH }}
+        NEW_FILE_NAME="$(echo ${TEMP_VAR%.zip*})."$(date +"%Y-%m-%dT%H:%M:%S%:z" | tr ':' _)".zip" &&
+        NEW_FILE_NAME=${NEW_FILE_NAME##*/} &&
+        echo "Name of new file: $NEW_FILE_NAME" &&
+        echo "NEW_FILE_NAME=$NEW_FILE_NAME" >> $GITHUB_OUTPUT
+
+    - name: Move built plugin to destination folder
+      shell: bash
+      run: >
+        mkdir -p /var/www/plugin-builds/${{ steps.extract_branch.outputs.BRANCH_NAME }} &&
+        mv ${{ steps.getting_file_name.outputs.CURRENT_FILE_NAME_PATH }} /var/www/plugin-builds/${{ steps.extract_branch.outputs.BRANCH_NAME }}/${{ steps.generate_file_name.outputs.NEW_FILE_NAME }}
