@@ -63,9 +63,9 @@ jobs:
 
     runs-on: XBY_IJMP_machine
 
-    concurrency: test
+    concurrency: built-plugin
     environment:
-      name: test
+      name: built-plugin
       url: http://178.172.233.157/plugin-builds/${{steps.extract_branch.outputs.BRANCH_NAME}}/${{ steps.generate_file_name.outputs.NEW_FILE_NAME }}
 
     steps:
