@@ -8,7 +8,6 @@
 name: Build with Gradle + Deploy
 
 on:
-  push:
   workflow_dispatch:
 
 permissions:
