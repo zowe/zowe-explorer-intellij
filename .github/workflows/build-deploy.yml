@@ -8,6 +8,7 @@
 name: Build with Gradle + Deploy
 
 on:
+  push:
   workflow_dispatch:
 
 permissions:
@@ -65,7 +66,7 @@ jobs:
     concurrency: test
     environment:
       name: test
-      url: http://178.172.233.157/plugin-builds/zowe/${{steps.extract_branch.outputs.BRANCH_NAME}}/${{ steps.generate_file_name.outputs.NEW_FILE_NAME }}
+      url: http://178.172.233.157/plugin-builds/${{steps.extract_branch.outputs.BRANCH_NAME}}/${{ steps.generate_file_name.outputs.NEW_FILE_NAME }}
 
     steps:
     - name: Extract branch name
@@ -108,5 +109,5 @@ jobs:
     - name: Move built plugin to destination folder
       shell: bash
       run: >
-        mkdir -p /var/www/plugin-builds/${{ steps.extract_branch.outputs.branch }} &&
+        mkdir -p /var/www/plugin-builds/${{ steps.extract_branch.outputs.BRANCH_NAME }} &&
         mv ${{ steps.getting_file_name.outputs.CURRENT_FILE_NAME_PATH }} /var/www/plugin-builds/${{ steps.extract_branch.outputs.BRANCH_NAME }}/${{ steps.generate_file_name.outputs.NEW_FILE_NAME }}
