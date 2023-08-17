@@ -9,11 +9,13 @@ sonarqube {
         property "sonar.sourceEncoding", "UTF-8"
         property "sonar.organization", "zowe"
         property "sonar.projectKey", "zowe_zowe-explorer-intellij"
-        property "sonar.projectName", "Zowe Explorer for IntelliJ"
+        property "sonar.projectName", "Zowe Explorer plug-in for IntelliJ IDEA"
         property "sonar.projectVersion", project.version
         property "sonar.language", "kotlin"
         property "sonar.links.scm", "https://github.com/zowe/zowe-explorer-intellij"
         property "sonar.links.ci", System.getenv()['BUILD_URL'] ?: null
+        property "sonar.core.codeCoveragePlugin", "jacoco"
+        property "sonar.coverage.jacoco.xmlReportPaths", "${project.buildDir}/reports/kover/repo.xml"
         if (pullRequest != null) {
             property "sonar.pullrequest.key", System.getenv()['CHANGE_ID'] ?: null
             property "sonar.pullrequest.branch", System.getenv()['CHANGE_BRANCH'] ?: null

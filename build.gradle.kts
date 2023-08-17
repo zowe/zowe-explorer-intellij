@@ -167,6 +167,7 @@ tasks {
 //    ignoreFailures = true
 
     finalizedBy("koverHtmlReport")
+    finalizedBy("koverXmlReport")
     systemProperty("idea.force.use.core.classloader", "true")
     systemProperty("idea.use.core.classloader.for.plugin.path", "true")
     systemProperty("java.awt.headless", "true")
@@ -182,11 +183,6 @@ tasks {
         }
       })
     )
-// TODO: setup Kover
-//    reports {
-//      xml.required.set(true)
-//      xml.outputLocation.set(File("${buildDir}/reports/jacoco.xml"))
-//    }
   }
 
   val createOpenApiSourceJar by registering(Jar::class) {
