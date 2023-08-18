@@ -208,6 +208,9 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
         title = title.split(".")[0]
       }
       details = t.errorParams["details"]?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
+      if (details.contains(":")) {
+        details = details.split(":").last()
+      }
     } else {
       title = t.message ?: t.toString()
       details = "Unknown error"
