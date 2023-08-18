@@ -25,7 +25,7 @@ group = "eu.ibagroup"
 version = "1.1.1-221"
 val remoteRobotVersion = "0.11.19"
 val okHttp3Version = "4.10.0"
-val kotestVersion = "5.5.5"
+val kotestVersion = "5.6.2"
 
 repositories {
   mavenCentral()
