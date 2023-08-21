@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("org.jetbrains.intellij") version "1.14.2"
-  kotlin("jvm") version "1.7.10"
+  kotlin("jvm") version "1.8.10"
   java
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
