@@ -22,7 +22,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "1.1.1-223"
+version = "1.1.1-231"
 val remoteRobotVersion = "0.11.19"
 val okHttp3Version = "4.10.0"
 val kotestVersion = "5.6.2"
@@ -75,7 +75,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.3")
+  version.set("2023.1")
 }
 
 tasks {
@@ -87,8 +87,8 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set("223.7571")
-    untilBuild.set("223.*")
+    sinceBuild.set("231.8109")
+    untilBuild.set("232.*")
     changeNotes.set(
       """
       <b>New features:</b>

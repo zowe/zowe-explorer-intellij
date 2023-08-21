@@ -13,7 +13,7 @@ package eu.ibagroup.formainframe.analytics
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import eu.ibagroup.formainframe.analytics.ui.AnalyticsPolicyDialog
 
 /**
@@ -21,10 +21,10 @@ import eu.ibagroup.formainframe.analytics.ui.AnalyticsPolicyDialog
  * It shows the analytics policy dialog before starting events tracking.
  * @author Valiantsin Krus.
  */
-class AnalyticsStartupActivity : StartupActivity {
+class AnalyticsStartupActivity : ProjectActivity {
 
   /** Shows analytics policy dialog if user was not aware of it. */
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     val analyticsService = service<AnalyticsService>()
     val policyProvider = service<PolicyProvider>()
     if (!analyticsService.isUserAcknowledged) {
