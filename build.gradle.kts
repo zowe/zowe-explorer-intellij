@@ -22,7 +22,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "1.1.1-221"
+version = "1.1.1-223"
 val remoteRobotVersion = "0.11.19"
 val okHttp3Version = "4.10.0"
 val kotestVersion = "5.6.2"
@@ -46,8 +46,8 @@ repositories {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
@@ -75,20 +75,20 @@ dependencies {
 }
 
 intellij {
-  version.set("2022.1")
+  version.set("2022.3")
 }
 
 tasks {
   withType<KotlinCompile> {
     kotlinOptions {
-      jvmTarget = JavaVersion.VERSION_11.toString()
+      jvmTarget = JavaVersion.VERSION_17.toString()
       languageVersion = org.jetbrains.kotlin.config.LanguageVersion.LATEST_STABLE.versionString
     }
   }
 
   patchPluginXml {
-    sinceBuild.set("221.5080")
-    untilBuild.set("222.*")
+    sinceBuild.set("223.7571")
+    untilBuild.set("223.*")
     changeNotes.set(
       """
       <b>New features:</b>

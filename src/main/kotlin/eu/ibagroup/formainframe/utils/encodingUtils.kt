@@ -15,6 +15,7 @@ import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -178,8 +179,7 @@ fun createCharsetsActionGroup(virtualFile: VirtualFile, attributes: RemoteUssAtt
         super.update(e)
       }
 
-      // TODO: needed in v1.*.*-223 and greater
-      // override fun getActionUpdateThread() = ActionUpdateThread.BGT
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
   }
 

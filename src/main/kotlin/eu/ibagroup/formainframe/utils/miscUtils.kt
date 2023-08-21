@@ -18,16 +18,11 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
-import java.awt.Component
-import java.awt.MouseInfo
-import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
-import java.util.stream.Collectors
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
-import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 
@@ -46,10 +41,7 @@ fun loadConfigClass(className: String): Class<*>? {
 
 /** Transform the stream to the mutable list */
 fun <E> Stream<E>.toMutableList(): MutableList<E> {
-  // TODO: remove in v1.*.*-223 and greater
-  return this.collect(Collectors.toList()).toMutableList()
-  // TODO: use in v1.*.*-223 and greater
-//  return this.toList().toMutableList()
+  return this.toList().toMutableList()
 }
 
 /** Transform the value to the specified class or return null if the cast is not possible */
@@ -270,18 +262,6 @@ fun debounce(delayInterval: Long, block: () -> Unit): () -> Unit {
       }
     }
   }
-}
-
-// TODO: remove in v1.*.*-223 and greater
-fun Component.isComponentUnderMouse(): Boolean {
-  if (mousePosition != null) {
-    return true
-  }
-  val pointerInfo = MouseInfo.getPointerInfo() ?: return false
-  val location = pointerInfo.location
-  SwingUtilities.convertPointFromScreen(location, this)
-  val bounds = Rectangle(0, 0, width, height)
-  return bounds.contains(location)
 }
 
 /**
