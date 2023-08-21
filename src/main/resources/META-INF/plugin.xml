@@ -344,11 +344,11 @@ Example of how to see the output:<br/>
 
         <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"
-                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestAnalyticsServiceImpl"/>
+                            testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestAnalyticsServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.connect.CredentialService"
                             serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"
-                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestCredentialsServiceImpl"/>
+                            testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestCredentialsServiceImpl"/>
 
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
@@ -356,11 +356,11 @@ Example of how to see the output:<br/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager" preload="true"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"
-                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl"/>
+                            testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.api.ZosmfApi"
                             serviceImplementation="eu.ibagroup.formainframe.api.ZosmfApiImpl"
-                            testServiceImplementation="eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl"/>
+                            testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.analytics.PolicyProvider"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.PolicyProviderImpl"/>

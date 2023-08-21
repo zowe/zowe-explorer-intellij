@@ -5,9 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -27,11 +24,11 @@ import eu.ibagroup.formainframe.explorer.ui.SpoolFileNode
 import eu.ibagroup.formainframe.explorer.ui.SpoolFilePropertiesDialog
 import eu.ibagroup.formainframe.explorer.ui.SpoolFileState
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.gson
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -43,19 +40,7 @@ import io.mockk.verify
 import org.zowe.kotlinsdk.Job
 import org.zowe.kotlinsdk.SpoolFile
 
-class GetJobPropertiesActionTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
