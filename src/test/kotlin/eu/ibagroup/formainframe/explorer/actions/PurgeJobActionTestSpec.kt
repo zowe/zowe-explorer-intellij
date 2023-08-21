@@ -54,13 +54,8 @@ class PurgeJobActionTestSpec : ShouldSpec({
   beforeSpec {
     // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
     val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
+    val lightFixture = factory.createLightFixtureBuilder("for-mainframe").fixture
+    val myFixture = factory.createCodeInsightFixture(lightFixture)
     myFixture.setUp()
   }
   afterSpec {
@@ -85,7 +80,7 @@ class PurgeJobActionTestSpec : ShouldSpec({
         )
       )
       mockkObject(gson)
-      every { gson.hint(Job::class).fromJson(any() as String, Job::class.java) } returns job
+      every { gson.hint(Job::class).fromJson(any<String>(), Job::class.java) } returns job
 
       mockkObject(CredentialService)
       every { CredentialService.instance.getUsernameByKey(any()) } returns "user"
