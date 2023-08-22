@@ -8,6 +8,7 @@
  * Copyright IBA Group 2020
  */
 
+// TODO: too much boilerplate
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -67,45 +68,7 @@ class SortByNameAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when By Name sorting is clicked
    */
-  // TODO: Consider using below commented code in v1.*.*-223 and greater:
-//  override fun actionPerformed(e: AnActionEvent) {
-//    val view = e.getExplorerView<FileExplorerView>() ?: return
-//    val selectedNode = view.mySelectedNodesData[0].node
-//    if (selectedNode is UssDirNode) {
-//      val queryToUpdate = (selectedNode.query as UnitRemoteQueryImpl)
-//      if (selectedNode.currentSortQueryKeysList.isEmpty()) {
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DATE)
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.ASCENDING)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      } else {
-//        selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.TYPE)
-//        selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.DATE)
-//        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.NAME)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.NAME)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      }
-//      queryToUpdate.requester = selectedNode
-//      selectedNode.cleanCache(false)
-//      fetchProvider.reload(queryToUpdate)
-//    }
-//  }
-
-  /**
-   * Custom isSelected method determines if the sorting By Name is currently enabled or not. Updates UI by 'tick' mark
-   */
-  override fun isSelected(e: AnActionEvent): Boolean {
-    val view = e.getExplorerView<FileExplorerView>() ?: return false
-    val selectedNode = view.mySelectedNodesData[0].node
-    if (selectedNode is UssDirNode) {
-      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.NAME)
-    }
-    return false
-  }
-
-  /**
-   * Always set or unset the selected 'tick' in UI. Called by actionPerformed final method in ToggleAction
-   */
-  // TODO: Consider comment out below code and switch to actionPerformed(e) in v1.*.*-223 and greater:
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
+  override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -124,6 +87,18 @@ class SortByNameAction : ToggleAction() {
       selectedNode.cleanCache(false)
       fetchProvider.reload(queryToUpdate)
     }
+  }
+
+  /**
+   * Custom isSelected method determines if the sorting By Name is currently enabled or not. Updates UI by 'tick' mark
+   */
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val view = e.getExplorerView<FileExplorerView>() ?: return false
+    val selectedNode = view.mySelectedNodesData[0].node
+    if (selectedNode is UssDirNode) {
+      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.NAME)
+    }
+    return false
   }
 
   /**
@@ -147,45 +122,7 @@ class SortByTypeAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when By Type sorting is clicked
    */
-  // TODO: Consider using below commented code in v1.*.*-223 and greater:
-//  override fun actionPerformed(e: AnActionEvent) {
-//    val view = e.getExplorerView<FileExplorerView>() ?: return
-//    val selectedNode = view.mySelectedNodesData[0].node
-//    if (selectedNode is UssDirNode) {
-//      val queryToUpdate = (selectedNode.query as UnitRemoteQueryImpl)
-//      if (selectedNode.currentSortQueryKeysList.isEmpty()) {
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DATE)
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.ASCENDING)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      } else {
-//        selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.NAME)
-//        selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.DATE)
-//        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.TYPE)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.TYPE)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      }
-//      queryToUpdate.requester = selectedNode
-//      selectedNode.cleanCache(false)
-//      fetchProvider.reload(queryToUpdate)
-//    }
-//  }
-
-  /**
-   * Custom isSelected method determines if the sorting By Type is currently enabled or not. Updates UI by 'tick' mark
-   */
-  override fun isSelected(e: AnActionEvent): Boolean {
-    val view = e.getExplorerView<FileExplorerView>() ?: return false
-    val selectedNode = view.mySelectedNodesData[0].node
-    if (selectedNode is UssDirNode) {
-      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.TYPE)
-    }
-    return false
-  }
-
-  /**
-   * Always set or unset the selected 'tick' in UI. Called by actionPerformed final method in ToggleAction
-   */
-  // TODO: Consider comment out below code and switch to actionPerformed(e) in v1.*.*-223 and greater:
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
+  override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -204,6 +141,18 @@ class SortByTypeAction : ToggleAction() {
       selectedNode.cleanCache(false)
       fetchProvider.reload(queryToUpdate)
     }
+  }
+
+  /**
+   * Custom isSelected method determines if the sorting By Type is currently enabled or not. Updates UI by 'tick' mark
+   */
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val view = e.getExplorerView<FileExplorerView>() ?: return false
+    val selectedNode = view.mySelectedNodesData[0].node
+    if (selectedNode is UssDirNode) {
+      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.TYPE)
+    }
+    return false
   }
 
   /**
@@ -227,45 +176,7 @@ class SortByModificationDateAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when By Modification Date sorting is clicked
    */
-  // TODO: Consider using below commented code in v1.*.*-223 and greater:
-//  override fun actionPerformed(e: AnActionEvent) {
-//    val view = e.getExplorerView<FileExplorerView>() ?: return
-//    val selectedNode = view.mySelectedNodesData[0].node
-//    if (selectedNode is UssDirNode) {
-//      val queryToUpdate = (selectedNode.query as UnitRemoteQueryImpl)
-//      if (selectedNode.currentSortQueryKeysList.isEmpty()) {
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DATE)
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.ASCENDING)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      } else {
-//        selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.NAME)
-//        selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.TYPE)
-//        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DATE)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DATE)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      }
-//      queryToUpdate.requester = selectedNode
-//      selectedNode.cleanCache(false)
-//      fetchProvider.reload(queryToUpdate)
-//    }
-//  }
-
-  /**
-   * Custom isSelected method determines if the sorting By Modification Date is currently enabled or not. Updates UI by 'tick' mark
-   */
-  override fun isSelected(e: AnActionEvent): Boolean {
-    val view = e.getExplorerView<FileExplorerView>() ?: return false
-    val selectedNode = view.mySelectedNodesData[0].node
-    if (selectedNode is UssDirNode) {
-      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DATE)
-    }
-    return false
-  }
-
-  /**
-   * Always set or unset the selected 'tick' in UI. Called by actionPerformed final method in ToggleAction
-   */
-  // TODO: Consider comment out below code and switch to actionPerformed(e) in v1.*.*-223 and greater:
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
+  override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -284,6 +195,18 @@ class SortByModificationDateAction : ToggleAction() {
       selectedNode.cleanCache(false)
       fetchProvider.reload(queryToUpdate)
     }
+  }
+
+  /**
+   * Custom isSelected method determines if the sorting By Modification Date is currently enabled or not. Updates UI by 'tick' mark
+   */
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val view = e.getExplorerView<FileExplorerView>() ?: return false
+    val selectedNode = view.mySelectedNodesData[0].node
+    if (selectedNode is UssDirNode) {
+      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DATE)
+    }
+    return false
   }
 
   /**
@@ -307,44 +230,7 @@ class SortByAscendingOrderAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when Ascending sorting is clicked
    */
-  // TODO: Consider using below commented code in v1.*.*-223 and greater:
-//  override fun actionPerformed(e: AnActionEvent) {
-//    val view = e.getExplorerView<FileExplorerView>() ?: return
-//    val selectedNode = view.mySelectedNodesData[0].node
-//    if (selectedNode is UssDirNode) {
-//      val queryToUpdate = (selectedNode.query as UnitRemoteQueryImpl)
-//      if (selectedNode.currentSortQueryKeysList.isEmpty()) {
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DATE)
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.ASCENDING)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      } else {
-//        selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.DESCENDING)
-//        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.ASCENDING)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      }
-//      queryToUpdate.requester = selectedNode
-//      selectedNode.cleanCache(false)
-//      fetchProvider.reload(queryToUpdate)
-//    }
-//  }
-
-  /**
-   * Custom isSelected method determines if the ascending sorting is currently enabled or not. Updates UI by 'tick' mark
-   */
-  override fun isSelected(e: AnActionEvent): Boolean {
-    val view = e.getExplorerView<FileExplorerView>() ?: return false
-    val selectedNode = view.mySelectedNodesData[0].node
-    if (selectedNode is UssDirNode) {
-      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)
-    }
-    return false
-  }
-
-  /**
-   * Always set or unset the selected 'tick' in UI. Called by actionPerformed final method in ToggleAction
-   */
-  // TODO: Consider comment out below code and switch to actionPerformed(e) in v1.*.*-223 and greater:
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
+  override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -362,6 +248,18 @@ class SortByAscendingOrderAction : ToggleAction() {
       selectedNode.cleanCache(false)
       fetchProvider.reload(queryToUpdate)
     }
+  }
+
+  /**
+   * Custom isSelected method determines if the ascending sorting is currently enabled or not. Updates UI by 'tick' mark
+   */
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val view = e.getExplorerView<FileExplorerView>() ?: return false
+    val selectedNode = view.mySelectedNodesData[0].node
+    if (selectedNode is UssDirNode) {
+      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)
+    }
+    return false
   }
 
   /**
@@ -385,44 +283,7 @@ class SortByDescendingOrderAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when Descending sorting is clicked
    */
-  // TODO: Consider using below commented code in v1.*.*-223 and greater:
-//  override fun actionPerformed(e: AnActionEvent) {
-//    val view = e.getExplorerView<FileExplorerView>() ?: return
-//    val selectedNode = view.mySelectedNodesData[0].node
-//    if (selectedNode is UssDirNode) {
-//      val queryToUpdate = (selectedNode.query as UnitRemoteQueryImpl)
-//      if (selectedNode.currentSortQueryKeysList.isEmpty()) {
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DATE)
-//        selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DESCENDING)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      } else {
-//        selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.ASCENDING)
-//        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DESCENDING)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DESCENDING)
-//        queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
-//      }
-//      queryToUpdate.requester = selectedNode
-//      selectedNode.cleanCache(false)
-//      fetchProvider.reload(queryToUpdate)
-//    }
-//  }
-
-  /**
-   * Custom isSelected method determines if the descending sorting is currently enabled or not. Updates UI by 'tick' mark
-   */
-  override fun isSelected(e: AnActionEvent): Boolean {
-    val view = e.getExplorerView<FileExplorerView>() ?: return false
-    val selectedNode = view.mySelectedNodesData[0].node
-    if (selectedNode is UssDirNode) {
-      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DESCENDING)
-    }
-    return false
-  }
-
-  /**
-   * Always set or unset the selected 'tick' in UI. Called by actionPerformed final method in ToggleAction
-   */
-  // TODO: Consider comment out below code and switch to actionPerformed(e) in v1.*.*-223 and greater:
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
+  override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -440,6 +301,18 @@ class SortByDescendingOrderAction : ToggleAction() {
       selectedNode.cleanCache(false)
       fetchProvider.reload(queryToUpdate)
     }
+  }
+
+  /**
+   * Custom isSelected method determines if the descending sorting is currently enabled or not. Updates UI by 'tick' mark
+   */
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val view = e.getExplorerView<FileExplorerView>() ?: return false
+    val selectedNode = view.mySelectedNodesData[0].node
+    if (selectedNode is UssDirNode) {
+      return selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DESCENDING)
+    }
+    return false
   }
 
   /**

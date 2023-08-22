@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.EditorDataProvider
 import com.intellij.openapi.fileEditor.FileEditor
-//import com.intellij.openapi.fileEditor.FileEditorComposite // TODO: needed in 1.*.*-223 and greater
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorNavigatable
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
