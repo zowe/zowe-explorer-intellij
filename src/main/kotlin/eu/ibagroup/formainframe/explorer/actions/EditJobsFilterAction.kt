@@ -10,20 +10,24 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
 import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
+import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.EditJobsFilterDialog
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
+import eu.ibagroup.formainframe.utils.getSelectedNodesWorkingSets
 
 /** Action to edit job filter in JES working set tree view */
-class EditJobsFilterAction : JobsFilterAction() {
+class EditJobsFilterAction : AnAction() {
 
   /** Save changes when the dialog is fulfilled */
   override fun actionPerformed(e: AnActionEvent) {
@@ -31,7 +35,8 @@ class EditJobsFilterAction : JobsFilterAction() {
 
     val node = view.mySelectedNodesData.getOrNull(0)?.node
     if (node is JesFilterNode) {
-      val ws = getUnits(view).firstOrNull() ?: return
+      val workingSets = getSelectedNodesWorkingSets<JesWorkingSet>(view as ExplorerTreeView<*, *, *>)
+      val ws = workingSets.firstOrNull() ?: return
       val prefix = node.value.prefix
       val owner = node.value.owner
       val jobId = node.value.jobId
@@ -55,6 +60,27 @@ class EditJobsFilterAction : JobsFilterAction() {
         }
       }
     }
+  }
+
+  /**
+   * Decides to show the edit jobs filter action or not.
+   * Shows the action if:
+   * 1. Explorer view is not null
+   * 2. Only one item selected
+   * 3. The selected item is a [JesFilterNode]
+   */
+  override fun update(e: AnActionEvent) {
+    val view = e.getExplorerView<JesExplorerView>() ?: let {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val selected = view.mySelectedNodesData
+    if (selected.size != 1) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val node = selected[0].node
+    e.presentation.isEnabledAndVisible = node is JesFilterNode
   }
 
 }

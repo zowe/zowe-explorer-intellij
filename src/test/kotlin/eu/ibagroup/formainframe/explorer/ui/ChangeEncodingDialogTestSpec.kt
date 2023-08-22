@@ -18,9 +18,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingUtil.Magic8
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -29,31 +26,30 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.WorkingSet
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.reloadIn
+import eu.ibagroup.formainframe.utils.saveIn
+import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.formainframe.utils.updateFileTag
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
 import java.awt.event.ActionEvent
 import java.nio.charset.Charset
 import javax.swing.Action
 import javax.swing.Icon
 import kotlin.reflect.full.declaredFunctions
 
-class ChangeEncodingDialogTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
@@ -204,7 +200,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -215,7 +210,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -247,7 +241,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -279,7 +272,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -304,7 +296,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -316,7 +307,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       every { saveIn(any(), virtualFileMock, charsetMock) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 
@@ -348,7 +338,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 
@@ -373,7 +362,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 

@@ -8,12 +8,12 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.testServiceImpl
+package eu.ibagroup.formainframe.testutils.testServiceImpl
 
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.AnalyticsEvent
 
-class TestAnalyticsServiceImpl : AnalyticsService {
+open class TestAnalyticsServiceImpl : AnalyticsService {
 
   /**
    * Test instance for the AnalyticsService.

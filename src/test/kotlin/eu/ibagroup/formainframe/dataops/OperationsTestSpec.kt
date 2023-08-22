@@ -15,13 +15,18 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.MFRemoteFileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesService
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.attributes.Requester
+import eu.ibagroup.formainframe.dataops.attributes.UssRequester
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.LF_LINE_SEPARATOR
@@ -32,17 +37,27 @@ import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperationRunner
 import eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMover
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMover
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
+import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.changeFileEncodingTo
+import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.formainframe.utils.setUssFileTag
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.mockk.*
-import org.zowe.kotlinsdk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.XIBMDataType
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import retrofit2.Response
@@ -60,7 +75,7 @@ inline fun mockkRequesters(
   every { attributes.requesters } returns mutableListOf(connectionConfigToRequester(connection))
 }
 
-inline fun <reified S: FileAttributes, reified D: MFRemoteFileAttributes<*, *>> prepareBareOperation(
+inline fun <reified S : FileAttributes, reified D : MFRemoteFileAttributes<*, *>> prepareBareOperation(
   isCrossystem: Boolean = false,
   sourceConnectionConfigToRequester: (ConnectionConfig) -> Requester<*>,
   destConnectionConfigToRequester: (ConnectionConfig) -> Requester<*>
@@ -82,19 +97,7 @@ inline fun <reified S: FileAttributes, reified D: MFRemoteFileAttributes<*, *>> 
   )
 }
 
-class OperationsTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class OperationsTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
