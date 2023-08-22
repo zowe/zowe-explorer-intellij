@@ -244,7 +244,7 @@ val uiTest = task<Test>("uiTest") {
     events("passed", "skipped", "failed")
   }
   extensions.configure(KoverTaskExtension::class) {
-    // set to true to disable instrumentation of this task,
+    // Set to true to disable instrumentation of this task,
     // Kover reports will not depend on the results of its execution
     isDisabled.set(true)
   }
