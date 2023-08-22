@@ -12,33 +12,59 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.authToken
+import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.Operation
+import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
+import eu.ibagroup.formainframe.dataops.log.JobLogFetcher
+import eu.ibagroup.formainframe.dataops.log.MFLogger
 import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
-import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl
-import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.explorer.ui.EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.ErrorNode
+import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
+import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
+import eu.ibagroup.formainframe.explorer.ui.JesWsNode
+import eu.ibagroup.formainframe.explorer.ui.JobNode
+import eu.ibagroup.formainframe.explorer.ui.NodeData
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
+import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.justRun
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import io.mockk.unmockkObject
 import org.junit.jupiter.api.Assertions.assertThrows
-import org.zowe.kotlinsdk.*
+import org.zowe.kotlinsdk.CancelJobPurgeOutRequest
+import org.zowe.kotlinsdk.JESApi
+import org.zowe.kotlinsdk.Job
+import org.zowe.kotlinsdk.gson
+import retrofit2.Call
 import retrofit2.Response
 
 class PurgeJobActionTestSpec : WithApplicationShouldSpec({
@@ -501,7 +527,12 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
             var isJobsPurged = false
             val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
             dataOpsManager.testInstance = mockk()
-            every { dataOpsManager.testInstance.performOperation(any() as PurgeJobOperation, any() as ProgressIndicator) } answers {
+            every {
+              dataOpsManager.testInstance.performOperation(
+                any() as PurgeJobOperation,
+                any() as ProgressIndicator
+              )
+            } answers {
               isJobsPurged = true
               CancelJobPurgeOutRequest()
             }
