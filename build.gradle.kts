@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("org.jetbrains.intellij") version "1.14.2"
-  kotlin("jvm") version "1.7.10"
+  kotlin("jvm") version "1.8.10"
   java
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
@@ -23,9 +23,9 @@ apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
 version = "1.2.0-223"
-val remoteRobotVersion = "0.11.18"
+val remoteRobotVersion = "0.11.19"
 val okHttp3Version = "4.10.0"
-val kotestVersion = "5.5.5"
+val kotestVersion = "5.6.2"
 
 repositories {
   mavenCentral()
@@ -59,9 +59,9 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
+  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.5.0-rc.1")
   implementation("com.segment.analytics.java:analytics:3.3.1")
-  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
+  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.3.0")
   testImplementation("io.mockk:mockk:1.13.5")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
   testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
@@ -91,27 +91,59 @@ tasks {
     untilBuild.set("223.*")
     changeNotes.set(
       """
-      <b>WARNING: </b> version 1.0 introduces breaking change. You won't be able to use the plugin with IntelliJ version less than 2022.3
-      <br>
-      <br>
       <b>New features:</b>
       <ul>
-        <li>Returned support for IntelliJ 2022.1</li>
-        <li>Focus on dataset name field in allocation dialog</li>
+        <li>GitHub issue #14: UX: Edit WS mask</li>
+        <li>GitHub issue #23: Double click on a working set or connection</li>
+        <li>GitHub issue #49: Plugin logging</li>
+        <li>GitHub issue #52: Presets for creating datasets</li>
+        <li>GitHub issue #111: "Rename" in dialog window should be "Edit" for DS and USS masks</li>
+        <li>GitHub issue #112: Migrate all UI tests from real data usage to mock server</li>
+        <li>GitHub issue #113: Change user password feature</li>
+        <li>GitHub issue #122: "whoami" on connection creation</li>
+        <li>GitHub issue #123: Implement "No items found" for USS and DS masks</li>
+        <li>GitHub issue #124: Clarify DS organization</li>
+        <li>GitHub issue #125: 80 LRECL by default</li>
+        <li>GitHub issue #126: Copy + rename</li>
+        <li>GitHub issue #130: JDK search index broken in IntelliJ after dataset is open</li>
+        <li>GitHub issue #136: CLEARTEXT communication not enabled for client</li>
+        <li>GitHub issue #140: Exception in Zowe Explorer (1.0.2-221) for Android Studio(Android Studio Flamingo | 2022.2.1 Patch 2)</li>
+        <li>GitHub issue #144: Incorrect encoding should not be changed directly, until a user is decided to change it when we suggest</li>
+        <li>GitHub issue #145: Migrated dataset properties should not be visible if they are not available</li>
+        <li>GitHub issue #146: Hints for creating working sets after connection is created</li>
+        <li>GitHub issue #147: "Duplicate" for member</li>
+        <li>GitHub issue #148: Warning about incompatible encodings</li>
+        <li>Separate info and tso requests during connection test</li>
+        <li>Rework configs in the plug-in to accept new configurables</li>
+        <li>Rework file sync with MF</li>
+        <li>Presets: improvement</li>
+        <li>VFS_CHANGES to MF_VFS_CHANGES</li>
+        <li>Change XML and JSON comparison on different plugin versions</li>
+        <li>Substitute R2Z with Zowe Kotlin SDK</li>
+        <li>Enhance configuration for CICS connections</li>
+        <li>Unit tests</li>
       </ul>
       <br>
       <b>Fixed bugs:</b>
       <ul>
-        <li>Memory leak bug</li>
-        <li>GitHub issue #132: IDE internal error - NPE</li>
-        <li>Access denied error when copy from remote to local file when local has folder with the same name</li>
-        <li>Paste to dataset with LRECL does not move exceeding characters to a new line</li>
-        <li>USS file with 0 permissions is not accessible and no error message displayed</li>
-        <li>Refresh does not work for job filter with one job after purge</li>
-        <li>Name conflict message if move uss-file from folder to mask and then back</li>
-        <li>File cash conflict</li>
-        <li>Cancel button does not work for TSO connection test during</li>
-        <li>Unknown file type after delete member after move</li>
+        <<li>GitHub issue #138: Job is identified as successful while it ends with RC=12</li>
+        <li>Tooltip on JES Working set shows 'Working set'</li>
+        <li>"debounce" test is failed sometimes</li>
+        <li>Allocate like strange behavior</li>
+        <li>Change permissions: incorrect permissions shown after change failure</li>
+        <li>Empty pds is not deleted after its move to pds</li>
+        <li>It shows that the job is still running after successfull purge</li>
+        <li>Errors for several actions in JES Explorer</li>
+        <li>Error if move empty PS to PDS</li>
+        <li>Password is changed only for one connection</li>
+        <li>Userid for new ws/jws is not changed in FileExplorer/JesExplorer after changes in corresponding connection</li>
+        <li>FileNotFoundException on configs search (The system cannot find the file specified)</li>
+        <li>Content of uss-file is changed to UTF-8 while copying it from remote to local</li>
+        <li>Copy/paste and DnD of PS dataset from one host to uss-folder on another host does not work</li>
+        <li>validateForGreaterValue should show correct message</li>
+        <li>JCL highlight does not work on mainframe files</li>
+        <li>IDE error when rename member/dataset to existing one/to the same</li>
+        <li>ClassCastException: class java.util.ArrayList cannot be cast to class com.intellij.openapi.vfs.VirtualFile</li>
       </ul>"""
     )
   }
@@ -127,6 +159,7 @@ tasks {
     finalizedBy("koverHtmlReport")
     systemProperty("idea.force.use.core.classloader", "true")
     systemProperty("idea.use.core.classloader.for.plugin.path", "true")
+    systemProperty("java.awt.headless", "true")
 
     afterSuite(
       KotlinClosure2<TestDescriptor, TestResult, Unit>({ desc, result ->

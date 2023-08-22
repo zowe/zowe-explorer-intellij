@@ -14,6 +14,11 @@ import com.google.gson.Gson
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
 import eu.ibagroup.formainframe.config.ConfigDeclaration
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
+import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
+import java.awt.Component
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
@@ -258,4 +263,17 @@ fun debounce(delayInterval: Long, block: () -> Unit): () -> Unit {
       }
     }
   }
+}
+
+/**
+ * Get all distinct working sets for the selected nodes.
+ * In case the items belong to different working sets, it returns all the distinct working sets
+ * @param view the view where the nodes are selected
+ */
+fun <U : WorkingSet<ConnectionConfig, *>> getSelectedNodesWorkingSets(view: ExplorerTreeView<*, *, *>): List<U> {
+  return view.mySelectedNodesData
+    .map { it.node }
+    .filterIsInstance<ExplorerUnitTreeNodeBase<ConnectionConfig, *, U>>()
+    .map { it.unit }
+    .distinct()
 }

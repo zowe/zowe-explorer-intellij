@@ -23,16 +23,15 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
+import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.*
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialog
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialogState
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
-import eu.ibagroup.formainframe.utils.runTask
-import eu.ibagroup.formainframe.utils.validateConnectionName
-import eu.ibagroup.formainframe.utils.validateForBlank
-import eu.ibagroup.formainframe.utils.validateZosmfUrl
+import eu.ibagroup.formainframe.utils.crudable.getAll
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
@@ -96,7 +95,6 @@ class ConnectionDialog(
               runCatching {
                 service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
               }.onSuccess {
-                state.owner = whoAmI(newTestedConnConfig) ?: ""
                 val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
                 state.zVersion = when (systemInfo.zosVersion) {
                   "04.25.00" -> ZVersion.ZOS_2_2
@@ -143,6 +141,9 @@ class ConnectionDialog(
               }
             addAnyway
           } else {
+            runTask(title = "Retrieving user information", project = project) {
+              state.owner = whoAmI(newTestedConnConfig) ?: ""
+            }
             true
           }
         }
@@ -300,6 +301,16 @@ class ConnectionDialog(
                         val relativePoint = RelativePoint(this, Point(this.width / 2, this.height))
                         balloon.show(relativePoint, Balloon.Position.below)
                       }
+
+                      configCrudable.getAll<ConnectionConfig>().filter { it.url == state.connectionUrl }
+                        .filter { CredentialService.instance.getUsernameByKey(it.uuid) == state.username }
+                        .forEach {
+                          CredentialService.instance.setCredentials(
+                            connectionConfigUuid = it.uuid,
+                            username = state.username,
+                            password = state.password
+                          )
+                        }
                     }
                     true
                   }

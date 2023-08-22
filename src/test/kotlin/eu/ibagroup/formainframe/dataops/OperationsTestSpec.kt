@@ -15,22 +15,31 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.MFRemoteFileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesService
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.attributes.Requester
+import eu.ibagroup.formainframe.dataops.attributes.UssRequester
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.LF_LINE_SEPARATOR
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
+import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
+import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperationRunner
 import eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMover
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMover
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.changeFileEncodingTo
 import eu.ibagroup.formainframe.utils.service
@@ -38,10 +47,14 @@ import eu.ibagroup.formainframe.utils.setUssFileTag
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.XIBMDataType
@@ -51,6 +64,7 @@ import retrofit2.Response
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import kotlin.reflect.KFunction
 
 inline fun mockkRequesters(
   attributes: MFRemoteFileAttributes<*, *>,
@@ -61,7 +75,7 @@ inline fun mockkRequesters(
   every { attributes.requesters } returns mutableListOf(connectionConfigToRequester(connection))
 }
 
-inline fun <reified S: FileAttributes, reified D: MFRemoteFileAttributes<*, *>> prepareBareOperation(
+inline fun <reified S : FileAttributes, reified D : MFRemoteFileAttributes<*, *>> prepareBareOperation(
   isCrossystem: Boolean = false,
   sourceConnectionConfigToRequester: (ConnectionConfig) -> Requester<*>,
   destConnectionConfigToRequester: (ConnectionConfig) -> Requester<*>
@@ -83,25 +97,77 @@ inline fun <reified S: FileAttributes, reified D: MFRemoteFileAttributes<*, *>> 
   )
 }
 
-class OperationsTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class OperationsTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
   context("dataops module: operations/ZOSIntoOperationRunner") {
-    context("run") {
-      should("perform Info operation") {}
+    val zosInfoOperationRunner = ZOSInfoOperationRunner()
+
+    val zosmfApi = ApplicationManager.getApplication().service<ZosmfApi>() as TestZosmfApiImpl
+    zosmfApi.testInstance = mockk()
+
+    val progressIndicatorMockk = mockk<ProgressIndicator>()
+    val responseMockk = mockk<Response<InfoResponse>>()
+    every {
+      zosmfApi.testInstance.getApi(InfoAPI::class.java, any())
+        .getSystemInfo()
+        .cancelByIndicator(progressIndicatorMockk)
+        .execute()
+    } returns responseMockk
+
+    val operationMockk = mockk<ZOSInfoOperation>()
+    every { operationMockk.connectionConfig } returns mockk()
+
+    val callExceptionRef: (Response<*>, String) -> CallException = ::CallException
+    beforeEach {
+      mockkStatic(callExceptionRef as KFunction<*>)
+    }
+    afterEach {
+      unmockkAll()
+    }
+
+    // ZOSIntoOperationRunner.run
+    should("perform Info operation with successful response") {
+      val expected = InfoResponse(zosVersion = "2.3", zosmfHostname = "host", zosmfPort = "port")
+
+      every { responseMockk.isSuccessful } returns true
+      every { responseMockk.body() } returns expected
+
+      val actual = zosInfoOperationRunner.run(operationMockk, progressIndicatorMockk)
+
+      assertSoftly { actual shouldBe expected }
+    }
+    should("perform Info operation with unsuccessful response") {
+      val expected = CallException(500, "An internal error has occurred")
+
+      every { responseMockk.isSuccessful } returns false
+      every { CallException(responseMockk, any()) } returns expected
+
+      var actual: Throwable? = null
+      runCatching {
+        zosInfoOperationRunner.run(operationMockk, progressIndicatorMockk)
+      }.onFailure {
+        actual = it
+      }
+
+      assertSoftly { actual shouldBe expected }
+    }
+    should("perform Info operation when response body is null") {
+      val expected = CallException(500, "Cannot parse z/OSMF info request body")
+
+      every { responseMockk.isSuccessful } returns true
+      every { responseMockk.body() } returns null
+      every { CallException(responseMockk, any()) } returns expected
+
+      var actual: Throwable? = null
+      runCatching {
+        zosInfoOperationRunner.run(operationMockk, progressIndicatorMockk)
+      }.onFailure {
+        actual = it
+      }
+
+      assertSoftly { actual shouldBe expected }
     }
   }
   context("dataops module: operations/RenameOperationRunner") {
