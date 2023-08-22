@@ -11,11 +11,9 @@
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.MaskState
@@ -29,10 +27,10 @@ import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -42,19 +40,7 @@ import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import java.util.*
 
-class EditMaskActionTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class EditMaskActionTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
@@ -68,6 +54,7 @@ class EditMaskActionTestSpec : ShouldSpec({
     val explorerTreeNodeMock = mockk<ExplorerTreeNode<ConnectionConfig, *>>()
     val filesWorkingSetMock = mockk<FilesWorkingSet>()
     val configServiceMock = mockk<ConfigService>()
+    val credentialServiceMock = mockk<CredentialService>()
     val crudableMock = mockk<Crudable>()
     val filesWorkingSetConfigMock = mockk<FilesWorkingSetConfig>()
 
@@ -86,6 +73,7 @@ class EditMaskActionTestSpec : ShouldSpec({
       every { anActionEventMock.getExplorerView<FileExplorerView>() } returns fileExplorerViewMock
 
       every { filesWorkingSetMock.uuid } returns uuid
+      every { filesWorkingSetMock.connectionConfig } returns null
       every { explorerTreeNodeMock.value } returns filesWorkingSetMock
 
       every {
@@ -95,6 +83,10 @@ class EditMaskActionTestSpec : ShouldSpec({
       mockkObject(ConfigService)
       every { ConfigService.instance } returns configServiceMock
       every { configServiceMock.crudable } returns crudableMock
+
+      mockkObject(CredentialService)
+      every { CredentialService.instance } returns credentialServiceMock
+      every { credentialServiceMock.getUsernameByKey(any<String>()) } returns "test"
 
       every { anActionEventMock.project } returns mockk()
 
