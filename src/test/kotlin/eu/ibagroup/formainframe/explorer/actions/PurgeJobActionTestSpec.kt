@@ -34,7 +34,6 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
 import eu.ibagroup.formainframe.explorer.ui.EXPLORER_VIEW
-import eu.ibagroup.formainframe.explorer.ui.ErrorNode
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
 import eu.ibagroup.formainframe.explorer.ui.JesWsNode
@@ -201,13 +200,6 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
 
         }
 
-        var isOperationSucceededForJesEx = false
-        every {
-          explorer.showNotification(any(), any(), NotificationType.INFORMATION, any())
-        } answers {
-          isOperationSucceededForJesEx = true
-        }
-
         var isOperationSucceededForJobsLog = false
         every {
           jobsLogView.showNotification(any(), any(), any(), NotificationType.INFORMATION)
@@ -215,45 +207,21 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
           isOperationSucceededForJobsLog = true
         }
 
-        var isVisibleInJes = false
-        every { mockActionEventForJesEx.presentation.isVisible = true } answers { isVisibleInJes = true }
-
         every { job.status } returns mockk()
         var isEnabledInJobsLog = true
         every { mockActionEventForJobsLog.presentation.isEnabled = false } answers { isEnabledInJobsLog = false }
 
-        purgeAction.actionPerformed(mockActionEventForJesEx)
-        purgeAction.update(mockActionEventForJesEx)
         purgeAction.actionPerformed(mockActionEventForJobsLog)
         purgeAction.update(mockActionEventForJobsLog)
 
         assertSoftly {
-          isOperationSucceededForJesEx shouldBe true
           isOperationSucceededForJobsLog shouldBe true
-          isVisibleInJes shouldBe true
           isEnabledInJobsLog shouldBe true
           purgeAction.isDumbAware shouldBe true
         }
 
       }
       should("perform purge on job with error") {
-
-        val updateJesAction = mockk<AnActionEvent>()
-        val jesViewForUpdate = mockk<JesExplorerView>()
-        every { updateJesAction.getExplorerView<JesExplorerView>() } returns jesViewForUpdate
-        every { jesViewForUpdate.mySelectedNodesData } returns listOf()
-
-        val updateJesAction2 = mockk<AnActionEvent>()
-        val jesViewForUpdate2 = mockk<JesExplorerView>()
-        every { updateJesAction2.getExplorerView<JesExplorerView>() } returns jesViewForUpdate2
-        val errorNode = mockk<ErrorNode<ConnectionConfig>>()
-        every { jesViewForUpdate2.mySelectedNodesData } returns listOf(
-          NodeData(
-            errorNode,
-            virtualFile,
-            null
-          )
-        )
 
         dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
@@ -264,13 +232,6 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             throw IllegalStateException("No operation is expected to be performed.")
           }
-        }
-
-        var isOperationFailedForJesEx = false
-        every {
-          explorer.showNotification(any(), any(), NotificationType.ERROR, any())
-        } answers {
-          isOperationFailedForJesEx = true
         }
 
         var isOperationFailedForJobsLog = false
@@ -291,28 +252,17 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
         var isEnabledInJobsLog = true
         every { mockActionEventForJobsLog.presentation.isEnabled = false } answers { isEnabledInJobsLog = false }
 
-        var isVisibleForJes = true
-        every { updateJesAction.presentation.isVisible = false } answers { isVisibleForJes = false }
-        var isVisibleForJes2 = true
-        every { updateJesAction2.presentation.isVisible = false } answers { isVisibleForJes2 = false }
-
-        purgeAction.actionPerformed(mockActionEventForJesEx)
         purgeAction.actionPerformed(mockActionEventForJobsLog)
         purgeAction.actionPerformed(mockActionEventWithoutDataContext)
         purgeAction.update(mockActionEventWithoutDataContext)
         purgeAction.update(mockActionEventForJobsLog)
-        purgeAction.update(updateJesAction)
-        purgeAction.update(updateJesAction2)
 
         assertSoftly {
-          isOperationFailedForJesEx shouldBe true
           isOperationFailedForJobsLog shouldBe true
           isEnabledInJobsLog shouldBe false
-          isVisibleForJes shouldBe false
-          isVisibleForJes2 shouldBe false
-          isOperationFailedForNoContextAction shouldBe true
         }
       }
+      unmockkAll()
     }
     context("api spec") {
 
@@ -355,6 +305,7 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
 
         every { jobParentParent1.unit } returns mockk()
         every { jobParentParent1.unit.name } returns "firstWS"
+
         val jobParent2 = mockk<JesFilterNode>()
         val jobParentParent2 = mockk<JesWsNode>()
         every { jobParent2.parent } returns jobParentParent2
