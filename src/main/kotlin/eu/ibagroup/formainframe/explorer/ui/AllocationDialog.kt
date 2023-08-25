@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.selectedValueMatches
+import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.getUsername
@@ -111,6 +112,10 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .bindItem(state.allocationParameters::allocationUnit.toNullableProperty())
           .also { spaceUnitBox = it.component }
           .widthGroup(sameWidthComboBoxGroup)
+        contextHelp(
+          description = message("allocation.dialog.unit.size.hint.description"),
+          title = message("allocation.dialog.unit.size.hint.title")
+        )
       }
       row {
         label("Primary allocation: ")
