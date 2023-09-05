@@ -40,6 +40,7 @@ import eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMover
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
+import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.changeFileEncodingTo
 import eu.ibagroup.formainframe.utils.service
@@ -57,6 +58,8 @@ import io.mockk.spyk
 import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.InfoAPI
+import org.zowe.kotlinsdk.InfoResponse
 import org.zowe.kotlinsdk.XIBMDataType
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call

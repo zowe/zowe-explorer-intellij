@@ -20,10 +20,14 @@ import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.attributes.AttributesService
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesService
 import eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProvider
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -31,8 +35,19 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.mockk.*
-import org.zowe.kotlinsdk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.DataSetsList
+import org.zowe.kotlinsdk.Dataset
+import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.HasMigrated
+import org.zowe.kotlinsdk.XIBMAttr
 import retrofit2.Call
 import retrofit2.Response
 
@@ -96,10 +111,29 @@ class DatasetFileFetchProviderTestSpec : ShouldSpec({
       zosmfApi.testInstance = mockk()
       val mockedApi = mockk<DataAPI>()
       every { zosmfApi.testInstance.getApi(DataAPI::class.java, mockedConnectionConfig) } returns mockedApi
-      every { mockedApi.listDataSets(authorizationToken = any() as String, dsLevel = any() as String, volser = any() as String, xIBMAttr = any() as XIBMAttr, xIBMMaxItems = any() as Int, start = any() as String) } returns mockedCall
-      every { mockedApi.listDataSets(authorizationToken = any() as String, dsLevel = any() as String, volser = any() as String, xIBMAttr = any() as XIBMAttr, xIBMMaxItems = any() as Int, start = any() as String).cancelByIndicator(progressMockk) } returns mockedCall
+      every {
+        mockedApi.listDataSets(
+          authorizationToken = any() as String,
+          dsLevel = any() as String,
+          volser = any() as String,
+          xIBMAttr = any() as XIBMAttr,
+          xIBMMaxItems = any() as Int,
+          start = any() as String
+        )
+      } returns mockedCall
+      every {
+        mockedApi.listDataSets(
+          authorizationToken = any() as String,
+          dsLevel = any() as String,
+          volser = any() as String,
+          xIBMAttr = any() as XIBMAttr,
+          xIBMMaxItems = any() as Int,
+          start = any() as String
+        ).cancelByIndicator(progressMockk)
+      } returns mockedCall
 
-      val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      val dataOpsManagerService =
+        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
       val componentManager = dataOpsManagerService.componentManager
 
       // needed for cleanupUnusedFile test
@@ -111,14 +145,17 @@ class DatasetFileFetchProviderTestSpec : ShouldSpec({
 
       afterEach { unmockkAll() }
 
-      val datasetFileFetchProviderForTest = spyk(DatasetFileFetchProvider(dataOpsManagerService), recordPrivateCalls = true)
+      val datasetFileFetchProviderForTest =
+        spyk(DatasetFileFetchProvider(dataOpsManagerService), recordPrivateCalls = true)
 
       should("dataset fetch provider fetchResponse test") {
-        val fetchResponseMethodRef = datasetFileFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
+        val fetchResponseMethodRef =
+          datasetFileFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
         fetchResponseMethodRef.trySetAccessible()
         every { mockedResponse.isSuccessful } returns true
 
-        val datasetAttributes = (fetchResponseMethodRef.invoke(datasetFileFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
+        val datasetAttributes =
+          (fetchResponseMethodRef.invoke(datasetFileFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
 
         assertSoftly {
           datasetAttributes shouldHaveSize dataSetsList.items.size
@@ -127,9 +164,10 @@ class DatasetFileFetchProviderTestSpec : ShouldSpec({
 
       should("cleanup unused file if connection config of the query is the same as for dataset file") {
         var cleanupPerformed = false
-        val cleanupUnusedFileMethodRef = datasetFileFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
+        val cleanupUnusedFileMethodRef =
+          datasetFileFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
         cleanupUnusedFileMethodRef.trySetAccessible()
-        dataOpsManagerService.testInstance = object: TestDataOpsManagerImpl(componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(componentManager) {
           override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
             attributesClass: Class<out A>,
             vFileClass: Class<out F>
@@ -158,7 +196,8 @@ class DatasetFileFetchProviderTestSpec : ShouldSpec({
 
       should("cleanup unused file if connection config of the query is the same as for dataset file") {
         var cleanupPerformed = false
-        val cleanupUnusedFileMethodRef = datasetFileFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
+        val cleanupUnusedFileMethodRef =
+          datasetFileFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
         cleanupUnusedFileMethodRef.trySetAccessible()
 
         every { mockedAttributesService.getAttributes(mockedVirtualFile) } returns mockedFileAttributes
@@ -167,7 +206,12 @@ class DatasetFileFetchProviderTestSpec : ShouldSpec({
         every { mockedMaskedRequester.connectionConfig } returns mockedConnectionConfig
         every { mockedMaskedRequester.queryVolser } returns "ANOTHER"
         every { mockedFileAttributes.requesters } returns requesters
-        every { mockedAttributesService.updateAttributes(mockedVirtualFile, any() as RemoteDatasetAttributes.() -> Unit) } answers {
+        every {
+          mockedAttributesService.updateAttributes(
+            mockedVirtualFile,
+            any() as RemoteDatasetAttributes.() -> Unit
+          )
+        } answers {
           cleanupPerformed = true
           secondArg<RemoteDatasetAttributes.() -> Unit>().invoke(mockedFileAttributes)
         }
