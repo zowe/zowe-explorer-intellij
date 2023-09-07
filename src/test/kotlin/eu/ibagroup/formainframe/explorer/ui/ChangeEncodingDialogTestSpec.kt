@@ -204,7 +204,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -215,7 +214,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -247,7 +245,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -279,7 +276,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -304,7 +300,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
@@ -316,7 +311,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       every { saveIn(any(), virtualFileMock, charsetMock) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 
@@ -348,7 +342,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 
@@ -373,7 +366,6 @@ class ChangeEncodingDialogTestSpec : ShouldSpec({
       }
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
-      // TODO: change it.getValue(Action.NAME) to it.getName() in v1.*.*-231 and greater
       val convertAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.convert") }
       convertAction?.actionPerformed(actionEventMock)
 

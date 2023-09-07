@@ -97,7 +97,7 @@ class EditMaskAction : AnAction() {
           if (node is DSMaskNode) MaskState(mask = node.value.mask, type = MaskType.ZOS)
           else MaskState(mask = (node as UssDirNode).value.path, type = MaskType.USS)
         val initialStateWithWS = MaskStateWithWS(initialState, parentWS)
-        val dialog = AddOrEditMaskDialog(e.project, "Edit Mask", initialStateWithWS)
+        val dialog = AddOrEditMaskDialog(e.project, "Edit Mask", parentWS.connectionConfig, initialStateWithWS)
         if (dialog.showAndGet()) {
           val changedMaskState = dialog.state
           wsConfToUpdate =

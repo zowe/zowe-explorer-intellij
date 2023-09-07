@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.editor
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -37,6 +38,7 @@ class FileEditorEventsListener : FileEditorManagerListener {
    */
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
     val editor = source.selectedTextEditor as? EditorEx
+
     editor?.addFocusListener(focusListener)
     super.fileOpened(source, file)
   }

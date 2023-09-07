@@ -19,8 +19,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileNavigator
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DoNotAskOption
-import com.intellij.openapi.ui.messages.MessagesService
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
@@ -33,7 +33,12 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SyncProvider
-import eu.ibagroup.formainframe.explorer.*
+import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.explorer.ExplorerUnit
+import eu.ibagroup.formainframe.explorer.FileExplorer
+import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
+import eu.ibagroup.formainframe.explorer.UIComponentManager
+import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
 import eu.ibagroup.formainframe.utils.service
@@ -43,10 +48,17 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.mockk.*
-import java.awt.Component
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.spyk
 import javax.swing.Icon
 import javax.swing.tree.TreePath
+import kotlin.reflect.KFunction
 
 class UssFileNodeTestSpec : ShouldSpec({
   beforeSpec {
@@ -210,29 +222,16 @@ class UssFileNodeTestSpec : ShouldSpec({
         }
 
         var isErrorMessageInDialogCalled = false
-        mockkObject(MessagesService)
+        val showDialogSpecificMock: (
+          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+        ) -> Int = Messages::showDialog
+        mockkStatic(showDialogSpecificMock as KFunction<*>)
         every {
-          MessagesService.getInstance()
-        } returns
-          object : TestMessagesService() {
-            override fun showMessageDialog(
-              project: Project?,
-              parentComponent: Component?,
-              message: String?,
-              title: String?,
-              options: Array<String>,
-              defaultOptionIndex: Int,
-              focusedOptionIndex: Int,
-              icon: Icon?,
-              doNotAskOption: DoNotAskOption?,
-              alwaysUseIdeaUI: Boolean,
-              helpId: String?
-            ): Int {
-              isErrorMessageInDialogCalled = true
-              return 1
-            }
-
-          }
+          showDialogSpecificMock(any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any(), any())
+        } answers {
+          isErrorMessageInDialogCalled = true
+          1
+        }
 
         ussFileNode.navigate(requestFocus)
         assertSoftly { isSyncWithRemotePerformed shouldBe true }
@@ -460,7 +459,8 @@ class UssFileNodeTestSpec : ShouldSpec({
               .INSTANCE
               .getExplorerContentProvider(explorerToTest::class.java)
           } returns null
-          val mockedUssNodeToTest = UssFileNode(virtualFileMock, mockedProject, parentNode, explorerUnitToTest, treeStructure)
+          val mockedUssNodeToTest =
+            UssFileNode(virtualFileMock, mockedProject, parentNode, explorerUnitToTest, treeStructure)
           val ussFileMockToSpyTest = spyk(mockedUssNodeToTest, recordPrivateCalls = true)
           every { ussFileMockToSpyTest["shouldUpdateData"]() } returns true
           every { ussFileMockToSpyTest["shouldPostprocess"]() } returns false
@@ -508,7 +508,13 @@ class UssFileNodeTestSpec : ShouldSpec({
       val treeStructure = mockk<ExplorerTreeStructureBase>()
       every { treeStructure.registerNode(any()) } just Runs
 
-      val objectMock = object: ExplorerTreeNode<ConnectionConfig, MFVirtualFile>(virtualFileMock, mockedProject, parentNode, explorer, treeStructure) {
+      val objectMock = object : ExplorerTreeNode<ConnectionConfig, MFVirtualFile>(
+        virtualFileMock,
+        mockedProject,
+        parentNode,
+        explorer,
+        treeStructure
+      ) {
         override fun update(presentation: PresentationData) {
           return
         }
@@ -553,7 +559,13 @@ class UssFileNodeTestSpec : ShouldSpec({
           }
         }
         should("get path of the node if parent is not null") {
-          val objectParentMock = object: ExplorerTreeNode<ConnectionConfig, MFVirtualFile>(virtualFileMock, mockedProject, parentNode, explorer, treeStructure) {
+          val objectParentMock = object : ExplorerTreeNode<ConnectionConfig, MFVirtualFile>(
+            virtualFileMock,
+            mockedProject,
+            parentNode,
+            explorer,
+            treeStructure
+          ) {
             override fun update(presentation: PresentationData) {
               return
             }
@@ -565,7 +577,13 @@ class UssFileNodeTestSpec : ShouldSpec({
 
           mockkObject(objectParentMock, recordPrivateCalls = true)
 
-          val objectMockToTest = object: ExplorerTreeNode<ConnectionConfig, MFVirtualFile>(virtualFileMock, mockedProject, objectParentMock, explorer, treeStructure) {
+          val objectMockToTest = object : ExplorerTreeNode<ConnectionConfig, MFVirtualFile>(
+            virtualFileMock,
+            mockedProject,
+            objectParentMock,
+            explorer,
+            treeStructure
+          ) {
             override fun update(presentation: PresentationData) {
               return
             }
