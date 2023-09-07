@@ -76,14 +76,15 @@ class ZosmfApiImpl : ZosmfApi {
     useBytesConverter: Boolean
   ): Api {
     val zosmfUrl = ZosmfUrl(url, isAllowSelfSigned)
+    val defaultApi = Pair<MutableMap<ZosmfUrl, Any>, MutableMap<ZosmfUrl, Any>>(hashMapOf(), hashMapOf())
     if (!apis.containsKey(apiClass)) {
       synchronized(apis) {
         if (!apis.containsKey(apiClass)) {
-          apis[apiClass] = Pair(hashMapOf(), hashMapOf())
+          apis[apiClass] = defaultApi
         }
       }
     }
-    val apiClassMap = apis[apiClass]!!
+    val apiClassMap = apis[apiClass] ?: defaultApi
     synchronized(apiClassMap) {
       if (!useBytesConverter && !apiClassMap.first.containsKey(zosmfUrl)) {
         apiClassMap.first[zosmfUrl] = buildApi(zosmfUrl.url, getOkHttpClient(zosmfUrl.isAllowSelfSigned), apiClass)
@@ -94,7 +95,6 @@ class ZosmfApiImpl : ZosmfApi {
     }
     return if (!useBytesConverter) apiClassMap.first[zosmfUrl] as Api else apiClassMap.second[zosmfUrl] as Api
   }
-
 }
 
 private val gsonFactory = GsonConverterFactory.create(GsonBuilder().create())
@@ -130,7 +130,7 @@ private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
       it.request().newBuilder().addHeader("X-CSRF-ZOSMF-HEADER", "").build().let { request ->
         it.proceed(request)
       }
-    }.connectionSpecs(mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+    }.connectionSpecs(mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT))
 }
 
 /**
