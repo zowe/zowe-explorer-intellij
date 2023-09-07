@@ -6,7 +6,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 
 * Feature: The plug-in's description and name update
 
-## `1.1.0 (2023-08-xx)`
+## `1.1.0 (2023-09-07)`
 
 * Feature: GitHub issue #14: UX: Edit WS mask ([0d358d0d](https://github.com/zowe/zowe-explorer-intellij/commit/0d358d0d))
 * Feature: GitHub issue #23: Double click on a working set or connection ([e7f040d7](https://github.com/zowe/zowe-explorer-intellij/commit/e7f040d7))
