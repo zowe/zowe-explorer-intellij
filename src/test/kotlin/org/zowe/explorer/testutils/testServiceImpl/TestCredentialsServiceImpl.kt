@@ -8,12 +8,12 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.testServiceImpl
+package org.zowe.explorer.testutils.testServiceImpl
 
 import org.zowe.explorer.config.connect.CredentialService
 
-class TestCredentialsServiceImpl: CredentialService {
-  var testInstance = object: CredentialService {
+class TestCredentialsServiceImpl : CredentialService {
+  var testInstance = object : CredentialService {
     override fun getUsernameByKey(connectionConfigUuid: String): String {
       return "testUser"
     }
@@ -29,6 +29,7 @@ class TestCredentialsServiceImpl: CredentialService {
     }
 
   }
+
   override fun getUsernameByKey(connectionConfigUuid: String): String? {
     return this.testInstance.getUsernameByKey(connectionConfigUuid)
   }

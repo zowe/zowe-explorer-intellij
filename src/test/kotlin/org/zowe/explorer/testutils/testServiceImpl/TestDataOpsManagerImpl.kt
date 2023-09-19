@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.testServiceImpl
+package org.zowe.explorer.testutils.testServiceImpl
 
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.components.ComponentManager
