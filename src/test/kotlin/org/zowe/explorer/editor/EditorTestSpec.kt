@@ -10,7 +10,10 @@
 
 package org.zowe.explorer.editor
 
-import com.intellij.codeInspection.*
+// import com.intellij.openapi.ui.isComponentUnderMouse // TODO: needed in v1.*.*-223 and greater
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.properties.charset.Native2AsciiCharset
@@ -19,7 +22,6 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.Project
-// import com.intellij.openapi.ui.isComponentUnderMouse // TODO: needed in v1.*.*-223 and greater
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
@@ -28,9 +30,6 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.ConfigService
@@ -45,37 +44,40 @@ import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.editor.inspection.MFLossyEncodingInspection
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.WorkingSet
-import org.zowe.explorer.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.utils.checkEncodingCompatibility
+import org.zowe.explorer.utils.isComponentUnderMouse
+import org.zowe.explorer.utils.sendTopic
+import org.zowe.explorer.utils.service
+import org.zowe.explorer.utils.showSaveAnywayDialog
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import io.mockk.unmockkStatic
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.FocusEvent
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
-import java.nio.charset.*
+import java.nio.charset.Charset
+import java.nio.charset.CharsetDecoder
+import java.nio.charset.CharsetEncoder
+import java.nio.charset.CoderResult
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.declaredFunctions
 
-class EditorTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class EditorTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }

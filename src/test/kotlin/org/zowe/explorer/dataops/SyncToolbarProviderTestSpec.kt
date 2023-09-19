@@ -15,28 +15,18 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
 
-class SyncToolbarProviderTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class SyncToolbarProviderTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
@@ -52,7 +42,9 @@ class SyncToolbarProviderTestSpec : ShouldSpec({
       var isResolved = false
       val mockedActionGroupForTest = mockk<ActionGroup>()
       every { ActionManager.getInstance() } returns mockedActionManagerInstance
-      every { mockedActionManagerInstance.getAction(any() as String)} answers {
+      every {
+        mockedActionManagerInstance.getAction(any() as String)
+      } answers {
         isResolved = true
         mockedActionGroupForTest
       }
@@ -67,7 +59,7 @@ class SyncToolbarProviderTestSpec : ShouldSpec({
       var isResolved = false
       val mockedNotActionGroupForTest = mockk<AnAction>()
       every { ActionManager.getInstance() } returns mockedActionManagerInstance
-      every { mockedActionManagerInstance.getAction(any() as String)} returns mockedNotActionGroupForTest
+      every { mockedActionManagerInstance.getAction(any() as String) } returns mockedNotActionGroupForTest
       every { mockedActionManagerInstance.registerAction(any() as String, any() as DefaultActionGroup) } answers {
         isResolved = true
       }

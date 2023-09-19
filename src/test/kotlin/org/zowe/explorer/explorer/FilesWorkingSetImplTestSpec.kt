@@ -11,9 +11,6 @@
 package org.zowe.explorer.explorer
 
 import com.intellij.openapi.Disposable
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.ConfigStateV2
 import org.zowe.explorer.config.configCrudable
@@ -22,11 +19,11 @@ import org.zowe.explorer.config.makeCrudableWithoutListeners
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.UssPath
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.utils.gson
 import org.zowe.explorer.utils.optional
 import org.zowe.explorer.utils.toMutableList
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -37,19 +34,7 @@ import io.mockk.unmockkAll
 import java.util.*
 import java.util.stream.Stream
 
-class FilesWorkingSetImplTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }

@@ -334,18 +334,18 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <applicationService serviceInterface="org.zowe.explorer.config.connect.CredentialService"
                             serviceImplementation="org.zowe.explorer.config.connect.CredentialServiceImpl"
-                            testServiceImplementation="org.zowe.explorer.testServiceImpl.TestCredentialsServiceImpl"/>
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.config.ConfigSandbox"
                             serviceImplementation="org.zowe.explorer.config.ConfigSandboxImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.dataops.DataOpsManager" preload="true"
                             serviceImplementation="org.zowe.explorer.dataops.DataOpsManagerImpl"
-                            testServiceImplementation="org.zowe.explorer.testServiceImpl.TestDataOpsManagerImpl"/>
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.api.ZosmfApi"
                             serviceImplementation="org.zowe.explorer.api.ZosmfApiImpl"
-                            testServiceImplementation="org.zowe.explorer.testServiceImpl.TestZosmfApiImpl"/>
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.explorer.UIComponentManager"
                             serviceImplementation="org.zowe.explorer.explorer.UIComponentManagerImpl"/>

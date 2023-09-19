@@ -8,12 +8,12 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.testServiceImpl
+package org.zowe.explorer.testutils.testServiceImpl
 
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 
-class TestZosmfApiImpl: ZosmfApi {
+class TestZosmfApiImpl : ZosmfApi {
   var testInstance = object : ZosmfApi {
     override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
       TODO("Not yet implemented")
@@ -36,6 +36,7 @@ class TestZosmfApiImpl: ZosmfApi {
     }
 
   }
+
   override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
     return this.testInstance.getApi(apiClass, connectionConfig)
   }
