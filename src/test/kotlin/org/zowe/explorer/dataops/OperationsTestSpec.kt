@@ -15,13 +15,18 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.DSMask
-import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.dataops.attributes.FileAttributes
+import org.zowe.explorer.dataops.attributes.MFRemoteFileAttributes
+import org.zowe.explorer.dataops.attributes.MaskedRequester
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributesService
+import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.attributes.Requester
+import org.zowe.explorer.dataops.attributes.UssRequester
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.LF_LINE_SEPARATOR
@@ -29,8 +34,9 @@ import org.zowe.explorer.dataops.operations.DeleteOperation
 import org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMover
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.dataops.operations.mover.RemoteToLocalFileMover
-import org.zowe.explorer.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testServiceImpl.TestZosmfApiImpl
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.changeFileEncodingTo
 import org.zowe.explorer.utils.service
@@ -38,10 +44,14 @@ import org.zowe.explorer.utils.setUssFileTag
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.XIBMDataType
@@ -61,7 +71,7 @@ inline fun mockkRequesters(
   every { attributes.requesters } returns mutableListOf(connectionConfigToRequester(connection))
 }
 
-inline fun <reified S: FileAttributes, reified D: MFRemoteFileAttributes<*, *>> prepareBareOperation(
+inline fun <reified S : FileAttributes, reified D : MFRemoteFileAttributes<*, *>> prepareBareOperation(
   isCrossystem: Boolean = false,
   sourceConnectionConfigToRequester: (ConnectionConfig) -> Requester<*>,
   destConnectionConfigToRequester: (ConnectionConfig) -> Requester<*>
@@ -83,19 +93,7 @@ inline fun <reified S: FileAttributes, reified D: MFRemoteFileAttributes<*, *>> 
   )
 }
 
-class OperationsTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class OperationsTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }

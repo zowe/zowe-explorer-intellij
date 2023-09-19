@@ -12,19 +12,6 @@ package org.zowe.explorer.config
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
-import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.connect.CredentialsConfigDeclaration
@@ -42,29 +29,27 @@ import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.WorkingSet
-import org.zowe.explorer.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.ui.build.tso.TSOWindowFactory
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.service
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.TsoResponse
 import org.zowe.kotlinsdk.annotations.ZVersion
 import kotlin.reflect.KFunction
 
-class ConfigTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class ConfigTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
@@ -76,12 +61,12 @@ class ConfigTestSpec : ShouldSpec({
 
       fun mockConfigService() {
         val mockConfigServiceInstance = mockk<ConfigService>()
-        every { mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java) } returns ZOSMFConnectionConfigDeclaration(
-          crudable
-        )
-        every { mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java) } returns CredentialsConfigDeclaration(
-          crudable
-        )
+        every {
+          mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java)
+        } returns ZOSMFConnectionConfigDeclaration(crudable)
+        every {
+          mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java)
+        } returns CredentialsConfigDeclaration(crudable)
 
         mockkObject(ConfigService)
         every { ConfigService.instance } returns mockConfigServiceInstance
@@ -292,18 +277,14 @@ class ConfigTestSpec : ShouldSpec({
       // getOwner
       should("get owner by connection config when owner is not empty") {
         val owner = getOwner(
-          ConnectionConfig(
-            "", "", "", true, ZVersion.ZOS_2_3, null, "ZOSMFAD"
-          )
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, null, "ZOSMFAD")
         )
 
         assertSoftly { owner shouldBe "ZOSMFAD" }
       }
       should("get owner by connection config when owner is empty") {
         val owner = getOwner(
-          ConnectionConfig(
-            "", "", "", true, ZVersion.ZOS_2_3, null, ""
-          )
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, null, "")
         )
 
         assertSoftly { owner shouldBe "ZOSMF" }

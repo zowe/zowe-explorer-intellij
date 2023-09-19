@@ -20,9 +20,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
@@ -37,12 +34,12 @@ import org.zowe.explorer.explorer.AbstractExplorerBase
 import org.zowe.explorer.explorer.FileExplorer
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -58,20 +55,7 @@ import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.reflect.KFunction
 
-class ExplorerPasteProviderTestSpec : ShouldSpec({
-
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }

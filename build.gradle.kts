@@ -20,7 +20,7 @@ buildscript {
 plugins {
   id("org.sonarqube") version "3.3"
   id("org.jetbrains.intellij") version "1.14.2"
-  kotlin("jvm") version "1.7.10"
+  kotlin("jvm") version "1.8.10"
   java
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
@@ -32,10 +32,10 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "1.1.0-223"
-val remoteRobotVersion = "0.11.18"
+version = "1.1.1-223"
+val remoteRobotVersion = "0.11.19"
 val okHttp3Version = "4.10.0"
-val kotestVersion = "5.5.5"
+val kotestVersion = "5.6.2"
 
 repositories {
   mavenCentral()
@@ -71,7 +71,7 @@ dependencies {
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("com.starxg:java-keytar:1.0.0")
   implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
-  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.0.0")
+  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.3.0")
   testImplementation("io.mockk:mockk:1.13.5")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
   testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")

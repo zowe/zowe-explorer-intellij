@@ -5,9 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.dataops.DataOpsManager
@@ -27,11 +24,11 @@ import org.zowe.explorer.explorer.ui.SpoolFileNode
 import org.zowe.explorer.explorer.ui.SpoolFilePropertiesDialog
 import org.zowe.explorer.explorer.ui.SpoolFileState
 import org.zowe.explorer.explorer.ui.getExplorerView
-import org.zowe.explorer.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.utils.gson
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
-import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -43,19 +40,7 @@ import io.mockk.verify
 import org.zowe.kotlinsdk.Job
 import org.zowe.kotlinsdk.SpoolFile
 
-class GetJobPropertiesActionTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }

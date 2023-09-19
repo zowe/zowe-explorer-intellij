@@ -12,14 +12,10 @@ package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showOkNoDialog
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.common.ui.showUntilDone
@@ -41,9 +37,8 @@ import org.zowe.explorer.explorer.ui.JobNode
 import org.zowe.explorer.explorer.ui.LibraryNode
 import org.zowe.explorer.explorer.ui.NodeData
 import org.zowe.explorer.explorer.ui.getExplorerView
-import org.zowe.explorer.utils.service
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -61,19 +56,7 @@ import javax.swing.Icon
 import javax.swing.SwingUtilities
 import kotlin.reflect.KFunction
 
-class AllocateDatasetActionTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
