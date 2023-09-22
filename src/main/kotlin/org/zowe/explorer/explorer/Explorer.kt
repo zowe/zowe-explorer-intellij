@@ -12,6 +12,7 @@ package org.zowe.explorer.explorer
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
@@ -24,6 +25,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.CONFIGS_CHANGED
@@ -33,11 +35,13 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.connect.CredentialsListener
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.editor.ChangeContentService
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.EntityWithUuid
 import org.zowe.explorer.utils.crudable.anyEventAdaptor
 import org.zowe.explorer.utils.crudable.eventAdapter
+import java.lang.RuntimeException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -193,15 +197,44 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
 
   /** @see Explorer.reportThrowable */
   override fun reportThrowable(t: Throwable, project: Project?) {
-    if (t is ProcessCanceledException) {
-      return
+    lateinit var title: String
+    lateinit var details: String
+
+    if (t is RuntimeException) {
+      title = "Error in plugin Zowe Explorer"
+      details = if (t.cause is ProcessCanceledException) {
+        "Error during operation execution: operation cancelled by user"
+      } else {
+        t.message ?: t.toString()
+      }
+    } else if (t is CallException) {
+      title = (t.errorParams?.getOrDefault("message", t.headMessage) as String).replaceFirstChar { it.uppercase() }
+      if (title.contains(".")) {
+        title = title.split(".")[0]
+      }
+      details = t.errorParams["details"]?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
+      if (details.contains(":")) {
+        details = details.split(":").last()
+      }
+    } else {
+      title = t.message ?: t.toString()
+      details = "Unknown error"
     }
+
     Notification(
       EXPLORER_NOTIFICATION_GROUP_ID,
-      "Error in plugin Zowe Explorer",
-      t.message ?: t.toString(),
+      title,
+      details,
       NotificationType.ERROR
-    ).let {
+    ).addAction(object : NotificationAction("More") {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        Messages.showErrorDialog(
+          project,
+          t.message ?: t.toString(),
+          title
+        )
+      }
+    }).let {
       Notifications.Bus.notify(it)
     }
   }
