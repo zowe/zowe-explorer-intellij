@@ -83,7 +83,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   private fun updateZoweConfigIfNeeded(state: ConnectionDialogState?) {
     val res = showOkCancelDialog(
       title = "Zowe Config Update",
-      message = "Update zowe config file?\n${state?.zoweConfigPath}",
+      message = "Do you want to update zowe config file?\n${state?.zoweConfigPath}",
       okText = "Yes",
       cancelText = "No"
     )
