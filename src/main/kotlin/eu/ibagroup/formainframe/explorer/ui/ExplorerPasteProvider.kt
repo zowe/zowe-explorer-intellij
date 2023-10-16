@@ -476,6 +476,7 @@ class ExplorerPasteProvider : PasteProvider {
       val conflictChild = it.first.findChild(it.second.name)
       (conflictChild?.isDirectory == true && !it.second.isDirectory)
           || (conflictChild?.isDirectory == false && it.second.isDirectory)
+          || it.first == it.second.parent
     }
     conflicts.removeAll(conflictsThatCannotBeOverwritten)
 
@@ -496,17 +497,24 @@ class ExplorerPasteProvider : PasteProvider {
       )
 
       when (choice) {
-        0 -> result.addAll(conflicts.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } })
-        1 -> {
-          result.addAll(conflicts.map { ConflictResolution(it.first, it.second).apply { resolveByOverwrite() } })
+        0 -> {
+          result.addAll(conflicts.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } })
           result.addAll(
-            conflictsThatCannotBeOverwritten.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } }
+            conflictsThatCannotBeOverwritten.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
+          )
+        }
+        1 -> {
+          result.addAll(conflicts.map { ConflictResolution(it.second, it.first).apply { resolveByOverwrite() } })
+          result.addAll(
+            conflictsThatCannotBeOverwritten.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
           )
           if (conflictsThatCannotBeOverwritten.isNotEmpty()) {
             val startMessage = "There are some conflicts that cannot be resolved:"
             val finishMessage = "File(s) above will be skipped."
             val conflictsToShow = conflictsThatCannotBeOverwritten.map {
-              if (it.second.isDirectory) {
+              if (it.first == it.second.parent) {
+                "The file '${it.second.name}' cannot overwrite itself"
+              } else if (it.second.isDirectory) {
                 "Directory '${it.second.name}' cannot replace file '${it.second.name}'"
               } else {
                 "File '${it.second.name}' cannot replace directory '${it.second.name}'"
@@ -590,7 +598,9 @@ class ExplorerPasteProvider : PasteProvider {
         result.add(resolution)
       } else {
         // Conflicts between text/binary files and directories.
-        val messageToShow = if (conflict.second.isDirectory) {
+        val messageToShow = if (conflict.first == conflict.second.parent) {
+          "The file '${conflict.second.name}' cannot replace itself"
+        } else if (conflict.second.isDirectory) {
           "Directory '${conflict.second.name}' cannot replace file '${conflict.second.name}'"
         } else {
           "File '${conflict.second.name}' cannot replace directory '${conflict.second.name}'"
