@@ -8,13 +8,13 @@
  * Copyright IBA Group 2020
  */
 def jiraSite = 'jira-iba'
-def gitCredentialsId = 'e92a3d13-efc3-47d7-955f-a78ad9d7faac'
+def gitCredentialsId = '7a6fa03a-a55d-40d4-b2b8-ec81654c5677'
 //def gitUrl = 'https://code.iby.scdc.io/ijmp/for-mainframe.git'
-def gitUrl = 'git@code.iby.scdc.io:ijmp/for-mainframe.git'
+def gitUrl = 'git@code.ycz.scdc.io:ijmp/for-mainframe.git'
 def resultFileName = ''
 String jiraTicket = ''
 def gitlabBranch = env.BRANCH_NAME
-properties([gitLabConnection('code.iby.scdc.io-connection')])
+properties([gitLabConnection('code.ycz.scdc.io-connection')])
 
 // @NonCPS
 // def changeVersion(String xmlFile) {
