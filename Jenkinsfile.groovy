@@ -14,7 +14,7 @@ def gitUrl = 'git@code.ycz.icdc.io:ijmp/for-mainframe.git'
 def resultFileName = ''
 String jiraTicket = ''
 def gitlabBranch = env.BRANCH_NAME
-properties([gitLabConnection('code.ycz.scdc.io-connection')])
+properties([gitLabConnection('code.ycz.icdc.io-connection')])
 
 // @NonCPS
 // def changeVersion(String xmlFile) {
