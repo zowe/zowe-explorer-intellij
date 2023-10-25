@@ -138,7 +138,7 @@ class UssDirNode(
     }
     presentation.setIcon(icon)
     if (vFile != null) {
-      updateMainTitleUsingCutBuffer(text, presentation)
+      updateNodeTitleUsingCutBuffer(text, presentation)
     } else {
       presentation.presentableText = text
     }

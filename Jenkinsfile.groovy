@@ -9,16 +9,15 @@
  */
 def jiraSite = 'jira-iba'
 def gitCredentialsId = 'e92a3d13-efc3-47d7-955f-a78ad9d7faac'
-//def gitUrl = 'https://code.iby.scdc.io/ijmp/for-mainframe.git'
-def gitUrl = 'git@code.iby.scdc.io:ijmp/for-mainframe.git'
+//def gitUrl = 'https://code.iby.icdc.io/ijmp/for-mainframe.git'
+def gitUrl = 'git@code.ycz.icdc.io:ijmp/for-mainframe.git'
 def resultFileName = ''
 String jiraTicket = ''
 def gitlabBranch = env.BRANCH_NAME
-properties([gitLabConnection('code.iby.scdc.io-connection')])
+properties([gitLabConnection('code.ycz.icdc.io-connection')])
 
 // @NonCPS
 // def changeVersion(String xmlFile) {
-
 //     def xml = new XmlSlurper().parseText(xmlFile)
 //     println xml.'idea-version'.'@since-build'
 //     xml.'idea-version'.'@since-build' =  '203.7148.72'
