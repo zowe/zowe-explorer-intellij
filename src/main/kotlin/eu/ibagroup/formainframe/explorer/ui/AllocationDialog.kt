@@ -184,6 +184,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             RecordFormat.V,
             RecordFormat.VA,
             RecordFormat.VB,
+            RecordFormat.U,
           )
         )
           .bindItem(state.allocationParameters::recordFormat.toNullableProperty())
