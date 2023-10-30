@@ -398,7 +398,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       every { ussFileMockToSpy.virtualFile } returns virtualFileMock
       every { ussFileMockToSpy.value } returns virtualFileMock
 
-      context("ExplorerTreeNode.updateMainTitleUsingCutBuffer") {
+      context("ExplorerTreeNode.updateNodeTitleUsingCutBuffer") {
         every { virtualFileMock.presentableName } returns "test"
         every { virtualFileMock.isValid } returns false
         every { explorer.nullableProject } returns mockedProject
