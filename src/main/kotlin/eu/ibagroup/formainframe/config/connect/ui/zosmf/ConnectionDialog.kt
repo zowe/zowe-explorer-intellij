@@ -56,6 +56,17 @@ class ConnectionDialog(
   private val lastSuccessfulState: ConnectionDialogState = if(state.mode == DialogMode.UPDATE) state.connectionConfig.toDialogState(crudable) else ConnectionDialogState()
   companion object {
 
+    /**
+     * Check if only the connection name has changed in the connection dialog
+     */
+    private fun isOnlyConnectionNameChanged(initialState: ConnectionDialogState, state: ConnectionDialogState): Boolean {
+      return initialState.connectionName != state.connectionName &&
+              initialState.connectionUrl == state.connectionUrl &&
+              initialState.username == state.username &&
+              initialState.password == state.password &&
+              initialState.isAllowSsl == state.isAllowSsl
+    }
+
     /** Show Test connection dialog and test the connection regarding the dialog state.
      * First the method checks whether connection succeeds for specified user/password.
      * If connection succeeds then the method automatically fill in z/OS version for this connection.
@@ -68,12 +79,16 @@ class ConnectionDialog(
       project: Project? = null,
       initialState: ConnectionDialogState
     ): ConnectionDialogState? {
+      val initState = initialState.clone()
       return showUntilDone(
         initialState = initialState,
         factory = { ConnectionDialog(crudable, initialState, project) },
         test = { state ->
           val newTestedConnConfig : ConnectionConfig
           if (initialState.mode == DialogMode.UPDATE) {
+            if (isOnlyConnectionNameChanged(initState, state)) {
+              return@showUntilDone true
+            }
             val newState = state.clone()
             newState.initEmptyUuids(crudable)
             newTestedConnConfig = ConnectionConfig(newState.connectionUuid, newState.connectionName, newState.connectionUrl, newState.isAllowSsl, newState.zVersion)
