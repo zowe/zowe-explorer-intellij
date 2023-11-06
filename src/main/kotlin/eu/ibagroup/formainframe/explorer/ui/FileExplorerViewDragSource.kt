@@ -56,7 +56,9 @@ class FileExplorerViewDragSource(
     bean: DnDDragStartBean
   ): com.intellij.openapi.util.Pair<Image, Point>? {
     val paths: Array<TreePath> = myTree.selectionPaths ?: return null
-    val toRender = mySelectedNodesDataProvider().map { Pair(it.node.presentation.coloredText[0].text, it.node.icon) }
+    val toRender = mySelectedNodesDataProvider().map {
+      Pair(it.node.presentation.coloredText.firstOrNull()?.text ?: "", it.node.icon)
+    }
 
     var count = 0
     val panel = JPanel(VerticalFlowLayout(0, 0))
