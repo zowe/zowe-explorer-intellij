@@ -177,6 +177,12 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig =
     toConnectionConfig(getOrCreateUuid(), zVersion)
 
+  /**
+   * Compares only significant for real connection fields between 2 connections.
+   * @param connectionA first connection instance to compare.
+   * @param connectionB second connection instance to compare.
+   * @return true if all significant fields fo connections are equal and false otherwise.
+   */
   fun compareConnections(connectionA: ConnectionConfig, connectionB: ConnectionConfig): Boolean {
     if (connectionA.name != connectionB.name) return false
     if (connectionA.url != connectionB.url) return false
