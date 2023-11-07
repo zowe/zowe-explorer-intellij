@@ -35,7 +35,7 @@ import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.nio.file.Path
 import java.util.*
-import kotlin.streams.toList
+import java.util.stream.Collectors
 
 val ZOWE_PROJECT_PREFIX = "zowe-"
 
@@ -82,7 +82,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   private fun findExistingConnection(): ConnectionConfig? {
     val zoweConnectionList = configCrudable.find<ConnectionConfig> {
       it.name == zoweConnectionName
-    }.toList()
+    }.collect(Collectors.toList())
     return if (zoweConnectionList.isEmpty()) null else zoweConnectionList[0]
   }
 
@@ -177,6 +177,16 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig =
     toConnectionConfig(getOrCreateUuid(), zVersion)
 
+  fun compareConnections(connectionA: ConnectionConfig, connectionB: ConnectionConfig): Boolean {
+    if (connectionA.name != connectionB.name) return false
+    if (connectionA.url != connectionB.url) return false
+    if (connectionA.isAllowSelfSigned != connectionB.isAllowSelfSigned) return false
+    if (connectionA.zVersion != connectionB.zVersion) return false
+    if (connectionA.zoweConfigPath != connectionB.zoweConfigPath) return false
+
+    return true
+  }
+
   /**
    * @see ZoweConfigService.getZoweConfigState
    */
@@ -191,7 +201,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val zoweUsername = zoweConfig.user ?: return ZoweConfigState.ERROR
     val zowePassword = zoweConfig.password ?: return ZoweConfigState.ERROR
 
-    return if (existingConnection == newConnection &&
+    return if (compareConnections(existingConnection, newConnection) &&
       getUsername(newConnection) == zoweUsername &&
       getPassword(newConnection) == zowePassword
     ) {
@@ -202,3 +212,4 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   }
 
 }
+
