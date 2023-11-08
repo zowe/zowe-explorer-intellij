@@ -99,6 +99,9 @@ Thank you for considering IBA Group for your mainframe needs.
         <listener class="org.zowe.explorer.editor.ProjectCloseListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
+        <listener class="org.zowe.explorer.editor.FileEditorBeforeEventsListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+
         <listener class="org.zowe.explorer.editor.FileEditorEventsListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </applicationListeners>
