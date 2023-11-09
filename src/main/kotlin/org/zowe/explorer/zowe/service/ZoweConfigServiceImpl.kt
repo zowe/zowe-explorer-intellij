@@ -177,21 +177,6 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig =
     toConnectionConfig(getOrCreateUuid(), zVersion)
 
-  /**
-   * Compares only significant for real connection fields between 2 connections.
-   * @param connectionA first connection instance to compare.
-   * @param connectionB second connection instance to compare.
-   * @return true if all significant fields fo connections are equal and false otherwise.
-   */
-  fun compareConnections(connectionA: ConnectionConfig, connectionB: ConnectionConfig): Boolean {
-    if (connectionA.name != connectionB.name) return false
-    if (connectionA.url != connectionB.url) return false
-    if (connectionA.isAllowSelfSigned != connectionB.isAllowSelfSigned) return false
-    if (connectionA.zVersion != connectionB.zVersion) return false
-    if (connectionA.zoweConfigPath != connectionB.zoweConfigPath) return false
-
-    return true
-  }
 
   /**
    * @see ZoweConfigService.getZoweConfigState
@@ -207,7 +192,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val zoweUsername = zoweConfig.user ?: return ZoweConfigState.ERROR
     val zowePassword = zoweConfig.password ?: return ZoweConfigState.ERROR
 
-    return if (compareConnections(existingConnection, newConnection) &&
+    return if (existingConnection == newConnection &&
       getUsername(newConnection) == zoweUsername &&
       getPassword(newConnection) == zowePassword
     ) {
