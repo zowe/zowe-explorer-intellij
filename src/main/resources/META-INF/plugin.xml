@@ -368,7 +368,7 @@ Thank you for considering IBA Group for your mainframe needs.
                                 order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory, before powerStatus"/>
 
         <!-- TODO: define attribute language="" in v1.*.*-223 and greater -->
-        <localInspection shortName="MFLossyEncoding" displayName="MF lossy encoding"
+        <localInspection shortName="ZoweMFLossyEncoding" displayName="Zowe MF lossy encoding"
                          groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.zowe.explorer.editor.inspection.MFLossyEncodingInspection"/>

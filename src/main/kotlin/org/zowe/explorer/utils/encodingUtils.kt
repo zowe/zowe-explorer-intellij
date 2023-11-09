@@ -227,7 +227,7 @@ fun checkEncodingCompatibility(file: VirtualFile, project: Project): Boolean {
   val psiFile = PsiManager.getInstance(project).findFile(file)
   psiFile?.let {
     val inspectionProfile = InspectionProjectProfileManager.getInstance(project).currentProfile
-    val inspectionTool = inspectionProfile.getInspectionTool("MFLossyEncoding", project)
+    val inspectionTool = inspectionProfile.getInspectionTool("ZoweMFLossyEncoding", project)
     inspectionTool?.let { tool ->
       val inspectionManager = InspectionManager.getInstance(project)
       val descriptors =
