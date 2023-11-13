@@ -35,7 +35,7 @@ import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.nio.file.Path
 import java.util.*
-import kotlin.streams.toList
+import java.util.stream.Collectors
 
 val ZOWE_PROJECT_PREFIX = "zowe-"
 
@@ -82,7 +82,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   private fun findExistingConnection(): ConnectionConfig? {
     val zoweConnectionList = configCrudable.find<ConnectionConfig> {
       it.name == zoweConnectionName
-    }.toList()
+    }.collect(Collectors.toList())
     return if (zoweConnectionList.isEmpty()) null else zoweConnectionList[0]
   }
 
@@ -177,6 +177,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig =
     toConnectionConfig(getOrCreateUuid(), zVersion)
 
+
   /**
    * @see ZoweConfigService.getZoweConfigState
    */
@@ -202,3 +203,4 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   }
 
 }
+
