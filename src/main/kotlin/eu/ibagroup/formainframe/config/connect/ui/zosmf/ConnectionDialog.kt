@@ -202,7 +202,7 @@ class ConnectionDialog(
         textField()
           .bindText(state::connectionUrl)
           .validationOnApply {
-            it.text = it.text.trim()
+            it.text = it.text.trim().removeTrailingSlashes()
             validateForBlank(it) ?: validateZosmfUrl(it)
           }
           .also { urlTextField = it.component }
