@@ -39,7 +39,7 @@ import java.nio.charset.CodingErrorAction
 class MFLossyEncodingInspection : LocalInspectionTool() {
 
   override fun getShortName(): String {
-    return "MFLossyEncoding"
+    return "ZoweMFLossyEncoding"
   }
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
