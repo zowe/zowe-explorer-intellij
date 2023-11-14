@@ -112,6 +112,7 @@ abstract class AllocateActionBase : AnAction() {
   protected fun doAllocateAction(e: AnActionEvent, datasetInfo: Dataset = Dataset()) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val parentNode = view.mySelectedNodesData[0].node
+    val project = e.project
     if (parentNode is ExplorerUnitTreeNodeBase<*, *, *> && parentNode.unit is FilesWorkingSet) {
       val workingSet = parentNode.unit
       val explorer = workingSet.explorer
@@ -120,13 +121,13 @@ abstract class AllocateActionBase : AnAction() {
         val initialState = preProcessState(datasetInfo)
         showUntilDone(
           initialState,
-          { initState -> AllocationDialog(project = e.project, config, initState) }
+          { initState -> AllocationDialog(project = project, config, initState) }
         ) {
           val state = postProcessState(it)
           var res = false
           runModalTask(
             title = "Allocating Data Set ${state.datasetName}",
-            project = e.project,
+            project = project,
             cancellable = true
           ) { progressIndicator ->
             runCatching {
@@ -152,7 +153,7 @@ abstract class AllocateActionBase : AnAction() {
                 initialState.errorMessage = ""
               }
               .onFailure { t ->
-                explorer.reportThrowable(t, e.project)
+                explorer.reportThrowable(t, project)
                 initialState.errorMessage = t.message ?: t.toString()
               }
           }

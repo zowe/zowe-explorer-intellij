@@ -35,6 +35,7 @@ class GetFilePropertiesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val node = view.mySelectedNodesData.getOrNull(0)?.node ?: return
+    val project = e.project
     if (node is ExplorerUnitTreeNodeBase<ConnectionConfig, *, out ExplorerUnit<ConnectionConfig>>) {
       val virtualFile = node.virtualFile
       val connectionConfig = node.unit.connectionConfig ?: return
@@ -42,19 +43,19 @@ class GetFilePropertiesAction : AnAction() {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)) {
           is RemoteDatasetAttributes -> {
-            val dialog = DatasetPropertiesDialog(e.project, DatasetState(attributes))
+            val dialog = DatasetPropertiesDialog(project, DatasetState(attributes))
             dialog.showAndGet()
           }
 
           is RemoteUssAttributes -> {
             val oldCharset = attributes.charset
             val initFileMode = attributes.fileMode?.clone()
-            val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes, virtualFile.isBeingEditingNow()))
+            val dialog = UssFilePropertiesDialog(project, UssFileState(attributes, virtualFile.isBeingEditingNow()))
             if (dialog.showAndGet()) {
               if (attributes.fileMode?.owner != initFileMode?.owner || attributes.fileMode?.group != initFileMode?.group || attributes.fileMode?.all != initFileMode?.all) {
                 runBackgroundableTask(
                   title = "Changing file mode on ${attributes.path}",
-                  project = e.project,
+                  project = project,
                   cancellable = true
                 ) {
                   if (attributes.fileMode != null) {
@@ -67,7 +68,7 @@ class GetFilePropertiesAction : AnAction() {
                         progressIndicator = it
                       )
                     }.onFailure { t ->
-                        view.explorer.reportThrowable(t, e.project)
+                        view.explorer.reportThrowable(t, project)
                     }
                     node.parent?.cleanCacheIfPossible(cleanBatchedQuery = false)
                   }
@@ -86,7 +87,7 @@ class GetFilePropertiesAction : AnAction() {
           }
 
           is RemoteMemberAttributes -> {
-            val dialog = MemberPropertiesDialog(e.project, MemberState(attributes))
+            val dialog = MemberPropertiesDialog(project, MemberState(attributes))
             dialog.showAndGet()
           }
         }
