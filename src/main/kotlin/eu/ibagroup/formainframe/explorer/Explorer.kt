@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.Topic
+import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.config.CONFIGS_CHANGED
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.CREDENTIALS_CHANGED
@@ -196,13 +197,15 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
 
   /** @see Explorer.reportThrowable */
   override fun reportThrowable(t: Throwable, project: Project?) {
-    if (t is ProcessCanceledException) {
-      return
-    }
     lateinit var title: String
     lateinit var details: String
 
-    if (t is CallException) {
+    if (t is RuntimeException) {
+      if (t is ProcessCanceledException || t.cause is ProcessCanceledException) {
+        title = "Error in plugin For Mainframe"
+        details = message("explorer.cancel.by.user.error")
+      }
+    } else if (t is CallException) {
       title = (t.errorParams?.getOrDefault("message", t.headMessage) as String).replaceFirstChar { it.uppercase() }
       if (title.contains(".")) {
         title = title.split(".")[0]
@@ -223,11 +226,19 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
       NotificationType.ERROR
     ).addAction(object : NotificationAction("More") {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        Messages.showErrorDialog(
-          project,
-          t.message ?: t.toString(),
-          title
-        )
+        if (t is ProcessCanceledException || t.cause is ProcessCanceledException) {
+          Messages.showErrorDialog(
+            project,
+            details + "\n\n" + (t.message ?: t.toString()),
+            title
+          )
+        } else {
+          Messages.showErrorDialog(
+            project,
+            t.message ?: t.toString(),
+            title
+          )
+        }
       }
     }).let {
       Notifications.Bus.notify(it)
