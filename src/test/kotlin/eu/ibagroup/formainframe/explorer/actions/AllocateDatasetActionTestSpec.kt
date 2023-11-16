@@ -60,7 +60,6 @@ import org.zowe.kotlinsdk.DsnameType
 import java.util.*
 import javax.swing.Icon
 import kotlin.reflect.KFunction
-import kotlin.reflect.full.declaredFunctions
 
 class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
   afterSpec {
@@ -121,10 +120,8 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           isCleanInvalidateOnExpandTriggered = true
         }
 
-        val notifyRef = Notifications.Bus::class.declaredFunctions
-          .filter { it.name == "notify" }
-          .first { it.parameters.size == 1 }
-        mockkStatic(notifyRef)
+        val notifyRef: (Notification) -> Unit = Notifications.Bus::notify
+        mockkStatic(notifyRef as KFunction<*>)
         mockkStatic(Notification::get)
         every { Notifications.Bus.notify(any<Notification>()) } answers {
           val notification = firstArg<Notification>()
