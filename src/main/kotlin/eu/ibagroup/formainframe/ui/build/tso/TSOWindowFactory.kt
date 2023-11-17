@@ -336,7 +336,7 @@ class TSOWindowFactory : ToolWindowFactory {
             processHandler.notifyTextAvailable("Attempting to reconnect...\n", ProcessOutputType.STDOUT)
             try {
               sendTopic(SESSION_RECONNECT_TOPIC).reconnect(project, console, session)
-              processHandler.notifyTextAvailable("Successfully reconnected to the TSO session.\n", ProcessOutputType.STDOUT)
+              processHandler.notifyTextAvailable("Successfully reconnected to the TSO session.\nREADY\n", ProcessOutputType.STDOUT)
             } catch (e : Exception) {
               throw e
             }
