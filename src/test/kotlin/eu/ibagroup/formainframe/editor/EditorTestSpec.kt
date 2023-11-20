@@ -132,7 +132,7 @@ class EditorTestSpec : WithApplicationShouldSpec({
     var isSynced = false
     val sendTopicRef: (Topic<AutoSyncFileListener>, ComponentManager) -> AutoSyncFileListener = ::sendTopic
     mockkStatic(sendTopicRef as KFunction<*>)
-    every { sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, any()) } answers {
+    every { sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, any<ComponentManager>()) } answers {
       isSynced = true
       val autoSyncFileListenerMock = mockk<AutoSyncFileListener>()
       every { autoSyncFileListenerMock.sync(virtualFileMock) } returns Unit
