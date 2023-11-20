@@ -2,6 +2,20 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
+## `1.1.1 (2023-11-xx)`
+
+* Bugfix: Dataset color does not change when cutting ([fa6f6ae5](https://github.com/zowe/zowe-explorer-intellij/commit/fa6f6ae5))
+* Bugfix: Spelling error in reload/convert dialog ([ec6d27da](https://github.com/zowe/zowe-explorer-intellij/commit/ec6d27da))
+* Bugfix: Incorrect error messages when allocating dataset ([e1134061](https://github.com/zowe/zowe-explorer-intellij/commit/e1134061))
+* Bugfix: Incorrect message if create connection with connection url ending with 2 slashes ([632e66c5](https://github.com/zowe/zowe-explorer-intellij/commit/632e66c5))
+* Bugfix: Sync action is not working during indexing process in 221 and 222 ([df523764](https://github.com/zowe/zowe-explorer-intellij/commit/df523764))
+* Bugfix: Mask cannot be created when the other connection is selected ([2188d9f3](https://github.com/zowe/zowe-explorer-intellij/commit/2188d9f3))
+* Bugfix: Copy and cut error message if skip for all or overwrite for all is selected ([6313b773](https://github.com/zowe/zowe-explorer-intellij/commit/6313b773))
+* Bugfix: GitHub issue #139: Can't allocate a dataset with record format U ([88d68cb9](https://github.com/zowe/zowe-explorer-intellij/commit/88d68cb9))
+* Bugfix: GitHub issue #143: Incorrect behaviour of TSO CLI ([451dc01f](https://github.com/zowe/zowe-explorer-intellij/commit/451dc01f))
+* Bugfix: GitHub issue #161: Conflict between Zowe Explorer and For Mainframe ([79a7fc50](https://github.com/zowe/zowe-explorer-intellij/commit/79a7fc50))
+
+
 ## `1.1.0 (2023-09-07)`
 
 * Feature: GitHub issue #14: UX: Edit WS mask ([0d358d0d](https://github.com/zowe/zowe-explorer-intellij/commit/0d358d0d))
