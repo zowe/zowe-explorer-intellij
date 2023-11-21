@@ -340,7 +340,7 @@ class ExplorerPasteProvider : PasteProvider {
         )
       ) {
         conflictsResolutions.addAll(
-          ussToPdsWarnings.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } }
+          ussToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
         )
       }
       // specific conflicts resolution end
