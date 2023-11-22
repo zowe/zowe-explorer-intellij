@@ -47,7 +47,6 @@ import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
-import eu.ibagroup.formainframe.utils.isComponentUnderMouse
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
