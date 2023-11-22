@@ -149,11 +149,6 @@ tasks {
         }
       })
     )
-    reports {
-      xml.required.set(true)
-      html.required.set(false)
-      xml.outputLocation.set(File("${buildDir}/reports/jacoco.xml"))
-    }
   }
 
   val createOpenApiSourceJar by registering(Jar::class) {
