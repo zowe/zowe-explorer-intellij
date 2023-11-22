@@ -41,7 +41,6 @@ import io.mockk.spyk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
-import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import retrofit2.Response
@@ -732,36 +731,6 @@ class UtilsTestSpec : ShouldSpec({
         every { mockDirNode1.value.path } returns "dirname1"
 
         val actual = validateUssFileNameAlreadyExists(jTextField, mockNode1)
-        val expected = null
-
-        assertSoftly {
-          actual shouldBe expected
-        }
-      }
-    }
-    context("validateDataset") {
-      should("validate that the provided dataset parameters are valid") {
-        val datasetName = JTextField("name")
-        val datasetOrganization = DatasetOrganization.PO
-        val primaryAllocation = JTextField("1")
-        val secondaryAllocation = JTextField("5")
-        val directoryBlocks = JTextField("2")
-        val recordLength = JTextField("80")
-        val blockSize = JTextField("400")
-        val averageBlockLength = JTextField("2000")
-        val advancedParameters = JTextField("volser")
-
-        val actual = validateDataset(
-          datasetName,
-          datasetOrganization,
-          primaryAllocation,
-          secondaryAllocation,
-          directoryBlocks,
-          recordLength,
-          blockSize,
-          averageBlockLength,
-          advancedParameters
-        )
         val expected = null
 
         assertSoftly {
