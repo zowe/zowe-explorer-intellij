@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.testServiceImpl
+package eu.ibagroup.formainframe.testutils.testServiceImpl
 
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.components.ComponentManager

@@ -20,9 +20,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
@@ -37,12 +34,12 @@ import eu.ibagroup.formainframe.explorer.AbstractExplorerBase
 import eu.ibagroup.formainframe.explorer.FileExplorer
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -58,20 +55,7 @@ import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.reflect.KFunction
 
-class ExplorerPasteProviderTestSpec : ShouldSpec({
-
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
@@ -498,6 +482,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         every { mockedSourceAttributes.isDirectory } returns true
         every { mockedSourceAttributes.isPastePossible } returns true
         every { mockedSourceFile.name } returns "test_folder_source"
+        every { mockedSourceFile.parent } returns null
         every { mockedSourceNodeData.node } returns mockedSourceNode
         every { mockedSourceNodeData.file } returns mockedSourceFile
         every { mockedSourceNodeData.attributes } returns mockedSourceAttributes
@@ -728,6 +713,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceAttributes1 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile1.name } returns "test1"
         every { mockedSourceFile1.isDirectory } returns false
+        every { mockedSourceFile1.parent } returns null
         every { mockedSourceAttributes1.isPastePossible } returns false
         every { mockedSourceAttributes1.isDirectory } returns false
         every { mockedSourceNodeData1.node } returns mockedSourceNode1
@@ -741,6 +727,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceAttributes2 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile2.name } returns "test2"
         every { mockedSourceFile2.isDirectory } returns true
+        every { mockedSourceFile2.parent } returns null
         every { mockedSourceAttributes2.isPastePossible } returns false
         every { mockedSourceAttributes2.isDirectory } returns false
         every { mockedSourceNodeData2.node } returns mockedSourceNode2
@@ -754,6 +741,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceAttributes3 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile3.name } returns "test1"
         every { mockedSourceFile3.isDirectory } returns false
+        every { mockedSourceFile3.parent } returns null
         every { mockedSourceAttributes3.isPastePossible } returns false
         every { mockedSourceAttributes3.isDirectory } returns false
         every { mockedSourceNodeData3.node } returns mockedSourceNode3
@@ -766,6 +754,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceFile4 = mockk<MFVirtualFile>()
         val mockedSourceAttributes4 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile4.name } returns "test4"
+        every { mockedSourceFile4.parent } returns null
         every { mockedSourceAttributes4.isPastePossible } returns false
         every { mockedSourceAttributes4.isDirectory } returns false
         every { mockedSourceNodeData4.node } returns mockedSourceNode4
@@ -778,6 +767,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceFile5 = mockk<MFVirtualFile>()
         val mockedSourceAttributes5 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile5.name } returns "test5"
+        every { mockedSourceFile5.parent } returns null
         every { mockedSourceAttributes5.isPastePossible } returns false
         every { mockedSourceAttributes5.isDirectory } returns false
         every { mockedSourceNodeData5.node } returns mockedSourceNode5
@@ -791,6 +781,7 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         val mockedSourceAttributes6 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile6.name } returns "test1"
         every { mockedSourceFile6.isDirectory } returns true
+        every { mockedSourceFile6.parent } returns null
         every { mockedSourceAttributes6.isPastePossible } returns false
         every { mockedSourceAttributes6.isDirectory } returns true
         every { mockedSourceNodeData6.node } returns mockedSourceNode6
@@ -1239,12 +1230,14 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
         fun addMockedSourceFile(
           fileName: String,
           isPastePossible: Boolean = false,
-          isDirectory: Boolean = false
+          isDirectory: Boolean = false,
+          parent: MFVirtualFile? = null
         ): MFVirtualFile {
           val mockedSourceAttributes = mockk<RemoteUssAttributes>()
           val mockedSourceFile = mockk<MFVirtualFile>()
           every { mockedSourceFile.name } returns fileName
           every { mockedSourceFile.isDirectory } returns isDirectory
+          every { mockedSourceFile.parent } returns parent
           every { mockedSourceAttributes.isPastePossible } returns isPastePossible
           every { mockedSourceAttributes.isDirectory } returns isDirectory
 
@@ -1507,6 +1500,159 @@ class ExplorerPasteProviderTestSpec : ShouldSpec({
           assertSoftly {
             dir1NewName shouldBe "dir1_(1)"
             dir2NewName shouldBe "dir2_(1)"
+          }
+        }
+
+        should("Resolve conflicts for copying to same directory (Skip all)") {
+          isPastePerformed = false
+          val sourceFile = addMockedSourceFile("file.txt", parent = mockedTargetFile)
+          destinationChildFiles.add(sourceFile)
+          mockkStatic(Messages::class)
+          var skipSelected = false
+
+          every {
+            Messages.showYesNoDialog(
+              any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+            )
+          } returns Messages.YES
+          every {
+            Messages.showDialog(
+              any() as Project?,
+              any() as String,
+              any() as String,
+              any() as Array<String>,
+              0,
+              any() as Icon?,
+              null
+            )
+          } answers {
+            if (!skipSelected) {
+              skipSelected = true
+            }
+            0
+          }
+
+          var operationPerformed = false
+          every {
+            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
+          } answers {
+            operationPerformed = true
+          }
+
+          mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+          assertSoftly {
+            skipSelected shouldBe true
+            operationPerformed shouldBe false
+          }
+        }
+
+        should("Resolve conflicts for copying to same directory (Overwrite all)") {
+          isPastePerformed = false
+          val sourceFile = addMockedSourceFile("file.txt", parent = mockedTargetFile)
+          destinationChildFiles.add(sourceFile)
+          mockkStatic(Messages::class)
+          var overwriteSelected = false
+          var notPossibleMessageShown = false
+
+          every {
+            Messages.showYesNoDialog(
+              any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+            )
+          } returns Messages.YES
+          every {
+            Messages.showDialog(
+              any() as Project?,
+              any() as String,
+              any() as String,
+              any() as Array<String>,
+              0,
+              any() as Icon?,
+              null
+            )
+          } answers {
+            var valueToReturn = 0
+            if (!overwriteSelected) {
+              overwriteSelected = true
+              valueToReturn = 1
+            } else if (thirdArg<String>() == "Not Resolvable Conflicts") {
+              notPossibleMessageShown = true
+            }
+            valueToReturn
+          }
+
+          var operationPerformed = false
+          every {
+            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
+          } answers {
+            operationPerformed = true
+          }
+
+          mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+          assertSoftly {
+            overwriteSelected shouldBe true
+            notPossibleMessageShown shouldBe true
+            operationPerformed shouldBe false
+          }
+        }
+
+        should("Resolve conflicts for copying to same directory (Decide for each)") {
+          isPastePerformed = false
+          val sourceFile1 = addMockedSourceFile("file1.txt", parent = mockedTargetFile)
+          destinationChildFiles.add(sourceFile1)
+          val sourceFile2 = addMockedSourceFile("file2.txt", parent = mockedTargetFile)
+          destinationChildFiles.add(sourceFile2)
+          mockkStatic(Messages::class)
+          var decideEachSelected = false
+
+          every {
+            Messages.showYesNoDialog(
+              any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+            )
+          } returns Messages.YES
+          every {
+            Messages.showDialog(
+              any() as Project?,
+              any() as String,
+              any() as String,
+              any() as Array<String>,
+              0,
+              any() as Icon?,
+              null
+            )
+          } answers {
+            if (!decideEachSelected) {
+              decideEachSelected = true
+              2
+            } else if (secondArg<String>().contains(sourceFile1.name)) {
+              1
+            } else if (secondArg<String>().contains(sourceFile2.name)) {
+              0
+            } else {
+              throw IllegalArgumentException("Unknown dialog called, that should not be shown.")
+            }
+          }
+
+          var file1CopiedWithNewName = false
+          var file2Copied = false
+          every {
+            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
+          } answers {
+            val op = firstArg<MoveCopyOperation>()
+            if (op.source.name == sourceFile1.name && op.newName == "file1_(1).txt") {
+              file1CopiedWithNewName = true
+            }
+            if (op.source.name == sourceFile2.name) {
+              file2Copied = true
+            }
+          }
+
+          mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+          assertSoftly {
+            file1CopiedWithNewName shouldBe true
+            file2Copied shouldBe false
           }
         }
       }

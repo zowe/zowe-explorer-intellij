@@ -24,7 +24,6 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -81,11 +80,10 @@ class FileLikeDatasetNode(
         }
       }
     }
-    updateMainTitleUsingCutBuffer(value.presentableName, presentation)
-    val volser = explorer.componentManager.service<DataOpsManager>()
-      .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
-      .getAttributes(value)?.volser
-    volser?.let { presentation.addText(" $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+    updateNodeTitleUsingCutBuffer(value.presentableName, presentation)
+    val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+    getVolserIfPresent(dataOpsManager, value)
+      ?.let { presentation.addText(it, SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES) }
   }
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {

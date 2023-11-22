@@ -54,7 +54,7 @@ open class AllocateDatasetDialog(
         datasetTextParams[2].text = secondaryAllocation.toString()
         datasetComboBoxParams[3].selectItem(recordFormat)
 
-        if (datasetOrganization == "PS") {
+        if (datasetOrganization == "Sequential (PS)") {
             datasetTextParams[3].text = recordLength.toString()
             datasetTextParams[4].text = blockSize.toString()
             datasetTextParams[5].text = averageBlockLength.toString()
