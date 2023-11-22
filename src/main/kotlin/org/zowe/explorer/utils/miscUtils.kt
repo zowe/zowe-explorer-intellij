@@ -296,3 +296,10 @@ fun <U : WorkingSet<ConnectionConfig, *>> getSelectedNodesWorkingSets(view: Expl
     .map { it.unit }
     .distinct()
 }
+
+/**
+ * Replace repeated slashes at the end of line with one
+ */
+fun String.removeTrailingSlashes(): String {
+  return this.replace(Regex("/+$"), "/")
+}

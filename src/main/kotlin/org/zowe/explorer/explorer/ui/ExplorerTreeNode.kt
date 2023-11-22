@@ -73,7 +73,13 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
     return treeStructure
   }
 
-  protected fun updateMainTitleUsingCutBuffer(text: String, presentationData: PresentationData) {
+  /**
+   * Set the node's title as a regular colored text. If the node's file is in cut buffer,
+   * the text's color will be gray
+   * @param text the text to set for the node
+   * @param presentationData the node to set the colored text to
+   */
+  protected fun updateNodeTitleUsingCutBuffer(text: String, presentationData: PresentationData) {
     val file = virtualFile ?: return
     val textAttributes = if (contentProvider?.isFileInCutBuffer(file) == true) {
       SimpleTextAttributes.GRAYED_ATTRIBUTES

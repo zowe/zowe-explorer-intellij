@@ -406,36 +406,6 @@ fun validateUssFileNameAlreadyExists(component: JTextField, selectedNode: NodeDa
 }
 
 /**
- * Validate the dataset to match the specified rules
- * @param datasetName the dataset name
- * @param datasetOrganization the dataset organization
- * @param primaryAllocation the primary allocation
- * @param secondaryAllocation the secondary allocation
- * @param directoryBlocks the directory blocks
- * @param recordLength the record length for the dataset
- * @param blockSize the block size
- * @param averageBlockLength the average block length
- * @param advancedParameters some advanced parameters
- */
-fun validateDataset(
-  datasetName: JTextField,
-  datasetOrganization: DatasetOrganization,
-  primaryAllocation: JTextField,
-  secondaryAllocation: JTextField,
-  directoryBlocks: JTextField,
-  recordLength: JTextField,
-  blockSize: JTextField,
-  averageBlockLength: JTextField,
-  advancedParameters: JTextField
-): ValidationInfo? {
-  return validateDatasetNameOnInput(datasetName) ?: validateForGreaterOrEqualValue(primaryAllocation, 1)
-  ?: validateForPositiveInteger(secondaryAllocation) ?: validateForGreaterOrEqualValue(directoryBlocks, 1).takeIf {
-    datasetOrganization == DatasetOrganization.PO
-  } ?: validateForGreaterOrEqualValue(recordLength, 1) ?: validateForPositiveInteger(blockSize)
-  ?: validateForPositiveInteger(averageBlockLength) ?: validateVolser(advancedParameters)
-}
-
-/**
  * Validate the dataset name on input
  * @param component the component text to validate the dataset name
  */

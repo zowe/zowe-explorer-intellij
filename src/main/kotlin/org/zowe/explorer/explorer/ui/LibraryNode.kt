@@ -27,6 +27,18 @@ import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
+/**
+ * TODO: merge as LibraryNode and FileLikeDatasetNode function
+ * Get VOLSER for file if it is applicable for the file type
+ * @param dataOpsManager the data ops manager to get file attributes through
+ * @param file the virtual file to get attributes for
+ * @return the VOLSER or null if it is not a dataset (if it is a member)
+ */
+fun getVolserIfPresent(dataOpsManager: DataOpsManager, file: MFVirtualFile): String? {
+  val attributesService = dataOpsManager.getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
+  return attributesService.getAttributes(file)?.volser?.let { " $it" }
+}
+
 /** Dataset node presentation implementation */
 class LibraryNode(
   library: MFVirtualFile,
@@ -55,11 +67,10 @@ class LibraryNode(
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(if (value.isDirectory) ForMainframeIcons.DatasetMask else AllIcons.FileTypes.Any_type)
-    presentation.addText(value.presentableName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-    val volser = explorer.componentManager.service<DataOpsManager>()
-      .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
-      .getAttributes(value)?.volser
-    volser?.let { presentation.addText(" $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+    updateNodeTitleUsingCutBuffer(value.presentableName, presentation)
+    val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+    getVolserIfPresent(dataOpsManager, value)
+      ?.let { presentation.addText(it, SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES) }
   }
 
   override fun getVirtualFile(): MFVirtualFile {
