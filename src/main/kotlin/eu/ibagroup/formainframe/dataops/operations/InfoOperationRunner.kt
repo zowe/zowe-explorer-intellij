@@ -56,7 +56,12 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
       .cancelByIndicator(progressIndicator)
       .execute()
     if (!response.isSuccessful) {
-      throw CallException(response, "Credentials are not valid")
+      val headMessage = when (response.message()) {
+        "Unauthorized" -> "Credentials are not valid"
+        "Not Found" -> "Endpoint not found"
+        else -> response.message()
+      }
+      throw CallException(response, headMessage)
     }
     return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")
   }

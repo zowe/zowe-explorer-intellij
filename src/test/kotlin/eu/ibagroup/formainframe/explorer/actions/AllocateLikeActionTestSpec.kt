@@ -18,9 +18,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.showWarningDialog
 import com.intellij.openapi.ui.showOkNoDialog
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.AnalyticsEvent
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
@@ -44,10 +41,10 @@ import eu.ibagroup.formainframe.explorer.ui.JobNode
 import eu.ibagroup.formainframe.explorer.ui.LibraryNode
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
-import eu.ibagroup.formainframe.testServiceImpl.TestAnalyticsServiceImpl
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestAnalyticsServiceImpl
 import eu.ibagroup.formainframe.utils.service
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -67,19 +64,7 @@ import javax.swing.Icon
 import javax.swing.SwingUtilities
 import kotlin.reflect.KFunction
 
-class AllocateLikeActionTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }

@@ -12,12 +12,16 @@ package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
-import eu.ibagroup.formainframe.config.connect.*
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclaration
+import eu.ibagroup.formainframe.config.connect.ZOSMFConnectionConfigDeclaration
+import eu.ibagroup.formainframe.config.connect.getOwner
+import eu.ibagroup.formainframe.config.connect.getUsername
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialogState
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionsTableModel
+import eu.ibagroup.formainframe.config.connect.ui.zosmf.initEmptyUuids
+import eu.ibagroup.formainframe.config.connect.whoAmI
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -26,34 +30,27 @@ import eu.ibagroup.formainframe.dataops.operations.TsoOperation
 import eu.ibagroup.formainframe.dataops.operations.TsoOperationMode
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.WorkingSet
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.ui.build.tso.TSOWindowFactory
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.service
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.TsoResponse
 import org.zowe.kotlinsdk.annotations.ZVersion
 import kotlin.reflect.KFunction
 
-class ConfigTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class ConfigTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
@@ -65,12 +62,20 @@ class ConfigTestSpec : ShouldSpec({
 
       fun mockConfigService() {
         val mockConfigServiceInstance = mockk<ConfigService>()
-        every { mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java) } returns ZOSMFConnectionConfigDeclaration(crudable)
-        every { mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java) } returns CredentialsConfigDeclaration(crudable)
+        every {
+          mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java)
+        } returns ZOSMFConnectionConfigDeclaration(crudable)
+        every {
+          mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java)
+        } returns CredentialsConfigDeclaration(crudable)
 
         mockkObject(ConfigService)
         every { ConfigService.instance } returns mockConfigServiceInstance
       }
+
+      val connectionDialogState = ConnectionDialogState(
+        connectionName = "a", connectionUrl = "https://a.com", username = "a", password = "a"
+      )
 
       beforeEach {
         val configCollections: MutableMap<String, MutableList<*>> = mutableMapOf(
@@ -82,14 +87,10 @@ class ConfigTestSpec : ShouldSpec({
 
         crudable =
           makeCrudableWithoutListeners(true, { sandboxState.credentials }) { sandboxState.configState }
+        connectionDialogState.initEmptyUuids(crudable)
         connTab = ConnectionsTableModel(crudable)
         mockConfigService()
       }
-
-
-      val connectionDialogState = ConnectionDialogState(
-        connectionName = "a", connectionUrl = "https://a.com", username = "a", password = "a"
-      )
 
       context("fetch") {
         should("fetch connections from crudable") {
@@ -110,6 +111,7 @@ class ConfigTestSpec : ShouldSpec({
           val connectionDialogStateB = ConnectionDialogState(
             connectionName = "b", connectionUrl = "https://b.com", username = "b", password = "b"
           )
+          connectionDialogStateB.initEmptyUuids(crudable)
 
           connTab.onAdd(crudable, connectionDialogState)
           connTab.onAdd(crudable, connectionDialogStateB)
@@ -124,6 +126,7 @@ class ConfigTestSpec : ShouldSpec({
         should("add connection with existing name") {
 
           val connectionDialogStateB = ConnectionDialogState(connectionName = connectionDialogState.connectionName)
+          connectionDialogStateB.initEmptyUuids(crudable)
 
           connTab.onAdd(crudable, connectionDialogState)
           connTab.onAdd(crudable, connectionDialogStateB)
@@ -138,6 +141,7 @@ class ConfigTestSpec : ShouldSpec({
         should("add connection with existing url") {
 
           val connectionDialogStateB = ConnectionDialogState(connectionUrl = connectionDialogState.connectionUrl)
+          connectionDialogStateB.initEmptyUuids(crudable)
 
           connTab.onAdd(crudable, connectionDialogState)
           connTab.onAdd(crudable, connectionDialogStateB)
@@ -167,7 +171,7 @@ class ConfigTestSpec : ShouldSpec({
       context("set") {
         should("set connection to crudable") {
 
-          connTab.addRow(ConnectionDialogState())
+          connTab.addRow(ConnectionDialogState().initEmptyUuids(crudable))
           connTab[0] = connectionDialogState
 
           assertSoftly {
@@ -277,16 +281,14 @@ class ConfigTestSpec : ShouldSpec({
       // getOwner
       should("get owner by connection config when owner is not empty") {
         val owner = getOwner(
-          ConnectionConfig(
-            "", "", "", true, ZVersion.ZOS_2_3, "ZOSMFAD")
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "ZOSMFAD")
         )
 
         assertSoftly { owner shouldBe "ZOSMFAD" }
       }
       should("get owner by connection config when owner is empty") {
         val owner = getOwner(
-          ConnectionConfig(
-            "", "", "", true, ZVersion.ZOS_2_3, "")
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "")
         )
 
         assertSoftly { owner shouldBe "ZOSMF" }
