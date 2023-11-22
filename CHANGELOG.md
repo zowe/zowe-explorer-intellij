@@ -16,6 +16,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #139: Can't allocate a dataset with record format U ([88d68cb9](https://github.com/zowe/zowe-explorer-intellij/commit/88d68cb9))
 * Bugfix: GitHub issue #143: Incorrect behaviour of TSO CLI ([451dc01f](https://github.com/zowe/zowe-explorer-intellij/commit/451dc01f))
 * Bugfix: GitHub issue #161: Conflict between Zowe Explorer and For Mainframe ([79a7fc50](https://github.com/zowe/zowe-explorer-intellij/commit/79a7fc50))
+* Bugfix: GitHub issue #162: Sync does not work on files and datasets in autosync ([da93cf9b](https://github.com/zowe/zowe-explorer-intellij/commit/da93cf9b))
 
 
 ## `1.1.0 (2023-09-07)`

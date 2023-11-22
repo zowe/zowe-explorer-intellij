@@ -120,6 +120,7 @@ tasks {
         <li>GitHub issue #139: Can't allocate a dataset with record format U</li>
         <li>GitHub issue #143: Incorrect behaviour of TSO CLI</li>
         <li>GitHub issue #161: Conflict between Zowe Explorer and For Mainframe</li>
+        <li>GitHub issue #162: Sync does not work on files and datasets in autosync</li>
       </ul>"""
     )
   }
