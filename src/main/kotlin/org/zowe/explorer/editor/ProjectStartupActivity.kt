@@ -11,20 +11,20 @@
 package org.zowe.explorer.editor
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 
 /**
  * Project post startup activity.
  */
-class ProjectStartupActivity: StartupActivity.DumbAware {
+class ProjectStartupActivity: ProjectActivity {
 
   /**
-   * Implementation of [StartupActivity.runActivity].
+   * Implementation of [ProjectActivity.execute].
    * Unregisters widget factories that provide status bar widgets that are overridden in the plugin.
    */
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     val extensionPoint = StatusBarWidgetFactory.EP_NAME.point
     extensionPoint.extensionList.filter {
       it.id == StatusBar.StandardWidgets.ENCODING_PANEL || it.id == StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL

@@ -369,11 +369,11 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
-                                order="after positionWidget"/>
+                                order="after Position"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfEncodingPanelWidgetFactory"
-                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory, before powerStatus"/>
+                                order="after org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory, before PowerSaveMode"/>
 
         <localInspection shortName="ZoweMFLossyEncoding" displayName="Zowe MF lossy encoding"
                          groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"

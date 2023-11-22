@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EncodingPanel
+import kotlinx.coroutines.CoroutineScope
 import org.zowe.explorer.editor.isMfVirtualFile
 
 const val MF_ENCODING_PANEL_WIDGET = "ZoweMF" + StatusBar.StandardWidgets.ENCODING_PANEL
@@ -22,10 +23,10 @@ const val MF_ENCODING_PANEL_WIDGET = "ZoweMF" + StatusBar.StandardWidgets.ENCODI
 /**
  * Encoding panel in status bar with correctly display for MF files.
  */
-class MfEncodingPanel(project: Project): EncodingPanel(project) {
+class MfEncodingPanel(project: Project, scope: CoroutineScope): EncodingPanel(project, scope) {
 
   override fun createInstance(project: Project): StatusBarWidget {
-    return MfEncodingPanel(project)
+    return MfEncodingPanel(project, scope)
   }
 
   /** Widget is not enabled for MF files. */
