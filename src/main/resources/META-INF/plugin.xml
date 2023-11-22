@@ -175,7 +175,8 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.DeleteRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.DeleteMemberOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.DeleteMemberOperationRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.UssChangeModeFactory"/>
 
@@ -254,7 +255,8 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.TsoOperationRunnerFactory"/>
 
-        <operationRunner implementation="org.zowe.explorer.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
+        <operationRunner
+                implementation="org.zowe.explorer.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
 
         <logFetcher implementation="org.zowe.explorer.dataops.log.JobLogFetcherFactory"/>
 
@@ -295,9 +297,6 @@ Thank you for considering IBA Group for your mainframe needs.
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
-
-        <requiredForSmartModeStartupActivity
-                implementation="org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider"/>
 
         <requiredForSmartModeStartupActivity
                 implementation="org.zowe.explorer.dataops.content.synchronizer.SyncToolbarProvider"/>
