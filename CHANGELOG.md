@@ -2,10 +2,6 @@
 
 All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be documented in this file.
 
-## `1.0.3 (2023-07-19)`
-
-* Feature: The plug-in's description and name update
-
 ## `1.1.1 (2023-11-xx)`
 
 * Bugfix: Dataset color does not change when cutting ([fa6f6ae5](https://github.com/zowe/zowe-explorer-intellij/commit/fa6f6ae5))
@@ -21,6 +17,11 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: GitHub issue #143: Incorrect behaviour of TSO CLI ([451dc01f](https://github.com/zowe/zowe-explorer-intellij/commit/451dc01f))
 * Bugfix: GitHub issue #161: Conflict between Zowe Explorer and For Mainframe ([79a7fc50](https://github.com/zowe/zowe-explorer-intellij/commit/79a7fc50))
 * Bugfix: GitHub issue #162: Sync does not work on files and datasets in autosync ([da93cf9b](https://github.com/zowe/zowe-explorer-intellij/commit/da93cf9b))
+
+
+## `1.0.3 (2023-07-19)`
+
+* Feature: The plug-in's description and name update
 
 
 ## `1.1.0 (2023-09-07)`
