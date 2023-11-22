@@ -82,7 +82,6 @@ abstract class ConnectionsTableModelBase<ConnectionConfig : ConnectionConfigBase
    */
   override fun onAdd(crudable: Crudable, value: ConnectionDialogState): Boolean {
     return with(crudable) {
-      value.connectionUuid = crudable.nextUniqueValue(connectionConfigClass)
       listOf(
         add(value.credentials),
         add(value.connectionConfig)

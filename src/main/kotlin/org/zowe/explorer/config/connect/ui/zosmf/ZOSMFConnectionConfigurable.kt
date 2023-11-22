@@ -83,7 +83,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   private fun updateZoweConfigIfNeeded(state: ConnectionDialogState?) {
     val res = showOkCancelDialog(
       title = "Zowe Config Update",
-      message = "Update zowe config file?\n${state?.zoweConfigPath}",
+      message = "Do you want to update zowe config file?\n${state?.zoweConfigPath}",
       okText = "Yes",
       cancelText = "No"
     )
@@ -105,7 +105,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     }
   }
 
-  private val zoweConfigStates = mutableListOf<ConnectionDialogState>()
+  private val zoweConfigStates = hashMapOf<String, ConnectionDialogState>()
 
   /** Dialog to edit existing connection. Triggers the dialog and, after the changes, tests the connection and adds the changes */
   private fun editConnection() {
@@ -114,8 +114,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
       val state = showAndTestConnection(connectionsTableModel!![idx].apply {
         mode = DialogMode.UPDATE
       })
-      if (state?.zoweConfigPath != null) {
-        zoweConfigStates.add(state)
+      state?.zoweConfigPath?.let {
+        zoweConfigStates[it] = state
       }
       if (state != null) {
         connectionsTableModel?.set(idx, state)
@@ -275,7 +275,11 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     val wasModified = isModified
     applySandbox<Credentials>()
     applySandbox<ConnectionConfig>()
-    zoweConfigStates.distinct().forEach { updateZoweConfigIfNeeded(it) }
+    zoweConfigStates.values.forEach {
+      if (isModified) {
+        updateZoweConfigIfNeeded(it)
+      }
+    }
     if (wasModified) {
       panel?.updateUI()
     }

@@ -32,7 +32,7 @@ class UssFileNode(
 ), UssNode {
 
   override fun update(presentation: PresentationData) {
-    updateMainTitleUsingCutBuffer(value.presentableName, presentation)
+    updateNodeTitleUsingCutBuffer(value.presentableName, presentation)
     val icon = IconUtil.computeFileIcon(value, Iconable.ICON_FLAG_READ_STATUS, explorer.nullableProject)
     if (this.navigating) {
       presentation.setIcon(AnimatedIcon.Default())

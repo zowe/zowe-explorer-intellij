@@ -24,7 +24,6 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
-import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.vfs.MFVirtualFile
 import icons.ForMainframeIcons
@@ -80,11 +79,10 @@ class FileLikeDatasetNode(
         }
       }
     }
-    updateMainTitleUsingCutBuffer(value.presentableName, presentation)
-    val volser = explorer.componentManager.service<DataOpsManager>()
-      .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()
-      .getAttributes(value)?.volser
-    volser?.let { presentation.addText(" $it", SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+    updateNodeTitleUsingCutBuffer(value.presentableName, presentation)
+    val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+    getVolserIfPresent(dataOpsManager, value)
+      ?.let { presentation.addText(it, SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES) }
   }
 
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
