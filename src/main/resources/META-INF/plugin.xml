@@ -345,13 +345,13 @@ Example of how to see the output:<br/>
         <fileType name="Unknown Data Set"
                   implementationClass="eu.ibagroup.formainframe.filetypes.UnknownDataSetFileType"/>
 
-        <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
+        <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
 
-        <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.config.OldConfigService"
+        <applicationService serviceInterface="eu.ibagroup.formainframe.config.OldConfigService"
                             serviceImplementation="eu.ibagroup.formainframe.config.OldConfigServiceImpl"/>
 
-        <applicationService preload="true" serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
+        <applicationService serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"
                             testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestAnalyticsServiceImpl"/>
 
@@ -363,7 +363,7 @@ Example of how to see the output:<br/>
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>
 
-        <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager" preload="true"
+        <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"
                             testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl"/>
 
