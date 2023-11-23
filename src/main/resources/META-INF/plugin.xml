@@ -333,10 +333,10 @@ Thank you for considering IBA Group for your mainframe needs.
         <fileType name="Unknown Data Set "
                   implementationClass="org.zowe.explorer.filetypes.UnknownDataSetFileType"/>
 
-        <applicationService preload="true" serviceInterface="org.zowe.explorer.config.ConfigService"
+        <applicationService serviceInterface="org.zowe.explorer.config.ConfigService"
                             serviceImplementation="org.zowe.explorer.config.ConfigServiceImpl"/>
 
-        <applicationService preload="true" serviceInterface="org.zowe.explorer.config.OldConfigService"
+        <applicationService serviceInterface="org.zowe.explorer.config.OldConfigService"
                             serviceImplementation="org.zowe.explorer.config.OldConfigServiceImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.config.connect.CredentialService"
@@ -346,7 +346,7 @@ Thank you for considering IBA Group for your mainframe needs.
         <applicationService serviceInterface="org.zowe.explorer.config.ConfigSandbox"
                             serviceImplementation="org.zowe.explorer.config.ConfigSandboxImpl"/>
 
-        <applicationService serviceInterface="org.zowe.explorer.dataops.DataOpsManager" preload="true"
+        <applicationService serviceInterface="org.zowe.explorer.dataops.DataOpsManager"
                             serviceImplementation="org.zowe.explorer.dataops.DataOpsManagerImpl"
                             testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl"/>
 
