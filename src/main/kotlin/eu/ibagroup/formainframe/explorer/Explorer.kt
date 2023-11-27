@@ -231,7 +231,7 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
   fun doInit() {
     service<ChangeContentService>().initialize()
     Disposer.register(service<DataOpsManager>(), disposable)
-    subscribe(CONFIGS_CHANGED, disposable, eventAdapter(unitConfigClass) {
+    subscribe(topic = CONFIGS_CHANGED, disposable = disposable, handler = eventAdapter(unitConfigClass) {
       onDelete { unit ->
         lock.write {
           val found = units.find { it.uuid == unit.uuid } ?: return@onDelete
@@ -254,14 +254,14 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
         }
       }
     })
-    subscribe(CONFIGS_CHANGED, disposable, anyEventAdaptor<ConnectionConfig> {
+    subscribe(topic = CONFIGS_CHANGED, disposable = disposable, handler = anyEventAdaptor<ConnectionConfig> {
       lock.read {
         units.forEach {
           sendTopic(UNITS_CHANGED).onChanged(this@AbstractExplorerBase, it)
         }
       }
     })
-    subscribe(CREDENTIALS_CHANGED, disposable, CredentialsListener { uuid ->
+    subscribe(topic = CREDENTIALS_CHANGED, disposable = disposable, handler = CredentialsListener { uuid ->
       lock.read {
         units.filter { it.connectionConfig?.uuid == uuid }.forEach {
           sendTopic(UNITS_CHANGED).onChanged(this@AbstractExplorerBase, it)
