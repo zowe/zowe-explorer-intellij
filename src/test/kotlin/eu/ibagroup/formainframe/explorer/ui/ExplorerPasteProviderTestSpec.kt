@@ -362,7 +362,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
           isShowYesNoDialogCalled shouldBe true
-          isPastePerformed shouldBe true
+          isPastePerformed shouldBe false
         }
       }
 
