@@ -107,20 +107,20 @@ class TSOWindowFactory : ToolWindowFactory {
    */
   companion object {
 
-    private var currentTsoSession : TSOConfigWrapper? = null
+    private var currentTsoSession: TSOConfigWrapper? = null
     private val tsoSessionToConfigMap = mutableMapOf<String, TSOSessionParams>()
 
     /**
      * Getter for TSO session wrapper class for each TSO session created
      */
-    fun getTsoSession() : TSOConfigWrapper? {
+    fun getTsoSession(): TSOConfigWrapper? {
       return currentTsoSession
     }
 
     /**
      * Getter for TSO config map which contains all the TSO session currently created and active
      */
-    fun getTsoSessionConfigMap() : Map<String, TSOSessionParams> {
+    fun getTsoSessionConfigMap(): Map<String, TSOSessionParams> {
       return tsoSessionToConfigMap
     }
 
@@ -129,7 +129,7 @@ class TSOWindowFactory : ToolWindowFactory {
      * @param tsoResponse - response from TSO session
      * @return String message
      */
-    fun parseTSODataResponse(tsoResponse: TsoResponse) : String {
+    fun parseTSODataResponse(tsoResponse: TsoResponse): String {
       val tsoData = tsoResponse.tsoData
       var message = ""
       tsoData.forEach {
@@ -147,7 +147,7 @@ class TSOWindowFactory : ToolWindowFactory {
      * @return an instance of TSO response
      * @throws Exception if operation is not successful
      */
-    fun getTsoMessageQueue(session: TSOConfigWrapper) : TsoResponse {
+    fun getTsoMessageQueue(session: TSOConfigWrapper): TsoResponse {
       runCatching {
         service<DataOpsManager>().performOperation(
           TsoOperation(
@@ -176,8 +176,11 @@ class TSOWindowFactory : ToolWindowFactory {
 
       val tsoContent = TSOConsoleView(project, tsoSession)
 
-      val content = contentManager.factory.createContent(tsoContent, tsoSession.getConnectionConfig().name + " TSO session. ServletKey: "
-          + tsoSession.getTSOResponse().servletKey, false)
+      val content = contentManager.factory.createContent(
+        tsoContent,
+        tsoSession.getConnectionConfig().name + " TSO session. ServletKey: " + tsoSession.getTSOResponse().servletKey,
+        false
+      )
       contentManager.addContent(content)
       contentManager.setSelectedContent(content)
 
@@ -211,27 +214,30 @@ class TSOWindowFactory : ToolWindowFactory {
    * Init method which is called first. Adds basic listeners and subscribe on topics
    */
   override fun init(toolWindow: ToolWindow) {
+    val project = toolWindow.project
 
-    toolWindow.addContentManagerListener(object: ContentManagerListener {
+    toolWindow.addContentManagerListener(object : ContentManagerListener {
       override fun contentRemoved(event: ContentManagerEvent) {
         val component = event.content.component as TSOConsoleView
         val session = component.getTsoSession()
-        sendTopic(SESSION_CLOSED_TOPIC).close(toolWindow.project, session)
+        sendTopic(SESSION_CLOSED_TOPIC, project).close(project, session)
       }
     })
 
-    subscribe(SESSION_ADDED_TOPIC,
-      object: TSOSessionHandler {
+    subscribe(
+      project = project,
+      topic = SESSION_ADDED_TOPIC,
+      handler = object : TSOSessionHandler {
 
         override fun create(project: Project, newSession: TSOConfigWrapper) {
           val servletKey = newSession.getTSOResponse().servletKey
-          if(servletKey != null) {
+          if (servletKey != null) {
             tsoSessionToConfigMap[servletKey] = newSession.getTSOSessionParams()
             addToolWindowContent(project, toolWindow, newSession)
           }
         }
 
-        override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) { }
+        override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) {}
 
         override fun processCommand(
           project: Project,
@@ -241,15 +247,17 @@ class TSOWindowFactory : ToolWindowFactory {
           messageType: MessageType,
           messageData: MessageData,
           processHandler: ProcessHandler
-        ) { }
+        ) {}
 
-        override fun close(project: Project, session: TSOConfigWrapper) { }
+        override fun close(project: Project, session: TSOConfigWrapper) {}
       }
     )
-    subscribe(SESSION_RECONNECT_TOPIC,
-      object : TSOSessionHandler {
+    subscribe(
+      project = project,
+      topic = SESSION_RECONNECT_TOPIC,
+      handler = object : TSOSessionHandler {
 
-        override fun create(project: Project, newSession: TSOConfigWrapper) { }
+        override fun create(project: Project, newSession: TSOConfigWrapper) {}
 
         override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) {
           val oldServletKey = oldSession.getTSOResponse().servletKey
@@ -292,17 +300,19 @@ class TSOWindowFactory : ToolWindowFactory {
           messageType: MessageType,
           messageData: MessageData,
           processHandler: ProcessHandler
-        ) { }
+        ) {}
 
-        override fun close(project: Project, session: TSOConfigWrapper) { }
+        override fun close(project: Project, session: TSOConfigWrapper) {}
       }
     )
-    subscribe(SESSION_COMMAND_ENTERED,
-      object: TSOSessionHandler {
+    subscribe(
+      project = project,
+      topic = SESSION_COMMAND_ENTERED,
+      handler = object : TSOSessionHandler {
 
-        override fun create(project: Project, newSession: TSOConfigWrapper) { }
+        override fun create(project: Project, newSession: TSOConfigWrapper) {}
 
-        override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) { }
+        override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) {}
 
         override fun processCommand(
           project: Project,
@@ -332,25 +342,33 @@ class TSOWindowFactory : ToolWindowFactory {
               processHandler.notifyTextAvailable(parseTSODataResponse(response), ProcessOutputType.STDOUT)
             }
           }.onFailure {
-            processHandler.notifyTextAvailable("Unsuccessful execution of the TSO request. Session already closed.\n", ProcessOutputType.STDOUT)
+            processHandler.notifyTextAvailable(
+              "Unsuccessful execution of the TSO request. Session already closed.\n",
+              ProcessOutputType.STDOUT
+            )
             processHandler.notifyTextAvailable("Attempting to reconnect...\n", ProcessOutputType.STDOUT)
             try {
-              sendTopic(SESSION_RECONNECT_TOPIC).reconnect(project, console, session)
-              processHandler.notifyTextAvailable("Successfully reconnected to the TSO session.\nREADY\n", ProcessOutputType.STDOUT)
-            } catch (e : Exception) {
+              sendTopic(SESSION_RECONNECT_TOPIC, project).reconnect(project, console, session)
+              processHandler.notifyTextAvailable(
+                "Successfully reconnected to the TSO session.\n",
+                ProcessOutputType.STDOUT
+              )
+            } catch (e: Exception) {
               throw e
             }
           }
         }
 
-        override fun close(project: Project, session: TSOConfigWrapper) { }
+        override fun close(project: Project, session: TSOConfigWrapper) {}
       }
     )
-    subscribe(SESSION_CLOSED_TOPIC,
-      object : TSOSessionHandler {
-        override fun create(project: Project, newSession: TSOConfigWrapper) { }
+    subscribe(
+      project = project,
+      topic = SESSION_CLOSED_TOPIC,
+      handler = object : TSOSessionHandler {
+        override fun create(project: Project, newSession: TSOConfigWrapper) {}
 
-        override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) { }
+        override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) {}
 
         override fun processCommand(
           project: Project,
@@ -360,7 +378,7 @@ class TSOWindowFactory : ToolWindowFactory {
           messageType: MessageType,
           messageData: MessageData,
           processHandler: ProcessHandler
-        ) { }
+        ) {}
 
         override fun close(project: Project, session: TSOConfigWrapper) {
           /**

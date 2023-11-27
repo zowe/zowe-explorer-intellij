@@ -122,7 +122,7 @@ class TSOConsoleView(
 
     terminalCommandReceiver.waitForCommandInput { enteredCommand ->
       log.info("ENTERED COMMAND: $enteredCommand")
-      sendTopic(SESSION_COMMAND_ENTERED).processCommand(
+      sendTopic(SESSION_COMMAND_ENTERED, project).processCommand(
         project,
         this,
         tsoSession,

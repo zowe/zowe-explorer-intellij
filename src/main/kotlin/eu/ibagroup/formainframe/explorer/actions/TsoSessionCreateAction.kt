@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.containers.isEmpty
 import eu.ibagroup.formainframe.common.message
@@ -50,10 +49,12 @@ class TsoSessionCreateAction : AnAction() {
       test = { state ->
         val throwable = runTask(title = "Testing TSO Connection to ${state.connectionConfig.url}", project = project) {
           return@runTask try {
-            val tsoResponse = service<DataOpsManager>().performOperation(TsoOperation(dialog.state, TsoOperationMode.START), it)
+            val tsoResponse = service<DataOpsManager>().performOperation(
+              TsoOperation(dialog.state, TsoOperationMode.START), it
+            )
             if (tsoResponse.servletKey?.isNotEmpty() == true && project != null) {
               val config = TSOConfigWrapper(dialog.state, tsoResponse)
-              sendTopic(SESSION_ADDED_TOPIC).create(project, config)
+              sendTopic(SESSION_ADDED_TOPIC, project).create(project, config)
             }
             null
           } catch (t: Throwable) {
