@@ -66,7 +66,7 @@ class SequentialToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMov
     val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
     var memberName: String
     val dataset = (operation.sourceAttributes as RemoteDatasetAttributes).also {
-      memberName = it.name.split(".").last()
+      memberName = operation.newName ?: it.name.split(".").last()
     }
     val response = api<DataAPI>(
       url = connectionConfig.url,
