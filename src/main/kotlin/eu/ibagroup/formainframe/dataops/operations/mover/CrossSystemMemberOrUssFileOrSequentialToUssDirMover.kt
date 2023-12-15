@@ -87,7 +87,9 @@ class CrossSystemMemberOrUssFileOrSequentialToUssDirMover(val dataOpsManager: Da
     contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
 
     val contentMode = XIBMDataType(XIBMDataType.Type.BINARY)
-    val pathToFile = destAttributes.path + "/" + op.source.name
+
+    val newName = op.newName ?: op.source.name
+    val pathToFile = destAttributes.path + "/" + newName
     progressIndicator.text = "Uploading file '$pathToFile'"
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(
       authorizationToken = destConnectionConfig.authToken,
@@ -99,7 +101,7 @@ class CrossSystemMemberOrUssFileOrSequentialToUssDirMover(val dataOpsManager: Da
     }.execute()
 
     if (!response.isSuccessful) {
-      throw CallException(response, "Cannot upload data to ${op.destination.path}${op.source.name}")
+      throw CallException(response, "Cannot upload data to ${op.destination.path}${newName}")
     } else {
       setUssFileTag(op.source.charset.name(), pathToFile, destConnectionConfig)
       if (op.isMove) {

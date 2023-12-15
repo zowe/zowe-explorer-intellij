@@ -562,12 +562,16 @@ class ExplorerPasteProvider : PasteProvider {
     allConflicts.forEach { conflict ->
       var copyIndex = 1
       val sourceName = conflict.second.name
+      val isSourceDirectory = conflict.second.isDirectory
       var newName: String
       val destAttributes = dataOpsManager.tryToGetAttributes(conflict.first)
+      val sourceAttributes = dataOpsManager.tryToGetAttributes(conflict.second)
 
       do {
         newName = if (destAttributes is RemoteDatasetAttributes) {
           if (sourceName.length >= 8) "${sourceName.take(7)}$copyIndex" else "$sourceName$copyIndex"
+        } else if (isSourceDirectory || sourceAttributes is RemoteDatasetAttributes) {
+          "${sourceName}_(${copyIndex})"
         } else {
           val extension = if (sourceName.contains(".")) sourceName.substringAfterLast(".") else null
           val newNameWithoutExtension = "${sourceName.substringBeforeLast(".")}_(${copyIndex})"
