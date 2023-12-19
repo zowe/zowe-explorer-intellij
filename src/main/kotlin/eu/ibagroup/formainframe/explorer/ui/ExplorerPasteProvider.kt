@@ -438,19 +438,19 @@ class ExplorerPasteProvider : PasteProvider {
 
     val listOfAllConflicts = pasteDestinations
       .mapNotNull { destFile ->
+        val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
         destFile.children
           ?.map conflicts@{ destChild ->
             val filteredSourceFiles = sourceFiles.filter { source ->
               val sourceAttributes = dataOpsManager.tryToGetAttributes(source)
-              val destAttributes = dataOpsManager.tryToGetAttributes(destChild)
               if (
-                destAttributes is RemoteMemberAttributes &&
+                destAttributes is RemoteDatasetAttributes &&
                 (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
               ) {
                 val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).uppercase()
                 if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
               } else if (
-                destAttributes is RemoteMemberAttributes &&
+                destAttributes is RemoteDatasetAttributes &&
                 sourceAttributes is RemoteDatasetAttributes
               ) {
                 sourceAttributes.name.split(".").last() == destChild.name
@@ -566,9 +566,10 @@ class ExplorerPasteProvider : PasteProvider {
       var newName: String
       val destAttributes = dataOpsManager.tryToGetAttributes(conflict.first)
       val sourceAttributes = dataOpsManager.tryToGetAttributes(conflict.second)
-
       do {
-        newName = if (destAttributes is RemoteDatasetAttributes) {
+        newName = if (destAttributes is RemoteDatasetAttributes && sourceAttributes is RemoteDatasetAttributes) {
+          "${sourceAttributes.name.split(".").last().take(7)}$copyIndex"
+        } else if (destAttributes is RemoteDatasetAttributes) {
           if (sourceName.length >= 8) "${sourceName.take(7)}$copyIndex" else "$sourceName$copyIndex"
         } else if (isSourceDirectory || sourceAttributes is RemoteDatasetAttributes) {
           "${sourceName}_(${copyIndex})"
