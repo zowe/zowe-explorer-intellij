@@ -36,10 +36,11 @@ Throughout this document you will find the following terminology being used:
 
 ## Distribution
 
-| #   | Ver | Req | BP  | Conformant | Criteria                                                                                                                                                        | Additional Information |
-|:----|:---:|:---:|:---:|:-----------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------|
-| 1   | v1  |  x  |     |            | Plug-in is being delivered either through the JetBrains marketplace or through the standalone zip/tar package                                                   |                        |
-| 2   | v1  |  x  |     |            | If the plug-in is being delivered through the standalone package, it must describe the reason, why it is not being delivered through the JetBrains marketplace  |                        |
+| #   | Ver | Req | BP  | Conformant | Criteria                                                                                                                                                                                                                               
+                            | Additional Information |
+|:----|:---:|:---:|:---:|:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------|
+| 1   | v1  |  x  |     |            | Plug-in is being delivered either through the JetBrains marketplace or through the standalone zip/tar package                                                                                                                                                       |                        |
+| 2   | v1  |  x  |     |            | If the plug-in is being delivered through the standalone package, it must describe the strong reason, why it is not being delivered through the JetBrains marketplace, as well as implement all the necessary Zowe security policies for such kind of situations |                        |
 
 ## Documentation
 
