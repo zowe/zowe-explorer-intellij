@@ -310,6 +310,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
       },
       disposable = this
     )
+    //TODO: is the functionality needed?
     subscribe(
       componentManager = dataOpsManager.componentManager,
       topic = AttributesService.FILE_CONTENT_CHANGED,

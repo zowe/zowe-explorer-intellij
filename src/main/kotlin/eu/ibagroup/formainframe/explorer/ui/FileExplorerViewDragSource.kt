@@ -24,6 +24,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
+import eu.ibagroup.formainframe.utils.log
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Image
@@ -36,6 +37,9 @@ import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
+
+private val log = log<FileExplorerViewDragSource>()
+
 
 /** Drag source representation */
 class FileExplorerViewDragSource(
@@ -56,7 +60,13 @@ class FileExplorerViewDragSource(
     bean: DnDDragStartBean
   ): com.intellij.openapi.util.Pair<Image, Point>? {
     val paths: Array<TreePath> = myTree.selectionPaths ?: return null
-    val toRender = mySelectedNodesDataProvider().map { Pair(it.node.presentation.coloredText[0].text, it.node.icon) }
+    val toRender = mySelectedNodesDataProvider().map {
+      val coloredTextToDisplay = it.node.presentation.coloredText.firstOrNull()?.text
+      if (coloredTextToDisplay == null) {
+        log.warn("Tree node for file '${it.file?.name}' doesn't contain colored text.")
+      }
+      Pair(coloredTextToDisplay ?: "ERROR", it.node.icon)
+    }
 
     var count = 0
     val panel = JPanel(VerticalFlowLayout(0, 0))

@@ -40,7 +40,7 @@ val cachesDir by lazy {
 }
 
 /**
- * Retrieve the topic sync publisher to publish messages by
+ * Retrieve the topic sync publisher to publish messages on the application bus
  * @param topic the topic to get sync publisher for
  * @param componentManager the component manager to get the topic sync publisher
  */
@@ -52,56 +52,67 @@ fun <L : Any> sendTopic(
 }
 
 /**
- * Subscribe to the specified topic with disposable object
- * @param componentManager the component manager to retrieve the message bus to subscribe to the topic
+ * Retrieve the topic sync publisher to publish messages on the project bus
+ * @param topic the topic to get sync publisher for
+ * @param project the project to get the topic sync publisher
+ */
+fun <L : Any> sendTopic(topic: Topic<L>, project: Project): L {
+  return project.messageBus.syncPublisher(topic)
+}
+
+/**
+ * Subscribe to the specified topic with disposable object to listen messages from the application bus
  * @param topic the topic to subscribe to
  * @param handler the handler to execute on topic message
  * @param disposable target parent disposable to which life cycle newly created connection shall be bound
+ * @param componentManager the component manager to retrieve the message bus to subscribe to the topic
  */
 fun <L : Any> subscribe(
-  componentManager: ComponentManager,
   topic: Topic<L>,
   handler: L,
-  disposable: Disposable
+  disposable: Disposable,
+  componentManager: ComponentManager = ApplicationManager.getApplication()
 ) = componentManager
   .messageBus
   .connect(disposable)
   .subscribe(topic, handler)
 
 /**
- * Subscribe to the specified topic
- * @param componentManager the component manager to retrieve the message bus to subscribe to the topic
+ * Subscribe to the specified topic to listen messages from the application bus
  * @param topic the topic to subscribe to
  * @param handler the handler to execute on topic message
+ * @param componentManager the component manager to retrieve the message bus to subscribe to the topic
  */
 fun <L : Any> subscribe(
-  componentManager: ComponentManager,
   topic: Topic<L>,
-  handler: L
+  handler: L,
+  componentManager: ComponentManager = ApplicationManager.getApplication()
 ) = componentManager
   .messageBus
   .connect()
   .subscribe(topic, handler)
 
 /**
- * Subscribe to the specified topic with the default component manager that gives the message bus
+ * Subscribe to the specified topic with disposable object to listen messages from the project bus
  * @param topic the topic to subscribe to
  * @param handler the handler to execute on topic message
+ * @param disposable target parent disposable to which life cycle newly created connection shall be bound
+ * @param project the project to retrieve the message bus to subscribe to the topic
  */
-fun <L : Any> subscribe(topic: Topic<L>, handler: L) = ApplicationManager.getApplication()
+fun <L : Any> subscribe(topic: Topic<L>, handler: L, disposable: Disposable, project: Project) = project
   .messageBus
-  .connect()
+  .connect(disposable)
   .subscribe(topic, handler)
 
 /**
- * Subscribe to the specified topic with the default component manager that gives the message bus and disposable object
+ * Subscribe to the specified topic to listen messages from the project bus
  * @param topic the topic to subscribe to
- * @param disposable target parent disposable to which life cycle newly created connection shall be bound
  * @param handler the handler to execute on topic message
+ * @param project the project to retrieve the message bus to subscribe to the topic
  */
-fun <L : Any> subscribe(topic: Topic<L>, disposable: Disposable, handler: L) = ApplicationManager.getApplication()
+fun <L : Any> subscribe(topic: Topic<L>, handler: L, project: Project) = project
   .messageBus
-  .connect(disposable)
+  .connect()
   .subscribe(topic, handler)
 
 /** Asserts whether write access is allowed */

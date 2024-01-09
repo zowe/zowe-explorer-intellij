@@ -340,7 +340,7 @@ class ExplorerPasteProvider : PasteProvider {
         )
       ) {
         conflictsResolutions.addAll(
-          ussToPdsWarnings.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } }
+          ussToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
         )
       }
       // specific conflicts resolution end
@@ -438,19 +438,19 @@ class ExplorerPasteProvider : PasteProvider {
 
     val listOfAllConflicts = pasteDestinations
       .mapNotNull { destFile ->
+        val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
         destFile.children
           ?.map conflicts@{ destChild ->
             val filteredSourceFiles = sourceFiles.filter { source ->
               val sourceAttributes = dataOpsManager.tryToGetAttributes(source)
-              val destAttributes = dataOpsManager.tryToGetAttributes(destChild)
               if (
-                destAttributes is RemoteMemberAttributes &&
+                destAttributes is RemoteDatasetAttributes &&
                 (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
               ) {
                 val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).uppercase()
                 if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
               } else if (
-                destAttributes is RemoteMemberAttributes &&
+                destAttributes is RemoteDatasetAttributes &&
                 sourceAttributes is RemoteDatasetAttributes
               ) {
                 sourceAttributes.name.split(".").last() == destChild.name
@@ -476,6 +476,7 @@ class ExplorerPasteProvider : PasteProvider {
       val conflictChild = it.first.findChild(it.second.name)
       (conflictChild?.isDirectory == true && !it.second.isDirectory)
           || (conflictChild?.isDirectory == false && it.second.isDirectory)
+          || it.first == it.second.parent
     }
     conflicts.removeAll(conflictsThatCannotBeOverwritten)
 
@@ -496,17 +497,24 @@ class ExplorerPasteProvider : PasteProvider {
       )
 
       when (choice) {
-        0 -> result.addAll(conflicts.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } })
-        1 -> {
-          result.addAll(conflicts.map { ConflictResolution(it.first, it.second).apply { resolveByOverwrite() } })
+        0 -> {
+          result.addAll(conflicts.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } })
           result.addAll(
-            conflictsThatCannotBeOverwritten.map { ConflictResolution(it.first, it.second).apply { resolveBySkip() } }
+            conflictsThatCannotBeOverwritten.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
+          )
+        }
+        1 -> {
+          result.addAll(conflicts.map { ConflictResolution(it.second, it.first).apply { resolveByOverwrite() } })
+          result.addAll(
+            conflictsThatCannotBeOverwritten.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
           )
           if (conflictsThatCannotBeOverwritten.isNotEmpty()) {
             val startMessage = "There are some conflicts that cannot be resolved:"
             val finishMessage = "File(s) above will be skipped."
             val conflictsToShow = conflictsThatCannotBeOverwritten.map {
-              if (it.second.isDirectory) {
+              if (it.first == it.second.parent) {
+                "The file '${it.second.name}' cannot overwrite itself"
+              } else if (it.second.isDirectory) {
                 "Directory '${it.second.name}' cannot replace file '${it.second.name}'"
               } else {
                 "File '${it.second.name}' cannot replace directory '${it.second.name}'"
@@ -554,12 +562,17 @@ class ExplorerPasteProvider : PasteProvider {
     allConflicts.forEach { conflict ->
       var copyIndex = 1
       val sourceName = conflict.second.name
+      val isSourceDirectory = conflict.second.isDirectory
       var newName: String
       val destAttributes = dataOpsManager.tryToGetAttributes(conflict.first)
-
+      val sourceAttributes = dataOpsManager.tryToGetAttributes(conflict.second)
       do {
-        newName = if (destAttributes is RemoteDatasetAttributes) {
+        newName = if (destAttributes is RemoteDatasetAttributes && sourceAttributes is RemoteDatasetAttributes) {
+          "${sourceAttributes.name.split(".").last().take(7)}$copyIndex"
+        } else if (destAttributes is RemoteDatasetAttributes) {
           if (sourceName.length >= 8) "${sourceName.take(7)}$copyIndex" else "$sourceName$copyIndex"
+        } else if (isSourceDirectory || sourceAttributes is RemoteDatasetAttributes) {
+          "${sourceName}_(${copyIndex})"
         } else {
           val extension = if (sourceName.contains(".")) sourceName.substringAfterLast(".") else null
           val newNameWithoutExtension = "${sourceName.substringBeforeLast(".")}_(${copyIndex})"
@@ -590,7 +603,9 @@ class ExplorerPasteProvider : PasteProvider {
         result.add(resolution)
       } else {
         // Conflicts between text/binary files and directories.
-        val messageToShow = if (conflict.second.isDirectory) {
+        val messageToShow = if (conflict.first == conflict.second.parent) {
+          "The file '${conflict.second.name}' cannot replace itself"
+        } else if (conflict.second.isDirectory) {
           "Directory '${conflict.second.name}' cannot replace file '${conflict.second.name}'"
         } else {
           "File '${conflict.second.name}' cannot replace directory '${conflict.second.name}'"

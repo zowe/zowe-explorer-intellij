@@ -10,7 +10,6 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
-import com.intellij.collaboration.ui.util.getName
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
