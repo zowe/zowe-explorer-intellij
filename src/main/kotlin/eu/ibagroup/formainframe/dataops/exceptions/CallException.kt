@@ -43,7 +43,7 @@ private fun formatMessage(code: Int, message: String, errorParams: Map<*, *>?): 
  */
 class CallException(
   val code: Int,
-  headMessage: String,
+  val headMessage: String,
   val errorParams: Map<*, *>? = null,
   override val cause: Throwable? = null
 ) : Exception(formatMessage(code, headMessage, errorParams))

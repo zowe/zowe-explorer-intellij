@@ -13,8 +13,10 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.containers.isEmpty
+import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -60,7 +62,12 @@ class TsoSessionCreateAction : AnAction() {
           }
         }
         if (throwable != null) {
-          val errorTemplate = "An error occurred. See details below:\n $throwable"
+          val tMessage = if (throwable is ProcessCanceledException) {
+            message("explorer.cancel.by.user.error")
+          } else {
+            "${throwable.message}"
+          }
+          val errorTemplate = "An error occurred. See details below:\n $tMessage"
           Messages.showErrorDialog(
             project,
             errorTemplate,

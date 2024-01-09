@@ -20,10 +20,14 @@ import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.config.ws.JobsFilter
-import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.attributes.AttributesService
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
+import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributesService
 import eu.ibagroup.formainframe.dataops.fetch.JobFetchProvider
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.testServiceImpl.TestZosmfApiImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -33,7 +37,13 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.ExecData
 import org.zowe.kotlinsdk.JESApi
 import org.zowe.kotlinsdk.Job
@@ -86,7 +96,7 @@ class JobFetchProviderTestSpec : ShouldSpec({
       every { job1.jobId } returns "TSUTEST1"
       every { job2.jobId } returns "TSUTEST2"
       every { job1.jobName } returns "TESTJOB1"
-      every {job2.jobName } returns "TESTJOB2"
+      every { job2.jobName } returns "TESTJOB2"
 
       val jobs = mutableListOf(job1, job2)
       val mockedCall = mockk<Call<List<Job>>>()
@@ -98,12 +108,41 @@ class JobFetchProviderTestSpec : ShouldSpec({
       zosmfApi.testInstance = mockk()
       val mockedApi = mockk<JESApi>()
       every { zosmfApi.testInstance.getApi(JESApi::class.java, mockedConnectionConfig) } returns mockedApi
-      every { mockedApi.getFilteredJobs(basicCredentials = any() as String, owner = any() as String, prefix = any() as String, userCorrelator = any() as String, execData = any() as ExecData) } returns mockedCall
-      every { mockedApi.getFilteredJobs(basicCredentials = any() as String, owner = any() as String, prefix = any() as String, userCorrelator = any() as String, execData = any() as ExecData).cancelByIndicator(progressMockk) } returns mockedCall
-      every { mockedApi.getFilteredJobs(basicCredentials = any() as String, jobId = any() as String, execData = any() as ExecData) } returns mockedCall
-      every { mockedApi.getFilteredJobs(basicCredentials = any() as String, jobId = any() as String, execData = any() as ExecData).cancelByIndicator(progressMockk) } returns mockedCall
+      every {
+        mockedApi.getFilteredJobs(
+          basicCredentials = any() as String,
+          owner = any() as String,
+          prefix = any() as String,
+          userCorrelator = any() as String,
+          execData = any() as ExecData
+        )
+      } returns mockedCall
+      every {
+        mockedApi.getFilteredJobs(
+          basicCredentials = any() as String,
+          owner = any() as String,
+          prefix = any() as String,
+          userCorrelator = any() as String,
+          execData = any() as ExecData
+        ).cancelByIndicator(progressMockk)
+      } returns mockedCall
+      every {
+        mockedApi.getFilteredJobs(
+          basicCredentials = any() as String,
+          jobId = any() as String,
+          execData = any() as ExecData
+        )
+      } returns mockedCall
+      every {
+        mockedApi.getFilteredJobs(
+          basicCredentials = any() as String,
+          jobId = any() as String,
+          execData = any() as ExecData
+        ).cancelByIndicator(progressMockk)
+      } returns mockedCall
 
-      val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      val dataOpsManagerService =
+        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
       val componentManager = dataOpsManagerService.componentManager
 
       // needed for cleanupUnusedFile test
@@ -119,12 +158,14 @@ class JobFetchProviderTestSpec : ShouldSpec({
 
       should("fetchResponse get job attributes if job ID is not null and response is successful and exec dates/times are null") {
 
-        val fetchResponseMethodRef = jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
+        val fetchResponseMethodRef =
+          jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
         fetchResponseMethodRef.trySetAccessible()
         every { mockedRequest.jobId } returns "TSUTEST"
         every { mockedResponse.isSuccessful } returns true
 
-        val jobAttributes = (fetchResponseMethodRef.invoke(jobFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
+        val jobAttributes =
+          (fetchResponseMethodRef.invoke(jobFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
 
         assertSoftly {
           jobAttributes shouldHaveSize jobs.size
@@ -133,12 +174,14 @@ class JobFetchProviderTestSpec : ShouldSpec({
 
       should("fetchResponse get job attributes if job ID is null and response is successful") {
 
-        val fetchResponseMethodRef = jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
+        val fetchResponseMethodRef =
+          jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
         fetchResponseMethodRef.trySetAccessible()
         every { mockedRequest.jobId } returns ""
         every { mockedResponse.isSuccessful } returns true
 
-        val jobAttributes = (fetchResponseMethodRef.invoke(jobFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
+        val jobAttributes =
+          (fetchResponseMethodRef.invoke(jobFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
 
         assertSoftly {
           jobAttributes shouldHaveSize jobs.size
@@ -147,7 +190,8 @@ class JobFetchProviderTestSpec : ShouldSpec({
 
       should("fetchResponse get job attributes if exec dates/times are not null") {
 
-        val fetchResponseMethodRef = jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
+        val fetchResponseMethodRef =
+          jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
         fetchResponseMethodRef.trySetAccessible()
         every { mockedRequest.jobId } returns "TSUTEST"
         every { mockedResponse.isSuccessful } returns true
@@ -159,7 +203,8 @@ class JobFetchProviderTestSpec : ShouldSpec({
         every { job2.execEnded } returns ""
         every { job2.execSubmitted } returns ""
 
-        val jobAttributes = (fetchResponseMethodRef.invoke(jobFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
+        val jobAttributes =
+          (fetchResponseMethodRef.invoke(jobFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
 
         assertSoftly {
           jobAttributes shouldHaveSize jobs.size
@@ -168,13 +213,15 @@ class JobFetchProviderTestSpec : ShouldSpec({
 
       should("fetchResponse get job attributes if response does not return any job") {
 
-        val fetchResponseMethodRef = jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
+        val fetchResponseMethodRef =
+          jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
         fetchResponseMethodRef.trySetAccessible()
         every { mockedRequest.jobId } returns "TSUTEST"
         every { mockedResponse.isSuccessful } returns true
         every { mockedResponse.body() } returns emptyList()
 
-        val jobAttributes = (fetchResponseMethodRef.invoke(jobFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
+        val jobAttributes =
+          (fetchResponseMethodRef.invoke(jobFetchProviderForTest, mockedQuery, progressMockk) as Collection<*>)
 
         assertSoftly {
           jobAttributes shouldHaveSize 0
@@ -182,7 +229,8 @@ class JobFetchProviderTestSpec : ShouldSpec({
       }
 
       should("fetchResponse get job attributes if response was not successful") {
-        val fetchResponseMethodRef = jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
+        val fetchResponseMethodRef =
+          jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "fetchResponse" }
         fetchResponseMethodRef.trySetAccessible()
         every { mockedRequest.jobId } returns "TSUTEST"
         every { mockedResponse.isSuccessful } returns false
@@ -200,9 +248,10 @@ class JobFetchProviderTestSpec : ShouldSpec({
 
       should("cleanup unused file if connection config of the query is the same as for job file") {
         var cleanupPerformed = false
-        val cleanupUnusedFileMethodRef = jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
+        val cleanupUnusedFileMethodRef =
+          jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
         cleanupUnusedFileMethodRef.trySetAccessible()
-        dataOpsManagerService.testInstance = object: TestDataOpsManagerImpl(componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(componentManager) {
           override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
             attributesClass: Class<out A>,
             vFileClass: Class<out F>
@@ -230,12 +279,18 @@ class JobFetchProviderTestSpec : ShouldSpec({
 
       should("cleanup file if connections are not the same") {
         var cleanupPerformed = false
-        val cleanupUnusedFileMethodRef = jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
+        val cleanupUnusedFileMethodRef =
+          jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
         cleanupUnusedFileMethodRef.trySetAccessible()
 
         every { mockedJobsRequester.connectionConfig } returns mockk()
         every { mockedFileAttributes.requesters } returns requesters
-        every { mockedAttributesService.updateAttributes(mockedVirtualFile, any() as RemoteJobAttributes.() -> Unit) } answers {
+        every {
+          mockedAttributesService.updateAttributes(
+            mockedVirtualFile,
+            any() as RemoteJobAttributes.() -> Unit
+          )
+        } answers {
           cleanupPerformed = true
           secondArg<RemoteJobAttributes.() -> Unit>().invoke(mockedFileAttributes)
         }

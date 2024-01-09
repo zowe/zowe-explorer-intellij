@@ -229,7 +229,6 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
    */
   private fun cleanCacheInternal(query: RemoteQuery<Connection, Request, Unit>, sendTopic: Boolean) {
     cacheState.remove(query)
-    cache.remove(query)
     if (sendTopic) {
       sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onCacheCleaned(query)
     }

@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.MessageType
@@ -20,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
@@ -56,6 +58,17 @@ class ConnectionDialog(
   private val lastSuccessfulState: ConnectionDialogState = if(state.mode == DialogMode.UPDATE) state.connectionConfig.toDialogState(crudable) else ConnectionDialogState()
   companion object {
 
+    /**
+     * Check if only the connection name has changed in the connection dialog
+     */
+    private fun isOnlyConnectionNameChanged(initialState: ConnectionDialogState, state: ConnectionDialogState): Boolean {
+      return initialState.connectionName != state.connectionName &&
+              initialState.connectionUrl == state.connectionUrl &&
+              initialState.username == state.username &&
+              initialState.password == state.password &&
+              initialState.isAllowSsl == state.isAllowSsl
+    }
+
     /** Show Test connection dialog and test the connection regarding the dialog state.
      * First the method checks whether connection succeeds for specified user/password.
      * If connection succeeds then the method automatically fill in z/OS version for this connection.
@@ -68,12 +81,16 @@ class ConnectionDialog(
       project: Project? = null,
       initialState: ConnectionDialogState
     ): ConnectionDialogState? {
+      val initState = initialState.clone()
       return showUntilDone(
         initialState = initialState,
         factory = { ConnectionDialog(crudable, initialState, project) },
         test = { state ->
           val newTestedConnConfig : ConnectionConfig
           if (initialState.mode == DialogMode.UPDATE) {
+            if (isOnlyConnectionNameChanged(initState, state)) {
+              return@showUntilDone true
+            }
             val newState = state.clone()
             newState.initEmptyUuids(crudable)
             newTestedConnConfig = ConnectionConfig(newState.connectionUuid, newState.connectionName, newState.connectionUrl, newState.isAllowSsl, newState.zVersion)
@@ -95,6 +112,7 @@ class ConnectionDialog(
               runCatching {
                 service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
               }.onSuccess {
+                state.owner = whoAmI(newTestedConnConfig) ?: ""
                 val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
                 state.zVersion = when (systemInfo.zosVersion) {
                   "04.25.00" -> ZVersion.ZOS_2_2
@@ -114,12 +132,16 @@ class ConnectionDialog(
           if (throwable != null) {
             state.mode = DialogMode.UPDATE
             val confirmMessage = "Do you want to add it anyway?"
-            val tMessage = throwable.message?.let {
-              if (it.contains("Exception")) {
-                it.substring(it.lastIndexOf(":") + 2)
-                  .replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString() }
-              } else {
-                it
+            val tMessage = if (throwable is ProcessCanceledException) {
+              message("explorer.cancel.by.user.error")
+            } else {
+              throwable.message?.let {
+                if (it.contains("Exception")) {
+                  it.substring(it.lastIndexOf(":") + 2)
+                    .replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString() }
+                } else {
+                  it
+                }
               }
             }
             val message = if (tMessage != null) {
@@ -141,9 +163,6 @@ class ConnectionDialog(
               }
             addAnyway
           } else {
-            runTask(title = "Retrieving user information", project = project) {
-              state.owner = whoAmI(newTestedConnConfig) ?: ""
-            }
             true
           }
         }
