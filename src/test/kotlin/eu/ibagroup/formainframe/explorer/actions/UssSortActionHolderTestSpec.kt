@@ -26,14 +26,24 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.fetch.UssFileFetchProvider
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
-import eu.ibagroup.formainframe.explorer.ui.*
-import eu.ibagroup.formainframe.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.LibraryNode
+import eu.ibagroup.formainframe.explorer.ui.NodeData
+import eu.ibagroup.formainframe.explorer.ui.UssDirNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.spyk
 import javax.swing.tree.TreePath
 
 class UssSortActionHolderTestSpec : ShouldSpec({
@@ -125,7 +135,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("is visible from context menu if file explorer view is not null and selected node is not UssDirNode") {
           var isVisible = true
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             isVisible = false
             listOf(mockedNodeDataNotUssForTest)
@@ -198,7 +209,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by name action performed if selected node is not UssDirNode") {
           var actionPerformed = false
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             actionPerformed = true
             listOf(mockedNodeDataNotUssForTest)
@@ -212,7 +224,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by name action isSelected if selected node is not UssDirNode") {
           var isSelected = true
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             isSelected = false
             listOf(mockedNodeDataNotUssForTest)
@@ -251,7 +264,10 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by name action performed if sort query keys is not empty") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.DATE, SortQueryKeys.ASCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.DATE,
+            SortQueryKeys.ASCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }
@@ -264,7 +280,11 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by name action performed if sort query keys is not empty and contains desired key") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.DATE, SortQueryKeys.NAME, SortQueryKeys.ASCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.DATE,
+            SortQueryKeys.NAME,
+            SortQueryKeys.ASCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }
@@ -329,7 +349,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by type action performed if selected node is not UssDirNode") {
           var actionPerformed = false
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             actionPerformed = true
             listOf(mockedNodeDataNotUssForTest)
@@ -343,7 +364,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by type action isSelected if selected node is not UssDirNode") {
           var isSelected = true
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             isSelected = false
             listOf(mockedNodeDataNotUssForTest)
@@ -382,7 +404,10 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by type action performed if sort query keys is not empty") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.DATE, SortQueryKeys.ASCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.DATE,
+            SortQueryKeys.ASCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }
@@ -395,7 +420,11 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by type action performed if sort query keys is not empty and contains desired key") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.DATE, SortQueryKeys.TYPE, SortQueryKeys.ASCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.DATE,
+            SortQueryKeys.TYPE,
+            SortQueryKeys.ASCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }
@@ -460,7 +489,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by date action performed if selected node is not UssDirNode") {
           var actionPerformed = false
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             actionPerformed = true
             listOf(mockedNodeDataNotUssForTest)
@@ -474,7 +504,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by date action isSelected if selected node is not UssDirNode") {
           var isSelected = true
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             isSelected = false
             listOf(mockedNodeDataNotUssForTest)
@@ -513,7 +544,10 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by date action performed if sort query keys is not empty") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.NAME, SortQueryKeys.ASCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.NAME,
+            SortQueryKeys.ASCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }
@@ -526,7 +560,11 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort by date action performed if sort query keys is not empty and contains desired key") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.DATE, SortQueryKeys.NAME, SortQueryKeys.ASCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.DATE,
+            SortQueryKeys.NAME,
+            SortQueryKeys.ASCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }
@@ -591,7 +629,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort Ascending action performed if selected node is not UssDirNode") {
           var actionPerformed = false
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             actionPerformed = true
             listOf(mockedNodeDataNotUssForTest)
@@ -605,7 +644,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort Ascending action isSelected if selected node is not UssDirNode") {
           var isSelected = true
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             isSelected = false
             listOf(mockedNodeDataNotUssForTest)
@@ -644,7 +684,10 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort Ascending action performed if sort query keys is not empty") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.NAME, SortQueryKeys.DESCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.NAME,
+            SortQueryKeys.DESCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }
@@ -657,7 +700,11 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort Ascending action performed if sort query keys is not empty and contains desired key") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.DESCENDING, SortQueryKeys.NAME, SortQueryKeys.ASCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.DESCENDING,
+            SortQueryKeys.NAME,
+            SortQueryKeys.ASCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }
@@ -722,7 +769,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort Descending action performed if selected node is not UssDirNode") {
           var actionPerformed = false
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             actionPerformed = true
             listOf(mockedNodeDataNotUssForTest)
@@ -736,7 +784,8 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort Descending action isSelected if selected node is not UssDirNode") {
           var isSelected = true
-          val mockedNodeDataNotUssForTest = NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
+          val mockedNodeDataNotUssForTest =
+            NodeData(mockk<LibraryNode>(), mockk<MFVirtualFile>(), mockk<RemoteDatasetAttributes>())
           every { mockedFileExplorerView.mySelectedNodesData } answers {
             isSelected = false
             listOf(mockedNodeDataNotUssForTest)
@@ -775,7 +824,10 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort Descending action performed if sort query keys is not empty") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.NAME, SortQueryKeys.ASCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.NAME,
+            SortQueryKeys.ASCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }
@@ -788,7 +840,11 @@ class UssSortActionHolderTestSpec : ShouldSpec({
 
         should("sort Descending action performed if sort query keys is not empty and contains desired key") {
           var actionPerformed = false
-          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(SortQueryKeys.DESCENDING, SortQueryKeys.NAME, SortQueryKeys.ASCENDING)
+          every { mockedUssDirNode.currentSortQueryKeysList } returns mutableListOf(
+            SortQueryKeys.DESCENDING,
+            SortQueryKeys.NAME,
+            SortQueryKeys.ASCENDING
+          )
           every { mockedFileFetchProvider.reload(mockedUssQuery) } answers {
             actionPerformed = true
           }

@@ -12,13 +12,17 @@ package eu.ibagroup.formainframe.utils
 
 import com.ibm.mq.headers.CCSID
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
+import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperation
 import eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperationParams
 import org.zowe.kotlinsdk.FileTagList
@@ -177,14 +181,32 @@ fun removeUssFileTag(attributes: RemoteUssAttributes) {
  * @param title error text.
  */
 private fun notifyError(th: Throwable, title: String) {
-  Notifications.Bus.notify(
-    Notification(
-      FILE_TAG_NOTIFICATION_GROUP_ID,
-      title,
-      th.message ?: "",
-      NotificationType.ERROR
-    )
-  )
+
+  var details: String = if (th is CallException) {
+    th.errorParams?.get("details")?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
+  } else {
+    "Unknown error"
+  }
+  if (details.contains(":")) {
+    details = details.split(":").last()
+  }
+
+  Notification(
+    FILE_TAG_NOTIFICATION_GROUP_ID,
+    title,
+    details,
+    NotificationType.ERROR
+  ).addAction(object : NotificationAction("More") {
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      Messages.showErrorDialog(
+        e.project,
+        th.message ?: th.toString(),
+        title
+      )
+    }
+  }).let {
+    Notifications.Bus.notify(it)
+  }
 }
 
 private val unsupportedEncodings = listOf(

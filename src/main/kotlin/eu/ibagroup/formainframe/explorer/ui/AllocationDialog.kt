@@ -22,14 +22,13 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.selectedValueMatches
+import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.getUsername
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.config.Presets
-import eu.ibagroup.formainframe.utils.validateDataset
-import eu.ibagroup.formainframe.utils.validateForBlank
-import eu.ibagroup.formainframe.utils.validateMemberName
+import eu.ibagroup.formainframe.utils.*
 import org.zowe.kotlinsdk.AllocationUnit
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.RecordFormat
@@ -59,6 +58,8 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
   private val mainPanel by lazy {
     val sameWidthLabelsGroup = "ALLOCATION_DIALOG_LABELS_WIDTH_GROUP"
     val sameWidthComboBoxGroup = "ALLOCATION_DIALOG_COMBO_BOX_WIDTH_GROUP"
+    val nonNegativeIntRange = IntRange(0, Int.MAX_VALUE - 1)
+    val positiveIntRange = IntRange(1, Int.MAX_VALUE - 1)
 
     panel {
       row {
@@ -133,11 +134,15 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .bindItem(state.allocationParameters::allocationUnit.toNullableProperty())
           .also { spaceUnitBox = it.component }
           .widthGroup(sameWidthComboBoxGroup)
+        contextHelp(
+          description = message("allocation.dialog.unit.size.hint.description"),
+          title = message("allocation.dialog.unit.size.hint.title")
+        )
       }
       row {
         label("Primary allocation: ")
           .widthGroup(sameWidthLabelsGroup)
-        textField()
+        intTextField(positiveIntRange)
           .bindText(
             { state.allocationParameters.primaryAllocation.toString() },
             { state.allocationParameters.primaryAllocation = it.toIntOrNull() ?: 0 }
@@ -148,7 +153,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       row {
         label("Secondary allocation: ")
           .widthGroup(sameWidthLabelsGroup)
-        textField()
+        intTextField(nonNegativeIntRange)
           .bindText(
             { state.allocationParameters.secondaryAllocation.toString() },
             { state.allocationParameters.secondaryAllocation = it.toIntOrNull() ?: 0 }
@@ -159,7 +164,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       row {
         label("Directory: ")
           .widthGroup(sameWidthLabelsGroup)
-        textField()
+        intTextField(positiveIntRange)
           .bindText(
             {
               if (state.allocationParameters.directoryBlocks != null) {
@@ -184,6 +189,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             RecordFormat.V,
             RecordFormat.VA,
             RecordFormat.VB,
+            RecordFormat.U,
           )
         )
           .bindItem(state.allocationParameters::recordFormat.toNullableProperty())
@@ -193,7 +199,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       row {
         label("Record Length: ")
           .widthGroup(sameWidthLabelsGroup)
-        textField()
+        intTextField(positiveIntRange)
           .bindText(
             { state.allocationParameters.recordLength?.toString() ?: "0" },
             { state.allocationParameters.recordLength = it.toIntOrNull() }
@@ -204,7 +210,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       row {
         label("Block size: ")
           .widthGroup(sameWidthLabelsGroup)
-        textField()
+        intTextField(nonNegativeIntRange)
           .bindText(
             { state.allocationParameters.blockSize?.toString() ?: "0" },
             { state.allocationParameters.blockSize = it.toIntOrNull() }
@@ -215,7 +221,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       row {
         label("Average Block Length: ")
           .widthGroup(sameWidthLabelsGroup)
-        textField()
+        intTextField(nonNegativeIntRange)
           .bindText(
             { state.allocationParameters.averageBlockLength?.toString() ?: "0" },
             { state.allocationParameters.averageBlockLength = it.toIntOrNull() }
@@ -318,18 +324,18 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
   }
 
   override fun doValidate(): ValidationInfo? {
-    return validateDataset(
-      datasetNameField,
-      datasetOrganizationBox.selectedItem as DatasetOrganization,
-      primaryAllocationField,
-      secondaryAllocationField,
-      directoryBlocksField,
-      recordLengthField,
-      blockSizeField,
-      averageBlockLengthField,
-      advancedParametersField
-    ) ?: validateForBlank(memberNameField)
+    val defaultValidationInfos =
+      mainPanel.validationsOnInput.mapNotNull { it.value.first().validate() }
+        .filter { it.component?.isVisible == true }
+        .plus(
+          mainPanel.validationsOnApply.mapNotNull { it.value.first().validate() }
+            .filter { it.component?.isVisible == true }
+        )
+    return validateDatasetNameOnInput(datasetNameField)
+      ?: validateForBlank(memberNameField)
       ?: validateMemberName(memberNameField)
+      ?: defaultValidationInfos.firstOrNull()
+      ?: validateVolser(advancedParametersField)
   }
 
   override fun getPreferredFocusedComponent(): JComponent? {
