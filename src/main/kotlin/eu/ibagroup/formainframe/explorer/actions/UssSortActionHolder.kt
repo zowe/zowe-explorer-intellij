@@ -28,7 +28,12 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 /**
  * Represents internal USS fetch provider to be able to update the query for each USS dir node whose sorting is enabled
  */
-internal val fetchProvider = service<DataOpsManager>().getFileFetchProvider(UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java)
+internal val fetchProvider = service<DataOpsManager>()
+  .getFileFetchProvider(
+    UssQuery::class.java,
+    RemoteQuery::class.java,
+    MFVirtualFile::class.java
+  )
 
 /**
  * Represents the custom sort action group in the FileExplorerView context menu
@@ -68,7 +73,7 @@ class SortByNameAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when By Name sorting is clicked
    */
-  override fun actionPerformed(e: AnActionEvent) {
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -80,7 +85,8 @@ class SortByNameAction : ToggleAction() {
       } else {
         selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.TYPE)
         selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.DATE)
-        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.NAME)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.NAME)
+        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.NAME))
+          selectedNode.currentSortQueryKeysList.add(SortQueryKeys.NAME)
         queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
       }
       queryToUpdate.requester = selectedNode
@@ -122,7 +128,7 @@ class SortByTypeAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when By Type sorting is clicked
    */
-  override fun actionPerformed(e: AnActionEvent) {
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -134,7 +140,8 @@ class SortByTypeAction : ToggleAction() {
       } else {
         selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.NAME)
         selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.DATE)
-        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.TYPE)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.TYPE)
+        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.TYPE))
+          selectedNode.currentSortQueryKeysList.add(SortQueryKeys.TYPE)
         queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
       }
       queryToUpdate.requester = selectedNode
@@ -176,7 +183,7 @@ class SortByModificationDateAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when By Modification Date sorting is clicked
    */
-  override fun actionPerformed(e: AnActionEvent) {
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -188,7 +195,8 @@ class SortByModificationDateAction : ToggleAction() {
       } else {
         selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.NAME)
         selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.TYPE)
-        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DATE)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DATE)
+        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DATE))
+          selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DATE)
         queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
       }
       queryToUpdate.requester = selectedNode
@@ -230,7 +238,7 @@ class SortByAscendingOrderAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when Ascending sorting is clicked
    */
-  override fun actionPerformed(e: AnActionEvent) {
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -241,7 +249,8 @@ class SortByAscendingOrderAction : ToggleAction() {
         queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
       } else {
         selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.DESCENDING)
-        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.ASCENDING)
+        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING))
+          selectedNode.currentSortQueryKeysList.add(SortQueryKeys.ASCENDING)
         queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
       }
       queryToUpdate.requester = selectedNode
@@ -283,7 +292,7 @@ class SortByDescendingOrderAction : ToggleAction() {
   /**
    * Action performed method to register the custom behavior when Descending sorting is clicked
    */
-  override fun actionPerformed(e: AnActionEvent) {
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0].node
     if (selectedNode is UssDirNode) {
@@ -294,7 +303,8 @@ class SortByDescendingOrderAction : ToggleAction() {
         queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
       } else {
         selectedNode.currentSortQueryKeysList.remove(SortQueryKeys.ASCENDING)
-        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DESCENDING)) selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DESCENDING)
+        if (!selectedNode.currentSortQueryKeysList.contains(SortQueryKeys.DESCENDING))
+          selectedNode.currentSortQueryKeysList.add(SortQueryKeys.DESCENDING)
         queryToUpdate.sortKeys.addAll(selectedNode.currentSortQueryKeysList)
       }
       queryToUpdate.requester = selectedNode
