@@ -117,6 +117,8 @@ class EditorTestSpec : WithApplicationShouldSpec({
     val bytes = byteArrayOf(116, 101, 120, 116)
     every { contentSynchronizerMock.successfulContentStorage(any()) } returns bytes
 
+    every { virtualFileMock.name } returns "fileName"
+
     var currentBytes: ByteArray
 
     mockkConstructor(DocumentedSyncProvider::class)

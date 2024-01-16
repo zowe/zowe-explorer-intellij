@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.MessageType
@@ -348,11 +349,13 @@ class ConnectionDialog(
       state.password = getPassword(lastSuccessfulState.connectionConfig)
       state.isAllowSsl = lastSuccessfulState.isAllowSsl
       state.zVersion = lastSuccessfulState.zVersion
-      CredentialService.instance.setCredentials(
-        connectionConfigUuid = lastSuccessfulState.connectionUuid,
-        username = getUsername(lastSuccessfulState.connectionConfig),
-        password = getPassword(lastSuccessfulState.connectionConfig)
-      )
+      runBackgroundableTask("Setting credentials", project, false) {
+        CredentialService.instance.setCredentials(
+          connectionConfigUuid = lastSuccessfulState.connectionUuid,
+          username = getUsername(lastSuccessfulState.connectionConfig),
+          password = getPassword(lastSuccessfulState.connectionConfig)
+        )
+      }
     }
   }
 

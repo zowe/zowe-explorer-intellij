@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.config.connect.ui.zosmf
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.dsl.builder.panel
@@ -225,11 +226,13 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
 
   /** Reset the Connections table changes. Updates UI when the changes were introduced */
   override fun reset() {
-    val wasModified = isModified
-    rollbackSandbox<Credentials>()
-    rollbackSandbox<ConnectionConfig>()
-    if (wasModified) {
-      panel?.updateUI()
+    runBackgroundableTask(title = "Reset changes", cancellable = false) {
+      val wasModified = isModified
+      rollbackSandbox<Credentials>()
+      rollbackSandbox<ConnectionConfig>()
+      if (wasModified) {
+        panel?.updateUI()
+      }
     }
   }
 
