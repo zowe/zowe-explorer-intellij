@@ -175,6 +175,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
   PDS ([ec94b39e](https://github.com/zowe/zowe-explorer-intellij/commit/ec94b39e))
 * Bugfix: USS file empty after rename ([71c49b24](https://github.com/zowe/zowe-explorer-intellij/commit/71c49b24))
 
+
 ## `1.0.0 (2023-03-13)`
 
 * Breaking: Java 17 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.3

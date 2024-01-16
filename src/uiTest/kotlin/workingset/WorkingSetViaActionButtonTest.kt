@@ -16,14 +16,13 @@ import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
 import io.kotest.matchers.string.shouldContain
-import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.Duration
+import workingset.auxiliary.components.dialogs.AddWorkingSetSubDialog
+import workingset.testutils.injectListEmptyData
 
 
 /**
@@ -32,33 +31,35 @@ import java.time.Duration
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class WorkingSetViaActionButtonTest {
+class WorkingSetViaActionButtonTest : WorkingSetBase() {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf("Add Working Set Dialog")
-
-    private val projectName = "untitled"
-    private val connectionName = "valid connection"
+    private val wsName1 = "WS1"
+    private val wsName2 = "WS2"
+    private val wsName3 = "WS3"
+    private val wsName4 = "WS4"
+    private val wsName5 = "WS5"
 
     /**
      * Opens the project and Explorer, clears test environment.
      */
     @BeforeAll
-    fun setUpAll(remoteRobot: RemoteRobot) {
+    fun setUpAll(remoteRobot: RemoteRobot, testInfo:TestInfo) {
         startMockServer()
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        createValidConnectionWithMock(testInfo, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+        addWorkingSetDialog = AddWorkingSetSubDialog(fixtureStack, remoteRobot)
     }
 
     /**
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun tearDownAll(remoteRobot: RemoteRobot) {
         mockServer.shutdown()
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
-            close()
-        }
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        closeIntelligentProject(fixtureStack, remoteRobot)
     }
 
     /**
@@ -73,233 +74,190 @@ class WorkingSetViaActionButtonTest {
     /**
      * Tests to add new working set without connection, checks that correct message is returned.
      */
-    @Test
-    @Order(1)
-    fun testAddWorkingSetWithoutConnectionViaActionButton(testInfo: TestInfo, remoteRobot: RemoteRobot) =
-        with(remoteRobot) {
-            val wsName = "first ws"
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_info",
-                { it?.requestLine?.contains("zosmf/info") ?: false },
-                { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-            )
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_resttopology",
-                { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-                { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-            )
-            ideFrameImpl(projectName, fixtureStack) {
-                createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
 
-                try {
-                    if (dialog("Add Working Set Dialog").isShowing) {
-                        Assertions.assertTrue(false)
-                    }
-                } catch (e: WaitForConditionTimeoutException) {
-                    e.message.shouldContain("Failed to find 'Dialog' by 'title Add Working Set Dialog'")
-                } finally {
-                    closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-                }
-                createConnectionFromActionButton(closableFixtureCollector, fixtureStack)
-                addConnectionDialog(fixtureStack) {
-                    addConnection(
-                        connectionName,
-                        "https://${mockServer.hostName}:${mockServer.port}",
-                        ZOS_USERID,
-                        ZOS_PWD,
-                        true
-                    )
-                    clickButton("OK")
-                    Thread.sleep(2000)
-                }
-                createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
-                addWorkingSetDialog(fixtureStack) {
-                    addWorkingSet(wsName, connectionName)
-                    clickButton("OK")
-                    Thread.sleep(2000)
-                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                        EMPTY_DATASET_MESSAGE
-                    )
-                    clickButton("OK")
-                    Thread.sleep(2000)
-                }
-                closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-            }
-        }
+
+
+
 
     /**
      * Tests to add new empty working set with very long name, checks that correct message is returned.
      */
     @Test
-    @Order(2)
+    @Disabled("https://jira.ibagroup.eu/browse/IJMP-977")
     fun testAddEmptyWorkingSetWithVeryLongNameViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName: String = "B".repeat(200)
-        ideFrameImpl(projectName, fixtureStack) {
-            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
-            addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName, connectionName)
-                clickButton("OK")
-                Thread.sleep(2000)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                    EMPTY_DATASET_MESSAGE
-                )
-                clickButton("OK")
-                Thread.sleep(2000)
-            }
-            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        }
+        callCreateWorkingSetFromActionButton(fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName, fixtureStack, remoteRobot)
+        clickByText(OK_TEXT, fixtureStack, remoteRobot)
+        find<HeavyWeightWindowFixture>(messageLoc).findText(EMPTY_DATASET_MESSAGE)
+        clickByText(OK_TEXT, fixtureStack, remoteRobot)
+        closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
     }
 
     /**
      * Tests to add new working set with one valid mask.
      */
     @Test
-    @Order(3)
-    fun testAddWorkingSetWithOneValidMaskViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        val wsName = "WS1"
+    fun testAddWorkingSetWithOneValidMaskViaActionButton(remoteRobot: RemoteRobot){
         val mask = Pair("$ZOS_USERID.*", "z/OS")
-        ideFrameImpl(projectName, fixtureStack) {
-            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
-            addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName, connectionName, mask)
-                clickButton("OK")
-                Thread.sleep(2000)
-            }
-            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        }
+        callCreateWorkingSetFromActionButton(fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName1, mask, fixtureStack, remoteRobot)
+        clickByText(OK_TEXT, fixtureStack, remoteRobot)
+        closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
     }
 
     /**
      * Tests to add new working set with several valid z/OS masks, opens masks in explorer.
      */
     @Test
-    @Order(4)
-    fun testAddWorkingSetWithValidZOSMasksViaActionButton(testInfo: TestInfo, remoteRobot: RemoteRobot) =
-        with(remoteRobot) {
-            val wsName = "WS2"
-            val masks: ArrayList<Pair<String, String>> = ArrayList()
-            //todo allocate dataset with 44 length when 'Allocate Dataset Dialog' implemented
+    fun testAddWorkingSetWithValidZOSMasksViaActionButton(testInfo: TestInfo, remoteRobot: RemoteRobot){
 
-            validZOSMasks.forEach {
-                masks.add(Pair(it, "z/OS"))
-            }
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles",
-                { it?.requestLine?.contains("zosmf/restfiles/ds?dslevel") ?: false },
-                { MockResponse().setBody("{}") }
-            )
+        val masks: ArrayList<Pair<String, String>> = ArrayList()
+        //todo allocate dataset with 44 length when 'Allocate Dataset Dialog' implemented
 
-            ideFrameImpl(projectName, fixtureStack) {
-                createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
-                addWorkingSetDialog(fixtureStack) {
-                    addWorkingSet(wsName, connectionName, masks)
-                    clickButton("OK")
-                    Thread.sleep(2000)
-                }
-                closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-            }
-            validZOSMasks.forEach {
-                openWSOpenMaskInExplorer(
-                    wsName,
-                    it.uppercase(),
-                    projectName,
-                    fixtureStack,
-                    remoteRobot
-                )
-            }
+        validZOSMasks.forEach {
+            masks.add(Pair(it, ZOS_MASK))
         }
+        injectListEmptyData(testInfo)
+        callCreateWorkingSetFromActionButton(fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName2, masks, fixtureStack, remoteRobot)
+        clickByText(OK_TEXT, fixtureStack, remoteRobot)
+        closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+        Thread.sleep(3000)
+        validZOSMasks.forEach {
+            openWSOpenMaskInExplorer(
+                wsName2,
+                it.uppercase(),
+                fixtureStack,
+                remoteRobot
+            )
+        }
+    }
 
     /**
      * Tests to add new working set with several valid USS masks, opens masks in explorer.
      */
     @Test
-    @Order(5)
-    fun testAddWorkingSetWithValidUSSMasksViaActionButton(testInfo: TestInfo, remoteRobot: RemoteRobot) =
-        with(remoteRobot) {
-            val wsName = "WS3"
-            val masks: ArrayList<Pair<String, String>> = ArrayList()
+    fun testAddWorkingSetWithValidUSSMasksViaActionButton(testInfo: TestInfo, remoteRobot: RemoteRobot){
 
-            validUSSMasks.forEach {
-                masks.add(Pair(it, "USS"))
-            }
+        val masks: ArrayList<Pair<String, String>> = ArrayList()
 
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles",
-                { it?.requestLine?.contains("zosmf/restfiles/fs?path") ?: false },
-                { MockResponse().setBody("{}") }
-            )
-
-            ideFrameImpl(projectName, fixtureStack) {
-                createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
-                addWorkingSetDialog(fixtureStack) {
-                    addWorkingSet(wsName, connectionName, masks)
-                    clickButton("OK")
-                    Thread.sleep(2000)
-                }
-                closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-            }
-            validUSSMasks.forEach { openWSOpenMaskInExplorer(wsName, it, projectName, fixtureStack, remoteRobot) }
+        validUSSMasks.forEach {
+            masks.add(Pair(it, USS_MASK))
         }
+        injectListEmptyData(testInfo, false)
+        callCreateWorkingSetFromActionButton(fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName3, masks, fixtureStack, remoteRobot)
+        clickByText(OK_TEXT, fixtureStack, remoteRobot)
+        closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+        compressAndDecompressTree(wsName3, fixtureStack, remoteRobot)
+        validUSSMasks.forEach { openWSOpenMaskInExplorer(wsName3, it, fixtureStack, remoteRobot) }
+    }
 
     /**
      * Tests to add new working set with invalid masks, checks that correct messages are returned.
      */
     @Test
-    @Order(6)
     fun testAddWorkingSetWithInvalidMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        val wsName = "WS4"
-        ideFrameImpl(projectName, fixtureStack) {
-            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
-            addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName, connectionName)
-                maskMessageMap.forEach {
-                    addMask(Pair(it.key, "z/OS"))
-                    if (button("OK").isEnabled()) {
-                        clickButton("OK")
-                    } else {
-                        findText("OK").moveMouse()
-                    }
-                    if (it.key.length < 49) {
-                        findText(it.key.uppercase()).moveMouse()
-                    } else {
-                        findText("${it.key.uppercase().substring(0, 46)}...").moveMouse()
-                    }
-                    Thread.sleep(2000)
-                    find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow'][.//div[@class='Header']]")).findText(
-                        it.value
-                    )
-                    assertFalse(button("OK").isEnabled())
-                    findText(it.key.uppercase()).click()
-                    clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[@myaction.key='button.text.remove']"))
-                }
-                clickButton("Cancel")
+
+        callCreateWorkingSetFromActionButton(fixtureStack, remoteRobot)
+        maskMessageMap.forEach {
+            val mask = Pair(it.key, ZOS_MASK)
+            addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName4, mask, fixtureStack, remoteRobot)
+            if(isButtonEnableByTextAddWorkingSet(OK_TEXT, fixtureStack, remoteRobot)){
+                clickByText(OK_TEXT, fixtureStack,remoteRobot)
+            } else {
+                hoverToByTextAddWorkingSet(OK_TEXT, fixtureStack, remoteRobot)
             }
-            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+            if (it.key.length < 49) {
+                hoverToByTextAddWorkingSet(it.key.uppercase(), fixtureStack, remoteRobot)
+            } else {
+                hoverToByTextAddWorkingSet("${it.key.uppercase().substring(0, 46)}...", fixtureStack, remoteRobot)
+            }
+            Thread.sleep(1000)
+            find<HeavyWeightWindowFixture>(helpLoc).findText(it.value)
+            assertFalse(isButtonEnableByTextAddWorkingSet(OK_TEXT, fixtureStack, remoteRobot))
+            clickToByTextAddWorkingSet(it.key.uppercase(), fixtureStack,remoteRobot)
+            Thread.sleep(3000)
+            clickActionButtonByXpath(removeEMaskButtonLoc, fixtureStack, remoteRobot)
         }
+        clickByText(CANCEL_TEXT, fixtureStack,remoteRobot)
+        closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
     }
 
     /**
      * Tests to add working set with the same masks, checks that correct message is returned.
      */
     @Test
-    @Order(7)
     fun testAddWorkingSetWithTheSameMasksViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        val wsName = "WS4"
-        ideFrameImpl(projectName, fixtureStack) {
-            createWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
-            addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName, connectionName)
-                addMask(Pair("$ZOS_USERID.*", "z/OS"))
-                addMask(Pair("$ZOS_USERID.*", "z/OS"))
-                clickButton("OK")
-                find<HeavyWeightWindowFixture>(
-                    byXpath("//div[@class='HeavyWeightWindow']"),
-                    Duration.ofSeconds(30)
-                ).findText(IDENTICAL_MASKS_MESSAGE)
-                assertFalse(button("OK").isEnabled())
-                clickButton("Cancel")
-            }
-            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        }
+        callCreateWorkingSetFromActionButton(fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName5, Pair("$ZOS_USERID.*", "z/OS"), fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName5, Pair("$ZOS_USERID.*", "z/OS"), fixtureStack, remoteRobot)
+        clickByText(OK_TEXT, fixtureStack,remoteRobot)
+        Thread.sleep(2000)
+        find<HeavyWeightWindowFixture>(messageLoc).findText(IDENTICAL_MASKS_MESSAGE)
+        assertFalse(isButtonEnableByTextAddWorkingSet(OK_TEXT, fixtureStack, remoteRobot))
+        clickByText(CANCEL_TEXT, fixtureStack,remoteRobot)
+        closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
     }
+}
+
+/**
+ * Tests creating working sets and masks via action button without creating connection
+ */
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(RemoteRobotExtension::class)
+class WorkingSetViaActionButtonNoConnectionTest : WorkingSetBase(){
+    private var closableFixtureCollector = ClosableFixtureCollector()
+    private var fixtureStack = mutableListOf<Locator>()
+    @BeforeAll
+    fun setUpAll(remoteRobot: RemoteRobot, testInfo:TestInfo){
+        startMockServer()
+        Thread.sleep(3000)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+    }
+
+    @AfterAll
+    fun tearDownAll(remoteRobot: RemoteRobot){
+        mockServer.shutdown()
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        closeIntelligentProject(fixtureStack, remoteRobot)
+    }
+    @Test
+    @Disabled("https://jira.ibagroup.eu/browse/IJMP-977")
+    fun testAddWorkingSetWithoutConnectionViaActionButton(testInfo: TestInfo, remoteRobot: RemoteRobot) =
+        with(remoteRobot) {
+            val wsName = "first ws"
+            responseDispatcher.injectTestInfo(testInfo)
+            responseDispatcher.injectTestInfoRestTopology(testInfo)
+            callCreateWorkingSetFromActionButton(fixtureStack,remoteRobot)
+
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
+                try {
+                    if (dialog("Add Working Set Dialog").isShowing) {
+                        Assertions.assertTrue(false)
+                    }
+                } catch (e: WaitForConditionTimeoutException) {
+                    e.message.shouldContain("Failed to find 'Dialog' by 'dialogTitle Add Working Set Dialog'")
+                } finally {
+                    closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+                }
+
+                createConnectionFromActionButton(closableFixtureCollector, fixtureStack)
+                fillConnectionFilds(fixtureStack=fixtureStack, remoteRobot=remoteRobot)
+                clickByText(OK_TEXT, fixtureStack, remoteRobot)
+                callCreateWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
+                addWorkingSetDialog(fixtureStack) {
+                    addWorkingSet(wsName, connectionName)
+                    clickByText(OK_TEXT, fixtureStack, remoteRobot)
+                    if (dialog("Add Working Set Dialog").isShowing) {
+                        Assertions.assertTrue(false)
+                    }
+                    clickByText(OK_TEXT, fixtureStack, remoteRobot)
+                }
+                closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
+            }
+        }
+
 }

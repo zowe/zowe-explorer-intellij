@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import auxiliary.containers.*
 import com.intellij.remoterobot.search.locators.Locator
 import org.junit.jupiter.api.*
+import workingset.PROJECT_NAME
 
 /**
  * When adding UI tests to GitHub Actions pipeline, there is a need to first run dummy test, which
@@ -27,7 +28,6 @@ import org.junit.jupiter.api.*
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
 class SmokeTest {
-    private val projectName = "untitled"
     private val wsName = "ws1"
     private val jwsName = "jws1"
     private val connectionName = "conName"
@@ -43,7 +43,7 @@ class SmokeTest {
      */
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) {
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
     /**
@@ -51,17 +51,17 @@ class SmokeTest {
      */
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             close()
         }
     }
 
     @Test
     fun testBasics(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        createConnection(projectName, fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
-        createWsAndMask(projectName, wsName, listOf(defaultZosMask, defaultUssMask), connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        createConnection(fixtureStack, closableFixtureCollector, connectionName, true, remoteRobot)
+        createWsAndMask(wsName, listOf(defaultZosMask, defaultUssMask), connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName, ZOS_USERID, defaultJobFilter)
@@ -70,8 +70,8 @@ class SmokeTest {
             }
             closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-        openMaskInExplorer(defaultUssMask.first, "", projectName, fixtureStack, remoteRobot)
-        openMaskInExplorer(defaultZosMask.first, "", projectName, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
+        openMaskInExplorer(defaultUssMask.first, "", fixtureStack, remoteRobot)
+        openMaskInExplorer(defaultZosMask.first, "",fixtureStack, remoteRobot)
     }
 }

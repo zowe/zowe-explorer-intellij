@@ -21,6 +21,7 @@ import com.intellij.remoterobot.utils.keyboard
 import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
+import workingset.PROJECT_NAME
 import java.awt.event.KeyEvent
 import java.io.File
 
@@ -36,7 +37,6 @@ class SubmitJobTest {
     private var wantToClose = mutableListOf(
         "Allocate Dataset Dialog"
     )
-    private val projectName = "untitled"
     private val connectionName = "valid connection"
 
     private val wsName = "WS1"
@@ -51,16 +51,15 @@ class SubmitJobTest {
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         startMockServer()
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createValidConnectionWithMock(
             testInfo,
             connectionName,
-            projectName,
             fixtureStack,
             closableFixtureCollector,
             remoteRobot
         )
-        createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+        createWsWithoutMask(wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_${datasetName}_restfiles",
             { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${datasetName}") ?: false },
@@ -69,7 +68,6 @@ class SubmitJobTest {
         allocatePDSAndCreateMask(
             wsName,
             datasetName,
-            projectName,
             fixtureStack,
             closableFixtureCollector,
             remoteRobot,
@@ -99,10 +97,10 @@ class SubmitJobTest {
             { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/${datasetName.uppercase()}") ?: false },
             { MockResponse().setBody("{}") }
         )
-        deleteDataset(datasetName, projectName, fixtureStack, remoteRobot)
+        deleteDataset(datasetName, fixtureStack, remoteRobot)
         mockServer.shutdown()
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             close()
         }
     }
@@ -170,7 +168,7 @@ class SubmitJobTest {
                     Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", "CC 0000"),
                     Pair("jobStatus", "OUTPUT")))).setResponseCode(200) }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 jesExplorer.click()
                 settings(closableFixtureCollector, fixtureStack)
@@ -204,7 +202,7 @@ class SubmitJobTest {
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/${jobName}/JOB07380/files/") ?: false },
             { MockResponse().setBody("").setResponseCode(200) }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             if (find<ComponentFixture>(viewTree).findAllText { it.text.startsWith(jobName) }.size > 1) {
                 find<ComponentFixture>(viewTree).findAllText { it.text.startsWith(jobName) }.first().doubleClick()
             }
@@ -233,7 +231,7 @@ class SubmitJobTest {
         remoteRobot: RemoteRobot
     ) =
         with(remoteRobot) {
-            openLocalFileAndCopyContent(filePath + fileName, projectName, fixtureStack, remoteRobot)
+            openLocalFileAndCopyContent(filePath + fileName, fixtureStack, remoteRobot)
             Thread.sleep(3000)
             createMemberAndPasteContentWithMock(testInfo, datasetName, jobName, fileName, remoteRobot)
             submitJobWithMock(testInfo, datasetName, jobName, rc, remoteRobot)
@@ -290,7 +288,7 @@ class SubmitJobTest {
                     Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
                     Pair("jobStatus", "OUTPUT")))) }
         )
-        submitJob(jobName, projectName, fixtureStack, remoteRobot)
+        submitJob(jobName, fixtureStack, remoteRobot)
     }
 
     private fun createMemberAndPasteContentWithMock(
@@ -320,9 +318,9 @@ class SubmitJobTest {
             { MockResponse().setBody("") }
         )
 
-        createEmptyDatasetMember(datasetName, memberName, projectName, fixtureStack, remoteRobot)
+        createEmptyDatasetMember(datasetName, memberName, fixtureStack, remoteRobot)
         isFirstRequest = false
-        pasteContent(memberName, projectName, fixtureStack, remoteRobot)
+        pasteContent(memberName, fixtureStack, remoteRobot)
     }
 
 
@@ -331,7 +329,7 @@ class SubmitJobTest {
      */
     private fun checkTabPanelAndConsole(jobName: String, jobId: String, rc: String, remoteRobot: RemoteRobot) =
         with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 find<ComponentFixture>(byXpath("//div[contains(@accessiblename.key, 'editor.accessible.name')]")).findText(
                     "JOB $jobName($jobId) EXECUTED"
                 )
@@ -355,7 +353,7 @@ class SubmitJobTest {
      */
     private fun getJobIdFromPanel(remoteRobot: RemoteRobot): String = with(remoteRobot) {
         var jobId = ""
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             jobId = find<ContainerFixture>(byXpath("//div[@class='Tree']")).findAllText()[2].text.trim()
         }
         return jobId
@@ -365,7 +363,7 @@ class SubmitJobTest {
      * Checks notification that correct info is returned.
      */
     private fun checkNotification(jobName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']")).findText("Job $jobName has been submitted")
                 .click()
             find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
@@ -413,6 +411,6 @@ class SubmitJobTest {
                 MockResponse().setBody(buildListMembersJson())
             }
         )
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
     }
 }

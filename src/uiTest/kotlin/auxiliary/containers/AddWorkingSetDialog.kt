@@ -19,6 +19,7 @@ import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.keyboard
+import workingset.removeEMaskButtonLoc
 import java.awt.event.KeyEvent
 import java.time.Duration
 
@@ -82,7 +83,7 @@ open class AddWorkingSetDialog(
       findText("${maskName.substring(0, 46)}...").moveMouse()
     }
     findText(maskName).click()
-    clickActionButton(byXpath("//div[contains(@myvisibleactions, 'Down')]//div[@myaction.key='button.text.remove']"))
+    clickActionButton(removeEMaskButtonLoc)
   }
 
   /**

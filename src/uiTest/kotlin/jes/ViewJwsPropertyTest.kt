@@ -22,6 +22,8 @@ import com.intellij.remoterobot.search.locators.byXpath
 import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
+import workingset.EMPTY_DATASET_MESSAGE
+import workingset.PROJECT_NAME
 
 /**
  * Tests viewing job and spool file properties.
@@ -33,7 +35,6 @@ class ViewJwsPropertyTest {
     private val closableFixtureCollector = ClosableFixtureCollector()
     private val fixtureStack = mutableListOf<Locator>()
 
-    private val projectName = "untitled"
     private val connectionName = "con1"
     private val jwsName = "JWS name"
     private val jobsFilterName = Triple("*", ZOS_USERID.uppercase(), "")
@@ -56,9 +57,8 @@ class ViewJwsPropertyTest {
             { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
             { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
         )
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createConnection(
-            projectName,
             fixtureStack,
             closableFixtureCollector,
             connectionName,
@@ -66,7 +66,7 @@ class ViewJwsPropertyTest {
             remoteRobot,
             "https://${mockServer.hostName}:${mockServer.port}"
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName)
@@ -94,7 +94,7 @@ class ViewJwsPropertyTest {
             "listSpoolFiles_restfiles",
             { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/") ?: false },
             { MockResponse().setBody(replaceInJson("getSingleSpoolFile", mapOf(Pair("jobName", jobName), Pair("spoolFileName", spoolFileName)))) })
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 jesExplorer.click()
                 find<ComponentFixture>(viewTree).findText(jwsName).doubleClick()
@@ -110,8 +110,8 @@ class ViewJwsPropertyTest {
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
         mockServer.shutdown()
 
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             close()
         }
     }
@@ -122,7 +122,7 @@ class ViewJwsPropertyTest {
     @Test
     @Order(1)
     fun testViewJobProperties(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 find<ComponentFixture>(viewTree).findAllText{ it.text.startsWith("$jobName (JOB07380)") }.first()
                     .rightClick()
@@ -146,7 +146,7 @@ class ViewJwsPropertyTest {
     @Test
     @Order(2)
     fun testViewSpoolFileProperties(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 jesExplorer.click()
                 Thread.sleep(1000)
