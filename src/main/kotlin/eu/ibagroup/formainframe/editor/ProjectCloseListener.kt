@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.editor
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -69,9 +70,11 @@ class ProjectCloseListener : ProjectManagerListener {
    * @param project the project to filter encoding mappings.
    */
   override fun projectClosingBeforeSave(project: Project) {
-    val encodingManager = EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl
-    val filteredMappings = encodingManager.allMappings.toMutableMap().filter { it.key !is MFVirtualFile }
-    encodingManager.setMapping(filteredMappings)
+    runWriteAction {
+      val encodingManager = EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl
+      val filteredMappings = encodingManager.allMappings.toMutableMap().filter { it.key !is MFVirtualFile }
+      encodingManager.setMapping(filteredMappings)
+    }
     super.projectClosingBeforeSave(project)
   }
 }
