@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -81,9 +82,9 @@ class UssSortActionHolderTestSpec : ShouldSpec({
     }
     val mockedActionEvent = mockk<AnActionEvent>()
     every { mockedActionEvent.presentation } returns mockk()
-    every { mockedActionEvent.presentation.putClientProperty(any() as String, any() as Boolean) } just Runs
+    every { mockedActionEvent.presentation.putClientProperty(any() as Key<Boolean>, any() as Boolean) } just Runs
     // isFromContextMenu is marked as deprecated
-    every { mockedActionEvent.isFromContextMenu } returns false
+    every { mockedActionEvent.isFromContextMenu() } returns false
     every { mockedActionEvent.presentation.isEnabledAndVisible = true } just Runs
     every { mockedActionEvent.presentation.isEnabledAndVisible = false } just Runs
 

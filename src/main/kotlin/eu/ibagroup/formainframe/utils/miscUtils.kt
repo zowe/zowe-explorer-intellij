@@ -18,6 +18,9 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
@@ -282,4 +285,15 @@ fun <U : WorkingSet<ConnectionConfig, *>> getSelectedNodesWorkingSets(view: Expl
  */
 fun String.removeTrailingSlashes(): String {
   return this.replace(Regex("/+$"), "/")
+}
+
+/**
+ * Utility function which transforms LocalDateTime timestamp to human-readable format (without nanos)
+ *
+ * @receiver LocalDateTime instance
+ * @return String representation of LocalDateTime in human-readable format
+ */
+fun LocalDateTime.toHumanReadableFormat(): String {
+  return "$dayOfMonth ${month.name} ${toLocalTime().truncatedTo(ChronoUnit.SECONDS).format(
+    DateTimeFormatter.ISO_LOCAL_TIME)}"
 }

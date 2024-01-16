@@ -14,6 +14,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.UssPath
@@ -140,7 +141,10 @@ class UssDirNode(
     if (vFile != null) {
       updateNodeTitleUsingCutBuffer(text, presentation)
     } else {
-      presentation.presentableText = text
+      presentation.addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    }
+    if (isRootNode) {
+      updateRefreshDateAndTime(presentation)
     }
   }
 

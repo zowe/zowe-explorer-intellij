@@ -10,10 +10,12 @@
 
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.rd.util.firstOrNull
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
@@ -22,6 +24,7 @@ import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.runIfTrue
 import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
 import eu.ibagroup.formainframe.utils.sendTopic
+import java.time.LocalDateTime
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.set
 import kotlin.concurrent.withLock
@@ -42,7 +45,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
 
   private val cache = mutableMapOf<RemoteQuery<Connection, Request, Unit>, Collection<File>>()
   private val cacheState = mutableMapOf<RemoteQuery<Connection, Request, Unit>, CacheState>()
-  protected var errorMessages = mutableMapOf<RemoteQuery<Connection, Request, Unit>, String>()
+  private val refreshCacheState = mutableMapOf<Pair<AbstractTreeNode<*>, RemoteQuery<Connection, Request, Unit>>, LocalDateTime>()
+  private var errorMessages = mutableMapOf<RemoteQuery<Connection, Request, Unit>, String>()
 
   /**
    * Returns successfully cached files.
@@ -207,6 +211,13 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
       .onFailure { publishFetchCancelledOrFailed(query, it) }
   }
 
+  override fun applyRefreshCacheDate(query: RemoteQuery<Connection, Request, Unit>, node: AbstractTreeNode<*>, lastRefresh: LocalDateTime) {
+    lock.withLock { refreshCacheState.computeIfAbsent(Pair(node, query)) { _ -> lastRefresh } }
+  }
+  override fun findCacheRefreshDateIfPresent(query: RemoteQuery<Connection, Request, Unit>): LocalDateTime? {
+    return refreshCacheState.filter { it.key.second == query }.firstOrNull()?.value
+  }
+
   /**
    * Clears the cache with sending the cache change topic.
    * @param query query that identifies the cache.
@@ -230,6 +241,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
   private fun cleanCacheInternal(query: RemoteQuery<Connection, Request, Unit>, sendTopic: Boolean) {
     cacheState.remove(query)
     if (sendTopic) {
+      lock.withLock { refreshCacheState.keys.removeIf { it.second == query } }
       sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onCacheCleaned(query)
     }
   }
