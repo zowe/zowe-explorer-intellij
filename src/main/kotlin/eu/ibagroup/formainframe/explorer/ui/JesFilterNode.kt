@@ -14,6 +14,7 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
@@ -54,8 +55,9 @@ class JesFilterNode(
 
 
   override fun update(presentation: PresentationData) {
-    presentation.presentableText = value.toString()
+    presentation.addText(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES)
     presentation.setIcon(jesFilterIcon)
+    updateRefreshDateAndTime(presentation)
   }
 
 

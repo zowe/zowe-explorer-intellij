@@ -40,6 +40,7 @@ class DSMaskNode(
     presentation.addText(value.mask, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     presentation.addText(" ${value.volser}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     presentation.setIcon(ForMainframeIcons.DatasetMask)
+    updateRefreshDateAndTime(presentation)
   }
 
   override val query: RemoteQuery<ConnectionConfig, DSMask, Unit>?

@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.utils
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.ui.components.JBTextField
 import eu.ibagroup.formainframe.config.ConfigStateV2
@@ -41,11 +42,13 @@ import io.mockk.spyk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
+import org.junit.platform.commons.util.StringUtils
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import retrofit2.Response
 import java.time.Duration
 import java.time.Instant.now
+import java.time.LocalDateTime
 import java.util.stream.Stream
 import javax.swing.JTextField
 
@@ -881,6 +884,18 @@ class UtilsTestSpec : ShouldSpec({
       assertSoftly {
         test shouldBe "debounce block"
         duration.toMillis() shouldBeGreaterThanOrEqual 500
+      }
+    }
+
+    should("return a human readable date format given valid LocalDateTime instance") {
+      //given
+      val actualLocalDate = LocalDateTime.of(2023, 12, 30, 10, 0, 0)
+      val expectedString = "30 DECEMBER 10:00:00"
+      //when
+      val actualString = actualLocalDate.toHumanReadableFormat()
+      //then
+      assertSoftly {
+        actualString shouldBe expectedString
       }
     }
   }

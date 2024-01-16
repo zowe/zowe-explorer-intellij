@@ -10,12 +10,14 @@
 
 package eu.ibagroup.formainframe.dataops.fetch
 
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.Query
+import java.time.LocalDateTime
 
 /** Interface that represents the file fetch provider and operations available for it */
 interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
@@ -40,6 +42,25 @@ interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
 
   /** Function for "load more" nodes */
   fun loadMode(query: Q, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE)
+
+  /**
+   * Function adds (node,query) pair with @param lastRefresh into the corresponding fetch provider refreshCacheState map
+   *
+   * @param query
+   * @param node
+   * @param lastRefresh
+   * @return Void
+   */
+  fun applyRefreshCacheDate(query: Q, node: AbstractTreeNode<*>, lastRefresh: LocalDateTime)
+
+  /**
+   * Function finds the lastRefresh date by query in refreshCacheSate map and returns it.
+   * If date was not found then returns null
+   *
+   * @param query
+   * @return LocalDateTime instance or null
+   */
+  fun findCacheRefreshDateIfPresent(query: Q): LocalDateTime?
 
   /**
    * File fetch provider contains all list of queries inside.
