@@ -17,6 +17,7 @@ import com.intellij.remoterobot.fixtures.ContainerFixture
 import com.intellij.remoterobot.fixtures.JTextFieldFixture
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import workingset.dropdownsLoc
 import java.time.Duration
 
 /**
@@ -40,7 +41,7 @@ class EditWorkingSetDialog(
      */
     fun changeConnection(newConnectionName: String) {
         if (newConnectionName.isEmpty().not()) {
-            find<ComboBoxFixture>(byXpath("//div[@class='ComboBox']")).selectItem(newConnectionName)
+            find<ComboBoxFixture>(dropdownsLoc).selectItem(newConnectionName)
         }
     }
 

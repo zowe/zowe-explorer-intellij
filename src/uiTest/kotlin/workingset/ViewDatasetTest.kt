@@ -12,33 +12,47 @@ package workingset
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
-import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
-import com.intellij.remoterobot.fixtures.ComponentFixture
-import com.intellij.remoterobot.fixtures.dataExtractor.RemoteText
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.utils.keyboard
-import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
-import java.awt.event.KeyEvent
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import workingset.testutils.injectMemberContent
+import org.junit.jupiter.params.provider.Arguments
+import workingset.testutils.injectListAllAllocatedDatasetsWithContents
+import workingset.testutils.injectPsDatasetContent
+import workingset.testutils.injectSingleMember
+import java.util.stream.Stream
 
 /**
  * Tests viewing dataset and members.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class ViewDatasetTest {
+class ViewDatasetTest :WorkingSetBase(){
   private var closableFixtureCollector = ClosableFixtureCollector()
   private var fixtureStack = mutableListOf<Locator>()
   private var wantToClose = mutableListOf("Add Working Set Dialog", "Create Mask Dialog")
 
-  private val projectName = "untitled"
-  private val connectionName = "valid connection"
   private var mapListDatasets = mutableMapOf<String, String>()
   private var listMembersInDataset = mutableListOf<String>()
 
   private val noItemsFoundMsg = "No items found"
+  private val wsNameWs1 = "WS1"
+  private val userIdPrefix = ZOS_USERID.uppercase()
+  private val emptyPdsDatasetNameTell = ".EMPTY.PDS".uppercase()
+  private val pdsDatasetName = "$ZOS_USERID.NONEMPTY.PDS".uppercase()
+
+  companion object {
+    @JvmStatic
+    fun pairProvider(): Stream<out Arguments> {
+      return Stream.of(
+        Arguments.of(WS_NAME_WS_2, EMPTY_MEMBER_CONTENT, ".EMPTY.PS"),
+        Arguments.of(WS_NAME_WS_3, SHORT_MEMBER_CONTENT, ".NONEMPTY.PS"),
+      )
+    }
+  }
 
   /**
    * Opens the project and Explorer, clears test environment, creates valid connection.
@@ -46,11 +60,10 @@ class ViewDatasetTest {
   @BeforeAll
   fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
     startMockServer()
-    setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+    setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
     createValidConnectionWithMock(
       testInfo,
       connectionName,
-      projectName,
       fixtureStack,
       closableFixtureCollector,
       remoteRobot
@@ -62,19 +75,17 @@ class ViewDatasetTest {
    * Closes the project and clears test environment.
    */
   @AfterAll
-  fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+  fun tearDownAll(remoteRobot: RemoteRobot) {
     mockServer.shutdown()
-    clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-    ideFrameImpl(projectName, fixtureStack) {
-      close()
-    }
+    clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+    closeIntelligentProject(fixtureStack, remoteRobot)
   }
 
   /**
    * Closes all unclosed closable fixtures that we want to close.
    */
   @AfterEach
-  fun tearDown(remoteRobot: RemoteRobot) = with(remoteRobot) {
+  fun tearDown(remoteRobot: RemoteRobot) {
     closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     responseDispatcher.removeAllEndpoints()
     mapListDatasets.clear()
@@ -85,130 +96,44 @@ class ViewDatasetTest {
    * Test to view empty PDS dataset and check that File Explorer contains correct message.
    */
   @Test
-  fun testViewEmptyPDS(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
-    val wsName = "WS1"
-    val datasetName = "$ZOS_USERID.EMPTY.PDS".uppercase()
-    createWsAndMaskWithMock(wsName, datasetName, true, "PDS", "PO", testInfo, remoteRobot)
-    openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+  fun testViewEmptyPDS(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+    createWsAndMaskWithMock(wsNameWs1, userIdPrefix+emptyPdsDatasetNameTell, EMPTY_MEMBER_CONTENT, PDS_TYPE, PO_ORG_SHORT, testInfo, remoteRobot)
+    openOrCloseWorkingSetInExplorer(wsNameWs1, fixtureStack, remoteRobot)
     findMessageInExplorer(noItemsFoundMsg, remoteRobot)
-    openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-  }
-
-  /**
-   * Test to view empty PS dataset.
-   */
-  @Test
-  fun testViewEmptyPS(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
-    val wsName = "WS2"
-    val datasetName = "$ZOS_USERID.EMPTY.PS".uppercase()
-    viewPSDataset(wsName, datasetName, true, testInfo, remoteRobot)
-  }
-
-  /**
-   * Test to view non-empty PS dataset.
-   */
-  @Test
-  fun testViewNonEmptyPS(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
-    val wsName = "WS3"
-    val datasetName = "$ZOS_USERID.NONEMPTY.PS".uppercase()
-    viewPSDataset(wsName, datasetName, false, testInfo, remoteRobot)
-  }
-
-  /**
-   * Test to view non-empty PDS dataset and view empty/non-empty members.
-   */
-  @Test
-  fun testViewNonEmptyPDS(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
-    val wsName = "WS4"
-    val datasetName = "$ZOS_USERID.NONEMPTY.PDS".uppercase()
-    createWsAndMaskWithMock(wsName, datasetName, false, "PDS", "PO", testInfo, remoteRobot)
-    openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-    openMember(datasetName, "MEMBER1", true, testInfo, remoteRobot)
-    closeMemberOrDataset(remoteRobot)
-    openMember(datasetName, "MEMBER2", false, testInfo, remoteRobot)
-    closeMemberOrDataset(remoteRobot)
-    openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
   }
 
   /**
    * Views empty/non-empty PS dataset.
    */
-  private fun viewPSDataset(
-    wsName: String,
-    datasetName: String,
-    isEmpty: Boolean,
-    testInfo: TestInfo,
-    remoteRobot: RemoteRobot
-  ) = with(remoteRobot) {
-    createWsAndMaskWithMock(wsName, datasetName, isEmpty, "", "PS", testInfo, remoteRobot)
-    openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-    openPSDataset(datasetName, isEmpty, testInfo, remoteRobot)
+  @ParameterizedTest
+  @MethodSource("pairProvider")
+  fun testViewPsDataset(wsName: String, memberContent:String, tell: String, testInfo: TestInfo, remoteRobot: RemoteRobot){
+    val datasetName = userIdPrefix + tell
+    createWsAndMaskWithMock(wsName, datasetName, memberContent, EMPTY_STRING, SEQUENTIAL_ORG_SHORT, testInfo, remoteRobot)
+    openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
+
+    injectPsDatasetContent(testInfo, datasetName, memberContent)
+    openTreesElement(datasetName, remoteRobot)
     closeMemberOrDataset(remoteRobot)
-    openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
   }
 
-  /**
-   * Closes opened dataset member or PS dataset.
-   */
-  private fun closeMemberOrDataset(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    ideFrameImpl(projectName, fixtureStack) {
-      with(textEditor()) {
-        keyboard {
-          hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
-        }
-      }
-    }
-  }
 
   /**
-   * Opens PS dataset.
+   * Test to view non-empty PDS dataset and view empty/non-empty members.
    */
-  private fun openPSDataset(datasetName: String, isEmpty: Boolean, testInfo: TestInfo, remoteRobot: RemoteRobot) =
-    with(remoteRobot) {
-      val psContent = if (isEmpty) {
-        ""
-      } else {
-        "content"
-      }
-      responseDispatcher.injectEndpoint(
-        "${testInfo.displayName}_restfiles_getcontent",
-        { it?.requestLine?.contains("GET /zosmf/restfiles/ds/-(TESTVOL)/$datasetName") ?: false },
-        { MockResponse().setBody(psContent) }
-      )
-      ideFrameImpl(projectName, fixtureStack) {
-        explorer {
-          find<ComponentFixture>(viewTree).findAllText(datasetName).last().doubleClick()
-          Thread.sleep(2000)
-        }
-      }
-    }
+  @Test
+  fun testViewNonEmptyPDS(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+    createWsAndMaskWithMock(WS_NAME_WS_4, pdsDatasetName, SHORT_MEMBER_CONTENT, PDS_TYPE, PO_ORG_SHORT, testInfo, remoteRobot)
+    openOrCloseWorkingSetInExplorer(WS_NAME_WS_4, fixtureStack, remoteRobot)
 
-  /**
-   * Opens dataset member.
-   */
-  private fun openMember(
-    datasetName: String,
-    memberName: String,
-    isEmpty: Boolean,
-    testInfo: TestInfo,
-    remoteRobot: RemoteRobot
-  ) = with(remoteRobot) {
-    val memberContent = if (isEmpty) {
-      ""
-    } else {
-      "content"
-    }
-    responseDispatcher.injectEndpoint(
-      "${testInfo.displayName}_restfiles_getmember",
-      { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${datasetName}($memberName)") ?: false },
-      { MockResponse().setBody(memberContent) }
-    )
-    ideFrameImpl(projectName, fixtureStack) {
-      explorer {
-        find<ComponentFixture>(viewTree).findAllText(memberName).last().doubleClick()
-        Thread.sleep(2000)
-      }
-    }
+    injectMemberContent(testInfo,pdsDatasetName, MEMBER_NAME_1)
+    openTreesElement(MEMBER_NAME_1, remoteRobot)
+    closeMemberOrDataset(remoteRobot)
+
+    injectMemberContent(testInfo,pdsDatasetName, MEMBER_NAME_2, "content")
+    openTreesElement(MEMBER_NAME_2, remoteRobot)
+    closeMemberOrDataset(remoteRobot)
+
   }
 
   /**
@@ -217,54 +142,24 @@ class ViewDatasetTest {
   private fun createWsAndMaskWithMock(
     wsName: String,
     datasetName: String,
-    isEmpty: Boolean,
+    memberContent: String,
     dsNtp: String,
     dsOrg: String,
     testInfo: TestInfo,
     remoteRobot: RemoteRobot
-  ) = with(remoteRobot) {
-    val maskList = listOf(Pair(datasetName, "z/OS"))
+  ) {
+    val maskList = listOf(Pair(datasetName, ZOS_MASK))
     mapListDatasets[datasetName] = listDS(datasetName, dsNtp, dsOrg)
-    responseDispatcher.injectEndpoint(
-      "${testInfo.displayName}_restfiles",
-      {
-        it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName}")
-          ?: false
-      },
-      { MockResponse().setBody(buildResponseListJson(mapListDatasets, true)) }
-    )
-    if (!isEmpty && dsNtp == "PDS") {
+
+    injectListAllAllocatedDatasetsWithContents(testInfo, datasetName, mapListDatasets)
+
+    if (memberContent != EMPTY_MEMBER_CONTENT && dsNtp == PDS_TYPE) {
       for (i in 1..5) {
-        listMembersInDataset.add("MEMBER$i")
+        listMembersInDataset.add(MEMBER_NAME_PATTERN+"$i")
       }
-    }
-    responseDispatcher.injectEndpoint(
-      "${testInfo.displayName}_restfiles_listmembers",
-      { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${datasetName}/member") ?: false },
-      {
-        MockResponse().setBody(buildListMembersJson())
       }
-    )
-    createWsAndMask(projectName, wsName, maskList, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+    injectSingleMember(testInfo, datasetName, listMembersInDataset)
+    createWsAndMask(wsName, maskList, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
   }
 
-  private fun buildListMembersJson(): String {
-    var members = "[ "
-    if (listMembersInDataset.isNotEmpty()) {
-      listMembersInDataset.forEach { members += "{\"member\": \"${it}\"}," }
-    }
-    members = members.dropLast(1) + "]"
-    return "{\"items\":$members,\"returnedRows\": ${listMembersInDataset.size},\"JSONversion\": 1}"
-  }
-
-  /**
-   * Checks if File Explorer contains expected message.
-   */
-  private fun findMessageInExplorer(msg: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
-    if (!find<ComponentFixture>(viewTree).findAllText().map(RemoteText::text).joinToString("")
-        .contains(msg)
-    ) {
-      throw Exception("Expected message is not found")
-    }
-  }
 }

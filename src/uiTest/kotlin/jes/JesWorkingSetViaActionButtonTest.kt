@@ -26,6 +26,8 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
+import workingset.EMPTY_DATASET_MESSAGE
+import workingset.PROJECT_NAME
 import java.time.Duration
 
 
@@ -49,7 +51,7 @@ class JesWorkingSetViaActionButtonTest {
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) {
         startMockServer()
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
     /**
@@ -58,8 +60,8 @@ class JesWorkingSetViaActionButtonTest {
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
         mockServer.shutdown()
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             close()
         }
     }
@@ -91,7 +93,7 @@ class JesWorkingSetViaActionButtonTest {
                 { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
                 { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
             )
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
 
                 try {
@@ -138,7 +140,7 @@ class JesWorkingSetViaActionButtonTest {
     @Order(2)
     fun testAddEmptyJesWorkingSetWithVeryLongNameViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName: String = "B".repeat(200)
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName)
@@ -163,7 +165,7 @@ class JesWorkingSetViaActionButtonTest {
     fun testAddJesWorkingSetWithOneValidFilterViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS1"
         val filter = Triple("*", ZOS_USERID, "")
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName, ZOS_USERID, filter)
@@ -188,7 +190,7 @@ class JesWorkingSetViaActionButtonTest {
                 { it?.requestLine?.contains("/zosmf/restjobs/jobs") ?: false },
                 { MockResponse().setBody("[]") }
             )
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
                 addJesWorkingSetDialog(fixtureStack) {
                     addJesWorkingSet(jwsName, connectionName, ZOS_USERID, validJobsFilters)
@@ -197,12 +199,12 @@ class JesWorkingSetViaActionButtonTest {
                 }
                 closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
             }
-            openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+            openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
             validJobsFilters.forEach {
-                openJobFilterInExplorer(it, "", projectName, fixtureStack, remoteRobot)
-                closeFilterInExplorer(it, projectName, fixtureStack, remoteRobot)
+                openJobFilterInExplorer(it, "", fixtureStack, remoteRobot)
+                closeFilterInExplorer(it, fixtureStack, remoteRobot)
             }
-            openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+            openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
         }
 
     // TODO: eliminate ZOS_USERID
@@ -213,7 +215,7 @@ class JesWorkingSetViaActionButtonTest {
     @Order(5)
     fun testAddJesWorkingSetWithInvalidFiltersViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS3"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName)
@@ -254,7 +256,7 @@ class JesWorkingSetViaActionButtonTest {
     @Order(6)
     fun testAddJesWorkingSetWithTheSameFiltersViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS3"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName, ZOS_USERID, Triple("*", ZOS_USERID.lowercase(), ""))
@@ -291,7 +293,6 @@ class JesWorkingSetViaActionButtonTest {
                 { MockResponse().setBody("[]") }
             )
             createConnection(
-                projectName,
                 fixtureStack,
                 closableFixtureCollector,
                 "invalid_connection",
@@ -300,7 +301,7 @@ class JesWorkingSetViaActionButtonTest {
                 "https://${mockServer.hostName}:$testPort"
             )
             val jwsName = "JWS3"
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
                 addJesWorkingSetDialog(fixtureStack) {
                     addJesWorkingSet(jwsName, "invalid_connection", ZOS_USERID, Triple("*", ZOS_USERID, ""))
@@ -309,13 +310,13 @@ class JesWorkingSetViaActionButtonTest {
                 }
                 closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
             }
-            openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+            openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
             findAll<ComponentFixture>(byXpath("//div[@class='MyComponent'][.//div[@accessiblename='Invalid URL port: \"104431\"' and @class='JEditorPane']]")).forEach {
                 it.click()
                 findAll<ActionButtonFixture>(
                     byXpath("//div[@class='ActionButton' and @myicon= 'close.svg']")
                 ).first().click()
             }
-            openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+            openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
         }
 }

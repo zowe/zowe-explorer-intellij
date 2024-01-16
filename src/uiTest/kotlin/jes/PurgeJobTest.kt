@@ -23,6 +23,8 @@ import io.kotest.assertions.throwables.shouldThrow
 import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
+import workingset.EMPTY_DATASET_MESSAGE
+import workingset.PROJECT_NAME
 import java.awt.event.KeyEvent
 import java.io.File
 
@@ -38,7 +40,6 @@ class PurgeJobTest {
     private var wantToClose = mutableListOf(
         "Allocate Dataset Dialog"
     )
-    private val projectName = "untitled"
     private val connectionName = "valid connection"
 
     private val wsName = "WS1"
@@ -56,11 +57,10 @@ class PurgeJobTest {
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         startMockServer()
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createValidConnectionWithMock(
             testInfo,
             connectionName,
-            projectName,
             fixtureStack,
             closableFixtureCollector,
             remoteRobot
@@ -87,7 +87,7 @@ class PurgeJobTest {
                 MockResponse().setBody(buildListMembersJson())
             }
         )
-        allocatePDSAndCreateMask(wsName, datasetName, projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        allocatePDSAndCreateMask(wsName, datasetName, fixtureStack, closableFixtureCollector, remoteRobot)
         createJobs(testInfo, remoteRobot)
         createJWS(remoteRobot)
     }
@@ -110,10 +110,10 @@ class PurgeJobTest {
             { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/${datasetName.uppercase()}") ?: false },
             { MockResponse().setBody("{}") }
         )
-        deleteDataset(datasetName, projectName, fixtureStack, remoteRobot)
+        deleteDataset(datasetName, fixtureStack, remoteRobot)
         mockServer.shutdown()
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             close()
         }
     }
@@ -162,7 +162,7 @@ class PurgeJobTest {
             Triple("TEST2", ZOS_USERID, ""),
             Triple("TEST3", ZOS_USERID, "")
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJesWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName, ZOS_USERID, filters)
@@ -220,7 +220,7 @@ class PurgeJobTest {
             Thread.sleep(3000)
             checkNotificationJobPurged(jobName, jobId, true, remoteRobot)
             checkJobsOutputWasDeletedJWSRefreshed(jobName, jobId, remoteRobot)
-            closeFilterInExplorer(Triple(jobName, ZOS_USERID, ""), projectName, fixtureStack, remoteRobot)
+            closeFilterInExplorer(Triple(jobName, ZOS_USERID, ""), fixtureStack, remoteRobot)
             responseDispatcher.removeAllEndpoints()
         }
 
@@ -230,7 +230,7 @@ class PurgeJobTest {
     private fun checkJobsOutputWasDeletedJWSRefreshed(
         jobName: String, jobId: String, remoteRobot: RemoteRobot
     ) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 shouldThrow<NoSuchElementException> {
                     find<ComponentFixture>(viewTree).findText("$jobName ($jobId)")
@@ -243,7 +243,7 @@ class PurgeJobTest {
      * Closes tab for job in jobs panel.
      */
     private fun closeTabInJobsPanel(jobName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             find<ComponentFixture>(byXpath("//div[@class='TabPanel'][.//div[@text='Jobs:']]//div[@class='ContentTabLabel']")).findText(
                 "//'$datasetName($jobName)'"
             ).click()
@@ -259,7 +259,7 @@ class PurgeJobTest {
     private fun createJobs(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
         var n = 1
         filesList.forEach {
-            openLocalFileAndCopyContent(filePath + it, projectName, fixtureStack, remoteRobot)
+            openLocalFileAndCopyContent(filePath + it, fixtureStack, remoteRobot)
             Thread.sleep(3000)
             createMemberAndPasteContentWithMock(testInfo, datasetName, "TEST$n", it, remoteRobot)
             n++
@@ -270,7 +270,7 @@ class PurgeJobTest {
      * Creates working set.
      */
     private fun createWS(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createWSFromContextMenu(fixtureStack, closableFixtureCollector)
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName)
@@ -290,7 +290,7 @@ class PurgeJobTest {
      * Purges job via action button.
      */
     private fun purgeJobFromTerminal(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             clickActionButton(byXpath("//div[@class='ActionButton' and @myaction='Purge Job ()']"))
         }
     }
@@ -344,14 +344,14 @@ class PurgeJobTest {
                     Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
                     Pair("jobStatus", "")))).setResponseCode(200) }
             )
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 explorer {
                     jesExplorer.click()
                 }
             }
-            openJobFilterInExplorer(Triple(jobName, ZOS_USERID, ""), "", projectName, fixtureStack, remoteRobot)
+            openJobFilterInExplorer(Triple(jobName, ZOS_USERID, ""), "", fixtureStack, remoteRobot)
             isFirstRequest = false
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 explorer {
                     find<ComponentFixture>(viewTree).findAllText { it.text.startsWith("$jobName ($jobId)") }.first()
                         .rightClick()
@@ -367,7 +367,7 @@ class PurgeJobTest {
      */
     private fun getJobIdFromPanel(remoteRobot: RemoteRobot): String = with(remoteRobot) {
         var jobId = ""
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             jobId = find<ContainerFixture>(byXpath("//div[@class='Tree']")).findAllText()[2].text.trim()
         }
         return jobId
@@ -377,7 +377,7 @@ class PurgeJobTest {
      * Checks notification that correct info is returned for submitted job.
      */
     private fun checkNotificationJobSubmitted(jobName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']")).findText("Job $jobName has been submitted")
                 .click()
             find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
@@ -398,7 +398,7 @@ class PurgeJobTest {
         } else {
             "Error purging $jobName: $jobId"
         }
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']")).findText(textToFind)
                 .click()
             find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
@@ -457,9 +457,9 @@ class PurgeJobTest {
             { MockResponse().setBody("") }
         )
 
-        createEmptyDatasetMember(datasetName, memberName, projectName, fixtureStack, remoteRobot)
+        createEmptyDatasetMember(datasetName, memberName, fixtureStack, remoteRobot)
         isFirstRequest = false
-        pasteContent(memberName, projectName, fixtureStack, remoteRobot)
+        pasteContent(memberName, fixtureStack, remoteRobot)
         Thread.sleep(3000)
     }
 
@@ -517,7 +517,7 @@ class PurgeJobTest {
                     Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
                     Pair("jobStatus", "OUTPUT")))) }
         )
-        submitJob(jobName, projectName, fixtureStack, remoteRobot)
+        submitJob(jobName, fixtureStack, remoteRobot)
     }
 
     private fun setBodyJobSubmit(jobName: String): String {

@@ -22,6 +22,8 @@ import com.intellij.remoterobot.utils.keyboard
 import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
+import workingset.EMPTY_DATASET_MESSAGE
+import workingset.PROJECT_NAME
 import java.awt.event.KeyEvent
 import java.io.File
 
@@ -58,11 +60,10 @@ class CancelHoldReleaseJobTest {
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         startMockServer()
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createValidConnectionWithMock(
             testInfo,
             connectionName,
-            projectName,
             fixtureStack,
             closableFixtureCollector,
             remoteRobot
@@ -89,7 +90,7 @@ class CancelHoldReleaseJobTest {
                 MockResponse().setBody(buildListMembersJson())
             }
         )
-        allocatePDSAndCreateMask(wsName, datasetName, projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        allocatePDSAndCreateMask(wsName, datasetName, fixtureStack, closableFixtureCollector, remoteRobot)
         createJob(testInfo, remoteRobot)
     }
 
@@ -111,10 +112,10 @@ class CancelHoldReleaseJobTest {
             { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/${datasetName.uppercase()}") ?: false },
             { MockResponse().setBody("{}") }
         )
-        deleteDataset(datasetName, projectName, fixtureStack, remoteRobot)
+        deleteDataset(datasetName, fixtureStack, remoteRobot)
         mockServer.shutdown()
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             close()
         }
     }
@@ -210,7 +211,7 @@ class CancelHoldReleaseJobTest {
      * Closes notifications and jobs tabs in jobs panel if exists.
      */
     private fun closeNotificationsAndJobsTabsIfExist(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             try {
                 find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']"))
                     .click()
@@ -241,7 +242,7 @@ class CancelHoldReleaseJobTest {
      */
     private fun getIdSubmittedJob(remoteRobot: RemoteRobot): String = with(remoteRobot) {
         var jobId = ""
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             jobId = find<ContainerFixture>(byXpath("//div[@class='Tree']")).findAllText()[2].text.trim()
         }
         return jobId
@@ -257,7 +258,7 @@ class CancelHoldReleaseJobTest {
                 JobAction.SUBMIT -> "CC 0000"
                 else -> throw Exception("Unknown action")
             }
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 find<ComponentFixture>(byXpath("//div[contains(@accessiblename.key, 'editor.accessible.name')]")).findText(
                     "JOB $jobName($jobId) EXECUTED"
                 )
@@ -274,7 +275,7 @@ class CancelHoldReleaseJobTest {
      * Closes tab in jobs panel.
      */
     private fun closeJobTabInJobsPanel(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             findAll<ComponentFixture>(byXpath("//div[@class='TabPanel'][.//div[@text='Jobs:']]//div[@class='ContentTabLabel']")).last()
                 .findText(
                     "//'$datasetName($jobName)'"
@@ -407,7 +408,7 @@ class CancelHoldReleaseJobTest {
                 else -> throw Exception("Unknown action")
             }
 
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 clickActionButton(byXpath("//div[@class='ActionButton' and @myaction='$myAction']"))
             }
         }
@@ -426,7 +427,7 @@ class CancelHoldReleaseJobTest {
             JobAction.RELEASE -> "$jobName: $jobId has been released"
             JobAction.SUBMIT -> "Job $jobName has been submitted"
         }
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']")).findText(textToFind)
                 .click()
             find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
@@ -437,7 +438,7 @@ class CancelHoldReleaseJobTest {
      * Creates empty working set.
      */
     private fun createWS(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createWSFromContextMenu(fixtureStack, closableFixtureCollector)
             addWorkingSetDialog(fixtureStack) {
                 addWorkingSet(wsName, connectionName)
@@ -457,7 +458,7 @@ class CancelHoldReleaseJobTest {
      * Creates job in dataset.
      */
     private fun createJob(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        openLocalFileAndCopyContent(filePath + fileName, projectName, fixtureStack, remoteRobot)
+        openLocalFileAndCopyContent(filePath + fileName, fixtureStack, remoteRobot)
         Thread.sleep(3000)
         createMemberAndPasteContentWithMock(testInfo, datasetName, jobName, fileName, remoteRobot)
     }
@@ -493,10 +494,10 @@ class CancelHoldReleaseJobTest {
         )
 
         createEmptyDatasetMember(
-            datasetName, memberName, projectName, fixtureStack, remoteRobot
+            datasetName, memberName, fixtureStack, remoteRobot
         )
         isFirstRequest = false
-        pasteContent(memberName, projectName, fixtureStack, remoteRobot)
+        pasteContent(memberName, fixtureStack, remoteRobot)
         Thread.sleep(3000)
         isFirst = false
     }
@@ -576,7 +577,7 @@ class CancelHoldReleaseJobTest {
                     Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
                     Pair("jobStatus", jobStatus.name)))) }
         )
-        submitJob(jobName, projectName, fixtureStack, remoteRobot)
+        submitJob(jobName, fixtureStack, remoteRobot)
         responseDispatcher.removeAllEndpoints()
     }
 

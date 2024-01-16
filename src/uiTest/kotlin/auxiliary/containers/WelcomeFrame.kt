@@ -17,6 +17,7 @@ import com.intellij.remoterobot.fixtures.CommonContainerFixture
 import com.intellij.remoterobot.fixtures.DefaultXpath
 import com.intellij.remoterobot.fixtures.FixtureName
 import com.intellij.remoterobot.search.locators.byXpath
+import workingset.PROJECT_NAME
 import java.time.Duration
 
 /**
@@ -37,12 +38,12 @@ class WelcomeFrame(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
   /**
    * Opens project with projectName, which is located in the resources of the uiTest source set.
    */
-  fun open(projectName: String) {
+  fun open() {
     openProject.click()
     Thread.sleep(1000)
     dialog("Open File or Project") {
       textField(byXpath("//div[@class='BorderlessTextField']")).text =
-        System.getProperty("user.dir") + "/src/uiTest/resources/$projectName"
+        System.getProperty("user.dir") + "/src/uiTest/resources/$PROJECT_NAME"
       Thread.sleep(1000)
       clickButton("OK")
     }
