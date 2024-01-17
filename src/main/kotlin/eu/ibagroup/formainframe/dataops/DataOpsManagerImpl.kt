@@ -27,6 +27,8 @@ import eu.ibagroup.formainframe.dataops.log.LogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
 import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
+import eu.ibagroup.formainframe.dataops.operations.mover.names.CopyPasteNameResolver
+import eu.ibagroup.formainframe.dataops.operations.mover.names.DefaultNameResolver
 import eu.ibagroup.formainframe.utils.associateListedBy
 import eu.ibagroup.formainframe.utils.findAnyNullable
 import eu.ibagroup.formainframe.utils.log
@@ -136,6 +138,15 @@ class DataOpsManagerImpl : DataOpsManager {
     MFContentAdapter.EP.extensionList.buildComponents()
   }
   private val mfContentAdapters by mfContentAdaptersDelegate
+
+  private val nameResolversDelegate = lazy {
+    CopyPasteNameResolver.EP.extensionList.buildComponents()
+  }
+  private val nameResolvers by nameResolversDelegate
+
+  override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+    return nameResolvers.firstOrNull { it.accepts(source, destination) } ?: DefaultNameResolver()
+  }
 
   /**
    * Checks if sync with mainframe is supported for provided object

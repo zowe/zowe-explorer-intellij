@@ -30,6 +30,9 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
+import eu.ibagroup.formainframe.dataops.operations.mover.names.DatasetOrDirResolver
+import eu.ibagroup.formainframe.dataops.operations.mover.names.DefaultNameResolver
+import eu.ibagroup.formainframe.dataops.operations.mover.names.SeqToPDSResolver
 import eu.ibagroup.formainframe.explorer.AbstractExplorerBase
 import eu.ibagroup.formainframe.explorer.FileExplorer
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
@@ -127,6 +130,10 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
       val nodeToRefreshSource = mockk<UssDirNode>()
       val nodeToRefreshTarget = mockk<UssDirNode>()
       beforeEach {
+        every {
+          dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
+        } returns DefaultNameResolver()
+
         // we do not need to refresh the nodes in below tests, so lets return default list for each node to refresh (USS for example)
         every { mockedFileExplorerView.myFsTreeStructure } returns mockk()
         every { mockedFileExplorerView.myStructure } returns mockk()
@@ -1041,6 +1048,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestFileAttributes
         every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
         every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributes
+        every {
+          dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
+        } returns DefaultNameResolver()
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
@@ -1298,10 +1308,14 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         } answers { copyPasteNodeDataList.mapNotNull { nodeData -> nodeData.file?.let { Pair(mockedTargetFile, it) } } }
 
         should("Skip 2 files one by one") {
+
           addMockedSourceFile("file.txt")
           addMockedSourceFile("file1.txt")
           addMockedTargetChildFile("file.txt")
           addMockedTargetChildFile("file1.txt")
+          every {
+            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
+          } returns DefaultNameResolver()
           mockkStatic(Messages::class)
           var decideOptionSelected = false
           var skipNumber = 0
@@ -1341,6 +1355,10 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           addMockedSourceFile("file1.txt")
           addMockedTargetChildFile("file.txt")
           addMockedTargetChildFile("file1.txt")
+          every {
+            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
+          } returns DefaultNameResolver()
+
           mockkStatic(Messages::class)
           var decideOptionSelected = false
           var overwriteSelected = false
@@ -1403,6 +1421,10 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           addMockedTargetChildFile("file.txt")
           addMockedTargetChildFile("file_(1).txt")
           addMockedTargetChildFile("file1.txt")
+          every {
+            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
+          } returns DefaultNameResolver()
+
           mockkStatic(Messages::class)
           var decideOptionSelected = false
           var overwriteSelected = false
@@ -1468,6 +1490,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           addMockedSourceFile("DATASET.TEST", sourceAttributes = datasetAttributes)
           addMockedTargetChildFile("directory.test", true)
           addMockedTargetChildFile("DATASET.TEST")
+          every {
+            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
+          } returns DatasetOrDirResolver(dataOpsManagerService)
           mockkStatic(Messages::class)
           var decideOptionSelected = false
 
@@ -1527,6 +1552,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
           addMockedSourceFile("DATASET.TEST", sourceAttributes = datasetAttributes)
           addMockedTargetChildFile("TEST")
+          every {
+            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
+          } returns SeqToPDSResolver(dataOpsManagerService)
           every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributesPDS
 
           mockkStatic(Messages::class)
@@ -1576,6 +1604,10 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           addMockedSourceFile("dir2", isPastePossible = true, isDirectory = true)
           addMockedTargetChildFile("dir1", true)
           addMockedTargetChildFile("dir2")
+          every {
+            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
+          } returns DefaultNameResolver()
+
           mockkStatic(Messages::class)
           var decideOptionSelected = false
 
@@ -1629,6 +1661,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           isPastePerformed = false
           val sourceFile = addMockedSourceFile("file.txt", parent = mockedTargetFile)
           destinationChildFiles.add(sourceFile)
+
           mockkStatic(Messages::class)
           var skipSelected = false
 
@@ -1725,6 +1758,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           destinationChildFiles.add(sourceFile1)
           val sourceFile2 = addMockedSourceFile("file2.txt", parent = mockedTargetFile)
           destinationChildFiles.add(sourceFile2)
+          every {
+            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
+          } returns DefaultNameResolver()
           mockkStatic(Messages::class)
           var decideEachSelected = false
 

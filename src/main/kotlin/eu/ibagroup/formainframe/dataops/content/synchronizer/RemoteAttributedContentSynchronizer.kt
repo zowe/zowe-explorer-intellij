@@ -105,6 +105,19 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   }
 
   /**
+   * It is only necessary to remove old file from cache while force overwriting.
+   * TODO: Not the best solution. Think on how to rework.
+   * @param file - file to remove.
+   */
+  fun removeFromCacheAfterForceOverwriting(file: VirtualFile) {
+    fetchedAtLeastOnce.removeIf { it.file == file }
+    // if you will not delete the file than "Local cache conflict" dialog appear.
+    runWriteActionInEdtAndWait {
+      file.delete(this@RemoteAttributedContentSynchronizer)
+    }
+  }
+
+  /**
    * Base implementation of [ContentSynchronizer.synchronizeWithRemote] method for each synchronizer.
    * Doesn't need to be overridden in most cases
    * @see ContentSynchronizer.synchronizeWithRemote
