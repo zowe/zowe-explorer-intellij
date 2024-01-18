@@ -95,8 +95,9 @@ class JobsWindowFactory: ToolWindowFactory {
 
   override fun init(toolWindow: ToolWindow) {
     subscribe(
-      JOB_ADDED_TOPIC,
-      object: JobHandler {
+      project = toolWindow.project,
+      topic = JOB_ADDED_TOPIC,
+      handler = object: JobHandler {
         override fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest) {
           addJobBuildContentTab(project, toolWindow, connectionConfig, mfFilePath, jobRequest.jobid, jobRequest.jobname)
         }

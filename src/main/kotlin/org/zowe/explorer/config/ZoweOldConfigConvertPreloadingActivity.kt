@@ -96,8 +96,33 @@ class ZoweOldConfigConvertPreloadingActivity : PreloadingActivity() {
     }
   }
 
+  /**
+   * Replace config storage name with old one if new config file doesn't exist
+   */
+  private fun replaceConfigStorageName() {
+    val oldConfigStorageName = "org.zowe.explorer.config.OldConfigService"
+    val newConfigStorageName = "org.zowe.explorer.config.ConfigService"
+    val oldConfigName = "zowe_explorer_intellij_config.xml"
+    val newConfigName = "zowe_explorer_intellij_config_v2.xml"
+    val configPathDir = Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY)
+    val oldConfigFile = File(Paths.get(configPathDir.pathString, oldConfigName).pathString)
+    val newConfigFile = File(Paths.get(configPathDir.pathString, newConfigName).pathString)
+    if (oldConfigFile.exists() && !newConfigFile.exists()) {
+      val charset = Charsets.UTF_8
+      runCatching {
+        val newContent =
+          oldConfigFile
+            .readText(charset)
+            .replace(newConfigStorageName.toRegex(), oldConfigStorageName)
+        Files.write(oldConfigFile.toPath(), newContent.toByteArray(charset))
+        service<IComponentStore>().reloadState(OldConfigServiceImpl::class.java)
+      }
+    }
+  }
+
   override suspend fun execute() {
     convertOldVersionConfig()
+    replaceConfigStorageName()
     super.execute()
   }
 

@@ -37,7 +37,7 @@ class ViewJobAction : AnAction() {
           dataOpsManager.tryToGetAttributes(virtualFile)?.clone() as RemoteJobAttributes
 
         val project = e.project ?: return
-        sendTopic(JOB_ADDED_TOPIC).viewed(
+        sendTopic(JOB_ADDED_TOPIC, project).viewed(
           project,
           attributes.requesters[0].connectionConfig,
           virtualFile.filenameInternal,

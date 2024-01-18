@@ -378,6 +378,9 @@ Thank you for considering IBA Group for your mainframe needs.
                          groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
                          enabledByDefault="true" level="WARNING" language=""
                          implementationClass="org.zowe.explorer.editor.inspection.MFLossyEncodingInspection"/>
+
+        <editorFactoryDocumentListener implementation="org.zowe.explorer.editor.DocumentChangeListener"/>
+
     </extensions>
 
     <actions>

@@ -100,7 +100,6 @@ class DocumentedSyncProvider(
           it.write(content)
         }
         loadNewContent(content)
-        getDocument()?.addDocumentListener(DocumentChangeListener())
       }.onFailure {
         isInitialContentSet.set(false)
       }
