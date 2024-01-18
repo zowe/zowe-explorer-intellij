@@ -362,7 +362,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
           isShowYesNoDialogCalled shouldBe true
-          isPastePerformed shouldBe true
+          isPastePerformed shouldBe false
         }
       }
 
@@ -1182,10 +1182,14 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val copyPasteNodeDataList = mutableListOf<NodeData<*>>()
         val destinationChildFiles = mutableListOf<MFVirtualFile>()
 
+        val mockedTargetFile = mockk<MFVirtualFile>()
+        val targetAttributes = mockk<RemoteUssAttributes>()
+
         afterEach {
           copyPasteNodeDataList.clear()
           destinationChildFiles.clear()
 //          clearMocks(dataOpsManagerService.testInstance)
+          every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributes
         }
 
         // prepare base mocks
@@ -1210,10 +1214,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         }
 
         // target to paste
-        val mockedTargetFile = mockk<MFVirtualFile>()
+
         val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
         val mockedNodeTarget = mockk<UssDirNode>()
-        val targetAttributes = mockk<RemoteUssAttributes>()
         every { mockedTargetFile.name } returns "test_folder"
         every { targetAttributes.isDirectory } returns true
         every { mockedTargetFile.children } answers { destinationChildFiles.toTypedArray() }
@@ -1231,15 +1234,22 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           fileName: String,
           isPastePossible: Boolean = false,
           isDirectory: Boolean = false,
-          parent: MFVirtualFile? = null
+          parent: MFVirtualFile? = null,
+          sourceAttributes: FileAttributes? = null
         ): MFVirtualFile {
-          val mockedSourceAttributes = mockk<RemoteUssAttributes>()
           val mockedSourceFile = mockk<MFVirtualFile>()
           every { mockedSourceFile.name } returns fileName
           every { mockedSourceFile.isDirectory } returns isDirectory
           every { mockedSourceFile.parent } returns parent
-          every { mockedSourceAttributes.isPastePossible } returns isPastePossible
-          every { mockedSourceAttributes.isDirectory } returns isDirectory
+
+          val mockedSourceAttributes = if (sourceAttributes != null) {
+            sourceAttributes
+          }  else {
+            val attributes = mockk<RemoteUssAttributes>()
+            every { attributes.isPastePossible } returns isPastePossible
+            every { attributes.isDirectory } returns isDirectory
+            attributes
+          }
 
           val mockedSourceNodeData = mockk<NodeData<ConnectionConfig>>()
           val mockedSourceNode = mockk<UssFileNode>()
@@ -1446,6 +1456,118 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
             fileNewName shouldBe "file_(2).txt"
             file1Overwritten shouldBe true
             overwriteSelected shouldBe true
+          }
+        }
+        should("Use new name for dataset or directory") {
+          isPastePerformed = false
+          val datasetAttributes = mockk<RemoteDatasetAttributes>()
+          every { datasetAttributes.isPastePossible } returns false
+          every { datasetAttributes.isDirectory } returns false
+
+          addMockedSourceFile("directory.test", isDirectory=true)
+          addMockedSourceFile("DATASET.TEST", sourceAttributes = datasetAttributes)
+          addMockedTargetChildFile("directory.test", true)
+          addMockedTargetChildFile("DATASET.TEST")
+          mockkStatic(Messages::class)
+          var decideOptionSelected = false
+
+          every {
+            Messages.showYesNoDialog(
+                any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+            )
+          } returns Messages.YES
+          every {
+            Messages.showDialog(
+                any() as Project?,
+                any() as String,
+                any() as String,
+                any() as Array<String>,
+                0,
+                any() as Icon?,
+                null
+            )
+          } answers {
+            if (!decideOptionSelected) {
+              decideOptionSelected = true
+              2
+            } else {
+              2
+            }
+          }
+
+          var dirNewName: String? = null
+          var datasetNewName: String? = null
+          every {
+            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
+          } answers {
+            val op = firstArg<MoveCopyOperation>()
+            if (op.source.name == "directory.test") {
+              dirNewName = op.newName
+            }
+            if (op.source.name == "DATASET.TEST") {
+              datasetNewName = op.newName
+            }
+          }
+
+          mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+          assertSoftly {
+            dirNewName shouldBe "directory.test_(1)"
+            datasetNewName shouldBe "DATASET.TEST_(1)"
+          }
+        }
+        should("Use new name for sequential dataset (moving to pds)") {
+
+          isPastePerformed = false
+          val datasetAttributes = mockk<RemoteDatasetAttributes>()
+          every { datasetAttributes.name } returns "DATASET.TEST"
+          every { datasetAttributes.isDirectory } returns false
+          every { datasetAttributes.isPastePossible } returns false
+          val targetAttributesPDS = mockk<RemoteDatasetAttributes>()
+
+          addMockedSourceFile("DATASET.TEST", sourceAttributes = datasetAttributes)
+          addMockedTargetChildFile("TEST")
+          every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributesPDS
+
+          mockkStatic(Messages::class)
+          var decideOptionSelected = false
+
+          every {
+            Messages.showYesNoDialog(
+              any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+            )
+          } returns Messages.YES
+          every {
+            Messages.showDialog(
+              any() as Project?,
+              any() as String,
+              any() as String,
+              any() as Array<String>,
+              0,
+              any() as Icon?,
+              null
+            )
+          } answers {
+            if (!decideOptionSelected) {
+              decideOptionSelected = true
+              2
+            } else {
+              2
+            }
+          }
+
+          var memberNewName: String? = null
+          every {
+            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
+          } answers {
+            val op = firstArg<MoveCopyOperation>()
+            memberNewName = op.newName
+          }
+
+          mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+          assertSoftly {
+            memberNewName shouldBe "TEST1"
           }
         }
         should("Resolve conflicts between directory and file") {

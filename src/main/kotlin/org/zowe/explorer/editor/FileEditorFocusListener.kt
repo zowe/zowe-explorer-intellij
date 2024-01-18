@@ -62,7 +62,7 @@ class FileEditorFocusListener: FocusChangeListener {
                 return
               }
               runWriteActionInEdtAndWait { syncProvider.saveDocument() }
-              sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, DataOpsManager.instance.componentManager).sync(file)
+              sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, project).sync(file)
             }
           }
         }

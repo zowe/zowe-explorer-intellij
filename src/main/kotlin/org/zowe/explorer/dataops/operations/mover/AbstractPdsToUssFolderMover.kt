@@ -121,7 +121,8 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
     var throwable: Throwable? = null
 
     if (sourceFileFetchProvider.isCacheValid(sourceQuery)) {
-      val destinationPath = "${destinationAttributes.path}/${sourceAttributes.name}"
+      val newName = operation.newName ?: sourceAttributes.name
+      val destinationPath = "${destinationAttributes.path}/${newName}"
 
       if (operation.forceOverwriting) {
         log.info("Overwriting directory $destinationPath")
@@ -137,7 +138,7 @@ abstract class AbstractPdsToUssFolderMover(val dataOpsManager: DataOpsManager) :
 
       val response = api<DataAPI>(destConnectionConfig).createUssFile(
         authorizationToken = destConnectionConfig.authToken,
-        filePath = FilePath(destinationAttributes.path + "/" + sourceAttributes.name),
+        filePath = FilePath(destinationPath),
         body = CreateUssFile(FileType.DIR, destinationAttributes.fileMode ?: FileMode(7, 7, 7))
       ).cancelByIndicator(progressIndicator).execute()
 

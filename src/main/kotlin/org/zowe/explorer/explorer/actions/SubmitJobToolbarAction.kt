@@ -54,7 +54,7 @@ class SubmitJobToolbarAction: AnAction() {
             progressIndicator = it
           ).also { result ->
             e.project?.let { project ->
-              sendTopic(JOB_ADDED_TOPIC).submitted(project, connectionConfig, file.parent.path, result)
+              sendTopic(JOB_ADDED_TOPIC, project).submitted(project, connectionConfig, file.parent.path, result)
             }
           }
         }.onFailure {
