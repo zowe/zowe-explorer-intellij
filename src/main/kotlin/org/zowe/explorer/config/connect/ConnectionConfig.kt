@@ -66,9 +66,8 @@ class ConnectionConfig : ConnectionConfigBase {
     if (url != other.url) return false
     if (isAllowSelfSigned != other.isAllowSelfSigned) return false
     if (zoweConfigPath != other.zoweConfigPath) return false
-    // TODO: uncomment next 2 lines when the task https://jira.ibagroup.eu/browse/IJMP-1412 will be completed.
-     if (zVersion != other.zVersion) return false
-     if (owner != other.owner) return false
+    if (zVersion != other.zVersion) return false
+    if (owner != other.owner) return false
 
     return true
   }
