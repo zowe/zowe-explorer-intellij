@@ -93,7 +93,7 @@ tasks {
       """
       <b>New features:</b>
       <ul>
-        <li>None at the moment</li>
+        <li>GitHub issue #165: IntelliJ 2023.3 support</li>
       </ul>
       <br>
       <b>Fixed bugs:</b>

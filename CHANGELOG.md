@@ -4,6 +4,9 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## `1.1.2 (2024-01-22)`
 
+* Feature: GitHub issue #165: IntelliJ 2023.3 support ([81f24fa3](https://github.com/zowe/zowe-explorer-intellij/commit/81f24fa3))
+
+
 * Bugfix: Sync action does not work after file download ([bfb125d7](https://github.com/zowe/zowe-explorer-intellij/commit/bfb125d7))
 * Bugifx: "Skip This Files" doesn't work when uploading local file to PDS ([749b2d4b](https://github.com/zowe/zowe-explorer-intellij/commit/749b2d4b))
 * Bugifx: "Use new name" doesn't work for copying partitioned dataset to USS folder ([26d865be](https://github.com/zowe/zowe-explorer-intellij/commit/26d865be))
