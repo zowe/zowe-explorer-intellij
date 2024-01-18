@@ -42,7 +42,10 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun init(toolWindow: ToolWindow) {
-    subscribe(AutoSyncFileListener.AUTO_SYNC_FILE, object: AutoSyncFileListener {
+    subscribe(
+      project = toolWindow.project,
+      topic = AutoSyncFileListener.AUTO_SYNC_FILE,
+      handler = object: AutoSyncFileListener {
       override fun sync(file: VirtualFile) {
         val dataOpsManager = service<DataOpsManager>()
         if (dataOpsManager.isSyncSupported(file)) {

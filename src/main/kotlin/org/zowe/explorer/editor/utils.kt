@@ -45,15 +45,11 @@ val MF_VIRTUAL_FILE = Key.create<Boolean>(MF_VIRTUAL_FILE_KEY_NAME)
 val USS_VIRTUAL_FILE = Key.create<Boolean>(USS_VIRTUAL_FILE_KEY_NAME)
 
 /** Puts user data in file. */
-fun VirtualFile.putUserData() {
-  val file = this
-  if (file is MFVirtualFile) {
-    file.putUserData(MF_VIRTUAL_FILE, true)
-    val attributes = DataOpsManager.instance.tryToGetAttributes(file)
-    if (attributes is RemoteUssAttributes) {
-      file.putUserData(USS_VIRTUAL_FILE, true)
-    }
-  }
+fun putUserDataInFile(file: MFVirtualFile) {
+  file.putUserData(MF_VIRTUAL_FILE, true)
+  DataOpsManager.instance.tryToGetAttributes(file)
+    ?.takeIf { it is RemoteUssAttributes }
+    ?.let { file.putUserData(USS_VIRTUAL_FILE, true) }
 }
 
 /**
