@@ -32,7 +32,7 @@ class MFVirtualFile internal constructor(
 ) : VirtualFile(), VirtualFileWithId, ReadWriteLock by ReentrantReadWriteLock() {
 
   companion object {
-    private val fs = MFVirtualFileSystem.instance
+    private val fs by lazy { MFVirtualFileSystem.instance }
   }
 
   @Volatile

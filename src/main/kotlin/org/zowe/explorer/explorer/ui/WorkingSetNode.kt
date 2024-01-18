@@ -13,6 +13,7 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
@@ -80,10 +81,13 @@ abstract class WorkingSetNode<Connection : ConnectionConfigBase, MaskType>(
    * @param presentation the presentation, which explanatory text will be assigned to
    */
   protected fun addInfo(presentation: PresentationData) {
-    val connectionConfig = value.connectionConfig ?: return
-    val url = value.connectionConfig?.url ?: return
-    val username = getUsername(connectionConfig)
-    val formedUsername = if (connectionConfig.zoweConfigPath == null) username else "*".repeat(username.length)
-    presentation.addText(" $formedUsername on ${connectionConfig.name} [${url}]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    runBackgroundableTask("Getting connection information", project, false) {
+      val connectionConfig = value.connectionConfig ?: return@runBackgroundableTask
+      val url = value.connectionConfig?.url ?: return@runBackgroundableTask
+      val username = getUsername(connectionConfig)
+      val formedUsername = if (connectionConfig.zoweConfigPath == null) username else "*".repeat(username.length)
+      presentation.addText(" $formedUsername on ${connectionConfig.name} [${url}]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      apply(presentation)
+    }
   }
 }

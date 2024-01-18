@@ -18,6 +18,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -224,7 +225,7 @@ fun createCharsetsActionGroup(virtualFile: VirtualFile, attributes: RemoteUssAtt
  */
 fun checkEncodingCompatibility(file: VirtualFile, project: Project): Boolean {
   var compatible = true
-  val psiFile = PsiManager.getInstance(project).findFile(file)
+  val psiFile = runReadAction { PsiManager.getInstance(project).findFile(file) }
   psiFile?.let {
     val inspectionProfile = InspectionProjectProfileManager.getInstance(project).currentProfile
     val inspectionTool = inspectionProfile.getInspectionTool("ZoweMFLossyEncoding", project)

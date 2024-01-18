@@ -13,6 +13,7 @@ package org.zowe.explorer.config
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
+import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.config.settings.ui.SettingsConfigurable
 
 /**
@@ -55,8 +56,10 @@ class MainframeConfigurable : TabbedConfigurable() {
    * @see com.intellij.openapi.options.UnnamedConfigurable.reset
    */
   override fun reset() {
-    ConfigSandbox.instance.fetch()
-    super.reset()
+    runBackgroundableTask(title = "Reset changes", cancellable = false) {
+      ConfigSandbox.instance.fetch()
+      super.reset()
+    }
   }
 
   /**
