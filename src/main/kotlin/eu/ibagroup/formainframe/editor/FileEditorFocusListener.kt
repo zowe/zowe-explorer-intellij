@@ -10,10 +10,12 @@
 
 package eu.ibagroup.formainframe.editor
 
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.isComponentUnderMouse
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -57,12 +59,20 @@ class FileEditorFocusListener: FocusChangeListener {
             val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
             val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
             if (!(currentContent contentEquals previousContent) && needToUpload) {
-              val incompatibleEncoding = !checkEncodingCompatibility(file, project)
-              if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
-                return
+              runBackgroundableTask(
+                title = "Synchronizing ${file.name}...",
+                project = project,
+                cancellable = true
+              ) {
+                val incompatibleEncoding = !checkEncodingCompatibility(file, project)
+                runInEdt {
+                  if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
+                    return@runInEdt
+                  }
+                  runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+                  sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, project).sync(file)
+                }
               }
-              runWriteActionInEdtAndWait { syncProvider.saveDocument() }
-              sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, project).sync(file)
             }
           }
         }
