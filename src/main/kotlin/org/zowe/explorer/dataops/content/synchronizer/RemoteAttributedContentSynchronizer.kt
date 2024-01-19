@@ -16,12 +16,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.utils.*
 import org.zowe.explorer.editor.FileContentChangeListener
+import org.zowe.explorer.utils.*
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
-private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
+private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "zowe_sync_storage_"
 private val log = logger<RemoteAttributedContentSynchronizer<*>>()
 
 /**
