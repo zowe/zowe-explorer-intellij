@@ -16,7 +16,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: Topics handling ([25606368](https://github.com/zowe/zowe-explorer-intellij/commit/25606368))
 * Bugfix: Zowe config v2 handling ([fd79b908](https://github.com/zowe/zowe-explorer-intellij/commit/fd79b908))
 * Bugfix: JES Explorer bug when ABEND job is being displayed ([614aa6cf](https://github.com/zowe/zowe-explorer-intellij/commit/614aa6cf))
-* Bugfix: Conflicting VFS name ([63596855](https://github.com/zowe/zowe-explorer-intellij/commit/63596855))
+* Bugfix: Conflicting VFS and content storage name ([3a2c8d60](https://github.com/zowe/zowe-explorer-intellij/commit/3a2c8d60))
 * Bugfix: GitHub issue #167: Zowe explorer config is not converted ([b5eae7a2](https://github.com/zowe/zowe-explorer-intellij/commit/b5eae7a2))
 
 ## `1.1.1 (2023-11-23)`
