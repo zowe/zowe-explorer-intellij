@@ -117,6 +117,7 @@ tasks {
         <li>Topics handling</li>
         <li>Zowe config v2 handling</li>
         <li>JES Explorer bug when ABEND job is being displayed</li>
+        <li>Conflicting VFS name</li>
         <li>GitHub issue #167: Zowe explorer config is not converted</li>
       </ul>"""
     )

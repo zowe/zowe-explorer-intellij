@@ -53,7 +53,7 @@ enum class FSEdgeType {
   }
 }
 
-private const val VFS_CONTENT_STORAGE_NAME = "mf_vfs_contents"
+private const val VFS_CONTENT_STORAGE_NAME = "zowe_mf_vfs_contents"
 
 class FSEdge @JvmOverloads constructor(val type: FSEdgeType = FSEdgeType.DIR)
 
