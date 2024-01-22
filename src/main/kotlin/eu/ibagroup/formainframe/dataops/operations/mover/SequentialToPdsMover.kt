@@ -66,7 +66,7 @@ class SequentialToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMov
     val destinationAttributes = operation.destinationAttributes as RemoteDatasetAttributes
     var memberName: String
     val dataset = (operation.sourceAttributes as RemoteDatasetAttributes).also {
-      memberName = it.name.split(".").last()
+      memberName = operation.newName ?: it.name.split(".").last()
     }
     val response = api<DataAPI>(
       url = connectionConfig.url,
@@ -83,7 +83,8 @@ class SequentialToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMov
       memberName = memberName
     ).cancelByIndicator(progressIndicator).execute()
 
-    if (!response.isSuccessful && response.errorBody()?.string()?.contains("data set is empty") == true) {
+    // Proceed with deletion of source dataset in case of successful response or dataset was empty, throw exception otherwise
+    if (response.isSuccessful || response.errorBody()?.string()?.contains("data set is empty") == true) {
       if (operation.isMove) {
         val deleteResponse = api<DataAPI>(
             url = connectionConfig.url,
