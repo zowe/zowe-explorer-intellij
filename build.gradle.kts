@@ -85,7 +85,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2023.1")
+  version.set("LATEST-EAP-SNAPSHOT")
 }
 
 tasks {
@@ -97,8 +97,8 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set("231.8109")
-    untilBuild.set("233.*")
+    sinceBuild.set("241.8102")
+    untilBuild.set("241.*")
     changeNotes.set(
       """
       <b>New features:</b>
