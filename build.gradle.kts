@@ -32,7 +32,7 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
-version = "1.1.2-231"
+version = "1.1.2-241-eap"
 val remoteRobotVersion = "0.11.21"
 val okHttp3Version = "4.12.0"
 val kotestVersion = "5.6.2"
