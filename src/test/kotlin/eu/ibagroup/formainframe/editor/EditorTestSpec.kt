@@ -117,6 +117,8 @@ class EditorTestSpec : WithApplicationShouldSpec({
     val bytes = byteArrayOf(116, 101, 120, 116)
     every { contentSynchronizerMock.successfulContentStorage(any()) } returns bytes
 
+    every { virtualFileMock.name } returns "fileName"
+
     var currentBytes: ByteArray
 
     mockkConstructor(DocumentedSyncProvider::class)
@@ -130,9 +132,9 @@ class EditorTestSpec : WithApplicationShouldSpec({
     every { virtualFileMock.charset } returns charsetMock
 
     var isSynced = false
-    val sendTopicRef: (Topic<AutoSyncFileListener>, ComponentManager) -> AutoSyncFileListener = ::sendTopic
+    val sendTopicRef: (Topic<AutoSyncFileListener>, Project) -> AutoSyncFileListener = ::sendTopic
     mockkStatic(sendTopicRef as KFunction<*>)
-    every { sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, any<ComponentManager>()) } answers {
+    every { sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, any<Project>()) } answers {
       isSynced = true
       val autoSyncFileListenerMock = mockk<AutoSyncFileListener>()
       every { autoSyncFileListenerMock.sync(virtualFileMock) } returns Unit

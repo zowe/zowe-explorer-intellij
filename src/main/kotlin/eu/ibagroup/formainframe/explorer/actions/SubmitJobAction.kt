@@ -73,7 +73,7 @@ class SubmitJobAction : AnAction() {
             ), it
           ).also { result ->
             e.project?.let { project ->
-              sendTopic(JOB_ADDED_TOPIC).submitted(project, requestData.second, submitFilePath, result)
+              sendTopic(JOB_ADDED_TOPIC, project).submitted(project, requestData.second, submitFilePath, result)
             }
           }
         }.onSuccess {
