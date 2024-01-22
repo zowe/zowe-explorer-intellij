@@ -37,22 +37,23 @@ class FileEditorEventsListener : FileEditorManagerListener {
    * @param file the file that was opened.
    */
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-    val editor = source.selectedTextEditor as? EditorEx
+    if (file is MFVirtualFile) {
+      val editor = source.selectedTextEditor as? EditorEx
 
-    // TODO: remove in v1.*.*-223 and greater
-    if (editor != null) {
-      editor.addFocusListener(focusListener)
-      val isDumbMode = ActionUtil.isDumbMode(editor.project)
-      if (isDumbMode) {
-        editor.document.setReadOnly(true)
-        editor.isViewer = true
+      // TODO: remove in v1.*.*-223 and greater
+      if (editor != null) {
+        editor.addFocusListener(focusListener)
+        val isDumbMode = ActionUtil.isDumbMode(editor.project)
+        if (isDumbMode) {
+          editor.document.setReadOnly(true)
+          editor.isViewer = true
+        }
       }
-      super.fileOpened(source, file)
-    }
 
-    // TODO: use in v1.*.*-223 and greater
-    //editor?.addFocusListener(focusListener)
-    //super.fileOpened(source, file)
+      // TODO: use in v1.*.*-223 and greater
+      //editor?.addFocusListener(focusListener)
+    }
+    super.fileOpened(source, file)
   }
 }
 
@@ -70,8 +71,9 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
    * @param file the file to be checked and synchronized
    */
   override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
+    val project = source.project
     val configService = service<ConfigService>()
-    val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(source.project))
+    val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(project))
     val attributes = dataOpsManager.tryToGetAttributes(file)
     if (file is MFVirtualFile && file.isWritable && attributes != null) {
       val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
@@ -79,15 +81,15 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
       val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
       val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
       if (!(currentContent contentEquals previousContent) && needToUpload) {
-        val incompatibleEncoding = !checkEncodingCompatibility(file, source.project)
+        val incompatibleEncoding = !checkEncodingCompatibility(file, project)
         if (!configService.isAutoSyncEnabled) {
-          if (showSyncOnCloseDialog(file.name, source.project)) {
+          if (showSyncOnCloseDialog(file.name, project)) {
             if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
               return
             }
             runModalTask(
               title = "Syncing ${file.name}",
-              project = source.project,
+              project = project,
               cancellable = true
             ) {
               runWriteActionInEdtAndWait {
@@ -101,7 +103,7 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
             return
           }
           runWriteActionInEdtAndWait { syncProvider.saveDocument() }
-          sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, DataOpsManager.instance.componentManager).sync(file)
+          sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, project).sync(file)
         }
       }
     }
@@ -114,7 +116,9 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
    * @param file the file that opens
    */
   override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
-    file.putUserData()
+    if (file is MFVirtualFile) {
+      putUserDataInFile(file)
+    }
     super.beforeFileOpened(source, file)
   }
 }

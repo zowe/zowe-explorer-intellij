@@ -32,9 +32,9 @@ apply(plugin = "org.jetbrains.intellij")
 apply(from = "gradle/sonar.gradle")
 
 group = "eu.ibagroup"
-version = "1.1.1-221"
-val remoteRobotVersion = "0.11.19"
-val okHttp3Version = "4.10.0"
+version = "1.1.2-221"
+val remoteRobotVersion = "0.11.21"
+val okHttp3Version = "4.12.0"
 val kotestVersion = "5.6.2"
 
 repositories {
@@ -74,7 +74,7 @@ dependencies {
   implementation("org.jgrapht:jgrapht-core:1.5.1")
   implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
   implementation("com.segment.analytics.java:analytics:3.3.1")
-  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.3.0")
+  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.4.1")
   testImplementation("io.mockk:mockk:1.13.5")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
   testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
@@ -111,16 +111,16 @@ tasks {
       <br>
       <b>Fixed bugs:</b>
       <ul>
-        <li>Dataset color does not change when cutting</li>
-        <li>Spelling error in reload/convert dialog</li>
-        <li>Incorrect error messages when allocating dataset</li>
-        <li>Incorrect message if create connection with connection url ending with 2 slashes</li>
-        <li>Sync action is not working during indexing process in 221 and 222</li>
-        <li>Mask cannot be created when the other connection is selected</li>
-        <li>Copy and cut error message if skip for all or overwrite for all is selected</li>
-        <li>GitHub issue #139: Can't allocate a dataset with record format U</li>
-        <li>GitHub issue #143: Incorrect behaviour of TSO CLI</li>
-        <li>GitHub issue #161: Conflict between Zowe Explorer and For Mainframe</li>
+        <li>Sync action does not work after file download</li>
+        <li>"Skip This Files" doesn't work when uploading local file to PDS</li>
+        <li>"Use new name" doesn't work for copying partitioned dataset to USS folder</li>
+        <li>"Use new name" doesn't work for copying sequential dataset to partitioned dataset</li>
+        <li>"Use new name" doesn't work when uploading local file to PDS</li>
+        <li>Editing two members with the same name does not update the content for one of the members</li>
+        <li>Topics handling</li>
+        <li>Zowe config v2 handling</li>
+        <li>JES Explorer bug when ABEND job is being displayed</li>
+        <li>GitHub issue #167: Zowe explorer config is not converted</li>
       </ul>"""
     )
   }

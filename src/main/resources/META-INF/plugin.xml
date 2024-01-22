@@ -396,6 +396,8 @@ Example of how to see the output:<br/>
                          groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="eu.ibagroup.formainframe.editor.inspection.MFLossyEncodingInspection"/>
+
+        <editorFactoryDocumentListener implementation="eu.ibagroup.formainframe.editor.DocumentChangeListener"/>
     </extensions>
 
     <actions>
