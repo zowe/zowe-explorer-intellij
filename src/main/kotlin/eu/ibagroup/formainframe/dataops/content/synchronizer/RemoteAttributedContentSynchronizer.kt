@@ -11,15 +11,19 @@
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.editor.FileContentChangeListener
+import eu.ibagroup.formainframe.utils.*
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
 private val log = logger<RemoteAttributedContentSynchronizer<*>>()
@@ -102,6 +106,29 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
    */
   private fun wasFetchedBefore(syncProvider: SyncProvider): Boolean {
     return fetchedAtLeastOnce.firstOrNull { syncProvider == it } != null
+  }
+
+  /**
+   * It is only necessary to remove old file from cache while force overwriting.
+   * TODO: Not the best solution. Think on how to rework.
+   * @param file - file to remove.
+   */
+  fun removeFromCacheAfterForceOverwriting(file: VirtualFile) {
+    val syncProvider = fetchedAtLeastOnce.firstOrNull { it.file == file } ?: return
+    fetchedAtLeastOnce.removeIf { it.file == file }
+    // if you will not delete the file than "Local cache conflict" dialog appear.
+    runWriteActionInEdtAndWait {
+      // close editor if file is opened to avoid IDE crash.
+      ProjectManager.getInstance().openProjects.forEach {
+        syncProvider.getDocument()?.let { document ->
+          val fileEditorManager = FileEditorManager.getInstance(it)
+          FileDocumentManager.getInstance().getFile(document)?.let { vf ->
+            fileEditorManager.closeFile(vf)
+          }
+        }
+      }
+      file.delete(this@RemoteAttributedContentSynchronizer)
+    }
   }
 
   /**

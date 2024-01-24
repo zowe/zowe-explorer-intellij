@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
+import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
@@ -58,17 +59,38 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
-    val request = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
+    val memberAllocationErrorString = "Cannot create member ${operation.request.memberName} in ${operation.request.datasetName} " +
+        "on ${operation.connectionConfig.name}."
+    val listMembersRequest = api<DataAPI>(operation.connectionConfig).listDatasetMembers(
       authorizationToken = operation.connectionConfig.authToken,
-      datasetName = operation.request.datasetName,
-      memberName = operation.request.memberName,
-      content = byteArrayOf()
+      datasetName = operation.request.datasetName
     ).cancelByIndicator(progressIndicator).execute()
-    if (!request.isSuccessful) {
+    if (listMembersRequest.isSuccessful) {
+      val membersList = listMembersRequest.body()
+      val duplicateMember = membersList?.items?.map { it.name }?.find { it == operation.request.memberName }
+      if (duplicateMember != null) {
+        throw CallException(
+          listMembersRequest,
+          "$memberAllocationErrorString Member with name ${operation.request.memberName} already exists."
+        )
+      } else {
+        val writeRequest = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
+          authorizationToken = operation.connectionConfig.authToken,
+          datasetName = operation.request.datasetName,
+          memberName = operation.request.memberName,
+          content = byteArrayOf()
+        ).cancelByIndicator(progressIndicator).execute()
+        if (!writeRequest.isSuccessful) {
+          throw CallException(
+            writeRequest,
+            memberAllocationErrorString
+          )
+        }
+      }
+    } else {
       throw CallException(
-        request,
-        "Cannot create member ${operation.request.memberName} in ${operation.request.datasetName} " +
-            "on ${operation.connectionConfig.name}"
+        listMembersRequest,
+        "Cannot fetch member list for ${operation.request.datasetName}"
       )
     }
   }
