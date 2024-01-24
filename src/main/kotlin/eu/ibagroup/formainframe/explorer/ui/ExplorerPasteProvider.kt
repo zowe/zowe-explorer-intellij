@@ -28,8 +28,8 @@ import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.RemoteAttributedContentSynchronizer
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.utils.castOrNull
@@ -216,6 +216,17 @@ class ExplorerPasteProvider : PasteProvider {
           .onSuccess {
             if (explorerView.isCut.get()) {
               copyPasteSupport.removeFromBuffer { node -> node.file == op.source }
+            }
+
+            // this step is necessary to clean old file after force overwriting performed.
+            if (op.forceOverwriting) {
+              val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
+              op.destination.children
+                .filter { file -> file == nameResolver.getConflictingChild(op.source, op.destination) }
+                .forEach { file ->
+                  dataOpsManager.getContentSynchronizer(file)
+                    .castOrNull<RemoteAttributedContentSynchronizer<*>>()?.removeFromCacheAfterForceOverwriting(file)
+                }
             }
           }
           .onFailure { throwable ->
@@ -433,45 +444,23 @@ class ExplorerPasteProvider : PasteProvider {
   ): List<ConflictResolution> {
     val result = mutableListOf<ConflictResolution>()
 
-//    val skipDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-//    val overwriteDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
+    val conflicts = pasteDestinations.map { destFile ->
 
-    val listOfAllConflicts = pasteDestinations
-      .mapNotNull { destFile ->
-        val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
-        destFile.children
-          ?.map conflicts@{ destChild ->
-            val filteredSourceFiles = sourceFiles.filter { source ->
-              val sourceAttributes = dataOpsManager.tryToGetAttributes(source)
-              if (
-                destAttributes is RemoteDatasetAttributes &&
-                (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
-              ) {
-                val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).uppercase()
-                if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
-              } else if (
-                destAttributes is RemoteDatasetAttributes &&
-                sourceAttributes is RemoteDatasetAttributes
-              ) {
-                sourceAttributes.name.split(".").last() == destChild.name
-              } else {
-                source.name == destChild.name
-              }
-            }
-            val foundConflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-            if (filteredSourceFiles.isNotEmpty()) {
-              filteredSourceFiles.forEach { foundConflict -> foundConflicts.add(Pair(destFile, foundConflict)) }
-            }
-            foundConflicts
-          }
+      val conflictingSources = sourceFiles.filter { source ->
+        val nameResolver = dataOpsManager.getNameResolver(source, destFile)
+        nameResolver.getConflictingChild(source, destFile) != null
       }
+      val foundConflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
+      if (conflictingSources.isNotEmpty()) {
+        conflictingSources.forEach { foundConflict -> foundConflicts.add(Pair(destFile, foundConflict)) }
+      }
+      foundConflicts
+    }
       .flatten()
-    val conflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-    listOfAllConflicts.forEach { conflictList -> conflicts.addAll(conflictList) }
+      .toMutableList()
 
     // Handle conflicts with different file type (file - directory, directory - file)
 
-//    skipDestinationSourceList.addAll(conflictsThatCannotBeSolved)
     val conflictsThatCannotBeOverwritten = conflicts.filter {
       val conflictChild = it.first.findChild(it.second.name)
       (conflictChild?.isDirectory == true && !it.second.isDirectory)
@@ -560,26 +549,8 @@ class ExplorerPasteProvider : PasteProvider {
     }
 
     allConflicts.forEach { conflict ->
-      var copyIndex = 1
-      val sourceName = conflict.second.name
-      val isSourceDirectory = conflict.second.isDirectory
-      var newName: String
-      val destAttributes = dataOpsManager.tryToGetAttributes(conflict.first)
-      val sourceAttributes = dataOpsManager.tryToGetAttributes(conflict.second)
-      do {
-        newName = if (destAttributes is RemoteDatasetAttributes && sourceAttributes is RemoteDatasetAttributes) {
-          "${sourceAttributes.name.split(".").last().take(7)}$copyIndex"
-        } else if (destAttributes is RemoteDatasetAttributes) {
-          if (sourceName.length >= 8) "${sourceName.take(7)}$copyIndex" else "$sourceName$copyIndex"
-        } else if (isSourceDirectory || sourceAttributes is RemoteDatasetAttributes) {
-          "${sourceName}_(${copyIndex})"
-        } else {
-          val extension = if (sourceName.contains(".")) sourceName.substringAfterLast(".") else null
-          val newNameWithoutExtension = "${sourceName.substringBeforeLast(".")}_(${copyIndex})"
-          if (extension != null) "$newNameWithoutExtension.$extension" else newNameWithoutExtension
-        }
-        ++copyIndex
-      } while (conflict.first.children.any { it.name == newName })
+
+      val newName = dataOpsManager.getNameResolver(conflict.second, conflict.first).resolve(conflict.second, conflict.first)
 
       val newNameMessage = "If you select option \"Use new name\", the following name will be selected: <b>$newName</b>"
 
