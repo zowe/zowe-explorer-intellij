@@ -15,6 +15,9 @@ import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
 import eu.ibagroup.formainframe.config.ConfigDeclaration
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
+import eu.ibagroup.formainframe.dataops.sort.orderingSortKeys
+import eu.ibagroup.formainframe.dataops.sort.typedSortKeys
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
@@ -179,6 +182,39 @@ fun <E : Any> E.asMutableList() = mutableListOf(this)
 
 fun <R> List<R>.mergeWith(another: List<R>): MutableList<R> {
   return this.plus(another).toSet().toMutableList()
+}
+
+/**
+ * Function clears the input list and adds another list elements to the end of this list
+ * @receiver any kind of MutableList
+ * @param another
+ */
+fun <R> List<R>.clearAndMergeWith(another: List<R>) {
+  (this as MutableList<R>).apply {
+    clear()
+    addAll(another)
+  }
+}
+
+/**
+ * Function clears the input list and adds the new sortKey to this list or does nothing if sortKey is null
+ * @receiver Any kind of MutableList of the current sortKeys
+ * @param toAdd
+ */
+fun List<SortQueryKeys>.clearOldKeysAndAddNew(toAdd: SortQueryKeys?) {
+  if (toAdd != null) {
+    if (typedSortKeys.contains(toAdd)) {
+      (this as MutableList<SortQueryKeys>).apply {
+        removeAll(typedSortKeys.toSet())
+        add(toAdd)
+      }
+    } else {
+      (this as MutableList<SortQueryKeys>).apply {
+        removeAll(orderingSortKeys.toSet())
+        add(toAdd)
+      }
+    }
+  }
 }
 
 val UNIT_CLASS = Unit::class.java

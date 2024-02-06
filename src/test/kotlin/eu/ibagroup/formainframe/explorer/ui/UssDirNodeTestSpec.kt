@@ -12,40 +12,28 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.SortQueryKeys
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributesService
 import eu.ibagroup.formainframe.dataops.getAttributesService
+import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
 import eu.ibagroup.formainframe.explorer.FileExplorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSetImpl
+import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 
-class UssDirNodeTestSpec : ShouldSpec({
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class UssDirNodeTestSpec : WithApplicationShouldSpec({
+
   afterSpec {
     clearAllMocks()
+    unmockkAll()
   }
+
   context("explorer module: ui/UssDirNode") {
     val mockedPath = mockk<UssPath>("USS//test_path/ZOSMFAD/test_dir")
     val mockedProject = mockk<Project>()
@@ -109,11 +97,11 @@ class UssDirNodeTestSpec : ShouldSpec({
 
       should("sort by name ascending") {
 
-        val sortQueryKeys = listOf(SortQueryKeys.NAME, SortQueryKeys.ASCENDING)
+        val sortQueryKeys = listOf(SortQueryKeys.FILE_NAME, SortQueryKeys.ASCENDING)
         mockkObject(sortQueryKeys)
 
         val expected = listOf(unexpectedNode, mockedUssDirNodeChild1, childNode3, mockedUssDirNodeChild2, childNode4)
-        val actual = sortChildrenForTest(mockedChildrenNodes, sortQueryKeys).invoke(mockedUssDirNode)
+        val actual = mockedUssDirNode.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
 
         assertSoftly {
           actual shouldBe expected
@@ -122,11 +110,11 @@ class UssDirNodeTestSpec : ShouldSpec({
 
       should("sort by name descending") {
 
-        val sortQueryKeys = listOf(SortQueryKeys.NAME, SortQueryKeys.DESCENDING)
+        val sortQueryKeys = listOf(SortQueryKeys.FILE_NAME, SortQueryKeys.DESCENDING)
         mockkObject(sortQueryKeys)
 
         val expected = listOf(childNode4, mockedUssDirNodeChild2, childNode3, mockedUssDirNodeChild1, unexpectedNode)
-        val actual = sortChildrenForTest(mockedChildrenNodes, sortQueryKeys).invoke(mockedUssDirNode)
+        val actual = mockedUssDirNode.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
 
         assertSoftly {
           actual shouldBe expected
@@ -135,11 +123,11 @@ class UssDirNodeTestSpec : ShouldSpec({
 
       should("sort by type ascending") {
 
-        val sortQueryKeys = listOf(SortQueryKeys.TYPE, SortQueryKeys.ASCENDING)
+        val sortQueryKeys = listOf(SortQueryKeys.FILE_TYPE, SortQueryKeys.ASCENDING)
         mockkObject(sortQueryKeys)
 
         val expected = listOf(mockedUssDirNodeChild1, mockedUssDirNodeChild2, childNode3, childNode4)
-        val actual = sortChildrenForTest(mockedChildrenNodes, sortQueryKeys).invoke(mockedUssDirNode)
+        val actual = mockedUssDirNode.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
 
         assertSoftly {
           actual shouldBe expected
@@ -148,11 +136,11 @@ class UssDirNodeTestSpec : ShouldSpec({
 
       should("sort by type descending") {
 
-        val sortQueryKeys = listOf(SortQueryKeys.TYPE, SortQueryKeys.DESCENDING)
+        val sortQueryKeys = listOf(SortQueryKeys.FILE_TYPE, SortQueryKeys.DESCENDING)
         mockkObject(sortQueryKeys)
 
         val expected = listOf(mockedUssDirNodeChild2, mockedUssDirNodeChild1, childNode4, childNode3)
-        val actual = sortChildrenForTest(mockedChildrenNodes, sortQueryKeys).invoke(mockedUssDirNode)
+        val actual = mockedUssDirNode.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
 
         assertSoftly {
           actual shouldBe expected
@@ -161,11 +149,11 @@ class UssDirNodeTestSpec : ShouldSpec({
 
       should("sort by date ascending") {
 
-        val sortQueryKeys = listOf(SortQueryKeys.DATE, SortQueryKeys.ASCENDING)
+        val sortQueryKeys = listOf(SortQueryKeys.FILE_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
         mockkObject(sortQueryKeys)
 
         val expected = listOf(unexpectedNode, childNode4, childNode3, mockedUssDirNodeChild2, mockedUssDirNodeChild1)
-        val actual = sortChildrenForTest(mockedChildrenNodes, sortQueryKeys).invoke(mockedUssDirNode)
+        val actual = mockedUssDirNode.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
 
         assertSoftly {
           actual shouldBe expected
@@ -174,27 +162,26 @@ class UssDirNodeTestSpec : ShouldSpec({
 
       should("sort by date descending") {
 
-        val sortQueryKeys = listOf(SortQueryKeys.DATE, SortQueryKeys.DESCENDING)
+        val sortQueryKeys = listOf(SortQueryKeys.FILE_MODIFICATION_DATE, SortQueryKeys.DESCENDING)
         mockkObject(sortQueryKeys)
 
         val expected = listOf(mockedUssDirNodeChild1, mockedUssDirNodeChild2, childNode3, childNode4, unexpectedNode)
-        val actual = sortChildrenForTest(mockedChildrenNodes, sortQueryKeys).invoke(mockedUssDirNode)
+        val actual = mockedUssDirNode.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
 
         assertSoftly {
           actual shouldBe expected
         }
       }
 
-      should("sort by none key") {
+      should("return unsorted nodes when passing invalid sort key") {
 
-        val sortQueryKeys = listOf(SortQueryKeys.NONE)
+        val sortQueryKeys = listOf(SortQueryKeys.JOB_NAME, SortQueryKeys.DESCENDING)
         mockkObject(sortQueryKeys)
 
-        val expected = listOf(mockedUssDirNodeChild1, mockedUssDirNodeChild2, childNode3, childNode4, unexpectedNode)
-        val actual = sortChildrenForTest(mockedChildrenNodes, sortQueryKeys).invoke(mockedUssDirNode)
+        val actual = mockedUssDirNode.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
 
         assertSoftly {
-          actual shouldBe expected
+          actual shouldBe mockedChildrenNodes
         }
       }
     }

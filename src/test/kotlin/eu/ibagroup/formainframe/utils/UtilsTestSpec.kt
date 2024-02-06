@@ -25,6 +25,7 @@ import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
 import eu.ibagroup.formainframe.config.ws.UssPath
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.UssDirNode
@@ -33,6 +34,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -896,6 +898,58 @@ class UtilsTestSpec : ShouldSpec({
       //then
       assertSoftly {
         actualString shouldBe expectedString
+      }
+    }
+
+    should("return this list cleared and one new element added, given the input list and another list") {
+      //given
+      val receiver = mutableListOf("AAA", "BBB", "CCC")
+      val another = listOf("DDD")
+      val expectedList = listOf("DDD")
+      //when
+      receiver.clearAndMergeWith(another)
+      //then
+      assertSoftly {
+        receiver shouldContainExactly expectedList
+      }
+    }
+
+    should("return this list cleared and new sort key added, given the input list and TYPED sort key to add") {
+      //given
+      val receiver = mutableListOf(SortQueryKeys.JOB_NAME, SortQueryKeys.DESCENDING)
+      val toAdd = SortQueryKeys.JOB_STATUS
+      val expectedList = listOf(SortQueryKeys.DESCENDING, SortQueryKeys.JOB_STATUS)
+      //when
+      receiver.clearOldKeysAndAddNew(toAdd)
+      //then
+      assertSoftly {
+        receiver shouldContainExactly expectedList
+      }
+    }
+
+    should("return this list cleared and new sort key added, given the input list and ORDERING sort key to add") {
+      //given
+      val receiver = mutableListOf(SortQueryKeys.JOB_NAME, SortQueryKeys.DESCENDING)
+      val toAdd = SortQueryKeys.ASCENDING
+      val expectedList = listOf(SortQueryKeys.JOB_NAME, SortQueryKeys.ASCENDING)
+      //when
+      receiver.clearOldKeysAndAddNew(toAdd)
+      //then
+      assertSoftly {
+        receiver shouldContainExactly expectedList
+      }
+    }
+
+    should("return this without modifications, given the input list and null key to add") {
+      //given
+      val receiver = mutableListOf(SortQueryKeys.JOB_NAME, SortQueryKeys.DESCENDING)
+      val toAdd = null
+      val expectedList = listOf(SortQueryKeys.JOB_NAME, SortQueryKeys.DESCENDING)
+      //when
+      receiver.clearOldKeysAndAddNew(toAdd)
+      //then
+      assertSoftly {
+        receiver shouldContainExactly expectedList
       }
     }
   }
