@@ -8,11 +8,13 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.explorer.ui
+package eu.ibagroup.formainframe.dataops
 
-import com.intellij.ide.util.treeView.AbstractTreeNode
+import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
 
 /**
- * interface which represents any USS Node. Extends SortableNode which implements children nodes sorting method
+ * Interface identifies what query is SortableQuery
  */
-interface UssNode : SortableNode
+interface SortableQuery {
+  val sortKeys : List<SortQueryKeys>
+}
