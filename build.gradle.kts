@@ -77,6 +77,10 @@ dependencies {
 
 intellij {
   version.set("2023.1")
+  // !Development only!
+  // downloadSources.set(true)
+  // In Settings | Advanced Settings enable option Download sources in section Build Tools. Gradle.
+  // Then invoke Reload All Gradle Projects action from the Gradle tool window.
 }
 
 tasks {
