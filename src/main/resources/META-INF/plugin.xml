@@ -14,7 +14,7 @@
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
-Zowe Explorer for IntelliJ IDEA is an <a href="https://ibagroupit.com/?utm_campaign=IBA_W-Mainframe&utm_source=JetBrains&utm_medium=referral&utm_content=description_zowe_explorer">IBA Group</a>-developed open-source plugin that gives access to mainframes from a modern IDE.
+Zowe Explorer for IntelliJ IDEA is an open-source plugin by the <a href="https://github.com/zowe/community">Zowe Community</a> which gives access to mainframes from a modern IDE.
 With the help of the plugin, developers can work with mainframes through a modern interface, using a single toolbar, structured trees, and drag-and-drop operations.
 The solution suits those who need to work with z/OS datasets, USS files, and Jobs from the IntelliJ IDEA.
 <br/>
@@ -53,6 +53,9 @@ Feel free to recommend or report everything on our <a href="https://github.com/z
 Join us in <a href="https://openmainframeproject.slack.com/archives/C020BGPSU0M">Slack</a>
 <br/>
 About us:<br/>
+Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible open source framework for z/OS that combines the past and present to build the future of mainframes. The Zowe Explorer for Intellij IDEA is developed by the <a href="https://github.com/zowe/community">Zowe community</a>, and you can visit the <a href="https://zowe.org">Zowe website</a> to learn more about Zowe. Contributing to the Zowe Explorer for Intellij IDEA is the <a href="https://ibagroupit.com/?utm_campaign=IBA_W-Mainframe&utm_source=JetBrains&utm_medium=referral&utm_content=description_zowe_explorer">IBA Group</a>, and other contributors to Zowe community projects include Broadcom, IBM, and Rocket Software.
+
+About the IBA Group:
 With over 30 years of experience in the mainframe domain, IBA Group is committed to maximizing your mainframe investment and enhancing your IT flexibility.
 One of the services we offer is Mainframe DevOps. Our approach is highly flexible, as we work with customers to choose the essential toolset for establishing a pipeline based on their preferences, existing tools, and the latest open-source opportunities (such as Zowe and plugins).
 <br/>
