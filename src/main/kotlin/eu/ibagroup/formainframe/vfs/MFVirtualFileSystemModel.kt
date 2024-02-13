@@ -148,8 +148,8 @@ class MFVirtualFileSystemModel {
     return FilteringBFSIterator(fsGraph, root) { v, e ->
       v.validReadLock(false) {
         (pointerIndex < pathElements.size
-          && e.type == FSEdgeType.DIR
-          && pathElements[pointerIndex] == v.name)
+            && e.type == FSEdgeType.DIR
+            && pathElements[pointerIndex] == v.name)
           .also { successful ->
             if (successful) ++pointerIndex
           }
@@ -158,11 +158,12 @@ class MFVirtualFileSystemModel {
   }
 
   /**
-   * Find the mainframe virtual file by provided path
+   * Find the mainframe virtual file by provided path. Usually, the path is a URL string with "/" at the end,
+   * so the filter is used to remove empty element at the end
    * @param path string path to search for the virtual file
    */
   fun findFileByPath(path: String): MFVirtualFile? {
-    val pathElements = path.formatPath().split(MFVirtualFileSystem.SEPARATOR)
+    val pathElements = path.formatPath().split(MFVirtualFileSystem.SEPARATOR).filter(String::isEmpty)
     return findFileByPath(pathElements)
   }
 
@@ -635,7 +636,7 @@ class MFVirtualFileSystemModel {
               }
             }
             try {
-            sendVfsChangesTopic().after(event)
+              sendVfsChangesTopic().after(event)
             } catch (ignored: InvalidPathException) {
               log.warn(ignored)
             }
@@ -750,13 +751,14 @@ class MFVirtualFileSystemModel {
 
   private fun String.formatPath(): String {
     val separator = MFVirtualFileSystem.SEPARATOR
-    return replace(Regex("$separator+"), separator).let {
-      if (it.startsWith(separator)) {
-        it.substringAfter(separator)
-      } else {
-        it
+    return replace(Regex("$separator+"), separator)
+      .let {
+        if (it.startsWith(separator)) {
+          it.substringAfter(separator)
+        } else {
+          it
+        }
       }
-    }
   }
 
   fun findFileByPathIfCached(path: String): MFVirtualFile? {
