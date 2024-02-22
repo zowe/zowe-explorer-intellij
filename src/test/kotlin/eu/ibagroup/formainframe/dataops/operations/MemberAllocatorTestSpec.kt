@@ -44,7 +44,7 @@ class MemberAllocatorTestSpec : WithApplicationShouldSpec({
       every { connectionConfig.authToken } returns "auth_token"
       val memberAllocationParams = mockk<MemberAllocationParams>()
       val memberAllocationOperation = mockk<MemberAllocationOperation>()
-      every { memberAllocationParams.memberName } returns "TEST"
+      every { memberAllocationParams.memberName } returns "test"
       every { memberAllocationParams.datasetName } returns "ZOSMFAD.TEST"
       every { memberAllocationOperation.request } returns memberAllocationParams
       every { memberAllocationOperation.connectionConfig } returns connectionConfig

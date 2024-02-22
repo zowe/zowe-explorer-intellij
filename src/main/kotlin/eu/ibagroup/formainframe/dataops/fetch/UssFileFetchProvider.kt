@@ -19,6 +19,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.exceptions.responseMessageMap
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -91,7 +92,8 @@ class UssFileFetchProvider(
         attributes?.joinToString("\n") ?: ""
       }
     } else {
-      exception = CallException(response, "Cannot retrieve USS files list")
+      val headMessage = responseMessageMap[response.message()] ?: "Cannot retrieve USS files list"
+      exception = CallException(response, headMessage)
     }
 
     if (exception != null) {

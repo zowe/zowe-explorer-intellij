@@ -19,6 +19,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
+import io.ktor.util.*
 import org.zowe.kotlinsdk.DataAPI
 
 /**
@@ -59,7 +60,8 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
-    val memberAllocationErrorString = "Cannot create member ${operation.request.memberName} in ${operation.request.datasetName} " +
+    val newMemberName = operation.request.memberName.toUpperCasePreservingASCIIRules()
+    val memberAllocationErrorString = "Cannot create member $newMemberName in ${operation.request.datasetName} " +
         "on ${operation.connectionConfig.name}."
     val listMembersRequest = api<DataAPI>(operation.connectionConfig).listDatasetMembers(
       authorizationToken = operation.connectionConfig.authToken,
@@ -67,17 +69,17 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
     ).cancelByIndicator(progressIndicator).execute()
     if (listMembersRequest.isSuccessful) {
       val membersList = listMembersRequest.body()
-      val duplicateMember = membersList?.items?.map { it.name }?.find { it == operation.request.memberName }
+      val duplicateMember = membersList?.items?.map { it.name.toUpperCasePreservingASCIIRules() }?.find { it == newMemberName }
       if (duplicateMember != null) {
         throw CallException(
           listMembersRequest,
-          "$memberAllocationErrorString Member with name ${operation.request.memberName} already exists."
+          "$memberAllocationErrorString Member with name $newMemberName already exists."
         )
       } else {
         val writeRequest = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
           authorizationToken = operation.connectionConfig.authToken,
           datasetName = operation.request.datasetName,
-          memberName = operation.request.memberName,
+          memberName = newMemberName,
           content = byteArrayOf()
         ).cancelByIndicator(progressIndicator).execute()
         if (!writeRequest.isSuccessful) {

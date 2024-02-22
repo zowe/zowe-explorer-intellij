@@ -24,6 +24,7 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import java.awt.IllegalComponentStateException
 import java.awt.event.FocusEvent
 import javax.swing.SwingUtilities
 
@@ -42,10 +43,19 @@ class FileEditorFocusListener: FocusChangeListener {
     val mouseClickInEditor = editor.component.isComponentUnderMouse()
     if (!mouseClickInEditor) {
       event.oppositeComponent?.let { focusedComponent ->
-        val point = focusedComponent.locationOnScreen
-        SwingUtilities.convertPointFromScreen(point, editor.component)
-        if (editor.component.contains(point)) {
-          return
+        try {
+          val point = focusedComponent.locationOnScreen
+          SwingUtilities.convertPointFromScreen(point, editor.component)
+          if (editor.component.contains(point)) {
+            return
+          }
+        } catch (e : IllegalComponentStateException) {
+          val diagnosticMessage = "Error happened while dispatching focusLost event. Content will be synchronized anyway.\n" +
+              "Diagnostic info:\n" + "Editor component name: ${editor.component.name}\n" + "Focused component name: ${focusedComponent.name}\n" +
+                  "Focused component location on screen: x coordinate is ${focusedComponent.location.x}, y coordinate is ${focusedComponent.location.y}.\n" +
+                  "isShowing: ${focusedComponent.isShowing}\n"
+          log<FileEditorFocusListener>().error(diagnosticMessage, e)
+          return@let
         }
       }
       if (ConfigService.instance.isAutoSyncEnabled) {
