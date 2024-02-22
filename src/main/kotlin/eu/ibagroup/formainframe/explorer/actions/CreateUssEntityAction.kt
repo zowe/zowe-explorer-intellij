@@ -175,8 +175,12 @@ abstract class CreateUssEntityAction : AnAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val selected = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible =
-      selected.size == 1 && (selected[0].node is UssDirNode || selected[0].node is UssFileNode)
+    val selectedNodes = view.mySelectedNodesData
+    val node = selectedNodes.getOrNull(0)?.node
+    e.presentation.isEnabledAndVisible = node is UssDirNode || node is UssFileNode
+
+    if (node.castOrNull<ExplorerUnitTreeNodeBase<*, *, *>>()?.unit?.connectionConfig == null) {
+      e.presentation.isEnabled = false
+    }
   }
 }
