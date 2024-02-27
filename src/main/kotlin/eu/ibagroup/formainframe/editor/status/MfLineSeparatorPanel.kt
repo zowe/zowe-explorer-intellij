@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.editor.status
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
@@ -49,6 +50,11 @@ class MfLineSeparatorPanel(project: Project): LineSeparatorPanel(project) {
   /** Widget is not enabled for all MF files except USS files. */
   override fun isEnabledForFile(file: VirtualFile?): Boolean {
     if (file != null && file.isMfVirtualFile() && !file.isUssVirtualFile()) {
+      return false
+    }
+    // need to disable changing line separator when more than one project is open
+    // see https://youtrack.jetbrains.com/issue/IDEA-346634/
+    if (ProjectManager.getInstance().openProjects.size > 1) {
       return false
     }
     return super.isEnabledForFile(file)

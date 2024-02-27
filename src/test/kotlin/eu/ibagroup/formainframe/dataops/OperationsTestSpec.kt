@@ -11,10 +11,10 @@
 package eu.ibagroup.formainframe.dataops
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.LineSeparator
 import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
@@ -29,7 +29,6 @@ import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.dataops.attributes.UssRequester
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
-import eu.ibagroup.formainframe.dataops.content.synchronizer.LF_LINE_SEPARATOR
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMover
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
@@ -37,10 +36,7 @@ import eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMover
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.changeFileEncodingTo
-import eu.ibagroup.formainframe.utils.service
-import eu.ibagroup.formainframe.utils.setUssFileTag
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -136,7 +132,7 @@ class OperationsTestSpec : WithApplicationShouldSpec({
       val virtualFileMockk = mockk<VirtualFile>()
       val charsetMockk = mockk<Charset>()
       every { virtualFileMockk.charset } returns charsetMockk
-      every { virtualFileMockk.detectedLineSeparator } returns LF_LINE_SEPARATOR
+      every { virtualFileMockk.detectedLineSeparator } returns LineSeparator.LF.separatorString
 
       var encodingChanged = false
       var lineSeparatorChanged = false
@@ -146,16 +142,15 @@ class OperationsTestSpec : WithApplicationShouldSpec({
         lineSeparatorChanged = false
 
         mockkStatic(LocalFileSystem::getInstance)
-        every { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileMockk) } returns mockk()
-
-        mockkStatic(::changeFileEncodingTo)
-        every { changeFileEncodingTo(any(), charsetMockk) } answers {
-          encodingChanged = true
+        every { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileMockk) } returns mockk {
+          every { detectedLineSeparator = any<String>() } answers {
+            lineSeparatorChanged = true
+          }
         }
 
-        mockkStatic(LoadTextUtil::changeLineSeparators)
-        every { LoadTextUtil.changeLineSeparators(null, any(), LF_LINE_SEPARATOR, any()) } answers {
-          lineSeparatorChanged = true
+        mockkStatic(::changeEncodingTo)
+        every { changeEncodingTo(any(), charsetMockk) } answers {
+          encodingChanged = true
         }
       }
       afterEach {

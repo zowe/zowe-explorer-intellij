@@ -17,7 +17,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicGetJclRecordsParams
@@ -25,7 +24,6 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperation
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JobNode
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
-import eu.ibagroup.formainframe.utils.changeFileEncodingTo
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -84,14 +82,12 @@ class EditJclAction : AnAction() {
                     DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(e.project))
                   if (!wasCreatedBefore) {
                     syncProvider.putInitialContent(jclContentBytes)
-                    changeFileEncodingTo(cachedFile, DEFAULT_TEXT_CHARSET)
                   } else {
                     val currentContent = syncProvider.retrieveCurrentContent()
                     if (!(currentContent contentEquals jclContentBytes)) {
                       syncProvider.loadNewContent(jclContentBytes)
                     }
                   }
-                  syncProvider.saveDocument()
                   it.navigate(true)
                 }
               }
