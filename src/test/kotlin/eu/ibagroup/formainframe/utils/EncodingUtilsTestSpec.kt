@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
@@ -80,13 +79,17 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     every { virtualFileMock.name } returns "fileName"
     every { virtualFileMock.charset = charsetMock } returns Unit
     every { virtualFileMock.charset } returns charsetMock
+    every { virtualFileMock.getOutputStream(null) } returns mockk {
+      every { close() } returns Unit
+      every { write(any<ByteArray>()) } returns Unit
+    }
 
     mockkConstructor(DocumentedSyncProvider::class)
     every { anyConstructed<DocumentedSyncProvider>().saveDocument() } returns Unit
-
-    val documentMockk = mockk<Document>()
+    every { anyConstructed<DocumentedSyncProvider>().loadNewContent(any<ByteArray>()) } returns Unit
     every { anyConstructed<DocumentedSyncProvider>().retrieveCurrentContent() } returns bytes
 
+    val documentMockk = mockk<Document>()
     every { documentMockk.text } returns text
     every { documentMockk.modificationStamp } returns 0L
 
@@ -99,10 +102,6 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
         }
       }
     }
-
-    mockkStatic(LoadTextUtil::class)
-    every { LoadTextUtil.write(any(), virtualFileMock, virtualFileMock, any(), any()) } returns Unit
-    every { LoadTextUtil.getTextByBinaryPresentation(bytes, virtualFileMock) } returns text
 
     val decoderMock = mockk<CharsetDecoder>()
     every { charsetMock.newDecoder() } returns decoderMock
@@ -186,9 +185,9 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       assertSoftly { isEncodingSet shouldBe true }
     }
-    // changeFileEncodingTo
+    // changeEncodingTo
     should("change file encoding to new one") {
-      changeFileEncodingTo(virtualFileMock, charsetMock)
+      changeEncodingTo(virtualFileMock, charsetMock)
 
       assertSoftly { isEncodingSet shouldBe true }
     }
@@ -294,7 +293,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns ChangeEncodingDialog.RELOAD_EXIT_CODE
 
-      val actual = changeFileEncodingAction(virtualFileMock, attributesMock, charsetMock)
+      val actual = changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
 
       assertSoftly { actual shouldBe true }
     }
@@ -304,7 +303,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns ChangeEncodingDialog.CONVERT_EXIT_CODE
 
-      val actual = changeFileEncodingAction(virtualFileMock, attributesMock, charsetMock)
+      val actual = changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
 
       assertSoftly { actual shouldBe true }
     }
@@ -314,7 +313,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns 1
 
-      val actual = changeFileEncodingAction(virtualFileMock, attributesMock, charsetMock)
+      val actual = changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
 
       assertSoftly { actual shouldBe false }
     }

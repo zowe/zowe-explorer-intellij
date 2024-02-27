@@ -145,12 +145,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       progressIndicator?.text = "Synchronizing file ${syncProvider.file.name} with mainframe"
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
-
       val ussAttributes = attributes.castOrNull<RemoteUssAttributes>()
-      if (!wasFetchedBefore(syncProvider)) {
-        ussAttributes?.let { checkUssFileTag(it) }
-      }
-      val currentCharset = ussAttributes?.charset ?: DEFAULT_TEXT_CHARSET
 
       val fetchedRemoteContentBytes = fetchRemoteContentBytes(attributes, progressIndicator)
       val contentAdapter = dataOpsManager.getMFContentAdapter(syncProvider.file)
@@ -158,9 +153,8 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
 
       if (!wasFetchedBefore(syncProvider)) {
         log.info("Setting initial content for file ${syncProvider.file.name}")
+        ussAttributes?.let { checkUssFileTag(it) }
         runWriteActionInEdtAndWait { syncProvider.putInitialContent(adaptedFetchedBytes) }
-        changeFileEncodingTo(syncProvider.file, currentCharset)
-        initLineSeparator(syncProvider)
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
         fetchedAtLeastOnce.add(syncProvider)
       } else {

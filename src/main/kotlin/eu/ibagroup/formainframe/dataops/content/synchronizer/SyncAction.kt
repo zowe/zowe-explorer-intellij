@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
@@ -64,7 +63,6 @@ class SyncAction : DumbAwareAction() {
     val vFile = getSupportedVirtualFile(e) ?: return
     val incompatibleEncoding = e.project?.let { !checkEncodingCompatibility(vFile, it) } ?: false
     if (incompatibleEncoding && !showSaveAnywayDialog(vFile.charset)) return
-    val editor = getEditor(e) ?: return
     val syncProvider = DocumentedSyncProvider(vFile, SaveStrategy.default(e.project))
     runBackgroundableTask(
       title = "Synchronizing ${vFile.name}...",
@@ -72,7 +70,7 @@ class SyncAction : DumbAwareAction() {
       cancellable = true
     ) { indicator ->
       runWriteActionInEdtAndWait {
-        FileDocumentManager.getInstance().saveDocument(editor.document)
+        syncProvider.saveDocument()
         service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
       }
     }
