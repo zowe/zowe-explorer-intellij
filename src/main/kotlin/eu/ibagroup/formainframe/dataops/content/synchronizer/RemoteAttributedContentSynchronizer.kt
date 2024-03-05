@@ -204,4 +204,11 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   override fun isFileUploadNeeded(syncProvider: SyncProvider): Boolean {
     return needToUpload.firstOrNull { syncProvider == it } != null
   }
+
+  /**
+   * Base implementation of [ContentSynchronizer.markAsNotNeededForSync] method for each content synchronizer.
+   */
+  override fun markAsNotNeededForSync(syncProvider: SyncProvider) {
+    needToUpload.remove(syncProvider)
+  }
 }
