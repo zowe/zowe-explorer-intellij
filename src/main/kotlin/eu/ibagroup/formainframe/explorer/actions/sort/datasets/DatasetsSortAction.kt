@@ -8,37 +8,33 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.explorer.actions.sort.jobs
+package eu.ibagroup.formainframe.explorer.actions.sort.datasets
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
 import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
 import eu.ibagroup.formainframe.explorer.actions.sort.SortAction
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
-import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
-import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clearAndMergeWith
 import eu.ibagroup.formainframe.utils.clearOldKeysAndAddNew
 
-class JobsSortAction : SortAction<JesFilterNode>() {
-  override fun getSourceView(e: AnActionEvent): JesExplorerView? {
+class DatasetsSortAction : SortAction<DSMaskNode>() {
+  override fun getSourceView(e: AnActionEvent): FileExplorerView? {
     return e.getExplorerView()
   }
 
-  override fun getSourceNode(view: ExplorerTreeView<*, *, *>): JesFilterNode? {
+  override fun getSourceNode(view: ExplorerTreeView<*, *, *>): DSMaskNode? {
     return view.mySelectedNodesData[0].node.castOrNull()
   }
 
-  override fun shouldEnableSortKeyForNode(selectedNode: JesFilterNode, sortKey: SortQueryKeys): Boolean {
+  override fun shouldEnableSortKeyForNode(selectedNode: DSMaskNode, sortKey: SortQueryKeys): Boolean {
     return selectedNode.currentSortQueryKeysList.contains(sortKey)
   }
 
-  override fun performQueryUpdateForNode(selectedNode: JesFilterNode, sortKey: SortQueryKeys) {
-    val queryToUpdate = selectedNode.query as UnitRemoteQueryImpl
+  override fun performQueryUpdateForNode(selectedNode: DSMaskNode, sortKey: SortQueryKeys) {
+    val queryToUpdate = selectedNode.query as BatchedRemoteQuery
     selectedNode.currentSortQueryKeysList.clearOldKeysAndAddNew(sortKey)
     queryToUpdate.sortKeys.clearAndMergeWith(selectedNode.currentSortQueryKeysList)
   }
-
 }

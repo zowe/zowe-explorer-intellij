@@ -30,7 +30,6 @@ data class UnitRemoteQueryImpl<Connection: ConnectionConfigBase, R>(
     get() = when(request) {
       is UssQuery -> mutableListOf(SortQueryKeys.FILE_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
       is JobsFilter -> mutableListOf(SortQueryKeys.JOB_CREATION_DATE, SortQueryKeys.ASCENDING)
-      // TODO: Add sort query keys for other queries when implemented
       else -> mutableListOf()
     }
 }

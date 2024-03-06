@@ -8,21 +8,22 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.explorer.actions.sort.uss
+package eu.ibagroup.formainframe.explorer.actions.sort.members
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.explorer.actions.sort.SortActionGroup
 import eu.ibagroup.formainframe.explorer.ui.*
 
 /**
- * Represents the custom USS files sort action group in the FileExplorerView context menu
+ * Represents the custom members sort action group in the FileExplorerView context menu
  */
-class UssSortActionGroup : SortActionGroup() {
+class MembersSortActionGroup : SortActionGroup() {
   override fun getSourceView(e: AnActionEvent): FileExplorerView? {
     return e.getExplorerView()
   }
 
   override fun checkNode(node: ExplorerTreeNode<*, *>): Boolean {
-    return node is UssDirNode
+    return node is LibraryNode
   }
+
 }

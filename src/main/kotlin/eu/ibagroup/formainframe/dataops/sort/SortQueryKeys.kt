@@ -16,6 +16,11 @@ enum class SortQueryKeys(private val sortType: String) {
   FILE_NAME("uss_file_name"),
   FILE_TYPE("uss_type"),
   FILE_MODIFICATION_DATE("uss_modification_date"),
+  DATASET_NAME("dataset_name"),
+  DATASET_TYPE("dataset_type"),
+  DATASET_MODIFICATION_DATE("dataset_modification_date"),
+  MEMBER_NAME("member_name"),
+  MEMBER_MODIFICATION_DATE("member_modification_date"),
   JOB_NAME("Job Name"),
   JOB_CREATION_DATE("Job Creation Date"),
   JOB_COMPLETION_DATE("Job Completion Date"),
@@ -31,7 +36,9 @@ enum class SortQueryKeys(private val sortType: String) {
 }
 
 val typedSortKeys : List<SortQueryKeys> by lazy {
-  return@lazy listOf(SortQueryKeys.FILE_NAME, SortQueryKeys.FILE_TYPE, SortQueryKeys.FILE_MODIFICATION_DATE, SortQueryKeys.JOB_NAME, SortQueryKeys.JOB_ID, SortQueryKeys.JOB_OWNER, SortQueryKeys.JOB_STATUS, SortQueryKeys.JOB_CREATION_DATE, SortQueryKeys.JOB_COMPLETION_DATE)
+  return@lazy listOf(SortQueryKeys.FILE_NAME, SortQueryKeys.FILE_TYPE, SortQueryKeys.FILE_MODIFICATION_DATE, SortQueryKeys.JOB_NAME,
+    SortQueryKeys.JOB_ID, SortQueryKeys.JOB_OWNER, SortQueryKeys.JOB_STATUS, SortQueryKeys.JOB_CREATION_DATE, SortQueryKeys.JOB_COMPLETION_DATE,
+    SortQueryKeys.DATASET_NAME, SortQueryKeys.DATASET_TYPE, SortQueryKeys.DATASET_MODIFICATION_DATE, SortQueryKeys.MEMBER_NAME, SortQueryKeys.MEMBER_MODIFICATION_DATE)
 }
 
 val orderingSortKeys : List<SortQueryKeys> by lazy {

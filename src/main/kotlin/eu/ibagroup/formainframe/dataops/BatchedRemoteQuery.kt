@@ -11,6 +11,11 @@
 package eu.ibagroup.formainframe.dataops
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.ws.DSMask
+import eu.ibagroup.formainframe.config.ws.JobsFilter
+import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
+import eu.ibagroup.formainframe.dataops.fetch.UssQuery
+import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
 /**
@@ -30,9 +35,16 @@ class BatchedRemoteQuery<R>(
   var alreadyFetched: Int = 0,
   var start: String? = null,
   var fetchNeeded: Boolean = true
-): RemoteQuery<ConnectionConfig, R, Unit> {
+): RemoteQuery<ConnectionConfig, R, Unit>, SortableQuery {
   override val resultClass: Class<out Unit>
     get() = UNIT_CLASS
+
+  override val sortKeys: List<SortQueryKeys>
+    get() = when(request) {
+      is DSMask -> mutableListOf(SortQueryKeys.DATASET_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
+      is LibraryQuery -> mutableListOf(SortQueryKeys.MEMBER_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
+      else -> mutableListOf()
+    }
 
   /**
    * Sets default values for params that identify current state of fetching.

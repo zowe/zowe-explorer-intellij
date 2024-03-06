@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer.actions.sort.jobs
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.Presentation
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.JobsFilter
@@ -23,6 +24,7 @@ import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import javax.swing.tree.TreePath
 
@@ -61,6 +63,43 @@ class JobsSortActionGroupTestSpec : WithApplicationShouldSpec({
     val mockedNodeDataForTest = NodeData(mockedJesFilterNode, mockedMFVirtualFile, mockedJobRemoteAttributes)
     mockkObject(mockedNodeDataForTest)
 
+    should("shouldReturnExplorerView_whenGetExplorerView_givenActionEvent") {
+      every { mockedActionEvent.getData(any() as DataKey<JesExplorerView>) } returns mockedFileExplorerView
+      val actualExplorer = classUnderTest.getSourceView(mockedActionEvent)
+
+      assertSoftly {
+        actualExplorer shouldNotBe null
+        actualExplorer is JesExplorerView
+      }
+    }
+
+    should("shouldReturnTrue_whenCheckNode_givenJesFilterNode") {
+      val nodeMock = mockk<JesFilterNode>()
+      val checkNode = classUnderTest.checkNode(nodeMock)
+
+      assertSoftly {
+        checkNode shouldBe true
+      }
+    }
+
+    should("shouldReturnNull_whenGetExplorerView_givenActionEvent") {
+      every { mockedActionEvent.getData(any() as DataKey<JesExplorerView>) } returns null
+      val actualExplorer = classUnderTest.getSourceView(mockedActionEvent)
+
+      assertSoftly {
+        actualExplorer shouldBe null
+      }
+    }
+
+    should("shouldReturnFalse_whenCheckNode_givenWrongNode") {
+      val nodeMock = mockk<DSMaskNode>()
+      val checkNode = classUnderTest.checkNode(nodeMock)
+
+      assertSoftly {
+        checkNode shouldBe false
+      }
+    }
+
     should("is visible from context menu if file explorer view is null") {
       var isVisible = true
       every { mockedActionEvent.getExplorerView<JesExplorerView>() } answers {
@@ -82,6 +121,7 @@ class JobsSortActionGroupTestSpec : WithApplicationShouldSpec({
         isVisible = false
         listOf(mockedNodeDataNotJesFilterForTest)
       }
+      every { mockedFileExplorerView.myTree.isExpanded(selectionPath) } returns true
       every { mockedActionEvent.getExplorerView<JesExplorerView>() } returns mockedFileExplorerView
 
       classUnderTest.update(mockedActionEvent)
