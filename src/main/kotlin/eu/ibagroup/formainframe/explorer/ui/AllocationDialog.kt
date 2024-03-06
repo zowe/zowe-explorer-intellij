@@ -85,7 +85,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .bindText(state::datasetName)
           .also {
             datasetNameField = it.component
-            datasetNameField.text = "${HLQ}.<CHANGEME>"
+            datasetNameField.text.ifEmpty { datasetNameField.text = "${HLQ}.<CHANGEME>" }
           }
           .onApply { state.datasetName = state.datasetName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -98,7 +98,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .bindText(state::memberName)
           .also {
             memberNameField = it.component
-            memberNameField.text = "SAMPLE"
+            memberNameField.text.ifEmpty { memberNameField.text = "SAMPLE" }
           }
           .onApply { state.memberName = state.memberName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -301,7 +301,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
    */
   private fun doPresetAssignment(preset: Presets) {
     val dataContainer = Presets.initDataClass(preset)
-    memberNameField.text = "SAMPLE"
+    memberNameField.text.ifEmpty { memberNameField.text = "SAMPLE" }
     datasetOrganizationBox.selectedItem = dataContainer.datasetOrganization
     spaceUnitBox.selectedItem = dataContainer.spaceUnit
     primaryAllocationField.text = dataContainer.primaryAllocation.toString()
