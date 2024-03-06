@@ -10,40 +10,20 @@
 
 package eu.ibagroup.formainframe.explorer.actions.sort.jobs
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
-import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.actions.sort.SortActionGroup
+import eu.ibagroup.formainframe.explorer.ui.*
 
 /**
  * Represents the custom Jobs sort action group in the JesExplorerView context menu
  */
-class JobsSortActionGroup : DefaultActionGroup() {
-
-  /**
-   * Update method to determine if sorting is possible for particular item in the tree
-   */
-  override fun update(e: AnActionEvent) {
-    val view = e.getExplorerView<JesExplorerView>()
-    view ?: let {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-    val selectedNodes = view.mySelectedNodesData
-    val treePathFromModel = view.myTree.selectionPath
-    e.presentation.apply {
-      isEnabledAndVisible = selectedNodes.size == 1 && selectedNodes.any {
-        it.node is JesFilterNode && view.myTree.isExpanded(treePathFromModel)
-      }
-    }
+class JobsSortActionGroup : SortActionGroup() {
+  override fun getSourceView(e: AnActionEvent): JesExplorerView? {
+    return e.getExplorerView()
   }
 
-  /**
-   * Tells that only UI component is affected
-   */
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+  override fun checkNode(node: ExplorerTreeNode<*, *>): Boolean {
+    return node is JesFilterNode
   }
+
 }
