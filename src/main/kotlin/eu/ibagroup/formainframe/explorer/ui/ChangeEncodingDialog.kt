@@ -13,6 +13,8 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
@@ -35,6 +37,7 @@ import javax.swing.JLabel
 
 /** Class that represent dialog for changing file encoding. */
 class ChangeEncodingDialog(
+  private val project: Project?,
   private val virtualFile: VirtualFile,
   private val attributes: RemoteUssAttributes,
   private val charset: Charset,
@@ -97,7 +100,7 @@ class ChangeEncodingDialog(
         }
         attributes.charset = charset
         updateFileTag(attributes)
-        reloadIn(null, virtualFile, charset)
+        reloadIn(project, virtualFile, charset)
         close(RELOAD_EXIT_CODE)
       }
     }
@@ -106,6 +109,7 @@ class ChangeEncodingDialog(
     }
     actions.add(reloadAction)
     reloadAction.putValue(Action.MNEMONIC_KEY, 'R'.code)
+    val severalProjectsOpen = ProjectManager.getInstance().openProjects.size > 1
     val convertAction = object : DialogWrapperAction(IdeBundle.message("button.convert")) {
       override fun doAction(e: ActionEvent?) {
         if (safeToConvert == Magic8.NO_WAY && !showConvertAnywayDialog()) {
@@ -114,12 +118,22 @@ class ChangeEncodingDialog(
         }
         attributes.charset = charset
         updateFileTag(attributes)
-        saveIn(null, virtualFile, charset)
+        saveIn(project, virtualFile, charset)
         close(CONVERT_EXIT_CODE)
       }
+
+      override fun isEnabled(): Boolean {
+        // need to disable encoding conversion when more than one project is open
+        // see https://youtrack.jetbrains.com/issue/IDEA-346634/
+        return !severalProjectsOpen
+      }
     }
-    if (!SystemInfo.isMac && safeToConvert == Magic8.NO_WAY) {
+    if (!SystemInfo.isMac && convertAction.isEnabled && safeToConvert == Magic8.NO_WAY) {
       convertAction.putValue(Action.SMALL_ICON, AllIcons.General.Warning)
+    }
+    if (severalProjectsOpen) {
+      val tooltipText = message("encoding.convert.button.error.tooltip")
+      convertAction.putValue(Action.SHORT_DESCRIPTION, tooltipText)
     }
     if (possibleToConvert) {
       actions.add(convertAction)

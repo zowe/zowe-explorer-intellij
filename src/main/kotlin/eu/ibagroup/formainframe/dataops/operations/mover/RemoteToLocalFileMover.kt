@@ -9,21 +9,17 @@
  */
 package eu.ibagroup.formainframe.dataops.operations.mover
 
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
+import com.intellij.util.LineSeparator
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
-import eu.ibagroup.formainframe.dataops.content.synchronizer.LF_LINE_SEPARATOR
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
-import eu.ibagroup.formainframe.utils.changeFileEncodingTo
-import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.XIBMDataType
 import java.io.File
@@ -99,10 +95,10 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       }
     }
     val createdFileJava = Paths.get(destFile.path, newFileName).toFile().apply { createNewFile() }
-    createdFileJava.writeBytes(sourceContent)
     if (!sourceFile.fileType.isBinary) {
       setCreatedFileParams(createdFileJava, sourceFile)
     }
+    createdFileJava.writeBytes(sourceContent)
     runReadActionInEdtAndWait {
       destFile.refresh(false, false)
     }
@@ -117,11 +113,9 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
   private fun setCreatedFileParams(createdFileJava: File, sourceFile: VirtualFile) {
     val createdVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createdFileJava)
     createdVirtualFile?.let {
-      changeFileEncodingTo(it, sourceFile.charset)
-      val lineSeparator = sourceFile.detectedLineSeparator ?: LF_LINE_SEPARATOR
-      runWriteActionInEdtAndWait {
-        LoadTextUtil.changeLineSeparators(null, it, lineSeparator, it)
-      }
+      val lineSeparator = sourceFile.detectedLineSeparator ?: LineSeparator.LF.separatorString
+      it.detectedLineSeparator = lineSeparator
+      runWriteActionInEdtAndWait { changeEncodingTo(it, sourceFile.charset) }
     }
   }
 

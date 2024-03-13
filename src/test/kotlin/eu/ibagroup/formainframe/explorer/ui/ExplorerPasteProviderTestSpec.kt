@@ -299,6 +299,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedSourceAttributes.isDirectory } returns false
         every { mockedSourceNodeData.node } returns mockedSourceNode
         every { mockedSourceNodeData.file } returns mockedSourceFile
+        every { mockedSourceFile.isInLocalFileSystem } returns false
         every { mockedSourceNodeData.attributes } returns mockedSourceAttributes
 
         // children of target
@@ -394,6 +395,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val mockedSourceFile = mockk<MFVirtualFile>()
         val mockedSourceAttributes = mockk<RemoteDatasetAttributes>()
         every { mockedSourceFile.name } returns "TEST.FILE"
+        every { mockedSourceFile.isInLocalFileSystem } returns false
         every { mockedSourceAttributes.name } returns "TEST.FILE"
         every { mockedSourceAttributes.isPastePossible } returns false
         every { mockedSourceAttributes.isDirectory } returns false
@@ -1251,6 +1253,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           every { mockedSourceFile.name } returns fileName
           every { mockedSourceFile.isDirectory } returns isDirectory
           every { mockedSourceFile.parent } returns parent
+          every { mockedSourceFile.isInLocalFileSystem } returns false
 
           val mockedSourceAttributes = if (sourceAttributes != null) {
             sourceAttributes
