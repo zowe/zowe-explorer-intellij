@@ -324,7 +324,7 @@ class ExplorerPasteProvider : PasteProvider {
 
       // conflicts end
       // specific configs resolution
-      val ussToPdsWarnings = pasteDestinations
+      val ussOrLocalFileToPdsWarnings = pasteDestinations
         .mapNotNull { destFile ->
           val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
           if (destAttributes !is RemoteDatasetAttributes) null
@@ -332,27 +332,28 @@ class ExplorerPasteProvider : PasteProvider {
             val sourceUssAttributes = sourceFiles
               .filter { sourceFile ->
                 val sourceAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
-                sourceAttributes is RemoteUssAttributes || sourceFile is VirtualFileImpl
+                sourceAttributes is RemoteUssAttributes || sourceFile.isInLocalFileSystem
               }
             sourceUssAttributes.map { Pair(destFile, it) }.ifEmpty { null }
           }
         }
         .flatten()
 
-      if (
-        ussToPdsWarnings.isNotEmpty() &&
-        !showYesNoDialog(
-          "USS File To PDS Placing",
-          "You are about to place USS file to PDS. All lines exceeding the record length will be truncated.",
-          null,
-          "Ok",
-          "Skip This Files",
-          AllIcons.General.WarningDialog
-        )
-      ) {
-        conflictsResolutions.addAll(
-          ussToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
-        )
+      if (ussOrLocalFileToPdsWarnings.isNotEmpty()) {
+        val isLocalFilesPresent = ussOrLocalFileToPdsWarnings.find { it.second.isInLocalFileSystem } != null
+        val fileTypesPattern = if (isLocalFilesPresent) "Local Files" else "USS Files"
+        if (!showYesNoDialog(
+            "$fileTypesPattern to PDS Placing",
+            "You are about to place $fileTypesPattern to PDS. All lines exceeding the record length will be truncated.",
+            null,
+            "Ok",
+            "Skip This Files",
+            AllIcons.General.WarningDialog
+          )) {
+          conflictsResolutions.addAll(
+            ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
+          )
+        }
       }
       // specific conflicts resolution end
 
