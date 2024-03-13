@@ -12,8 +12,8 @@ import kotlinx.kover.api.KoverTaskExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  id("org.jetbrains.intellij") version "1.14.2"
-  kotlin("jvm") version "1.8.20"
+  id("org.jetbrains.intellij") version "1.17.2"
+  kotlin("jvm") version "1.9.22"
   java
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
@@ -55,8 +55,6 @@ dependencies {
   implementation("com.squareup.retrofit2:converter-gson:2.9.0")
   implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
   implementation("com.squareup.okhttp3:okhttp:$okHttp3Version")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.20")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
   implementation("org.jgrapht:jgrapht-core:1.5.2")
   implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
   implementation("com.segment.analytics.java:analytics:3.5.0")
