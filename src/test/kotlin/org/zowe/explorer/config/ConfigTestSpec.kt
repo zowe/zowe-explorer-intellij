@@ -12,6 +12,8 @@ package org.zowe.explorer.config
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.ValidationInfo
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.connect.CredentialsConfigDeclaration
@@ -24,6 +26,9 @@ import org.zowe.explorer.config.connect.ui.zosmf.initEmptyUuids
 import org.zowe.explorer.config.connect.whoAmI
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
+import org.zowe.explorer.config.ws.ui.AbstractWsDialog
+import org.zowe.explorer.config.ws.ui.FilesWorkingSetDialogState
+import org.zowe.explorer.config.ws.ui.files.FilesWorkingSetDialog
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.operations.TsoOperation
@@ -38,16 +43,14 @@ import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
+import io.mockk.*
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.TsoResponse
 import org.zowe.kotlinsdk.annotations.ZVersion
+import java.util.*
+import java.util.stream.Stream
+import javax.swing.JComponent
 import kotlin.reflect.KFunction
 
 class ConfigTestSpec : WithApplicationShouldSpec({
@@ -322,6 +325,31 @@ class ConfigTestSpec : WithApplicationShouldSpec({
     should("check if the sandbox is modified") {}
   }
   context("config module: ws") {
+
+    lateinit var crudableMockk: Crudable
+
+    beforeEach {
+      mockkObject(AbstractWsDialog)
+      every { AbstractWsDialog["initialize"](any<() -> Unit>()) } returns Unit
+
+      crudableMockk = mockk<Crudable>()
+      every { crudableMockk.getAll(ConnectionConfig::class.java) } returns Stream.of()
+      every {
+        crudableMockk.getByUniqueKey(ConnectionConfig::class.java, any<String>())
+      } returns Optional.of(ConnectionConfig())
+
+      mockkConstructor(DialogPanel::class)
+      every { anyConstructed<DialogPanel>().registerValidators(any(), any()) } answers {
+        val componentValidityChangedCallback = secondArg<(Map<JComponent, ValidationInfo>) -> Unit>()
+        componentValidityChangedCallback(mapOf())
+      }
+    }
+
+    afterEach {
+      unmockkAll()
+      clearAllMocks()
+    }
+
     // WSNameColumn.validateEntered
     should("check that the entered working set name is not empty") {}
     should("check that the entered working set name is not blank") {}
@@ -335,5 +363,13 @@ class ConfigTestSpec : WithApplicationShouldSpec({
     should("check that the error appears on any errors for file masks") {}
     should("check that the error appears on empty file working set") {}
     should("check that the error appears on adding the same file mask again") {}
+    // ui/AbstractWsDialog.init
+    should("check that OK action is enabled if validation map is empty") {
+
+      val dialog = FilesWorkingSetDialog(crudableMockk, FilesWorkingSetDialogState())
+
+      verify { anyConstructed<DialogPanel>().registerValidators(any(), any()) }
+      assertSoftly { dialog.isOKActionEnabled shouldBe true }
+    }
   }
 })

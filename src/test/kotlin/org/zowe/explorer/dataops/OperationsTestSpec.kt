@@ -11,10 +11,10 @@
 package org.zowe.explorer.dataops
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.LineSeparator
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.DSMask
@@ -29,7 +29,6 @@ import org.zowe.explorer.dataops.attributes.Requester
 import org.zowe.explorer.dataops.attributes.UssRequester
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
-import org.zowe.explorer.dataops.content.synchronizer.LF_LINE_SEPARATOR
 import org.zowe.explorer.dataops.operations.DeleteOperation
 import org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMover
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
@@ -37,10 +36,7 @@ import org.zowe.explorer.dataops.operations.mover.RemoteToLocalFileMover
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
-import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.changeFileEncodingTo
-import org.zowe.explorer.utils.service
-import org.zowe.explorer.utils.setUssFileTag
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -136,7 +132,7 @@ class OperationsTestSpec : WithApplicationShouldSpec({
       val virtualFileMockk = mockk<VirtualFile>()
       val charsetMockk = mockk<Charset>()
       every { virtualFileMockk.charset } returns charsetMockk
-      every { virtualFileMockk.detectedLineSeparator } returns LF_LINE_SEPARATOR
+      every { virtualFileMockk.detectedLineSeparator } returns LineSeparator.LF.separatorString
 
       var encodingChanged = false
       var lineSeparatorChanged = false
@@ -146,16 +142,15 @@ class OperationsTestSpec : WithApplicationShouldSpec({
         lineSeparatorChanged = false
 
         mockkStatic(LocalFileSystem::getInstance)
-        every { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileMockk) } returns mockk()
-
-        mockkStatic(::changeFileEncodingTo)
-        every { changeFileEncodingTo(any(), charsetMockk) } answers {
-          encodingChanged = true
+        every { LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileMockk) } returns mockk {
+          every { detectedLineSeparator = any<String>() } answers {
+            lineSeparatorChanged = true
+          }
         }
 
-        mockkStatic(LoadTextUtil::changeLineSeparators)
-        every { LoadTextUtil.changeLineSeparators(null, any(), LF_LINE_SEPARATOR, any()) } answers {
-          lineSeparatorChanged = true
+        mockkStatic(::changeEncodingTo)
+        every { changeEncodingTo(any(), charsetMockk) } answers {
+          encodingChanged = true
         }
       }
       afterEach {

@@ -96,6 +96,9 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <extensionPoint name="configDeclaration"
                         interface="org.zowe.explorer.config.ConfigDeclarationFactory"/>
+
+        <extensionPoint name="nameResolver"
+                        interface="org.zowe.explorer.dataops.operations.mover.names.CopyPasteNameResolverFactory"/>
     </extensionPoints>
 
     <applicationListeners>
@@ -218,6 +221,18 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.mover.CrossSystemPdsToUssDirMoverFactory"/>
+
+        <nameResolver
+                implementation="org.zowe.explorer.dataops.operations.mover.names.SeqToPDSResolverFactory"/>
+
+        <nameResolver
+                implementation="org.zowe.explorer.dataops.operations.mover.names.SeqToPDSResolverFactory"/>
+
+        <nameResolver
+                implementation="org.zowe.explorer.dataops.operations.mover.names.NotSeqToPDSResolverFactory"/>
+
+        <nameResolver
+                implementation="org.zowe.explorer.dataops.operations.mover.names.DatasetOrDirResolverFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.RenameOperationRunnerFactory"/>
 

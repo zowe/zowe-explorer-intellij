@@ -17,7 +17,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
-import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.operations.jobs.BasicGetJclRecordsParams
@@ -25,7 +24,6 @@ import org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperation
 import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.explorer.ui.JobNode
 import org.zowe.explorer.explorer.ui.getExplorerView
-import org.zowe.explorer.utils.changeFileEncodingTo
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 
@@ -84,14 +82,12 @@ class EditJclAction : AnAction() {
                     DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(e.project))
                   if (!wasCreatedBefore) {
                     syncProvider.putInitialContent(jclContentBytes)
-                    changeFileEncodingTo(cachedFile, DEFAULT_TEXT_CHARSET)
                   } else {
                     val currentContent = syncProvider.retrieveCurrentContent()
                     if (!(currentContent contentEquals jclContentBytes)) {
                       syncProvider.loadNewContent(jclContentBytes)
                     }
                   }
-                  syncProvider.saveDocument()
                   it.navigate(true)
                 }
               }

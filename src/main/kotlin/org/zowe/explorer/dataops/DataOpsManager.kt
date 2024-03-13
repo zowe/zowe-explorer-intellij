@@ -26,6 +26,7 @@ import org.zowe.explorer.dataops.fetch.FileFetchProvider
 import org.zowe.explorer.dataops.log.LogFetcher
 import org.zowe.explorer.dataops.log.MFLogger
 import org.zowe.explorer.dataops.log.MFProcessInfo
+import org.zowe.explorer.dataops.operations.mover.names.CopyPasteNameResolver
 
 interface DataOpsManager : Disposable {
 
@@ -64,6 +65,8 @@ interface DataOpsManager : Disposable {
   fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer?
 
   fun getMFContentAdapter(file: VirtualFile): MFContentAdapter
+
+  fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver
 
   fun isOperationSupported(operation: Operation<*>): Boolean
 

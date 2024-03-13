@@ -25,6 +25,7 @@ import org.zowe.explorer.dataops.fetch.FileFetchProvider
 import org.zowe.explorer.dataops.log.LogFetcher
 import org.zowe.explorer.dataops.log.MFLogger
 import org.zowe.explorer.dataops.log.MFProcessInfo
+import org.zowe.explorer.dataops.operations.mover.names.CopyPasteNameResolver
 import io.mockk.every
 import io.mockk.mockk
 
@@ -70,6 +71,10 @@ open class TestDataOpsManagerImpl(override val componentManager: ComponentManage
     }
 
     override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {
+      TODO("Not yet implemented")
+    }
+
+    override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
       TODO("Not yet implemented")
     }
 
@@ -130,6 +135,10 @@ open class TestDataOpsManagerImpl(override val componentManager: ComponentManage
 
   override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {
     return this.testInstance.getMFContentAdapter(file)
+  }
+
+  override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+    return this.testInstance.getNameResolver(source, destination)
   }
 
   override fun isOperationSupported(operation: Operation<*>): Boolean {

@@ -13,12 +13,8 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.util.IconUtil
-import org.zowe.explorer.explorer.ui.DSMaskNode
-import org.zowe.explorer.explorer.ui.FileExplorerView
-import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
-import org.zowe.explorer.explorer.ui.FilesWorkingSetNode
-import org.zowe.explorer.explorer.ui.LibraryNode
-import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.utils.castOrNull
 
 /**
  * Class that represents dataset allocation action with parameters, defined by a user
@@ -40,18 +36,20 @@ class AllocateDatasetAction : AllocateActionBase() {
    * 2. The first selected node is [FilesWorkingSetNode], [DSMaskNode], [LibraryNode] or [FileLikeDatasetNode]
    */
   override fun update(e: AnActionEvent) {
+    e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
+
     val view = e.getExplorerView<FileExplorerView>() ?: let {
       e.presentation.isEnabledAndVisible = false
       return
     }
     val selectedNodesData = view.mySelectedNodesData
     val node = selectedNodesData.getOrNull(0)?.node
-    if (node !is FilesWorkingSetNode && node !is DSMaskNode && node !is LibraryNode && node !is FileLikeDatasetNode) {
-      e.presentation.isEnabledAndVisible = false
-      return
+    e.presentation.isEnabledAndVisible =
+      node is FilesWorkingSetNode || node is DSMaskNode || node is LibraryNode || node is FileLikeDatasetNode
+
+    if (node.castOrNull<ExplorerUnitTreeNodeBase<*, *, *>>()?.unit?.connectionConfig == null) {
+      e.presentation.isEnabled = false
     }
-    e.presentation.isEnabledAndVisible = true
-    e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 
 }

@@ -45,14 +45,13 @@ class AddMemberAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     var currentNode = view.mySelectedNodesData[0].node
-    DataOpsManager.instance
     if (currentNode !is FetchNode) {
       currentNode = currentNode.parent ?: return
       if (currentNode !is LibraryNode) return
     }
     if ((currentNode as ExplorerUnitTreeNodeBase<ConnectionConfig, *, out ExplorerUnit<ConnectionConfig>>).unit is FilesWorkingSet) {
       val connectionConfig = currentNode.unit.connectionConfig
-      val dataOpsManager = currentNode.explorer.componentManager.service<DataOpsManager>()
+      val dataOpsManager = service<DataOpsManager>()
       if (currentNode is LibraryNode && connectionConfig != null) {
         val parentName = dataOpsManager
           .getAttributesService<RemoteDatasetAttributes, MFVirtualFile>()

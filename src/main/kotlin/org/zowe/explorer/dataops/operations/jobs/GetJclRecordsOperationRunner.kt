@@ -16,6 +16,7 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
+import org.zowe.explorer.dataops.content.synchronizer.removeLastNewLine
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
@@ -75,7 +76,7 @@ class GetJclRecordsOperationRunner : OperationRunner<GetJclRecordsOperation, Byt
 
       else -> throw Exception("Method with such parameters not found")
     }
-    val body = response.body()
+    val body = response.body()?.removeLastNewLine()
     if (!response.isSuccessful || body == null) {
       throw CallException(
         response,

@@ -54,6 +54,15 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
   var initialState: WSDState = state.clone(wsdStateClass)
 ) : DialogWrapper(false), StatefulComponent<WSDState> {
 
+  companion object {
+
+    // TODO: Remove when it becomes possible to mock class constructor with init section.
+    /** Wrapper for init() method. It is necessary only for test purposes for now. */
+    private fun initialize(init: () -> Unit) {
+      init()
+    }
+  }
+
   abstract val wsConfigClass: Class<out WSConfig>
   abstract val connectionClass: Class<out Connection>
 
@@ -153,6 +162,14 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
       .apply {
         minimumSize = Dimension(450, 500)
       }
+  }
+
+  /** Register validator that enables OK action if validation map is empty */
+  override fun init() {
+    initialize { super.init() }
+    panel.registerValidators(myDisposable) { map ->
+      isOKActionEnabled = map.isEmpty()
+    }
   }
 
   override fun createCenterPanel(): JComponent {
