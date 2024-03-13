@@ -22,7 +22,7 @@ apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
 group = "eu.ibagroup"
-version = "1.2.0-231"
+version = "1.2.1-231"
 val remoteRobotVersion = "0.11.21"
 val okHttp3Version = "4.12.0"
 val kotestVersion = "5.6.2"
