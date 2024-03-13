@@ -47,6 +47,12 @@ class GetFilePropertiesAction : AnAction() {
           }
 
           is RemoteUssAttributes -> {
+            // TODO: need to think whether this sync is necessary
+            // synchronize charset from file attributes with charset from file properties
+            // if (attributes.charset != virtualFile.charset) {
+            //   attributes.charset = virtualFile.charset
+            //   updateFileTag(attributes)
+            // }
             val oldCharset = attributes.charset
             val initFileMode = attributes.fileMode?.clone()
             val dialog = UssFilePropertiesDialog(e.project, UssFileState(attributes, virtualFile.isBeingEditingNow()))
@@ -75,7 +81,7 @@ class GetFilePropertiesAction : AnAction() {
               }
               val charset = attributes.charset
               if (!virtualFile.isDirectory && oldCharset != charset) {
-                val changed = changeFileEncodingAction(virtualFile, attributes, charset)
+                val changed = changeFileEncodingAction(e.project, virtualFile, attributes, charset)
                 if (!changed) {
                   attributes.charset = oldCharset
                 }

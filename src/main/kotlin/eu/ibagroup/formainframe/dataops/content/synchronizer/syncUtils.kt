@@ -10,9 +10,6 @@
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.project.Project
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import java.nio.charset.Charset
 
 private const val NEW_LINE = "\n"
@@ -20,10 +17,6 @@ private const val NEW_LINE = "\n"
 val DEFAULT_TEXT_CHARSET: Charset = Charset.forName("ISO8859_1")
 
 val DEFAULT_BINARY_CHARSET: Charset = Charset.forName("IBM-1047")
-
-const val LF_LINE_SEPARATOR: String = "\n"
-
-const val CR_LINE_SEPARATOR: String = "\r"
 
 /** Remove string's last blank line */
 fun String.removeLastNewLine(): String {
@@ -34,12 +27,11 @@ fun String.removeLastNewLine(): String {
   }
 }
 
+/** Remove last blank line in byte array by converting it to string and back again */
 fun ByteArray.removeLastNewLine(): ByteArray {
-  return if (last() == NEW_LINE.toByte()) {
-    dropLast(1).toByteArray()
-  } else {
-    this
-  }
+  return toString(DEFAULT_TEXT_CHARSET)
+    .removeLastNewLine()
+    .toByteArray(DEFAULT_TEXT_CHARSET)
 }
 
 /** Add new blank line to the string */
@@ -47,16 +39,8 @@ fun ByteArray.addNewLine(): ByteArray {
   return this.plus(NEW_LINE.toByteArray())
 }
 
-/** Initializes the line separator to the contents of the file (by default "\n"). */
-fun initLineSeparator(syncProvider: SyncProvider, project: Project? = null) {
-  val file = syncProvider.file
-  runWriteActionInEdtAndWait {
-    syncProvider.saveDocument()
-    LoadTextUtil.changeLineSeparators(
-      project,
-      file,
-      LoadTextUtil.detectLineSeparator(file, true) ?: LF_LINE_SEPARATOR,
-      file
-    )
-  }
+// TODO: Remove when it becomes possible to mock kotlin inline function.
+/** Wrapper for [String.toByteArray] function. It is necessary only for test purposes for now. */
+fun String.convertToByteArray(charset: Charset = Charsets.UTF_8): ByteArray {
+  return toByteArray(charset)
 }
