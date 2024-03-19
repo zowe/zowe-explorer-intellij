@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
@@ -339,7 +338,7 @@ class ExplorerPasteProvider : PasteProvider {
         }
         .flatten()
 
-      if (ussOrLocalFileToPdsWarnings.isNotEmpty()) {
+      if (ussOrLocalFileToPdsWarnings.isNotEmpty() && !isAllConflictsResolvedBySkip(conflictsResolutions, ussOrLocalFileToPdsWarnings.size )) {
         val isLocalFilesPresent = ussOrLocalFileToPdsWarnings.find { it.second.isInLocalFileSystem } != null
         val fileTypesPattern = if (isLocalFilesPresent) "Local Files" else "USS Files"
         if (!showYesNoDialog(
@@ -350,9 +349,10 @@ class ExplorerPasteProvider : PasteProvider {
             "Skip This Files",
             AllIcons.General.WarningDialog
           )) {
-          conflictsResolutions.addAll(
-            ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
-          )
+          conflictsResolutions.apply {
+            clear()
+            addAll(ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } })
+          }
         }
       }
       // specific conflicts resolution end
@@ -384,7 +384,7 @@ class ExplorerPasteProvider : PasteProvider {
       val operationsToDownload = operations
         .filter { operation -> operation.destination !is MFVirtualFile }
 
-      if (operationsToDownload.isNotEmpty()) {
+      if (operationsToDownload.isNotEmpty() && (!isAllConflictsResolvedBySkip(conflictsResolutions, operationsToDownload.size) || operationsToDownload.size == 1)) {
         val filesToDownloadUpdated = operationsToDownload.map { operation -> operation.source.name }
 
         val startMessage = "You are going to DOWNLOAD files:"
@@ -528,6 +528,10 @@ class ExplorerPasteProvider : PasteProvider {
     }
 
     return result
+  }
+
+  private fun isAllConflictsResolvedBySkip(conflicts: List<ConflictResolution>, filesToProcessSize: Int) : Boolean {
+    return conflicts.isNotEmpty() && conflicts.map { it.shouldSkip() }.filter { it }.size == conflicts.size && filesToProcessSize == conflicts.size
   }
 
   /**
