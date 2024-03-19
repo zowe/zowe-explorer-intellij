@@ -2,6 +2,28 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
+## `1.2.0 (2024-xx-yy)`
+
+* Feature: TSO CLI PA1 button functionality added ([48834cac](https://github.com/zowe/zowe-explorer-intellij/commit/48834cac))
+* Feature: Allocation units clarification added ([1ff218e4](https://github.com/zowe/zowe-explorer-intellij/commit/1ff218e4))
+* Feature: Now after allocating a dataset, a notification is shown instead of a dialog window ([20343651](https://github.com/zowe/zowe-explorer-intellij/commit/20343651))
+* Feature: VFS_CHANGES topic rework for encoding purposes ([3adaded3](https://github.com/zowe/zowe-explorer-intellij/commit/3adaded3))
+* Feature: Close all files in editor, related to the file/folder/dataset/member being deleted ([8a0d9980](https://github.com/zowe/zowe-explorer-intellij/commit/8a0d9980))
+
+
+* Bugfix: GitHub issue #159: Zowe config detection doesn't work correctly ([c73226f6](https://github.com/zowe/zowe-explorer-intellij/commit/c73226f6))
+* Bugfix: Warning during working set creation without masks/job filters is missing ([4fd0b22c](https://github.com/zowe/zowe-explorer-intellij/commit/4fd0b22c))
+* Bugfix: When opened file tabs bar is full, opening any dataset or USS file preserves only last 2 items Explorer items in the bar ([3a822fbb](https://github.com/zowe/zowe-explorer-intellij/commit/3a822fbb))
+* Bugfix: Unclear error message for list datasets/jobs when password is expired ([74fe5e86](https://github.com/zowe/zowe-explorer-intellij/commit/74fe5e86))
+* Bugfix: In dataset allocation dialog window, dataset name is reset when an error is received ([218f5a3a](https://github.com/zowe/zowe-explorer-intellij/commit/218f5a3a))
+* Bugfix: Issue creating member with the same name as the existing one ([6ebae1a0](https://github.com/zowe/zowe-explorer-intellij/commit/6ebae1a0))
+* Bugfix: "Overwrite for All" causes caches conflicts when dataset member is being copied to a USS with rewrite ([90b9ce17](https://github.com/zowe/zowe-explorer-intellij/commit/90b9ce17))
+* Bugfix: "Cut/Paste" doesn't work when moving a sequential dataset to a partitioned dataset ([f1cf4a9d](https://github.com/zowe/zowe-explorer-intellij/commit/f1cf4a9d))
+* Bugfix: Incorrect warning message when uploading a local file to a PDS ([6d9e5de3](https://github.com/zowe/zowe-explorer-intellij/commit/6d9e5de3))
+* Bugfix: It is possible to create a dataset when a connection is removed or invalid ([3df02fde](https://github.com/zowe/zowe-explorer-intellij/commit/3df02fde))
+* Bugfix: TSO EXEC command without operands causes the CLI to hang ([d071960a](https://github.com/zowe/zowe-explorer-intellij/commit/d071960a))
+* Bugfix: Connection is not fully reset to the last successful state and it causes errors ([f6d5a72e](https://github.com/zowe/zowe-explorer-intellij/commit/f6d5a72e))
+
 ## `1.1.2 (2024-01-22)`
 
 * Feature: GitHub issue #165: IntelliJ 2023.3 support ([81f24fa3](https://github.com/zowe/zowe-explorer-intellij/commit/81f24fa3))
