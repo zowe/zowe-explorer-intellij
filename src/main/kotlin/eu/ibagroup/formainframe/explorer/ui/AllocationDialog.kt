@@ -16,11 +16,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toNullableProperty
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
@@ -89,7 +85,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             datasetNameField.text = "${HLQ}.<CHANGEME>"
           }
           .onApply { state.datasetName = state.datasetName.uppercase() }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .focused()
       }
       row {
@@ -102,7 +98,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             memberNameField.text = "SAMPLE"
           }
           .onApply { state.memberName = state.memberName.uppercase() }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
         .visibleIf(presetsBox.selectedValueMatches { it == Presets.PDS_WITH_EMPTY_MEMBER || it == Presets.PDS_WITH_SAMPLE_JCL_MEMBER })
       row {
@@ -148,7 +144,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             { state.allocationParameters.primaryAllocation = it.toIntOrNull() ?: 0 }
           )
           .also { primaryAllocationField = it.component }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Secondary allocation: ")
@@ -159,7 +155,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             { state.allocationParameters.secondaryAllocation = it.toIntOrNull() ?: 0 }
           )
           .also { secondaryAllocationField = it.component }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Directory: ")
@@ -176,7 +172,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             { state.allocationParameters.directoryBlocks = it.toIntOrNull() ?: 0 }
           )
           .also { directoryBlocksField = it.component }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
         .visibleIf(datasetOrganizationBox.selectedValueMatches { it != DatasetOrganization.PS })
       row {
@@ -205,7 +201,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             { state.allocationParameters.recordLength = it.toIntOrNull() }
           )
           .also { recordLengthField = it.component }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Block size: ")
@@ -216,7 +212,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             { state.allocationParameters.blockSize = it.toIntOrNull() }
           )
           .also { blockSizeField = it.component }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Average Block Length: ")
@@ -227,7 +223,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             { state.allocationParameters.averageBlockLength = it.toIntOrNull() }
           )
           .also { averageBlockLengthField = it.component }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       collapsibleGroup("Advanced Parameters", false) {
         row {
@@ -239,7 +235,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
               { state.allocationParameters.volumeSerial = it }
             )
             .also { advancedParametersField = it.component }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Device Type: ")
@@ -249,7 +245,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
               { state.allocationParameters.deviceType ?: "" },
               { state.allocationParameters.deviceType = it }
             )
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Storage class: ")
@@ -259,7 +255,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
               { state.allocationParameters.storageClass ?: "" },
               { state.allocationParameters.storageClass = it }
             )
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Management class: ")
@@ -269,7 +265,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
               { state.allocationParameters.managementClass ?: "" },
               { state.allocationParameters.managementClass = it }
             )
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Data class: ")
@@ -279,7 +275,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
               { state.allocationParameters.dataClass ?: "" },
               { state.allocationParameters.dataClass = it }
             )
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       }
     }

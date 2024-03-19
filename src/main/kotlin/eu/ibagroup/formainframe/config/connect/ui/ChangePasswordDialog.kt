@@ -13,7 +13,6 @@ package eu.ibagroup.formainframe.config.connect.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.utils.validateForBlank
 import eu.ibagroup.formainframe.utils.validateForPassword
@@ -46,7 +45,7 @@ class ChangePasswordDialog(
             it.text = it.text.trim()
             validateForBlank(it)
           }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Old password: ")
@@ -58,7 +57,7 @@ class ChangePasswordDialog(
             addShowHidePasswordIcon(this)
           }
           .validationOnApply { validateForBlank(it) }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("New password: ")
@@ -75,7 +74,7 @@ class ChangePasswordDialog(
             })
           }
           .validationOnApply { validateForBlank(it) }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Confirm password: ")
@@ -87,7 +86,7 @@ class ChangePasswordDialog(
             addShowHidePasswordIcon(this)
           }
           .validationOnApply { validateForBlank(it) ?: validateForPassword(state.newPassword, it) }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
   }
