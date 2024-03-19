@@ -14,6 +14,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,7 +49,7 @@ import java.awt.event.ActionEvent
 import java.nio.charset.Charset
 import javax.swing.Action
 import javax.swing.Icon
-import kotlin.reflect.full.declaredFunctions
+import kotlin.reflect.KFunction
 
 class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
   afterSpec {
@@ -57,6 +59,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
     lateinit var changeEncodingDialog: ChangeEncodingDialog
     var expectedExitCode = 0
+
+    val projectMock = mockk<Project>()
 
     val fileName = "fileName"
     val virtualFileMock = mockk<VirtualFile>()
@@ -91,9 +95,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
     val actionEventMock = mockk<ActionEvent>()
 
-    val showDialogRef = Messages::class.declaredFunctions
-      .first { it.name == "showDialog" && it.parameters.size == 5 }
-    mockkStatic(showDialogRef)
+    val showDialogRef: (String, String, Array<String>, Int, Icon) -> Int = Messages::showDialog
+    mockkStatic(showDialogRef as KFunction<*>)
 
     every { contentSynchronizerMock.synchronizeWithRemote(any()) } returns Unit
 
@@ -101,6 +104,11 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
     mockkStatic(::updateFileTag)
     every { updateFileTag(attributesMock) } returns Unit
+
+    val projectManagerMock = mockk<ProjectManager>()
+
+    mockkStatic(ProjectManager::getInstance)
+    every { ProjectManager.getInstance() } returns projectManagerMock
 
     beforeEach {
       safeToReload = Magic8.ABSOLUTELY
@@ -113,8 +121,11 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       }
       every { attributesMock.isWritable } returns true
 
+      every { projectManagerMock.openProjects } returns arrayOf(mockk())
+
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(
+          projectMock,
           virtualFileMock,
           attributesMock,
           charsetMock,
@@ -154,6 +165,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(
+          projectMock,
           virtualFileMock,
           attributesMock,
           charsetMock,
@@ -171,12 +183,27 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       assertSoftly { messageRef.get(changeEncodingDialog) shouldBe expectedMessage }
       assertSoftly { actions.size shouldBe 2 }
     }
+    should("create actions when conversion is disabled") {
+      every { projectManagerMock.openProjects } returns arrayOf(mockk(), mockk())
+
+      val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
+      val actualConvertAction = actions?.get(1)
+
+      val expectedTooltip = message("encoding.convert.button.error.tooltip")
+
+      assertSoftly {
+        actualConvertAction?.isEnabled shouldBe false
+        actualConvertAction?.getValue(Action.SHORT_DESCRIPTION) shouldBe expectedTooltip
+        actions?.size shouldBe 3
+      }
+    }
     should("create actions when encoding is incompatible") {
       safeToReload = Magic8.NO_WAY
       safeToConvert = Magic8.NO_WAY
 
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(
+          projectMock,
           virtualFileMock,
           attributesMock,
           charsetMock,
@@ -224,6 +251,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(
+          projectMock,
           virtualFileMock,
           attributesMock,
           charsetMock,
@@ -251,6 +279,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(
+          projectMock,
           virtualFileMock,
           attributesMock,
           charsetMock,
@@ -282,6 +311,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(
+          projectMock,
           virtualFileMock,
           attributesMock,
           charsetMock,
@@ -317,6 +347,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(
+          projectMock,
           virtualFileMock,
           attributesMock,
           charsetMock,
@@ -348,6 +379,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
       changeEncodingDialog = spyk(
         ChangeEncodingDialog(
+          projectMock,
           virtualFileMock,
           attributesMock,
           charsetMock,

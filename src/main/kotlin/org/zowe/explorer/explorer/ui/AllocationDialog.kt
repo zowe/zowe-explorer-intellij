@@ -22,6 +22,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.selectedValueMatches
+import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.getUsername
@@ -85,7 +86,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .bindText(state::datasetName)
           .also {
             datasetNameField = it.component
-            datasetNameField.text = "${HLQ}.<CHANGEME>"
+            datasetNameField.text.ifEmpty { datasetNameField.text = "${HLQ}.<CHANGEME>" }
           }
           .onApply { state.datasetName = state.datasetName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -98,7 +99,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .bindText(state::memberName)
           .also {
             memberNameField = it.component
-            memberNameField.text = "SAMPLE"
+            memberNameField.text.ifEmpty { memberNameField.text = "SAMPLE" }
           }
           .onApply { state.memberName = state.memberName.uppercase() }
           .horizontalAlign(HorizontalAlign.FILL)
@@ -133,6 +134,10 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .bindItem(state.allocationParameters::allocationUnit.toNullableProperty())
           .also { spaceUnitBox = it.component }
           .widthGroup(sameWidthComboBoxGroup)
+        contextHelp(
+          description = message("allocation.dialog.unit.size.hint.description"),
+          title = message("allocation.dialog.unit.size.hint.title")
+        )
       }
       row {
         label("Primary allocation: ")
@@ -301,7 +306,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
    */
   private fun doPresetAssignment(preset: Presets) {
     val dataContainer = Presets.initDataClass(preset)
-    memberNameField.text = "SAMPLE"
+    memberNameField.text.ifEmpty { memberNameField.text = "SAMPLE" }
     datasetOrganizationBox.selectedItem = dataContainer.datasetOrganization
     spaceUnitBox.selectedItem = dataContainer.spaceUnit
     primaryAllocationField.text = dataContainer.primaryAllocation.toString()

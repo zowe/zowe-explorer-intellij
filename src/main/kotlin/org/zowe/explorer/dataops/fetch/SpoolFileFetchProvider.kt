@@ -20,6 +20,7 @@ import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.attributes.RemoteSpoolFileAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.exceptions.responseMessageMap
 import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
@@ -89,7 +90,8 @@ class SpoolFileFetchProvider(dataOpsManager: DataOpsManager) :
           attributes?.joinToString("\n") ?: ""
         }
       } else {
-        exception = CallException(response, "Cannot retrieve Job files list")
+        val headMessage = responseMessageMap[response.message()] ?: "Cannot retrieve Job files list"
+        exception = CallException(response, headMessage)
       }
 
       if (exception != null) {

@@ -27,6 +27,8 @@ import org.zowe.explorer.dataops.log.LogFetcher
 import org.zowe.explorer.dataops.log.MFLogger
 import org.zowe.explorer.dataops.log.MFProcessInfo
 import org.zowe.explorer.dataops.operations.OperationRunner
+import org.zowe.explorer.dataops.operations.mover.names.CopyPasteNameResolver
+import org.zowe.explorer.dataops.operations.mover.names.DefaultNameResolver
 import org.zowe.explorer.utils.associateListedBy
 import org.zowe.explorer.utils.findAnyNullable
 import org.zowe.explorer.utils.log
@@ -136,6 +138,15 @@ class DataOpsManagerImpl : DataOpsManager {
     MFContentAdapter.EP.extensionList.buildComponents()
   }
   private val mfContentAdapters by mfContentAdaptersDelegate
+
+  private val nameResolversDelegate = lazy {
+    CopyPasteNameResolver.EP.extensionList.buildComponents()
+  }
+  private val nameResolvers by nameResolversDelegate
+
+  override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+    return nameResolvers.firstOrNull { it.accepts(source, destination) } ?: DefaultNameResolver()
+  }
 
   /**
    * Checks if sync with mainframe is supported for provided object

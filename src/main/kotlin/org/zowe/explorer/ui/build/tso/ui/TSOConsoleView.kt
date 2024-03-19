@@ -11,15 +11,21 @@
 package org.zowe.explorer.ui.build.tso.ui
 
 //import com.intellij.ui.layout.cellPanel
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.TerminalExecutionConsole
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBEmptyBorder
+import org.zowe.explorer.common.isDebugModeEnabled
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.ui.build.TerminalCommandReceiver
@@ -29,7 +35,7 @@ import org.zowe.explorer.ui.build.tso.utils.InputRecognizer
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.sendTopic
 import java.awt.BorderLayout
-import javax.swing.JComboBox
+import javax.swing.JButton
 import javax.swing.JComponent
 
 /**
@@ -42,12 +48,13 @@ class TSOConsoleView(
   private var tsoSession: TSOConfigWrapper
 ) : ExecutionConsole, JBPanel<TSOConsoleView>() {
 
-  private lateinit var tsoMessageType: JComboBox<MessageType>
-  private lateinit var tsoDataType: JComboBox<MessageData>
+  private lateinit var tsoMessageTypeBox: ComboBox<MessageType>
+  private lateinit var tsoDataTypeBox: ComboBox<MessageData>
+  private lateinit var cancelCommandButton: JButton
   private val tsoWidthGroup: String = "TSO_WIDTH_GROUP"
 
   private val tsoMessageTypes: List<MessageType> =
-    listOf(MessageType.TSO_MESSAGE, MessageType.TSO_PROMPT, MessageType.TSO_RESPONSE)
+    listOf(MessageType.TSO_RESPONSE, MessageType.TSO_MESSAGE, MessageType.TSO_PROMPT)
   private val tsoDataTypes: List<MessageData> =
     listOf(MessageData.DATA_DATA, MessageData.DATA_HIDDEN, MessageData.DATA_ACTION)
 
@@ -61,6 +68,8 @@ class TSOConsoleView(
 
   private val log = log<TSOConsoleView>()
 
+  private val debugMode = isDebugModeEnabled()
+
   /**
    * UI panel which contains 2 combo boxes of TSO message type and message data type
    */
@@ -73,18 +82,35 @@ class TSOConsoleView(
           model = tsoMessageTypeComboBoxModel,
           renderer = SimpleListCellRenderer.create("") { it.type }
         ).also {
-          tsoMessageType = it.component
+          tsoMessageTypeBox = it.component
         }
-      }
+      }.visible(debugMode)
       row {
         label("TSO data type").widthGroup(tsoWidthGroup)
         comboBox(
           model = tsoDataTypeComboBoxModel,
           renderer = SimpleListCellRenderer.create("") { it.data }
         ).also {
-          tsoDataType = it.component
+          tsoDataTypeBox = it.component
+        }
+      }.visible(debugMode)
+      row {
+        button("Cancel Command (PA1)") {
+          log.info("CANCEL COMMAND (PA1)")
+          val prevTsoMessageType = tsoMessageTypeBox.item
+          val prevTsoDataType = tsoDataTypeBox.item
+          tsoMessageTypeBox.item = MessageType.TSO_RESPONSE
+          tsoDataTypeBox.item = MessageData.DATA_ACTION
+          terminalCommandReceiver.cleanCommand()
+          processHandler.processInput?.write(("\r").toByteArray())
+          tsoMessageTypeBox.item = prevTsoMessageType
+          tsoDataTypeBox.item = prevTsoDataType
+        }.also {
+          cancelCommandButton = it.component
         }
       }
+    }.also {
+      it.border = JBEmptyBorder(10, 15, 10, 15)
     }
   }
 
@@ -102,14 +128,25 @@ class TSOConsoleView(
         this,
         tsoSession,
         enteredCommand.trim(),
-        tsoMessageType.selectedItem as MessageType,
-        tsoDataType.selectedItem as MessageData,
+        tsoMessageTypeBox.item,
+        tsoDataTypeBox.item,
         processHandler
       )
       terminalCommandReceiver.waitForCommandInput()
     }
 
     terminalCommandReceiver.initialized = true
+
+    processHandler.addProcessListener(object : ProcessListener {
+      override fun startNotified(event: ProcessEvent) {}
+
+      override fun processTerminated(event: ProcessEvent) {}
+
+      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+        cancelCommandButton.isEnabled =
+          !terminalCommandReceiver.isPrevCommandEndsWithReady() && terminalCommandReceiver.isNeedToWaitForCommandInput()
+      }
+    })
 
     Disposer.register(this, consoleView)
     layout = BorderLayout()

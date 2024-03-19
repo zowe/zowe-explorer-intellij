@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -48,24 +47,14 @@ import javax.swing.Icon
  * @param charset new encoding.
  */
 fun saveIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
-  val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile) ?: return
-  val syncProvider = DocumentedSyncProvider(virtualFile)
-  val fileUploadNeeded = contentSynchronizer.isFileUploadNeeded(syncProvider)
-  val document = syncProvider.getDocument() ?: return
+  val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.default(project))
   syncProvider.saveDocument()
-  val bytes = contentSynchronizer.successfulContentStorage(syncProvider)
-  val text = if (fileUploadNeeded) document.text
-  else LoadTextUtil.getTextByBinaryPresentation(bytes, virtualFile).toString()
-  EncodingManager.getInstance().setEncoding(virtualFile, charset)
-  virtualFile.charset = charset
+  val bytes = syncProvider.retrieveCurrentContent()
   runWriteActionInEdtAndWait {
-    LoadTextUtil.write(
-      project,
-      virtualFile,
-      virtualFile,
-      text,
-      document.modificationStamp
-    )
+    changeEncodingTo(virtualFile, charset)
+    virtualFile.getOutputStream(null).use {
+      it.write(bytes)
+    }
   }
 }
 
@@ -77,20 +66,17 @@ fun saveIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
  */
 fun reloadIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
   val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.syncOnOpen(project))
+  val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
   runWriteActionInEdtAndWait {
-    EncodingManager.getInstance().setEncoding(virtualFile, charset)
-    virtualFile.charset = charset
-    val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
+    changeEncodingTo(virtualFile, charset)
     contentSynchronizer?.synchronizeWithRemote(syncProvider)
   }
 }
 
 /** Changes the file encoding to the specified one. */
-fun changeFileEncodingTo(file: VirtualFile, charset: Charset) {
-  runWriteActionInEdtAndWait {
-    EncodingManager.getInstance().setEncoding(file, charset)
-    file.charset = charset
-  }
+fun changeEncodingTo(file: VirtualFile, charset: Charset) {
+  EncodingManager.getInstance().setEncoding(file, charset)
+  file.charset = charset
 }
 
 /** Checks if it is safe to reload file in the specified encoding. */
@@ -152,11 +138,11 @@ fun inspectSafeEncodingChange(virtualFile: VirtualFile, charset: Charset): Encod
  * Change file encoding action that invokes the change encoding dialog.
  * @return true if changed or false otherwise.
  */
-fun changeFileEncodingAction(virtualFile: VirtualFile, attributes: RemoteUssAttributes, charset: Charset): Boolean {
+fun changeFileEncodingAction(project: Project?, virtualFile: VirtualFile, attributes: RemoteUssAttributes, charset: Charset): Boolean {
   val encodingInspection = inspectSafeEncodingChange(virtualFile, charset)
   val safeToReload = encodingInspection.safeToReload
   val safeToConvert = encodingInspection.safeToConvert
-  val dialog = ChangeEncodingDialog(virtualFile, attributes, charset, safeToReload, safeToConvert)
+  val dialog = ChangeEncodingDialog(project, virtualFile, attributes, charset, safeToReload, safeToConvert)
   dialog.show()
   return dialog.exitCode == ChangeEncodingDialog.RELOAD_EXIT_CODE || dialog.exitCode == ChangeEncodingDialog.CONVERT_EXIT_CODE
 }
@@ -171,7 +157,7 @@ fun createCharsetsActionGroup(virtualFile: VirtualFile, attributes: RemoteUssAtt
   val action: (charset: Charset, icon: Icon?) -> DumbAwareAction = { charset, icon ->
     object : DumbAwareAction(charset.name(), null, icon) {
       override fun actionPerformed(e: AnActionEvent) {
-        changeFileEncodingAction(virtualFile, attributes, charset)
+        changeFileEncodingAction(e.project, virtualFile, attributes, charset)
       }
 
       override fun update(e: AnActionEvent) {

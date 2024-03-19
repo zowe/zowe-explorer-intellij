@@ -17,12 +17,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.LineSeparator
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.editor.DocumentChangeListener
 import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.changeEncodingTo
 import org.zowe.explorer.vfs.MFVirtualFile
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicBoolean
@@ -90,15 +92,26 @@ class DocumentedSyncProvider(
     get() = getDocument()?.isWritable != true
 
   /**
+   * Initialize the file properties (charset, line separator)
+   * when the file is opened for the first time.
+   * @param content bytes of the content to init.
+   */
+  private fun initFileProperties(content: ByteArray) {
+    val charset = getCurrentCharset()
+    val text = content.toString(charset)
+    val detectedLineSeparator = runCatching { StringUtil.detectSeparators(text) }.getOrNull() ?: LineSeparator.LF
+    file.detectedLineSeparator = detectedLineSeparator.separatorString
+    changeEncodingTo(file, charset)
+  }
+
+  /**
    * Puts initial content in file document.
    * @see SyncProvider.putInitialContent
    */
   override fun putInitialContent(content: ByteArray) {
     if (isInitialContentSet.compareAndSet(false, true)) {
       runCatching {
-        file.getOutputStream(null).use {
-          it.write(content)
-        }
+        initFileProperties(content)
         loadNewContent(content)
       }.onFailure {
         isInitialContentSet.set(false)
@@ -106,11 +119,18 @@ class DocumentedSyncProvider(
     }
   }
 
+  /** Checks if the new content needs to be load */
+  private fun isLoadNeeded(content: ByteArray): Boolean {
+    val currentContent = retrieveCurrentContent()
+    return !content.contentEquals(currentContent)
+  }
+
   /**
    * Update content in file document.
    * @see SyncProvider.loadNewContent
    */
   override fun loadNewContent(content: ByteArray) {
+    if (!isLoadNeeded(content)) return
     val document = getDocument()
     document.castOrNull<DocumentImpl>()?.setAcceptSlashR(true)
     val wasReadOnly = isReadOnly
@@ -118,10 +138,12 @@ class DocumentedSyncProvider(
       document?.setReadOnly(false)
     }
     val charset = getCurrentCharset()
-    document?.setText(String(content, charset))
+    val text = content.toString(charset)
+    document?.setText(text)
     if (wasReadOnly) {
       document?.setReadOnly(true)
     }
+    saveDocument()
   }
 
   /**

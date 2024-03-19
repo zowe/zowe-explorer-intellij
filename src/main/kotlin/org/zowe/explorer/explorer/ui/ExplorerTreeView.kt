@@ -4,11 +4,13 @@ import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -71,7 +73,7 @@ inline fun <reified ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getEx
 abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>, UnitConfig : EntityWithUuid>
   (
   val explorer: Explorer<Connection, U>,
-  project: Project,
+  private val project: Project,
   parentDisposable: Disposable,
   private val contextMenu: ActionGroup,
   rootNodeProvider: (explorer: Explorer<Connection, U>, project: Project, treeStructure: ExplorerTreeStructureBase) -> ExplorerTreeNode<Connection, *>,
@@ -227,6 +229,14 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
       componentManager = ApplicationManager.getApplication(),
       topic = MFVirtualFileSystem.MF_VFS_CHANGES_TOPIC,
       handler = object : MFBulkFileListener {
+        override fun before(events: List<VFileEvent>) {
+          // listens for virtual file delete events and
+          // closes files opened in editor if file to be deleted is an ancestor of these files
+          events.filterIsInstance<VFileDeleteEvent>().forEach {
+            closeChildrenInEditor(it.file)
+          }
+        }
+
         override fun after(events: List<VFileEvent>) {
           events
             .mapNotNull {
@@ -374,5 +384,20 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
 
   }
 
+  /** Close files opened in editor if selected file is an ancestor of these files */
+  fun closeChildrenInEditor(selectedFile: VirtualFile) {
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    val openFiles = fileEditorManager.openFiles
+    openFiles.forEach { openFile ->
+      if (VfsUtilCore.isAncestor(selectedFile, openFile, false)) {
+        val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(openFile)
+        val syncProvider = DocumentedSyncProvider(openFile)
+        contentSynchronizer?.markAsNotNeededForSync(syncProvider)
+        runWriteActionInEdtAndWait {
+          fileEditorManager.closeFile(openFile)
+        }
+      }
+    }
+  }
 
 }

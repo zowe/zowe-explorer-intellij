@@ -15,6 +15,7 @@ import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.exceptions.responseMessageMap
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.SystemsApi
@@ -56,11 +57,7 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
       .cancelByIndicator(progressIndicator)
       .execute()
     if (!response.isSuccessful) {
-      val headMessage = when (response.message()) {
-        "Unauthorized" -> "Credentials are not valid"
-        "Not Found" -> "Endpoint not found"
-        else -> response.message()
-      }
+      val headMessage = responseMessageMap[response.message()] ?: response.message()
       throw CallException(response, headMessage)
     }
     return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")

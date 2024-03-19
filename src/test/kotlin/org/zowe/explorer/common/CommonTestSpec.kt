@@ -10,9 +10,16 @@
 
 package org.zowe.explorer.common
 
-import io.kotest.core.spec.style.ShouldSpec
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
+import io.mockk.*
+import java.util.Properties
 
-class CommonTestSpec : ShouldSpec({
+class CommonTestSpec : WithApplicationShouldSpec({
+  afterSpec {
+    clearAllMocks()
+  }
   context("common module: ui") {
     // ValidatingCellRenderer.getTableCellRendererComponent
     should("get table cell renderer") {}
@@ -25,5 +32,46 @@ class CommonTestSpec : ShouldSpec({
     should("not get virtual file from tree path if it cannot be casted") {}
     // StatefulDialog.showUntilDone
     should("show dialog until it is fulfilled") {}
+  }
+  context("common module: SettingsPropertyManager") {
+    val propertyName = "debug.mode"
+
+    mockkConstructor(Properties::class)
+
+    // isDebugModeEnabled
+    should("debug mode enabled") {
+      every { anyConstructed<Properties>().getProperty(propertyName) } returns "true"
+      val debugMode = isDebugModeEnabled()
+
+      assertSoftly {
+        debugMode shouldBe true
+      }
+    }
+    should("debug mode disabled") {
+      every { anyConstructed<Properties>().getProperty(propertyName) } returns "false"
+      val debugMode = isDebugModeEnabled()
+
+      assertSoftly {
+        debugMode shouldBe false
+      }
+    }
+    should("debug mode property not found") {
+      every { anyConstructed<Properties>().getProperty(propertyName) } returns null
+      val debugMode = isDebugModeEnabled()
+
+      assertSoftly {
+        debugMode shouldBe false
+      }
+    }
+    should("debug mode property contains a non-boolean value") {
+      every { anyConstructed<Properties>().getProperty(propertyName) } returns "123"
+      val debugMode = isDebugModeEnabled()
+
+      assertSoftly {
+        debugMode shouldBe false
+      }
+    }
+
+    unmockkAll()
   }
 })

@@ -20,6 +20,7 @@ import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.attributes.JobsRequester
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.exceptions.responseMessageMap
 import org.zowe.explorer.utils.asMutableList
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
@@ -119,7 +120,8 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
         log.info("No jobs returned for query $query. Skipping")
       }
     } else {
-      exception = CallException(response, "Cannot retrieve Job files list")
+      val headMessage = responseMessageMap[response.message()] ?: "Cannot retrieve Job files list"
+      exception = CallException(response, headMessage)
     }
 
     if (exception != null) {
