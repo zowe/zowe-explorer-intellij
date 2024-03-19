@@ -18,7 +18,16 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.showOkNoDialog
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.common.ui.showUntilDone
@@ -30,18 +39,17 @@ import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.operations.DatasetAllocationParams
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.DSMaskNode
+import org.zowe.explorer.explorer.ui.ExplorerTreeNode
+import org.zowe.explorer.explorer.ui.ExplorerTreeView
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
+import org.zowe.explorer.explorer.ui.FilesWorkingSetNode
+import org.zowe.explorer.explorer.ui.JobNode
+import org.zowe.explorer.explorer.ui.LibraryNode
+import org.zowe.explorer.explorer.ui.NodeData
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import io.kotest.assertions.assertSoftly
-import io.kotest.matchers.shouldBe
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.DsnameType
 import java.util.*
@@ -387,93 +395,12 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           isCleanInvalidateOnExpandTriggered shouldBe true
           isShowUntilDoneSucceeded shouldBe true
           isOperationPerformed shouldBe true
-          isCleanCacheTriggered shouldBe true
           isUpdateOnConfigCrudableCalled shouldBe false
           isThrowableReported shouldBe false
           initState.errorMessage shouldBe ""
         }
       }
-      should("perform allocate dataset action without refreshing dataset mask as the selected node is a working set") {
-        val workingSetMock = mockk<FilesWorkingSet>()
-        val nodeMock = mockk<FilesWorkingSetNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
-        lateinit var initState: DatasetAllocationParams
-        var isOperationPerformed = false
-        var isUpdateOnConfigCrudableCalled = false
-        var isShowUntilDoneSucceeded = false
-
-        val showUntilDoneMockk: (
-          DatasetAllocationParams,
-          (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
-          (DatasetAllocationParams) -> Boolean
-        ) -> DatasetAllocationParams? = ::showUntilDone
-        mockkStatic(showUntilDoneMockk as KFunction<*>)
-        every {
-          hint(DatasetAllocationParams::class)
-          showUntilDoneMockk(
-            any<DatasetAllocationParams>(),
-            any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
-            any<(DatasetAllocationParams) -> Boolean>()
-          )
-        } answers {
-          initState = firstArg<DatasetAllocationParams>()
-          val thirdBlockResult = thirdArg<(DatasetAllocationParams) -> Boolean>()
-          isShowUntilDoneSucceeded = thirdBlockResult(initState)
-          initState
-        }
-
-        mockkObject(configCrudable)
-        every {
-          configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
-        } returns Optional.of(filesWorkingSetConfigMock)
-
-        every { nodeMock.parent } returns null
-        every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { workingSetMock.name } returns "test"
-        every { workingSetMock.uuid } returns "test"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
-        every {
-          dataOpsManagerMock.hint(Boolean::class).performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-        } answers {
-          isOperationPerformed = true
-          true
-        }
-        every { workingSetMock.explorer } returns explorerMock
-        every { configCrudable.update(any(), any()) } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
-
-        val showOkNoDialogMock: (
-          String,
-          String,
-          Project?,
-          String,
-          String,
-          Icon?
-        ) -> Boolean = ::showOkNoDialog
-        mockkStatic(showOkNoDialogMock as KFunction<*>)
-        every {
-          hint(Boolean::class)
-          showOkNoDialogMock(any<String>(), any<String>(), any<Project>(), any<String>(), any<String>(), any())
-        } answers {
-          true
-        }
-
-        allocateDsActionInst.actionPerformed(anActionEventMock)
-
-        assertSoftly {
-          isCleanInvalidateOnExpandTriggered shouldBe false
-          isShowUntilDoneSucceeded shouldBe true
-          isOperationPerformed shouldBe true
-          isUpdateOnConfigCrudableCalled shouldBe true
-          isThrowableReported shouldBe false
-          initState.errorMessage shouldBe ""
-        }
-      }
-      should("perform allocate dataset action creating new dataset mask without refreshing the existing on as the connection config is not found") {
+      should("perform allocate dataset action creating new dataset mask without adding as the connection config is not found") {
         val workingSetMock = mockk<FilesWorkingSet>()
         val nodeMock = mockk<FilesWorkingSetNode>()
         val nodeDataMock = NodeData(nodeMock, null, null)

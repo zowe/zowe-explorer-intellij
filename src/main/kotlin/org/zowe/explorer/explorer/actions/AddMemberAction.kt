@@ -12,6 +12,7 @@ package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
@@ -32,7 +33,6 @@ import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
 import org.zowe.explorer.explorer.ui.LibraryNode
 import org.zowe.explorer.explorer.ui.getExplorerView
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /** Class that represents "Add member" action */
@@ -76,9 +76,9 @@ class AddMemberAction : AnAction() {
                 )
               }.onSuccess {
                 currentNode.cleanCache(cleanBatchedQuery = true)
-              }.onFailure {
-                var throwable = it
-                if (it is CallException && it.code == 500 && it.message?.contains("Directory full") == true) {
+              }.onFailure { failObj: Throwable ->
+                var throwable = failObj
+                if (failObj is CallException && failObj.code == 500 && failObj.message?.contains("Directory full") == true) {
                   runCatching {
                     dataOpsManager.performOperation(
                       operation = DeleteMemberOperation(
@@ -89,8 +89,8 @@ class AddMemberAction : AnAction() {
                         connectionConfig = connectionConfig
                       )
                     )
-                  }.onFailure { th ->
-                    throwable = Throwable("Directory is FULL. Invalid member created.\n" + th.message)
+                  }.onFailure { innerFailObj: Throwable ->
+                    throwable = Throwable("Directory is FULL. Invalid member created.\n" + innerFailObj.message)
                     currentNode.cleanCache(cleanBatchedQuery = true)
                   }
                 }

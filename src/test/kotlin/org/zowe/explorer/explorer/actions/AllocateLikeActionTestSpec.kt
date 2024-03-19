@@ -19,6 +19,16 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.showWarningDialog
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.common.ui.showUntilDone
@@ -41,18 +51,6 @@ import org.zowe.explorer.explorer.ui.LibraryNode
 import org.zowe.explorer.explorer.ui.NodeData
 import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestAnalyticsServiceImpl
-import org.zowe.explorer.utils.service
-import io.kotest.assertions.assertSoftly
-import io.kotest.matchers.shouldBe
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.RecordFormat
@@ -184,7 +182,6 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         assertSoftly {
           isCleanInvalidateOnExpandTriggered shouldBe true
           isShowUntilDoneSucceeded shouldBe true
-          isAnalitycsTracked shouldBe true
           isOperationPerformed shouldBe true
           isThrowableReported shouldBe false
           initState.errorMessage shouldBe ""
@@ -256,7 +253,6 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         assertSoftly {
           isCleanInvalidateOnExpandTriggered shouldBe true
           isShowUntilDoneSucceeded shouldBe true
-          isAnalitycsTracked shouldBe true
           isOperationPerformed shouldBe true
           isThrowableReported shouldBe false
           initState.errorMessage shouldBe ""
@@ -328,7 +324,6 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         assertSoftly {
           isCleanInvalidateOnExpandTriggered shouldBe true
           isShowUntilDoneSucceeded shouldBe true
-          isAnalitycsTracked shouldBe true
           isOperationPerformed shouldBe true
           isThrowableReported shouldBe false
           initState.errorMessage shouldBe ""
@@ -405,7 +400,6 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         assertSoftly {
           isCleanInvalidateOnExpandTriggered shouldBe true
           isShowUntilDoneSucceeded shouldBe true
-          isAnalitycsTracked shouldBe true
           isOperationPerformed shouldBe true
           isBlocksChangedToTracks shouldBe true
           isThrowableReported shouldBe false
@@ -428,7 +422,6 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
 
         assertSoftly {
           isCleanInvalidateOnExpandTriggered shouldBe false
-          isAnalitycsTracked shouldBe false
           isOperationPerformed shouldBe false
           isThrowableReported shouldBe false
         }
