@@ -25,8 +25,8 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.content.synchronizer.RemoteAttributedContentSynchronizer
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.utils.castOrNull
@@ -205,6 +205,17 @@ class ExplorerPasteProvider : PasteProvider {
             if (explorerView.isCut.get()) {
               copyPasteSupport.removeFromBuffer { node -> node.file == op.source }
             }
+
+            // this step is necessary to clean old file after force overwriting performed.
+            if (op.forceOverwriting) {
+              val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
+              op.destination.children
+                .filter { file -> file == nameResolver.getConflictingChild(op.source, op.destination) }
+                .forEach { file ->
+                  dataOpsManager.getContentSynchronizer(file)
+                    .castOrNull<RemoteAttributedContentSynchronizer<*>>()?.removeFromCacheAfterForceOverwriting(file)
+                }
+            }
           }
           .onFailure { throwable ->
             explorerView.explorer.reportThrowable(throwable, project)
@@ -301,7 +312,7 @@ class ExplorerPasteProvider : PasteProvider {
 
       // conflicts end
       // specific configs resolution
-      val ussToPdsWarnings = pasteDestinations
+      val ussOrLocalFileToPdsWarnings = pasteDestinations
         .mapNotNull { destFile ->
           val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
           if (destAttributes !is RemoteDatasetAttributes) null
@@ -309,27 +320,28 @@ class ExplorerPasteProvider : PasteProvider {
             val sourceUssAttributes = sourceFiles
               .filter { sourceFile ->
                 val sourceAttributes = dataOpsManager.tryToGetAttributes(sourceFile)
-                sourceAttributes is RemoteUssAttributes || sourceFile is VirtualFileImpl
+                sourceAttributes is RemoteUssAttributes || sourceFile.isInLocalFileSystem
               }
             sourceUssAttributes.map { Pair(destFile, it) }.ifEmpty { null }
           }
         }
         .flatten()
 
-      if (
-        ussToPdsWarnings.isNotEmpty() &&
-        !showYesNoDialog(
-          "USS File To PDS Placing",
-          "You are about to place USS file to PDS. All lines exceeding the record length will be truncated.",
-          null,
-          "Ok",
-          "Skip This Files",
-          AllIcons.General.WarningDialog
-        )
-      ) {
-        conflictsResolutions.addAll(
-          ussToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
-        )
+      if (ussOrLocalFileToPdsWarnings.isNotEmpty()) {
+        val isLocalFilesPresent = ussOrLocalFileToPdsWarnings.find { it.second.isInLocalFileSystem } != null
+        val fileTypesPattern = if (isLocalFilesPresent) "Local Files" else "USS Files"
+        if (!showYesNoDialog(
+            "$fileTypesPattern to PDS Placing",
+            "You are about to place $fileTypesPattern to PDS. All lines exceeding the record length will be truncated.",
+            null,
+            "Ok",
+            "Skip This Files",
+            AllIcons.General.WarningDialog
+          )) {
+          conflictsResolutions.addAll(
+            ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
+          )
+        }
       }
       // specific conflicts resolution end
 
@@ -421,45 +433,23 @@ class ExplorerPasteProvider : PasteProvider {
   ): List<ConflictResolution> {
     val result = mutableListOf<ConflictResolution>()
 
-//    val skipDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-//    val overwriteDestinationSourceList = mutableListOf<Pair<VirtualFile, VirtualFile>>()
+    val conflicts = pasteDestinations.map { destFile ->
 
-    val listOfAllConflicts = pasteDestinations
-      .mapNotNull { destFile ->
-        val destAttributes = dataOpsManager.tryToGetAttributes(destFile)
-        destFile.children
-          ?.map conflicts@{ destChild ->
-            val filteredSourceFiles = sourceFiles.filter { source ->
-              val sourceAttributes = dataOpsManager.tryToGetAttributes(source)
-              if (
-                destAttributes is RemoteDatasetAttributes &&
-                (sourceAttributes is RemoteUssAttributes || source is VirtualFileImpl)
-              ) {
-                val memberName = source.name.filter { it.isLetterOrDigit() }.take(8).uppercase()
-                if (memberName.isNotEmpty()) memberName == destChild.name else "EMPTY" == destChild.name
-              } else if (
-                destAttributes is RemoteDatasetAttributes &&
-                sourceAttributes is RemoteDatasetAttributes
-              ) {
-                sourceAttributes.name.split(".").last() == destChild.name
-              } else {
-                source.name == destChild.name
-              }
-            }
-            val foundConflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-            if (filteredSourceFiles.isNotEmpty()) {
-              filteredSourceFiles.forEach { foundConflict -> foundConflicts.add(Pair(destFile, foundConflict)) }
-            }
-            foundConflicts
-          }
+      val conflictingSources = sourceFiles.filter { source ->
+        val nameResolver = dataOpsManager.getNameResolver(source, destFile)
+        nameResolver.getConflictingChild(source, destFile) != null
       }
+      val foundConflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
+      if (conflictingSources.isNotEmpty()) {
+        conflictingSources.forEach { foundConflict -> foundConflicts.add(Pair(destFile, foundConflict)) }
+      }
+      foundConflicts
+    }
       .flatten()
-    val conflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-    listOfAllConflicts.forEach { conflictList -> conflicts.addAll(conflictList) }
+      .toMutableList()
 
     // Handle conflicts with different file type (file - directory, directory - file)
 
-//    skipDestinationSourceList.addAll(conflictsThatCannotBeSolved)
     val conflictsThatCannotBeOverwritten = conflicts.filter {
       val conflictChild = it.first.findChild(it.second.name)
       (conflictChild?.isDirectory == true && !it.second.isDirectory)
@@ -548,26 +538,8 @@ class ExplorerPasteProvider : PasteProvider {
     }
 
     allConflicts.forEach { conflict ->
-      var copyIndex = 1
-      val sourceName = conflict.second.name
-      val isSourceDirectory = conflict.second.isDirectory
-      var newName: String
-      val destAttributes = dataOpsManager.tryToGetAttributes(conflict.first)
-      val sourceAttributes = dataOpsManager.tryToGetAttributes(conflict.second)
-      do {
-        newName = if (destAttributes is RemoteDatasetAttributes && sourceAttributes is RemoteDatasetAttributes) {
-          "${sourceAttributes.name.split(".").last().take(7)}$copyIndex"
-        } else if (destAttributes is RemoteDatasetAttributes) {
-          if (sourceName.length >= 8) "${sourceName.take(7)}$copyIndex" else "$sourceName$copyIndex"
-        } else if (isSourceDirectory || sourceAttributes is RemoteDatasetAttributes) {
-          "${sourceName}_(${copyIndex})"
-        } else {
-          val extension = if (sourceName.contains(".")) sourceName.substringAfterLast(".") else null
-          val newNameWithoutExtension = "${sourceName.substringBeforeLast(".")}_(${copyIndex})"
-          if (extension != null) "$newNameWithoutExtension.$extension" else newNameWithoutExtension
-        }
-        ++copyIndex
-      } while (conflict.first.children.any { it.name == newName })
+
+      val newName = dataOpsManager.getNameResolver(conflict.second, conflict.first).resolve(conflict.second, conflict.first)
 
       val newNameMessage = "If you select option \"Use new name\", the following name will be selected: <b>$newName</b>"
 

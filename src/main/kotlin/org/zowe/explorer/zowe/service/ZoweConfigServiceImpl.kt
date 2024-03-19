@@ -10,8 +10,10 @@
 
 package org.zowe.explorer.zowe.service
 
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
@@ -35,6 +37,8 @@ import java.nio.file.Path
 import java.util.*
 import java.util.stream.Collectors
 
+const val ZOWE_CONFIG_NOTIFICATION_GROUP_ID = "org.zowe.explorerzowe.service.ZoweConfigNotificationGroupId"
+
 val ZOWE_PROJECT_PREFIX = "zowe-"
 
 /**
@@ -54,6 +58,22 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     get() = "$ZOWE_PROJECT_PREFIX${myProject.name}"
 
   /**
+   * Displays an error notification if an error was received.
+   * @param t thrown error.
+   * @param title error text.
+   */
+  private fun notifyError(t: Throwable, title: String? = null) {
+    Notifications.Bus.notify(
+      Notification(
+        ZOWE_CONFIG_NOTIFICATION_GROUP_ID,
+        title ?: "Error with Zowe config file",
+        t.message ?: t.toString(),
+        NotificationType.ERROR
+      )
+    )
+  }
+
+  /**
    * Checks project contains zowe.config.json. If zowe config presented
    * it will parse it and save to object model inside zoweConfig field.
    * @return ZoweConfig instance if zowe.config.json is presented or null otherwise.
@@ -69,7 +89,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         zoweConfig = it
       }
     } catch (e: Exception) {
-      null
+      throw Exception("Cannot parse Zowe config file")
     }
   }
 
@@ -155,30 +175,35 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @see ZoweConfigService.addOrUpdateZoweConfig
    */
   override fun addOrUpdateZoweConfig(scanProject: Boolean, checkConnection: Boolean): ConnectionConfig? {
-    val zoweConfig = if (scanProject) {
-      scanForZoweConfig()
-    } else this.zoweConfig
-    zoweConfig ?: return null
-    val username = zoweConfig.user ?: return null
-    val password = zoweConfig.password ?: return null
-    val zoweConnection = findExistingConnection()?.let {
-      zoweConfig.toConnectionConfig(it.uuid, it.zVersion)
-    } ?: zoweConfig.toConnectionConfig(UUID.randomUUID().toString())
-    CredentialService.instance.setCredentials(zoweConnection.uuid, username, password)
+    return try {
+      val zoweConfig = if (scanProject) {
+        scanForZoweConfig()
+      } else this.zoweConfig
+      zoweConfig ?: throw Exception("Cannot get Zowe config")
+      val username = zoweConfig.user ?: throw Exception("Cannot get username for Zowe config")
+      val password = zoweConfig.password ?: throw Exception("Cannot get password for Zowe config")
+      val zoweConnection = findExistingConnection()?.let {
+        zoweConfig.toConnectionConfig(it.uuid, it.zVersion)
+      } ?: zoweConfig.toConnectionConfig(UUID.randomUUID().toString())
+      CredentialService.instance.setCredentials(zoweConnection.uuid, username, password)
 
-    if (checkConnection) {
-      try {
-        testAndPrepareConnection(zoweConnection)
-      } catch (t: Throwable) {
-        notifyUiOnConnectionFailure("Connection to ${zoweConnection.url} failed.", t.message ?: "")
-        return null
+      if (checkConnection) {
+        try {
+          testAndPrepareConnection(zoweConnection)
+        } catch (t: Throwable) {
+          notifyUiOnConnectionFailure("Connection to ${zoweConnection.url} failed.", t.message ?: "")
+          return null
+        }
       }
-    }
 
-    val connectionOpt = configCrudable.addOrUpdate(zoweConnection)
-    return if (connectionOpt.isEmpty) null else connectionOpt.get().also {
-      CredentialService.instance.setCredentials(it.uuid, username, password)
-      sendTopic(ZOWE_CONFIG_CHANGED).onConfigSaved(zoweConfig, zoweConnection)
+      val connectionOpt = configCrudable.addOrUpdate(zoweConnection)
+      return if (connectionOpt.isEmpty) null else connectionOpt.get().also {
+        CredentialService.instance.setCredentials(it.uuid, username, password)
+        sendTopic(ZOWE_CONFIG_CHANGED).onConfigSaved(zoweConfig, zoweConnection)
+      }
+    } catch (e: Exception) {
+      notifyError(e)
+      null
     }
   }
 
@@ -218,7 +243,11 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   override fun getZoweConfigState(scanProject: Boolean): ZoweConfigState {
     if (scanProject) {
-      scanForZoweConfig()
+      try {
+        scanForZoweConfig()
+      } catch (e: Exception) {
+        notifyError(e)
+      }
     }
     val zoweConfig = zoweConfig ?: return ZoweConfigState.NOT_EXISTS
     val existingConnection = findExistingConnection() ?: return ZoweConfigState.NEED_TO_ADD

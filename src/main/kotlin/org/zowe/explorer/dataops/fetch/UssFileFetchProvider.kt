@@ -19,6 +19,7 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.exceptions.responseMessageMap
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -91,7 +92,8 @@ class UssFileFetchProvider(
         attributes?.joinToString("\n") ?: ""
       }
     } else {
-      exception = CallException(response, "Cannot retrieve USS files list")
+      val headMessage = responseMessageMap[response.message()] ?: "Cannot retrieve USS files list"
+      exception = CallException(response, headMessage)
     }
 
     if (exception != null) {

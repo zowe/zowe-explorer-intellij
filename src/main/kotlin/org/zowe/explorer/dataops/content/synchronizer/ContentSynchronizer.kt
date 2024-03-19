@@ -69,4 +69,10 @@ interface ContentSynchronizer {
    */
   fun isFileUploadNeeded(syncProvider: SyncProvider): Boolean
 
+  /**
+   * Marks file as not needed for synchronisation until the next time file is modified.
+   * @param syncProvider instance of [SyncProvider] class that contains file to mark.
+   */
+  fun markAsNotNeededForSync(syncProvider: SyncProvider)
+
 }

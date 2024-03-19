@@ -14,6 +14,12 @@ import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.gson
 import retrofit2.Response
 
+/** The map contains the correspondence between the response message and the message for the user. */
+val responseMessageMap = mapOf(
+  Pair("Unauthorized", "Credentials are not valid"),
+  Pair("Not Found", "Endpoint not found")
+)
+
 /**
  * Generating an exception message string.
  * @param code exception code.
