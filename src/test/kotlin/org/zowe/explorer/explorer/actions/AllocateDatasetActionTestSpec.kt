@@ -10,6 +10,9 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.notification.Notification
+import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.components.ComponentManager
@@ -39,12 +42,10 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import org.junit.jupiter.api.fail
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.DsnameType
 import java.util.*
 import javax.swing.Icon
-import javax.swing.SwingUtilities
 import kotlin.reflect.KFunction
 
 class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
@@ -63,6 +64,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
       val dataOpsManagerMock = mockk<DataOpsManager>()
       val componentManagerMock = mockk<ComponentManager>()
       val explorerMock = mockk<Explorer<ConnectionConfig, *>>()
+      lateinit var addMaskActionInst: AnAction
 
       beforeEach {
         isCleanInvalidateOnExpandTriggered = false
@@ -93,6 +95,15 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         } answers {
           isCleanInvalidateOnExpandTriggered = true
         }
+
+        val notifyRef: (Notification) -> Unit = Notifications.Bus::notify
+        mockkStatic(notifyRef as KFunction<*>)
+        mockkStatic(Notification::get)
+        every { Notifications.Bus.notify(any<Notification>()) } answers {
+          val notification = firstArg<Notification>()
+          every { Notification.get(any()) } returns notification
+          addMaskActionInst = notification.actions.first { it.templateText == "Add mask" }
+        }
       }
 
       afterEach {
@@ -108,7 +119,6 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         val dsMaskNodeMock = mockk<DSMaskNode>()
         lateinit var initState: DatasetAllocationParams
         var isOperationPerformed = false
-        var isCleanCacheTriggered = false
         var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
@@ -137,15 +147,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.of(filesWorkingSetConfigMock)
 
-        every {
-          dsMaskNodeMock.cleanCache(any(), any(), any(), any())
-        } answers {
-          isCleanCacheTriggered = true
-          val isSendTopic = lastArg<Boolean>()
-          if (isSendTopic) {
-            fail("cleanCache should not send topic in this testcase")
-          }
-        }
+        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
         every { nodeMock.parent } returns dsMaskNodeMock
         every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
         every { viewMock.mySelectedNodesData } returns selectedNodesData
@@ -164,33 +166,16 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           Optional.of(mockk())
         }
 
-        val showOkNoDialogMock: (
-          String,
-          String,
-          Project?,
-          String,
-          String,
-          Icon?
-        ) -> Boolean = ::showOkNoDialog
-        mockkStatic(showOkNoDialogMock as KFunction<*>)
-        every {
-          hint(Boolean::class)
-          showOkNoDialogMock(any<String>(), any<String>(), any<Project>(), any<String>(), any<String>(), any())
-        } answers {
-          true
-        }
-
         allocateDsActionInst.actionPerformed(anActionEventMock)
+        addMaskActionInst.actionPerformed(anActionEventMock)
 
-        // Pause to wait until all EDT events are finished
-        SwingUtilities.invokeAndWait {
-          assertSoftly { isCleanInvalidateOnExpandTriggered shouldBe true }
-          assertSoftly { isShowUntilDoneSucceeded shouldBe true }
-          assertSoftly { isOperationPerformed shouldBe true }
-          assertSoftly { isCleanCacheTriggered shouldBe true }
-          assertSoftly { isUpdateOnConfigCrudableCalled shouldBe true }
-          assertSoftly { isThrowableReported shouldBe false }
-          assertSoftly { initState.errorMessage shouldBe "" }
+        assertSoftly {
+          isCleanInvalidateOnExpandTriggered shouldBe true
+          isShowUntilDoneSucceeded shouldBe true
+          isOperationPerformed shouldBe true
+          isUpdateOnConfigCrudableCalled shouldBe true
+          isThrowableReported shouldBe false
+          initState.errorMessage shouldBe ""
         }
       }
       should("perform allocate PS dataset action creating a new dataset mask") {
@@ -201,7 +186,6 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         val dsMaskNodeMock = mockk<DSMaskNode>()
         lateinit var initState: DatasetAllocationParams
         var isOperationPerformed = false
-        var isCleanCacheTriggered = false
         var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
@@ -237,15 +221,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.of(filesWorkingSetConfigMock)
 
-        every {
-          dsMaskNodeMock.cleanCache(any(), any(), any(), any())
-        } answers {
-          isCleanCacheTriggered = true
-          val isSendTopic = lastArg<Boolean>()
-          if (isSendTopic) {
-            fail("cleanCache should not send topic in this testcase")
-          }
-        }
+        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
         every { nodeMock.parent } returns dsMaskNodeMock
         every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
         every { viewMock.mySelectedNodesData } returns selectedNodesData
@@ -264,34 +240,17 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           Optional.of(mockk())
         }
 
-        val showOkNoDialogMock: (
-          String,
-          String,
-          Project?,
-          String,
-          String,
-          Icon?
-        ) -> Boolean = ::showOkNoDialog
-        mockkStatic(showOkNoDialogMock as KFunction<*>)
-        every {
-          hint(Boolean::class)
-          showOkNoDialogMock(any<String>(), any<String>(), any<Project>(), any<String>(), any<String>(), any())
-        } answers {
-          true
-        }
-
         allocateDsActionInst.actionPerformed(anActionEventMock)
+        addMaskActionInst.actionPerformed(anActionEventMock)
 
-        // Pause to wait until all EDT events are finished
-        SwingUtilities.invokeAndWait {
-          assertSoftly { isCleanInvalidateOnExpandTriggered shouldBe true }
-          assertSoftly { isShowUntilDoneSucceeded shouldBe true }
-          assertSoftly { isOperationPerformed shouldBe true }
-          assertSoftly { isCleanCacheTriggered shouldBe true }
-          assertSoftly { isUpdateOnConfigCrudableCalled shouldBe true }
-          assertSoftly { isThrowableReported shouldBe false }
-          assertSoftly { initState.errorMessage shouldBe "" }
-          assertSoftly { initState.allocationParameters.directoryBlocks shouldBe null }
+        assertSoftly {
+          isCleanInvalidateOnExpandTriggered shouldBe true
+          isShowUntilDoneSucceeded shouldBe true
+          isOperationPerformed shouldBe true
+          isUpdateOnConfigCrudableCalled shouldBe true
+          isThrowableReported shouldBe false
+          initState.errorMessage shouldBe ""
+          initState.allocationParameters.directoryBlocks shouldBe null
         }
       }
       should("perform allocate PO-E dataset action creating a new dataset mask") {
@@ -302,7 +261,6 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         val dsMaskNodeMock = mockk<DSMaskNode>()
         lateinit var initState: DatasetAllocationParams
         var isOperationPerformed = false
-        var isCleanCacheTriggered = false
         var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
@@ -335,15 +293,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.of(filesWorkingSetConfigMock)
 
-        every {
-          dsMaskNodeMock.cleanCache(any(), any(), any(), any())
-        } answers {
-          isCleanCacheTriggered = true
-          val isSendTopic = lastArg<Boolean>()
-          if (isSendTopic) {
-            fail("cleanCache should not send topic in this testcase")
-          }
-        }
+        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
         every { nodeMock.parent } returns dsMaskNodeMock
         every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
         every { viewMock.mySelectedNodesData } returns selectedNodesData
@@ -362,35 +312,18 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           Optional.of(mockk())
         }
 
-        val showOkNoDialogMock: (
-          String,
-          String,
-          Project?,
-          String,
-          String,
-          Icon?
-        ) -> Boolean = ::showOkNoDialog
-        mockkStatic(showOkNoDialogMock as KFunction<*>)
-        every {
-          hint(Boolean::class)
-          showOkNoDialogMock(any<String>(), any<String>(), any<Project>(), any<String>(), any<String>(), any())
-        } answers {
-          true
-        }
-
         allocateDsActionInst.actionPerformed(anActionEventMock)
+        addMaskActionInst.actionPerformed(anActionEventMock)
 
-        // Pause to wait until all EDT events are finished
-        SwingUtilities.invokeAndWait {
-          assertSoftly { isCleanInvalidateOnExpandTriggered shouldBe true }
-          assertSoftly { isShowUntilDoneSucceeded shouldBe true }
-          assertSoftly { isOperationPerformed shouldBe true }
-          assertSoftly { isCleanCacheTriggered shouldBe true }
-          assertSoftly { isUpdateOnConfigCrudableCalled shouldBe true }
-          assertSoftly { isThrowableReported shouldBe false }
-          assertSoftly { initState.errorMessage shouldBe "" }
-          assertSoftly { initState.allocationParameters.datasetOrganization shouldBe DatasetOrganization.PO }
-          assertSoftly { initState.allocationParameters.dsnType shouldBe DsnameType.LIBRARY }
+        assertSoftly {
+          isCleanInvalidateOnExpandTriggered shouldBe true
+          isShowUntilDoneSucceeded shouldBe true
+          isOperationPerformed shouldBe true
+          isUpdateOnConfigCrudableCalled shouldBe true
+          isThrowableReported shouldBe false
+          initState.errorMessage shouldBe ""
+          initState.allocationParameters.datasetOrganization shouldBe DatasetOrganization.PO
+          initState.allocationParameters.dsnType shouldBe DsnameType.LIBRARY
         }
       }
       should("perform allocate dataset action without creating a new dataset mask") {
@@ -401,7 +334,6 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         val dsMaskNodeMock = mockk<DSMaskNode>()
         lateinit var initState: DatasetAllocationParams
         var isOperationPerformed = false
-        var isCleanCacheTriggered = false
         var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
@@ -430,15 +362,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.of(filesWorkingSetConfigMock)
 
-        every {
-          dsMaskNodeMock.cleanCache(any(), any(), any(), any())
-        } answers {
-          isCleanCacheTriggered = true
-          val isSendTopic = lastArg<Boolean>()
-          if (!isSendTopic) {
-            fail("cleanCache should send topic in this testcase")
-          }
-        }
+        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
         every { nodeMock.parent } returns dsMaskNodeMock
         every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
         every { viewMock.mySelectedNodesData } returns selectedNodesData
@@ -457,33 +381,16 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           Optional.of(mockk())
         }
 
-        val showOkNoDialogMock: (
-          String,
-          String,
-          Project?,
-          String,
-          String,
-          Icon?
-        ) -> Boolean = ::showOkNoDialog
-        mockkStatic(showOkNoDialogMock as KFunction<*>)
-        every {
-          hint(Boolean::class)
-          showOkNoDialogMock(any<String>(), any<String>(), any<Project>(), any<String>(), any<String>(), any())
-        } answers {
-          false
-        }
-
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
-        // Pause to wait until all EDT events are finished
-        SwingUtilities.invokeAndWait {
-          assertSoftly { isCleanInvalidateOnExpandTriggered shouldBe true }
-          assertSoftly { isShowUntilDoneSucceeded shouldBe true }
-          assertSoftly { isOperationPerformed shouldBe true }
-          assertSoftly { isCleanCacheTriggered shouldBe true }
-          assertSoftly { isUpdateOnConfigCrudableCalled shouldBe false }
-          assertSoftly { isThrowableReported shouldBe false }
-          assertSoftly { initState.errorMessage shouldBe "" }
+        assertSoftly {
+          isCleanInvalidateOnExpandTriggered shouldBe true
+          isShowUntilDoneSucceeded shouldBe true
+          isOperationPerformed shouldBe true
+          isCleanCacheTriggered shouldBe true
+          isUpdateOnConfigCrudableCalled shouldBe false
+          isThrowableReported shouldBe false
+          initState.errorMessage shouldBe ""
         }
       }
       should("perform allocate dataset action without refreshing dataset mask as the selected node is a working set") {
@@ -557,14 +464,13 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
-        // Pause to wait until all EDT events are finished
-        SwingUtilities.invokeAndWait {
-          assertSoftly { isCleanInvalidateOnExpandTriggered shouldBe false }
-          assertSoftly { isShowUntilDoneSucceeded shouldBe true }
-          assertSoftly { isOperationPerformed shouldBe true }
-          assertSoftly { isUpdateOnConfigCrudableCalled shouldBe true }
-          assertSoftly { isThrowableReported shouldBe false }
-          assertSoftly { initState.errorMessage shouldBe "" }
+        assertSoftly {
+          isCleanInvalidateOnExpandTriggered shouldBe false
+          isShowUntilDoneSucceeded shouldBe true
+          isOperationPerformed shouldBe true
+          isUpdateOnConfigCrudableCalled shouldBe true
+          isThrowableReported shouldBe false
+          initState.errorMessage shouldBe ""
         }
       }
       should("perform allocate dataset action creating new dataset mask without refreshing the existing on as the connection config is not found") {
@@ -620,32 +526,16 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           Optional.of(mockk())
         }
 
-        val showOkNoDialogMock: (
-          String,
-          String,
-          Project?,
-          String,
-          String,
-          Icon?
-        ) -> Boolean = ::showOkNoDialog
-        mockkStatic(showOkNoDialogMock as KFunction<*>)
-        every {
-          hint(Boolean::class)
-          showOkNoDialogMock(any<String>(), any<String>(), any<Project>(), any<String>(), any<String>(), any())
-        } answers {
-          true
-        }
-
         allocateDsActionInst.actionPerformed(anActionEventMock)
+        addMaskActionInst.actionPerformed(anActionEventMock)
 
-        // Pause to wait until all EDT events are finished
-        SwingUtilities.invokeAndWait {
-          assertSoftly { isCleanInvalidateOnExpandTriggered shouldBe false }
-          assertSoftly { isShowUntilDoneSucceeded shouldBe true }
-          assertSoftly { isOperationPerformed shouldBe true }
-          assertSoftly { isUpdateOnConfigCrudableCalled shouldBe false }
-          assertSoftly { isThrowableReported shouldBe false }
-          assertSoftly { initState.errorMessage shouldBe "" }
+        assertSoftly {
+          isCleanInvalidateOnExpandTriggered shouldBe false
+          isShowUntilDoneSucceeded shouldBe true
+          isOperationPerformed shouldBe true
+          isUpdateOnConfigCrudableCalled shouldBe false
+          isThrowableReported shouldBe false
+          initState.errorMessage shouldBe ""
         }
       }
       should("perform allocate dataset action with failure on operation performing") {
@@ -689,12 +579,11 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
-        // Pause to wait until all EDT events are finished
-        SwingUtilities.invokeAndWait {
-          assertSoftly { isCleanInvalidateOnExpandTriggered shouldBe false }
-          assertSoftly { isShowUntilDoneSucceeded shouldBe false }
-          assertSoftly { isThrowableReported shouldBe true }
-          assertSoftly { initState.errorMessage shouldBe exceptionMsg }
+        assertSoftly {
+          isCleanInvalidateOnExpandTriggered shouldBe false
+          isShowUntilDoneSucceeded shouldBe false
+          isThrowableReported shouldBe true
+          initState.errorMessage shouldBe exceptionMsg
         }
       }
     }

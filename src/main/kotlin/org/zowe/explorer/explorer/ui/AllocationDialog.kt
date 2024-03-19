@@ -22,6 +22,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.selectedValueMatches
+import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.getUsername
@@ -133,6 +134,10 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
           .bindItem(state.allocationParameters::allocationUnit.toNullableProperty())
           .also { spaceUnitBox = it.component }
           .widthGroup(sameWidthComboBoxGroup)
+        contextHelp(
+          description = message("allocation.dialog.unit.size.hint.description"),
+          title = message("allocation.dialog.unit.size.hint.title")
+        )
       }
       row {
         label("Primary allocation: ")

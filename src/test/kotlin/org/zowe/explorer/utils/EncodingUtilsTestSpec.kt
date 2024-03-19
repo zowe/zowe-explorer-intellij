@@ -52,7 +52,7 @@ import java.nio.charset.CharsetDecoder
 import java.nio.charset.CharsetEncoder
 import java.nio.charset.UnsupportedCharsetException
 import javax.swing.Icon
-import kotlin.reflect.full.declaredFunctions
+import kotlin.reflect.KFunction
 
 class EncodingUtilsTestSpec : WithApplicationShouldSpec({
   context("utils module: encodingUtils") {
@@ -139,9 +139,8 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
     mockkStatic(InspectionEngine::runInspectionOnFile)
 
-    val showDialogRef = Messages::class.declaredFunctions
-      .first { it.name == "showDialog" && it.parameters.size == 5 }
-    mockkStatic(showDialogRef)
+    val showDialogRef: (String, String, Array<String>, Int, Icon) -> Int = Messages::showDialog
+    mockkStatic(showDialogRef as KFunction<*>)
 
     beforeEach {
       dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {

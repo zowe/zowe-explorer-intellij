@@ -19,14 +19,13 @@ import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
 import org.zowe.explorer.ui.build.tso.ui.TSOSessionParams
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
+import org.zowe.explorer.dataops.operations.MessageType as MessageTypeEnum
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoApi
 import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.TsoResponse
 import io.ktor.util.*
 import retrofit2.Response
-import java.nio.charset.Charset
-import java.util.*
 
 /**
  * Factory class which represents a TSO operation runner. Defined in plugin.xml
@@ -85,12 +84,7 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
           response = api<TsoApi>(state.getConnectionConfig())
             .sendMessageToTso(
               state.getConnectionConfig().authToken,
-              body = TsoData(
-                tsoResponse = MessageType(
-                  version = "0100",
-                  data = operation.message
-                )
-              ),
+              body = createTsoData(operation),
               servletKey = servletKey
             )
             .cancelByIndicator(progressIndicator)
@@ -138,6 +132,53 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
       }
     }
     return response?.body() ?: throw Exception("Cannot retrieve response from server.")
+  }
+
+  /**
+   * Create TsoData object depending on the specified message type
+   * @throws Exception if message type not specified
+   */
+  private fun createTsoData(operation: TsoOperation): TsoData {
+    return when (operation.messageType) {
+      MessageTypeEnum.TSO_MESSAGE -> TsoData(
+        tsoMessage = createMessageType(operation)
+      )
+
+      MessageTypeEnum.TSO_PROMPT -> TsoData(
+        tsoPrompt = createMessageType(operation)
+      )
+
+      MessageTypeEnum.TSO_RESPONSE -> TsoData(
+        tsoResponse = createMessageType(operation)
+      )
+
+      null -> throw Exception("Message type not specified")
+    }
+  }
+
+  /**
+   * Create MessageType object depending on the specified message data
+   * @throws Exception if message data not specified
+   */
+  private fun createMessageType(operation: TsoOperation): MessageType {
+    return when (operation.messageData) {
+      MessageData.DATA_DATA -> MessageType(
+        version = "0100",
+        data = operation.message
+      )
+
+      MessageData.DATA_HIDDEN -> MessageType(
+        version = "0100",
+        hidden = operation.message
+      )
+
+      MessageData.DATA_ACTION -> MessageType(
+        version = "0100",
+        action = operation.message
+      )
+
+      null -> throw Exception("Message data not specified")
+    }
   }
 
 }

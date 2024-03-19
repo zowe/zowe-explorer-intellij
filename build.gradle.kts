@@ -19,8 +19,8 @@ buildscript {
 
 plugins {
   id("org.sonarqube") version "3.3"
-  id("org.jetbrains.intellij") version "1.14.2"
-  kotlin("jvm") version "1.8.10"
+  id("org.jetbrains.intellij") version "1.17.2"
+  kotlin("jvm") version "1.9.22"
   java
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
 }
@@ -33,9 +33,9 @@ apply(from = "gradle/sonar.gradle")
 
 group = "org.zowe"
 version = "1.2.0-221"
-val remoteRobotVersion = "0.11.21"
+val remoteRobotVersion = "0.11.22"
 val okHttp3Version = "4.12.0"
-val kotestVersion = "5.6.2"
+val kotestVersion = "5.8.1"
 
 repositories {
   mavenCentral()
@@ -65,23 +65,20 @@ dependencies {
   implementation("com.squareup.retrofit2:converter-gson:2.9.0")
   implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
   implementation("com.squareup.okhttp3:okhttp:$okHttp3Version")
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-  implementation("org.jgrapht:jgrapht-core:1.5.1")
+  implementation("org.jgrapht:jgrapht-core:1.5.2")
   implementation("com.starxg:java-keytar:1.0.0")
   implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.4.1")
-  testImplementation("io.mockk:mockk:1.13.5")
-  testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
+  testImplementation("io.mockk:mockk:1.13.9")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
   testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
   testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
   testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
   testImplementation("com.squareup.okhttp3:okhttp-tls:$okHttp3Version")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
-  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.1")
 }
 
 intellij {
@@ -94,6 +91,10 @@ tasks {
       jvmTarget = JavaVersion.VERSION_11.toString()
       languageVersion = org.jetbrains.kotlin.config.LanguageVersion.LATEST_STABLE.versionString
     }
+  }
+
+  withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   }
 
   patchPluginXml {
@@ -166,6 +167,15 @@ tasks {
   buildPlugin {
     dependsOn(createOpenApiSourceJar)
     from(createOpenApiSourceJar) { into("lib/src") }
+  }
+
+  downloadRobotServerPlugin {
+    version.set(remoteRobotVersion)
+  }
+
+  runIdeForUiTests {
+    systemProperty("idea.trust.all.projects", "true")
+    systemProperty("ide.show.tips.on.startup.default.value", "false")
   }
 }
 
@@ -255,19 +265,4 @@ val SmokeUiTest = task<Test>("smokeUiTest") {
     // Kover reports will not depend on the results of its execution
     isDisabled.set(true)
   }
-}
-
-tasks {
-  withType<Copy> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-  }
-}
-
-tasks.downloadRobotServerPlugin {
-  version.set(remoteRobotVersion)
-}
-
-tasks.runIdeForUiTests {
-  systemProperty("idea.trust.all.projects", "true")
-  systemProperty("ide.show.tips.on.startup.default.value", "false")
 }
