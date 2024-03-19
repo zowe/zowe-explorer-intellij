@@ -14,9 +14,7 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.ui.AnActionButton
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.table.TableView
 import javax.swing.JPanel
 import javax.swing.JTable
@@ -152,8 +150,7 @@ fun <Item> Row.tableWithToolbar(
     .apply { toolbarTableBuilder() }
     .createPanel()
   return cell(tableComponent)
-    .horizontalAlign(HorizontalAlign.FILL)
-    .verticalAlign(VerticalAlign.FILL)
+    .align(AlignX.FILL.plus(AlignY.FILL))
 }
 
 val TableModelEvent.rows: IntRange

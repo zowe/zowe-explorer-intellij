@@ -11,10 +11,10 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.openapi.project.Project
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationParams
 import eu.ibagroup.formainframe.utils.validateForBlank
@@ -71,7 +71,7 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
         textField()
           .bindText(state::fileName)
           .validationOnApply { validateForBlank(it) ?: validateUssFileName(it) }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .focused()
       }
       row {
