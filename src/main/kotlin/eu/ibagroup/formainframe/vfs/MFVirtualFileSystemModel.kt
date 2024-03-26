@@ -311,13 +311,13 @@ class MFVirtualFileSystemModel {
   @Throws(IOException::class)
   fun renameFile(requestor: Any?, vFile: MFVirtualFile, newName: String) {
     val event = listOf(VFilePropertyChangeEvent(requestor, vFile, VirtualFile.PROP_NAME, vFile.name, newName, false))
-    sendMFVfsChangesTopic().before(event)
+    sendVfsChangesTopic().before(event)
     vFile.validReadLock {
       if (vFile.filenameInternal != newName) {
         vFile.filenameInternal = newName
       }
     }
-    sendMFVfsChangesTopic().after(event)
+    sendVfsChangesTopic().after(event)
   }
 
   @Throws(IOException::class)
