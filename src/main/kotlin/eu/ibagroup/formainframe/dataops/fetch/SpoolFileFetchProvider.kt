@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.exceptions.responseMessageMap
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
@@ -89,7 +90,8 @@ class SpoolFileFetchProvider(dataOpsManager: DataOpsManager) :
           attributes?.joinToString("\n") ?: ""
         }
       } else {
-        exception = CallException(response, "Cannot retrieve Job files list")
+        val headMessage = responseMessageMap[response.message()] ?: "Cannot retrieve Job files list"
+        exception = CallException(response, headMessage)
       }
 
       if (exception != null) {

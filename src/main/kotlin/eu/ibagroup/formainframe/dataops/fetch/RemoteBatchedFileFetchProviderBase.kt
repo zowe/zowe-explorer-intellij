@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.exceptions.responseMessageMap
 import eu.ibagroup.formainframe.utils.castOrNull
 
 /**
@@ -99,7 +100,8 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
     val attributes = fetchedItems?.map { buildAttributes(query, it) }
 
     if (failedResponse != null) {
-      throw CallException(failedResponse, "Cannot retrieve dataset list")
+      val headMessage = responseMessageMap[failedResponse.message()] ?: "Cannot retrieve dataset list"
+      throw CallException(failedResponse, headMessage)
     }
 
     return attributes ?: emptyList()

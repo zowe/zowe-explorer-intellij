@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.dataops.operations
 
 import com.intellij.openapi.progress.ProgressIndicator
+import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.api.apiWithBytesConverter
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
@@ -18,6 +19,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
+import io.ktor.util.*
 import org.zowe.kotlinsdk.DataAPI
 
 /**
@@ -58,17 +60,39 @@ class MemberAllocator : Allocator<MemberAllocationOperation> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
-    val request = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
+    val newMemberName = operation.request.memberName.toUpperCasePreservingASCIIRules()
+    val memberAllocationErrorString = "Cannot create member $newMemberName in ${operation.request.datasetName} " +
+        "on ${operation.connectionConfig.name}."
+    val listMembersRequest = api<DataAPI>(operation.connectionConfig).listDatasetMembers(
       authorizationToken = operation.connectionConfig.authToken,
-      datasetName = operation.request.datasetName,
-      memberName = operation.request.memberName,
-      content = byteArrayOf()
+      datasetName = operation.request.datasetName
     ).cancelByIndicator(progressIndicator).execute()
-    if (!request.isSuccessful) {
+    if (listMembersRequest.isSuccessful) {
+      val membersList = listMembersRequest.body()
+      val duplicateMember = membersList?.items?.map { it.name.toUpperCasePreservingASCIIRules() }?.find { it == newMemberName }
+      if (duplicateMember != null) {
+        throw CallException(
+          listMembersRequest,
+          "$memberAllocationErrorString Member with name $newMemberName already exists."
+        )
+      } else {
+        val writeRequest = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
+          authorizationToken = operation.connectionConfig.authToken,
+          datasetName = operation.request.datasetName,
+          memberName = newMemberName,
+          content = byteArrayOf()
+        ).cancelByIndicator(progressIndicator).execute()
+        if (!writeRequest.isSuccessful) {
+          throw CallException(
+            writeRequest,
+            memberAllocationErrorString
+          )
+        }
+      }
+    } else {
       throw CallException(
-        request,
-        "Cannot create member ${operation.request.memberName} in ${operation.request.datasetName} " +
-            "on ${operation.connectionConfig.name}"
+        listMembersRequest,
+        "Cannot fetch member list for ${operation.request.datasetName}"
       )
     }
   }
