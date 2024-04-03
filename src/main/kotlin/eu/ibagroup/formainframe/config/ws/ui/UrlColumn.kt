@@ -43,14 +43,6 @@ class UrlColumn<WSConfig : WorkingSetConfig>(
     return false
   }
 
-  /** Returns width of url column
-   * @param table column of table in GUI
-   * @return width of column in pixels
-   */
-  override fun getWidth(table: JTable?): Int {
-    return 270
-  }
-
   /**
    * Returns instance of renderer object
    * @param item instance of working set config

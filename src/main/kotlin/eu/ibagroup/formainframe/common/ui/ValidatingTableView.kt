@@ -19,6 +19,11 @@ class ValidatingTableView<Item>(
   model: ValidatingListTableModel<Item>,
   val disposable: Disposable
 ) : TableView<Item>(model) {
+  init {
+    for (column in columnModel.columns) {
+      column.minWidth = 150
+    }
+  }
 
 //  /**
 //   * Get cell renderer with the changed cell size for the cells with default cell editor
