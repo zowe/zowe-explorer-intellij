@@ -482,8 +482,7 @@ class ExplorerPasteProvider : PasteProvider {
           "Decide for Each"
         ),
         0,
-        AllIcons.General.QuestionDialog,
-        null
+        AllIcons.General.QuestionDialog
       )
 
       when (choice) {
@@ -516,8 +515,7 @@ class ExplorerPasteProvider : PasteProvider {
               "Not Resolvable Conflicts",
               arrayOf("Ok"),
               0,
-              Messages.getErrorIcon(),
-              null
+              Messages.getErrorIcon()
             )
           }
         }
