@@ -10,17 +10,30 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
+import eu.ibagroup.formainframe.explorer.ui.JobNode
+import eu.ibagroup.formainframe.explorer.ui.JobPropertiesDialog
+import eu.ibagroup.formainframe.explorer.ui.JobState
+import eu.ibagroup.formainframe.explorer.ui.SpoolFileNode
+import eu.ibagroup.formainframe.explorer.ui.SpoolFilePropertiesDialog
+import eu.ibagroup.formainframe.explorer.ui.SpoolFileState
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.service
 
 /** Action to get job or spool file properties*/
 class GetJobPropertiesAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** Create properties dialog depending on received attributes*/
   override fun actionPerformed(e: AnActionEvent) {
@@ -35,6 +48,7 @@ class GetJobPropertiesAction : AnAction() {
             val dialog = JobPropertiesDialog.create(e.project, JobState(attributes))
             dialog.showAndGet()
           }
+
           is RemoteSpoolFileAttributes -> {
             val dialog = SpoolFilePropertiesDialog.create(e.project, SpoolFileState(attributes))
             dialog.showAndGet()
@@ -58,7 +72,7 @@ class GetJobPropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-            && (node is JobNode
-            || node is SpoolFileNode)
+        && (node is JobNode
+        || node is SpoolFileNode)
   }
 }

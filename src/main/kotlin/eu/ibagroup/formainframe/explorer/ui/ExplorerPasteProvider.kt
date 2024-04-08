@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.PasteProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
@@ -21,7 +22,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
@@ -111,6 +111,10 @@ class ExplorerPasteProvider : PasteProvider {
   private val dataOpsManager = service<DataOpsManager>()
   private val pastePredicate: (NodeData<*>) -> Boolean = {
     it.attributes?.isPastePossible ?: true
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   /**
@@ -349,7 +353,8 @@ class ExplorerPasteProvider : PasteProvider {
             "Ok",
             "Skip This Files",
             AllIcons.General.WarningDialog
-          )) {
+          )
+        ) {
           conflictsResolutions.addAll(
             ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
           )
@@ -493,6 +498,7 @@ class ExplorerPasteProvider : PasteProvider {
             conflictsThatCannotBeOverwritten.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
           )
         }
+
         1 -> {
           result.addAll(conflicts.map { ConflictResolution(it.second, it.first).apply { resolveByOverwrite() } })
           result.addAll(
@@ -551,7 +557,8 @@ class ExplorerPasteProvider : PasteProvider {
 
     allConflicts.forEach { conflict ->
 
-      val newName = dataOpsManager.getNameResolver(conflict.second, conflict.first).resolve(conflict.second, conflict.first)
+      val newName =
+        dataOpsManager.getNameResolver(conflict.second, conflict.first).resolve(conflict.second, conflict.first)
 
       val newNameMessage = "If you select option \"Use new name\", the following name will be selected: <b>$newName</b>"
 

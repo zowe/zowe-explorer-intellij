@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.configCrudable
@@ -28,6 +29,10 @@ import eu.ibagroup.formainframe.utils.getSelectedNodesWorkingSets
 
 /** Action to edit job filter in JES working set tree view */
 class EditJobsFilterAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** Save changes when the dialog is fulfilled */
   override fun actionPerformed(e: AnActionEvent) {

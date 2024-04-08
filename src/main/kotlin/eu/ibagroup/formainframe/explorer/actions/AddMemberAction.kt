@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -24,14 +25,27 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.getAttributesService
-import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.dataops.operations.DeleteMemberOperation
+import eu.ibagroup.formainframe.dataops.operations.DeleteMemberOperationParams
+import eu.ibagroup.formainframe.dataops.operations.MemberAllocationOperation
+import eu.ibagroup.formainframe.dataops.operations.MemberAllocationParams
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.AddMemberDialog
+import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
+import eu.ibagroup.formainframe.explorer.ui.FetchNode
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
+import eu.ibagroup.formainframe.explorer.ui.LibraryNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /** Class that represents "Add member" action */
 class AddMemberAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Create a new member in the dataset library
@@ -114,8 +128,8 @@ class AddMemberAction : AnAction() {
     }
     val selected = view.mySelectedNodesData.getOrNull(0)
     e.presentation.isEnabledAndVisible = selected?.node is LibraryNode || (
-            selected?.node is FileLikeDatasetNode && selected.attributes is RemoteMemberAttributes
-            )
+        selected?.node is FileLikeDatasetNode && selected.attributes is RemoteMemberAttributes
+        )
   }
 
 }

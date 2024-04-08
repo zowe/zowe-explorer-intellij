@@ -10,15 +10,23 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.FetchNode
+import eu.ibagroup.formainframe.explorer.ui.RefreshableNode
+import eu.ibagroup.formainframe.explorer.ui.WorkingSetNode
 
 /**
  * Class which represents a refresh node action
  */
 class RefreshNodeAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Overloaded method of AnAction abstract class. Tells what to do if an action was submitted
