@@ -1,6 +1,7 @@
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -12,7 +13,12 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicPurgeJobParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.FetchNode
+import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
+import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
+import eu.ibagroup.formainframe.explorer.ui.JobNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
 import org.zowe.kotlinsdk.ExecData
@@ -21,6 +27,10 @@ import org.zowe.kotlinsdk.Job
 
 /** An action to purge a job */
 class PurgeJobAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun isDumbAware(): Boolean {
     return true
@@ -134,6 +144,7 @@ class PurgeJobAction : AnAction() {
       }
     }
   }
+
   /**
    * A job can be purged from the Jobs Tool Window
    * or from the JES Explorer by clicking on the corresponding job
@@ -147,7 +158,7 @@ class PurgeJobAction : AnAction() {
       val selected = view.mySelectedNodesData
       val node = selected.getOrNull(0)?.node
       e.presentation.isVisible = selected.size == 1
-              && node is JobNode
+          && node is JobNode
     } else if (view is JobBuildTreeView) {
       val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
       if (jobStatus == null) {

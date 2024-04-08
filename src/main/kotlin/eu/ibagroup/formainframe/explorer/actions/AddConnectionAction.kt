@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -21,7 +22,9 @@ import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialog
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialogState
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.initEmptyUuids
 import eu.ibagroup.formainframe.explorer.hints.Hint
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.EXPLORER_VIEW
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.utils.castOrNull
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
@@ -30,6 +33,10 @@ import javax.swing.event.HyperlinkEvent
  * Action for adding Connection through UI.
  */
 class AddConnectionAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** Shows connection dialog */
   override fun actionPerformed(e: AnActionEvent) {
@@ -76,7 +83,7 @@ private fun showHint(e: AnActionEvent) {
         else -> null
       }
       val text = "Now you can add working set to browse<br> $content.<br>" +
-              "<a href\"\">Click here to add...</a>"
+          "<a href\"\">Click here to add...</a>"
       val hyperlinkAction = when (view) {
         is FileExplorerView -> {
           { AddWorkingSetAction().actionPerformed(e) }
