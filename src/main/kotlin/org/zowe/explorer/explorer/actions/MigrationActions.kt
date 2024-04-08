@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
@@ -61,6 +62,10 @@ private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*, *>>) {
  * @see MigrateAction
  */
 class RecallAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Runs recall operation
@@ -115,6 +120,10 @@ class RecallAction : DumbAwareAction() {
  * Action class for dataset migration
  */
 class MigrateAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Runs migrate operation

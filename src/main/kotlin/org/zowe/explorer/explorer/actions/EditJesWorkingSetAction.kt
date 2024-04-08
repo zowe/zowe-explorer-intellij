@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -29,7 +30,11 @@ import org.zowe.explorer.utils.crudable.getByUniqueKey
 /**
  * Action class for edit JES working set act
  */
-class EditJesWorkingSetAction: AnAction() {
+class EditJesWorkingSetAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Called when edit JES working set option is chosen from context menu,

@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.config.configCrudable
@@ -33,6 +34,10 @@ import org.zowe.explorer.utils.crudable.getByUniqueKey
  * The action is shown and triggered only on [DSMaskNode] and [UssDirNode] (a USS mask) node types
  */
 class EditMaskAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Edit changed dataset mask. Will remove the mask from dataset masks list and add it to USS paths list

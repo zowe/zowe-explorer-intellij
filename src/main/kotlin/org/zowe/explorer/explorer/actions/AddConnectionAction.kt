@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -32,6 +33,10 @@ import javax.swing.event.HyperlinkEvent
  * Action for adding Connection through UI.
  */
 class AddConnectionAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** Shows connection dialog */
   override fun actionPerformed(e: AnActionEvent) {

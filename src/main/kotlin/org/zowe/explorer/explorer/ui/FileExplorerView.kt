@@ -11,7 +11,11 @@
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.*
+import com.intellij.ide.CopyPasteSupport
+import com.intellij.ide.CopyProvider
+import com.intellij.ide.CutProvider
+import com.intellij.ide.DeleteProvider
+import com.intellij.ide.PasteProvider
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDSource
 import com.intellij.ide.dnd.DnDTarget
@@ -19,6 +23,7 @@ import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -230,6 +235,10 @@ class FileExplorerView(
      */
     inner class ExplorerCutProvider : CutProvider {
 
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.EDT
+      }
+
       /** @see ExplorerCopyPasteSupport.performCopyCut */
       override fun performCut(dataContext: DataContext) {
         performCopyCut(true, dataContext)
@@ -263,6 +272,10 @@ class FileExplorerView(
      */
     override fun getCopyProvider(): CopyProvider {
       return object : CopyProvider {
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+          return ActionUpdateThread.EDT
+        }
 
         /** @see ExplorerCopyPasteSupport.performCopyCut */
         override fun performCopy(dataContext: DataContext) {
@@ -411,6 +424,11 @@ class FileExplorerView(
    * @author Viktar Mushtsin.
    */
   private val deleteProvider = object : DeleteProvider {
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     /** Deletes files corresponding to the selected nodes data. */
     override fun deleteElement(dataContext: DataContext) {
       val selected = mySelectedNodesData

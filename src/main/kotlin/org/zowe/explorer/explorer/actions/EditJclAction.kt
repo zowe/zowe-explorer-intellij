@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -31,6 +32,10 @@ import org.zowe.explorer.vfs.MFVirtualFile
  * Action to edit job JCL through the editor in JES explorer
  */
 class EditJclAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun isDumbAware(): Boolean {
     return true

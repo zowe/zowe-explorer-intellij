@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.dataops.DataOpsManager
@@ -24,6 +25,10 @@ import org.zowe.explorer.utils.service
 
 /** An action to view a process of running job in the Jobs Tool Window */
 class ViewJobAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** View a process of running job on click in the JES Explorer */
   override fun actionPerformed(e: AnActionEvent) {

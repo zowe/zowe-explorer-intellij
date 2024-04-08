@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -21,8 +22,24 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.operations.UssChangeModeOperation
 import org.zowe.explorer.dataops.operations.UssChangeModeParams
 import org.zowe.explorer.explorer.ExplorerUnit
-import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.explorer.ui.DatasetPropertiesDialog
+import org.zowe.explorer.explorer.ui.DatasetState
+import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
+import org.zowe.explorer.explorer.ui.LibraryNode
+import org.zowe.explorer.explorer.ui.MemberPropertiesDialog
+import org.zowe.explorer.explorer.ui.MemberState
+import org.zowe.explorer.explorer.ui.UssDirNode
+import org.zowe.explorer.explorer.ui.UssFileNode
+import org.zowe.explorer.explorer.ui.UssFilePropertiesDialog
+import org.zowe.explorer.explorer.ui.UssFileState
+import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
+import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.utils.changeFileEncodingAction
+import org.zowe.explorer.utils.clone
+import org.zowe.explorer.utils.isBeingEditingNow
+import org.zowe.explorer.utils.service
 import org.zowe.kotlinsdk.ChangeMode
 
 /**
@@ -30,6 +47,10 @@ import org.zowe.kotlinsdk.ChangeMode
  * @author Valiantsin Krus.
  */
 class GetFilePropertiesAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** Shows dialog with properties depending on type of the file selected by user. */
   override fun actionPerformed(e: AnActionEvent) {
@@ -73,7 +94,7 @@ class GetFilePropertiesAction : AnAction() {
                         progressIndicator = it
                       )
                     }.onFailure { t ->
-                        view.explorer.reportThrowable(t, e.project)
+                      view.explorer.reportThrowable(t, e.project)
                     }
                     node.parent?.cleanCacheIfPossible(cleanBatchedQuery = false)
                   }
@@ -115,7 +136,7 @@ class GetFilePropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-      && (node is UssFileNode || node is FileLikeDatasetNode || node is LibraryNode || node is UssDirNode)
+        && (node is UssFileNode || node is FileLikeDatasetNode || node is LibraryNode || node is UssDirNode)
 
     // Mark the migrated dataset properties unavailable for clicking
     if (node != null && (node is FileLikeDatasetNode || node is LibraryNode)) {

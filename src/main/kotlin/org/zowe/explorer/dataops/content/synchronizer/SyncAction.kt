@@ -10,9 +10,9 @@
 
 package org.zowe.explorer.dataops.content.synchronizer
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -20,10 +20,18 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.checkEncodingCompatibility
+import org.zowe.explorer.utils.runReadActionInEdtAndWait
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.showSaveAnywayDialog
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
 class SyncAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   /**
    * Get a virtual file on which the event was triggered
    * @param e the event to get the virtual file

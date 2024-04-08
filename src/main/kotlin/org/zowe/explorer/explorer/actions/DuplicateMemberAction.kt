@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -19,12 +20,23 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.operations.RenameOperation
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.ExplorerTreeView
+import org.zowe.explorer.explorer.ui.FetchNode
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
+import org.zowe.explorer.explorer.ui.NodeData
+import org.zowe.explorer.explorer.ui.RenameDialog
+import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
+import org.zowe.explorer.explorer.ui.getExplorerView
 
 /**
  * Class which represents a duplicate member action
  */
 class DuplicateMemberAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * The method of AnAction abstract class. Tells what to do if an action was submitted
@@ -50,7 +62,12 @@ class DuplicateMemberAction : AnAction() {
    * @throws any throwable during the processing of the request
    * @return Void
    */
-  private fun runDuplicateOperation(project : Project, view : ExplorerTreeView<ConnectionConfig, *,*>, selectedNode : NodeData<ConnectionConfig>, newName: String) {
+  private fun runDuplicateOperation(
+    project: Project,
+    view: ExplorerTreeView<ConnectionConfig, *, *>,
+    selectedNode: NodeData<ConnectionConfig>,
+    newName: String
+  ) {
     val dataOpsManager = view.explorer.componentManager.getService(DataOpsManager::class.java)
     val attributes = selectedNode.attributes ?: return
     val file = selectedNode.file ?: return
@@ -98,7 +115,8 @@ class DuplicateMemberAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     val nodeAttributes = selected.getOrNull(0)?.attributes
-    e.presentation.isVisible = selected.size == 1 && node is FileLikeDatasetNode && nodeAttributes is RemoteMemberAttributes
+    e.presentation.isVisible =
+      selected.size == 1 && node is FileLikeDatasetNode && nodeAttributes is RemoteMemberAttributes
   }
 
 }

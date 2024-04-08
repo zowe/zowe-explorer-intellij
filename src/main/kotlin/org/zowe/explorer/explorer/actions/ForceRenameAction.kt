@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -23,13 +24,24 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.operations.ForceRenameOperation
 import org.zowe.explorer.dataops.operations.RenameOperation
 import org.zowe.explorer.explorer.Explorer
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.ExplorerTreeNode
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.NodeData
+import org.zowe.explorer.explorer.ui.RenameDialog
+import org.zowe.explorer.explorer.ui.UssDirNode
+import org.zowe.explorer.explorer.ui.UssFileNode
+import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * Base class implementation of the force rename action
  */
 class ForceRenameAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Called when force rename is chosen from context menu

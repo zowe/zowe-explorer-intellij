@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -34,6 +35,10 @@ import org.zowe.explorer.utils.sendTopic
  */
 class TsoSessionCreateAction : AnAction() {
   private val presentationText = "TSO Console"
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Method to perform an action which is called when OK button is pressed

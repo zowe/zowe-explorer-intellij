@@ -10,17 +10,30 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.attributes.RemoteSpoolFileAttributes
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.ExplorerTreeNode
+import org.zowe.explorer.explorer.ui.JesExplorerView
+import org.zowe.explorer.explorer.ui.JobNode
+import org.zowe.explorer.explorer.ui.JobPropertiesDialog
+import org.zowe.explorer.explorer.ui.JobState
+import org.zowe.explorer.explorer.ui.SpoolFileNode
+import org.zowe.explorer.explorer.ui.SpoolFilePropertiesDialog
+import org.zowe.explorer.explorer.ui.SpoolFileState
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.service
 
 /** Action to get job or spool file properties*/
 class GetJobPropertiesAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** Create properties dialog depending on received attributes*/
   override fun actionPerformed(e: AnActionEvent) {
@@ -35,6 +48,7 @@ class GetJobPropertiesAction : AnAction() {
             val dialog = JobPropertiesDialog.create(e.project, JobState(attributes))
             dialog.showAndGet()
           }
+
           is RemoteSpoolFileAttributes -> {
             val dialog = SpoolFilePropertiesDialog.create(e.project, SpoolFileState(attributes))
             dialog.showAndGet()
@@ -58,7 +72,7 @@ class GetJobPropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-            && (node is JobNode
-            || node is SpoolFileNode)
+        && (node is JobNode
+        || node is SpoolFileNode)
   }
 }

@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -27,6 +28,9 @@ import org.zowe.explorer.utils.crudable.Crudable
  */
 abstract class AddWsActionBase : AnAction() {
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** Shows add Working Set dialog (for files or for jobs) */
   override fun actionPerformed(e: AnActionEvent) {

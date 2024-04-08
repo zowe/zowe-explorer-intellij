@@ -11,6 +11,7 @@
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -23,6 +24,10 @@ import org.zowe.kotlinsdk.Job
 
 /** Action to cancel a running job in the Jobs Tool Window */
 class CancelJobAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun isDumbAware(): Boolean {
     return true

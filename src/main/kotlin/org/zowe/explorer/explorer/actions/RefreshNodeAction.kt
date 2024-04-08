@@ -10,15 +10,23 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.EXPLORER_VIEW
+import org.zowe.explorer.explorer.ui.FetchNode
+import org.zowe.explorer.explorer.ui.RefreshableNode
+import org.zowe.explorer.explorer.ui.WorkingSetNode
 
 /**
  * Class which represents a refresh node action
  */
 class RefreshNodeAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Overloaded method of AnAction abstract class. Tells what to do if an action was submitted

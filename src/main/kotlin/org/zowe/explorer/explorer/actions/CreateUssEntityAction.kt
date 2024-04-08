@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -27,7 +28,14 @@ import org.zowe.explorer.dataops.operations.UssAllocationOperation
 import org.zowe.explorer.dataops.operations.UssAllocationParams
 import org.zowe.explorer.dataops.operations.UssChangeModeOperation
 import org.zowe.explorer.dataops.operations.UssChangeModeParams
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.CreateFileDialog
+import org.zowe.explorer.explorer.ui.CreateFileDialogState
+import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.UssDirNode
+import org.zowe.explorer.explorer.ui.UssFileNode
+import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.explorer.ui.toAllocationParams
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.ChangeMode
@@ -37,6 +45,10 @@ import org.zowe.kotlinsdk.FileType
  * Abstract action for creating Uss Entity (file or directory) through context menu.
  */
 abstract class CreateUssEntityAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Uss file state which contains parameters for creating.

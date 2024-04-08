@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.config.connect.CredentialService
@@ -23,6 +24,10 @@ import org.zowe.explorer.utils.getSelectedNodesWorkingSets
  * @author Valiantsin Krus
  */
 class AddJobsFilterAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** Opens AddJobsFilterDialog and saves result. */
   override fun actionPerformed(e: AnActionEvent) {

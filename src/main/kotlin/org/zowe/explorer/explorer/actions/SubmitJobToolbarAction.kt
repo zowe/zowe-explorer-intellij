@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -17,7 +18,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
-import org.zowe.explorer.dataops.operations.jobs.*
+import org.zowe.explorer.dataops.operations.jobs.SubmitJobJclOperationParams
+import org.zowe.explorer.dataops.operations.jobs.SubmitJobOperation
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.ui.build.jobs.JOB_ADDED_TOPIC
 import org.zowe.explorer.utils.sendTopic
@@ -25,7 +27,11 @@ import org.zowe.explorer.utils.sendTopic
 /**
  * Action to submit job using the button in editor when edit JCL
  */
-class SubmitJobToolbarAction: AnAction() {
+class SubmitJobToolbarAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Submit a job on button click

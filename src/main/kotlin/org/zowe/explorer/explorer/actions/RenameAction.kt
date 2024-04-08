@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -22,7 +23,15 @@ import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.operations.RenameOperation
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.ExplorerTreeNode
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
+import org.zowe.explorer.explorer.ui.LibraryNode
+import org.zowe.explorer.explorer.ui.RenameDialog
+import org.zowe.explorer.explorer.ui.UssDirNode
+import org.zowe.explorer.explorer.ui.UssFileNode
+import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
@@ -31,6 +40,10 @@ import org.zowe.explorer.vfs.MFVirtualFile
  * [LibraryNode] and [FileLikeDatasetNode] node types
  */
 class RenameAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Method to run rename operation. It passes the control to rename operation runner
