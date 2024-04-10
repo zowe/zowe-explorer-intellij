@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.zowe.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
@@ -26,7 +27,9 @@ import org.zowe.kotlinsdk.zowe.config.parseConfigJson
  * @version 0.5
  * @since 2021-02-12
  */
-class UpdateZoweConfigAction: DumbAwareAction() {
+class UpdateZoweConfigAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: let {
@@ -67,7 +70,8 @@ class UpdateZoweConfigAction: DumbAwareAction() {
       zoweConfigService.zoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
     }
     val zoweState = zoweConfigService.getZoweConfigState(false)
-    e.presentation.isEnabledAndVisible = zoweState == ZoweConfigState.NEED_TO_UPDATE || zoweState == ZoweConfigState.NEED_TO_ADD
+    e.presentation.isEnabledAndVisible =
+      zoweState == ZoweConfigState.NEED_TO_UPDATE || zoweState == ZoweConfigState.NEED_TO_ADD
     zoweConfigService.zoweConfig = prevZoweConfig
   }
 }
