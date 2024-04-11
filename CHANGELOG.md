@@ -6,11 +6,11 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ### Features
 
-* Feature: TSO CLI PA1 button functionality added ([48834cac](https://github.com/zowe/zowe-explorer-intellij/commit/48834cac))
-* Feature: Allocation units clarification added ([1ff218e4](https://github.com/zowe/zowe-explorer-intellij/commit/1ff218e4))
-* Feature: Now after allocating a dataset, a notification is shown instead of a dialog window ([20343651](https://github.com/zowe/zowe-explorer-intellij/commit/20343651))
-* Feature: VFS_CHANGES topic rework for encoding purposes ([3adaded3](https://github.com/zowe/zowe-explorer-intellij/commit/3adaded3))
-* Feature: Close all files in editor, related to the file/folder/dataset/member being deleted ([8a0d9980](https://github.com/zowe/zowe-explorer-intellij/commit/8a0d9980))
+* Feature: GitHub issue #171: TSO CLI PA1 button functionality added ([48834cac](https://github.com/zowe/zowe-explorer-intellij/commit/48834cac))
+* Feature: GitHub issue #172: Allocation units clarification added ([1ff218e4](https://github.com/zowe/zowe-explorer-intellij/commit/1ff218e4))
+* Feature: GitHub issue #173: Now after allocating a dataset, a notification is shown instead of a dialog window ([20343651](https://github.com/zowe/zowe-explorer-intellij/commit/20343651))
+* Feature: GitHub issue #174: VFS_CHANGES topic rework for encoding purposes ([3adaded3](https://github.com/zowe/zowe-explorer-intellij/commit/3adaded3))
+* Feature: GitHub issue #175: Close all files in editor, related to the file/folder/dataset/member being deleted ([8a0d9980](https://github.com/zowe/zowe-explorer-intellij/commit/8a0d9980))
 
 ### Bugfixes
 
