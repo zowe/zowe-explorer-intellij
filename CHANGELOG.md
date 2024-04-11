@@ -27,7 +27,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: TSO EXEC command without operands causes the CLI to hang ([d071960a](https://github.com/zowe/zowe-explorer-intellij/commit/d071960a))
 * Bugfix: Connection is not fully reset to the last successful state and it causes errors ([f6d5a72e](https://github.com/zowe/zowe-explorer-intellij/commit/f6d5a72e))
 
-## [1.1.2] (2024-01-22)
+## [1.1.2-221] (2024-01-22)
 
 ### Bugfixes
 
@@ -42,7 +42,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: JES Explorer bug when ABEND job is being displayed ([614aa6cf](https://github.com/zowe/zowe-explorer-intellij/commit/614aa6cf))
 * Bugfix: GitHub issue #167: Zowe explorer config is not converted ([b5eae7a2](https://github.com/zowe/zowe-explorer-intellij/commit/b5eae7a2))
 
-## [1.1.1] (2023-11-23)
+## [1.1.1-221] (2023-11-23)
 
 ### Bugfixes
 
@@ -67,7 +67,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #161: Conflict between Zowe Explorer and For
   Mainframe ([79a7fc50](https://github.com/zowe/zowe-explorer-intellij/commit/79a7fc50))
 
-## [1.1.0] (2023-09-07)
+## [1.1.0-221] (2023-09-07)
 
 ### Features
 
@@ -161,7 +161,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: ClassCastException: class java.util.ArrayList cannot be cast to class
   com.intellij.openapi.vfs.VirtualFile ([cdc0a458](https://github.com/zowe/zowe-explorer-intellij/commit/cdc0a458))
 
-## [1.0.2] (2023-06-13)
+## [1.0.2-221] (2023-06-13)
 
 ### Features
 
@@ -439,10 +439,10 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
-[1.1.2]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.1-221...1.1.2-221
-[1.1.1]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.0-221...1.1.1-221
-[1.1.0]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.2-221...1.1.0-221
-[1.0.2]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.1...1.0.2-221
+[1.1.2-221]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.1-221...1.1.2-221
+[1.1.1-221]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.0-221...1.1.1-221
+[1.1.0-221]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.2-221...1.1.0-221
+[1.0.2-221]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.1...1.0.2-221
 [1.0.1]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/for-mainframe/For-Mainframe/compare/0.7.1...1.0.0
 [0.7.1]: https://github.com/for-mainframe/For-Mainframe/compare/0.7.0...0.7.1
