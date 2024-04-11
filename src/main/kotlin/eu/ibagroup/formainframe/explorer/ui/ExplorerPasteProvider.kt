@@ -637,16 +637,30 @@ class ExplorerPasteProvider : PasteProvider {
     return isPastePossibleAndEnabled(dataContext)
   }
 
+  /**
+   * Creates an HTML message from an items list
+   * Message structure:
+   *   startMessage
+   *     Next, a string is constructed from the items list.
+   *     Elements are added to the string until its length does not exceed the limit.
+   *     If not all elements were added to the string, then "and more..." is added to the end of the string
+   *   finishMessage.
+   * @param startMessage beginning of the message
+   * @param items list of items to display
+   * @param finishMessage end of message
+   * @param limit the maximum allowed length for a converted list of elements.
+   * @return created HTML message
+   */
   private fun createHtmlMessageWithItemsList(
-    startMessage: String, items: List<String>, finishMessage: String, maxItems: Int = 5
+    startMessage: String, items: List<String>, finishMessage: String, limit: Int = 130
   ): String {
-    val tagP = "<p style=\"margin-left: 10px\">"
-    val itemsToShow = if (items.size > maxItems) {
-      items.subList(0, maxItems).toMutableList().apply { add("more ...") }
-    } else {
-      items
-    }
-    val itemsString = "$tagP${itemsToShow.joinToString("</p>$tagP")}</p>"
+    val pTag = "<p style=\"margin-left: 10px\">"
+    val itemsMerged = items.joinToString(", ")
+    val result = if (itemsMerged.length > limit)
+      itemsMerged.substring(0, limit - 3).plus("...</p>${pTag}and more...")
+    else
+      itemsMerged
+    val itemsString = pTag.plus(result).plus("</p>")
     return "<html><span>$startMessage\n</span>\n$itemsString\n<span>$finishMessage</span></html>"
   }
 }
