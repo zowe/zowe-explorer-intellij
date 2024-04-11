@@ -9,20 +9,31 @@
  */
 
 import kotlinx.kover.api.KoverTaskExtension
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+fun properties(key: String) = providers.gradleProperty(key)
+fun environment(key: String) = providers.environmentVariable(key)
+fun dateValue(pattern: String): String =
+  LocalDate.now(ZoneId.of("Europe/Warsaw")).format(DateTimeFormatter.ofPattern(pattern))
 
 plugins {
   id("org.jetbrains.intellij") version "1.17.2"
+  id("org.jetbrains.changelog") version "2.2.0"
   kotlin("jvm") version "1.9.22"
   java
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
+  id("org.owasp.dependencycheck") version "9.1.0"
 }
 
 apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
-group = "eu.ibagroup"
-version = "1.2.0-231"
+group = properties("pluginGroup").get()
+version = properties("pluginVersion").get()
 val remoteRobotVersion = "0.11.22"
 val okHttp3Version = "4.12.0"
 val kotestVersion = "5.8.1"
@@ -72,10 +83,35 @@ dependencies {
 }
 
 intellij {
-  version.set("2023.1")
+  version.set(properties("platformVersion").get())
+}
+
+// Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
+changelog {
+  version.set(properties("pluginVersion").get())
+  header.set(provider { "${version.get()} (${dateValue("yyyy-MM-dd")})" }.get())
+  groups.set(listOf("Breaking changes", "Features", "Bugfixes", "Deprecations", "Security"))
+  keepUnreleasedSection.set(false)
+  itemPrefix.set("*")
+  repositoryUrl.set(properties("pluginRepositoryUrl").get())
+  sectionUrlBuilder.set { repositoryUrl, currentVersion, previousVersion, isUnreleased: Boolean ->
+    repositoryUrl + when {
+      isUnreleased -> when (previousVersion) {
+        null -> "/commits"
+        else -> "/compare/$previousVersion...HEAD"
+      }
+
+      previousVersion == null -> "/commits/$currentVersion"
+      else -> "/compare/$previousVersion...$currentVersion"
+    }
+  }
 }
 
 tasks {
+  wrapper {
+    gradleVersion = properties("gradleVersion").get()
+  }
+
   withType<KotlinCompile> {
     kotlinOptions {
       jvmTarget = JavaVersion.VERSION_17.toString()
@@ -88,28 +124,25 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set("231.8109")
-    untilBuild.set("241.*")
+    version.set(properties("pluginVersion").get())
+    sinceBuild.set(properties("pluginSinceBuild").get())
+    untilBuild.set(properties("pluginUntilBuild").get())
+
+    val changelog = project.changelog // local variable for configuration cache compatibility
+    // Get the latest available change notes from the changelog file
     changeNotes.set(
-      """
-      <b>New features:</b>
-      <ul>
-        <li>GitHub issue #165: IntelliJ 2023.3 support</li>
-      </ul>
-      <br>
-      <b>Fixed bugs:</b>
-      <ul>
-        <li>Sync action does not work after file download</li>
-        <li>"Skip This Files" doesn't work when uploading local file to PDS</li>
-        <li>"Use new name" doesn't work for copying partitioned dataset to USS folder</li>
-        <li>"Use new name" doesn't work for copying sequential dataset to partitioned dataset</li>
-        <li>"Use new name" doesn't work when uploading local file to PDS</li>
-        <li>Editing two members with the same name does not update the content for one of the members</li>
-        <li>Topics handling</li>
-        <li>Zowe config v2 handling</li>
-        <li>JES Explorer bug when ABEND job is being displayed</li>
-        <li>GitHub issue #167: Zowe explorer config is not converted</li>
-      </ul>"""
+      properties("pluginVersion")
+        .map { pluginVersion ->
+          with(changelog) {
+            renderItem(
+              (getOrNull(pluginVersion) ?: getUnreleased())
+                .withHeader(false)
+                .withEmptySections(false),
+              Changelog.OutputType.HTML,
+            )
+          }
+        }
+        .get()
     )
   }
 
@@ -155,6 +188,30 @@ tasks {
   buildPlugin {
     dependsOn(createOpenApiSourceJar)
     from(createOpenApiSourceJar) { into("lib/src") }
+  }
+
+  signPlugin {
+    certificateChain.set(environment("INTELLIJ_SIGNING_CERTIFICATE_CHAIN").map { it })
+    privateKey.set(environment("INTELLIJ_SIGNING_PRIVATE_KEY").map { it })
+    password.set(environment("INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD").map { it })
+  }
+
+  publishPlugin {
+    dependsOn("patchChangelog")
+    token.set(environment("INTELLIJ_SIGNING_PUBLISH_TOKEN").map { it })
+    // The pluginVersion is based on the SemVer (https://semver.org)
+    // Read more: https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
+    channels.set(
+      properties("pluginVersion")
+        .map {
+          listOf(
+            it.substringAfter('-', "")
+              .substringAfter('-', "")
+              .substringBefore('.')
+              .ifEmpty { "stable" }
+          )
+        }
+        .map { it })
   }
 
   downloadRobotServerPlugin {
