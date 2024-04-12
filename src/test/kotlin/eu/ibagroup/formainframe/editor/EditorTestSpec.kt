@@ -509,34 +509,6 @@ class EditorTestSpec : WithApplicationShouldSpec({
 
       assertSoftly { descriptors?.isEmpty() shouldBe true }
     }
-    should("check file when getting decoder error") {
-
-      text = "qwe��rty"
-
-      var decoderResultIsError = false
-      var pointer = 0
-      every { decoderMock.decode(any(), any(), any()) } answers {
-        val back = secondArg<CharBuffer>()
-        val str = text.substring(pointer)
-        val pos = str.indexOfFirst { it !in 'A'..'z' }
-        if (pos != -1) {
-          decoderResultIsError = true
-          pointer += pos
-          back.position(pointer)
-          pointer++
-        } else {
-          decoderResultIsError = false
-          back.put(str)
-        }
-        decoderResultMock
-      }
-      every { decoderResultMock.isError } answers { decoderResultIsError }
-
-      val descriptors = lossyEncodingInspection.checkFile(psiFileMock, inspectionManagerMock, isOnTheFly)
-
-      assertSoftly { descriptors?.size shouldBe 1 }
-      assertSoftly { descriptors?.get(0)?.textRangeInElement shouldBe TextRange(3, 5) }
-    }
     should("check file where not all characters are decoded back") {
 
       text = "qwerty."

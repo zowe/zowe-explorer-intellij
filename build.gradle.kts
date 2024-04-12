@@ -20,14 +20,8 @@ fun environment(key: String) = providers.environmentVariable(key)
 fun dateValue(pattern: String): String =
   LocalDate.now(ZoneId.of("Europe/Warsaw")).format(DateTimeFormatter.ofPattern(pattern))
 
-buildscript {
-  dependencies {
-    classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.1.1")
-  }
-}
-
 plugins {
-  id("org.sonarqube") version "3.3"
+  id("org.sonarqube") version "5.0.0.4638"
   id("org.jetbrains.intellij") version "1.17.2"
   id("org.jetbrains.changelog") version "2.2.0"
   kotlin("jvm") version "1.9.22"
@@ -183,6 +177,10 @@ tasks {
         }
       })
     )
+  }
+
+  koverHtmlReport {
+    finalizedBy("koverXmlReport")
   }
 
   val createOpenApiSourceJar by registering(Jar::class) {
