@@ -6,6 +6,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ### Features
 
+* Feature: GitHub issue #118: getActionUpdateThread function is overridden for each AnAction class inheritors ([639b60ee](https://github.com/zowe/zowe-explorer-intellij/commit/639b60ee))
 * Feature: GitHub issue #171: TSO CLI PA1 button functionality added ([48834cac](https://github.com/zowe/zowe-explorer-intellij/commit/48834cac))
 * Feature: GitHub issue #172: Allocation units clarification added ([1ff218e4](https://github.com/zowe/zowe-explorer-intellij/commit/1ff218e4))
 * Feature: GitHub issue #173: Now after allocating a dataset, a notification is shown instead of a dialog window ([20343651](https://github.com/zowe/zowe-explorer-intellij/commit/20343651))
