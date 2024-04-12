@@ -32,6 +32,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.crudable.find
 import eu.ibagroup.formainframe.utils.crudable.getAll
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
@@ -54,7 +55,11 @@ class ConnectionDialog(
    * Private field
    * In case of DialogMode.UPDATE takes the last successful state from crudable, takes default state otherwise
    */
-  private val lastSuccessfulState: ConnectionDialogState = if(state.mode == DialogMode.UPDATE) state.connectionConfig.toDialogState(crudable) else ConnectionDialogState()
+  private val lastSuccessfulState: ConnectionDialogState =
+    if(state.mode == DialogMode.UPDATE) crudable.find<ConnectionConfig> { it.uuid == state.connectionUuid }
+      .findAny()
+      .orElseGet { state.connectionConfig }
+      .toDialogState(crudable) else ConnectionDialogState()
   companion object {
 
     /** Show Test connection dialog and test the connection regarding the dialog state.

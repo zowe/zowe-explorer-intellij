@@ -15,6 +15,7 @@ import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.exceptions.responseMessageMap
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import org.zowe.kotlinsdk.SystemsApi
@@ -56,11 +57,7 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
       .cancelByIndicator(progressIndicator)
       .execute()
     if (!response.isSuccessful) {
-      val headMessage = when (response.message()) {
-        "Unauthorized" -> "Credentials are not valid"
-        "Not Found" -> "Endpoint not found"
-        else -> response.message()
-      }
+      val headMessage = responseMessageMap[response.message()] ?: response.message()
       throw CallException(response, headMessage)
     }
     return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")

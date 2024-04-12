@@ -401,7 +401,6 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       context("ExplorerTreeNode.updateNodeTitleUsingCutBuffer") {
         every { virtualFileMock.presentableName } returns "test"
         every { virtualFileMock.isValid } returns false
-        every { explorer.nullableProject } returns mockedProject
 
         should("perform an update of the node if virtual file in the cut buffer and navigate is true") {
           every { explorerContentProviderMock.isFileInCutBuffer(virtualFileMock) } returns true
@@ -455,7 +454,6 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
             updatePerformed = true
             true
           }
-          every { explorerToTest.nullableProject } returns mockedProject
           every { ussFileMockToSpyTest.virtualFile } returns virtualFileMock
           every { ussFileMockToSpyTest.value } returns virtualFileMock
           ussFileMockToSpyTest.update()

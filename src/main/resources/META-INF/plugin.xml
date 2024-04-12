@@ -111,6 +111,9 @@ Example of how to see the output:<br/>
 
         <extensionPoint name="configDeclaration"
                         interface="eu.ibagroup.formainframe.config.ConfigDeclarationFactory"/>
+
+        <extensionPoint name="nameResolver"
+                        interface="eu.ibagroup.formainframe.dataops.operations.mover.names.CopyPasteNameResolverFactory"/>
     </extensionPoints>
 
     <applicationListeners>
@@ -234,6 +237,18 @@ Example of how to see the output:<br/>
 
         <operationRunner
                 implementation="eu.ibagroup.formainframe.dataops.operations.mover.CrossSystemPdsToUssDirMoverFactory"/>
+
+        <nameResolver
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.names.SeqToPDSResolverFactory"/>
+
+        <nameResolver
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.names.SeqToPDSResolverFactory"/>
+
+        <nameResolver
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.names.NotSeqToPDSResolverFactory"/>
+
+        <nameResolver
+                implementation="eu.ibagroup.formainframe.dataops.operations.mover.names.DatasetOrDirResolverFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
