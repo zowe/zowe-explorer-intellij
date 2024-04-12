@@ -14,6 +14,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -49,6 +50,10 @@ import org.zowe.kotlinsdk.DsnameType
 const val ALLOCATE_ACTION_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.AllocateActionNotificationGroup"
 
 abstract class AllocateActionBase : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Returns null if object doesn't contain anything

@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.showYesNoDialog
@@ -24,6 +25,10 @@ import eu.ibagroup.formainframe.explorer.ui.getExplorerView
  * Action class for delete JES node action (working set or filter)
  */
 class DeleteJesNodeAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Called when delete JES element option is chosen from context menu
@@ -83,6 +88,6 @@ class DeleteJesNodeAction : AnAction() {
     }
     val selected = view.mySelectedNodesData
     e.presentation.isEnabledAndVisible = selected.isNotEmpty()
-            && (selected[0].node is JesWsNode || selected[0].node is JesFilterNode)
+        && (selected[0].node is JesWsNode || selected[0].node is JesFilterNode)
   }
 }

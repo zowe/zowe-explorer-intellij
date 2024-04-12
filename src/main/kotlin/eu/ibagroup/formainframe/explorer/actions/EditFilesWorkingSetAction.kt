@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -30,6 +31,10 @@ import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
  * Action class for edit working set act
  */
 class EditFilesWorkingSetAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Called when edit working set option is chosen from context menu
@@ -53,6 +58,7 @@ class EditFilesWorkingSetAction : AnAction() {
             }
         }
       }
+
       else -> {
         return
       }
