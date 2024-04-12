@@ -1,0 +1,22 @@
+name: "Setup action"
+description: "Runs sonar scans"
+
+
+runs:
+  using: composite
+  steps:
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.sonar/caches
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+
+    - name: Code coverage and publish results
+      shell: bash
+      run: >
+        ./gradlew --info sonarqube
+        -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=512m"
+        -Dresults="build/reports/tests/test,build/test-results/test,build/reports/jacoco/test/html"
+        -Psonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+        -Dsonar.coverage.jacoco.xmlReportPaths="build/reports/jacoco.xml"

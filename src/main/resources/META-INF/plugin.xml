@@ -74,30 +74,39 @@ Example of how to see the output:<br/>
     <extensionPoints>
 
         <extensionPoint name="attributesService"
+                        dynamic="true"
                         interface="eu.ibagroup.formainframe.dataops.attributes.AttributesServiceFactory"/>
 
         <extensionPoint name="fileDataProvider"
+                        dynamic="true"
                         interface="eu.ibagroup.formainframe.dataops.fetch.FileFetchProviderFactory"/>
 
         <extensionPoint name="contentSynchronizer"
+                        dynamic="true"
                         interface="eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizerFactory"/>
 
         <extensionPoint name="mfContentAdapter"
+                        dynamic="true"
                         interface="eu.ibagroup.formainframe.dataops.content.adapters.MFContentAdapterFactory"/>
 
         <extensionPoint name="operationRunner"
+                        dynamic="true"
                         interface="eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory"/>
 
         <extensionPoint name="logFetcher"
+                        dynamic="true"
                         interface="eu.ibagroup.formainframe.dataops.log.LogFetcherFactory"/>
 
         <extensionPoint name="oldConfigAdapter"
+                        dynamic="true"
                         interface="eu.ibagroup.formainframe.config.OldConfigAdapterFactory"/>
 
         <extensionPoint name="explorerContentProvider"
+                        dynamic="true"
                         interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
 
         <extensionPoint name="explorer"
+                        dynamic="true"
                         interface="eu.ibagroup.formainframe.explorer.ExplorerFactory"/>
 
         <extensionPoint name="configDeclaration"
@@ -304,7 +313,7 @@ Example of how to see the output:<br/>
         <filePasteProvider implementation="eu.ibagroup.formainframe.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="eu.ibagroup.formainframe.explorer.ui.ExplorerPasteProvider"/>
 
-        <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>
+        <!--        <postStartupActivity implementation="eu.ibagroup.formainframe.analytics.AnalyticsStartupActivity"/>-->
 
         <postStartupActivity implementation="eu.ibagroup.formainframe.config.ConfigStartupActivity"/>
 

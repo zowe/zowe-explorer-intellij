@@ -1,13 +1,7 @@
 .gradle
 .idea
-gradle/*
-gradle/wrapper/*
-!gradle/
-!gradle/wrapper/
-!gradle/wrapper/gradle-wrapper.properties
-build
+/build
 
-libs
 verifier-all.jar
 
 # Windows thumbnail cache files
