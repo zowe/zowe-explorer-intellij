@@ -11,15 +11,19 @@
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.editor.FileContentChangeListener
+import eu.ibagroup.formainframe.utils.*
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+
 
 private const val SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX = "sync_storage_"
 private val log = logger<RemoteAttributedContentSynchronizer<*>>()
@@ -105,6 +109,29 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   }
 
   /**
+   * It is only necessary to remove old file from cache while force overwriting.
+   * TODO: Not the best solution. Think on how to rework.
+   * @param file - file to remove.
+   */
+  fun removeFromCacheAfterForceOverwriting(file: VirtualFile) {
+    val syncProvider = fetchedAtLeastOnce.firstOrNull { it.file == file } ?: return
+    fetchedAtLeastOnce.removeIf { it.file == file }
+    // if you will not delete the file than "Local cache conflict" dialog appear.
+    runWriteActionInEdtAndWait {
+      // close editor if file is opened to avoid IDE crash.
+      ProjectManager.getInstance().openProjects.forEach {
+        syncProvider.getDocument()?.let { document ->
+          val fileEditorManager = FileEditorManager.getInstance(it)
+          FileDocumentManager.getInstance().getFile(document)?.let { vf ->
+            fileEditorManager.closeFile(vf)
+          }
+        }
+      }
+      file.delete(this@RemoteAttributedContentSynchronizer)
+    }
+  }
+
+  /**
    * Base implementation of [ContentSynchronizer.synchronizeWithRemote] method for each synchronizer.
    * Doesn't need to be overridden in most cases
    * @see ContentSynchronizer.synchronizeWithRemote
@@ -118,12 +145,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       progressIndicator?.text = "Synchronizing file ${syncProvider.file.name} with mainframe"
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
-
       val ussAttributes = attributes.castOrNull<RemoteUssAttributes>()
-      if (!wasFetchedBefore(syncProvider)) {
-        ussAttributes?.let { checkUssFileTag(it) }
-      }
-      val currentCharset = ussAttributes?.charset ?: DEFAULT_TEXT_CHARSET
 
       val fetchedRemoteContentBytes = fetchRemoteContentBytes(attributes, progressIndicator)
       val contentAdapter = dataOpsManager.getMFContentAdapter(syncProvider.file)
@@ -131,9 +153,8 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
 
       if (!wasFetchedBefore(syncProvider)) {
         log.info("Setting initial content for file ${syncProvider.file.name}")
+        ussAttributes?.let { checkUssFileTag(it) }
         runWriteActionInEdtAndWait { syncProvider.putInitialContent(adaptedFetchedBytes) }
-        changeFileEncodingTo(syncProvider.file, currentCharset)
-        initLineSeparator(syncProvider)
         successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
         fetchedAtLeastOnce.add(syncProvider)
       } else {
@@ -182,5 +203,12 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
    */
   override fun isFileUploadNeeded(syncProvider: SyncProvider): Boolean {
     return needToUpload.firstOrNull { syncProvider == it } != null
+  }
+
+  /**
+   * Base implementation of [ContentSynchronizer.markAsNotNeededForSync] method for each content synchronizer.
+   */
+  override fun markAsNotNeededForSync(syncProvider: SyncProvider) {
+    needToUpload.remove(syncProvider)
   }
 }

@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.ui.build
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.TerminalExecutionConsole
 import com.jediterm.terminal.TerminalKeyEncoder
 import eu.ibagroup.formainframe.ui.build.tso.utils.InputRecognizer
@@ -33,6 +34,7 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
   private var needToWaitForCommandInput = false
   private var commandsInQueue: Queue<String> = LinkedList()
   private var expectParameters = false
+  private var prevCommandEndsWithReady = false
   var initialized = false
 
   private var onCommandEntered: (String) -> Unit = {}
@@ -146,15 +148,34 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
       override fun getProcessInput(): OutputStream {
         return this@TerminalCommandReceiver.processInput
       }
+
+      /**
+       * Override notifyTextAvailable() method to check what the command ends with
+       */
+      override fun notifyTextAvailable(text: String, outputType: Key<*>) {
+        if (text != "\n" && text.endsWith("\n")) {
+          prevCommandEndsWithReady = isTextEndsWithReady(text)
+        }
+        super.notifyTextAvailable(text, outputType)
+      }
     }
     terminalConsole.withConvertLfToCrlfForNonPtyProcess(true)
     terminalConsole.attachToProcess(processHandler)
   }
 
   /**
+   * Check if the text ends with "READY" - successful completion of TSO command
+   */
+  private fun isTextEndsWithReady(text: String): Boolean {
+    val successfulEnding = "READY"
+    val trimmedText = text.trimEnd()
+    return trimmedText.endsWith(successfulEnding, true)
+  }
+
+  /**
    * Called when command is submitted. Clean up the entered command for follow up user input
    */
-  private fun cleanCommand() {
+  fun cleanCommand() {
     this.typedCommand = ""
     this.textAfterCursor = ""
     this.cursorPosition = 0
@@ -191,6 +212,20 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
         processHandler.notifyTextAvailable("", ProcessOutputType.STDOUT)
       }
     }
+  }
+
+  /**
+   * Return true if console is waiting for command input or else otherwise
+   */
+  fun isNeedToWaitForCommandInput(): Boolean {
+    return needToWaitForCommandInput
+  }
+
+  /**
+   * Return true if previous command ends with "READY" or else otherwise
+   */
+  fun isPrevCommandEndsWithReady(): Boolean {
+    return prevCommandEndsWithReady
   }
 
   /**

@@ -10,12 +10,14 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
-import com.intellij.openapi.ui.showOkNoDialog
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
@@ -28,6 +30,7 @@ import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
+import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.AllocationDialog
 import eu.ibagroup.formainframe.explorer.ui.DSMaskNode
@@ -42,6 +45,8 @@ import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.DsnameType
+
+const val ALLOCATE_ACTION_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.explorer.AllocateActionNotificationGroup"
 
 abstract class AllocateActionBase : AnAction() {
 
@@ -139,34 +144,10 @@ abstract class AllocateActionBase : AnAction() {
                 }
                 val nodeToClean = parentProbablyDSMaskNode?.castOrNull<FileFetchNode<*, *, *, *, *, *>>()
                 nodeToClean?.let { cleanInvalidateOnExpand(nodeToClean, view) }
-
-                var nodeCleaned = false
-                runInEdt {
-                  if (
-                    showOkNoDialog(
-                      title = "Dataset ${state.datasetName} Has Been Created",
-                      message = "Would you like to add mask \"${state.datasetName}\" to ${workingSet.name}",
-                      project = e.project,
-                      okText = "Yes",
-                      noText = "No"
-                    )
-                  ) {
-                    val filesWorkingSetConfig =
-                      configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
-                    if (filesWorkingSetConfig != null) {
-                      nodeToClean?.cleanCache(recursively = false, cleanBatchedQuery = true, sendTopic = false)
-                      nodeCleaned = true
-
-                      filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
-                      configCrudable.update(filesWorkingSetConfig)
-                    }
-                  }
-
-                  if (!nodeCleaned) {
-                    nodeToClean?.cleanCache(recursively = false, cleanBatchedQuery = true)
-                  }
-                }
+                nodeToClean?.cleanCache(recursively = false, cleanBatchedQuery = true)
                 initialState.errorMessage = ""
+
+                showNotification(state, workingSet)
               }
               .onFailure { t ->
                 explorer.reportThrowable(t, e.project)
@@ -185,5 +166,35 @@ abstract class AllocateActionBase : AnAction() {
    */
   override fun isDumbAware(): Boolean {
     return true
+  }
+
+  /**
+   * Shows a notification about successful allocation and suggest adding a mask to the working set
+   */
+  private fun showNotification(
+    state: DatasetAllocationParams,
+    workingSet: ExplorerUnit<*>
+  ) {
+    val notification = Notification(
+      ALLOCATE_ACTION_NOTIFICATION_GROUP_ID,
+      "Dataset ${state.datasetName} has been created",
+      "Would you like to add mask \"${state.datasetName}\" to ${workingSet.name}?",
+      NotificationType.INFORMATION
+    )
+    notification.addActions(
+      setOf(
+        NotificationAction.createSimpleExpiring("Add mask") {
+          val filesWorkingSetConfig =
+            configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
+          if (filesWorkingSetConfig != null) {
+            filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
+            configCrudable.update(filesWorkingSetConfig)
+          }
+        },
+        NotificationAction.createSimpleExpiring("Skip") { }
+      )
+    )
+    notification.setSuggestionType(true)
+    Notifications.Bus.notify(notification)
   }
 }

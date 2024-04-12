@@ -73,7 +73,7 @@ class UssFileToPdsMover(private val dataOpsManager: DataOpsManager) : AbstractFi
     val from = sourceAttributes.path
     val to = destinationAttributes.name
     val api = api<DataAPI>(connectionConfig)
-    var memberName = sourceAttributes.name.filter { it.isLetterOrDigit() }.take(8)
+    var memberName = operation.newName ?: sourceAttributes.name.filter { it.isLetterOrDigit() }.take(8)
     if (memberName.isEmpty()) {
       memberName = "empty"
     }

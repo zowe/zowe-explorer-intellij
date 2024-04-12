@@ -74,7 +74,6 @@ import java.nio.charset.CoderResult
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.reflect.KFunction
-import kotlin.reflect.full.declaredFunctions
 
 class EditorTestSpec : WithApplicationShouldSpec({
   afterSpec {
@@ -299,10 +298,8 @@ class EditorTestSpec : WithApplicationShouldSpec({
     val decoderResultMock = mockk<CoderResult>()
     every { decoderResultMock.length() } returns 1
 
-    val getLastItemRef = ContainerUtil::class.declaredFunctions
-      .filter { it.name == "getLastItem" }
-      .first { it.parameters.size == 2 }
-    mockkStatic(getLastItemRef)
+    val getLastItemRef: (MutableList<Any>) -> Any = ContainerUtil::getLastItem
+    mockkStatic(getLastItemRef as KFunction<*>)
     every { ContainerUtil.getLastItem(any<MutableList<ProblemDescriptor>>()) } answers {
       val descriptors = firstArg<MutableList<ProblemDescriptor>>()
       if (descriptors.isNotEmpty()) descriptors.last() else null
@@ -501,10 +498,8 @@ class EditorTestSpec : WithApplicationShouldSpec({
         decoderResultMock
       }
 
-      val commonPrefixLengthRef = StringUtil::class.declaredFunctions
-        .filter { it.name == "commonPrefixLength" }
-        .first { it.parameters.size == 2 }
-      mockkStatic(commonPrefixLengthRef)
+      val commonPrefixLengthRef: (CharSequence, CharSequence) -> Int = StringUtil::commonPrefixLength
+      mockkStatic(commonPrefixLengthRef as KFunction<*>)
       every { StringUtil.commonPrefixLength(any(), any()) } returns text.length
 
       val descriptors = lossyEncodingInspection.checkFile(psiFileMock, inspectionManagerMock, isOnTheFly)
@@ -620,10 +615,8 @@ class EditorTestSpec : WithApplicationShouldSpec({
         decoderResultMock
       }
 
-      val commonPrefixLengthRef = StringUtil::class.declaredFunctions
-        .filter { it.name == "commonPrefixLength" }
-        .first { it.parameters.size == 2 }
-      mockkStatic(commonPrefixLengthRef)
+      val commonPrefixLengthRef: (CharSequence, CharSequence) -> Int = StringUtil::commonPrefixLength
+      mockkStatic(commonPrefixLengthRef as KFunction<*>)
       every { StringUtil.commonPrefixLength(any(), any()) } returns text.length - 1
 
       val descriptors = lossyEncodingInspection.checkFile(psiFileMock, inspectionManagerMock, isOnTheFly)

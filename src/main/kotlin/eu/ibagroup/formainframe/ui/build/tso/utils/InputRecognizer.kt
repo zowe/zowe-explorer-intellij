@@ -39,6 +39,10 @@ class InputRecognizer(
    */
   fun recognizeMessage(command: String) : Message<*> {
     val upperCommand = command.toUpperCasePreservingASCIIRules().trim()
+    if (upperCommand.isEmpty()) {
+      previousCommand = upperCommand
+      return OrdinaryMessage(command, session)
+    }
     val parseExecStm = upperCommand.substringBefore(" ")
     if (parseExecStm == "EX" || parseExecStm == "EXEC" || previousCommand == "EX" || previousCommand == "EXEC") {
       val parseAfterExec = upperCommand.substringAfter(" ").trim()
