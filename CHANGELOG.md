@@ -168,6 +168,12 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: ClassCastException: class java.util.ArrayList cannot be cast to class
   com.intellij.openapi.vfs.VirtualFile ([cdc0a458](https://github.com/zowe/zowe-explorer-intellij/commit/cdc0a458))
 
+## [1.0.3-221] (2023-07-18)
+
+### Features
+
+* Feature: Plugin name and trademarks update ([593fa30a](https://github.com/zowe/zowe-explorer-intellij/commit/593fa30a))
+
 ## [1.0.2-221] (2023-06-13)
 
 ### Features
@@ -450,7 +456,8 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 [1.1.2-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-221...1.1.2-221
 [1.1.1-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.0-221...1.1.1-221
-[1.1.0-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.2-221...1.1.0-221
+[1.1.0-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.3-221...1.1.0-221
+[1.0.3-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.2-221...1.0.3-221
 [1.0.2-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.1...1.0.2-221
 [1.0.1]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/zowe/zowe-explorer-intellij/compare/0.3.1...1.0.0
