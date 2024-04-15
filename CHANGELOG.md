@@ -6,11 +6,13 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 
 ### Features
 
+* Feature: GitHub issue #118: getActionUpdateThread function is overridden for each AnAction class inheritors ([639b60ee](https://github.com/zowe/zowe-explorer-intellij/commit/639b60ee))
 * Feature: GitHub issue #171: TSO CLI PA1 button functionality added ([48834cac](https://github.com/zowe/zowe-explorer-intellij/commit/48834cac))
 * Feature: GitHub issue #172: Allocation units clarification added ([1ff218e4](https://github.com/zowe/zowe-explorer-intellij/commit/1ff218e4))
 * Feature: GitHub issue #173: Now after allocating a dataset, a notification is shown instead of a dialog window ([20343651](https://github.com/zowe/zowe-explorer-intellij/commit/20343651))
 * Feature: GitHub issue #174: VFS_CHANGES topic rework for encoding purposes ([3adaded3](https://github.com/zowe/zowe-explorer-intellij/commit/3adaded3))
 * Feature: GitHub issue #175: Close all files in editor, related to the file/folder/dataset/member being deleted ([8a0d9980](https://github.com/zowe/zowe-explorer-intellij/commit/8a0d9980))
+* Feature: GitHub issue #176: Support for IntelliJ IDEA 2024.1 ([876156b8](https://github.com/zowe/zowe-explorer-intellij/commit/876156b8))
 
 ### Bugfixes
 
@@ -27,7 +29,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: TSO EXEC command without operands causes the CLI to hang ([d071960a](https://github.com/zowe/zowe-explorer-intellij/commit/d071960a))
 * Bugfix: Connection is not fully reset to the last successful state and it causes errors ([f6d5a72e](https://github.com/zowe/zowe-explorer-intellij/commit/f6d5a72e))
 
-## [1.1.2-223] (2024-01-22)
+## [1.1.2-231] (2024-01-22)
 
 ### Bugfixes
 
@@ -46,7 +48,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: Conflicting VFS and content storage name ([3a2c8d60](https://github.com/zowe/zowe-explorer-intellij/commit/3a2c8d60))
 * Bugfix: GitHub issue #167: Zowe explorer config is not converted ([b5eae7a2](https://github.com/zowe/zowe-explorer-intellij/commit/b5eae7a2))
 
-## [1.1.1-223] (2023-11-23)
+## [1.1.1-231] (2023-11-23)
 
 ### Bugfixes
 
@@ -77,7 +79,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: GitHub issue #162: Sync does not work on files and datasets in
   autosync ([da93cf9b](https://github.com/zowe/zowe-explorer-intellij/commit/da93cf9b))
 
-## [1.1.0-223] (2023-09-07)
+## [1.1.0-231] (2023-09-07)
 
 ### Features
 
@@ -171,13 +173,13 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: ClassCastException: class java.util.ArrayList cannot be cast to class
   com.intellij.openapi.vfs.VirtualFile ([cdc0a458](https://github.com/zowe/zowe-explorer-intellij/commit/cdc0a458))
 
-## [1.0.3-223] (2023-07-18)
+## [1.0.3-231] (2023-07-18)
 
 ### Features
 
 * Feature: Plugin name and trademarks update ([593fa30a](https://github.com/zowe/zowe-explorer-intellij/commit/593fa30a))
 
-## [1.0.2-223] (2023-06-13)
+## [1.0.2-231] (2023-06-13)
 
 ### Features
 
@@ -457,12 +459,12 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
-[1.1.2-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-223...1.1.2-223
-[1.1.1-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.0-223...1.1.1-223
-[1.1.0-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.3-223...1.1.0-223
-[1.0.3-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.2-223...1.0.3-223
-[1.0.2-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.1...1.0.2-223
-[1.0.1]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.0...1.0.1
+[1.1.2-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-231...1.1.2-231
+[1.1.1-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.0-231...1.1.1-231
+[1.1.0-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.3-231...1.1.0-231
+[1.0.3-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.2-231...1.0.3-231
+[1.0.2-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.1-231...1.0.2-231
+[1.0.1-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.0...1.0.1-231
 [1.0.0]: https://github.com/zowe/zowe-explorer-intellij/compare/0.3.1...1.0.0
 [0.3.1]: https://github.com/zowe/zowe-explorer-intellij/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/zowe/zowe-explorer-intellij/commits/0.3.0
