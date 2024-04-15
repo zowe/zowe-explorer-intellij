@@ -2,14 +2,17 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## `1.2.0 (2024-xx-yy)`
+## [Unreleased]
 
-* Feature: TSO CLI PA1 button functionality added ([48834cac](https://github.com/zowe/zowe-explorer-intellij/commit/48834cac))
-* Feature: Allocation units clarification added ([1ff218e4](https://github.com/zowe/zowe-explorer-intellij/commit/1ff218e4))
-* Feature: Now after allocating a dataset, a notification is shown instead of a dialog window ([20343651](https://github.com/zowe/zowe-explorer-intellij/commit/20343651))
-* Feature: VFS_CHANGES topic rework for encoding purposes ([3adaded3](https://github.com/zowe/zowe-explorer-intellij/commit/3adaded3))
-* Feature: Close all files in editor, related to the file/folder/dataset/member being deleted ([8a0d9980](https://github.com/zowe/zowe-explorer-intellij/commit/8a0d9980))
+### Features
 
+* Feature: GitHub issue #171: TSO CLI PA1 button functionality added ([48834cac](https://github.com/zowe/zowe-explorer-intellij/commit/48834cac))
+* Feature: GitHub issue #172: Allocation units clarification added ([1ff218e4](https://github.com/zowe/zowe-explorer-intellij/commit/1ff218e4))
+* Feature: GitHub issue #173: Now after allocating a dataset, a notification is shown instead of a dialog window ([20343651](https://github.com/zowe/zowe-explorer-intellij/commit/20343651))
+* Feature: GitHub issue #174: VFS_CHANGES topic rework for encoding purposes ([3adaded3](https://github.com/zowe/zowe-explorer-intellij/commit/3adaded3))
+* Feature: GitHub issue #175: Close all files in editor, related to the file/folder/dataset/member being deleted ([8a0d9980](https://github.com/zowe/zowe-explorer-intellij/commit/8a0d9980))
+
+### Bugfixes
 
 * Bugfix: GitHub issue #159: Zowe config detection doesn't work correctly ([c73226f6](https://github.com/zowe/zowe-explorer-intellij/commit/c73226f6))
 * Bugfix: Warning during working set creation without masks/job filters is missing ([4fd0b22c](https://github.com/zowe/zowe-explorer-intellij/commit/4fd0b22c))
@@ -24,7 +27,9 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: TSO EXEC command without operands causes the CLI to hang ([d071960a](https://github.com/zowe/zowe-explorer-intellij/commit/d071960a))
 * Bugfix: Connection is not fully reset to the last successful state and it causes errors ([f6d5a72e](https://github.com/zowe/zowe-explorer-intellij/commit/f6d5a72e))
 
-## `1.1.2 (2024-01-22)`
+## [1.1.2-221] (2024-01-22)
+
+### Bugfixes
 
 * Bugfix: Sync action does not work after file download ([bfb125d7](https://github.com/zowe/zowe-explorer-intellij/commit/bfb125d7))
 * Bugifx: "Skip This Files" doesn't work when uploading local file to PDS ([749b2d4b](https://github.com/zowe/zowe-explorer-intellij/commit/749b2d4b))
@@ -38,7 +43,9 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Conflicting VFS and content storage name ([3a2c8d60](https://github.com/zowe/zowe-explorer-intellij/commit/3a2c8d60))
 * Bugfix: GitHub issue #167: Zowe explorer config is not converted ([b5eae7a2](https://github.com/zowe/zowe-explorer-intellij/commit/b5eae7a2))
 
-## `1.1.1 (2023-11-23)`
+## [1.1.1-221] (2023-11-23)
+
+### Bugfixes
 
 * Bugfix: Dataset color does not change when
   cutting ([fa6f6ae5](https://github.com/zowe/zowe-explorer-intellij/commit/fa6f6ae5))
@@ -67,7 +74,9 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #162: Sync does not work on files and datasets in
   autosync ([da93cf9b](https://github.com/zowe/zowe-explorer-intellij/commit/da93cf9b))
 
-## `1.1.0 (2023-09-07)`
+## [1.1.0-221] (2023-09-07)
+
+### Features
 
 * Feature: GitHub issue #14: UX: Edit WS
   mask ([0d358d0d](https://github.com/zowe/zowe-explorer-intellij/commit/0d358d0d))
@@ -122,6 +131,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Feature: Unit
   tests ([019bef00](https://github.com/zowe/zowe-explorer-intellij/commit/019bef00), [fa903c1c](https://github.com/zowe/zowe-explorer-intellij/commit/fa903c1c), [709a5e2f](https://github.com/zowe/zowe-explorer-intellij/commit/709a5e2f), [07ecd283](https://github.com/zowe/zowe-explorer-intellij/commit/07ecd283), [93febb62](https://github.com/zowe/zowe-explorer-intellij/commit/93febb62), [517c2cff](https://github.com/zowe/zowe-explorer-intellij/commit/517c2cff), [29cd85e4](https://github.com/zowe/zowe-explorer-intellij/commit/29cd85e4), [3850fcec](https://github.com/zowe/zowe-explorer-intellij/commit/3850fcec), [5646963e](https://github.com/zowe/zowe-explorer-intellij/commit/5646963e), [be3b5086](https://github.com/zowe/zowe-explorer-intellij/commit/be3b5086), [5043f5da](https://github.com/zowe/zowe-explorer-intellij/commit/5043f5da), [fdf67e1c](https://github.com/zowe/zowe-explorer-intellij/commit/fdf67e1c))
 
+### Bugfixes
 
 * Bugfix: GitHub issue #138: Job is identified as successful while it ends with
   RC=12 ([99491858](https://github.com/zowe/zowe-explorer-intellij/commit/99491858))
@@ -158,13 +168,16 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: ClassCastException: class java.util.ArrayList cannot be cast to class
   com.intellij.openapi.vfs.VirtualFile ([cdc0a458](https://github.com/zowe/zowe-explorer-intellij/commit/cdc0a458))
 
-## `1.0.2 (2023-06-13)`
+## [1.0.2-221] (2023-06-13)
+
+### Features
 
 * Feature: Returned support for IntelliJ
   2022.1 ([6329c788](https://github.com/zowe/zowe-explorer-intellij/commit/6329c788))
 * Feature: Focus on dataset name field in allocation
   dialog ([fccb77f9](https://github.com/zowe/zowe-explorer-intellij/commit/fccb77f9))
 
+### Bugfixes
 
 * Bugfix: Memory leak bug ([644c9fa1](https://github.com/zowe/zowe-explorer-intellij/commit/644c9fa1))
 * Bugfix: GitHub issue #132: IDE internal error -
@@ -185,10 +198,13 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Unknown file type after delete member after
   move ([02b8090f](https://github.com/zowe/zowe-explorer-intellij/commit/02b8090f))
 
-## `1.0.1 (2023-04-18)`
+## [1.0.1] (2023-04-18)
+
+### Features
 
 * Feature: Support for IntelliJ 2023.1
 
+### Bugfixes
 
 * Bugfix: Runtime Exception in Zowe Explorer when delete
   dataset ([6a2458f2](https://github.com/zowe/zowe-explorer-intellij/commit/6a2458f2))
@@ -219,10 +235,13 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
   PDS ([ec94b39e](https://github.com/zowe/zowe-explorer-intellij/commit/ec94b39e))
 * Bugfix: USS file empty after rename ([71c49b24](https://github.com/zowe/zowe-explorer-intellij/commit/71c49b24))
 
-## `1.0.0 (2023-03-21)`
+## [1.0.0] (2023-03-13)
+
+### Breaking changes
 
 * Breaking: Java 17 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.3
 
+### Features
 
 * Feature: GitHub issue #31: Support for CHMOD
   operation ([3a166173](https://github.com/zowe/zowe-explorer-intellij/commit/3a166173))
@@ -258,6 +277,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
   CrudableTestSpec ([3ff0ab36](https://github.com/zowe/zowe-explorer-intellij/commit/3ff0ab36))
 * Feature: Unit tests: jUnit to Kotest ([0fa8a1d6](https://github.com/zowe/zowe-explorer-intellij/commit/0fa8a1d6))
 
+### Bugfixes
 
 * Bugfix: Unit tests are broken ([e2f12c92](https://github.com/zowe/zowe-explorer-intellij/commit/e2f12c92))
 * Bugfix: GitHub issue #55: Error in event log when copy member to PDS that does not have enough
@@ -319,8 +339,6 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
   dialog ([8504564c](https://github.com/zowe/zowe-explorer-intellij/commit/8504564c))
 * Bugfix: Typo in message for incorrect directory quantity in allocate
   dataset ([8504564c](https://github.com/zowe/zowe-explorer-intellij/commit/8504564c))
-* Bugfix: Typo in message for incorrect directory quantity in allocate
-  dataset ([8504564c](https://github.com/zowe/zowe-explorer-intellij/commit/8504564c))
 * Bugfix: Unhandled error type for jobs ([47ea9f94](https://github.com/zowe/zowe-explorer-intellij/commit/47ea9f94))
 * Bugfix: Automatic refresh does not work correctly for job filter after purge job via context
   menu ([47ea9f94](https://github.com/zowe/zowe-explorer-intellij/commit/47ea9f94))
@@ -338,14 +356,15 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
   exist ([7cee23f3](https://github.com/zowe/zowe-explorer-intellij/commit/7cee23f3))
 * Bugfix: Policy agreement is gone wild ([d600f58e](https://github.com/zowe/zowe-explorer-intellij/commit/d600f58e))
 * Bugfix: Exception while opening TSO CLI ([540bfa80](https://github.com/zowe/zowe-explorer-intellij/commit/540bfa80))
-* Bugfix: Exception during IDE startup with
-  plugin ([5dbc9f27](https://github.com/zowe/zowe-explorer-intellij/commit/5dbc9f27))
 
-## `0.3.1 (2022-11-30)`
+## [0.3.1] (2022-11-30)
+
+### Features
 
 * Feature: Unit tests for utils
   module ([16fae1fb](https://github.com/zowe/zowe-explorer-intellij/commit/16fae1fb)) ([683185bb](https://github.com/zowe/zowe-explorer-intellij/commit/683185bb))
 
+### Bugfixes
 
 * Bugfix: DnD does not work properly ([e5dfa3a3](https://github.com/zowe/zowe-explorer-intellij/commit/e5dfa3a3))
 * Bugfix: Copy DS member to USS folder does not
@@ -355,10 +374,13 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Ctrl+C/Ctrl+V does not work if copy file from remote to
   local ([e5601e7f](https://github.com/zowe/zowe-explorer-intellij/commit/e5601e7f))
 
-## `0.3.0 (2022-11-18)`
+## [0.3.0] (2022-11-18)
+
+### Breaking changes
 
 * Breaking: Kotlin DSL v2 usage introduced. Plugin requires to use it with IntelliJ version >= 2022.1
 
+### Features
 
 * Feature: Configurable batch size to load filter
   smoothly ([928baba](https://github.com/zowe/zowe-explorer-intellij/commit/928baba))
@@ -380,6 +402,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Feature: Source code documentation added ([636411e](https://github.com/zowe/zowe-explorer-intellij/commit/636411e)
   , [11bb7dd](https://github.com/zowe/zowe-explorer-intellij/commit/11bb7dd))
 
+### Bugfixes
 
 * Bugfix: File cache conflict if open JCL to edit it in JES explorer second
   time ([b3962de](https://github.com/zowe/zowe-explorer-intellij/commit/b3962de))
@@ -424,3 +447,12 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #16: Error creating zOSMF connection
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
+
+[1.1.2-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-221...1.1.2-221
+[1.1.1-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.0-221...1.1.1-221
+[1.1.0-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.2-221...1.1.0-221
+[1.0.2-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.1...1.0.2-221
+[1.0.1]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.0...1.0.1
+[1.0.0]: https://github.com/zowe/zowe-explorer-intellij/compare/0.3.1...1.0.0
+[0.3.1]: https://github.com/zowe/zowe-explorer-intellij/compare/0.3.0...0.3.1
+[0.3.0]: https://github.com/zowe/zowe-explorer-intellij/commits/0.3.0
