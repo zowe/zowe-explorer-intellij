@@ -32,7 +32,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
+          distribution: semeru
           java-version: 11
 
       - name: Setup Gradle
@@ -89,7 +89,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
+          distribution: semeru
           java-version: 11
 
       - name: Setup Gradle
@@ -139,7 +139,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
+          distribution: semeru
           java-version: 11
 
       - name: Setup Gradle
