@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.editor
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
@@ -63,7 +64,7 @@ class FileEditorFocusListener: FocusChangeListener {
           if (file is MFVirtualFile && file.isWritable) {
             val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(project))
             val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
-            val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+            val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
             val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
             val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
             if (!(currentContent contentEquals previousContent) && needToUpload) {

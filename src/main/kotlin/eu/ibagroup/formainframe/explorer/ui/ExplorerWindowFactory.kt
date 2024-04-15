@@ -53,10 +53,8 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
           runBackgroundableTask("Synchronizing file ${file.name} with mainframe") { indicator ->
             val syncProvider = DocumentedSyncProvider(file)
-            runWriteActionInEdtAndWait {
-              syncProvider.saveDocument()
-              contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
-            }
+            runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+            contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
           }
         }
       }

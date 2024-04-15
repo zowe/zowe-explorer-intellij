@@ -28,11 +28,11 @@ import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.RemoteAttributedContentSynchronizer
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
+import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
 
@@ -222,10 +222,7 @@ class ExplorerPasteProvider : PasteProvider {
               val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
               op.destination.children
                 .filter { file -> file == nameResolver.getConflictingChild(op.source, op.destination) }
-                .forEach { file ->
-                  dataOpsManager.getContentSynchronizer(file)
-                    .castOrNull<RemoteAttributedContentSynchronizer<*>>()?.removeFromCacheAfterForceOverwriting(file)
-                }
+                .forEach { file -> runWriteActionInEdt { file.delete(this) } }
             }
           }
           .onFailure { throwable ->

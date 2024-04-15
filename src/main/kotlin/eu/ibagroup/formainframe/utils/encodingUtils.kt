@@ -17,6 +17,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -47,9 +48,9 @@ import javax.swing.Icon
  */
 fun saveIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
   val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.default(project))
-  syncProvider.saveDocument()
-  val bytes = syncProvider.retrieveCurrentContent()
   runWriteActionInEdtAndWait {
+    syncProvider.saveDocument()
+    val bytes = syncProvider.retrieveCurrentContent()
     changeEncodingTo(virtualFile, charset)
     virtualFile.getOutputStream(null).use {
       it.write(bytes)
@@ -66,10 +67,8 @@ fun saveIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
 fun reloadIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
   val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.syncOnOpen(project))
   val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
-  runWriteActionInEdtAndWait {
-    changeEncodingTo(virtualFile, charset)
-    contentSynchronizer?.synchronizeWithRemote(syncProvider)
-  }
+  runWriteActionInEdtAndWait { changeEncodingTo(virtualFile, charset) }
+  contentSynchronizer?.synchronizeWithRemote(syncProvider)
 }
 
 /** Changes the file encoding to the specified one. */
@@ -125,7 +124,7 @@ fun inspectSafeEncodingChange(virtualFile: VirtualFile, charset: Charset): Encod
   val fileNotSynced = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
   val text = syncProvider.getDocument()?.text
     ?: throw IllegalArgumentException("Cannot get document text")
-  val bytes = if (fileNotSynced) syncProvider.retrieveCurrentContent()
+  val bytes = if (fileNotSynced) runReadAction { syncProvider.retrieveCurrentContent() }
   else contentSynchronizer?.successfulContentStorage(syncProvider)
     ?: throw IllegalArgumentException("Cannot get content bytes")
   val safeToReload = isSafeToReloadIn(virtualFile, text, bytes, charset)

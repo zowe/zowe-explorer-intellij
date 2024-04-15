@@ -93,10 +93,8 @@ class ChangeEncodingDialog(
         val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
         val syncProvider = DocumentedSyncProvider(virtualFile)
         if (contentSynchronizer?.isFileUploadNeeded(syncProvider) == true) {
-          runWriteActionInEdtAndWait {
-            syncProvider.saveDocument()
-            contentSynchronizer.synchronizeWithRemote(syncProvider)
-          }
+          runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+          contentSynchronizer.synchronizeWithRemote(syncProvider)
         }
         attributes.charset = charset
         updateFileTag(attributes)

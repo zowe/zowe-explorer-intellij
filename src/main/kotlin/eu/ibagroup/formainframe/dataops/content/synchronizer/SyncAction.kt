@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -69,10 +70,8 @@ class SyncAction : DumbAwareAction() {
       project = e.project,
       cancellable = true
     ) { indicator ->
-      runWriteActionInEdtAndWait {
-        syncProvider.saveDocument()
-        service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
-      }
+      runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+      service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
     }
   }
 
@@ -108,7 +107,7 @@ class SyncAction : DumbAwareAction() {
 
     val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
     val syncProvider = DocumentedSyncProvider(file)
-    val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+    val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
     val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
     val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
     e.presentation.isEnabledAndVisible = file.isWritable
