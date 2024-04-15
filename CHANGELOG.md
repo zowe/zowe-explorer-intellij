@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## [Unreleased]
+## [1.2.0-223] (2024-04-15)
 
 ### Features
 
@@ -439,6 +439,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.0-223]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.2-223...1.2.0-223
 [1.1.2-223]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.1-223...1.1.2-223
 [1.1.1-223]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.0-223...1.1.1-223
 [1.1.0-223]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.2-223...1.1.0-223
