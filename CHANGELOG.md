@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## [Unreleased]
+## [1.2.0-231] (2024-04-15)
 
 ### Features
 
@@ -34,18 +34,6 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 ### Bugfixes
 
 * Feature: GitHub issue #165: IntelliJ 2023.3 support ([81f24fa3](https://github.com/zowe/zowe-explorer-intellij/commit/81f24fa3))
-
-
-* Bugfix: Sync action does not work after file download ([bfb125d7](https://github.com/zowe/zowe-explorer-intellij/commit/bfb125d7))
-* Bugifx: "Skip This Files" doesn't work when uploading local file to PDS ([749b2d4b](https://github.com/zowe/zowe-explorer-intellij/commit/749b2d4b))
-* Bugifx: "Use new name" doesn't work for copying partitioned dataset to USS folder ([26d865be](https://github.com/zowe/zowe-explorer-intellij/commit/26d865be))
-* Bugifx: "Use new name" doesn't work for copying sequential dataset to partitioned dataset ([349c02e9](https://github.com/zowe/zowe-explorer-intellij/commit/349c02e9))
-* Bugfix: "Use new name" doesn't work when uploading local file to PDS ([26d865be](https://github.com/zowe/zowe-explorer-intellij/commit/26d865be))
-* Bugfix: Editing two members with the same name does not update the content for one of the members ([25606368](https://github.com/zowe/zowe-explorer-intellij/commit/25606368))
-* Bugfix: Topics handling ([25606368](https://github.com/zowe/zowe-explorer-intellij/commit/25606368))
-* Bugfix: Zowe config v2 handling ([fd79b908](https://github.com/zowe/zowe-explorer-intellij/commit/fd79b908))
-* Bugfix: JES Explorer bug when ABEND job is being displayed ([614aa6cf](https://github.com/zowe/zowe-explorer-intellij/commit/614aa6cf))
-* Bugfix: GitHub issue #167: Zowe explorer config is not converted ([b5eae7a2](https://github.com/zowe/zowe-explorer-intellij/commit/b5eae7a2))
 
 ## [1.1.1-231] (2023-11-23)
 
@@ -444,10 +432,12 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.0-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.2-231...1.2.0-231
 [1.1.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.1-231...1.1.2-231
 [1.1.1-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.0-231...1.1.1-231
 [1.1.0-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.2-231...1.1.0-231
-[1.0.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.1-231...1.0.2-231
+[1.0.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.1...1.0.2-231
+[1.0.1]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.0...1.0.1
 [1.0.1-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.0...1.0.1-231
 [1.0.0]: https://github.com/for-mainframe/For-Mainframe/compare/0.7.1...1.0.0
 [0.7.1]: https://github.com/for-mainframe/For-Mainframe/compare/0.7.0...0.7.1
