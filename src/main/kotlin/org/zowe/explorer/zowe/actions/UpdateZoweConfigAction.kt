@@ -10,7 +10,6 @@
 
 package org.zowe.explorer.zowe.actions
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
@@ -28,8 +27,6 @@ import org.zowe.kotlinsdk.zowe.config.parseConfigJson
  * @since 2021-02-12
  */
 class UpdateZoweConfigAction : DumbAwareAction() {
-
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: let {
