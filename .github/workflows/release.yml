@@ -42,15 +42,12 @@ jobs:
         run: |
           PROPERTIES="$(./gradlew properties --console=plain -q)"
           PLUGIN_VERSION_FULL="$(echo "$PROPERTIES" | grep "^pluginVersion:" | cut -f2- -d ' ')"
-          PLUGIN_VERSION_SEMVER="$(echo "$PLUGIN_VERSION_FULL" | grep -Po '\d{1,}\.\d{1,}\.\d{1,}')"
           CURR_COMMIT="$(git rev-parse HEAD)"
 
           echo "pluginVersionFull: $PLUGIN_VERSION_FULL"
-          echo "pluginVersionSemVer: $PLUGIN_VERSION_SEMVER"
           echo "currCommit: $CURR_COMMIT"
 
           echo "pluginVersionFull=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
-          echo "pluginVersionSemVer=$PLUGIN_VERSION_SEMVER" >> $GITHUB_OUTPUT
           echo "currCommit=$CURR_COMMIT" >> $GITHUB_OUTPUT
 
       - name: Publish Plugin
@@ -116,5 +113,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api repos/{owner}/{repo}/milestones \
-            --jq '.[] | select(.title == "${{ steps.properties.outputs.pluginVersionSemVer }}") | .number' \
+            --jq '.[] | select(.title == "${{ steps.properties.outputs.pluginVersionFull }}") | .number' \
             | xargs -I '{}' gh api -X PATCH repos/{owner}/{repo}/milestones/{} -F state='closed'
