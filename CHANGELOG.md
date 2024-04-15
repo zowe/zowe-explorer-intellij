@@ -184,7 +184,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Unknown file type after delete member after
   move ([02b8090f](https://github.com/zowe/zowe-explorer-intellij/commit/02b8090f))
 
-## [1.0.1] (2023-04-18)
+## [1.0.1-231] (2023-04-18)
 
 ### Features
 
@@ -436,8 +436,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 [1.1.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.1-231...1.1.2-231
 [1.1.1-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.0-231...1.1.1-231
 [1.1.0-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.2-231...1.1.0-231
-[1.0.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.1...1.0.2-231
-[1.0.1]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.0...1.0.1
+[1.0.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.1-231...1.0.2-231
 [1.0.1-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.0...1.0.1-231
 [1.0.0]: https://github.com/for-mainframe/For-Mainframe/compare/0.7.1...1.0.0
 [0.7.1]: https://github.com/for-mainframe/For-Mainframe/compare/0.7.0...0.7.1
