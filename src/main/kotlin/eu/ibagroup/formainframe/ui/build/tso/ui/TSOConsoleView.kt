@@ -10,11 +10,11 @@
 
 package eu.ibagroup.formainframe.ui.build.tso.ui
 
-//import com.intellij.ui.layout.cellPanel
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -28,7 +28,7 @@ import eu.ibagroup.formainframe.common.isDebugModeEnabled
 import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
 import eu.ibagroup.formainframe.ui.build.TerminalCommandReceiver
-import eu.ibagroup.formainframe.ui.build.tso.SESSION_COMMAND_ENTERED
+import eu.ibagroup.formainframe.ui.build.tso.*
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.utils.InputRecognizer
 import eu.ibagroup.formainframe.utils.log
@@ -50,6 +50,7 @@ class TSOConsoleView(
   private lateinit var tsoMessageType: MessageType
   private lateinit var tsoDataType: MessageData
   private lateinit var cancelCommandButton: JButton
+  private lateinit var reopenSessionButton: JButton
   private val tsoWidthGroup: String = "TSO_WIDTH_GROUP"
 
   private val tsoMessageTypes: List<MessageType> =
@@ -94,6 +95,17 @@ class TSOConsoleView(
         }
       }.visible(debugMode)
       row {
+        button("Reopen Session") {
+          runBackgroundableTask("Re-opening TSO session", project) {
+            sendTopic(SESSION_REOPEN_TOPIC).reopen(project, this@TSOConsoleView)
+          }
+        }.also {
+          reopenSessionButton = it.component
+          reopenSessionButton.apply { toolTipText = "The server tries to re-open the current session in case of some troubles (for example console hangs)" }
+        }
+          .widthGroup(tsoWidthGroup)
+      }
+      row {
         button("Cancel Command (PA1)") {
           log.info("CANCEL COMMAND (PA1)")
           val prevTsoMessageType = tsoMessageType
@@ -107,6 +119,7 @@ class TSOConsoleView(
         }.also {
           cancelCommandButton = it.component
         }
+          .widthGroup(tsoWidthGroup)
       }
     }.also {
       it.border = JBEmptyBorder(10, 15, 10, 15)
