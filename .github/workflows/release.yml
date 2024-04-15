@@ -1,0 +1,120 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time.
+# After the build stage is finished, it is ready to be published to the respective public repositories
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+
+      - name: Checkout the plugin GitHub repository
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Fetch Gradle properties
+        id: properties
+        shell: bash
+        run: |
+          PROPERTIES="$(./gradlew properties --console=plain -q)"
+          PLUGIN_VERSION_FULL="$(echo "$PROPERTIES" | grep "^pluginVersion:" | cut -f2- -d ' ')"
+          PLUGIN_VERSION_SEMVER="$(echo "$PLUGIN_VERSION_FULL" | grep -Po '\d{1,}\.\d{1,}\.\d{1,}')"
+          CURR_COMMIT="$(git rev-parse HEAD)"
+
+          echo "pluginVersionFull: $PLUGIN_VERSION_FULL"
+          echo "pluginVersionSemVer: $PLUGIN_VERSION_SEMVER"
+          echo "currCommit: $CURR_COMMIT"
+
+          echo "pluginVersionFull=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
+          echo "pluginVersionSemVer=$PLUGIN_VERSION_SEMVER" >> $GITHUB_OUTPUT
+          echo "currCommit=$CURR_COMMIT" >> $GITHUB_OUTPUT
+
+      - name: Publish Plugin
+        env:
+          ZOWE_INTELLIJ_MARKET_TOKEN: ${{ secrets.ZOWE_INTELLIJ_MARKET_TOKEN }}
+          INTELLIJ_SIGNING_CERTIFICATE_CHAIN: ${{ secrets.INTELLIJ_SIGNING_CERTIFICATE_CHAIN }}
+          INTELLIJ_SIGNING_PRIVATE_KEY: ${{ secrets.INTELLIJ_SIGNING_PRIVATE_KEY }}
+          INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: ./gradlew publishPlugin
+
+      - name: Prepare release notes
+        id: release_notes
+        shell: bash
+        run: |
+          CHANGELOG="$(./gradlew getChangelog -q)"
+
+          echo 'version_release_notes<<EOF' >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+
+          echo "Release notes to be added:"
+          echo "$CHANGELOG"
+
+      - name: Create new tag and release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag ${{ steps.properties.outputs.pluginVersionFull }}
+          git push origin ${{ steps.properties.outputs.pluginVersionFull }}
+          gh release create ${{ steps.properties.outputs.pluginVersionFull }} --title ${{ steps.properties.outputs.pluginVersionFull }} --target ${{ steps.properties.outputs.currCommit }} -F- <<EOF
+          ${{ steps.release_notes.outputs.version_release_notes }}
+          EOF
+
+      - name: Upload Release Built Artifact
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ steps.properties.outputs.pluginVersionFull }} ./build/distributions/*
+
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.properties.outputs.pluginVersionFull }}"
+          BRANCH="release-changelog-update-$VERSION"
+
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+
+          git checkout -b $BRANCH
+          git commit -am ":moyai: ${VERSION}" -m "[skip ci]"
+          git push --set-upstream origin $BRANCH
+
+          gh pr create \
+            --title ":moyai: \`$VERSION\`" \
+            --body "Current pull request contains patched \`CHANGELOG.md\` file for the \`$VERSION\` version." \
+            --base "release/v$VERSION" \
+            --head $BRANCH
+
+      - name: Close Milestone
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/{owner}/{repo}/milestones \
+            --jq '.[] | select(.title == "${{ steps.properties.outputs.pluginVersionSemVer }}") | .number' \
+            | xargs -I '{}' gh api -X PATCH repos/{owner}/{repo}/milestones/{} -F state='closed'
