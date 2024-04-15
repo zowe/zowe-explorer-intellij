@@ -31,10 +31,11 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 
 ## [1.1.2-231] (2024-01-22)
 
-### Bugfixes
+### Features
 
 * Feature: GitHub issue #165: IntelliJ 2023.3 support ([81f24fa3](https://github.com/zowe/zowe-explorer-intellij/commit/81f24fa3))
 
+### Bugfixes
 
 * Bugfix: Sync action does not work after file download ([bfb125d7](https://github.com/zowe/zowe-explorer-intellij/commit/bfb125d7))
 * Bugifx: "Skip This Files" doesn't work when uploading local file to PDS ([749b2d4b](https://github.com/zowe/zowe-explorer-intellij/commit/749b2d4b))
@@ -209,7 +210,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: Unknown file type after delete member after
   move ([02b8090f](https://github.com/zowe/zowe-explorer-intellij/commit/02b8090f))
 
-## [1.0.1] (2023-04-18)
+## [1.0.1-231] (2023-04-18)
 
 ### Features
 
