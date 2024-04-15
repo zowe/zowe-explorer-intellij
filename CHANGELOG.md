@@ -168,11 +168,11 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: ClassCastException: class java.util.ArrayList cannot be cast to class
   com.intellij.openapi.vfs.VirtualFile ([cdc0a458](https://github.com/zowe/zowe-explorer-intellij/commit/cdc0a458))
 
-## [1.0.3-223] (2023-07-19)
+## [1.0.3-223] (2023-07-18)
 
 ### Features
 
-* Feature: The plug-in's description and name update
+* Feature: Plugin name and trademarks update ([593fa30a](https://github.com/zowe/zowe-explorer-intellij/commit/593fa30a))
 
 ## [1.0.2-223] (2023-06-13)
 
