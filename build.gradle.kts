@@ -41,6 +41,13 @@ version = properties("pluginVersion").get()
 val remoteRobotVersion = "0.11.22"
 val okHttp3Version = "4.12.0"
 val kotestVersion = "5.8.1"
+val retrofit2Vertion = "2.11.0"
+val junitVersion = "5.10.2"
+val mockkVersion = "1.13.10"
+val ibmMqVersion = "9.3.5.0"
+val jGraphTVersion = "1.5.2"
+val zoweKotlinSdkVersion = "0.4.0"
+val javaAnalyticsVersion = "3.5.1"
 
 repositories {
   mavenCentral()
@@ -69,25 +76,25 @@ java {
 }
 
 dependencies {
-  implementation(group = "com.squareup.retrofit2", name = "retrofit", version = "2.9.0")
-  implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-  implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+  implementation(group = "com.squareup.retrofit2", name = "retrofit", version = retrofit2Vertion)
+  implementation("com.squareup.retrofit2:converter-gson:$retrofit2Vertion")
+  implementation("com.squareup.retrofit2:converter-scalars:$retrofit2Vertion")
   implementation("com.squareup.okhttp3:okhttp:$okHttp3Version")
-  implementation("org.jgrapht:jgrapht-core:1.5.2")
-  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
-  implementation("com.segment.analytics.java:analytics:3.5.0")
-  implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.4.1")
-  implementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
-  testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
-  testImplementation("io.mockk:mockk:1.13.9")
+  implementation("org.jgrapht:jgrapht-core:$jGraphTVersion")
+  implementation("org.zowe.sdk:zowe-kotlin-sdk:$zoweKotlinSdkVersion")
+  implementation("com.segment.analytics.java:analytics:$javaAnalyticsVersion")
+  implementation("com.ibm.mq:com.ibm.mq.allclient:$ibmMqVersion")
+  implementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+  testImplementation("io.mockk:mockk:$mockkVersion")
   testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
   testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
   testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
   testImplementation("com.squareup.okhttp3:okhttp-tls:$okHttp3Version")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
-  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.1")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junitVersion")
 }
 
 intellij {

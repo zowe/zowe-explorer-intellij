@@ -51,6 +51,7 @@ class TSOConsoleView(
   private lateinit var tsoMessageTypeBox: ComboBox<MessageType>
   private lateinit var tsoDataTypeBox: ComboBox<MessageData>
   private lateinit var cancelCommandButton: JButton
+  private lateinit var reopenSessionButton: JButton
   private val tsoWidthGroup: String = "TSO_WIDTH_GROUP"
 
   private val tsoMessageTypes: List<MessageType> =
@@ -94,6 +95,17 @@ class TSOConsoleView(
         }
       }.visible(debugMode)
       row {
+        button("Reopen Session") {
+          runBackgroundableTask("Re-opening TSO session", project) {
+            sendTopic(SESSION_REOPEN_TOPIC).reopen(project, this@TSOConsoleView)
+          }
+        }.also {
+          reopenSessionButton = it.component
+          reopenSessionButton.apply { toolTipText = "The server tries to re-open the current session in case of some troubles (for example console hangs)" }
+        }
+          .widthGroup(tsoWidthGroup)
+      }
+      row {
         button("Cancel Command (PA1)") {
           log.info("CANCEL COMMAND (PA1)")
           val prevTsoMessageType = tsoMessageTypeBox.item
@@ -106,17 +118,6 @@ class TSOConsoleView(
           tsoDataTypeBox.item = prevTsoDataType
         }.also {
           cancelCommandButton = it.component
-        }
-          .widthGroup(tsoWidthGroup)
-      }.visible(debugMode)
-      row {
-        button("Reopen Session") {
-          runBackgroundableTask("Re-opening TSO session", project) {
-            sendTopic(SESSION_REOPEN_TOPIC).reopen(project, this@TSOConsoleView)
-          }
-        }.also {
-          reopenSessionButton = it.component
-          reopenSessionButton.apply { toolTipText = "The server tries to re-open the current session in case of some troubles (for example console hangs)" }
         }
           .widthGroup(tsoWidthGroup)
       }

@@ -10,7 +10,6 @@
 
 package eu.ibagroup.formainframe.editor
 
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -19,8 +18,14 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.content.synchronizer.*
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListener
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
+import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
+import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.sendTopic
+import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
