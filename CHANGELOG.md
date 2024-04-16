@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be documented in this file.
 
-## [Unreleased]
+## [1.2.0-223] (2024-04-16)
 
 ### Features
 
@@ -454,6 +454,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.0-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.2-223...1.2.0-223
 [1.1.2-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-223...1.1.2-223
 [1.1.1-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.0-223...1.1.1-223
 [1.1.0-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.3-223...1.1.0-223
