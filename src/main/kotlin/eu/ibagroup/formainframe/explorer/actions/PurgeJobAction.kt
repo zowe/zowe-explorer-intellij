@@ -25,11 +25,11 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicPurgeJobParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.PurgeJobOperation
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.FetchNode
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
+import eu.ibagroup.formainframe.explorer.ui.JesWsNode
 import eu.ibagroup.formainframe.explorer.ui.JobNode
+import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.ui.build.jobs.JOBS_LOG_VIEW
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
@@ -134,7 +134,10 @@ class PurgeJobAction : AnAction() {
           if (foundJobsWaitingInPurgeQueue.isNotEmpty()) {
             foundJobsWaitingInPurgeQueue.clear()
             val filterRefreshSize = jobsByFilterWaitingPurgeMap[filterNode]!!.size
-            runRefreshByFilter(filterNode, if (filterRefreshSize == 1) (filterRefreshSize.toLong() * 1000) else (filterRefreshSize / 2).toLong() * 1000)
+            runRefreshByFilter(
+              filterNode,
+              if (filterRefreshSize == 1) (filterRefreshSize.toLong() * 1000) else (filterRefreshSize / 2).toLong() * 1000
+            )
           } else {
             filterNode.cleanCache()
           }

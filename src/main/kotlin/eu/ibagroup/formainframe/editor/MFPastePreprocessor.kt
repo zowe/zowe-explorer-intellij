@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import eu.ibagroup.formainframe.utils.`is`
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 
