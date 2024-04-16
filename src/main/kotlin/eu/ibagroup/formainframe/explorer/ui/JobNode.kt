@@ -51,8 +51,6 @@ class JobNode(
   override val query: RemoteQuery<ConnectionConfig, JobQuery, Unit>?
     get() {
       val connectionConfig = unit.connectionConfig
-
-
       return if (connectionConfig != null) {
         UnitRemoteQueryImpl(JobQuery(value), connectionConfig)
       } else null

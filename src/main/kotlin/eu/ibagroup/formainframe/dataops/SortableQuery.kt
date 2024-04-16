@@ -10,14 +10,11 @@
 
 package eu.ibagroup.formainframe.dataops
 
-import io.kotest.core.spec.style.ShouldSpec
+import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
 
-class FetchTestSpec : ShouldSpec({
-  context("dataops module: fetch") {
-    // SpoolFileFetchProvider.reload
-    should("reload files cache") {}
-    should("reload files cache with failure") {}
-    // DatasetFileFetchProvider.cleanupUnusedFile
-    should("clean up files attributes") {}
-  }
-})
+/**
+ * Interface identifies what query is SortableQuery
+ */
+interface SortableQuery {
+  val sortKeys : List<SortQueryKeys>
+}

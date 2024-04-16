@@ -10,73 +10,58 @@
 
 package workingset
 
+
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
-import auxiliary.components.actionMenu
-import auxiliary.components.actionMenuItem
-import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
-import com.intellij.remoterobot.fixtures.ComponentFixture
-import com.intellij.remoterobot.fixtures.ContainerFixture
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.search.locators.byXpath
-import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import workingset.testutils.injectListAllAllocatedDatasets
+
 
 /**
  * Tests allocating datasets with valid and invalid inputs.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class DeleteDatasetTest:WorkingSetBase() {
+class DeleteDatasetTest : WorkingSetBase() {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
-    private var wantToClose = mutableListOf(
-        "Allocate Dataset Dialog"
-    )
-    private val projectName = "untitled"
-    override val connectionName = "valid connection"
-
-    val wsName = "WS1"
+    private var wantToClose = mutableListOf(ALLOCATE_DATASET_DIALOG)
     override val datasetName = "$ZOS_USERID.ALLOC."
-    private val recordFormats = mutableListOf("F", "FB", "V", "VA", "VB")
+    private val recordFormats = mutableListOf(F_RECORD_FORMAT_SHORT, FB_RECORD_FORMAT_SHORT, V_RECORD_FORMAT_SHORT, VA_RECORD_FORMAT_SHORT, VB_RECORD_FORMAT_SHORT)
     private var datasetsToBeDeleted = mutableListOf<String>()
-
-       private var mapListDatasets = mutableMapOf<String, String>()
+    private var mapListDatasets = mutableMapOf<String, String>()
 
     /**
      * Opens the project and Explorer, clears test environment, creates working set and mask.
      */
     @BeforeAll
-    fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         startMockServer()
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createValidConnectionWithMock(
             testInfo,
             connectionName,
-            projectName,
             fixtureStack,
             closableFixtureCollector,
             remoteRobot
         )
         createWsAndMask(remoteRobot)
-
     }
 
     /**
      * Closes the project and clears test environment, deletes created datasets.
      */
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun tearDownAll(remoteRobot: RemoteRobot) {
         deleteDatasets(remoteRobot)
         mockServer.shutdown()
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
-            close()
-        }
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        closeIntelligentProject(fixtureStack, remoteRobot)
     }
 
     /**
@@ -94,7 +79,7 @@ class DeleteDatasetTest:WorkingSetBase() {
      * Tests to allocate PO datasets with valid parameters.
      */
     @ParameterizedTest
-    @ValueSource(strings = ["Sequential (PS)", "Partitioned (PO)", "Partitioned Extended (PO-E)"])
+    @ValueSource(strings = [SEQUENTIAL_ORG_FULL, PO_ORG_FULL, POE_ORG_FULL])
     fun testDeleteDatasets(input: String, remoteRobot: RemoteRobot) {
         doValidTest(input, remoteRobot)
         deleteDatasets(remoteRobot)
@@ -105,53 +90,35 @@ class DeleteDatasetTest:WorkingSetBase() {
      */
     private fun doValidTest(datasetOrganization: String, remoteRobot: RemoteRobot) {
         recordFormats.forEach { s ->
-            val recordLength = if (s == "F") {
+            val recordLength = if (s == F_RECORD_FORMAT_SHORT) {
                 3200
             } else {
                 80
             }
-//            val dsName = "${datasetName}${datasetOrganization.replace("-", "")}.${s}".uppercase()
             val dsOrganisationShort = "\\((.*?)\\)".toRegex().find(datasetOrganization)?.groupValues?.get(1)
             val dsName = "${datasetName}${dsOrganisationShort}.${s}".uppercase().replace("-", "")
-            responseDispatcher.injectEndpoint(
-                "testAllocateValid${datasetOrganization}Datasets_${s}_restfiles",
-                { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${dsName}") ?: false },
-                { MockResponse().setBody("{\"dsorg\":\"${dsOrganisationShort}\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":1,\"recfm\":\"${s}\",\"blksize\":3200,\"lrecl\":${recordLength}}") }
-            )
-//            Thread.sleep(3000)
+
+            if (dsOrganisationShort != null) {
+                responseDispatcher.injectAllocationResultPo(
+                    datasetOrganization,
+                    s,
+                    dsName,
+                    dsOrganisationShort,
+                    recordLength
+                )
+            }
             allocateDataSet(
-                wsName, dsName, datasetOrganization, "TRK", 10, 1, 1,
+                wsName, dsName, datasetOrganization, TRACKS_ALLOCATION_UNIT_SHORT, 10, 1, 1,
                 s, recordLength, 3200, 0, remoteRobot
             )
 
-            val dsntp = if (dsOrganisationShort == "PS") {
+            val dsntp = if (dsOrganisationShort == SEQUENTIAL_ORG_SHORT) {
                 ""
             } else {
-                "PDS"
+                PDS_TYPE
             }
 
-            val listDs = "{\n" +
-                    "      \"dsname\": \"${dsName}\",\n" +
-                    "      \"blksz\": \"3200\",\n" +
-                    "      \"catnm\": \"TEST.CATALOG.MASTER\",\n" +
-                    "      \"cdate\": \"2021/11/15\",\n" +
-                    "      \"dev\": \"3390\",\n" +
-                    "      \"dsntp\": \"${dsntp}\",\n" +
-                    "      \"dsorg\": \"${datasetOrganization}\",\n" +
-                    "      \"edate\": \"***None***\",\n" +
-                    "      \"extx\": \"1\",\n" +
-                    "      \"lrecl\": \"${recordLength}\",\n" +
-                    "      \"migr\": \"NO\",\n" +
-                    "      \"mvol\": \"N\",\n" +
-                    "      \"ovf\": \"NO\",\n" +
-                    "      \"rdate\": \"2021/11/17\",\n" +
-                    "      \"recfm\": \"${s}\",\n" +
-                    "      \"sizex\": \"10\",\n" +
-                    "      \"spacu\": \"TRACKS\",\n" +
-                    "      \"used\": \"1\",\n" +
-                    "      \"vol\": \"TESTVOL\",\n" +
-                    "      \"vols\": \"TESTVOL\"\n" +
-                    "    },"
+            val listDs = buildDatasetConfigString(dsName, dsntp, datasetOrganization, recordLength, s)
             mapListDatasets[dsName] = listDs
             datasetsToBeDeleted.add(dsName)
         }
@@ -160,68 +127,21 @@ class DeleteDatasetTest:WorkingSetBase() {
     /**
      * Deletes created datasets.
      */
-    private fun deleteDatasets(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllAllocatedDatasets_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName.uppercase()}*") ?: false },
-            { MockResponse().setBody(buildFinalListDatasetJson()) }
-        )
-        responseDispatcher.injectEndpoint(
-            "listMembers_restfiles",
-            { it?.requestLine?.contains("/member") ?: false },
-            { MockResponse().setBody("{\"items\":[],\"returnedRows\":0,\"totalRows\":0,\"moreRows\":null,\"JSONversion\":1}") }
-        )
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(wsName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Refresh").click()
-            explorer {
-                find<ComponentFixture>(viewTree).findAllText(wsName).last().doubleClick()
-            }
-        }
-//                    Thread.sleep(1000)
-//        Thread.sleep(3000)
+    private fun deleteDatasets(remoteRobot: RemoteRobot) {
+        injectListAllAllocatedDatasets(datasetName.uppercase(), mapListDatasets)
+        responseDispatcher.injectListMembers(NO_MEMBERS)
+
+        refreshWorkSpace(wsName, fixtureStack, remoteRobot)
+        compressAndDecompressTree(wsName, fixtureStack, remoteRobot)
+
         datasetsToBeDeleted.forEach { s ->
             mapListDatasets.remove(s)
-            responseDispatcher.injectEndpoint(
-                "listAllocatedDatasets_restfiles_${s}",
-                { it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName.uppercase()}*") ?: false },
-                { MockResponse().setBody(buildFinalListDatasetJson()) }
-            )
-            responseDispatcher.injectEndpoint(
-                "deleteDataset_restfiles_${s}",
-                { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/${s}") ?: false },
-                { MockResponse().setBody("{}") }
-            )
-            deleteDataset(s, projectName, fixtureStack, remoteRobot)
+            responseDispatcher.injectAllocatedDatasets(s, buildFinalListDatasetJson(mapListDatasets), s)
+            responseDispatcher.injectDeleteDataset(s)
+            deleteDataset(s, fixtureStack, remoteRobot)
+        }
+        compressAndDecompressTree(wsName, fixtureStack, remoteRobot)
 
-        }
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findAllText(wsName).last().doubleClick()
-//                Thread.sleep(1000)
-            }
-        }
         datasetsToBeDeleted.clear()
     }
-
-
-
-//    /**
-//     * Creates working set and z/OS mask.
-//     */
-//    private fun createWsAndMask(remoteRobot: RemoteRobot) = with(remoteRobot) {
-//        createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
-//        ideFrameImpl(projectName, fixtureStack) {
-//            createMask(wsName, fixtureStack, closableFixtureCollector)
-//            createMaskDialog(fixtureStack) {
-//                createMask(Pair("$datasetName*", "z/OS"))
-//                clickButton("OK")
-//            }
-//            closableFixtureCollector.closeOnceIfExists(CreateMaskDialog.name)
-//        }
-//    }
 }

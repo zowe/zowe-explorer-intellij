@@ -50,6 +50,7 @@ class EditJclAction : AnAction() {
     val view = e.getExplorerView<JesExplorerView>() ?: return
     val selected = view.mySelectedNodesData.getOrNull(0)
     val node = selected?.node
+    val project = e.project
     if (node is JobNode) {
       val connectionConfig = node.unit.connectionConfig
       if (connectionConfig != null) {
@@ -57,7 +58,7 @@ class EditJclAction : AnAction() {
         val dataOpsManager = service<DataOpsManager>()
         runBackgroundableTask(
           title = "Get JCL records for job ${attributes.jobInfo.jobName}",
-          project = e.project,
+          project = project,
           cancellable = true
         ) {
           runCatching {
@@ -81,10 +82,10 @@ class EditJclAction : AnAction() {
                   cachedFile = createdFile
                   wasCreatedBefore = false
                 }
-                val descriptor = e.project?.let { pr -> OpenFileDescriptor(pr, cachedFile) }
+                val descriptor = project?.let { pr -> OpenFileDescriptor(pr, cachedFile) }
                 descriptor?.let {
                   val syncProvider =
-                    DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(e.project))
+                    DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(project))
                   if (!wasCreatedBefore) {
                     syncProvider.putInitialContent(jclContentBytes)
                   } else {
@@ -98,7 +99,7 @@ class EditJclAction : AnAction() {
               }
             }
           }.onFailure {
-            node.explorer.reportThrowable(it, e.project)
+            node.explorer.reportThrowable(it, project)
           }
         }
       }

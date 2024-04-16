@@ -460,6 +460,102 @@ Example of how to see the output:<br/>
                 class="eu.ibagroup.formainframe.explorer.actions.CreateUssDirectoryAction"
                 text="Directory" icon="AllIcons.Nodes.Folder"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.uss.ByUssFileName"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssSortAction"
+                text="File Name"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.uss.ByUssType"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssSortAction"
+                text="File Type"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.uss.ByModificationDate"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssSortAction"
+                text="File Modification Date"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.ByDatasetName"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Dataset Name"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.ByDatasetType"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Dataset Type"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.ByDatasetModificationDate"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Dataset Modification Date"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.members.ByMemberName"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.members.MembersSortAction"
+                text="Member Name"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.members.ByMemberModificationDate"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.members.MembersSortAction"
+                text="Member Modification Date"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobName"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Name"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobCreationDate"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Creation Date"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobCompletionDate"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Completion Date"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobStatus"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Status"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobOwner"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Owner"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobID"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job ID"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssAscendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssSortAction"
+                text="Ascending"
+                icon="AllIcons.Chooser.Bottom"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssDescendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssSortAction"
+                text="Descending"
+                icon="AllIcons.Chooser.Top"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetAscendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Ascending"
+                icon="AllIcons.Chooser.Bottom"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetDescendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Descending"
+                icon="AllIcons.Chooser.Top"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.members.MemberAscendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.members.MembersSortAction"
+                text="Ascending"
+                icon="AllIcons.Chooser.Bottom"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.members.MemberDescendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.members.MembersSortAction"
+                text="Descending"
+                icon="AllIcons.Chooser.Top"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsAscendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsSortAction"
+                text="Ascending"
+                icon="AllIcons.Chooser.Bottom"/>
+
+        <action id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsDescendingOrder"
+                class="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsSortAction"
+                text="Descending"
+                icon="AllIcons.Chooser.Top"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.AddMemberAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddMemberAction" text="Member"
                 icon="ForMainframeIcons.MemberIcon"
@@ -602,6 +698,60 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
         </group>
 
+        <group id="eu.ibagroup.formainframe.actions.sort.uss.UssSortActionGroup"
+               description="Sort items"
+               text="Sort"
+               class="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssSortActionGroup"
+               popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.uss.ByUssFileName"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.uss.ByUssType"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.uss.ByModificationDate"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssAscendingOrder"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.uss.UssDescendingOrder"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.sort.datasets.DatasetsSortActionGroup"
+               description="Sort items"
+               text="Sort"
+               class="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetsSortActionGroup"
+               popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.ByDatasetName"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.ByDatasetType"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.ByDatasetModificationDate"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetAscendingOrder"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.datasets.DatasetDescendingOrder"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.sort.members.MembersSortActionGroup"
+               description="Sort items"
+               text="Sort"
+               class="eu.ibagroup.formainframe.explorer.actions.sort.members.MembersSortActionGroup"
+               popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.members.ByMemberName"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.members.ByMemberModificationDate"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.members.MemberAscendingOrder"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.members.MemberDescendingOrder"/>
+        </group>
+
+        <group id="eu.ibagroup.formainframe.actions.sort.jobs.JobsSortActionGroup"
+               description="Sort items"
+               text="Sort"
+               class="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsSortActionGroup"
+               popup="true">
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobName"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobCreationDate"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobCompletionDate"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobStatus"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobOwner"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.ByJobID"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsAscendingOrder"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.sort.jobs.JobsDescendingOrder"/>
+        </group>
+
         <group id="eu.ibagroup.formainframe.actions.AddWsOrConnectionGroup"
                icon="AllIcons.General.Add"
                popup="true">
@@ -634,6 +784,10 @@ Example of how to see the output:<br/>
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
+            <reference id="eu.ibagroup.formainframe.actions.sort.uss.UssSortActionGroup"/>
+            <reference id ="eu.ibagroup.formainframe.actions.sort.datasets.DatasetsSortActionGroup"/>
+            <reference id ="eu.ibagroup.formainframe.actions.sort.members.MembersSortActionGroup"/>
+            <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>
             <separator/>
@@ -657,6 +811,8 @@ Example of how to see the output:<br/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditJesWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditJobsFilterAction"/>
+            <separator/>
+            <reference id="eu.ibagroup.formainframe.actions.sort.jobs.JobsSortActionGroup"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.DeleteJesNodeAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"/>

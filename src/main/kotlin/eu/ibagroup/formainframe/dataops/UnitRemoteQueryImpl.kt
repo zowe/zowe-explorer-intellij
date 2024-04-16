@@ -11,6 +11,10 @@
 package eu.ibagroup.formainframe.dataops
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
+import eu.ibagroup.formainframe.config.ws.JobsFilter
+import eu.ibagroup.formainframe.dataops.fetch.UssQuery
+import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
+import eu.ibagroup.formainframe.explorer.ui.UssNode
 import eu.ibagroup.formainframe.utils.UNIT_CLASS
 
 /**
@@ -18,8 +22,14 @@ import eu.ibagroup.formainframe.utils.UNIT_CLASS
  */
 data class UnitRemoteQueryImpl<Connection: ConnectionConfigBase, R>(
   override val request: R,
-  override val connectionConfig: Connection
-) : RemoteQuery<Connection, R, Unit> {
+  override val connectionConfig: Connection,
+) : RemoteQuery<Connection, R, Unit>, SortableQuery {
   override val resultClass: Class<out Unit>
     get() = UNIT_CLASS
+  override val sortKeys: List<SortQueryKeys>
+    get() = when(request) {
+      is UssQuery -> mutableListOf(SortQueryKeys.FILE_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
+      is JobsFilter -> mutableListOf(SortQueryKeys.JOB_CREATION_DATE, SortQueryKeys.ASCENDING)
+      else -> mutableListOf()
+    }
 }

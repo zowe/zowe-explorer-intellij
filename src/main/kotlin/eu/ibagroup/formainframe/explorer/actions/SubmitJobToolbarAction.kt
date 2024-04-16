@@ -38,7 +38,8 @@ class SubmitJobToolbarAction : AnAction() {
    * Opens job log
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val explorerView = e.project?.let { FileExplorerContentProvider.getInstance().getExplorerView(it) }
+    val project = e.project
+    val explorerView = project?.let { FileExplorerContentProvider.getInstance().getExplorerView(it) }
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val jclContent = editor.document.text
@@ -48,7 +49,7 @@ class SubmitJobToolbarAction : AnAction() {
       val connectionConfig = parentAttributes.requesters[0].connectionConfig
       runBackgroundableTask(
         title = "Submitting job from file ${file.name}",
-        project = e.project,
+        project = project,
         cancellable = true
       ) {
         runCatching {
@@ -64,7 +65,7 @@ class SubmitJobToolbarAction : AnAction() {
             }
           }
         }.onFailure {
-          explorerView?.explorer?.reportThrowable(it, e.project)
+          explorerView?.explorer?.reportThrowable(it, project)
         }
       }
     }

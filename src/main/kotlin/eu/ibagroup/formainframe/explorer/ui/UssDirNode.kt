@@ -14,16 +14,16 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.UssPath
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.RemoteQuery
-import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
+import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
-import eu.ibagroup.formainframe.dataops.getAttributesService
+import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import eu.ibagroup.formainframe.utils.clearAndMergeWith
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -47,7 +47,9 @@ class UssDirNode(
   workingSet: FilesWorkingSet,
   treeStructure: ExplorerTreeStructureBase,
   private var vFile: MFVirtualFile? = null,
-  private val isRootNode: Boolean = false
+  private val isRootNode: Boolean = false,
+  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(SortQueryKeys.FILE_MODIFICATION_DATE, SortQueryKeys.ASCENDING),
+  override val sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 ) : RemoteMFFileFetchNode<ConnectionConfig, UssPath, UssQuery, FilesWorkingSet>(
   ussPath, project, parent, workingSet, treeStructure
 ), UssNode, RefreshableNode {
@@ -75,10 +77,7 @@ class UssDirNode(
   /** Transform the collection of mainframe virtual files to the list of USS children nodes */
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
     return find { attributesService.getAttributes(it)?.path == value.path }
-      ?.also {
-        vFile = it
-        treeStructure.registerNode(this@UssDirNode)
-      }
+      ?.also { vFile = it }
       ?.children
       ?.map {
         if (it.isDirectory) {
@@ -93,7 +92,7 @@ class UssDirNode(
         } else {
           UssFileNode(it, notNullProject, this@UssDirNode, unit, treeStructure)
         }
-      } ?: listOf()
+      }?.let { sortChildrenNodes(it, currentSortQueryKeysList) } ?: listOf()
   }
 
   override val requestClass = UssQuery::class.java
@@ -137,7 +136,10 @@ class UssDirNode(
     if (vFile != null) {
       updateNodeTitleUsingCutBuffer(text, presentation)
     } else {
-      presentation.presentableText = text
+      presentation.addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    }
+    if (isRootNode) {
+      updateRefreshDateAndTime(presentation)
     }
   }
 
@@ -145,4 +147,92 @@ class UssDirNode(
     return vFile
   }
 
+  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(childrenNodes: List<Node>, sortKeys: List<SortQueryKeys>): List<Node> {
+    if (sortKeys.contains(SortQueryKeys.FILE_NAME)) {
+      if (sortKeys.contains(SortQueryKeys.ASCENDING)) {
+        return childrenNodes.sortedBy {
+          when (it) {
+            is UssDirNode -> it.vFile?.filenameInternal
+            is UssFileNode -> it.virtualFile.filenameInternal
+            else -> null
+          }
+        }.also {
+          sortedNodes.clearAndMergeWith(it)
+        }
+      } else {
+        return childrenNodes.sortedByDescending {
+          when (it) {
+            is UssDirNode -> it.vFile?.filenameInternal
+            is UssFileNode -> it.virtualFile.filenameInternal
+            else -> null
+          }
+        }.also {
+          sortedNodes.clearAndMergeWith(it)
+        }
+      }
+    } else if (sortKeys.contains(SortQueryKeys.FILE_TYPE)) {
+      val listToReturn = mutableListOf<Node>()
+      val dirs = mutableListOf<Node>()
+      val files = mutableListOf<Node>()
+      val sortedDirs: List<Node>
+      val sortedFiles: List<Node>
+      childrenNodes.forEach {
+        when (it) {
+          is UssDirNode -> dirs.add(it)
+          is UssFileNode -> files.add(it)
+        }
+      }
+      return if (sortKeys.contains(SortQueryKeys.ASCENDING)) {
+        sortedDirs = dirs.sortedBy { (it as UssDirNode).vFile?.filenameInternal }
+        sortedFiles = files.sortedBy { (it as UssFileNode).virtualFile.filenameInternal }
+        listToReturn.addAll(sortedDirs)
+        listToReturn.addAll(sortedFiles)
+        listToReturn.also {
+          sortedNodes.clearAndMergeWith(it)
+        }
+      } else {
+        sortedDirs = dirs.sortedByDescending { (it as UssDirNode).vFile?.filenameInternal }
+        sortedFiles = files.sortedByDescending { (it as UssFileNode).virtualFile.filenameInternal }
+        listToReturn.addAll(sortedDirs)
+        listToReturn.addAll(sortedFiles)
+        listToReturn.also {
+          sortedNodes.clearAndMergeWith(it)
+        }
+      }
+    } else if (sortKeys.contains(SortQueryKeys.FILE_MODIFICATION_DATE)) {
+      return if (sortKeys.contains(SortQueryKeys.ASCENDING)) {
+        childrenNodes.sortedBy {
+          modificationTimeSelector().invoke(it)
+        }.also {
+          sortedNodes.clearAndMergeWith(it)
+        }
+      } else {
+        childrenNodes.sortedByDescending {
+          modificationTimeSelector().invoke(it)
+        }.also {
+          sortedNodes.clearAndMergeWith(it)
+        }
+      }
+    } else {
+      return childrenNodes
+    }
+  }
+
+  /**
+   * Selector which extracts modification time for the every child node
+   * @return String representation of the modification time of the virtual file
+   */
+  private fun modificationTimeSelector(): (AbstractTreeNode<*>) -> String? {
+    return {
+      when(it) {
+        is UssDirNode -> {
+          it.virtualFile?.let { vFile -> attributesService.getAttributes(vFile) }?.modificationTime
+        }
+        is UssFileNode -> {
+          attributesService.getAttributes(it.virtualFile)?.modificationTime
+        }
+        else -> null
+      }
+    }
+  }
 }

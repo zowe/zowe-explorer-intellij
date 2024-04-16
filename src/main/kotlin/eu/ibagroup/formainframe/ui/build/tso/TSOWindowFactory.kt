@@ -35,24 +35,35 @@ import org.zowe.kotlinsdk.TsoResponse
 import java.net.ConnectException
 
 /**
- * Interface class which represents callable methods for topics
+ * Interface class which represents create topic handler
  */
-interface TSOSessionHandler {
+interface TSOSessionCreateHandler {
 
   /**
    * Function which is called when TSO session is created
    * @param project - a root project
    * @param newSession - an instance of config wrapper for new TSO session created
    */
-  fun create (project: Project, newSession: TSOConfigWrapper)
+  fun create(project: Project, newSession: TSOConfigWrapper)
+}
 
+/**
+ * Interface class which represents reconnect topic handler
+ */
+interface TSOSessionReconnectHandler {
   /**
    * Function which is called when we need to reconnect to the disconnected TSO session
    * @param project - a root project
    * @param console - an instance of TSO console view
    * @param oldSession - an instance of TSO session which we want to reconnect to
    */
-  fun reconnect (project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper)
+  fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper)
+}
+
+/**
+ * Interface class which represents process command topic handler
+ */
+interface TSOSessionProcessCommandHandler {
 
   /**
    * Function which is called when we want to process an entered command.
@@ -65,7 +76,7 @@ interface TSOSessionHandler {
    * @param messageData - message data we want to execute
    * @param processHandler - process handler to display the result of response message in tool window
    */
-  fun processCommand (
+  fun processCommand(
     project: Project,
     console: TSOConsoleView,
     session: TSOConfigWrapper,
@@ -74,6 +85,12 @@ interface TSOSessionHandler {
     messageData: MessageData,
     processHandler: ProcessHandler
   )
+}
+
+/**
+ * Interface class which represents close topic handler
+ */
+interface TSOSessionCloseHandler {
 
   /**
    * Function which is called when we want to close currently running TSO session
@@ -85,17 +102,32 @@ interface TSOSessionHandler {
   fun close (project: Project, session: TSOConfigWrapper)
 }
 
-@JvmField
-val SESSION_ADDED_TOPIC = Topic.create("tsoSessionAdded", TSOSessionHandler::class.java)
+/**
+ * Interface class which represents reopen topic handler
+ */
+interface TSOSessionReopenHandler {
+  /**
+   * Function which is called when reopen session event is triggered
+   * @param project
+   * @param console
+   */
+  fun reopen(project: Project, console: TSOConsoleView)
+}
 
 @JvmField
-val SESSION_RECONNECT_TOPIC = Topic.create("tsoSessionReconnect", TSOSessionHandler::class.java)
+val SESSION_ADDED_TOPIC = Topic.create("tsoSessionAdded", TSOSessionCreateHandler::class.java)
 
 @JvmField
-val SESSION_COMMAND_ENTERED = Topic.create("tsoSessionCommandTyped", TSOSessionHandler::class.java)
+val SESSION_RECONNECT_TOPIC = Topic.create("tsoSessionReconnect", TSOSessionReconnectHandler::class.java)
 
 @JvmField
-val SESSION_CLOSED_TOPIC = Topic.create("tsoSessionClosed", TSOSessionHandler::class.java)
+val SESSION_COMMAND_ENTERED = Topic.create("tsoSessionCommandTyped", TSOSessionProcessCommandHandler::class.java)
+
+@JvmField
+val SESSION_CLOSED_TOPIC = Topic.create("tsoSessionClosed", TSOSessionCloseHandler::class.java)
+
+@JvmField
+val SESSION_REOPEN_TOPIC = Topic.create("tsoSessionReopen", TSOSessionReopenHandler::class.java)
 
 /**
  * Factory class for building an instance of TSO tool window when TSO session is created
@@ -109,20 +141,6 @@ class TSOWindowFactory : ToolWindowFactory {
 
     private var currentTsoSession: TSOConfigWrapper? = null
     private val tsoSessionToConfigMap = mutableMapOf<String, TSOSessionParams>()
-
-    /**
-     * Getter for TSO session wrapper class for each TSO session created
-     */
-    fun getTsoSession(): TSOConfigWrapper? {
-      return currentTsoSession
-    }
-
-    /**
-     * Getter for TSO config map which contains all the TSO session currently created and active
-     */
-    fun getTsoSessionConfigMap(): Map<String, TSOSessionParams> {
-      return tsoSessionToConfigMap
-    }
 
     /**
      * Method is used to parse response for every TSO session created
@@ -184,16 +202,7 @@ class TSOWindowFactory : ToolWindowFactory {
       contentManager.addContent(content)
       contentManager.setSelectedContent(content)
 
-      val component = toolWindow.contentManager.selectedContent?.component as TSOConsoleView
-      val processHandler = component.getProcessHandler()
-      processHandler.notifyTextAvailable(parseTSODataResponse(tsoSession.getTSOResponse()), ProcessOutputType.STDOUT)
-
-      while (tsoSession.getTSOResponseMessageQueue().last().tsoPrompt == null) {
-        val response = getTsoMessageQueue(tsoSession)
-        processHandler.notifyTextAvailable(parseTSODataResponse(response), ProcessOutputType.STDOUT)
-        tsoSession.setTSOResponseMessageQueue(response.tsoData)
-      }
-      processHandler.notifyTextAvailable("> ", ProcessOutputType.STDOUT)
+      fetchNewSessionResponseMessages(tsoContent, tsoSession)
     }
   }
 
@@ -227,92 +236,46 @@ class TSOWindowFactory : ToolWindowFactory {
     subscribe(
       project = project,
       topic = SESSION_ADDED_TOPIC,
-      handler = object : TSOSessionHandler {
+      handler = object : TSOSessionCreateHandler {
 
         override fun create(project: Project, newSession: TSOConfigWrapper) {
-          val servletKey = newSession.getTSOResponse().servletKey
-          if (servletKey != null) {
-            tsoSessionToConfigMap[servletKey] = newSession.getTSOSessionParams()
-            addToolWindowContent(project, toolWindow, newSession)
-          }
+          val servletKey = newSession.getTSOResponse().servletKey ?: throw Exception("Cannot create a new session, because new session ID was not recognized.")
+          addToolWindowContent(project, toolWindow, newSession)
+          tsoSessionToConfigMap[servletKey] = newSession.getTSOSessionParams()
         }
-
-        override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) {}
-
-        override fun processCommand(
-          project: Project,
-          console: TSOConsoleView,
-          session: TSOConfigWrapper,
-          command: String,
-          messageType: MessageType,
-          messageData: MessageData,
-          processHandler: ProcessHandler
-        ) {}
-
-        override fun close(project: Project, session: TSOConfigWrapper) {}
       }
     )
+
     subscribe(
       project = project,
       topic = SESSION_RECONNECT_TOPIC,
-      handler = object : TSOSessionHandler {
-
-        override fun create(project: Project, newSession: TSOConfigWrapper) {}
+      handler = object : TSOSessionReconnectHandler {
 
         override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) {
           val oldServletKey = oldSession.getTSOResponse().servletKey
-          val params = oldSession.getTSOSessionParams()
           if (tsoSessionToConfigMap[oldServletKey] != null) {
-            tsoSessionToConfigMap.remove(oldServletKey)
-            val tsoResponse = service<DataOpsManager>().performOperation(
-              TsoOperation(
-                params,
-                TsoOperationMode.START
-              )
-            )
-            val servletKey = tsoResponse.servletKey
-            if (servletKey != null) {
-              val config = TSOConfigWrapper(params, tsoResponse)
-              currentTsoSession = config
-              console.setTsoSession(config)
-              tsoSessionToConfigMap[servletKey] = config.getTSOSessionParams()
-              console.getProcessHandler()
-                .notifyTextAvailable(parseTSODataResponse(config.getTSOResponse()), ProcessOutputType.STDOUT)
-              while (config.getTSOResponseMessageQueue().last().tsoPrompt == null) {
-                val response = getTsoMessageQueue(config)
-                console.getProcessHandler()
-                  .notifyTextAvailable(parseTSODataResponse(response), ProcessOutputType.STDOUT)
-                config.setTSOResponseMessageQueue(response.tsoData)
-              }
+            val newSessionConfig = createNewSessionFromOldConfig(oldSession)
+            if (newSessionConfig != null) {
+              val sessionResponse = newSessionConfig.getTSOResponse()
+              val newServletKey = sessionResponse.servletKey ?: throw Exception("Cannot reconnect to the session, because new session ID was not recognized.")
+              currentTsoSession = newSessionConfig
+              console.setTsoSession(newSessionConfig)
+              fetchNewSessionResponseMessages(console, newSessionConfig)
+              tsoSessionToConfigMap.remove(oldServletKey)
+              tsoSessionToConfigMap[newServletKey] = newSessionConfig.getTSOSessionParams()
             } else {
-              throw Exception("Cannot reconnect to the session, because new session ID was not recognized.")
+              throw Exception("Cannot reconnect to the session, because new session config is missing.")
             }
           } else {
             throw Exception("Cannot reconnect to the session, because session ID was not found.")
           }
         }
-
-        override fun processCommand(
-          project: Project,
-          console: TSOConsoleView,
-          session: TSOConfigWrapper,
-          command: String,
-          messageType: MessageType,
-          messageData: MessageData,
-          processHandler: ProcessHandler
-        ) {}
-
-        override fun close(project: Project, session: TSOConfigWrapper) {}
       }
     )
     subscribe(
       project = project,
       topic = SESSION_COMMAND_ENTERED,
-      handler = object : TSOSessionHandler {
-
-        override fun create(project: Project, newSession: TSOConfigWrapper) {}
-
-        override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) {}
+      handler = object : TSOSessionProcessCommandHandler {
 
         override fun processCommand(
           project: Project,
@@ -358,27 +321,12 @@ class TSOWindowFactory : ToolWindowFactory {
             }
           }
         }
-
-        override fun close(project: Project, session: TSOConfigWrapper) {}
       }
     )
     subscribe(
       project = project,
       topic = SESSION_CLOSED_TOPIC,
-      handler = object : TSOSessionHandler {
-        override fun create(project: Project, newSession: TSOConfigWrapper) {}
-
-        override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) {}
-
-        override fun processCommand(
-          project: Project,
-          console: TSOConsoleView,
-          session: TSOConfigWrapper,
-          command: String,
-          messageType: MessageType,
-          messageData: MessageData,
-          processHandler: ProcessHandler
-        ) {}
+      handler = object : TSOSessionCloseHandler {
 
         override fun close(project: Project, session: TSOConfigWrapper) {
           /**
@@ -407,5 +355,59 @@ class TSOWindowFactory : ToolWindowFactory {
         }
       }
     )
+
+    subscribe(
+      project = project,
+      topic = SESSION_REOPEN_TOPIC,
+      handler = object : TSOSessionReopenHandler {
+        override fun reopen(project: Project, console: TSOConsoleView) {
+          val oldConfig = console.getTsoSession()
+          runInEdt {
+            toolWindow.contentManager.apply {
+              selectedContent?.let { removeContent(it, true) }
+            }
+          }
+          val newConfig = createNewSessionFromOldConfig(oldConfig) ?: throw Exception("Unable to establish a new TSO session with parameters: ${oldConfig.getTSOSessionParams()}")
+          sendTopic(SESSION_ADDED_TOPIC).create(project, newConfig)
+        }
+      }
+    )
   }
+
+  /**
+   * Method is used to create a new session config from the parameters of the old session config
+   * @param oldConfig
+   * @return a new instance of TSOConfigWrapper if a new session was successfully created, null otherwise
+   */
+  private fun createNewSessionFromOldConfig(oldConfig: TSOConfigWrapper) : TSOConfigWrapper? {
+    val params = oldConfig.getTSOSessionParams()
+    val tsoResponse = service<DataOpsManager>().performOperation(
+      TsoOperation(
+        params,
+        TsoOperationMode.START
+      )
+    )
+    val servletKey = tsoResponse.servletKey
+    return if (servletKey != null) TSOConfigWrapper(params, tsoResponse) else null
+  }
+
+  /**
+   * Method is used to fetch and display the welcome messages when a new session is created and a tool window content is added
+   * @param console
+   * @param newConfig
+   */
+  private fun fetchNewSessionResponseMessages(console: TSOConsoleView, newConfig: TSOConfigWrapper) {
+    val sessionResponse = newConfig.getTSOResponse()
+    val processHandler = console.getProcessHandler()
+    processHandler
+      .notifyTextAvailable(parseTSODataResponse(sessionResponse), ProcessOutputType.STDOUT)
+    while (newConfig.getTSOResponseMessageQueue().last().tsoPrompt == null) {
+      val response = getTsoMessageQueue(newConfig)
+      processHandler
+        .notifyTextAvailable(parseTSODataResponse(response), ProcessOutputType.STDOUT)
+      newConfig.setTSOResponseMessageQueue(response.tsoData)
+    }
+    processHandler.notifyTextAvailable("> ", ProcessOutputType.STDOUT)
+  }
+
 }

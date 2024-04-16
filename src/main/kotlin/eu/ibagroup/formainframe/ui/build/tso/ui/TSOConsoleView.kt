@@ -10,11 +10,11 @@
 
 package eu.ibagroup.formainframe.ui.build.tso.ui
 
-//import com.intellij.ui.layout.cellPanel
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
@@ -29,7 +29,7 @@ import eu.ibagroup.formainframe.common.isDebugModeEnabled
 import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
 import eu.ibagroup.formainframe.ui.build.TerminalCommandReceiver
-import eu.ibagroup.formainframe.ui.build.tso.SESSION_COMMAND_ENTERED
+import eu.ibagroup.formainframe.ui.build.tso.*
 import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.utils.InputRecognizer
 import eu.ibagroup.formainframe.utils.log
@@ -75,7 +75,6 @@ class TSOConsoleView(
    */
   private val tsoPanel by lazy {
     panel {
-//      cellPanel()
       row {
         label("TSO message type").widthGroup(tsoWidthGroup)
         comboBox(
@@ -108,6 +107,18 @@ class TSOConsoleView(
         }.also {
           cancelCommandButton = it.component
         }
+          .widthGroup(tsoWidthGroup)
+      }.visible(debugMode)
+      row {
+        button("Reopen Session") {
+          runBackgroundableTask("Re-opening TSO session", project) {
+            sendTopic(SESSION_REOPEN_TOPIC).reopen(project, this@TSOConsoleView)
+          }
+        }.also {
+          reopenSessionButton = it.component
+          reopenSessionButton.apply { toolTipText = "The server tries to re-open the current session in case of some troubles (for example console hangs)" }
+        }
+          .widthGroup(tsoWidthGroup)
       }
     }.also {
       it.border = JBEmptyBorder(10, 15, 10, 15)

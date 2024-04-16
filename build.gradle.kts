@@ -77,8 +77,9 @@ dependencies {
   implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
   implementation("com.segment.analytics.java:analytics:3.5.0")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.4.1")
-  testImplementation("io.mockk:mockk:1.13.9")
+  implementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
+  testImplementation("io.mockk:mockk:1.13.9")
   testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
   testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
@@ -91,6 +92,10 @@ dependencies {
 
 intellij {
   version.set(properties("platformVersion").get())
+  // !Development only!
+  // downloadSources.set(true)
+  // In Settings | Advanced Settings enable option Download sources in section Build Tools. Gradle.
+  // Then invoke Reload All Gradle Projects action from the Gradle tool window.
 }
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin

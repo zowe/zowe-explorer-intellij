@@ -49,7 +49,7 @@ class WorkingSetViaSettingsTest {
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) {
         startMockServer()
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
     /**
@@ -58,8 +58,8 @@ class WorkingSetViaSettingsTest {
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
         mockServer.shutdown()
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             close()
         }
     }
@@ -79,7 +79,7 @@ class WorkingSetViaSettingsTest {
     @Test
     @Order(1)
     fun testAddWorkingSetWithoutConnectionViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
@@ -121,7 +121,6 @@ class WorkingSetViaSettingsTest {
                 { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
             )
             createConnection(
-                projectName,
                 fixtureStack,
                 closableFixtureCollector,
                 connectionName,
@@ -130,7 +129,7 @@ class WorkingSetViaSettingsTest {
                 "https://${mockServer.hostName}:${mockServer.port}"
             )
             val wsName: String = "A".repeat(200)
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 explorer {
                     settings(closableFixtureCollector, fixtureStack)
                 }
@@ -164,7 +163,7 @@ class WorkingSetViaSettingsTest {
     fun testAddWorkingSetWithOneValidMaskViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS1"
         val mask = Pair("$ZOS_USERID.*", "z/OS")
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
@@ -206,7 +205,7 @@ class WorkingSetViaSettingsTest {
                 { MockResponse().setBody("{}") }
             )
 
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 explorer {
                     settings(closableFixtureCollector, fixtureStack)
                 }
@@ -229,7 +228,6 @@ class WorkingSetViaSettingsTest {
                 openWSOpenMaskInExplorer(
                     wsName,
                     it.uppercase(),
-                    projectName,
                     fixtureStack,
                     remoteRobot
                 )
@@ -255,7 +253,7 @@ class WorkingSetViaSettingsTest {
                 { MockResponse().setBody("{}") }
             )
 
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 explorer {
                     settings(closableFixtureCollector, fixtureStack)
                 }
@@ -274,7 +272,7 @@ class WorkingSetViaSettingsTest {
                 }
                 closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
             }
-            validUSSMasks.forEach { openWSOpenMaskInExplorer(wsName, it, projectName, fixtureStack, remoteRobot) }
+            validUSSMasks.forEach { openWSOpenMaskInExplorer(wsName, it, fixtureStack, remoteRobot) }
         }
 
 
@@ -285,7 +283,7 @@ class WorkingSetViaSettingsTest {
     @Order(6)
     fun testAddWorkingSetWithInvalidMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS4"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
@@ -332,7 +330,7 @@ class WorkingSetViaSettingsTest {
     @Order(7)
     fun testAddWorkingSetWithTheSameMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS4"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
@@ -372,9 +370,9 @@ class WorkingSetViaSettingsTest {
             { it?.requestLine?.contains("zosmf/restfiles/") ?: false },
             { MockResponse().setBody("{}") }
         )
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-        closeMaskInExplorer("$ZOS_USERID.*".uppercase(), projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
+        closeMaskInExplorer("$ZOS_USERID.*".uppercase(), fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
@@ -393,8 +391,8 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        openMaskInExplorer("/u/$ZOS_USERID", "", projectName, fixtureStack, remoteRobot)
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+        openMaskInExplorer("/u/$ZOS_USERID", "", fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -405,8 +403,8 @@ class WorkingSetViaSettingsTest {
     fun testEditWorkingSetDeleteMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         val masks = listOf("$ZOS_USERID.*".uppercase(), "Q.*", ZOS_USERID.uppercase())
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
@@ -425,8 +423,8 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        masks.forEach { checkItemWasDeletedWSRefreshed(it.uppercase(), projectName, fixtureStack, remoteRobot) }
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+        masks.forEach { checkItemWasDeletedWSRefreshed(it.uppercase(), fixtureStack, remoteRobot) }
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -437,8 +435,8 @@ class WorkingSetViaSettingsTest {
     fun testEditWorkingSetDeleteAllMasksViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
         val deletedMasks = listOf("$ZOS_USERID.**", "$ZOS_USERID.@#%", "$ZOS_USERID.@#%.*", "WWW.*", maskWithLength44)
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
@@ -459,8 +457,8 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        deletedMasks.forEach { checkItemWasDeletedWSRefreshed(it.uppercase(), projectName, fixtureStack, remoteRobot) }
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+        deletedMasks.forEach { checkItemWasDeletedWSRefreshed(it.uppercase(), fixtureStack, remoteRobot) }
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -484,7 +482,6 @@ class WorkingSetViaSettingsTest {
                 { MockResponse().setBody("{}") }
             )
             createConnection(
-                projectName,
                 fixtureStack,
                 closableFixtureCollector,
                 newConnectionName,
@@ -492,8 +489,8 @@ class WorkingSetViaSettingsTest {
                 remoteRobot,
                 "https://${mockServer.hostName}:$testPort"
             )
-            openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-            ideFrameImpl(projectName, fixtureStack) {
+            openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 explorer {
                     settings(closableFixtureCollector, fixtureStack)
                 }
@@ -521,7 +518,6 @@ class WorkingSetViaSettingsTest {
             openMaskInExplorer(
                 "$ZOS_USERID.*".uppercase(),
                 "Invalid URL port: \"${testPort}1\"",
-                projectName,
                 fixtureStack,
                 remoteRobot
             )
@@ -546,7 +542,6 @@ class WorkingSetViaSettingsTest {
                 { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
             )
             createConnection(
-                projectName,
                 fixtureStack,
                 closableFixtureCollector,
                 newConnectionName,
@@ -560,7 +555,7 @@ class WorkingSetViaSettingsTest {
                 { it?.requestLine?.contains("zosmf/restfiles") ?: false },
                 { MockResponse().setBody("{}") }
             )
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 explorer {
                     settings(closableFixtureCollector, fixtureStack)
                 }
@@ -579,8 +574,8 @@ class WorkingSetViaSettingsTest {
                 }
                 closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
             }
-            checkItemWasDeletedWSRefreshed("Invalid URL port: \"104431\"", projectName, fixtureStack, remoteRobot)
-            openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
+            checkItemWasDeletedWSRefreshed("Invalid URL port: \"104431\"", fixtureStack, remoteRobot)
+            openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
         }
 
     /**
@@ -592,8 +587,8 @@ class WorkingSetViaSettingsTest {
         val newWorkingSetName = "new ws name"
         val oldWorkingSetName = "WS1"
         val alreadyExistsWorkingSetName = "WS2"
-        openOrCloseWorkingSetInExplorer(oldWorkingSetName, projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        openOrCloseWorkingSetInExplorer(oldWorkingSetName, fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
@@ -619,8 +614,8 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        checkItemWasDeletedWSRefreshed(oldWorkingSetName, projectName, fixtureStack, remoteRobot)
-        openOrCloseWorkingSetInExplorer(newWorkingSetName, projectName, fixtureStack, remoteRobot)
+        checkItemWasDeletedWSRefreshed(oldWorkingSetName, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(newWorkingSetName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -630,7 +625,7 @@ class WorkingSetViaSettingsTest {
     @Order(14)
     fun testDeleteWorkingSetViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName = "WS2"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }
@@ -643,7 +638,7 @@ class WorkingSetViaSettingsTest {
             }
             closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
         }
-        checkItemWasDeletedWSRefreshed(wsName, projectName, fixtureStack, remoteRobot)
+        checkItemWasDeletedWSRefreshed(wsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -652,7 +647,7 @@ class WorkingSetViaSettingsTest {
     @Test
     @Order(15)
     fun testDeleteAllWorkingSetsViaSettings(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 settings(closableFixtureCollector, fixtureStack)
             }

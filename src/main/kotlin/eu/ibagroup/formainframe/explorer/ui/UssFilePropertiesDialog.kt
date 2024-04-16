@@ -18,7 +18,6 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import javax.swing.JComponent
@@ -71,7 +70,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         textField()
           .text(state.ussAttributes.name)
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Location: ")
@@ -79,7 +78,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         textField()
           .text(state.ussAttributes.parentDirPath)
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Path: ")
@@ -87,7 +86,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         textField()
           .text(state.ussAttributes.path)
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("$fileTypeName size: ")
@@ -95,7 +94,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         textField()
           .text("${state.ussAttributes.length} bytes")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Last modified: ")
@@ -103,14 +102,14 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         textField()
           .text(state.ussAttributes.modificationTime ?: "")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       if (!state.ussAttributes.isDirectory && state.fileIsBeingEditingNow) {
         row {
           label("File encoding: ").widthGroup(sameWidthGroup)
           comboBox = comboBox(getSupportedEncodings())
             .bindItem(state.ussAttributes::charset.toNullableProperty())
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           button("Reset Default Encoding") {
@@ -126,7 +125,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
           textField()
             .text(state.ussAttributes.symlinkTarget ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       }
     }
@@ -138,7 +137,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         textField()
           .text(state.ussAttributes.owner ?: "")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Group: ")
@@ -146,7 +145,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         textField()
           .text(state.ussAttributes.groupId ?: "")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("The numeric group ID (GID): ")
@@ -154,7 +153,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         textField()
           .text(state.ussAttributes.gid?.toString() ?: "")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Owner permissions: ")
@@ -164,7 +163,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
             { state.ussAttributes.fileMode?.owner?.toFileModeValue() },
             { state.ussAttributes.fileMode?.owner = it?.mode ?: 0 }
           )
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Group permissions: ")
@@ -174,7 +173,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
             { state.ussAttributes.fileMode?.group?.toFileModeValue() },
             { state.ussAttributes.fileMode?.group = it?.mode ?: 0 }
           )
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Permissions for all users: ")
@@ -184,7 +183,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
             { state.ussAttributes.fileMode?.all?.toFileModeValue() },
             { state.ussAttributes.fileMode?.all = it?.mode ?: 0 }
           )
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
 

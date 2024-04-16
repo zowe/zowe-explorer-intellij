@@ -10,21 +10,23 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
+import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.LeafState
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
-import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
-import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.Query
+import eu.ibagroup.formainframe.dataops.*
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.locked
 import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.formainframe.utils.toHumanReadableFormat
+import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -46,6 +48,8 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
   private val hasError = AtomicBoolean(false)
 
   private val connectionError = "Error: Check connection"
+  private val refreshLabel = "latest refresh:"
+  private val outOfSync : String = "Out of sync"
 
   @Volatile
   private var needsToShowPlus = true
@@ -126,7 +130,10 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
                 if (needToLoadMore) {
                   fileFetchProvider.loadMode(q, it)
                 } else {
-                  fileFetchProvider.reload(q, it)
+                  fileFetchProvider.apply {
+                    reload(q, it)
+                    applyRefreshCacheDate(q, this@FileFetchNode, LocalDateTime.now())
+                  }
                 }
                 needToLoadMore = false
                 possibleToFetch = true
@@ -162,6 +169,24 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
     } else {
       LeafState.DEFAULT
     }
+  }
+
+  /**
+   * Function gets the last updated date for query from fetchProvider and updates the node presentation accordingly
+   * Important: In current implementation fetchProvider stores the last refresh timestamp for every node,
+   * but presentation is only updated for mask nodes and filter nodes
+   *
+   * @param presentation
+   * @return Void
+   */
+  fun updateRefreshDateAndTime(presentation: PresentationData) {
+    val q = fileFetchProvider.getRealQueryInstance(query) ?: query
+    if (q != null) {
+      val lastKnownRefreshTime = fileFetchProvider.findCacheRefreshDateIfPresent(q)
+      if (lastKnownRefreshTime != null) {
+        presentation.addText(" $refreshLabel ${lastKnownRefreshTime.toHumanReadableFormat()}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
+    } else presentation.addText(" $outOfSync", SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }
 
   /**

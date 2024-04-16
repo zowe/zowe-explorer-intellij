@@ -19,6 +19,7 @@ import com.intellij.remoterobot.data.RemoteComponent
 import com.intellij.remoterobot.fixtures.FixtureName
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import workingset.PROJECT_NAME
 import java.time.Duration
 
 /**
@@ -55,7 +56,7 @@ class IdeFrameImpl(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
  * Finds the Ide Frame with a specific name and modifies the fixtureStack. The frame needs to be called from the
  * RemoteRobot as there is no ContainerFixture containing it.
  */
-fun RemoteRobot.ideFrameImpl(name: String,
+fun RemoteRobot.ideFrameImpl(name: String = PROJECT_NAME,
                              fixtureStack: MutableList<Locator>,
                              function: IdeFrameImpl.() -> Unit) {
     find<IdeFrameImpl>(IdeFrameImpl.xPath(name), Duration.ofSeconds(60)).apply {

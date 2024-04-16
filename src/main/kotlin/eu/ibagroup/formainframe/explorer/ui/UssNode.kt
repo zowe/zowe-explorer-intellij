@@ -10,5 +10,9 @@
 
 package eu.ibagroup.formainframe.explorer.ui
 
-interface UssNode {
-}
+import com.intellij.ide.util.treeView.AbstractTreeNode
+
+/**
+ * interface which represents any USS Node. Extends SortableNode which implements children nodes sorting method
+ */
+interface UssNode : SortableNode
