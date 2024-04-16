@@ -26,6 +26,7 @@ import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
 import eu.ibagroup.formainframe.dataops.log.LogFetcher
 import eu.ibagroup.formainframe.dataops.log.MFLogger
 import eu.ibagroup.formainframe.dataops.log.MFProcessInfo
+import eu.ibagroup.formainframe.dataops.operations.mover.names.CopyPasteNameResolver
 
 interface DataOpsManager : Disposable {
 
@@ -64,6 +65,8 @@ interface DataOpsManager : Disposable {
   fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer?
 
   fun getMFContentAdapter(file: VirtualFile): MFContentAdapter
+
+  fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver
 
   fun isOperationSupported(operation: Operation<*>): Boolean
 

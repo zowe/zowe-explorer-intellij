@@ -32,16 +32,7 @@ import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.DSMaskNode
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
-import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
-import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
-import eu.ibagroup.formainframe.explorer.ui.FilesWorkingSetNode
-import eu.ibagroup.formainframe.explorer.ui.JobNode
-import eu.ibagroup.formainframe.explorer.ui.LibraryNode
-import eu.ibagroup.formainframe.explorer.ui.NodeData
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestAnalyticsServiceImpl
 import eu.ibagroup.formainframe.utils.service
@@ -539,12 +530,18 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
     context("update") {
       val presentationMock = mockk<Presentation>()
       var isPresentationEnabledAndVisible = false
+      var isPresentationEnabled = false
 
       beforeEach {
         every {
           presentationMock.isEnabledAndVisible = any<Boolean>()
         } answers {
           isPresentationEnabledAndVisible = firstArg<Boolean>()
+        }
+        every {
+          presentationMock.isEnabled = any<Boolean>()
+        } answers {
+          isPresentationEnabled = firstArg<Boolean>()
         }
         every { presentationMock.icon = any<Icon>() } just Runs
         every { anActionEventMock.presentation } returns presentationMock
@@ -561,6 +558,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
 
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+        every { nodeMock.unit.connectionConfig } returns mockk()
 
         allocateDsActionInst.update(anActionEventMock)
 
@@ -573,6 +571,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
 
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+        every { nodeMock.unit.connectionConfig } returns mockk()
 
         allocateDsActionInst.update(anActionEventMock)
 
@@ -585,6 +584,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
 
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+        every { nodeMock.unit.connectionConfig } returns mockk()
 
         allocateDsActionInst.update(anActionEventMock)
 
@@ -597,6 +597,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
 
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+        every { nodeMock.unit.connectionConfig } returns mockk()
 
         allocateDsActionInst.update(anActionEventMock)
 
@@ -609,6 +610,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
 
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+        every { nodeMock.unit.connectionConfig } returns mockk()
 
         allocateDsActionInst.update(anActionEventMock)
 
@@ -622,7 +624,10 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
 
         allocateDsActionInst.update(anActionEventMock)
 
-        assertSoftly { isPresentationEnabledAndVisible shouldBe false }
+        assertSoftly {
+          isPresentationEnabledAndVisible shouldBe false
+          isPresentationEnabled shouldBe false
+        }
       }
       should("not show the action on update function is triggered outside the file explorer view") {
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
@@ -630,6 +635,19 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         allocateDsActionInst.update(anActionEventMock)
 
         assertSoftly { isPresentationEnabledAndVisible shouldBe false }
+      }
+      should("not enable the action on update function is triggered without connection config") {
+        val nodeMock = mockk<FilesWorkingSetNode>()
+        val nodeDataMock = NodeData(nodeMock, null, null)
+        val selectedNodesData = listOf(nodeDataMock)
+
+        every { viewMock.mySelectedNodesData } returns selectedNodesData
+        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+        every { nodeMock.unit.connectionConfig } returns null
+
+        allocateDsActionInst.update(anActionEventMock)
+
+        assertSoftly { isPresentationEnabled shouldBe false }
       }
     }
   }

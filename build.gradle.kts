@@ -9,23 +9,34 @@
  */
 
 import kotlinx.kover.api.KoverTaskExtension
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+fun properties(key: String) = providers.gradleProperty(key)
+fun environment(key: String) = providers.environmentVariable(key)
+fun dateValue(pattern: String): String =
+  LocalDate.now(ZoneId.of("Europe/Warsaw")).format(DateTimeFormatter.ofPattern(pattern))
 
 plugins {
-  id("org.jetbrains.intellij") version "1.14.2"
-  kotlin("jvm") version "1.8.10"
+  id("org.jetbrains.intellij") version "1.17.2"
+  id("org.jetbrains.changelog") version "2.2.0"
+  kotlin("jvm") version "1.9.22"
   java
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
+  id("org.owasp.dependencycheck") version "9.1.0"
 }
 
 apply(plugin = "kotlin")
 apply(plugin = "org.jetbrains.intellij")
 
-group = "eu.ibagroup"
-version = "2.0.0-231"
-val remoteRobotVersion = "0.11.21"
+group = properties("pluginGroup").get()
+version = properties("pluginVersion").get()
+val remoteRobotVersion = "0.11.22"
 val okHttp3Version = "4.12.0"
-val kotestVersion = "5.6.2"
+val kotestVersion = "5.8.1"
 
 repositories {
   mavenCentral()
@@ -55,35 +66,57 @@ dependencies {
   implementation("com.squareup.retrofit2:converter-gson:2.9.0")
   implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
   implementation("com.squareup.okhttp3:okhttp:$okHttp3Version")
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.20")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-  implementation("org.jgrapht:jgrapht-core:1.5.1")
-  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.5.0-rc.1")
-  implementation("com.segment.analytics.java:analytics:3.3.1")
+  implementation("org.jgrapht:jgrapht-core:1.5.2")
+  implementation("org.zowe.sdk:zowe-kotlin-sdk:0.4.0")
+  implementation("com.segment.analytics.java:analytics:3.5.0")
   implementation("com.ibm.mq:com.ibm.mq.allclient:9.3.4.1")
-  testImplementation("io.mockk:mockk:1.13.5")
-  testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
   implementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
+  testImplementation("io.mockk:mockk:1.13.9")
   testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
   testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
   testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
   testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
   testImplementation("com.squareup.okhttp3:okhttp-tls:$okHttp3Version")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
-  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.1")
 }
 
 intellij {
-  version.set("2023.1")
+  version.set(properties("platformVersion").get())
   // !Development only!
   // downloadSources.set(true)
   // In Settings | Advanced Settings enable option Download sources in section Build Tools. Gradle.
   // Then invoke Reload All Gradle Projects action from the Gradle tool window.
 }
 
+// Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
+changelog {
+  version.set(properties("pluginVersion").get())
+  header.set(provider { "${version.get()} (${dateValue("yyyy-MM-dd")})" }.get())
+  groups.set(listOf("Breaking changes", "Features", "Bugfixes", "Deprecations", "Security"))
+  keepUnreleasedSection.set(false)
+  itemPrefix.set("*")
+  repositoryUrl.set(properties("pluginRepositoryUrl").get())
+  sectionUrlBuilder.set { repositoryUrl, currentVersion, previousVersion, isUnreleased: Boolean ->
+    repositoryUrl + when {
+      isUnreleased -> when (previousVersion) {
+        null -> "/commits"
+        else -> "/compare/$previousVersion...HEAD"
+      }
+
+      previousVersion == null -> "/commits/$currentVersion"
+      else -> "/compare/$previousVersion...$currentVersion"
+    }
+  }
+}
+
 tasks {
+  wrapper {
+    gradleVersion = properties("gradleVersion").get()
+  }
+
   withType<KotlinCompile> {
     kotlinOptions {
       jvmTarget = JavaVersion.VERSION_17.toString()
@@ -91,29 +124,30 @@ tasks {
     }
   }
 
+  withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  }
+
   patchPluginXml {
-    sinceBuild.set("231.8109")
-    untilBuild.set("233.*")
+    version.set(properties("pluginVersion").get())
+    sinceBuild.set(properties("pluginSinceBuild").get())
+    untilBuild.set(properties("pluginUntilBuild").get())
+
+    val changelog = project.changelog // local variable for configuration cache compatibility
+    // Get the latest available change notes from the changelog file
     changeNotes.set(
-      """
-      <b>New features:</b>
-      <ul>
-        <li>GitHub issue #165: IntelliJ 2023.3 support</li>
-      </ul>
-      <br>
-      <b>Fixed bugs:</b>
-      <ul>
-        <li>Sync action does not work after file download</li>
-        <li>"Skip This Files" doesn't work when uploading local file to PDS</li>
-        <li>"Use new name" doesn't work for copying partitioned dataset to USS folder</li>
-        <li>"Use new name" doesn't work for copying sequential dataset to partitioned dataset</li>
-        <li>"Use new name" doesn't work when uploading local file to PDS</li>
-        <li>Editing two members with the same name does not update the content for one of the members</li>
-        <li>Topics handling</li>
-        <li>Zowe config v2 handling</li>
-        <li>JES Explorer bug when ABEND job is being displayed</li>
-        <li>GitHub issue #167: Zowe explorer config is not converted</li>
-      </ul>"""
+      properties("pluginVersion")
+        .map { pluginVersion ->
+          with(changelog) {
+            renderItem(
+              (getOrNull(pluginVersion) ?: getUnreleased())
+                .withHeader(false)
+                .withEmptySections(false),
+              Changelog.OutputType.HTML,
+            )
+          }
+        }
+        .get()
     )
   }
 
@@ -159,6 +193,39 @@ tasks {
   buildPlugin {
     dependsOn(createOpenApiSourceJar)
     from(createOpenApiSourceJar) { into("lib/src") }
+  }
+
+  signPlugin {
+    certificateChain.set(environment("INTELLIJ_SIGNING_CERTIFICATE_CHAIN").map { it })
+    privateKey.set(environment("INTELLIJ_SIGNING_PRIVATE_KEY").map { it })
+    password.set(environment("INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD").map { it })
+  }
+
+  publishPlugin {
+    dependsOn("patchChangelog")
+    token.set(environment("INTELLIJ_SIGNING_PUBLISH_TOKEN").map { it })
+    // The pluginVersion is based on the SemVer (https://semver.org)
+    // Read more: https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
+    channels.set(
+      properties("pluginVersion")
+        .map {
+          listOf(
+            it.substringAfter('-', "")
+              .substringAfter('-', "")
+              .substringBefore('.')
+              .ifEmpty { "stable" }
+          )
+        }
+        .map { it })
+  }
+
+  downloadRobotServerPlugin {
+    version.set(remoteRobotVersion)
+  }
+
+  runIdeForUiTests {
+    systemProperty("idea.trust.all.projects", "true")
+    systemProperty("ide.show.tips.on.startup.default.value", "false")
   }
 }
 
@@ -248,19 +315,4 @@ val SmokeUiTest = task<Test>("smokeUiTest") {
     // Kover reports will not depend on the results of its execution
     isDisabled.set(true)
   }
-}
-
-tasks {
-  withType<Copy> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-  }
-}
-
-tasks.downloadRobotServerPlugin {
-  version.set(remoteRobotVersion)
-}
-
-tasks.runIdeForUiTests {
-  systemProperty("idea.trust.all.projects", "true")
-  systemProperty("ide.show.tips.on.startup.default.value", "false")
 }

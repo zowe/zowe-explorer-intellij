@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.ws.DSMask
@@ -25,6 +26,10 @@ import eu.ibagroup.formainframe.utils.getSelectedNodesWorkingSets
 
 /** Action to add USS or z/OS mask */
 class AddMaskAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /** Add new mask to the working set, where the action is triggered */
   override fun actionPerformed(e: AnActionEvent) {

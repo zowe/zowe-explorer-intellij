@@ -16,6 +16,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
+import eu.ibagroup.formainframe.dataops.content.synchronizer.removeLastNewLine
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
@@ -73,7 +74,7 @@ class GetJclRecordsOperationRunner: OperationRunner<GetJclRecordsOperation, Byte
       }
       else -> throw Exception("Method with such parameters not found")
     }
-    val body = response.body()
+    val body = response.body()?.removeLastNewLine()
     if (!response.isSuccessful || body == null) {
       throw CallException(
         response,

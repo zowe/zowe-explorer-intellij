@@ -16,6 +16,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.TerminalExecutionConsole
@@ -47,10 +48,9 @@ class TSOConsoleView(
   private var tsoSession: TSOConfigWrapper
 ) : ExecutionConsole, JBPanel<TSOConsoleView>() {
 
-  private lateinit var tsoMessageType: MessageType
-  private lateinit var tsoDataType: MessageData
+  private lateinit var tsoMessageTypeBox: ComboBox<MessageType>
+  private lateinit var tsoDataTypeBox: ComboBox<MessageData>
   private lateinit var cancelCommandButton: JButton
-  private lateinit var reopenSessionButton: JButton
   private val tsoWidthGroup: String = "TSO_WIDTH_GROUP"
 
   private val tsoMessageTypes: List<MessageType> =
@@ -75,14 +75,13 @@ class TSOConsoleView(
    */
   private val tsoPanel by lazy {
     panel {
-//      cellPanel()
       row {
         label("TSO message type").widthGroup(tsoWidthGroup)
         comboBox(
           model = tsoMessageTypeComboBoxModel,
           renderer = SimpleListCellRenderer.create("") { it.type }
         ).also {
-          tsoMessageType = it.component.item
+          tsoMessageTypeBox = it.component
         }
       }.visible(debugMode)
       row {
@@ -91,8 +90,24 @@ class TSOConsoleView(
           model = tsoDataTypeComboBoxModel,
           renderer = SimpleListCellRenderer.create("") { it.data }
         ).also {
-          tsoDataType = it.component.item
+          tsoDataTypeBox = it.component
         }
+      }.visible(debugMode)
+      row {
+        button("Cancel Command (PA1)") {
+          log.info("CANCEL COMMAND (PA1)")
+          val prevTsoMessageType = tsoMessageTypeBox.item
+          val prevTsoDataType = tsoDataTypeBox.item
+          tsoMessageTypeBox.item = MessageType.TSO_RESPONSE
+          tsoDataTypeBox.item = MessageData.DATA_ACTION
+          terminalCommandReceiver.cleanCommand()
+          processHandler.processInput?.write(("\r").toByteArray())
+          tsoMessageTypeBox.item = prevTsoMessageType
+          tsoDataTypeBox.item = prevTsoDataType
+        }.also {
+          cancelCommandButton = it.component
+        }
+          .widthGroup(tsoWidthGroup)
       }.visible(debugMode)
       row {
         button("Reopen Session") {
@@ -102,22 +117,6 @@ class TSOConsoleView(
         }.also {
           reopenSessionButton = it.component
           reopenSessionButton.apply { toolTipText = "The server tries to re-open the current session in case of some troubles (for example console hangs)" }
-        }
-          .widthGroup(tsoWidthGroup)
-      }
-      row {
-        button("Cancel Command (PA1)") {
-          log.info("CANCEL COMMAND (PA1)")
-          val prevTsoMessageType = tsoMessageType
-          val prevTsoDataType = tsoDataType
-          tsoMessageType = MessageType.TSO_RESPONSE
-          tsoDataType = MessageData.DATA_ACTION
-          terminalCommandReceiver.cleanCommand()
-          processHandler.processInput?.write(("\r").toByteArray())
-          tsoMessageType = prevTsoMessageType
-          tsoDataType = prevTsoDataType
-        }.also {
-          cancelCommandButton = it.component
         }
           .widthGroup(tsoWidthGroup)
       }
@@ -140,8 +139,8 @@ class TSOConsoleView(
         this,
         tsoSession,
         enteredCommand.trim(),
-        tsoMessageType,
-        tsoDataType,
+        tsoMessageTypeBox.item,
+        tsoDataTypeBox.item,
         processHandler
       )
       terminalCommandReceiver.waitForCommandInput()

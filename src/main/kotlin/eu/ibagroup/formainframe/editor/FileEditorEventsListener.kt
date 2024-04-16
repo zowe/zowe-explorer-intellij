@@ -90,7 +90,6 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
           if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
             return
           }
-          runWriteActionInEdtAndWait { syncProvider.saveDocument() }
           sendTopic(AutoSyncFileListener.AUTO_SYNC_FILE, project).sync(file)
         }
       }

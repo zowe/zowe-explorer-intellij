@@ -10,21 +10,28 @@
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
+import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
 class SyncAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   /**
    * Get a virtual file on which the event was triggered
    * @param e the event to get the virtual file
@@ -64,7 +71,6 @@ class SyncAction : DumbAwareAction() {
     val vFile = getSupportedVirtualFile(e) ?: return
     val incompatibleEncoding = e.project?.let { !checkEncodingCompatibility(vFile, it) } ?: false
     if (incompatibleEncoding && !showSaveAnywayDialog(vFile.charset)) return
-    val editor = getEditor(e) ?: return
     val syncProvider = DocumentedSyncProvider(vFile, SaveStrategy.default(e.project))
     runBackgroundableTask(
       title = "Synchronizing ${vFile.name}...",
@@ -72,7 +78,7 @@ class SyncAction : DumbAwareAction() {
       cancellable = true
     ) { indicator ->
       runWriteActionInEdtAndWait {
-        FileDocumentManager.getInstance().saveDocument(editor.document)
+        syncProvider.saveDocument()
         service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
       }
     }

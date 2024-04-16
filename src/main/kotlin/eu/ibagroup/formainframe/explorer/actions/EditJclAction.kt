@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -17,7 +18,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.operations.jobs.BasicGetJclRecordsParams
@@ -25,7 +25,6 @@ import eu.ibagroup.formainframe.dataops.operations.jobs.GetJclRecordsOperation
 import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
 import eu.ibagroup.formainframe.explorer.ui.JobNode
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
-import eu.ibagroup.formainframe.utils.changeFileEncodingTo
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -33,6 +32,10 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
  * Action to edit job JCL through the editor in JES explorer
  */
 class EditJclAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun isDumbAware(): Boolean {
     return true
@@ -85,14 +88,12 @@ class EditJclAction : AnAction() {
                     DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(project))
                   if (!wasCreatedBefore) {
                     syncProvider.putInitialContent(jclContentBytes)
-                    changeFileEncodingTo(cachedFile, DEFAULT_TEXT_CHARSET)
                   } else {
                     val currentContent = syncProvider.retrieveCurrentContent()
                     if (!(currentContent contentEquals jclContentBytes)) {
                       syncProvider.loadNewContent(jclContentBytes)
                     }
                   }
-                  syncProvider.saveDocument()
                   it.navigate(true)
                 }
               }

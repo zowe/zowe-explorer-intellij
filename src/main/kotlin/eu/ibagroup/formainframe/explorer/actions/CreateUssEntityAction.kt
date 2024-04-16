@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -30,7 +31,14 @@ import eu.ibagroup.formainframe.dataops.operations.UssAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationParams
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.CreateFileDialog
+import eu.ibagroup.formainframe.explorer.ui.CreateFileDialogState
+import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.UssDirNode
+import eu.ibagroup.formainframe.explorer.ui.UssFileNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.toAllocationParams
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.ChangeMode
@@ -40,6 +48,10 @@ import org.zowe.kotlinsdk.FileType
  * Abstract action for creating Uss Entity (file or directory) through context menu.
  */
 abstract class CreateUssEntityAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Uss file state which contains parameters for creating.
@@ -176,8 +188,12 @@ abstract class CreateUssEntityAction : AnAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val selected = view.mySelectedNodesData
-    e.presentation.isEnabledAndVisible =
-      selected.size == 1 && (selected[0].node is UssDirNode || selected[0].node is UssFileNode)
+    val selectedNodes = view.mySelectedNodesData
+    val node = selectedNodes.getOrNull(0)?.node
+    e.presentation.isEnabledAndVisible = node is UssDirNode || node is UssFileNode
+
+    if (node.castOrNull<ExplorerUnitTreeNodeBase<*, *, *>>()?.unit?.connectionConfig == null) {
+      e.presentation.isEnabled = false
+    }
   }
 }
