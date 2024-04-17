@@ -10,12 +10,14 @@
 
 package org.zowe.explorer.zowe.service
 
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.zowe.explorer.utils.runIfTrue
-import org.zowe.explorer.utils.service
+import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
+import org.zowe.explorer.zowe.showDialogForDeleteZoweConfigIfNeeded
 import org.zowe.explorer.zowe.showNotificationForAddUpdateZoweConfigIfNeeded
 
 /**
@@ -25,7 +27,7 @@ import org.zowe.explorer.zowe.showNotificationForAddUpdateZoweConfigIfNeeded
  * @version 0.5
  * @since 2021-02-12
  */
-class ZoweFileListener: BulkFileListener {
+class ZoweFileListener : BulkFileListener {
 
   /**
    * Updates zowe config by file events.
@@ -33,24 +35,23 @@ class ZoweFileListener: BulkFileListener {
    * @param isBefore - true if event triggered before changes action and false otherwise.
    * @return Nothing.
    */
-  private fun updateZoweConfig(events: MutableList<out VFileEvent>, isBefore: Boolean) {
+  private fun updateZoweConfig(events: MutableList<out VFileEvent>) {
     events.forEach { e ->
       val file = e.file ?: return
-      runIfTrue(file.name == "zowe.config.json") {
+      runIfTrue(file.name == ZOWE_CONFIG_NAME) {
         val projectForFile = ProjectLocator.getInstance().guessProjectForFile(file) ?: return
         if (e is VFileDeleteEvent) {
-          projectForFile.service<ZoweConfigService>().zoweConfig = null
-        } else if(!isBefore) {
+          invokeLater {
+            showDialogForDeleteZoweConfigIfNeeded(projectForFile)
+          }
+        } else {
           showNotificationForAddUpdateZoweConfigIfNeeded(projectForFile)
         }
       }
     }
   }
 
-  override fun before(events: MutableList<out VFileEvent>) {
-    updateZoweConfig(events, true)
-  }
   override fun after(events: MutableList<out VFileEvent>) {
-    updateZoweConfig(events, false)
+    updateZoweConfig(events)
   }
 }

@@ -13,6 +13,7 @@ package org.zowe.explorer.zowe.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 
 
@@ -59,7 +60,7 @@ interface ZoweConfigService {
    *           SYNCHRONIZED if zowe.config.json and connection config are presented and their data are the same.
    *           NOT_EXISTS if zowe.config.json file is not presented in project.
    */
-  fun getZoweConfigState (scanProject: Boolean = true): ZoweConfigState
+  fun getZoweConfigState(scanProject: Boolean = true): ZoweConfigState
 
   /**
    * Adds or updates connection config related to zoweConnection
@@ -67,7 +68,27 @@ interface ZoweConfigService {
    * @param checkConnection - Verify zowe connection by sending info request if true.
    * @return - ConnectionConfig that was added or updated.
    */
-  fun addOrUpdateZoweConfig (scanProject: Boolean = true, checkConnection: Boolean = true): ConnectionConfig?
+  fun addOrUpdateZoweConfig(scanProject: Boolean = true, checkConnection: Boolean = true): ConnectionConfig?
+
+  /**
+   * Deletes connection config related to zoweConnection
+   * @return - Nothing.
+   */
+  fun deleteZoweConfig()
+
+  /**
+   * Creates zowe.schema.json for the currrent project and adds credentials to the secret store
+   * @param state - ConnectionDialogState for new zowe-connection
+   * @return - Nothing.
+   */
+  fun addZoweConfigFile(state: ConnectionDialogState)
+
+  /**
+   * Checks all connections and removes linl to Zowe config file if it exists
+   * renames old connection if it is needed
+   * @return - Nothing.
+   */
+  fun checkAndRemoveOldZoweConnection()
 
   companion object {
     fun getInstance(project: Project): ZoweConfigService = project.getService(ZoweConfigService::class.java)

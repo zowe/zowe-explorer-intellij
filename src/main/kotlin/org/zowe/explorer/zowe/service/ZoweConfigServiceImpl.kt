@@ -15,31 +15,50 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.ReflectionUtil
+import org.apache.commons.io.FileUtils
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.*
+import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
+import org.zowe.explorer.config.connect.ui.zosmf.ZOSMFConnectionConfigurable.Companion.warningMessageForDeleteConfig
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.crudable.find
+import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.runReadActionInEdtAndWait
 import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.utils.sendTopic
+import org.zowe.explorer.utils.toMutableList
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.kotlinsdk.annotations.ZVersion
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
-import java.nio.file.Path
+import java.io.File
+import java.net.URI
+import java.net.URL
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
+import java.nio.file.*
 import java.util.*
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 import java.util.stream.Collectors
+import kotlin.collections.set
+
 
 const val ZOWE_CONFIG_NOTIFICATION_GROUP_ID = "org.zowe.explorerzowe.service.ZoweConfigNotificationGroupId"
 
-val ZOWE_PROJECT_PREFIX = "zowe-"
+const val ZOWE_PROJECT_PREFIX = "zowe-"
 
 /**
  * ZoweConfigService base implementation.
@@ -49,6 +68,23 @@ val ZOWE_PROJECT_PREFIX = "zowe-"
  * @since 2021-02-12
  */
 class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService {
+
+  companion object {
+
+    private fun getResourceUrl(strPath: String): URL? {
+      return ReflectionUtil.getGrandCallerClass()?.classLoader?.getResource(strPath)
+    }
+
+    private fun getResourceContent(strPath: String, cs: Charset): String {
+      val url = getResourceUrl(strPath)
+      val array = url.toString().split("!")
+      val fs: FileSystem = FileSystems.newFileSystem(URI.create(array[0]), HashMap<String, String?>())
+      val content = String(Files.readAllBytes(fs.getPath(array[1])), cs)
+      fs.close()
+      return content
+    }
+
+  }
 
   private val configCrudable = ConfigService.instance.crudable
 
@@ -121,16 +157,16 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   private fun notifyUiOnConnectionFailure(title: String, content: String) {
     NotificationGroupManager.getInstance().getNotificationGroup(EXPLORER_NOTIFICATION_GROUP_ID)
-        .createNotification(title, content, NotificationType.ERROR)
-        .apply {
-          addAction(object : DumbAwareAction("Add Anyway") {
-            override fun actionPerformed(e: AnActionEvent) {
-              addOrUpdateZoweConfig(checkConnection = false)
-              hideBalloon()
-            }
-          })
-          notify(myProject)
-        }
+      .createNotification(title, content, NotificationType.ERROR)
+      .apply {
+        addAction(object : DumbAwareAction("Add Anyway") {
+          override fun actionPerformed(e: AnActionEvent) {
+            addOrUpdateZoweConfig(checkConnection = false)
+            hideBalloon()
+          }
+        })
+        notify(myProject)
+      }
   }
 
   /**
@@ -208,24 +244,124 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   }
 
   /**
+   * @see ZoweConfigService.deleteZoweConfig
+   */
+  override fun deleteZoweConfig() {
+    try {
+      val zoweConnection = findExistingConnection() ?: throw Exception("Cannot get Zowe config")
+
+      val filesWorkingSets = configCrudable.getAll<FilesWorkingSetConfig>().toMutableList()
+      val filesWsUsages = filesWorkingSets.filter { filesWsConfig ->
+        filesWsConfig.connectionConfigUuid == zoweConnection.uuid
+      }
+
+      val jesWorkingSet = configCrudable.getAll<JesWorkingSetConfig>().toMutableList()
+      val jesWsUsages = jesWorkingSet.filter { jesWsConfig ->
+        jesWsConfig.connectionConfigUuid == zoweConnection.uuid
+      }
+
+      if (filesWsUsages.isEmpty() && jesWsUsages.isEmpty()) {
+        CredentialService.instance.clearCredentials(zoweConnection.uuid)
+        configCrudable.delete(zoweConnection)
+        return
+      }
+
+      val ret = warningMessageForDeleteConfig(filesWsUsages, jesWsUsages)
+
+      if (ret == Messages.OK) {
+        CredentialService.instance.clearCredentials(zoweConnection.uuid)
+        configCrudable.delete(zoweConnection)
+      }
+
+    } catch (e: Exception) {
+      notifyError(e)
+    }
+  }
+
+  /**
+   * @see ZoweConfigService.addZoweConfigFile
+   */
+  override fun addZoweConfigFile(state: ConnectionDialogState) {
+    checkAndRemoveOldZoweConnection()
+
+    val schemaFileName = "${myProject.basePath}/zowe.schema.json"
+    val jsonFileName = "${myProject.basePath}/${ZOWE_CONFIG_NAME}"
+    val charset: Charset = StandardCharsets.UTF_8
+
+    val pathSourceSchema = getResourceUrl("files/zowe.schema.json")
+
+    val f: File = File(schemaFileName)
+    if (!f.exists()) {
+      FileUtils.copyURLToFile(pathSourceSchema, File(schemaFileName))
+    }
+
+    val urlRegex =
+      "(https?:\\/\\/)(www\\.)?([-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6})\b?([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*)"
+    val pattern: Pattern = Pattern.compile(urlRegex)
+    val matcher: Matcher = pattern.matcher(state.connectionUrl)
+
+    var host = "localhost"
+    var port = "443"
+    if (matcher.matches()) {
+      host = matcher.group(3)
+      port = matcher.group(4).substring(1)
+    }
+
+    var content = getResourceContent("files/$ZOWE_CONFIG_NAME", charset)
+    content = content.replace("<PORT>".toRegex(), port)
+    content = content.replace("<HOST>".toRegex(), "\"$host\"")
+    content = content.replace("<SSL>".toRegex(), (!state.isAllowSsl).toString())
+    Files.write(Paths.get(jsonFileName), content.toByteArray(charset))
+
+    runWriteAction {
+      val configCredentialsMap = mutableMapOf<String, Any?>()
+      configCredentialsMap["profiles.base.properties.user"] = state.username
+      configCredentialsMap["profiles.base.properties.password"] = state.password
+      ZoweConfig.saveNewSecureProperties(jsonFileName, configCredentialsMap)
+    }
+  }
+
+  override fun checkAndRemoveOldZoweConnection() {
+    val allConnections = configCrudable.getAll<ConnectionConfig>().toList()
+    val allConnectionsNames: MutableList<String> = allConnections.map { it.name }.toMutableList()
+
+    allConnections.filter { it.zoweConfigPath != null }.forEach {
+      var index = 1
+      var newName = it.name
+      while (allConnectionsNames.contains(newName)) {
+        newName = it.name.plus(index.toString())
+        index++
+      }
+      allConnectionsNames.add(newName)
+      it.name = newName
+      it.zoweConfigPath = null
+      configCrudable.update(it)
+    }
+  }
+
+  /**
    * Converts ZoweConfig to ConnectionConfig.
    * @param uuid - uuid returned connection.
    * @return converted ConnectionConfig.
    */
-  fun ZoweConfig.toConnectionConfig(uuid: String, zVersion: ZVersion = ZVersion.ZOS_2_1, owner: String = ""): ConnectionConfig {
+  fun ZoweConfig.toConnectionConfig(
+    uuid: String,
+    zVersion: ZVersion = ZVersion.ZOS_2_1,
+    owner: String = ""
+  ): ConnectionConfig {
     val basePath = if (basePath.last() == '/') basePath.dropLast(1) else basePath
     val domain = if (port == null) host else "${host}:${port}"
     val zoweUrl = "${protocol}://${domain}${basePath}"
     val isAllowSelfSigned = !(rejectUnauthorized ?: false)
 
     return ConnectionConfig(
-        uuid,
-        zoweConnectionName,
-        zoweUrl,
-        isAllowSelfSigned,
-        zVersion,
-        "${myProject.basePath}/${ZOWE_CONFIG_NAME}",
-        owner
+      uuid,
+      zoweConnectionName,
+      zoweUrl,
+      isAllowSelfSigned,
+      zVersion,
+      "${myProject.basePath}/${ZOWE_CONFIG_NAME}",
+      owner
     )
   }
 
@@ -235,7 +371,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @return converted ConnectionConfig.
    */
   fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig =
-      toConnectionConfig(getOrCreateUuid(), zVersion)
+    toConnectionConfig(getOrCreateUuid(), zVersion)
 
 
   /**
@@ -252,15 +388,15 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val zoweConfig = zoweConfig ?: return ZoweConfigState.NOT_EXISTS
     val existingConnection = findExistingConnection() ?: return ZoweConfigState.NEED_TO_ADD
     val newConnection = zoweConfig.toConnectionConfig(
-        existingConnection.uuid, existingConnection.zVersion, existingConnection.owner
+      existingConnection.uuid, existingConnection.zVersion, existingConnection.owner
     )
 
     val zoweUsername = zoweConfig.user ?: return ZoweConfigState.ERROR
     val zowePassword = zoweConfig.password ?: return ZoweConfigState.ERROR
 
     return if (existingConnection == newConnection &&
-        getUsername(newConnection) == zoweUsername &&
-        getPassword(newConnection) == zowePassword
+      getUsername(newConnection) == zoweUsername &&
+      getPassword(newConnection) == zowePassword
     ) {
       ZoweConfigState.SYNCHRONIZED
     } else {
