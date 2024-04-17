@@ -13,12 +13,7 @@ package org.zowe.explorer.ui.build.tso.ui
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toNullableProperty
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.builder.*
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.ConnectionConfig
@@ -68,8 +63,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
           .also {
             connectionBox = it.component
             resizableRow()
-            it.verticalAlign(VerticalAlign.FILL)
-            it.horizontalAlign(HorizontalAlign.FILL)
+            it.align(AlignX.FILL.plus(AlignY.FILL))
           }
       }
       row {
@@ -82,8 +76,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
           }.also {
             logonProcField = it.component
             resizableRow()
-            it.verticalAlign(VerticalAlign.FILL)
-            it.horizontalAlign(HorizontalAlign.FILL)
+            it.align(AlignX.FILL.plus(AlignY.FILL))
           }.validationOnInput { validateForBlank(it) }
       }
       row {
@@ -94,8 +87,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
           .also {
             charsetField = it.component
             resizableRow()
-            it.verticalAlign(VerticalAlign.FILL)
-            it.horizontalAlign(HorizontalAlign.FILL)
+            it.align(AlignX.FILL.plus(AlignY.FILL))
           }.validationOnInput { validateForBlank(it) ?: validateForPositiveInteger(it) }
       }
       row {
@@ -108,8 +100,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
           .also {
             codepageField = it.component
             resizableRow()
-            it.verticalAlign(VerticalAlign.FILL)
-            it.horizontalAlign(HorizontalAlign.FILL)
+            it.align(AlignX.FILL.plus(AlignY.FILL))
           }
       }
       row {
@@ -120,8 +111,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
           .also {
             rowsField = it.component
             resizableRow()
-            it.verticalAlign(VerticalAlign.FILL)
-            it.horizontalAlign(HorizontalAlign.FILL)
+            it.align(AlignX.FILL.plus(AlignY.FILL))
           }.validationOnInput { validateForBlank(it) ?: validateForPositiveInteger(it) }
       }
       row {
@@ -132,8 +122,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
           .also {
             colsField = it.component
             resizableRow()
-            it.verticalAlign(VerticalAlign.FILL)
-            it.horizontalAlign(HorizontalAlign.FILL)
+            it.align(AlignX.FILL.plus(AlignY.FILL))
           }.validationOnInput { validateForBlank(it) ?: validateForPositiveInteger(it) }
       }
       row {
@@ -144,8 +133,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
           .also {
             acctField = it.component
             resizableRow()
-            it.verticalAlign(VerticalAlign.FILL)
-            it.horizontalAlign(HorizontalAlign.FILL)
+            it.align(AlignX.FILL.plus(AlignY.FILL))
           }.validationOnInput { validateForBlank(it) }
       }
       row {
@@ -156,8 +144,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
           .also {
             userGroupField = it.component
             resizableRow()
-            it.verticalAlign(VerticalAlign.FILL)
-            it.horizontalAlign(HorizontalAlign.FILL)
+            it.align(AlignX.FILL.plus(AlignY.FILL))
           }.validationOnInput { validateForBlank(it) }
       }
       row {
@@ -168,8 +155,7 @@ class TSOSessionDialog(project: Project?, override var state: TSOSessionParams) 
           .also {
             regionField = it.component
             resizableRow()
-            it.verticalAlign(VerticalAlign.FILL)
-            it.horizontalAlign(HorizontalAlign.FILL)
+            it.align(AlignX.FILL.plus(AlignY.FILL))
           }.validationOnInput { validateForBlank(it) ?: validateForPositiveInteger(it) }
       }
       row {

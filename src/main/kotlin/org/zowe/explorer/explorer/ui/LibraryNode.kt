@@ -13,6 +13,7 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.config.connect.ConnectionConfig
@@ -20,9 +21,13 @@ import org.zowe.explorer.dataops.BatchedRemoteQuery
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.fetch.LibraryQuery
 import org.zowe.explorer.dataops.getAttributesService
+import org.zowe.explorer.dataops.sort.SortQueryKeys
+import org.zowe.explorer.dataops.sort.typedSortKeys
 import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.utils.clearAndMergeWith
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import icons.ForMainframeIcons
@@ -45,10 +50,12 @@ class LibraryNode(
   project: Project,
   parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: FilesWorkingSet,
-  treeStructure: ExplorerTreeStructureBase
+  treeStructure: ExplorerTreeStructureBase,
+  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(SortQueryKeys.MEMBER_MODIFICATION_DATE, SortQueryKeys.ASCENDING),
+  override val sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 ) : RemoteMFFileFetchNode<ConnectionConfig, MFVirtualFile, LibraryQuery, FilesWorkingSet>(
   library, project, parent, workingSet, treeStructure
-), RefreshableNode {
+), RefreshableNode, SortableNode {
 
   override val query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>?
     get() {
@@ -60,7 +67,7 @@ class LibraryNode(
     }
 
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
-    return map { FileLikeDatasetNode(it, notNullProject, this@LibraryNode, unit, treeStructure) }
+    return sortChildrenNodes(map { FileLikeDatasetNode(it, notNullProject, this@LibraryNode, unit, treeStructure) }, currentSortQueryKeysList)
   }
 
   override val requestClass = LibraryQuery::class.java
@@ -68,7 +75,7 @@ class LibraryNode(
   override fun update(presentation: PresentationData) {
     presentation.setIcon(if (value.isDirectory) ForMainframeIcons.DatasetMask else AllIcons.FileTypes.Any_type)
     updateNodeTitleUsingCutBuffer(value.presentableName, presentation)
-    val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+    val dataOpsManager = service<DataOpsManager>()
     getVolserIfPresent(dataOpsManager, value)
       ?.let { presentation.addText(it, SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES) }
   }
@@ -79,5 +86,53 @@ class LibraryNode(
 
   override fun makeFetchTaskTitle(query: RemoteQuery<ConnectionConfig, LibraryQuery, Unit>): String {
     return "Fetching members for ${query.request.library.name}"
+  }
+
+  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(childrenNodes: List<Node>, sortKeys: List<SortQueryKeys>): List<Node> {
+    val listToReturn : List<Node> = mutableListOf()
+    val foundSortKey = sortKeys.firstOrNull { typedSortKeys.contains(it) }
+    if (foundSortKey != null) {
+      listToReturn.clearAndMergeWith(performMembersSorting(childrenNodes, this@LibraryNode, foundSortKey))
+    } else {
+      listToReturn.clearAndMergeWith(childrenNodes)
+    }
+    return listToReturn
+  }
+
+  /**
+   * Function sorts the children nodes by specified sorting key
+   * @param nodes
+   * @param dataset
+   * @param sortKey
+   * @return sorted nodes by specified key
+   */
+  private fun performMembersSorting(nodes: List<AbstractTreeNode<*>>, dataset: LibraryNode, sortKey: SortQueryKeys) : List<AbstractTreeNode<*>> {
+    val sortedNodesInternal: List<AbstractTreeNode<*>> = if (dataset.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)) {
+      nodes.sortedBy {
+        selector(sortKey).invoke(it)
+      }
+    } else {
+      nodes.sortedByDescending {
+        selector(sortKey).invoke(it)
+      }
+    }
+    return sortedNodesInternal.also { sortedNodes.clearAndMergeWith(it) }
+  }
+
+  /**
+   * Selector which extracts the member info by specified sort key
+   * @param key - sort key
+   * @return String representation of the extracted member info attribute of the virtual file
+   */
+  private fun selector(key: SortQueryKeys) : (AbstractTreeNode<*>) -> String? {
+    return {
+      val memberInfo =
+        (service<DataOpsManager>().tryToGetAttributes((it as FileLikeDatasetNode).virtualFile) as RemoteMemberAttributes).info
+      when (key) {
+        SortQueryKeys.MEMBER_NAME -> memberInfo.name
+        SortQueryKeys.MEMBER_MODIFICATION_DATE -> memberInfo.modificationDate
+        else -> null
+      }
+    }
   }
 }

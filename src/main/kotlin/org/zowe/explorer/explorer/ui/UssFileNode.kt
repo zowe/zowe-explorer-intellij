@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.IconUtil
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.vfs.MFVirtualFile
 
@@ -26,7 +27,9 @@ class UssFileNode(
   project: Project,
   parent: ExplorerTreeNode<ConnectionConfig, *>,
   unit: ExplorerUnit<ConnectionConfig>,
-  treeStructure: ExplorerTreeStructureBase
+  treeStructure: ExplorerTreeStructureBase,
+  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(),
+  override val sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 ) : ExplorerUnitTreeNodeBase<ConnectionConfig, MFVirtualFile, ExplorerUnit<ConnectionConfig>>(
   file, project, parent, unit, treeStructure
 ), UssNode {

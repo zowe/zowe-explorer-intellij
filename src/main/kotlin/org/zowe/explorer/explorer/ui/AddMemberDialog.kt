@@ -12,9 +12,9 @@ package org.zowe.explorer.explorer.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.operations.MemberAllocationParams
 import org.zowe.explorer.utils.validateForBlank
@@ -33,7 +33,7 @@ class AddMemberDialog(project: Project?, override var state: MemberAllocationPar
           .bindText(state::memberName)
           .validationOnApply { validateForBlank(it) ?: validateMemberName(it) }
           .apply { focused() }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
   }

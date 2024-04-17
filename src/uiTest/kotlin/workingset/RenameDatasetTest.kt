@@ -12,15 +12,20 @@ package workingset
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
-import auxiliary.components.actionMenuItem
-import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
-import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.search.locators.byXpath
+import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import workingset.auxiliary.components.elements.ButtonElement
+import workingset.testutils.injectMemberList
+import workingset.testutils.*
+import java.time.Duration
+import java.util.stream.Stream
 
 /**
  * Tests creating, editing and deleting working sets and masks from context menu.
@@ -28,26 +33,36 @@ import org.junit.jupiter.api.extension.ExtendWith
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class RenameDatasetTest {
+class RenameDatasetTest : WorkingSetBase() {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf("Allocate DataSet Dialog", "Allocate Member Dialog")
+    override val connectionName = "con1"
+    override val wsName = "WS name"
 
-    private val projectName = "untitled"
-    private val connectionName = "con1"
-    private val wsName = "WS name"
-    private val errorHeader = "Error in plugin For Mainframe"
     private val errorType = "Unable to rename"
 
     private val pdsName = "$ZOS_USERID.UI.TEST".uppercase()
+    private val pdsMaskName = "$ZOS_USERID.UI.TEST*".uppercase()
     private val memberName = "TESTM"
     private val memberFinalName = "TESTMF"
     private val anotherMemberName = "TESTMA"
 
-    private val dsName = "$ZOS_USERID.UI.TESTD".uppercase()
-    private val dsFinalName = "$ZOS_USERID.UI.TESTDF".uppercase()
+    private val dsName =        "$ZOS_USERID.UI.TESTD".uppercase()
+    private val dsFinalName =   "$ZOS_USERID.UI.TESTDF".uppercase()
     private val anotherDsName = "$ZOS_USERID.UI.TESTA".uppercase()
     private var mapListDatasets = mutableMapOf<String, String>()
+    private val dsFinalNameLong =   "$ZOS_USERID.UI.TESTDF.123456789".uppercase()
+    private val tooLongString45 = "A".repeat(45)
+
+    companion object {
+        @JvmStatic
+        fun valuesProviderMembers(): Stream<Arguments> {
+            return incorrectRenameMember.entries.stream().map { entry ->
+                Arguments.of(entry.key, entry.value)
+            }
+        }
+    }
 
     /**
      * Opens the project and Explorer, clears test environment.
@@ -55,52 +70,36 @@ class RenameDatasetTest {
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         startMockServer()
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        createValidConnectionWithMock(
-            testInfo,
-            connectionName,
-            projectName,
-            fixtureStack,
-            closableFixtureCollector,
-            remoteRobot
-        )
-        createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        createValidConnectionWithMock(testInfo, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+        createWsWithoutMask(wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+        createMask(wsName, pdsMaskName, fixtureStack,closableFixtureCollector, ZOS_MASK, remoteRobot)
 
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_${pdsName}_restfiles",
-            { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${pdsName}") ?: false },
-            { MockResponse().setBody("{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":2,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255}") }
-        )
-        allocatePDSAndCreateMask(
-            wsName,
-            pdsName,
-            projectName,
-            fixtureStack,
-            closableFixtureCollector,
-            remoteRobot,
-            "$ZOS_USERID.UI.TEST*",
-            directory = 2,
-            false
-        )
-        mapListDatasets[pdsName] = listDS(pdsName, "PDS", "PO")
-        allocateDSWithMock(testInfo, dsName, remoteRobot)
-        allocateDSWithMock(testInfo, anotherDsName, remoteRobot)
+        okButton = ButtonElement(OK_TEXT, fixtureStack, remoteRobot)
+    }
+
+    @BeforeEach
+    fun setUp(testInfo: TestInfo, remoteRobot: RemoteRobot){
+        responseDispatcher.injectTestInfoForPdsDataset(testInfo.displayName, DATASET_FOR_RENAME_PROPERTY, pdsName)
+
+        responseDispatcher.injectAllocationResultPo(PO_ORG_FULL, VB_RECORD_FORMAT_SHORT, dsName, PO_ORG_SHORT, 255)
+        responseDispatcher.injectAllocationResultPo(PO_ORG_FULL, VB_RECORD_FORMAT_SHORT, anotherDsName, PO_ORG_SHORT, 255)
+
+        mapListDatasets[dsName] = listDS(dsName, PDS_TYPE, PO_ORG_SHORT)
+        mapListDatasets[anotherDsName] = listDS(anotherDsName, PDS_TYPE, PO_ORG_SHORT)
+        mapListDatasets[pdsName] = listDS(pdsName, PDS_TYPE, PO_ORG_SHORT)
+
         openWSAndListDatasets(testInfo, remoteRobot)
-        allocateMemberWithMock(testInfo, pdsName, memberName, remoteRobot)
-        allocateMemberWithMock(testInfo, pdsName, anotherMemberName, remoteRobot)
     }
 
     /**
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        deleteDatasetsWithMock(testInfo, remoteRobot)
+    fun tearDownAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         mockServer.shutdown()
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
-            close()
-        }
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        return closeIntelligentProject(fixtureStack, remoteRobot)
     }
 
     /**
@@ -108,6 +107,8 @@ class RenameDatasetTest {
      */
     @AfterEach
     fun tearDown(remoteRobot: RemoteRobot) {
+        compressAndDecompressTree(wsName, fixtureStack, remoteRobot)
+        mapListDatasets.clear()
         responseDispatcher.removeAllEndpoints()
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
@@ -116,402 +117,170 @@ class RenameDatasetTest {
      * Tests renaming member when valid member name is provided.
      */
     @Test
-    @Order(1)
-    fun testRenameMemberWithCorrectNameViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) =
-        with(remoteRobot) {
-            var isFirstRequest = true
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_listmembers1",
-                { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${pdsName}/member") ?: false && isFirstRequest },
-                { MockResponse().setBody("{\"items\":[{\"member\": \"${memberName}\"},{\"member\": \"${anotherMemberName}\"}],\"returnedRows\": 2,\"JSONversion\": 1}") }
-            )
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_listmembers2",
-                { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${pdsName}/member") ?: false && !isFirstRequest },
-                { MockResponse().setBody("{\"items\":[{\"member\": \"${memberFinalName}\"},{\"member\": \"${anotherMemberName}\"}],\"returnedRows\": 2,\"JSONversion\": 1}") }
-            )
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_rename_member",
-                { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${pdsName}(${memberFinalName})") ?: false },
-                { MockResponse().setBody("{\"request\":\"rename\",\"from-dataset\":{\"dsn\":\"${pdsName}\",\"member\":\"${memberName}\"}}") }
-            )
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    fileExplorer.click()
-                    Thread.sleep(3000)
-                    find<ComponentFixture>(viewTree).findText(pdsName).doubleClick()
-                    Thread.sleep(5000)
-                    find<ComponentFixture>(viewTree).findText(memberName).rightClick()
-                }
-                actionMenuItem(remoteRobot, "Rename").click()
-                dialog("Rename Member") {
-                    find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberFinalName
-                    isFirstRequest = false
-                }
-                clickButton("OK")
-            }
-        }
+    fun testRenameMemberWithCorrectNameViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+        var isFirstRequest = true
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restfiles_listmembers1",
+            { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${pdsName}/member") ?: false && isFirstRequest },
+            { MockResponse().setBody("{\"items\":[{\"member\": \"${memberName}\"},{\"member\": \"${anotherMemberName}\"}],\"returnedRows\": 2,\"JSONversion\": 1}") }
+        )
+        responseDispatcher.injectEndpoint(
+            "${testInfo.displayName}_restfiles_listmembers2",
+            { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${pdsName}/member") ?: false && !isFirstRequest },
+            { MockResponse().setBody("{\"items\":[{\"member\": \"${memberFinalName}\"},{\"member\": \"${anotherMemberName}\"}],\"returnedRows\": 2,\"JSONversion\": 1}") }
+        )
+        injectRenameMember(testInfo,pdsName,memberFinalName,memberName)
+        callRenameMemberPoint(fixtureStack,pdsName,memberName, remoteRobot)
+        newMemberNameInput(memberFinalName, fixtureStack, remoteRobot)
+        isFirstRequest = false
+        return clickByText(OK_TEXT, fixtureStack, remoteRobot)
+    }
 
+    // todo: 3 tests with the same scenario, create 1 test with parametrisation
     /**
      * Tests renaming member to name of another member in the same PDS and validates error pop-up notification.
      */
     @Test
-    @Order(2)
-    fun testRenameMemberWithNameOfAnotherMemberViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) =
-        with(remoteRobot) {
-            val errorDetail = "Member already exists"
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_rename_member",
-                { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${pdsName}(${anotherMemberName})") ?: false },
-                {
-                    MockResponse().setBody("{\"request\":\"rename\",\"from-dataset\":{\"dsn\":\"${pdsName}\",\"member\":\"${memberFinalName}\"}}")
-                        .setResponseCode(500)
-                        .setBody("{\"category\":\"4.0\",\"message\":\"Rename member failed\",\"rc\":\"4.0\",\"details\":[\"ISRZ002 $errorDetail - Directory already contains the specified member name.\"],\"reason\":\"0.0\"}")
-                }
-            )
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_listmembers",
-                { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${pdsName}/member") ?: false },
-                { MockResponse().setBody("{\"items\":[{\"member\": \"${memberFinalName}\"},{\"member\": \"${anotherMemberName}\"}],\"returnedRows\": 2,\"JSONversion\": 1}") }
-            )
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    Thread.sleep(5000)
-                    find<ComponentFixture>(viewTree).findText(memberFinalName).rightClick()
-                }
-                actionMenuItem(remoteRobot, "Rename").click()
-                dialog("Rename Member") {
-                    find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = anotherMemberName
-                }
-                clickButton("OK")
-                Thread.sleep(3000)
-                checkErrorNotification(errorHeader, errorType, errorDetail, projectName, fixtureStack, remoteRobot)
-            }
-        }
+    fun testRenameMemberWithNameOfAnotherMemberViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+        injectRenameMemberUnsuccessful(testInfo, pdsName, memberFinalName, anotherMemberName, 500, "4.0", MEMBER_ALREADY_EXISTS)
+        injectMemberList(testInfo, pdsName, listOf(memberFinalName, anotherMemberName))
+        callRenameMemberPoint(fixtureStack,pdsName,memberFinalName, remoteRobot)
+        newMemberNameInput(anotherMemberName, fixtureStack, remoteRobot)
+        clickByText(OK_TEXT, fixtureStack, remoteRobot)
+        checkErrorNotification(RENAME_MEMBER_FAILED, RENAME_MEMBER_FAILED, MEMBER_ALREADY_EXISTS, fixtureStack, remoteRobot)
+        closeNotificztion(fixtureStack, remoteRobot)
+    }
+
+    /**
+     * Tests renaming DataSet to name of another DataSet and validates error pop-up notification.
+     */
+    @Test
+    fun testRenameDatasetWithNameOfAnotherDatasetViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+        injectRenameDatasetUnsuccessful(testInfo, dsFinalName, anotherDsName, 500, RC_8, RC_8_TEXT)
+        injectListAllAllocatedDatasets("$ZOS_USERID.UI.TEST*".uppercase(),mapListDatasets)
+        callRenameDatasetPoint(fixtureStack, dsName, remoteRobot)
+        newDatasetNameInput(anotherDsName,fixtureStack,remoteRobot)
+        clickByText(OK_TEXT,fixtureStack,remoteRobot)
+        checkErrorNotification(DATA_SET_RENAME_FAILED_MSG, DATA_SET_RENAME_FAILED_MSG, DATA_SET_RENAME_FAILED, fixtureStack, remoteRobot)
+        closeNotificztion(fixtureStack, remoteRobot)
+    }
 
     /**
      * Tests renaming member to the same name and validates error pop-up notification.
      */
     @Test
-    @Order(3)
-    fun testRenameMemberWithTheSameNameViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) =
-        with(remoteRobot) {
-            val errorDetail = "Member in use"
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_rename_member",
-                { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${pdsName}(${memberFinalName})") ?: false },
-                {
-                    MockResponse().setBody("{\"request\":\"rename\",\"from-dataset\":{\"dsn\":\"${pdsName}\",\"member\":\"${memberFinalName}\"}}")
-                        .setResponseCode(500)
-                        .setBody("{\"category\":\"4.0\",\"message\":\"Rename member failed\",\"rc\":\"12.0\",\"details\":[\"ISRZ002 $errorDetail - Member is being updated by you or another user. Enter HELP for a list of users using the data set.\"],\"reason\":\"0.0\"}")
-                }
-            )
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_listmembers",
-                { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${pdsName}/member") ?: false },
-                { MockResponse().setBody("{\"items\":[{\"member\": \"${memberFinalName}\"},{\"member\": \"${anotherMemberName}\"}],\"returnedRows\": 2,\"JSONversion\": 1}") }
-            )
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    Thread.sleep(5000)
-                    find<ComponentFixture>(viewTree).findText(memberFinalName).rightClick()
-                }
-                actionMenuItem(remoteRobot, "Rename").click()
-                dialog("Rename Member") {
-                    find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = memberFinalName
-                }
-                clickButton("OK")
-                Thread.sleep(3000)
-                checkErrorNotification(errorHeader, errorType, errorDetail, projectName, fixtureStack, remoteRobot)
-            }
-        }
-
-    /**
-     * Tests renaming member to very long and validates error notification.
-     */
-    @Test
-    @Order(4)
-    fun testRenameMemberWithTooLongNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                Thread.sleep(5000)
-                find<ComponentFixture>(viewTree).findText(memberFinalName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Rename").click()
-            dialog("Rename Member") {
-                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = "123456789"
-            }
-            clickButton("OK")
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                MEMBER_NAME_LENGTH_MESSAGE
-            )
-            Thread.sleep(3000)
-            clickButton("Cancel")
-        }
+    fun testRenameMemberWithTheSameNameViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+        injectRenameMemberUnsuccessful(testInfo, pdsName, memberFinalName, memberFinalName, 500, "12.0", MEMBER_IN_USE)
+        injectMemberList(testInfo, pdsName, listOf(memberFinalName, anotherMemberName))
+        callRenameMemberPoint(fixtureStack,pdsName,memberFinalName, remoteRobot)
+        newMemberNameInput(memberFinalName, fixtureStack, remoteRobot)
+        clickByText(OK_TEXT, fixtureStack, remoteRobot)
+        checkErrorNotification(RENAME_MEMBER_FAILED, RENAME_MEMBER_FAILED, MEMBER_IN_USE, fixtureStack, remoteRobot)
+        closeNotificztion(fixtureStack, remoteRobot)
     }
 
     /**
-     * Tests renaming member to invalid name and validates error notification.
+     * Tests renaming member to the incorrect name and validates error pop-up notification.
      */
-    @Test
-    @Order(5)
-    fun testRenameMemberWithInvalidNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                Thread.sleep(5000)
-                find<ComponentFixture>(viewTree).findText(memberFinalName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Rename").click()
-            dialog("Rename Member") {
-                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = "@*"
-            }
-            clickButton("OK")
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                INVALID_MEMBER_NAME_MESSAGE
-            )
-            Thread.sleep(3000)
-            clickButton("Cancel")
-        }
-    }
+    @ParameterizedTest
+    @MethodSource("valuesProviderMembers")
+    fun testIncorrectRename(invalidName: String, errorMsg: String, testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
+        injectRenameMemberUnsuccessful(testInfo, pdsName, memberFinalName, memberFinalName, 500, "12.0", MEMBER_IN_USE)
+        injectMemberList(testInfo, pdsName, listOf(memberFinalName, anotherMemberName))
+        callRenameMemberPoint(fixtureStack,pdsName,memberFinalName,remoteRobot)
+        newMemberNameInput(invalidName, fixtureStack, remoteRobot)
+        clickByText(OK_TEXT, fixtureStack, remoteRobot)
 
-    /**
-     * Tests renaming member to name with the invalid first symbol and validates error notification.
-     */
-    @Test
-    @Order(6)
-    fun testRenameMemberWithInvalidFirstSymbolViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                Thread.sleep(5000)
-                find<ComponentFixture>(viewTree).findText(memberFinalName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Rename").click()
-            dialog("Rename Member") {
-                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = "**"
-            }
-            clickButton("OK")
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                INVALID_MEMBER_NAME_BEGINNING_MESSAGE
-            )
-            Thread.sleep(3000)
-            clickButton("Cancel")
-        }
-    }
 
-    /**
-     * Tests renaming member to empty name and validates error notification.
-     */
-    @Test
-    @Order(7)
-    fun testRenameMemberWithEmptyNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                Thread.sleep(5000)
-                find<ComponentFixture>(viewTree).findText(memberFinalName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Rename").click()
-            dialog("Rename Member") {
-                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = ""
-            }
-            clickButton("OK")
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                MEMBER_EMPTY_NAME_MESSAGE
-            )
-            Thread.sleep(3000)
-            clickButton("Cancel")
-        }
+        val msgAll = find<HeavyWeightWindowFixture>(messageLoc, Duration.ofSeconds(30)
+        ).findAllText()
+        var msg = ""
+        msgAll.forEach { msg += it.text }
+
+        clickByText(CANCEL_TEXT, fixtureStack, remoteRobot)
+        Assertions.assertEquals(errorMsg, msg)
     }
 
     /**
      * Tests renaming DataSet when valid member name is provided.
      */
     @Test
-    @Order(8)
-    fun testRenameDataSetWithCorrectNameViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) =
-        with(remoteRobot) {
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_listmembers",
-                { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${pdsName}/member") ?: false },
-                { MockResponse().setBody("{\"items\":[{\"member\": \"${memberFinalName}\"},{\"member\": \"${anotherMemberName}\"}],\"returnedRows\": 2,\"JSONversion\": 1}") }
-            )
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_rename_ds",
-                { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${dsFinalName}") ?: false },
-                { MockResponse().setBody("{\"request\":\"rename\",\"from-dataset\":{\"dsn\":\"${dsName}\"}}") }
-            )
-            mapListDatasets.remove(dsName)
-            mapListDatasets[dsFinalName] = listDS(dsFinalName, "PDS", "PO")
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles",
-                {
-                    it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${"$ZOS_USERID.UI.TEST*".uppercase()}")
-                        ?: false
-                },
-                { MockResponse().setBody(buildFinalListDatasetJson()) }
-            )
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    Thread.sleep(3000)
-                    find<ComponentFixture>(viewTree).findText(dsName).rightClick()
-                }
-                actionMenuItem(remoteRobot, "Rename").click()
-                dialog("Rename Dataset") {
-                    find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = dsFinalName
-                }
-                clickButton("OK")
-            }
-        }
-
-    /**
-     * Tests renaming DataSet to name of another DataSet and validates error pop-up notification.
-     */
-    @Test
-    @Order(9)
-    fun testRenameDatasetWithNameOfAnotherDatasetViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) =
-        with(remoteRobot) {
-            val errorDetail = "data set rename failed"
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_rename_ds",
-                { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${anotherDsName}") ?: false },
-                {
-                    MockResponse().setBody("{\"request\":\"rename\",\"from-dataset\":{\"dsn\":\"${dsFinalName}\"}}")
-                        .setResponseCode(500)
-                        .setBody("{\"category\":\"1.0\",\"message\":\"$errorDetail\",\"rc\":\"8.0\",\"details\":[\"EDC5051I An error occurred when renaming a file.\"],\"reason\":\"6.0\"}")
-                }
-            )
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_list_ds",
-                {
-                    it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${"$ZOS_USERID.UI.TEST*".uppercase()}")
-                        ?: false
-                },
-                { MockResponse().setBody(buildFinalListDatasetJson()) }
-            )
-            ideFrameImpl(projectName, fixtureStack) {
-                explorer {
-                    Thread.sleep(5000)
-                    find<ComponentFixture>(viewTree).findText(dsFinalName).rightClick()
-                }
-                actionMenuItem(remoteRobot, "Rename").click()
-                dialog("Rename Dataset") {
-                    find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = anotherDsName
-                }
-                clickButton("OK")
-                Thread.sleep(3000)
-                checkErrorNotification(errorHeader, errorType, errorDetail, projectName, fixtureStack, remoteRobot)
-            }
-        }
+    fun testRenameDataSetWithCorrectNameViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+        injectRenameMember(testInfo, pdsName, memberFinalName, anotherMemberName)
+        injectMemberList(testInfo, pdsName, listOf(memberFinalName, anotherMemberName))
+        injectRenameDataset(testInfo, dsFinalName, dsName)
+        mapListDatasets.remove(dsName)
+        mapListDatasets[dsFinalName] = listDS(dsFinalName, PDS_TYPE, PO_ORG_SHORT)
+        injectListAllAllocatedDatasets("$ZOS_USERID.UI.TEST*".uppercase(),mapListDatasets)
+        callRenameDatasetPoint(fixtureStack, dsName, remoteRobot)
+        newDatasetNameInput(dsFinalName,fixtureStack,remoteRobot)
+        okButton.click()
+    }
 
     /**
      * Tests renaming DataSet to name with invalid section and validates error notification.
      */
     @Test
-    @Order(10)
     fun testRenameDatasetWithInvalidSectionViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                Thread.sleep(5000)
-                find<ComponentFixture>(viewTree).findText(dsFinalName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Rename").click()
-            dialog("Rename Dataset") {
-                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = "$dsFinalName.123456789"
-            }
-            clickButton("OK")
-            var message = ""
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findAllText().forEach {
-                message += it.text
-            }
-            Thread.sleep(3000)
-            clickButton("Cancel")
-            if (!message.contains(DATASET_INVALID_SECTION_MESSAGE)) {
-                throw Exception("Error message is different from expected")
-            }
-        }
+        callRenameDatasetPoint(fixtureStack, anotherDsName, remoteRobot)
+        newDatasetNameInput(dsFinalNameLong,fixtureStack,remoteRobot)
+        clickByText(OK_TEXT,fixtureStack,remoteRobot)
+
+        val msgAll = find<HeavyWeightWindowFixture>(messageLoc, Duration.ofSeconds(30)
+        ).findAllText()
+        var msg = ""
+        msgAll.forEach { msg += it.text }
+
+        clickByText(CANCEL_TEXT, fixtureStack, remoteRobot)
+        Assertions.assertEquals(DATASET_INVALID_SECTION_MESSAGE, msg)
     }
 
     /**
      * Tests renaming DataSet to very long name and validates error notification.
      */
     @Test
-    @Order(11)
     fun testRenameDatasetWithTooLongNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                Thread.sleep(5000)
-                find<ComponentFixture>(viewTree).findText(dsFinalName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Rename").click()
-            dialog("Rename Dataset") {
-                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = "A".repeat(45)
-            }
-            clickButton("OK")
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                DATASET_NAME_LENGTH_MESSAGE
-            )
-            Thread.sleep(3000)
-            clickButton("Cancel")
-        }
+        callRenameDatasetPoint(fixtureStack, anotherDsName, remoteRobot)
+        newDatasetNameInput(tooLongString45,fixtureStack,remoteRobot)
+        clickByText(OK_TEXT,fixtureStack,remoteRobot)
+
+        val msgAll = find<HeavyWeightWindowFixture>(messageLoc, Duration.ofSeconds(30)
+        ).findAllText()
+        var msg = ""
+        msgAll.forEach { msg += it.text }
+
+        clickByText(CANCEL_TEXT, fixtureStack, remoteRobot)
+        Assertions.assertEquals(DATASET_NAME_LENGTH_MESSAGE, msg)
     }
 
     /**
      * Tests renaming DataSet to empty name and validates error notification.
      */
     @Test
-    @Order(12)
     fun testRenameDatasetWithEmptyNameViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
-            explorer {
-                Thread.sleep(5000)
-                find<ComponentFixture>(viewTree).findText(dsFinalName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Rename").click()
-            dialog("Rename Dataset") {
-                find<JTextFieldFixture>(byXpath("//div[@class='JBTextField']")).text = ""
-            }
-            clickButton("OK")
-            Thread.sleep(3000)
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                MEMBER_EMPTY_NAME_MESSAGE
-            )
-            clickButton("Cancel")
-        }
-    }
+        callRenameDatasetPoint(fixtureStack, anotherDsName, remoteRobot)
+        newDatasetNameInput(EMPTY_STRING,fixtureStack,remoteRobot)
+        clickByText(OK_TEXT,fixtureStack,remoteRobot)
 
-    private fun allocateDSWithMock(testInfo: TestInfo, dsName: String, remoteRobot: RemoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_${dsName}_restfiles",
-            { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${dsName}") ?: false },
-            { MockResponse().setBody("{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":1,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255}") }
-        )
-        allocateDataSet(wsName, dsName, projectName, fixtureStack, remoteRobot)
-        mapListDatasets[dsName] = listDS(dsName, "PDS", "PO")
+        val msgAll = find<HeavyWeightWindowFixture>(messageLoc, Duration.ofSeconds(30)
+        ).findAllText()
+        var msg = ""
+        msgAll.forEach { msg += it.text }
+
+        clickByText(CANCEL_TEXT, fixtureStack, remoteRobot)
+        Assertions.assertEquals(MEMBER_EMPTY_NAME_MESSAGE, msg)
     }
 
     private fun openWSAndListDatasets(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         responseDispatcher.injectEndpoint(
             "${testInfo.displayName}_restfiles",
             {
-                it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${"$ZOS_USERID.UI.TEST*".uppercase()}")
+                it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=$pdsMaskName")
                     ?: false
             },
             { MockResponse().setBody(buildFinalListDatasetJson()) }
         )
-        openOrCloseWorkingSetInExplorer(wsName, projectName, fixtureStack, remoteRobot)
-    }
-
-    private fun allocateMemberWithMock(
-        testInfo: TestInfo,
-        dsName: String,
-        memberName: String,
-        remoteRobot: RemoteRobot
-    ) {
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_${memberName}in${dsName}_restfiles",
-            { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${dsName}(${memberName})") ?: false },
-            { MockResponse().setBody("{}") }
-        )
-        allocateMemberForPDS(pdsName, memberName, projectName, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
     }
 
     private fun buildFinalListDatasetJson(): String {
@@ -528,32 +297,5 @@ class RenameDatasetTest {
                     "}"
         }
         return result
-    }
-
-    private fun deleteDatasetsWithMock(testInfo: TestInfo, remoteRobot: RemoteRobot) {
-        val datasetsToBeDeleted = mutableListOf<String>()
-        mapListDatasets.forEach { datasetsToBeDeleted.add(it.key) }
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restfiles_members",
-            { it?.requestLine?.contains("/member") ?: false },
-            { MockResponse().setBody("{\"items\":[],\"returnedRows\":0,\"totalRows\":0,\"moreRows\":null,\"JSONversion\":1}") }
-        )
-        datasetsToBeDeleted.forEach { entry ->
-            mapListDatasets.remove(entry)
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_restfiles_${entry}",
-                {
-                    it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${"$ZOS_USERID.UI.TEST*".uppercase()}")
-                        ?: false
-                },
-                { MockResponse().setBody(buildFinalListDatasetJson()) }
-            )
-            responseDispatcher.injectEndpoint(
-                "${testInfo.displayName}_delete_${entry}",
-                { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/${entry}") ?: false },
-                { MockResponse().setBody("{}") }
-            )
-            deleteDataset(entry, projectName, fixtureStack, remoteRobot)
-        }
     }
 }

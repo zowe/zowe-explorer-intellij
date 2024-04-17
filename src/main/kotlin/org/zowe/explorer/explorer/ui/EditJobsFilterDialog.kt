@@ -13,9 +13,9 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.config.ws.JobFilterStateWithWS
 import org.zowe.explorer.config.ws.JobsFilter
@@ -57,7 +57,7 @@ class EditJobsFilterDialog(
           .validationOnApply {
             validateJobFilter(initJobFilter, it.text, ownerField.text, jobIdField.text, state.ws.masks, it, false)
           }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Owner: ")
@@ -68,7 +68,7 @@ class EditJobsFilterDialog(
           .validationOnApply {
             validateJobFilter(initJobFilter, prefixField.text, it.text, jobIdField.text, state.ws.masks, it, false)
           }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Job ID: ")
@@ -79,7 +79,7 @@ class EditJobsFilterDialog(
           .validationOnApply {
             validateJobFilter(initJobFilter, prefixField.text, ownerField.text, it.text, state.ws.masks, it, true)
           }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
   }

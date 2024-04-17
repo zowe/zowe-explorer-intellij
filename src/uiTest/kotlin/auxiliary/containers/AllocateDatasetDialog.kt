@@ -17,6 +17,7 @@ import com.intellij.remoterobot.data.RemoteComponent
 import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import workingset.*
 import java.time.Duration
 
 /**
@@ -43,18 +44,18 @@ open class AllocateDatasetDialog(
         blockSize: Int,
         averageBlockLength: Int = 0
     ) {
-        findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']"))[0].text = datasetName
-        findAll<ComboBoxFixture>(byXpath("//div[@class='ComboBox']"))[1].selectItem(datasetOrganization)
+        findAll<JTextFieldFixture>(datasetNameInputLoc)[0].text = datasetName
+        findAll<ComboBoxFixture>(datasetOrgDropDownLoc)[1].selectItem(datasetOrganization)
 
-        val datasetTextParams = findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']"))
-        val datasetComboBoxParams = findAll<ComboBoxFixture>(byXpath("//div[@class='ComboBox']"))
+        val datasetTextParams = findAll<JTextFieldFixture>(inputFieldLoc)
+        val datasetComboBoxParams = findAll<ComboBoxFixture>(dropdownsLoc)
 
         datasetComboBoxParams[2].selectItem(allocationUnit)
         datasetTextParams[1].text = primaryAllocation.toString()
         datasetTextParams[2].text = secondaryAllocation.toString()
         datasetComboBoxParams[3].selectItem(recordFormat)
 
-        if (datasetOrganization == "Sequential (PS)") {
+        if (datasetOrganization == SEQUENTIAL_ORG_FULL) {
             datasetTextParams[3].text = recordLength.toString()
             datasetTextParams[4].text = blockSize.toString()
             datasetTextParams[5].text = averageBlockLength.toString()

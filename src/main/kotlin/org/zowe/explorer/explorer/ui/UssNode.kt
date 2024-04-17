@@ -10,5 +10,7 @@
 
 package org.zowe.explorer.explorer.ui
 
-interface UssNode {
-}
+/**
+ * interface which represents any USS Node. Extends SortableNode which implements children nodes sorting method
+ */
+interface UssNode : SortableNode

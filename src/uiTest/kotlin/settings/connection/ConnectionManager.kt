@@ -23,6 +23,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
+import workingset.PROJECT_NAME
 import java.time.Duration
 
 /**
@@ -47,7 +48,7 @@ class ConnectionManager {
   @BeforeAll
   fun setUpAll(remoteRobot: RemoteRobot) {
     startMockServer()
-    setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+    setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
   }
 
   /**
@@ -57,8 +58,8 @@ class ConnectionManager {
   fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
     mockServer.shutdown()
 
-    clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-    ideFrameImpl(projectName, fixtureStack) {
+    clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       close()
     }
   }
@@ -80,7 +81,7 @@ class ConnectionManager {
   fun testAddWrongConnection(remoteRobot: RemoteRobot) = with(remoteRobot) {
     val host = "a.com"
 
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }
@@ -108,7 +109,7 @@ class ConnectionManager {
   @Order(2)
   fun testAddTwoConnectionsWithTheSameName(remoteRobot: RemoteRobot) = with(remoteRobot) {
     val connectionName = "a"
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }
@@ -164,7 +165,6 @@ class ConnectionManager {
       { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
     )
     createConnection(
-      projectName,
       fixtureStack,
       closableFixtureCollector,
       "valid connection1",
@@ -190,7 +190,7 @@ class ConnectionManager {
       { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
       { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
     )
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }
@@ -228,7 +228,7 @@ class ConnectionManager {
       { it?.requestLine?.contains("zosmf/info") ?: false },
       { MockResponse().setResponseCode(401) }
     )
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }
@@ -270,7 +270,7 @@ class ConnectionManager {
       { it?.requestLine?.contains("zosmf/info") ?: false },
       { MockResponse().setBody("Unable to find valid certification path to requested target") }
     )
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }
@@ -318,7 +318,6 @@ class ConnectionManager {
       { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
     )
     createConnection(
-      projectName,
       fixtureStack,
       closableFixtureCollector,
       "A".repeat(200),
@@ -339,7 +338,7 @@ class ConnectionManager {
       { it?.requestLine?.contains("zosmf/info") ?: false },
       { MockResponse().setBody("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443") }
     )
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }
@@ -375,7 +374,7 @@ class ConnectionManager {
   @Order(9)
   fun testEditConnectionFromValidToInvalid(remoteRobot: RemoteRobot) = with(remoteRobot) {
     val testPort = "104431"
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }
@@ -424,7 +423,7 @@ class ConnectionManager {
       { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
       { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
     )
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }
@@ -474,7 +473,7 @@ class ConnectionManager {
       { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
       { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
     )
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }
@@ -564,7 +563,6 @@ class ConnectionManager {
       { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
     )
     createConnection(
-      projectName,
       fixtureStack,
       closableFixtureCollector,
       connectionName,
@@ -583,7 +581,7 @@ class ConnectionManager {
    */
   private fun deleteConnection(connectionName: String, wsName: String, jwsName: String, remoteRobot: RemoteRobot) =
     with(remoteRobot) {
-      ideFrameImpl(projectName, fixtureStack) {
+      ideFrameImpl(PROJECT_NAME, fixtureStack) {
         explorer {
           settings(closableFixtureCollector, fixtureStack)
         }
@@ -631,7 +629,7 @@ class ConnectionManager {
         { it?.requestLine?.contains("/zosmf/restjobs/jobs") ?: false },
         { MockResponse().setBody("[]") }
       )
-      ideFrameImpl(projectName, fixtureStack) {
+      ideFrameImpl(PROJECT_NAME, fixtureStack) {
         explorer {
           settings(closableFixtureCollector, fixtureStack)
         }
@@ -661,7 +659,7 @@ class ConnectionManager {
       { it?.requestLine?.contains("zosmf/restfiles/ds?dslevel=") ?: false },
       { MockResponse().setBody("{}") }
     )
-    ideFrameImpl(projectName, fixtureStack) {
+    ideFrameImpl(PROJECT_NAME, fixtureStack) {
       explorer {
         settings(closableFixtureCollector, fixtureStack)
       }

@@ -11,18 +11,22 @@
 package org.zowe.explorer.dataops.content.synchronizer
 
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.changeEncodingTo
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -51,15 +55,39 @@ class DocumentedSyncProvider(
      * param file - the file to get the name to display
      * param th - the throwable to show the error message
      */
-    val defaultOnThrowableHandler: (VirtualFile, Throwable) -> Unit = { file, th ->
-      Notifications.Bus.notify(
-        Notification(
-          SYNC_NOTIFICATION_GROUP_ID,
-          "Cannot synchronize file \"${file.name}\" with mainframe",
-          th.message ?: "",
-          NotificationType.ERROR
-        )
-      )
+    val defaultOnThrowableHandler: (VirtualFile, Throwable) -> Unit = { _, th ->
+      lateinit var title: String
+      lateinit var details: String
+
+      if (th is CallException) {
+        title = (th.errorParams?.getOrDefault("message", th.headMessage) as String).replaceFirstChar { it.uppercase() }
+        if (title.contains(".")) {
+          title = title.split(".")[0]
+        }
+        details = th.errorParams["details"]?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
+        if (details.contains(":")) {
+          details = details.split(":").last()
+        }
+      } else {
+        title = th.message ?: th.toString()
+        details = "Unknown error"
+      }
+      Notification(
+        SYNC_NOTIFICATION_GROUP_ID,
+        title,
+        details,
+        NotificationType.ERROR
+      ).addAction(object : NotificationAction("More") {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          Messages.showErrorDialog(
+            e.project,
+            th.message ?: th.toString(),
+            title
+          )
+        }
+      }).let {
+        Notifications.Bus.notify(it)
+      }
     }
 
     /** Default sync success handler. Won't do anything after the sync action is completed until redefined */

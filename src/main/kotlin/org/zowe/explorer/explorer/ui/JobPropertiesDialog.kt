@@ -13,9 +13,9 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.DialogState
 import org.zowe.explorer.common.ui.StatefulComponent
@@ -53,7 +53,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.jobId)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Job name: ")
@@ -61,7 +61,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.jobName)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Subsystem: ")
@@ -69,7 +69,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.subSystem ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Owner: ")
@@ -77,7 +77,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.owner)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Status: ")
@@ -85,7 +85,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.status?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Job type: ")
@@ -93,7 +93,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.type.toString())
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Job class: ")
@@ -101,7 +101,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.jobClass ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Return code: ")
@@ -109,7 +109,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.returnedCode ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Job correlator: ")
@@ -117,7 +117,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.jobCorrelator ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       })
 
@@ -130,7 +130,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.phase.toString())
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Phase name: ")
@@ -138,7 +138,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.phaseName)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("URL: ")
@@ -146,7 +146,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.url)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Files URL: ")
@@ -154,7 +154,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.filesUrl)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("System executor: ")
@@ -162,7 +162,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.execSystem ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Reason not running: ")
@@ -170,7 +170,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.reasonNotRunning ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Run info")
@@ -183,7 +183,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.execSubmitted ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Job start time: ")
@@ -191,7 +191,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.execStarted ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Time ended: ")
@@ -199,7 +199,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           textField()
             .text(job.execEnded ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       })
 

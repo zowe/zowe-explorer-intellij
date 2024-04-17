@@ -1,11 +1,23 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright IBA Group 2020
+ */
+
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.runModalTask
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
@@ -13,17 +25,18 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.operations.jobs.BasicPurgeJobParams
 import org.zowe.explorer.dataops.operations.jobs.PurgeJobOperation
-import org.zowe.explorer.explorer.ui.ExplorerTreeNode
-import org.zowe.explorer.explorer.ui.FetchNode
 import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.explorer.ui.JesFilterNode
+import org.zowe.explorer.explorer.ui.JesWsNode
 import org.zowe.explorer.explorer.ui.JobNode
+import org.zowe.explorer.explorer.ui.NodeData
 import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
 import org.zowe.kotlinsdk.ExecData
 import org.zowe.kotlinsdk.JESApi
-import org.zowe.kotlinsdk.Job
+import retrofit2.Response
+import java.util.concurrent.ConcurrentHashMap
 
 /** An action to purge a job */
 class PurgeJobAction : AnAction() {
@@ -45,68 +58,37 @@ class PurgeJobAction : AnAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    var jobStatus: Job? = null
-    var connectionConfig: ConnectionConfig? = null
     if (view is JesExplorerView) {
-      val node = view.mySelectedNodesData.getOrNull(0)?.node
-      if (node is ExplorerTreeNode<*, *>) {
-        val virtualFile = node.virtualFile
-        if (virtualFile != null) {
-          val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
-          val attributes: RemoteJobAttributes =
-            dataOpsManager.tryToGetAttributes(virtualFile)?.clone() as RemoteJobAttributes
-          jobStatus = attributes.jobInfo
-          connectionConfig = attributes.requesters[0].connectionConfig
-        }
-      }
+      val jobNodesToPurge = view.mySelectedNodesData
+      val filtersToNodesMap = selectJobNodesByWSFilters(jobNodesToPurge)
+      runMassivePurgeAndRefreshByFilter(filtersToNodesMap, jobNodesToPurge, e, view)
+
     } else if (view is JobBuildTreeView) {
-      jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()
-      connectionConfig = view.getConnectionConfig()
-    }
-    val dataOpsManager = service<DataOpsManager>()
-    if (jobStatus != null && connectionConfig != null) {
-      runBackgroundableTask(
-        title = "Purging ${jobStatus.jobName}: ${jobStatus.jobId}",
-        project = e.project,
-        cancellable = true
-      ) {
-        runCatching {
-          dataOpsManager.performOperation(
-            operation = PurgeJobOperation(
-              request = BasicPurgeJobParams(jobStatus.jobName, jobStatus.jobId),
-              connectionConfig = connectionConfig
-            ),
-            progressIndicator = it
-          )
-        }.onFailure {
-          if (view is JesExplorerView) {
-            view.explorer.showNotification(
-              "Error purging ${jobStatus.jobName}: ${jobStatus.jobId}",
-              "${it.message}",
-              NotificationType.ERROR,
-              e.project
+      val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()
+      val connectionConfig: ConnectionConfig = view.getConnectionConfig()
+      val dataOpsManager = service<DataOpsManager>()
+      if (jobStatus != null) {
+        runBackgroundableTask(
+          title = "Purging ${jobStatus.jobName}: ${jobStatus.jobId}",
+          project = e.project,
+          cancellable = true
+        ) {
+          runCatching {
+            dataOpsManager.performOperation(
+              operation = PurgeJobOperation(
+                request = BasicPurgeJobParams(jobStatus.jobName, jobStatus.jobId),
+                connectionConfig = connectionConfig
+              ),
+              progressIndicator = it
             )
-          } else if (view is JobBuildTreeView) {
+          }.onFailure {
             view.showNotification(
               "Error purging ${jobStatus.jobName}: ${jobStatus.jobId}",
               "${it.message}",
               e.project,
               NotificationType.ERROR
             )
-          }
-        }.onSuccess {
-          if (view is JesExplorerView) {
-            view.explorer.showNotification(
-              "${jobStatus.jobName}: ${jobStatus.jobId} has been purged",
-              "$it",
-              NotificationType.INFORMATION,
-              e.project
-            )
-            val jobFilterNode = view.mySelectedNodesData.getOrNull(0)?.node?.parent
-            if (jobFilterNode is FetchNode) {
-              waitJobReleasedAndRefresh(jobFilterNode, jobStatus)
-            }
-          } else if (view is JobBuildTreeView) {
+          }.onSuccess {
             view.showNotification(
               "${jobStatus.jobName}: ${jobStatus.jobId} has been purged",
               "$it",
@@ -120,14 +102,18 @@ class PurgeJobAction : AnAction() {
   }
 
   /**
-   * Function which checks if job is already purged from JES2. If not, repeats the scenario, cleans cache otherwise
-   * @param jobParentNode - parent node for particular job
-   * @param jobInfo - job info for particular job
+   * After performing the massive purge of the jobs scope (several filters) z/OSMF returns immediate success in the response,
+   * but actual purge was not performed yet on the mainframe which causes the problems during fetching the new job list during refresh.
+   * The purpose of this function is to perform the refresh on each filter only when actual purge was performed
+   * Note: This function performs refresh only on those filters from which purge action is requested
+   * @param jobsByFilterWaitingPurgeMap - concurrent map of the filter-to-jobs relationship waiting to purge
    * @return Void
    */
-  private fun waitJobReleasedAndRefresh(jobParentNode: ExplorerTreeNode<ConnectionConfig, *>, jobInfo: Job) {
-    if (jobParentNode is JesFilterNode) {
-      val query = jobParentNode.query
+  private fun waitJobsReleasedAndRefresh(jobsByFilterWaitingPurgeMap: ConcurrentHashMap<JesFilterNode, List<NodeData<ConnectionConfig>>>) {
+    val foundJobsWaitingInPurgeQueue: MutableList<JobNode> = mutableListOf()
+    val filtersWithRefreshErrors: MutableMap<JesFilterNode, Response<*>> = mutableMapOf()
+    jobsByFilterWaitingPurgeMap.keys.forEach { filterNode ->
+      val query = filterNode.query
       if (query != null) {
         val response = api<JESApi>(query.connectionConfig).getFilteredJobs(
           basicCredentials = query.connectionConfig.authToken,
@@ -138,11 +124,175 @@ class PurgeJobAction : AnAction() {
         ).execute()
         val result = response.body()
         if (response.isSuccessful && result != null) {
-          val job = result.find { it.jobId == jobInfo.jobId }
-          if (job != null) waitJobReleasedAndRefresh(jobParentNode, jobInfo) else jobParentNode.cleanCache()
+          jobsByFilterWaitingPurgeMap[filterNode]?.forEach { data ->
+            val nodeToFind = data.node as JobNode
+            val jobAttributes = data.attributes as RemoteJobAttributes
+            val jobInfo = jobAttributes.jobInfo
+            val foundJob = result.find { it.jobId == jobInfo.jobId }
+            if (foundJob != null) foundJobsWaitingInPurgeQueue.add(nodeToFind)
+          }
+          if (foundJobsWaitingInPurgeQueue.isNotEmpty()) {
+            foundJobsWaitingInPurgeQueue.clear()
+            val filterRefreshSize = jobsByFilterWaitingPurgeMap[filterNode]!!.size
+            runRefreshByFilter(
+              filterNode,
+              if (filterRefreshSize == 1) (filterRefreshSize.toLong() * 1000) else (filterRefreshSize / 2).toLong() * 1000
+            )
+          } else {
+            filterNode.cleanCache()
+          }
+        } else {
+          filtersWithRefreshErrors[filterNode] = response
         }
       }
     }
+    if (filtersWithRefreshErrors.isNotEmpty()) {
+      var errorFilterNames = ""
+      for (entry in filtersWithRefreshErrors) {
+        errorFilterNames += entry.key.unit.name + "\n"
+      }
+      throw RuntimeException("Refresh error. Failed filters are: $errorFilterNames")
+    }
+  }
+
+  /**
+   * Function triggers refresh by filter
+   * @param filter - jes filter
+   * @param timeWait - time to wait before refresh
+   */
+  private fun runRefreshByFilter(filter: JesFilterNode, timeWait: Long) {
+    runInEdt {
+      Thread.sleep(timeWait)
+      filter.cleanCache()
+    }
+  }
+
+  /**
+   * Function needs to determine when to show "purge job/jobs" action. Currently, purge is only possible within 1 Working Set
+   * @param jobs - the list of selected job nodes in JES view
+   * @return true if jobs were selected within 1 WS, false otherwise
+   */
+  private fun isSelectedJobNodesFromSameWS(jobs: List<NodeData<ConnectionConfig>>): Boolean {
+    val firstJob = jobs[0].node as JobNode
+    val firstConnection = firstJob.query?.connectionConfig
+
+    // Could be different connections
+    val diffConnectionJobNode = jobs.filter {
+      (it.node is JobNode && it.node.unit.connectionConfig != firstConnection)
+    }
+    if (diffConnectionJobNode.isNotEmpty()) return false
+
+    // Could be the same connections but different Working Sets
+    val firstJobWS = if (firstJob.parent is JesFilterNode) firstJob.parent.parent as? JesWsNode else null
+    if (firstJobWS != null) {
+      val diffWS = jobs.filter {
+        val jobWS = it.node.parent?.parent as JesWsNode
+        firstJobWS.unit.name != jobWS.unit.name
+      }
+      if (diffWS.isNotEmpty()) return false
+    }
+    return true
+  }
+
+  /**
+   * Function builds the filter-to-jobs dependency and puts it to the concurrent map
+   * @param nodes - list of the selected job nodes in JES view
+   * @return concurrent map of the filter-to-jobs dependency
+   */
+  private fun selectJobNodesByWSFilters(nodes: List<NodeData<ConnectionConfig>>): ConcurrentHashMap<JesFilterNode, List<NodeData<ConnectionConfig>>> {
+    val jobFilters: MutableList<JesFilterNode> = mutableListOf()
+    val filtersToJobNodesMap: ConcurrentHashMap<JesFilterNode, List<NodeData<ConnectionConfig>>> = ConcurrentHashMap()
+    nodes.forEach {
+      val jobNode = it.node as JobNode
+      val filterNode = findFilter(jobNode)
+      if (filterNode != null && !jobFilters.contains(filterNode)) {
+        jobFilters.add(filterNode)
+        filtersToJobNodesMap[filterNode] = findJobsByFilter(filterNode, nodes)
+      }
+    }
+    return filtersToJobNodesMap
+  }
+
+  /**
+   * Function finds the corresponding filter or null if filter was not found
+   * @param node - job node to find its filter
+   * @return the JesFilterNode object corresponding to this job node or null if it was not found
+   */
+  private fun findFilter(node: JobNode): JesFilterNode? {
+    return node.parent as? JesFilterNode
+  }
+
+  /**
+   * Function finds all selected job nodes which correspond to the specified filter
+   * @param filter - filter to find the corresponding job nodes
+   * @param nodes - the list of all selected job nodes in JES view
+   * @return the list of job nodes which correspond to the specified filter
+   */
+  private fun findJobsByFilter(
+    filter: JesFilterNode,
+    nodes: List<NodeData<ConnectionConfig>>
+  ): List<NodeData<ConnectionConfig>> {
+    val jobsByFilter: MutableList<NodeData<ConnectionConfig>> = mutableListOf()
+    nodes.forEach {
+      val jobNode = it.node as JobNode
+      val jobFilter = findFilter(jobNode)
+      if (filter == jobFilter) {
+        jobsByFilter.add(it)
+      }
+    }
+    return jobsByFilter
+  }
+
+  /**
+   * The main function which triggers the jobs purge on the mainframe and refreshes each affected filter in the JES view tree
+   * @param jobsByFilterMap - the concurrent map of the filter-to-jobs dependency
+   * @param nodes - the list of all selected job nodes to purge
+   * @param e - purge action event
+   * @param view - an instance of current JES view
+   */
+  private fun runMassivePurgeAndRefreshByFilter(
+    jobsByFilterMap: ConcurrentHashMap<JesFilterNode, List<NodeData<ConnectionConfig>>>,
+    nodes: List<NodeData<ConnectionConfig>>,
+    e: AnActionEvent,
+    view: JesExplorerView
+  ) {
+    val dataOpsManager = service<DataOpsManager>()
+    nodes.forEach { nodeData ->
+      val jobAttributes = nodeData.attributes as RemoteJobAttributes
+      val jobStatus = jobAttributes.jobInfo
+      val connectionConfig = jobAttributes.requesters[0].connectionConfig
+      runModalTask(
+        title = "Purging ${jobStatus.jobName}: ${jobStatus.jobId}",
+        project = e.project,
+        cancellable = true
+      ) {
+        runCatching {
+          dataOpsManager.performOperation(
+            operation = PurgeJobOperation(
+              request = BasicPurgeJobParams(jobStatus.jobName, jobStatus.jobId),
+              connectionConfig = connectionConfig
+            ),
+            progressIndicator = it
+          )
+        }.onFailure { throwable ->
+          (jobsByFilterMap.values.find { it.contains(nodeData) } as MutableList).remove(nodeData)
+          view.explorer.showNotification(
+            "Error purging ${jobStatus.jobName}: ${jobStatus.jobId}",
+            "${throwable.message}",
+            NotificationType.ERROR,
+            e.project
+          )
+        }.onSuccess {
+          view.explorer.showNotification(
+            "${jobStatus.jobName}: ${jobStatus.jobId} has been purged",
+            "$it",
+            NotificationType.INFORMATION,
+            e.project
+          )
+        }
+      }
+    }
+    waitJobsReleasedAndRefresh(jobsByFilterMap)
   }
 
   /**
@@ -156,9 +306,11 @@ class PurgeJobAction : AnAction() {
     }
     if (view is JesExplorerView) {
       val selected = view.mySelectedNodesData
-      val node = selected.getOrNull(0)?.node
-      e.presentation.isVisible = selected.size == 1
-          && node is JobNode
+      val wrongNode = selected.find { it.node !is JobNode }
+      e.presentation.apply {
+        isEnabledAndVisible = wrongNode == null && isSelectedJobNodesFromSameWS(selected)
+        text = if (isEnabledAndVisible && selected.size > 1) "Purge Jobs" else "Purge Job"
+      }
     } else if (view is JobBuildTreeView) {
       val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()?.status
       if (jobStatus == null) {

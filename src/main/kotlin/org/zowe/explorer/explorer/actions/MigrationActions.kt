@@ -72,6 +72,7 @@ class RecallAction : DumbAwareAction() {
    */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>()
+    val project = e.project
     if (view != null) {
       val triples = view.mySelectedNodesData.mapNotNull { getRequestDataForNode(it.node) }
       val operations: List<RecallOperation> = triples.map {
@@ -89,7 +90,7 @@ class RecallAction : DumbAwareAction() {
             )
           }
         }.onFailure {
-          view.explorer.reportThrowable(it, e.project)
+          view.explorer.reportThrowable(it, project)
         }
       }
       makeUniqueCacheClean(view.mySelectedNodesData.map { it.node })
@@ -130,6 +131,7 @@ class MigrateAction : DumbAwareAction() {
    */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<FileExplorerView>()
+    val project = e.project
     if (view != null) {
       val triples = view.mySelectedNodesData.mapNotNull { getRequestDataForNode(it.node) }
       val operations: List<MigrateOperation> = triples.map {
@@ -147,7 +149,7 @@ class MigrateAction : DumbAwareAction() {
             )
           }
         }.onFailure {
-          view.explorer.reportThrowable(it, e.project)
+          view.explorer.reportThrowable(it, project)
         }
       }
       makeUniqueCacheClean(view.mySelectedNodesData.map { it.node })

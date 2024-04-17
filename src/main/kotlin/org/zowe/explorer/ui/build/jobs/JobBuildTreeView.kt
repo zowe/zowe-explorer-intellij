@@ -41,9 +41,6 @@ import javax.swing.tree.DefaultMutableTreeNode
 val JOBS_LOG_VIEW = DataKey.create<JobBuildTreeView>("jobsLogView")
 const val JOBS_LOG_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.ExplorerNotificationGroup"
 
-const val SUCCESSFUL_JOB_COMPLETION_CODE = 0
-const val SUCCESSFUL_JOB_COMPLETION_CODE_WITH_WARNING = 4
-
 /**
  * Console with BuildTree for display job execution process and results.
  * @param jobLogInfo job process information necessary to get log and status.
@@ -122,22 +119,8 @@ class JobBuildTreeView(
         .getCachedJobStatus()
         ?.returnedCode
         ?.uppercase()
-      var codeWithWarning = false
-      val result = if (rc == null || rc.contains(Regex("ERR|ABEND|CANCEL|FAIL"))) FailureResultImpl()
-      else if (rc.contains("CC")) { // result code can be in format "CC nnnn"
-        val completionCode = rc.split(" ")[1].toInt()
-        when (completionCode) {
-          SUCCESSFUL_JOB_COMPLETION_CODE -> SuccessResultImpl()
-
-          SUCCESSFUL_JOB_COMPLETION_CODE_WITH_WARNING -> {
-            codeWithWarning = true
-            SuccessResultImpl()
-          }
-
-          else -> FailureResultImpl()
-        }
-      } else SuccessResultImpl()
-
+      val result = if (rc == null || rc.contains(Regex("ERR|ABEND|CANCEL"))) FailureResultImpl()
+      else SuccessResultImpl()
       jobLogger.logFetcher.getCachedLog()
         .forEach {
           treeConsoleView.onEvent(buildId, FinishEventImpl(it.key.id, buildId, Date().time, it.key.ddName, result))
@@ -147,8 +130,6 @@ class JobBuildTreeView(
         val buildExecutionNode = (buildNode as DefaultMutableTreeNode).userObject as ExecutionNode
         if (result is FailureResultImpl) {
           buildExecutionNode.setIconProvider { AllIcons.General.BalloonError }
-        } else if (codeWithWarning) {
-          buildExecutionNode.setIconProvider { AllIcons.General.BalloonWarning }
         } else {
           buildExecutionNode.setIconProvider { AllIcons.General.InspectionsOK }
         }

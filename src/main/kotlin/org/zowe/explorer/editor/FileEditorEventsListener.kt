@@ -10,7 +10,6 @@
 
 package org.zowe.explorer.editor
 
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -19,8 +18,14 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.content.synchronizer.*
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.dataops.content.synchronizer.AutoSyncFileListener
+import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
+import org.zowe.explorer.utils.checkEncodingCompatibility
+import org.zowe.explorer.utils.runReadActionInEdtAndWait
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.sendTopic
+import org.zowe.explorer.utils.showSaveAnywayDialog
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /**

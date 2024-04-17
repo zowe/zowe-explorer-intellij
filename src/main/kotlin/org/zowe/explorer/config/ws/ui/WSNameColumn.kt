@@ -61,10 +61,6 @@ class WSNameColumn<WSConfig : WorkingSetConfig>(private val wsProvider: () -> Li
     return false
   }
 
-  override fun getWidth(table: JTable?): Int {
-    return 200
-  }
-
   /**
    * Overloaded setter method. Sets a new name in the working set config.
    * @param item working set config [WorkingSetConfig].

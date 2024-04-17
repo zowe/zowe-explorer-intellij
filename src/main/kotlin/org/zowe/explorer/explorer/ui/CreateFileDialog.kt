@@ -11,10 +11,10 @@
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.openapi.project.Project
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.dataops.operations.UssAllocationParams
 import org.zowe.explorer.utils.validateForBlank
@@ -71,7 +71,7 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
         textField()
           .bindText(state::fileName)
           .validationOnApply { validateForBlank(it) ?: validateUssFileName(it) }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .focused()
       }
       row {

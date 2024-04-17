@@ -11,6 +11,10 @@
 package org.zowe.explorer.dataops
 
 import org.zowe.explorer.config.connect.ConnectionConfigBase
+import org.zowe.explorer.config.ws.JobsFilter
+import org.zowe.explorer.dataops.fetch.UssQuery
+import org.zowe.explorer.dataops.sort.SortQueryKeys
+import org.zowe.explorer.explorer.ui.UssNode
 import org.zowe.explorer.utils.UNIT_CLASS
 
 /**
@@ -18,8 +22,14 @@ import org.zowe.explorer.utils.UNIT_CLASS
  */
 data class UnitRemoteQueryImpl<Connection: ConnectionConfigBase, R>(
   override val request: R,
-  override val connectionConfig: Connection
-) : RemoteQuery<Connection, R, Unit> {
+  override val connectionConfig: Connection,
+) : RemoteQuery<Connection, R, Unit>, SortableQuery {
   override val resultClass: Class<out Unit>
     get() = UNIT_CLASS
+  override val sortKeys: List<SortQueryKeys>
+    get() = when(request) {
+      is UssQuery -> mutableListOf(SortQueryKeys.FILE_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
+      is JobsFilter -> mutableListOf(SortQueryKeys.JOB_CREATION_DATE, SortQueryKeys.ASCENDING)
+      else -> mutableListOf()
+    }
 }

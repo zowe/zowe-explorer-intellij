@@ -445,6 +445,102 @@ Thank you for considering IBA Group for your mainframe needs.
                 class="org.zowe.explorer.explorer.actions.CreateUssDirectoryAction"
                 text="Directory" icon="AllIcons.Nodes.Folder"/>
 
+        <action id="org.zowe.explorer.explorer.actions.sort.uss.ByUssFileName"
+                class="org.zowe.explorer.explorer.actions.sort.uss.UssSortAction"
+                text="File Name"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.uss.ByUssType"
+                class="org.zowe.explorer.explorer.actions.sort.uss.UssSortAction"
+                text="File Type"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.uss.ByModificationDate"
+                class="org.zowe.explorer.explorer.actions.sort.uss.UssSortAction"
+                text="File Modification Date"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.datasets.ByDatasetName"
+                class="org.zowe.explorer.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Dataset Name"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.datasets.ByDatasetType"
+                class="org.zowe.explorer.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Dataset Type"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.datasets.ByDatasetModificationDate"
+                class="org.zowe.explorer.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Dataset Modification Date"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.members.ByMemberName"
+                class="org.zowe.explorer.explorer.actions.sort.members.MembersSortAction"
+                text="Member Name"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.members.ByMemberModificationDate"
+                class="org.zowe.explorer.explorer.actions.sort.members.MembersSortAction"
+                text="Member Modification Date"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobName"
+                class="org.zowe.explorer.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Name"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobCreationDate"
+                class="org.zowe.explorer.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Creation Date"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobCompletionDate"
+                class="org.zowe.explorer.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Completion Date"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobStatus"
+                class="org.zowe.explorer.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Status"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobOwner"
+                class="org.zowe.explorer.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job Owner"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobID"
+                class="org.zowe.explorer.explorer.actions.sort.jobs.JobsSortAction"
+                text="Job ID"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.uss.UssAscendingOrder"
+                class="org.zowe.explorer.explorer.actions.sort.uss.UssSortAction"
+                text="Ascending"
+                icon="AllIcons.Chooser.Bottom"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.uss.UssDescendingOrder"
+                class="org.zowe.explorer.explorer.actions.sort.uss.UssSortAction"
+                text="Descending"
+                icon="AllIcons.Chooser.Top"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.datasets.DatasetAscendingOrder"
+                class="org.zowe.explorer.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Ascending"
+                icon="AllIcons.Chooser.Bottom"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.datasets.DatasetDescendingOrder"
+                class="org.zowe.explorer.explorer.actions.sort.datasets.DatasetsSortAction"
+                text="Descending"
+                icon="AllIcons.Chooser.Top"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.members.MemberAscendingOrder"
+                class="org.zowe.explorer.explorer.actions.sort.members.MembersSortAction"
+                text="Ascending"
+                icon="AllIcons.Chooser.Bottom"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.members.MemberDescendingOrder"
+                class="org.zowe.explorer.explorer.actions.sort.members.MembersSortAction"
+                text="Descending"
+                icon="AllIcons.Chooser.Top"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.jobs.JobsAscendingOrder"
+                class="org.zowe.explorer.explorer.actions.sort.jobs.JobsSortAction"
+                text="Ascending"
+                icon="AllIcons.Chooser.Bottom"/>
+
+        <action id="org.zowe.explorer.explorer.actions.sort.jobs.JobsDescendingOrder"
+                class="org.zowe.explorer.explorer.actions.sort.jobs.JobsSortAction"
+                text="Descending"
+                icon="AllIcons.Chooser.Top"/>
+
         <action id="org.zowe.explorer.explorer.actions.AddMemberAction"
                 class="org.zowe.explorer.explorer.actions.AddMemberAction" text="Member"
                 icon="ForMainframeIcons.MemberIcon"
@@ -587,6 +683,60 @@ Thank you for considering IBA Group for your mainframe needs.
             <reference id="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"/>
         </group>
 
+        <group id="org.zowe.explorer.actions.sort.uss.UssSortActionGroup"
+               description="Sort items"
+               text="Sort"
+               class="org.zowe.explorer.explorer.actions.sort.uss.UssSortActionGroup"
+               popup="true">
+            <reference id="org.zowe.explorer.explorer.actions.sort.uss.ByUssFileName"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.uss.ByUssType"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.uss.ByModificationDate"/>
+            <separator/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.uss.UssAscendingOrder"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.uss.UssDescendingOrder"/>
+        </group>
+
+        <group id="org.zowe.explorer.actions.sort.datasets.DatasetsSortActionGroup"
+               description="Sort items"
+               text="Sort"
+               class="org.zowe.explorer.explorer.actions.sort.datasets.DatasetsSortActionGroup"
+               popup="true">
+            <reference id="org.zowe.explorer.explorer.actions.sort.datasets.ByDatasetName"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.datasets.ByDatasetType"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.datasets.ByDatasetModificationDate"/>
+            <separator/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.datasets.DatasetAscendingOrder"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.datasets.DatasetDescendingOrder"/>
+        </group>
+
+        <group id="org.zowe.explorer.actions.sort.members.MembersSortActionGroup"
+               description="Sort items"
+               text="Sort"
+               class="org.zowe.explorer.explorer.actions.sort.members.MembersSortActionGroup"
+               popup="true">
+            <reference id="org.zowe.explorer.explorer.actions.sort.members.ByMemberName"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.members.ByMemberModificationDate"/>
+            <separator/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.members.MemberAscendingOrder"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.members.MemberDescendingOrder"/>
+        </group>
+
+        <group id="org.zowe.explorer.actions.sort.jobs.JobsSortActionGroup"
+               description="Sort items"
+               text="Sort"
+               class="org.zowe.explorer.explorer.actions.sort.jobs.JobsSortActionGroup"
+               popup="true">
+            <reference id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobName"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobCreationDate"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobCompletionDate"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobStatus"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobOwner"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.jobs.ByJobID"/>
+            <separator/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.jobs.JobsAscendingOrder"/>
+            <reference id="org.zowe.explorer.explorer.actions.sort.jobs.JobsDescendingOrder"/>
+        </group>
+
         <group id="org.zowe.explorer.actions.AddWsOrConnectionGroup"
                icon="AllIcons.General.Add"
                popup="true">
@@ -619,6 +769,10 @@ Thank you for considering IBA Group for your mainframe needs.
             <reference id="$Copy"/>
             <reference id="$Paste"/>
             <separator/>
+            <reference id="org.zowe.explorer.actions.sort.uss.UssSortActionGroup"/>
+            <reference id ="org.zowe.explorer.actions.sort.datasets.DatasetsSortActionGroup"/>
+            <reference id ="org.zowe.explorer.actions.sort.members.MembersSortActionGroup"/>
+            <separator/>
             <reference id="org.zowe.explorer.explorer.actions.MigrateAction"/>
             <reference id="org.zowe.explorer.explorer.actions.RecallAction"/>
             <separator/>
@@ -642,6 +796,8 @@ Thank you for considering IBA Group for your mainframe needs.
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.EditJesWorkingSetAction"/>
             <reference id="org.zowe.explorer.explorer.actions.EditJobsFilterAction"/>
+            <separator/>
+            <reference id="org.zowe.explorer.actions.sort.jobs.JobsSortActionGroup"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.DeleteJesNodeAction"/>
             <reference id="org.zowe.explorer.explorer.actions.PurgeJobAction"/>

@@ -10,11 +10,11 @@
 
 package org.zowe.explorer.ui.build.tso.ui
 
-//import com.intellij.ui.layout.cellPanel
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
@@ -29,7 +29,7 @@ import org.zowe.explorer.common.isDebugModeEnabled
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.ui.build.TerminalCommandReceiver
-import org.zowe.explorer.ui.build.tso.SESSION_COMMAND_ENTERED
+import org.zowe.explorer.ui.build.tso.*
 import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
 import org.zowe.explorer.ui.build.tso.utils.InputRecognizer
 import org.zowe.explorer.utils.log
@@ -51,6 +51,7 @@ class TSOConsoleView(
   private lateinit var tsoMessageTypeBox: ComboBox<MessageType>
   private lateinit var tsoDataTypeBox: ComboBox<MessageData>
   private lateinit var cancelCommandButton: JButton
+  private lateinit var reopenSessionButton: JButton
   private val tsoWidthGroup: String = "TSO_WIDTH_GROUP"
 
   private val tsoMessageTypes: List<MessageType> =
@@ -75,7 +76,6 @@ class TSOConsoleView(
    */
   private val tsoPanel by lazy {
     panel {
-//      cellPanel()
       row {
         label("TSO message type").widthGroup(tsoWidthGroup)
         comboBox(
@@ -95,6 +95,17 @@ class TSOConsoleView(
         }
       }.visible(debugMode)
       row {
+        button("Reopen Session") {
+          runBackgroundableTask("Re-opening TSO session", project) {
+            sendTopic(SESSION_REOPEN_TOPIC).reopen(project, this@TSOConsoleView)
+          }
+        }.also {
+          reopenSessionButton = it.component
+          reopenSessionButton.apply { toolTipText = "The server tries to re-open the current session in case of some troubles (for example console hangs)" }
+        }
+          .widthGroup(tsoWidthGroup)
+      }
+      row {
         button("Cancel Command (PA1)") {
           log.info("CANCEL COMMAND (PA1)")
           val prevTsoMessageType = tsoMessageTypeBox.item
@@ -108,6 +119,7 @@ class TSOConsoleView(
         }.also {
           cancelCommandButton = it.component
         }
+          .widthGroup(tsoWidthGroup)
       }
     }.also {
       it.border = JBEmptyBorder(10, 15, 10, 15)

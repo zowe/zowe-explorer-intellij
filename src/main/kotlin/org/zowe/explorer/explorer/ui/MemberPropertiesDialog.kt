@@ -13,9 +13,9 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.DialogState
 import org.zowe.explorer.common.ui.StatefulComponent
@@ -44,7 +44,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.name)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Version.Modification: ")
@@ -58,7 +58,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
               }
             )
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Create Date: ")
@@ -66,7 +66,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.creationDate ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Modification Date: ")
@@ -74,7 +74,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.modificationDate ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Modification Time: ")
@@ -82,7 +82,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.lastChangeTime ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Userid that Created/Modified: ")
@@ -90,7 +90,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.user ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       }
     )
@@ -104,7 +104,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.currentNumberOfRecords?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Beginning number of records: ")
@@ -112,7 +112,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.beginningNumberOfRecords?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Number of changed records: ")
@@ -120,7 +120,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.numberOfChangedRecords?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           val updatePlace = if ("Y" == member.sclm) {
@@ -146,7 +146,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.authorizationCode ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Current Member is alias of: ")
@@ -154,7 +154,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.aliasOf ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Load module attributes: ")
@@ -162,7 +162,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.loadModuleAttributes ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Member AMODE: ")
@@ -170,7 +170,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.amode ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Member RMODE: ")
@@ -178,7 +178,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.rmode ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Size: ")
@@ -186,7 +186,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.size ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Member TTR: ")
@@ -194,7 +194,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.ttr ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("SSI information for a load module: ")
@@ -202,7 +202,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           textField()
             .text(member.ssi ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       }
     )

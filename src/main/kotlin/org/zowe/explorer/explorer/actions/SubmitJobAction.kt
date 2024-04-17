@@ -47,6 +47,7 @@ class SubmitJobAction : AnAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
+    val project = e.project
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node ?: return
 
@@ -78,9 +79,9 @@ class SubmitJobAction : AnAction() {
             }
           }
         }.onSuccess {
-          view.explorer.showNotification("Job ${it.jobname} has been submitted", "$it", project = e.project)
+          view.explorer.showNotification("Job ${it.jobname} has been submitted", "$it", project = project)
         }.onFailure {
-          view.explorer.reportThrowable(it, e.project)
+          view.explorer.reportThrowable(it, project)
         }
       }
     }

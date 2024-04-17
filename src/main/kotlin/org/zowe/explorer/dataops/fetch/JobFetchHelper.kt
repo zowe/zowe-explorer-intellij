@@ -42,10 +42,7 @@ class JobFetchHelper(private val query: RemoteQuery<ConnectionConfig, JobsFilter
 
   private var exception : Throwable? = null
 
-  private val jobLogFetcher : JobLogFetcher
-    get() {
-      return JobLogFetcher()
-    }
+  private val jobLogFetcher : JobLogFetcher = JobLogFetcher()
 
   private val jobProcessInfo = JobProcessInfo(jobAttributes.jobInfo.jobId, jobAttributes.jobInfo.jobName, query.connectionConfig)
 

@@ -38,7 +38,7 @@ class Credentials {
     if (other == null || javaClass != other.javaClass) return false
     val that = other as Credentials
     if (configUuid != that.configUuid) return false
-    return if (username != that.username) false else password == that.password
+    return username == that.username && password == that.password
   }
 
   override fun hashCode(): Int {
@@ -51,9 +51,9 @@ class Credentials {
 
   override fun toString(): String {
     return "Credentials{" +
-      "connectionConfigUuid='" + configUuid + '\'' +
-      ", username='" + username + '\'' +
-      ", password='" + password + '\'' +
-      '}'
+        "connectionConfigUuid='" + configUuid + '\'' +
+        ", username='" + username + '\'' +
+        ", password='" + password + '\'' +
+        '}'
   }
 }

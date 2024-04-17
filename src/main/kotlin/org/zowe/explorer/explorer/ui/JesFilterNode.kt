@@ -13,13 +13,19 @@ package org.zowe.explorer.explorer.ui
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.toMutableSmartList
+import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JobsFilter
+import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.UnitRemoteQueryImpl
+import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
+import org.zowe.explorer.dataops.sort.SortQueryKeys
+import org.zowe.explorer.dataops.sort.typedSortKeys
 import org.zowe.explorer.explorer.JesWorkingSet
+import org.zowe.explorer.utils.clearAndMergeWith
 import org.zowe.explorer.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
@@ -31,10 +37,12 @@ class JesFilterNode(
   project: Project,
   parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: JesWorkingSet,
-  treeStructure: ExplorerTreeStructureBase
+  treeStructure: ExplorerTreeStructureBase,
+  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(SortQueryKeys.JOB_CREATION_DATE, SortQueryKeys.ASCENDING),
+  override val sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 ) : RemoteMFFileFetchNode<ConnectionConfig, JobsFilter, JobsFilter, JesWorkingSet>(
   jobsFilter, project, parent, workingSet, treeStructure
-), RefreshableNode {
+), SortableNode, RefreshableNode {
 
   override val query: RemoteQuery<ConnectionConfig, JobsFilter, Unit>?
     get() {
@@ -44,18 +52,19 @@ class JesFilterNode(
       } else null
     }
 
-  override fun Collection<MFVirtualFile>.toChildrenNodes(): MutableList<AbstractTreeNode<*>> {
+  override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
     return map {
       JobNode(it, notNullProject, this@JesFilterNode, unit, treeStructure)
-    }.toMutableSmartList()
+    }.let { sortChildrenNodes(it, currentSortQueryKeysList) }
   }
 
   override val requestClass = JobsFilter::class.java
 
 
   override fun update(presentation: PresentationData) {
-    presentation.presentableText = value.toString()
+    presentation.addText(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES)
     presentation.setIcon(jesFilterIcon)
+    updateRefreshDateAndTime(presentation)
   }
 
 
@@ -63,4 +72,54 @@ class JesFilterNode(
     return "Fetching jobs for ${query.request}"
   }
 
+  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(childrenNodes: List<Node>, sortKeys: List<SortQueryKeys>): List<Node> {
+    val listToReturn : List<Node> = mutableListOf()
+    val foundSortKey = sortKeys.firstOrNull { typedSortKeys.contains(it) }
+    if (foundSortKey != null) {
+      listToReturn.clearAndMergeWith(performJobsSorting(childrenNodes, this@JesFilterNode, foundSortKey))
+    } else {
+      listToReturn.clearAndMergeWith(childrenNodes)
+    }
+    return listToReturn
+  }
+
+  /**
+   * Function sorts the children nodes by specified sorting key
+   * @param nodes
+   * @param jesFilter
+   * @param sortKey
+   * @return sorted nodes by specified key
+   */
+  private fun performJobsSorting(nodes: List<AbstractTreeNode<*>>, jesFilter: JesFilterNode, sortKey: SortQueryKeys) : List<AbstractTreeNode<*>> {
+    val sortedNodesInternal: List<AbstractTreeNode<*>> = if (jesFilter.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)) {
+      nodes.sortedBy {
+        selector(sortKey).invoke(it)
+      }
+    } else {
+      nodes.sortedByDescending {
+        selector(sortKey).invoke(it)
+      }
+    }
+    return sortedNodesInternal.also { sortedNodes.clearAndMergeWith(it) }
+  }
+
+  /**
+   * Selector which extracts the job info by specified sort key
+   * @param key - sort key
+   * @return String representation of the extracted job info attribute of the virtual file
+   */
+  private fun selector(key: SortQueryKeys) : (AbstractTreeNode<*>) -> String? {
+    return {
+      val jobInfo = (service<DataOpsManager>().tryToGetAttributes((it as JobNode).value) as RemoteJobAttributes).jobInfo
+      when(key) {
+        SortQueryKeys.JOB_NAME -> jobInfo.jobName
+        SortQueryKeys.JOB_OWNER -> jobInfo.owner
+        SortQueryKeys.JOB_STATUS -> jobInfo.status?.value
+        SortQueryKeys.JOB_ID -> jobInfo.jobId
+        SortQueryKeys.JOB_CREATION_DATE -> jobInfo.execStarted
+        SortQueryKeys.JOB_COMPLETION_DATE -> jobInfo.execEnded
+        else -> null
+      }
+    }
+  }
 }

@@ -29,7 +29,10 @@ import org.zowe.explorer.dataops.attributes.Requester
 import org.zowe.explorer.dataops.attributes.UssRequester
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.DeleteOperation
+import org.zowe.explorer.dataops.operations.ZOSInfoOperation
+import org.zowe.explorer.dataops.operations.ZOSInfoOperationRunner
 import org.zowe.explorer.dataops.operations.mover.CrossSystemMemberOrUssFileOrSequentialToUssDirMover
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.dataops.operations.mover.RemoteToLocalFileMover
@@ -50,6 +53,8 @@ import io.mockk.spyk
 import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.InfoAPI
+import org.zowe.kotlinsdk.InfoResponse
 import org.zowe.kotlinsdk.XIBMDataType
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
@@ -57,6 +62,7 @@ import retrofit2.Response
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import kotlin.reflect.KFunction
 
 inline fun mockkRequesters(
   attributes: MFRemoteFileAttributes<*, *>,
@@ -94,8 +100,72 @@ class OperationsTestSpec : WithApplicationShouldSpec({
     clearAllMocks()
   }
   context("dataops module: operations/ZOSIntoOperationRunner") {
-    context("run") {
-      should("perform Info operation") {}
+    val zosInfoOperationRunner = ZOSInfoOperationRunner()
+
+    val zosmfApi = ApplicationManager.getApplication().service<ZosmfApi>() as TestZosmfApiImpl
+    zosmfApi.testInstance = mockk()
+
+    val progressIndicatorMockk = mockk<ProgressIndicator>()
+    val responseMockk = mockk<Response<InfoResponse>>()
+    every {
+      zosmfApi.testInstance.getApi(InfoAPI::class.java, any())
+        .getSystemInfo()
+        .cancelByIndicator(progressIndicatorMockk)
+        .execute()
+    } returns responseMockk
+
+    val operationMockk = mockk<ZOSInfoOperation>()
+    every { operationMockk.connectionConfig } returns mockk()
+
+    val callExceptionRef: (Response<*>, String) -> CallException = ::CallException
+    beforeEach {
+      mockkStatic(callExceptionRef as KFunction<*>)
+    }
+    afterEach {
+      unmockkAll()
+    }
+
+    // ZOSIntoOperationRunner.run
+    should("perform Info operation with successful response") {
+      val expected = InfoResponse(zosVersion = "2.3", zosmfHostname = "host", zosmfPort = "port")
+
+      every { responseMockk.isSuccessful } returns true
+      every { responseMockk.body() } returns expected
+
+      val actual = zosInfoOperationRunner.run(operationMockk, progressIndicatorMockk)
+
+      assertSoftly { actual shouldBe expected }
+    }
+    should("perform Info operation with unsuccessful response") {
+      val expected = CallException(500, "An internal error has occurred")
+
+      every { responseMockk.isSuccessful } returns false
+      every { CallException(responseMockk, any()) } returns expected
+
+      var actual: Throwable? = null
+      runCatching {
+        zosInfoOperationRunner.run(operationMockk, progressIndicatorMockk)
+      }.onFailure {
+        actual = it
+      }
+
+      assertSoftly { actual shouldBe expected }
+    }
+    should("perform Info operation when response body is null") {
+      val expected = CallException(500, "Cannot parse z/OSMF info request body")
+
+      every { responseMockk.isSuccessful } returns true
+      every { responseMockk.body() } returns null
+      every { CallException(responseMockk, any()) } returns expected
+
+      var actual: Throwable? = null
+      runCatching {
+        zosInfoOperationRunner.run(operationMockk, progressIndicatorMockk)
+      }.onFailure {
+        actual = it
+      }
+
+      assertSoftly { actual shouldBe expected }
     }
   }
   context("dataops module: operations/RenameOperationRunner") {

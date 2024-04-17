@@ -13,9 +13,9 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.DialogState
 import org.zowe.explorer.common.ui.StatefulComponent
@@ -55,7 +55,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.jobId)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Job name: ")
@@ -63,7 +63,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.jobname)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Job correlator: ")
@@ -71,7 +71,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.jobCorrelator ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Class: ")
@@ -79,7 +79,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.fileClass)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("ID: ")
@@ -87,7 +87,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.id.toString())
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("DD name: ")
@@ -95,7 +95,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.ddName)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Step name: ")
@@ -103,7 +103,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.stepName ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Process step: ")
@@ -111,7 +111,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.procStep ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       })
     tabbedPanel.add(
@@ -123,7 +123,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.recfm)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Byte content: ")
@@ -131,7 +131,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.byteCount.toString())
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Record count: ")
@@ -139,7 +139,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.recordCount.toString())
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Record URL: ")
@@ -147,7 +147,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.recordsUrl)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Record length: ")
@@ -155,7 +155,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.recordLength.toString())
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Subsystem: ")
@@ -163,7 +163,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           textField()
             .text(spoolFile.subsystem ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       })
     return tabbedPanel

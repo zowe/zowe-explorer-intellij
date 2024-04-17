@@ -28,6 +28,8 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
+import workingset.EMPTY_DATASET_MESSAGE
+import workingset.PROJECT_NAME
 import java.awt.event.KeyEvent
 import java.time.Duration
 
@@ -53,7 +55,7 @@ class JesWorkingSetViaContextMenuTest {
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) {
         startMockServer()
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
     /**
@@ -62,8 +64,8 @@ class JesWorkingSetViaContextMenuTest {
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
         mockServer.shutdown()
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             close()
         }
     }
@@ -95,7 +97,7 @@ class JesWorkingSetViaContextMenuTest {
                 { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
                 { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
             )
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
                 try {
                     if (dialog("Add JES Working Set Dialog").isShowing) {
@@ -154,7 +156,7 @@ class JesWorkingSetViaContextMenuTest {
     fun testAddJesWorkingSetWithOneValidFilterViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS1"
         val filter = Triple("*", ZOS_USERID, "")
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName, ZOS_USERID, filter)
@@ -182,7 +184,7 @@ class JesWorkingSetViaContextMenuTest {
     @Order(5)
     fun testAddJWSWithInvalidFiltersViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS2"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName)
@@ -228,7 +230,7 @@ class JesWorkingSetViaContextMenuTest {
             { it?.requestLine?.contains("/zosmf/restjobs/jobs") ?: false },
             { MockResponse().setBody("[]") }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName, ZOS_USERID, validJobsFilters)
@@ -237,12 +239,12 @@ class JesWorkingSetViaContextMenuTest {
             }
             closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
         }
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
         validJobsFilters.forEach {
-            openJobFilterInExplorer(it, "", projectName, fixtureStack, remoteRobot)
-            closeFilterInExplorer(it, projectName, fixtureStack, remoteRobot)
+            openJobFilterInExplorer(it, "", fixtureStack, remoteRobot)
+            closeFilterInExplorer(it, fixtureStack, remoteRobot)
         }
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
     }
 
     // TODO: eliminate ZOS_USERID
@@ -266,7 +268,6 @@ class JesWorkingSetViaContextMenuTest {
                 { MockResponse().setBody("[]") }
             )
             createConnection(
-                projectName,
                 fixtureStack,
                 closableFixtureCollector,
                 "invalid connection",
@@ -274,7 +275,7 @@ class JesWorkingSetViaContextMenuTest {
                 remoteRobot,
                 "https://${mockServer.hostName}:$testPort"
             )
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
                 addJesWorkingSetDialog(fixtureStack) {
                     addJesWorkingSet(jwsName, "invalid connection", ZOS_USERID, Triple("*", ZOS_USERID, ""))
@@ -283,14 +284,14 @@ class JesWorkingSetViaContextMenuTest {
                 }
                 closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
             }
-            openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+            openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
             findAll<ComponentFixture>(byXpath("//div[@class='MyComponent'][.//div[@accessiblename='Invalid URL port: \"104431\"' and @class='JEditorPane']]")).forEach {
                 it.click()
                 findAll<ActionButtonFixture>(
                     byXpath("//div[@class='ActionButton' and @myicon= 'close.svg']")
                 ).first().click()
             }
-            openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+            openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
         }
 
     // TODO: eliminate ZOS_USERID
@@ -301,7 +302,7 @@ class JesWorkingSetViaContextMenuTest {
     @Order(8)
     fun testAddJWSWithTheSameFiltersViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS4"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName, ZOS_USERID, Triple("*", ZOS_USERID.lowercase(), ""))
@@ -325,7 +326,7 @@ class JesWorkingSetViaContextMenuTest {
     @Order(9)
     fun testCreateInvalidFiltersViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "first jws"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJobsFilter(jwsName, fixtureStack, closableFixtureCollector)
             createJobsFilterDialog(fixtureStack) {
                 invalidJobsFiltersMap.forEach {
@@ -367,12 +368,12 @@ class JesWorkingSetViaContextMenuTest {
         validJobsFilters.forEach {
             createFilterFromContextMenu(jwsName, it, remoteRobot)
         }
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
         validJobsFilters.forEach {
-            openJobFilterInExplorer(it, "", projectName, fixtureStack, remoteRobot)
-            closeFilterInExplorer(it, projectName, fixtureStack, remoteRobot)
+            openJobFilterInExplorer(it, "", fixtureStack, remoteRobot)
+            closeFilterInExplorer(it, fixtureStack, remoteRobot)
         }
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -382,7 +383,7 @@ class JesWorkingSetViaContextMenuTest {
     @Order(11)
     fun testCreateAlreadyExistsFilterViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "first jws"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJobsFilter(jwsName, fixtureStack, closableFixtureCollector)
             createJobsFilterDialog(fixtureStack) {
                 createJobsFilter(Triple("*", ZOS_USERID, ""))
@@ -413,9 +414,9 @@ class JesWorkingSetViaContextMenuTest {
             { it?.requestLine?.contains("/zosmf/restjobs/jobs") ?: false },
             { MockResponse().setBody("[]") }
         )
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
-        closeFilterInExplorer(Triple("*", ZOS_USERID, ""), projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
+        closeFilterInExplorer(Triple("*", ZOS_USERID, ""), fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             editJWSFromContextMenu(jwsName, fixtureStack, closableFixtureCollector)
             editJesWorkingSetDialog(fixtureStack) {
                 addFilter(ZOS_USERID, Triple("*", "$ZOS_USERID*", ""))
@@ -424,8 +425,8 @@ class JesWorkingSetViaContextMenuTest {
             }
             closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
         }
-        openJobFilterInExplorer(Triple("*", ZOS_USERID, ""), "", projectName, fixtureStack, remoteRobot)
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openJobFilterInExplorer(Triple("*", ZOS_USERID, ""), "", fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -437,8 +438,8 @@ class JesWorkingSetViaContextMenuTest {
         val jwsName = "first jws"
         val jobsFilter =
             Triple("*", ZOS_USERID, "")
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             editJWSFromContextMenu(jwsName, fixtureStack, closableFixtureCollector)
             editJesWorkingSetDialog(fixtureStack) {
                 deleteFilter(jobsFilter)
@@ -447,8 +448,8 @@ class JesWorkingSetViaContextMenuTest {
             }
             closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
         }
-        checkFilterWasDeletedJWSRefreshed(jobsFilter, projectName, fixtureStack, remoteRobot)
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        checkFilterWasDeletedJWSRefreshed(jobsFilter, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -469,8 +470,8 @@ class JesWorkingSetViaContextMenuTest {
             Triple("TEST1", ZOS_USERID, ""),
             Triple("TEST***", "$ZOS_USERID***", "")
         )
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             editJWSFromContextMenu(jwsName, fixtureStack, closableFixtureCollector)
             editJesWorkingSetDialog(fixtureStack) {
                 deleteAllFilters()
@@ -483,8 +484,8 @@ class JesWorkingSetViaContextMenuTest {
             }
             closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
         }
-        deletedFilters.forEach { checkFilterWasDeletedJWSRefreshed(it, projectName, fixtureStack, remoteRobot) }
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        deletedFilters.forEach { checkFilterWasDeletedJWSRefreshed(it, fixtureStack, remoteRobot) }
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -495,8 +496,8 @@ class JesWorkingSetViaContextMenuTest {
     fun testEditJWSChangeConnectionToInvalidViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val newConnectionName = "invalid connection"
         val jwsName = "JWS1"
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             editJWSFromContextMenu(jwsName, fixtureStack, closableFixtureCollector)
             editJesWorkingSetDialog(fixtureStack) {
                 changeConnection(newConnectionName)
@@ -514,7 +515,6 @@ class JesWorkingSetViaContextMenuTest {
         openJobFilterInExplorer(
             Triple("*", ZOS_USERID, ""),
             "Invalid URL port: \"104431\"",
-            projectName,
             fixtureStack,
             remoteRobot
         )
@@ -544,7 +544,6 @@ class JesWorkingSetViaContextMenuTest {
                 { MockResponse().setBody("[]") }
             )
             createConnection(
-                projectName,
                 fixtureStack,
                 closableFixtureCollector,
                 newConnectionName,
@@ -553,7 +552,7 @@ class JesWorkingSetViaContextMenuTest {
                 "https://${mockServer.hostName}:${mockServer.port}"
             )
             val jwsName = "JWS1"
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 editJWSFromContextMenu(jwsName, fixtureStack, closableFixtureCollector)
                 editJesWorkingSetDialog(fixtureStack) {
                     changeConnection(newConnectionName)
@@ -562,8 +561,8 @@ class JesWorkingSetViaContextMenuTest {
                 }
                 closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
             }
-            checkItemWasDeletedWSRefreshed("Invalid URL port: \"104431\"", projectName, fixtureStack, remoteRobot)
-            openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+            checkItemWasDeletedWSRefreshed("Invalid URL port: \"104431\"", fixtureStack, remoteRobot)
+            openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
         }
 
     /**
@@ -575,8 +574,8 @@ class JesWorkingSetViaContextMenuTest {
         val newJesWorkingSetName = "new jws name"
         val oldJesWorkingSetName = "JWS1"
         val alreadyExistsJesWorkingSetName = "JWS2"
-        openOrCloseJesWorkingSetInExplorer(oldJesWorkingSetName, projectName, fixtureStack, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        openOrCloseJesWorkingSetInExplorer(oldJesWorkingSetName, fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             editJWSFromContextMenu(oldJesWorkingSetName, fixtureStack, closableFixtureCollector)
             editJesWorkingSetDialog(fixtureStack) {
                 renameJesWorkingSet(alreadyExistsJesWorkingSetName)
@@ -592,8 +591,8 @@ class JesWorkingSetViaContextMenuTest {
             }
             closableFixtureCollector.closeOnceIfExists(EditJesWorkingSetDialog.name)
         }
-        checkItemWasDeletedWSRefreshed(oldJesWorkingSetName, projectName, fixtureStack, remoteRobot)
-        openOrCloseJesWorkingSetInExplorer(newJesWorkingSetName, projectName, fixtureStack, remoteRobot)
+        checkItemWasDeletedWSRefreshed(oldJesWorkingSetName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(newJesWorkingSetName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -610,11 +609,11 @@ class JesWorkingSetViaContextMenuTest {
             { it?.requestLine?.contains("/zosmf/restjobs/jobs") ?: false },
             { MockResponse().setBody("[]") }
         )
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
         editJobFilter(oldFilter, newFilter, remoteRobot)
-        checkFilterWasDeletedJWSRefreshed(oldFilter, projectName, fixtureStack, remoteRobot)
-        openJobFilterInExplorer(newFilter, "", projectName, fixtureStack, remoteRobot)
-        openOrCloseJesWorkingSetInExplorer(jwsName, projectName, fixtureStack, remoteRobot)
+        checkFilterWasDeletedJWSRefreshed(oldFilter, fixtureStack, remoteRobot)
+        openJobFilterInExplorer(newFilter, "", fixtureStack, remoteRobot)
+        openOrCloseJesWorkingSetInExplorer(jwsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -633,11 +632,11 @@ class JesWorkingSetViaContextMenuTest {
     @Order(20)
     fun testDeleteJWSViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsName = "JWS2"
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             deleteJWSFromContextMenu(jwsName)
             clickButton("Yes")
         }
-        checkItemWasDeletedWSRefreshed(jwsName, projectName, fixtureStack, remoteRobot)
+        checkItemWasDeletedWSRefreshed(jwsName, fixtureStack, remoteRobot)
     }
 
     /**
@@ -647,7 +646,7 @@ class JesWorkingSetViaContextMenuTest {
     @Order(21)
     fun testDeleteAllJWSViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val jwsList = listOf("first jws", "A".repeat(200), "B12#$%^&*", "new jws name", "JWS3")
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 jesExplorer.click()
                 find<ComponentFixture>(viewTree).click()
@@ -674,7 +673,7 @@ class JesWorkingSetViaContextMenuTest {
         remoteRobot: RemoteRobot
     ) = with(remoteRobot) {
         val textToFind = convertJobFilterToString(jobFilter)
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 jesExplorer.click()
                 find<ComponentFixture>(viewTree).findText(jwsName).doubleClick()
@@ -686,7 +685,7 @@ class JesWorkingSetViaContextMenuTest {
             dialog("Deletion Of Jobs Filter") {
                 clickButton("Yes")
             }
-            checkFilterWasDeletedJWSRefreshed(jobFilter, projectName, fixtureStack, remoteRobot)
+            checkFilterWasDeletedJWSRefreshed(jobFilter, fixtureStack, remoteRobot)
             explorer {
                 find<ComponentFixture>(viewTree).findText(jwsName).doubleClick()
             }
@@ -711,7 +710,7 @@ class JesWorkingSetViaContextMenuTest {
         remoteRobot: RemoteRobot
     ) = with(remoteRobot) {
         val textToFind = convertJobFilterToString(oldFilter)
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 jesExplorer.click()
                 find<ComponentFixture>(viewTree).findText(textToFind).rightClick()
@@ -731,7 +730,7 @@ class JesWorkingSetViaContextMenuTest {
      * Creates empty JES working set from context menu.
      */
     private fun createJWS(jwsName: String, isUniqueName: Boolean, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
             addJesWorkingSetDialog(fixtureStack) {
                 addJesWorkingSet(jwsName, connectionName)
@@ -766,7 +765,7 @@ class JesWorkingSetViaContextMenuTest {
         remoteRobot: RemoteRobot
     ) =
         with(remoteRobot) {
-            ideFrameImpl(projectName, fixtureStack) {
+            ideFrameImpl(PROJECT_NAME, fixtureStack) {
                 createJobsFilter(jwsName, fixtureStack, closableFixtureCollector)
                 createJobsFilterDialog(fixtureStack) {
                     createJobsFilter(filter)

@@ -11,6 +11,10 @@
 package org.zowe.explorer.dataops
 
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.ws.DSMask
+import org.zowe.explorer.dataops.fetch.LibraryQuery
+import org.zowe.explorer.dataops.fetch.UssQuery
+import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.utils.UNIT_CLASS
 
 /**
@@ -30,9 +34,16 @@ class BatchedRemoteQuery<R>(
   var alreadyFetched: Int = 0,
   var start: String? = null,
   var fetchNeeded: Boolean = true
-): RemoteQuery<ConnectionConfig, R, Unit> {
+): RemoteQuery<ConnectionConfig, R, Unit>, SortableQuery {
   override val resultClass: Class<out Unit>
     get() = UNIT_CLASS
+
+  override val sortKeys: List<SortQueryKeys>
+    get() = when(request) {
+      is DSMask -> mutableListOf(SortQueryKeys.DATASET_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
+      is LibraryQuery -> mutableListOf(SortQueryKeys.MEMBER_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
+      else -> mutableListOf()
+    }
 
   /**
    * Sets default values for params that identify current state of fetching.

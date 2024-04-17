@@ -18,6 +18,8 @@ import com.intellij.remoterobot.data.RemoteComponent
 import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
+import workingset.dataTabLoc
+import workingset.inputFieldLoc
 import java.time.Duration
 
 /**
@@ -64,22 +66,27 @@ open class MemberPropertiesDialog(
         curRecNum: String,
         begRecNum: String,
         changedRecNum: String): Boolean {
-        var result = true
-        val memberGeneralParams = findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']"))
+
+        val memberGeneralParams = findAll<JTextFieldFixture>(inputFieldLoc)
+
         if(memberGeneralParams[0].text != memName || memberGeneralParams[1].text != version ||
             memberGeneralParams[2].text != createDate || memberGeneralParams[3].text != modDate ||
             memberGeneralParams[4].text != modTime || memberGeneralParams[5].text != userId){
-            result = false
-        }
-        Thread.sleep(1000)
-        find<ComponentFixture>(byXpath("//div[@text='Data']")).click()
-        Thread.sleep(1000)
-        val memberDataParams = findAll<JTextFieldFixture>(byXpath("//div[@class='JBTextField']"))
-        if(memberDataParams[0].text != curRecNum || memberDataParams[1].text != begRecNum || memberDataParams[2].text != changedRecNum){
-            result = false
+            return false
         }
 
-        return result
+        find<ComponentFixture>(dataTabLoc).click()
+
+        val memberDataParams = findAll<JTextFieldFixture>(inputFieldLoc)
+
+        if(memberDataParams[0].text != curRecNum ||
+            memberDataParams[1].text != begRecNum ||
+            memberDataParams[2].text != changedRecNum)
+        {
+            return false
+        }
+
+        return true
     }
 
     /**

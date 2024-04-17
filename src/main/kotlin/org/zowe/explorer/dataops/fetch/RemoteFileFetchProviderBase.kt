@@ -10,20 +10,21 @@
 
 package org.zowe.explorer.dataops.fetch
 
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.rd.util.firstOrNull
 import org.zowe.explorer.config.connect.ConnectionConfigBase
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Query
-import org.zowe.explorer.dataops.RemoteQuery
+import org.zowe.explorer.dataops.*
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.services.ErrorSeparatorService
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.runIfTrue
 import org.zowe.explorer.utils.runWriteActionOnWriteThread
 import org.zowe.explorer.utils.sendTopic
+import java.time.LocalDateTime
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.set
 import kotlin.concurrent.withLock
@@ -44,7 +45,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
 
   private val cache = mutableMapOf<RemoteQuery<Connection, Request, Unit>, Collection<File>>()
   private val cacheState = mutableMapOf<RemoteQuery<Connection, Request, Unit>, CacheState>()
-  protected var errorMessages = mutableMapOf<RemoteQuery<Connection, Request, Unit>, String>()
+  private val refreshCacheState = mutableMapOf<Pair<AbstractTreeNode<*>, RemoteQuery<Connection, Request, Unit>>, LocalDateTime>()
+  private var errorMessages = mutableMapOf<RemoteQuery<Connection, Request, Unit>, String>()
 
   /**
    * Returns successfully cached files.
@@ -163,7 +165,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
     progressIndicator: ProgressIndicator
   ) {
     runCatching {
-      val files = getFetchedFiles(query, progressIndicator)
+
+      val files: List<File> = getFetchedFiles(query, progressIndicator)
 
       // Cleans up attributes of invalid files
       cache[query]
@@ -208,6 +211,13 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
       .onFailure { publishFetchCancelledOrFailed(query, it) }
   }
 
+  override fun applyRefreshCacheDate(query: RemoteQuery<Connection, Request, Unit>, node: AbstractTreeNode<*>, lastRefresh: LocalDateTime) {
+    lock.withLock { refreshCacheState.computeIfAbsent(Pair(node, query)) { _ -> lastRefresh } }
+  }
+  override fun findCacheRefreshDateIfPresent(query: RemoteQuery<Connection, Request, Unit>): LocalDateTime? {
+    return refreshCacheState.filter { it.key.second == query }.firstOrNull()?.value
+  }
+
   /**
    * Clears the cache with sending the cache change topic.
    * @param query query that identifies the cache.
@@ -231,6 +241,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
   private fun cleanCacheInternal(query: RemoteQuery<Connection, Request, Unit>, sendTopic: Boolean) {
     cacheState.remove(query)
     if (sendTopic) {
+      lock.withLock { refreshCacheState.keys.removeIf { it.second == query } }
       sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onCacheCleaned(query)
     }
   }

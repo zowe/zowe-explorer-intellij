@@ -73,9 +73,8 @@ class CreateUssFileAndDirTest {
             { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
             { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
         )
-        setUpTestEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
+        setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createConnection(
-            projectName,
             fixtureStack,
             closableFixtureCollector,
             connectionName,
@@ -83,7 +82,7 @@ class CreateUssFileAndDirTest {
             remoteRobot,
             "https://${mockServer.hostName}:${mockServer.port}"
         )
-        createWsWithoutMask(projectName, wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+        createWsWithoutMask(wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
         mapListUssFiles["."] = dirHereList
         mapListUssFiles[".."] = dirParentList
         responseDispatcher.injectEndpoint(
@@ -91,7 +90,7 @@ class CreateUssFileAndDirTest {
             { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
             { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             createMask(wsName, fixtureStack, closableFixtureCollector)
             createMaskDialog(fixtureStack) {
                 createMask(Pair(ussMaskName, "USS"))
@@ -113,8 +112,8 @@ class CreateUssFileAndDirTest {
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
         mockServer.shutdown()
 
-        clearEnvironment(projectName, fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(projectName, fixtureStack) {
+        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             close()
         }
     }
@@ -140,8 +139,8 @@ class CreateUssFileAndDirTest {
             { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
             { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
         )
-        ideFrameImpl(projectName, fixtureStack) {
-            createUssFile(ussMaskName, ussFileName, UssFileType.File, projectName, fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
+            createUssFile(ussMaskName, ussFileName, UssFileType.File, fixtureStack, remoteRobot)
             mapListUssFiles[ussFileName] = fileList
             explorer {
                 fileExplorer.click()
@@ -162,7 +161,7 @@ class CreateUssFileAndDirTest {
             { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
             { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
@@ -192,7 +191,7 @@ class CreateUssFileAndDirTest {
             { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
             { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
@@ -230,7 +229,7 @@ class CreateUssFileAndDirTest {
                     .setBody("{\"category\":\"1.0\",\"message\":\"The specified file already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}")
             }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
@@ -242,7 +241,8 @@ class CreateUssFileAndDirTest {
                 clickButton("OK")
             }
             clickButton("Cancel")
-            checkErrorNotification(errorHeader, errorType, fileErrorDetail, projectName, fixtureStack, remoteRobot)
+            checkErrorNotification(fileErrorDetail, errorType, fileErrorDetail, fixtureStack, remoteRobot)
+            closeNotificztion(fixtureStack, remoteRobot)
         }
     }
 
@@ -262,8 +262,8 @@ class CreateUssFileAndDirTest {
             { it?.requestLine?.contains("POST /zosmf/restfiles/fs$ussMaskName/$ussDirName") ?: false },
             { MockResponse().setResponseCode(201) }
         )
-        ideFrameImpl(projectName, fixtureStack) {
-            createUssFile(ussMaskName, ussDirName, UssFileType.Directory, projectName, fixtureStack, remoteRobot)
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
+            createUssFile(ussMaskName, ussDirName, UssFileType.Directory, fixtureStack, remoteRobot)
             mapListUssFiles[ussDirName] = dirList
             explorer {
                 fileExplorer.click()
@@ -292,7 +292,7 @@ class CreateUssFileAndDirTest {
                     .setBody("{\"category\":\"1.0\",\"message\":\"The specified file already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}")
             }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
@@ -304,7 +304,8 @@ class CreateUssFileAndDirTest {
                 clickButton("OK")
             }
             clickButton("Cancel")
-            checkErrorNotification(errorHeader, errorType, fileErrorDetail, projectName, fixtureStack, remoteRobot)
+            checkErrorNotification(fileErrorDetail, errorType, fileErrorDetail, fixtureStack, remoteRobot)
+            closeNotificztion(fixtureStack, remoteRobot)
         }
     }
 
@@ -319,7 +320,7 @@ class CreateUssFileAndDirTest {
             { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
             { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
@@ -349,7 +350,7 @@ class CreateUssFileAndDirTest {
             { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
             { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
@@ -387,7 +388,7 @@ class CreateUssFileAndDirTest {
                     .setBody("{\"category\":\"1.0\",\"message\":\"The specified directory already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}")
             }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
@@ -399,7 +400,8 @@ class CreateUssFileAndDirTest {
                 clickButton("OK")
             }
             clickButton("Cancel")
-            checkErrorNotification(errorHeader, errorType, dirErrorDetail, projectName, fixtureStack, remoteRobot)
+            checkErrorNotification(dirErrorDetail, errorType, dirErrorDetail, fixtureStack, remoteRobot)
+            closeNotificztion(fixtureStack, remoteRobot)
         }
     }
 
@@ -422,7 +424,7 @@ class CreateUssFileAndDirTest {
                     .setBody("{\"category\":\"1.0\",\"message\":\"The specified directory already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}")
             }
         )
-        ideFrameImpl(projectName, fixtureStack) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 fileExplorer.click()
                 find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
@@ -434,7 +436,8 @@ class CreateUssFileAndDirTest {
                 clickButton("OK")
             }
             clickButton("Cancel")
-            checkErrorNotification(errorHeader, errorType, dirErrorDetail, projectName, fixtureStack, remoteRobot)
+            checkErrorNotification(dirErrorDetail, errorType, dirErrorDetail, fixtureStack, remoteRobot)
+            closeNotificztion(fixtureStack, remoteRobot)
         }
     }
 }

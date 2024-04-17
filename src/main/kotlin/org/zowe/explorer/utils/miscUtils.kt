@@ -15,9 +15,15 @@ import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
 import org.zowe.explorer.config.ConfigDeclaration
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.sort.SortQueryKeys
+import org.zowe.explorer.dataops.sort.orderingSortKeys
+import org.zowe.explorer.dataops.sort.typedSortKeys
 import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.explorer.ui.ExplorerTreeView
 import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
@@ -178,6 +184,39 @@ fun <R> List<R>.mergeWith(another: List<R>): MutableList<R> {
   return this.plus(another).toSet().toMutableList()
 }
 
+/**
+ * Function clears the input list and adds another list elements to the end of this list
+ * @receiver any kind of MutableList
+ * @param another
+ */
+fun <R> List<R>.clearAndMergeWith(another: List<R>) {
+  (this as MutableList<R>).apply {
+    clear()
+    addAll(another)
+  }
+}
+
+/**
+ * Function clears the input list and adds the new sortKey to this list or does nothing if sortKey is null
+ * @receiver Any kind of MutableList of the current sortKeys
+ * @param toAdd
+ */
+fun List<SortQueryKeys>.clearOldKeysAndAddNew(toAdd: SortQueryKeys?) {
+  if (toAdd != null) {
+    if (typedSortKeys.contains(toAdd)) {
+      (this as MutableList<SortQueryKeys>).apply {
+        removeAll(typedSortKeys.toSet())
+        add(toAdd)
+      }
+    } else {
+      (this as MutableList<SortQueryKeys>).apply {
+        removeAll(orderingSortKeys.toSet())
+        add(toAdd)
+      }
+    }
+  }
+}
+
 val UNIT_CLASS = Unit::class.java
 
 inline fun <reified T, reified V> T.applyIfNotNull(v: V?, block: T.(V) -> T): T {
@@ -282,4 +321,15 @@ fun <U : WorkingSet<ConnectionConfig, *>> getSelectedNodesWorkingSets(view: Expl
  */
 fun String.removeTrailingSlashes(): String {
   return this.replace(Regex("/+$"), "/")
+}
+
+/**
+ * Utility function which transforms LocalDateTime timestamp to human-readable format (without nanos)
+ *
+ * @receiver LocalDateTime instance
+ * @return String representation of LocalDateTime in human-readable format
+ */
+fun LocalDateTime.toHumanReadableFormat(): String {
+  return "$dayOfMonth ${month.name} ${toLocalTime().truncatedTo(ChronoUnit.SECONDS).format(
+    DateTimeFormatter.ISO_LOCAL_TIME)}"
 }

@@ -69,6 +69,7 @@ abstract class CreateUssEntityAction : AnAction() {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selected = view.mySelectedNodesData[0]
     val selectedNode = selected.node
+    val project = e.project
     val node = if (selectedNode is UssFileNode) {
       selectedNode.parent?.takeIf { it is UssDirNode }
     } else {
@@ -88,7 +89,7 @@ abstract class CreateUssEntityAction : AnAction() {
       if (filePath != null) {
         showUntilDone(
           initialState = fileType.apply { path = filePath },
-          { initState -> CreateFileDialog(e.project, state = initState, filePath = filePath) }
+          { initState -> CreateFileDialog(project, state = initState, filePath = filePath) }
         ) {
           var res = false
           val allocationParams = it.toAllocationParams()
@@ -99,7 +100,7 @@ abstract class CreateUssEntityAction : AnAction() {
           }
           runModalTask(
             title = "Creating $fileType ${allocationParams.fileName}",
-            project = e.project,
+            project = project,
             cancellable = true
           ) { indicator ->
             val ussDirNode = node.castOrNull<UssDirNode>()
@@ -124,7 +125,7 @@ abstract class CreateUssEntityAction : AnAction() {
               ussDirNode?.cleanCache(false)
               res = true
             }.onFailure { t ->
-              view.explorer.reportThrowable(t, e.project)
+              view.explorer.reportThrowable(t, project)
             }
           }
           res

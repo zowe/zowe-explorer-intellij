@@ -13,9 +13,9 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.DialogState
 import org.zowe.explorer.common.ui.StatefulComponent
@@ -45,7 +45,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.name)
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Dataset name type: ")
@@ -53,7 +53,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.dsnameType?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Catalog name: ")
@@ -61,7 +61,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.catalogName ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Volume serials: ")
@@ -69,7 +69,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.volumeSerials ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Device type: ")
@@ -77,7 +77,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.deviceType ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         if (dataset.migrated?.equals(HasMigrated.YES) == true) {
           row {
@@ -86,7 +86,6 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         }
       }
     )
-
 
     tabbedPanel.add(
       "Data",
@@ -104,7 +103,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
               }
             )
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Record format: ")
@@ -112,7 +111,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.recordFormat?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Record length: ")
@@ -120,7 +119,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.recordLength?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Block size: ")
@@ -128,7 +127,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.blockSize?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Size in tracks: ")
@@ -136,7 +135,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.sizeInTracks?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         row {
           label("Space units: ")
@@ -144,7 +143,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           textField()
             .text(dataset.spaceUnits?.toString() ?: "")
             .applyToComponent { isEditable = false }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
         if ("YES" == dataset.spaceOverflowIndicator) {
           row {
@@ -153,8 +152,6 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         }
       }
     )
-
-
 
     tabbedPanel.add("Extended", panel {
       row {
@@ -167,7 +164,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         textField()
           .text(dataset.usedTracksOrBlocks?.toString() ?: "")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Used extents: ")
@@ -175,7 +172,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         textField()
           .text(dataset.extendsUsed?.toString() ?: "")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Dates")
@@ -187,7 +184,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         textField()
           .text(dataset.creationDate ?: "")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Referenced date: ")
@@ -195,7 +192,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         textField()
           .text(dataset.lastReferenceDate ?: "")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         label("Expiration date: ")
@@ -203,7 +200,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         textField()
           .text(dataset.expirationDate ?: "")
           .applyToComponent { isEditable = false }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     })
 
