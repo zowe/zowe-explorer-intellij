@@ -21,7 +21,6 @@ import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
@@ -29,7 +28,6 @@ import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
 import eu.ibagroup.formainframe.dataops.sort.typedSortKeys
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.utils.clearAndMergeWith
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import icons.ForMainframeIcons
 
@@ -52,7 +50,10 @@ class LibraryNode(
   parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: FilesWorkingSet,
   treeStructure: ExplorerTreeStructureBase,
-  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(SortQueryKeys.MEMBER_MODIFICATION_DATE, SortQueryKeys.ASCENDING),
+  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(
+    SortQueryKeys.MEMBER_MODIFICATION_DATE,
+    SortQueryKeys.ASCENDING
+  ),
   override val sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 ) : RemoteMFFileFetchNode<ConnectionConfig, MFVirtualFile, LibraryQuery, FilesWorkingSet>(
   library, project, parent, workingSet, treeStructure
@@ -68,7 +69,10 @@ class LibraryNode(
     }
 
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
-    return sortChildrenNodes(map { FileLikeDatasetNode(it, notNullProject, this@LibraryNode, unit, treeStructure) }, currentSortQueryKeysList)
+    return sortChildrenNodes(
+      map { FileLikeDatasetNode(it, notNullProject, this@LibraryNode, unit, treeStructure) },
+      currentSortQueryKeysList
+    )
   }
 
   override val requestClass = LibraryQuery::class.java
@@ -89,8 +93,11 @@ class LibraryNode(
     return "Fetching members for ${query.request.library.name}"
   }
 
-  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(childrenNodes: List<Node>, sortKeys: List<SortQueryKeys>): List<Node> {
-    val listToReturn : List<Node> = mutableListOf()
+  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(
+    childrenNodes: List<Node>,
+    sortKeys: List<SortQueryKeys>
+  ): List<Node> {
+    val listToReturn: List<Node> = mutableListOf()
     val foundSortKey = sortKeys.firstOrNull { typedSortKeys.contains(it) }
     if (foundSortKey != null) {
       listToReturn.clearAndMergeWith(performMembersSorting(childrenNodes, this@LibraryNode, foundSortKey))
@@ -107,16 +114,21 @@ class LibraryNode(
    * @param sortKey
    * @return sorted nodes by specified key
    */
-  private fun performMembersSorting(nodes: List<AbstractTreeNode<*>>, dataset: LibraryNode, sortKey: SortQueryKeys) : List<AbstractTreeNode<*>> {
-    val sortedNodesInternal: List<AbstractTreeNode<*>> = if (dataset.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)) {
-      nodes.sortedBy {
-        selector(sortKey).invoke(it)
+  private fun performMembersSorting(
+    nodes: List<AbstractTreeNode<*>>,
+    dataset: LibraryNode,
+    sortKey: SortQueryKeys
+  ): List<AbstractTreeNode<*>> {
+    val sortedNodesInternal: List<AbstractTreeNode<*>> =
+      if (dataset.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)) {
+        nodes.sortedBy {
+          selector(sortKey).invoke(it)
+        }
+      } else {
+        nodes.sortedByDescending {
+          selector(sortKey).invoke(it)
+        }
       }
-    } else {
-      nodes.sortedByDescending {
-        selector(sortKey).invoke(it)
-      }
-    }
     return sortedNodesInternal.also { sortedNodes.clearAndMergeWith(it) }
   }
 
@@ -125,7 +137,7 @@ class LibraryNode(
    * @param key - sort key
    * @return String representation of the extracted member info attribute of the virtual file
    */
-  private fun selector(key: SortQueryKeys) : (AbstractTreeNode<*>) -> String? {
+  private fun selector(key: SortQueryKeys): (AbstractTreeNode<*>) -> String? {
     return {
       val memberInfo =
         (service<DataOpsManager>().tryToGetAttributes((it as FileLikeDatasetNode).virtualFile) as RemoteMemberAttributes).info

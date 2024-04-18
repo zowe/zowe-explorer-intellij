@@ -14,7 +14,6 @@ import com.intellij.util.ui.ColumnInfo
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.ErrorableTableCellRenderer
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
-import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
 /**
