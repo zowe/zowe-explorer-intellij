@@ -14,7 +14,6 @@ import com.intellij.util.ui.ColumnInfo
 import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.ErrorableTableCellRenderer
 import org.zowe.explorer.config.ws.WorkingSetConfig
-import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
 /**

@@ -16,7 +16,6 @@ import org.zowe.explorer.common.ui.ValidatingCellRenderer
 import org.zowe.explorer.common.ui.ValidatingColumnInfo
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import javax.swing.JComponent
-import javax.swing.JTable
 
 /**
  * Class which represents working set name column in working set table model.

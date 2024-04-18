@@ -15,7 +15,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.containers.toMutableSmartList
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.dataops.BatchedRemoteQuery
@@ -38,7 +37,10 @@ class DSMaskNode(
   parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: FilesWorkingSet,
   treeStructure: ExplorerTreeStructureBase,
-  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(SortQueryKeys.DATASET_MODIFICATION_DATE, SortQueryKeys.ASCENDING),
+  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(
+    SortQueryKeys.DATASET_MODIFICATION_DATE,
+    SortQueryKeys.ASCENDING
+  ),
   override val sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 ) : RemoteMFFileFetchNode<ConnectionConfig, DSMask, DSMask, FilesWorkingSet>(
   dsMask, project, parent, workingSet, treeStructure
@@ -81,7 +83,10 @@ class DSMaskNode(
     return "Fetching listings for ${query.request.mask}"
   }
 
-  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(childrenNodes: List<Node>, sortKeys: List<SortQueryKeys>): List<Node> {
+  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(
+    childrenNodes: List<Node>,
+    sortKeys: List<SortQueryKeys>
+  ): List<Node> {
     val listToReturn = mutableListOf<Node>()
     val psFiles = childrenNodes.filter { it is FileLikeDatasetNode }
     val libraries = childrenNodes.filter { it is LibraryNode }
@@ -91,7 +96,7 @@ class DSMaskNode(
       val sortedLibraries = performDatasetsSorting(libraries, this@DSMaskNode, SortQueryKeys.DATASET_NAME)
       listToReturn.addAll(sortedLibraries)
       listToReturn.addAll(sortedPSFiles)
-      also {  sortedNodes.clearAndMergeWith(listToReturn) }
+      also { sortedNodes.clearAndMergeWith(listToReturn) }
     } else if (foundSortKey != null) {
       listToReturn.clearAndMergeWith(performDatasetsSorting(childrenNodes, this@DSMaskNode, foundSortKey))
     } else {
@@ -107,7 +112,11 @@ class DSMaskNode(
    * @param sortKey
    * @return sorted nodes by specified key
    */
-  private fun <Node: AbstractTreeNode<*>> performDatasetsSorting(nodes: List<Node>, mask: DSMaskNode, sortKey: SortQueryKeys) : List<Node> {
+  private fun <Node : AbstractTreeNode<*>> performDatasetsSorting(
+    nodes: List<Node>,
+    mask: DSMaskNode,
+    sortKey: SortQueryKeys
+  ): List<Node> {
     val sortedNodesInternal: List<Node> = if (mask.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)) {
       nodes.sortedBy {
         selector(sortKey).invoke(it)
@@ -125,7 +134,7 @@ class DSMaskNode(
    * @param key - sort key
    * @return String representation of the extracted dataset info of the virtual file
    */
-  private fun selector(key: SortQueryKeys) : (AbstractTreeNode<*>) -> String? {
+  private fun selector(key: SortQueryKeys): (AbstractTreeNode<*>) -> String? {
     return {
       val datasetAttributes = when (it) {
         is FileLikeDatasetNode -> service<DataOpsManager>().tryToGetAttributes(it.virtualFile) as RemoteDatasetAttributes
