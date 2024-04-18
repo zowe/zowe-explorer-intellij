@@ -11,16 +11,20 @@
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.ws.UssPath
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.AttributesService
+import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributesService
-import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.explorer.FileExplorer
 import org.zowe.explorer.explorer.FilesWorkingSetImpl
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
@@ -45,10 +49,19 @@ class UssDirNodeTestSpec : WithApplicationShouldSpec({
 
     val mockedUssAttributesService = mockk<RemoteUssAttributesService>()
 
+    val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+    val componentManager = dataOpsManagerService.componentManager
+    dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(componentManager) {
+      @Suppress("UNCHECKED_CAST")
+      override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
+        attributesClass: Class<out A>,
+        vFileClass: Class<out F>
+      ): AttributesService<A, F> {
+        return mockedUssAttributesService as AttributesService<A, F>
+      }
+    }
+
     every { mockedWorkingSet.explorer } returns mockedExplorer
-    every { mockedExplorer.componentManager } returns mockk()
-    every { mockedExplorer.componentManager.service<DataOpsManager>() } returns mockk()
-    every { mockedExplorer.componentManager.service<DataOpsManager>().getAttributesService<RemoteUssAttributes, MFVirtualFile>() } returns mockedUssAttributesService
     every { mockedExplorerTreeStructure.registerNode(any()) } just Runs
 
     context("sort children nodes") {

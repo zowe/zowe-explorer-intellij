@@ -14,9 +14,6 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.ui.SimpleTextAttributes
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.DSMask
@@ -30,7 +27,6 @@ import org.zowe.explorer.explorer.FilesWorkingSetImpl
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.utils.service
-import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.*
 import java.time.LocalDateTime
 
@@ -59,12 +55,11 @@ class FileFetchNodeTestSpec: WithApplicationShouldSpec({
     val mockedExplorerTreeStructure = mockk<ExplorerTreeStructureBase>()
 
     every { mockedWorkingSet.explorer } returns mockedExplorer
-    every { mockedExplorer.componentManager } returns mockk()
-    every { mockedExplorer.componentManager.service<DataOpsManager>() } returns dataOpsManagerService
     every { mockedExplorerTreeStructure.registerNode(any()) } just Runs
     every { mockedWorkingSet.connectionConfig } returns mockk()
 
     dataOpsManagerService.testInstance = object: TestDataOpsManagerImpl(componentManager) {
+      @Suppress("UNCHECKED_CAST")
       override fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> getFileFetchProvider(
         requestClass: Class<out R>,
         queryClass: Class<out Query<*, *>>,
