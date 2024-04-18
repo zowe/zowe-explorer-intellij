@@ -16,7 +16,6 @@ import eu.ibagroup.formainframe.common.ui.ValidatingCellRenderer
 import eu.ibagroup.formainframe.common.ui.ValidatingColumnInfo
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import javax.swing.JComponent
-import javax.swing.JTable
 
 /**
  * Class which represents working set name column in working set table model.
