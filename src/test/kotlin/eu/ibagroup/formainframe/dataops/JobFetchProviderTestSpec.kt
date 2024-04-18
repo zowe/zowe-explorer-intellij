@@ -236,6 +236,7 @@ class JobFetchProviderTestSpec : ShouldSpec({
         every { mockedResponse.isSuccessful } returns false
         every { mockedResponse.code() } returns 404
         every { mockedResponse.body() } returns emptyList()
+        every { mockedResponse.message() } returns "Unknown error"
 
         val exception = shouldThrow<InvocationTargetException> {
           fetchResponseMethodRef.invoke(jobFetchProviderForTest, mockedQuery, progressMockk)
@@ -252,6 +253,7 @@ class JobFetchProviderTestSpec : ShouldSpec({
           jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
         cleanupUnusedFileMethodRef.trySetAccessible()
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(componentManager) {
+          @Suppress("UNCHECKED_CAST")
           override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
             attributesClass: Class<out A>,
             vFileClass: Class<out F>
