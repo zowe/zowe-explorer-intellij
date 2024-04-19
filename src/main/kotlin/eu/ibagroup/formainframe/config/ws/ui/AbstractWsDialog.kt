@@ -166,6 +166,13 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
     }
   }
 
+  /**
+   * Enables continuous validation of the dialog components
+   */
+  override fun continuousValidation(): Boolean {
+    return true
+  }
+
   override fun createCenterPanel(): JComponent {
     return panel
   }
