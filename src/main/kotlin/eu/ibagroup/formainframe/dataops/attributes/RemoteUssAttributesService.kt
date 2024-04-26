@@ -100,14 +100,14 @@ class RemoteUssAttributesService(
     fsModel.setWritable(file, newAttributes.isWritable)
     file.isReadable = newAttributes.isReadable
     if (oldAttributes.name != newAttributes.name) {
-      fsModel.renameFile(this, file, newAttributes.name)
+      file.rename(this, newAttributes.name)
     }
     if (oldAttributes.parentDirPath != newAttributes.parentDirPath) {
-      var current = subDirectory
+      var current = fsRoot
       createPathChain(newAttributes).dropLast(1).map { nameWithFileAttr ->
         findOrCreate(current, nameWithFileAttr).also { current = it }
       }
-      fsModel.moveFile(this, file, current)
+      file.move(this, current)
     }
   }
 

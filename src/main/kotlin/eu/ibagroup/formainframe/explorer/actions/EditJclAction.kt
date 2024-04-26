@@ -73,18 +73,18 @@ class EditJclAction : AnAction() {
             )
             val virtualFile = node.virtualFile
             if (virtualFile != null) {
-              runWriteActionInEdtAndWait {
-                var wasCreatedBefore = true
-                var cachedFile = virtualFile.findChild(attributes.name)
-                if (cachedFile == null) {
-                  val createdFile = virtualFile.createChildData(null, attributes.name) as MFVirtualFile
-                  cachedFile = createdFile
-                  wasCreatedBefore = false
-                }
-                val descriptor = e.project?.let { pr -> OpenFileDescriptor(pr, cachedFile) }
-                descriptor?.let {
-                  val syncProvider =
-                    DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(e.project))
+              var wasCreatedBefore = true
+              var cachedFile = virtualFile.findChild(attributes.name)
+              if (cachedFile == null) {
+                val createdFile = virtualFile.createChildData(null, attributes.name) as MFVirtualFile
+                cachedFile = createdFile
+                wasCreatedBefore = false
+              }
+              val descriptor = e.project?.let { pr -> OpenFileDescriptor(pr, cachedFile) }
+              descriptor?.let {
+                val syncProvider =
+                  DocumentedSyncProvider(file = cachedFile, saveStrategy = SaveStrategy.default(e.project))
+                runWriteActionInEdtAndWait {
                   if (!wasCreatedBefore) {
                     syncProvider.putInitialContent(jclContentBytes)
                   } else {

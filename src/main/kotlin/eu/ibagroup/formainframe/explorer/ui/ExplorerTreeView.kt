@@ -315,7 +315,13 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
 
         override fun <R : Any, Q : Query<R, Unit>> onFetchFailure(query: Q, throwable: Throwable) {
           getNodesByQueryAndInvalidate(query)
-          explorer.reportThrowable(throwable, project)
+          //The ability to show exceptions for JES Explorer has been disabled.
+          //All messages about exceptions that occur in TreeView components will be displayed using File Explorer.
+          //This was done to avoid duplication of exception messages, since both explorers have a common EventBus and,
+          // accordingly, both receive a message about an exception that occurred in one of them.
+          if (this@ExplorerTreeView is FileExplorerView) {
+            explorer.reportThrowable(throwable, project)
+          }
         }
       },
       disposable = this
