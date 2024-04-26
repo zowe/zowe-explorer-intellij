@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -35,6 +36,10 @@ import eu.ibagroup.formainframe.utils.sendTopic
  * Action class for executing submit job on mainframe
  */
 class SubmitJobAction : AnAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Called when submit option is chosen from context menu,
@@ -103,6 +108,6 @@ class SubmitJobAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-            && (node is FileLikeDatasetNode || node is UssFileNode)
+        && (node is FileLikeDatasetNode || node is UssFileNode)
   }
 }

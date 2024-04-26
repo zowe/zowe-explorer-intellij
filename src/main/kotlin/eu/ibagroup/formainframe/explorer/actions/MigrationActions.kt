@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
@@ -26,7 +27,11 @@ import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationPar
 import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperation
 import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationParams
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
@@ -60,6 +65,10 @@ private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*, *>>) {
  * @see MigrateAction
  */
 class RecallAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Runs recall operation
@@ -116,6 +125,10 @@ class RecallAction : DumbAwareAction() {
  * Action class for dataset migration
  */
 class MigrateAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   /**
    * Runs migrate operation

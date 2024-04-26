@@ -49,7 +49,7 @@ import java.awt.event.ActionEvent
 import java.nio.charset.Charset
 import javax.swing.Action
 import javax.swing.Icon
-import kotlin.reflect.full.declaredFunctions
+import kotlin.reflect.KFunction
 
 class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
   afterSpec {
@@ -95,9 +95,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
     val actionEventMock = mockk<ActionEvent>()
 
-    val showDialogRef = Messages::class.declaredFunctions
-      .first { it.name == "showDialog" && it.parameters.size == 5 }
-    mockkStatic(showDialogRef)
+    val showDialogRef: (String, String, Array<String>, Int, Icon) -> Int = Messages::showDialog
+    mockkStatic(showDialogRef as KFunction<*>)
 
     every { contentSynchronizerMock.synchronizeWithRemote(any()) } returns Unit
 

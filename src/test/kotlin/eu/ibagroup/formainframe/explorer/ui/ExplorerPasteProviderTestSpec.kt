@@ -13,7 +13,7 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -40,7 +40,6 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
@@ -76,9 +75,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         ExplorerPasteProvider(), recordPrivateCalls = true
       )
 
-      var dataOpsManagerService =
-        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-      every { mockedFileExplorer.componentManager } returns ApplicationManager.getApplication()
+      var dataOpsManagerService = service<DataOpsManager>() as TestDataOpsManagerImpl
       dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(mockedFileExplorer.componentManager) {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
           return mockk()
@@ -1000,8 +997,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           true
         }
 
-        dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-        every { mockedFileExplorer.componentManager } returns ApplicationManager.getApplication()
+        dataOpsManagerService = service<DataOpsManager>() as TestDataOpsManagerImpl
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(mockedFileExplorer.componentManager) {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             throw IllegalStateException("Test Error")
