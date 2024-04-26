@@ -25,7 +25,6 @@ import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.locked
 import eu.ibagroup.formainframe.utils.service
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -42,8 +41,6 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
 
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
-
-  private val hasError = AtomicBoolean(false)
 
   private val connectionError = "Error: Check connection"
 
@@ -135,7 +132,6 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
             (fetched?.toChildrenNodes()?.toMutableList() ?: mutableListOf()).apply { add(loadingNode) }
           }
         } else {
-          hasError.set(true)
           errorNode(
             if (unit.connectionConfig == null) {
               connectionError
@@ -179,9 +175,7 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
     sendTopic: Boolean = true
   ) {
     val children = cachedChildren
-    if (!hasError.compareAndSet(true, false)) {
-      cachedChildren = null
-    }
+    cachedChildren = null
     if (cleanFetchProviderCache) {
       query?.let {
         fileFetchProvider.cleanCache(it, sendTopic)

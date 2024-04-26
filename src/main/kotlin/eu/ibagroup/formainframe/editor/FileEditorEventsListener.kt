@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.editor
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -65,7 +66,7 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
     val attributes = dataOpsManager.tryToGetAttributes(file)
     if (file is MFVirtualFile && file.isWritable && attributes != null) {
       val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
-      val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+      val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
       val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
       val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
       if (!(currentContent contentEquals previousContent) && needToUpload) {
@@ -80,10 +81,8 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
               project = project,
               cancellable = true
             ) {
-              runWriteActionInEdtAndWait {
-                syncProvider.saveDocument()
-                contentSynchronizer?.synchronizeWithRemote(syncProvider, it)
-              }
+              runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+              contentSynchronizer?.synchronizeWithRemote(syncProvider, it)
             }
           }
         } else {

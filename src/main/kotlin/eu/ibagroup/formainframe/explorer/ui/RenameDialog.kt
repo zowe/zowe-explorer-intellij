@@ -20,11 +20,7 @@ import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction
 import eu.ibagroup.formainframe.explorer.actions.RenameAction
-import eu.ibagroup.formainframe.utils.validateDatasetNameOnInput
-import eu.ibagroup.formainframe.utils.validateForBlank
-import eu.ibagroup.formainframe.utils.validateMemberName
-import eu.ibagroup.formainframe.utils.validateUssFileName
-import eu.ibagroup.formainframe.utils.validateUssFileNameAlreadyExists
+import eu.ibagroup.formainframe.utils.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -83,6 +79,9 @@ class RenameDialog(
    */
   private fun validateOnInput(component: JTextField): ValidationInfo? {
     val attributes = selectedNodeData.attributes
+
+    validateForTheSameValue(attributes?.name, component)?.let { return it }
+
     when (node) {
       is LibraryNode, is FileLikeDatasetNode -> {
         return if (attributes is RemoteDatasetAttributes) {

@@ -35,6 +35,7 @@ class ConnectionsTableModel(
     get(row).isAllowSsl = item.isAllowSsl
     get(row).password = item.password
     get(row).zVersion = item.zVersion
+    get(row).owner = item.owner
     super.set(row, item)
   }
 

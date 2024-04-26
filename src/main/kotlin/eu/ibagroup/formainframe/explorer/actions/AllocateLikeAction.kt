@@ -103,10 +103,10 @@ class AllocateLikeAction : AllocateActionBase() {
       return
     }
     val selected = view.mySelectedNodesData
-    val entityAttributes = selected[0].attributes
-    e.presentation.isEnabledAndVisible = selected.size == 1
-        && entityAttributes is RemoteDatasetAttributes
-        && !entityAttributes.isMigrated
+    val entityAttributes = if (selected.size == 1) selected[0].attributes else null
+    e.presentation.isEnabledAndVisible = entityAttributes != null
+      && entityAttributes is RemoteDatasetAttributes
+      && !entityAttributes.isMigrated
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 
