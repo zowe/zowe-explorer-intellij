@@ -114,8 +114,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
                     "Error While Opening File ${file.name}",
                     arrayOf("Ok"),
                     0,
-                    AllIcons.General.ErrorDialog,
-                    null
+                    AllIcons.General.ErrorDialog
                   )
                 }
               } else {
