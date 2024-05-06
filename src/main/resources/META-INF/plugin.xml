@@ -14,11 +14,11 @@
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
-Zowe Explorer for IntelliJ IDEA is an open-source plugin by the <a href="https://github.com/zowe/community">Zowe Community</a> which gives access to mainframes from a modern IDE.
+Zowe™ Explorer for IntelliJ IDEA™ is an open-source plugin by the <a href="https://github.com/zowe/community">Zowe Community</a> which gives access to mainframes from a modern IDE.
 With the help of the plugin, developers can work with mainframes through a modern interface, using a single toolbar, structured trees, and drag-and-drop operations.
 The solution suits those who need to work with z/OS datasets, USS files, and Jobs from the IntelliJ IDEA.
 <br/>
-Zowe Explorer extends IntelliJ’s tools similar to that of VS Code Zowe Explorer, giving developers a modern way to interact with Mainframe.
+Zowe is a project hosted under the Open Mainframe Project. Zowe Explorer plug-in for IntelliJ IDEA extends IntelliJ IDEA platform’s tools similar to that of VS Code Zowe™ Explorer, giving developers a modern way to interact with Mainframe.
 <br/>
 <br/>
 It also:
