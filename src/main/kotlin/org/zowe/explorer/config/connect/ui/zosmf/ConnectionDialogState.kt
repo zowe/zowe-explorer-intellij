@@ -30,10 +30,10 @@ data class ConnectionDialogState(
   /*var apiMeditationLayer: String = "",*/
   override var username: String = "",
   override var password: String = "",
+  override var owner: String = "",
   var isAllowSsl: Boolean = false,
   var zVersion: ZVersion = ZVersion.ZOS_2_1,
   var zoweConfigPath: String? = null,
-  var owner: String = "",
   override var mode: DialogMode = DialogMode.CREATE
 ) : ConnectionDialogStateBase<ConnectionConfig>() {
 

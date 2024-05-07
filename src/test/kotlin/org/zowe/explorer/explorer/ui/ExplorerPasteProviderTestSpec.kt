@@ -459,12 +459,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         isPastePerformed = false
 
         val showDialogMock: (
-          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+          Project?, String, String, Array<String>, Int, Icon?
         ) -> Int = Messages::showDialog
         mockkStatic(showDialogMock as KFunction<*>)
         every {
           showDialogMock(
-            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?, any()
+            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?
           )
         } answers {
           isShowDialogCalled = true
@@ -580,12 +580,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         }
 
         val showDialogMock: (
-          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+          Project?, String, String, Array<String>, Int, Icon?
         ) -> Int = Messages::showDialog
         mockkStatic(showDialogMock as KFunction<*>)
         every {
           showDialogMock(
-            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?, any()
+            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?
           )
         } answers {
           isShowDialogCalled = true
@@ -602,12 +602,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
       should("return if unrecognized dialog message") {
         isPastePerformed = true
         val showDialogSpecificMock: (
-          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+          Project?, String, String, Array<String>, Int, Icon?
         ) -> Int = Messages::showDialog
         mockkStatic(showDialogSpecificMock as KFunction<*>)
         every {
           showDialogSpecificMock(
-            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?, any()
+            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?
           )
         } answers {
           isPastePerformed = false
@@ -689,12 +689,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(false)
 
         val showDialogSpecificMock: (
-          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+          Project?, String, String, Array<String>, Int, Icon?
         ) -> Int = Messages::showDialog
         mockkStatic(showDialogSpecificMock as KFunction<*>)
         every {
           showDialogSpecificMock(
-            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?, any()
+            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?
           )
         } answers {
           isShowYesNoDialogCalled = true

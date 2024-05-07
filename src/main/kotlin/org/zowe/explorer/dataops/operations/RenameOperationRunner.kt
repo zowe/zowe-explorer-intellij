@@ -21,12 +21,8 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.explorer.actions.DuplicateMemberAction
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
-import org.zowe.explorer.vfs.sendMFVfsChangesTopic
-import org.zowe.kotlinsdk.CopyDataZOS
-import org.zowe.kotlinsdk.DataAPI
-import org.zowe.kotlinsdk.FilePath
-import org.zowe.kotlinsdk.MoveUssFile
-import org.zowe.kotlinsdk.RenameData
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.kotlinsdk.*
 
 /**
  * Class which represents factory for rename operation runner. Defined in plugin.xml
@@ -85,7 +81,9 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               toDatasetName = operation.newName
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              sendMFVfsChangesTopic()
+              runWriteActionInEdtAndWait {
+                operation.file.rename(this, operation.newName)
+              }
             } else {
               throw CallException(response, "Unable to rename the selected dataset")
             }
@@ -118,9 +116,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 toDatasetName = parentAttributes.datasetInfo.name,
                 memberName = operation.newName
               ).cancelByIndicator(progressIndicator).execute()
-              if (response.isSuccessful) {
-                sendMFVfsChangesTopic()
-              } else {
+              if (!response.isSuccessful) {
                 throw CallException(response, "Unable to duplicate the selected member")
               }
             } else {
@@ -136,7 +132,9 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 memberName = operation.newName
               ).cancelByIndicator(progressIndicator).execute()
               if (response.isSuccessful) {
-                sendMFVfsChangesTopic()
+                runWriteActionInEdtAndWait {
+                  operation.file.rename(this, operation.newName)
+                }
               } else {
                 throw CallException(response, "Unable to rename the selected member")
               }
@@ -164,7 +162,9 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               filePath = FilePath("$parentDirPath/${operation.newName}")
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              sendMFVfsChangesTopic()
+              runWriteActionInEdtAndWait {
+                operation.file.rename(this, operation.newName)
+              }
             } else {
               throw CallException(response, "Unable to rename the selected file or directory")
             }

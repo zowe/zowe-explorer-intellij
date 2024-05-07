@@ -21,16 +21,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.dataops.content.synchronizer.RemoteAttributedContentSynchronizer
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.getMinimalCommonParents
+import org.zowe.explorer.utils.runWriteActionInEdt
 import org.zowe.explorer.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
 
@@ -211,10 +210,7 @@ class ExplorerPasteProvider : PasteProvider {
               val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
               op.destination.children
                 .filter { file -> file == nameResolver.getConflictingChild(op.source, op.destination) }
-                .forEach { file ->
-                  dataOpsManager.getContentSynchronizer(file)
-                    .castOrNull<RemoteAttributedContentSynchronizer<*>>()?.removeFromCacheAfterForceOverwriting(file)
-                }
+                .forEach { file -> runWriteActionInEdt { file.delete(this) } }
             }
           }
           .onFailure { throwable ->
@@ -327,7 +323,7 @@ class ExplorerPasteProvider : PasteProvider {
         }
         .flatten()
 
-      if (ussOrLocalFileToPdsWarnings.isNotEmpty()) {
+      if (ussOrLocalFileToPdsWarnings.isNotEmpty() && !isAllConflictsResolvedBySkip(conflictsResolutions, ussOrLocalFileToPdsWarnings.size )) {
         val isLocalFilesPresent = ussOrLocalFileToPdsWarnings.find { it.second.isInLocalFileSystem } != null
         val fileTypesPattern = if (isLocalFilesPresent) "Local Files" else "USS Files"
         if (!showYesNoDialog(
@@ -338,9 +334,10 @@ class ExplorerPasteProvider : PasteProvider {
             "Skip This Files",
             AllIcons.General.WarningDialog
           )) {
-          conflictsResolutions.addAll(
-            ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
-          )
+          conflictsResolutions.apply {
+            clear()
+            addAll(ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } })
+          }
         }
       }
       // specific conflicts resolution end
@@ -372,7 +369,7 @@ class ExplorerPasteProvider : PasteProvider {
       val operationsToDownload = operations
         .filter { operation -> operation.destination !is MFVirtualFile }
 
-      if (operationsToDownload.isNotEmpty()) {
+      if (operationsToDownload.isNotEmpty() && (!isAllConflictsResolvedBySkip(conflictsResolutions, operationsToDownload.size) || operationsToDownload.size == 1)) {
         val filesToDownloadUpdated = operationsToDownload.map { operation -> operation.source.name }
 
         val startMessage = "You are going to DOWNLOAD files:"
@@ -470,8 +467,7 @@ class ExplorerPasteProvider : PasteProvider {
           "Decide for Each"
         ),
         0,
-        AllIcons.General.QuestionDialog,
-        null
+        AllIcons.General.QuestionDialog
       )
 
       when (choice) {
@@ -504,8 +500,7 @@ class ExplorerPasteProvider : PasteProvider {
               "Not Resolvable Conflicts",
               arrayOf("Ok"),
               0,
-              Messages.getErrorIcon(),
-              null
+              Messages.getErrorIcon()
             )
           }
         }
@@ -516,6 +511,10 @@ class ExplorerPasteProvider : PasteProvider {
     }
 
     return result
+  }
+
+  private fun isAllConflictsResolvedBySkip(conflicts: List<ConflictResolution>, filesToProcessSize: Int) : Boolean {
+    return conflicts.isNotEmpty() && conflicts.map { it.shouldSkip() }.filter { it }.size == conflicts.size && filesToProcessSize == conflicts.size
   }
 
   /**
@@ -623,16 +622,30 @@ class ExplorerPasteProvider : PasteProvider {
     return isPastePossibleAndEnabled(dataContext)
   }
 
+  /**
+   * Creates an HTML message from an items list
+   * Message structure:
+   *   startMessage
+   *     Next, a string is constructed from the items list.
+   *     Elements are added to the string until its length does not exceed the limit.
+   *     If not all elements were added to the string, then "and more..." is added to the end of the string
+   *   finishMessage.
+   * @param startMessage beginning of the message
+   * @param items list of items to display
+   * @param finishMessage end of message
+   * @param limit the maximum allowed length for a converted list of elements.
+   * @return created HTML message
+   */
   private fun createHtmlMessageWithItemsList(
-    startMessage: String, items: List<String>, finishMessage: String, maxItems: Int = 5
+    startMessage: String, items: List<String>, finishMessage: String, limit: Int = 130
   ): String {
-    val tagP = "<p style=\"margin-left: 10px\">"
-    val itemsToShow = if (items.size > maxItems) {
-      items.subList(0, maxItems).toMutableList().apply { add("more ...") }
-    } else {
-      items
-    }
-    val itemsString = "$tagP${itemsToShow.joinToString("</p>$tagP")}</p>"
+    val pTag = "<p style=\"margin-left: 10px\">"
+    val itemsMerged = items.joinToString(", ")
+    val result = if (itemsMerged.length > limit)
+      itemsMerged.substring(0, limit - 3).plus("...</p>${pTag}and more...")
+    else
+      itemsMerged
+    val itemsString = pTag.plus(result).plus("</p>")
     return "<html><span>$startMessage\n</span>\n$itemsString\n<span>$finishMessage</span></html>"
   }
 }

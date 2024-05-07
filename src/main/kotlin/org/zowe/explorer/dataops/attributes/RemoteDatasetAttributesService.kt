@@ -100,10 +100,10 @@ class RemoteDatasetAttributesService(
       val volserDir = fsModel.findOrCreate(
         this, subDirectory, newAttributes.volser ?: MIGRATED, createAttributes(directory = true)
       )
-      fsModel.moveFile(this, file, volserDir)
+      file.move(this, volserDir)
     }
     if (oldAttributes.name != newAttributes.name) {
-      fsModel.renameFile(this, file, newAttributes.name)
+      file.rename(this, newAttributes.name)
     }
   }
 

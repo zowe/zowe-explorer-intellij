@@ -91,7 +91,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
     runWriteActionInEdtAndWait {
       if (operation.forceOverwriting) {
-        destFile.children.filter { it.name === (newFileName) && !it.isDirectory }.forEach { it.delete(this) }
+        destFile.children.filter { it.name == newFileName && !it.isDirectory }.forEach { it.delete(this) }
       }
     }
     val createdFileJava = Paths.get(destFile.path, newFileName).toFile().apply { createNewFile() }
