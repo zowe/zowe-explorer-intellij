@@ -76,8 +76,7 @@ fun showDialogForDeleteZoweConfigIfNeeded(project: Project) {
         "Delete Connection", "Keep Connection"
       ),
       0,
-      AllIcons.General.QuestionDialog,
-      null
+      AllIcons.General.QuestionDialog
     )
     if (choice == 0) {
       zoweConfigService.deleteZoweConfig()

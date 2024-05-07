@@ -70,20 +70,12 @@ const val ZOWE_PROJECT_PREFIX = "zowe-"
 class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService {
 
   companion object {
-
+    /**
+     * This function is required for testing purposes
+     */
     private fun getResourceUrl(strPath: String): URL? {
-      return ReflectionUtil.getGrandCallerClass()?.classLoader?.getResource(strPath)
+      return ZoweConfigServiceImpl::class.java.classLoader?.getResource(strPath)
     }
-
-    private fun getResourceContent(strPath: String, cs: Charset): String {
-      val url = getResourceUrl(strPath)
-      val array = url.toString().split("!")
-      val fs: FileSystem = FileSystems.newFileSystem(URI.create(array[0]), HashMap<String, String?>())
-      val content = String(Files.readAllBytes(fs.getPath(array[1])), cs)
-      fs.close()
-      return content
-    }
-
   }
 
   private val configCrudable = ConfigService.instance.crudable
@@ -288,6 +280,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val jsonFileName = "${myProject.basePath}/${ZOWE_CONFIG_NAME}"
     val charset: Charset = StandardCharsets.UTF_8
 
+    val pathSourceConfig = getResourceUrl("files/${ZOWE_CONFIG_NAME}")
     val pathSourceSchema = getResourceUrl("files/zowe.schema.json")
 
     val f: File = File(schemaFileName)
@@ -307,7 +300,10 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       port = matcher.group(4).substring(1)
     }
 
-    var content = getResourceContent("files/$ZOWE_CONFIG_NAME", charset)
+    val array = pathSourceConfig.toString().split("!")
+    val fs: FileSystem = FileSystems.newFileSystem(URI.create(array[0]), HashMap<String, String?>())
+    var content = String(Files.readAllBytes(fs.getPath(array[1])), charset)
+    fs.close()
     content = content.replace("<PORT>".toRegex(), port)
     content = content.replace("<HOST>".toRegex(), "\"$host\"")
     content = content.replace("<SSL>".toRegex(), (!state.isAllowSsl).toString())

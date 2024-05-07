@@ -2,6 +2,7 @@ package org.zowe.explorer.config
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
@@ -18,16 +19,16 @@ import org.zowe.explorer.zowe.service.ZoweConfigState
 import org.zowe.kotlinsdk.zowe.config.KeytarWrapper
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import java.io.File
+import java.net.URI
 import java.net.URL
-import java.nio.charset.Charset
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.*
+import javax.swing.Icon
 import kotlin.reflect.KFunction
 
 class ZoweConfigTestSpec : WithApplicationShouldSpec({
-
-  val baseProjPath = System.getProperty("java.io.tmpdir")
-  val tmpZoweConfFile = baseProjPath + File.separator + ZOWE_CONFIG_NAME
+  val baseProjPath = Path.of(System.getProperty("java.io.tmpdir")).toRealPath().toString().replace("\\", "/")
+  val tmpZoweConfFile = "$baseProjPath/$ZOWE_CONFIG_NAME"
+  val winTmpZoweConfFile = tmpZoweConfFile.split("/").toTypedArray().joinToString(File.separator)
   val connectionDialogState = ConnectionDialogState(
     connectionName = "a",
     connectionUrl = "https://111.111.111.111:555",
@@ -38,11 +39,12 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
 
   afterSpec {
     clearAllMocks()
+    unmockkAll()
   }
 
   context("config module: zowe config file") {
 
-    val mockedProject = mockk<Project>()
+    val mockedProject = mockk<Project>(relaxed = true)
     every { mockedProject.basePath } returns baseProjPath
     every { mockedProject.name } returns "testProj"
 
@@ -54,42 +56,67 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       copyURLToFileMock(any() as URL, any() as File)
     } just Runs
 
+    val fs = mockk<FileSystem>(relaxed = true)
+    val newFileSystemMock: (
+      URI?, Map<String, *>
+    ) -> FileSystem? = FileSystems::newFileSystem
+    mockkStatic(newFileSystemMock as KFunction<*>)
+    every {
+      newFileSystemMock(any() as URI, any() as Map<String, *>)
+    } returns fs
+    every {
+      fs.getPath(any() as String)
+    } answers {
+      (Paths.get(firstArg<String>()))
+    }
+    every {
+      fs.close()
+    } just Runs
+
+    val pathsGet: (
+      String, Array<out String>
+    ) -> Path = Paths::get
+    mockkStatic(pathsGet as KFunction<*>)
+    every {
+      pathsGet(match { it.startsWith("/") && System.getProperty("os.name").contains("Windows") }, arrayOf<String>())
+    } answers {
+      if (System.getProperty("os.name")
+          .contains("Windows") && firstArg<String>().startsWith("/")
+      ) Path.of(URI("file:" + firstArg<String>()))
+      else Path.of(URI(firstArg<String>()))
+    }
+
     mockkObject(ZoweConfigServiceImpl(mockedProject)) {
       every { ZoweConfigService.getInstance(mockedProject) } returns ZoweConfigServiceImpl(mockedProject)
     }
 
     mockkObject(ZoweConfigServiceImpl)
-    every { ZoweConfigServiceImpl.Companion["getResourceContent"](any() as String, any() as Charset) } answers {
-      String(
-        Files.readAllBytes(
-          Paths.get(
-            this::class.java.classLoader?.getResource(firstArg<String>())?.path.toString()
-          )
-        ), secondArg<Charset>()
-      )
+    every { ZoweConfigServiceImpl.Companion["getResourceUrl"](any() as String) } answers {
+      val p = ZoweConfigTestSpec::class.java.classLoader?.getResource(firstArg<String>())?.path
+      if (firstArg<String>().contains(ZOWE_CONFIG_NAME)) {
+        URL("jar:file:/path/to/jar!" + p.toString())
+      } else {
+        URL("file:" + p)
+      }
+
     }
 
     var checkFilePath = false
     var checkUser = false
     var checkPass = false
     fun checkSaveNewSecProp(
-      filePath: String,
-      configCredentialsMap: MutableMap<String, Any?>
+      filePath: String, configCredentialsMap: MutableMap<String, Any?>
     ) {
-      if (filePath == tmpZoweConfFile)
-        checkFilePath = true
+      if (filePath == tmpZoweConfFile) checkFilePath = true
       configCredentialsMap.forEach {
-        if (it.key == "profiles.base.properties.user" && it.value == "testUser")
-          checkUser = true
-        if (it.key == "profiles.base.properties.password" && it.value == "testPass")
-          checkPass = true
+        if (it.key == "profiles.base.properties.user" && it.value == "testUser") checkUser = true
+        if (it.key == "profiles.base.properties.password" && it.value == "testPass") checkPass = true
       }
     }
     mockkObject(ZoweConfig)
     every {
       ZoweConfig.saveNewSecureProperties(
-        any() as String,
-        any() as MutableMap<String, Any?>, any()
+        any() as String, any() as MutableMap<String, Any?>, any()
       )
     } answers {
       checkSaveNewSecProp(firstArg<String>(), secondArg<MutableMap<String, Any?>>())
@@ -99,14 +126,28 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     val configCredentialsMap = mutableMapOf<String, String>()
     configCredentialsMap["profiles.base.properties.user"] = "testUser"
     configCredentialsMap["profiles.base.properties.password"] = "testPass"
-    confMap[tmpZoweConfFile] = configCredentialsMap
+    confMap[winTmpZoweConfFile] = configCredentialsMap
 
     every { ZoweConfig.Companion["readZoweCredentialsFromStorage"](any() as KeytarWrapper) } returns confMap
 
     val zoweConnConf = connectionDialogState.connectionConfig
-    zoweConnConf.zoweConfigPath = tmpZoweConfFile
+    zoweConnConf.zoweConfigPath = tmpZoweConfFile.replace("\\", "/")
     zoweConnConf.name = "zowe-testProj"
 
+    val zoweConfigService = ZoweConfigService.getInstance(mockedProject)
+    val crudableInst = ConfigService.instance.crudable
+
+    var isDeleteMessageInDialogCalled = false
+    val showDialogSpecificMock: (
+      Project?, String, String, Array<String>, Int, Icon?
+    ) -> Int = Messages::showDialog
+    mockkStatic(showDialogSpecificMock as KFunction<*>)
+    every {
+      showDialogSpecificMock(any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any())
+    } answers {
+      isDeleteMessageInDialogCalled = true
+      1
+    }
 
     should("add zowe team config file") {
 
@@ -117,18 +158,15 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       var isSslAdded = false
 
       ApplicationManager.getApplication().invokeAndWait {
-        ZoweConfigService.getInstance(mockedProject).addZoweConfigFile(connectionDialogState)
+        zoweConfigService.addZoweConfigFile(connectionDialogState)
         VirtualFileManager.getInstance().syncRefresh()
       }
 
       val read = Files.readAllLines(Paths.get(tmpZoweConfFile))
       for (listItem in read) {
-        if (listItem.contains("\"port\": 555"))
-          isPortAdded = true
-        if (listItem.contains("\"host\": \"111.111.111.111\""))
-          isHostAdded = true
-        if (listItem.contains("\"rejectUnauthorized\": false"))
-          isSslAdded = true
+        if (listItem.contains("\"port\": 555")) isPortAdded = true
+        if (listItem.contains("\"host\": \"111.111.111.111\"")) isHostAdded = true
+        if (listItem.contains("\"rejectUnauthorized\": false")) isSslAdded = true
       }
 
       isPortAdded shouldBe true
@@ -142,57 +180,72 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
 
     should("get zowe team config state") {
 
-      val run1 = ZoweConfigService.getInstance(mockedProject).getZoweConfigState(false)
+      val run1 = zoweConfigService.getZoweConfigState(false)
       run1 shouldBeEqual ZoweConfigState.NOT_EXISTS
 
-      val run2 = ZoweConfigService.getInstance(mockedProject).getZoweConfigState()
+      val run2 = zoweConfigService.getZoweConfigState()
       run2 shouldBeEqual ZoweConfigState.NEED_TO_ADD
 
-      ConfigService.instance.crudable.addOrUpdate(zoweConnConf)
+      crudableInst.addOrUpdate(zoweConnConf)
 
-      val run3 = ZoweConfigService.getInstance(mockedProject).getZoweConfigState()
+      val run3 = zoweConfigService.getZoweConfigState()
       run3 shouldBeEqual ZoweConfigState.NEED_TO_UPDATE
 
-      confMap[tmpZoweConfFile]?.set("profiles.base.properties.password", "testPassword")
+      confMap[winTmpZoweConfFile]?.set("profiles.base.properties.password", "testPassword")
 
-      val run4 = ZoweConfigService.getInstance(mockedProject).getZoweConfigState()
+      val run4 = zoweConfigService.getZoweConfigState()
       run4 shouldBeEqual ZoweConfigState.SYNCHRONIZED
 
     }
+    val zoweConfig = zoweConfigService.zoweConfig
+    val host = zoweConfig?.host
+    val port = zoweConfig?.port
 
     should("add or update zowe team config connection") {
 
       zoweConnConf.url = "222.222.222.222:666"
-      ConfigService.instance.crudable.addOrUpdate(zoweConnConf)
-      ConfigService.instance.crudable.getAll<ConnectionConfig>().toList()
+      crudableInst.addOrUpdate(zoweConnConf)
+      crudableInst.getAll<ConnectionConfig>().toList()
         .filter { it.name == zoweConnConf.name }[0].url shouldBeEqual zoweConnConf.url
 
-      ZoweConfigService.getInstance(mockedProject).addOrUpdateZoweConfig(scanProject = true, checkConnection = false)
+      zoweConfigService.addOrUpdateZoweConfig(scanProject = true, checkConnection = false)
 
-      ConfigService.instance.crudable.getAll<ConnectionConfig>().toList()
-        .filter { it.name == zoweConnConf.name }[0].url shouldBeEqual "https://${
-        ZoweConfigService.getInstance(
-          mockedProject
-        ).zoweConfig?.host
-      }:${ZoweConfigService.getInstance(mockedProject).zoweConfig?.port}"
-
+      crudableInst.getAll<ConnectionConfig>().toList()
+        .filter { it.name == zoweConnConf.name }[0].url shouldBeEqual "https://$host:$port"
     }
 
     should("delete zowe team config connection") {
 
-      Files.deleteIfExists(Paths.get(tmpZoweConfFile))
+      crudableInst.getAll<ConnectionConfig>().toList()
+        .filter { it.name == zoweConnConf.name }[0].url shouldBeEqual "https://$host:$port"
 
-      ConfigService.instance.crudable.getAll<ConnectionConfig>().toList()
-        .filter { it.name == zoweConnConf.name }[0].url shouldBeEqual "https://${
-        ZoweConfigService.getInstance(
-          mockedProject
-        ).zoweConfig?.host
-      }:${ZoweConfigService.getInstance(mockedProject).zoweConfig?.port}"
+      zoweConfigService.deleteZoweConfig()
 
-      ZoweConfigService.getInstance(mockedProject).deleteZoweConfig()
+      crudableInst.getAll<ConnectionConfig>().toList().filter { it.name == zoweConnConf.name }.size shouldBeEqual 0
 
-      ConfigService.instance.crudable.getAll<ConnectionConfig>().toList()
-        .filter { it.name == zoweConnConf.name }.size shouldBeEqual 0
+    }
+
+    should("delete zowe team config file") {
+
+      zoweConnConf.name = "zowe-zowe-explorer"
+      crudableInst.addOrUpdate(zoweConnConf)
+
+      crudableInst.getAll<ConnectionConfig>().toList()
+        .filter { it.name == zoweConnConf.name }[0].url shouldBeEqual zoweConnConf.url
+
+      ApplicationManager.getApplication().invokeAndWait {
+        Files.deleteIfExists(Paths.get(tmpZoweConfFile))
+        VirtualFileManager.getInstance().syncRefresh()
+      }
+      var t = 0
+      while (!isDeleteMessageInDialogCalled && t < 5000) {
+        Thread.sleep(100)
+        t += 100
+      }
+
+      File(tmpZoweConfFile).exists() shouldBe false
+      isDeleteMessageInDialogCalled shouldBe true
+      crudableInst.getAll<ConnectionConfig>().toList()[0].name shouldBeEqual "zowe-zowe-explorer1"
 
     }
 
