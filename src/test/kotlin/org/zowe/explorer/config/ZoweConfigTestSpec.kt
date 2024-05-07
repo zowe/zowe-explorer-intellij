@@ -90,17 +90,6 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       every { ZoweConfigService.getInstance(mockedProject) } returns ZoweConfigServiceImpl(mockedProject)
     }
 
-    mockkObject(ZoweConfigServiceImpl)
-    every { ZoweConfigServiceImpl.Companion["getResourceUrl"](any() as String) } answers {
-      val p = ZoweConfigTestSpec::class.java.classLoader?.getResource(firstArg<String>())?.path
-      if (firstArg<String>().contains(ZOWE_CONFIG_NAME)) {
-        URL("jar:file:/path/to/jar!" + p.toString())
-      } else {
-        URL("file:" + p)
-      }
-
-    }
-
     var checkFilePath = false
     var checkUser = false
     var checkPass = false

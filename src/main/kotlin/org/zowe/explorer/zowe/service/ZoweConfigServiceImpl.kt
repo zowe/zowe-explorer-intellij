@@ -21,8 +21,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.ReflectionUtil
-import org.apache.commons.io.FileUtils
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.*
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
@@ -43,9 +41,7 @@ import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.kotlinsdk.annotations.ZVersion
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
-import java.io.File
-import java.net.URI
-import java.net.URL
+import java.io.*
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
@@ -73,8 +69,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     /**
      * This function is required for testing purposes
      */
-    private fun getResourceUrl(strPath: String): URL? {
-      return ZoweConfigServiceImpl::class.java.classLoader?.getResource(strPath)
+    private fun getResourceStream(strPath: String): InputStream? {
+      return ZoweConfigServiceImpl::class.java.classLoader?.getResourceAsStream(strPath)
     }
   }
 
@@ -280,12 +276,14 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val jsonFileName = "${myProject.basePath}/${ZOWE_CONFIG_NAME}"
     val charset: Charset = StandardCharsets.UTF_8
 
-    val pathSourceConfig = getResourceUrl("files/${ZOWE_CONFIG_NAME}")
-    val pathSourceSchema = getResourceUrl("files/zowe.schema.json")
+    val inputStreamSourceConfig = getResourceStream("files/${ZOWE_CONFIG_NAME}")
+    val inputStreamSourceSchema = getResourceStream("files/zowe.schema.json")
 
     val f: File = File(schemaFileName)
     if (!f.exists()) {
-      FileUtils.copyURLToFile(pathSourceSchema, File(schemaFileName))
+      FileOutputStream(f, false).use {
+        inputStreamSourceSchema?.transferTo(it)
+      }
     }
 
     val urlRegex =
@@ -300,14 +298,11 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       port = matcher.group(4).substring(1)
     }
 
-    val array = pathSourceConfig.toString().split("!")
-    val fs: FileSystem = FileSystems.newFileSystem(URI.create(array[0]), HashMap<String, String?>())
-    var content = String(Files.readAllBytes(fs.getPath(array[1])), charset)
-    fs.close()
-    content = content.replace("<PORT>".toRegex(), port)
-    content = content.replace("<HOST>".toRegex(), "\"$host\"")
-    content = content.replace("<SSL>".toRegex(), (!state.isAllowSsl).toString())
-    Files.write(Paths.get(jsonFileName), content.toByteArray(charset))
+    var content  = inputStreamSourceConfig?.readAllBytes()?.let { String(it, charset)}
+    content = content?.replace("<PORT>".toRegex(), port)
+    content = content?.replace("<HOST>".toRegex(), "\"$host\"")
+    content = content?.replace("<SSL>".toRegex(), (!state.isAllowSsl).toString())
+    content?.toByteArray(charset)?.let { Files.write(Paths.get(jsonFileName), it) }
 
     runWriteAction {
       val configCredentialsMap = mutableMapOf<String, Any?>()
