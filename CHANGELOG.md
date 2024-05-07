@@ -4,6 +4,8 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## [Unreleased]
 
+* Feature: plug-in's description in JetBrains marketplace update ([5cc0086a](https://github.com/zowe/zowe-explorer-intellij/commit/5cc0086a))
+
 ## [1.2.0-221] (2024-04-16)
 
 ### Features
