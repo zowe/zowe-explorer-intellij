@@ -108,9 +108,11 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       VirtualFileManager.getInstance().findFileByNioPath(Path.of(zoweConfigLocation))
     } ?: return null
     return try {
-      parseConfigJson(zoweFile.inputStream).also {
-        it.extractSecureProperties(zoweFile.path.split("/").toTypedArray())
-        zoweConfig = it
+      zoweFile.inputStream.use { zoweFileInputStream ->
+        parseConfigJson(zoweFileInputStream).also { tmpZoweConfig ->
+          tmpZoweConfig.extractSecureProperties(zoweFile.path.split("/").toTypedArray())
+          zoweConfig = tmpZoweConfig
+        }
       }
     } catch (e: Exception) {
       throw Exception("Cannot parse Zowe config file")
@@ -276,13 +278,10 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val jsonFileName = "${myProject.basePath}/${ZOWE_CONFIG_NAME}"
     val charset: Charset = StandardCharsets.UTF_8
 
-    val inputStreamSourceConfig = getResourceStream("files/${ZOWE_CONFIG_NAME}")
-    val inputStreamSourceSchema = getResourceStream("files/zowe.schema.json")
-
-    val f: File = File(schemaFileName)
-    if (!f.exists()) {
-      FileOutputStream(f, false).use {
-        inputStreamSourceSchema?.transferTo(it)
+    val fShema = File(schemaFileName)
+    if (!fShema.exists()) {
+      FileOutputStream(fShema, false).use { fOS ->
+       getResourceStream("files/zowe.schema.json").use{iS -> iS?.transferTo(fOS)}
       }
     }
 
@@ -298,7 +297,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       port = matcher.group(4).substring(1)
     }
 
-    var content  = inputStreamSourceConfig?.readAllBytes()?.let { String(it, charset)}
+    var content  =getResourceStream("files/${ZOWE_CONFIG_NAME}").use{iS -> iS?.readAllBytes()?.let { String(it, charset)}}
     content = content?.replace("<PORT>".toRegex(), port)
     content = content?.replace("<HOST>".toRegex(), "\"$host\"")
     content = content?.replace("<SSL>".toRegex(), (!state.isAllowSsl).toString())
