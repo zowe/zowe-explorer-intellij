@@ -22,9 +22,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.zowe.explorer.config.ConfigService
-import org.zowe.explorer.config.connect.*
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.config.connect.getPassword
+import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.ui.zosmf.ZOSMFConnectionConfigurable.Companion.warningMessageForDeleteConfig
+import org.zowe.explorer.config.connect.whoAmI
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
@@ -41,10 +45,14 @@ import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.kotlinsdk.annotations.ZVersion
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
-import java.io.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -274,16 +282,10 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   override fun addZoweConfigFile(state: ConnectionDialogState) {
     checkAndRemoveOldZoweConnection()
 
-    val schemaFileName = "${myProject.basePath}/zowe.schema.json"
     val jsonFileName = "${myProject.basePath}/${ZOWE_CONFIG_NAME}"
     val charset: Charset = StandardCharsets.UTF_8
 
-    val fShema = File(schemaFileName)
-    if (!fShema.exists()) {
-      FileOutputStream(fShema, false).use { fOS ->
-       getResourceStream("files/zowe.schema.json").use{iS -> iS?.transferTo(fOS)}
-      }
-    }
+    createZoweSchemaJsonIfNotExists()
 
     val urlRegex =
       "(https?:\\/\\/)(www\\.)?([-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6})\b?([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*)"
@@ -297,11 +299,14 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       port = matcher.group(4).substring(1)
     }
 
-    var content  =getResourceStream("files/${ZOWE_CONFIG_NAME}").use{iS -> iS?.readAllBytes()?.let { String(it, charset)}}
-    content = content?.replace("<PORT>".toRegex(), port)
-    content = content?.replace("<HOST>".toRegex(), "\"$host\"")
-    content = content?.replace("<SSL>".toRegex(), (!state.isAllowSsl).toString())
-    content?.toByteArray(charset)?.let { Files.write(Paths.get(jsonFileName), it) }
+    val content = getResourceStream("files/${ZOWE_CONFIG_NAME}")
+      .use { iS -> iS?.readAllBytes()?.let { String(it, charset) } }
+      ?.replace("<PORT>".toRegex(), port)
+      ?.replace("<HOST>".toRegex(), "\"$host\"")
+      ?.replace("<SSL>".toRegex(), (!state.isAllowSsl).toString())
+      ?.toByteArray(charset)
+      ?: throw Exception("$ZOWE_CONFIG_NAME is not found")
+    Files.write(Paths.get(jsonFileName), content)
 
     runWriteAction {
       val configCredentialsMap = mutableMapOf<String, Any?>()
@@ -326,6 +331,16 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       it.name = newName
       it.zoweConfigPath = null
       configCrudable.update(it)
+    }
+  }
+
+  private fun createZoweSchemaJsonIfNotExists() {
+    val schemaFileName = "${myProject.basePath}/zowe.schema.json"
+    val schemaFile = File(schemaFileName)
+    if (!schemaFile.exists()) {
+      FileOutputStream(schemaFile, false).use { fOS ->
+        getResourceStream("files/zowe.schema.json").use { iS -> iS?.transferTo(fOS) }
+      }
     }
   }
 
@@ -395,4 +410,3 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   }
 
 }
-

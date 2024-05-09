@@ -162,6 +162,10 @@ tasks {
     )
   }
 
+  classpathIndexCleanup {
+    dependsOn("compileTestKotlin")
+  }
+
   test {
     useJUnitPlatform()
     testLogging {
