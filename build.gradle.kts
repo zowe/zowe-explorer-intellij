@@ -168,6 +168,14 @@ tasks {
 
   test {
     useJUnitPlatform()
+
+    jvmArgs("--add-opens", "java.desktop/java.awt=ALL-UNNAMED")
+    jvmArgs("--add-opens", "java.desktop/sun.awt=ALL-UNNAMED")
+    jvmArgs("--add-opens", "java.desktop/java.awt.event=ALL-UNNAMED")
+    jvmArgs("--add-opens", "java.base/java.lang=ALL-UNNAMED")
+    jvmArgs("--add-exports", "java.base/jdk.internal.vm=ALL-UNNAMED")
+    jvmArgs("--add-opens", "java.base/java.nio.file=ALL-UNNAMED")
+
     testLogging {
       events("passed", "skipped", "failed")
     }
