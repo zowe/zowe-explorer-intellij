@@ -10,9 +10,7 @@
 
 package eu.ibagroup.formainframe.ui.build
 
-import com.intellij.execution.process.NopProcessHandler
-import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.process.ProcessOutputType
+import com.intellij.execution.process.*
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.TerminalExecutionConsole
 import com.jediterm.terminal.TerminalKeyEncoder
@@ -27,7 +25,7 @@ import java.util.Queue
 /**
  * Base class to accept user input from TSO terminal console view
  */
-class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
+class TerminalCommandReceiver(val terminalConsole: TerminalExecutionConsole) {
   private var typedCommand = ""
   private var textAfterCursor = ""
   private var cursorPosition = 0
@@ -52,8 +50,12 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
      * Note: Added possibility to recognize the command to be submitted - TSO ordinary command or execute REXX program command which expects parameters
      */
     override fun write(b: ByteArray) {
-      super.write(b)
+      if (terminalConsole.isOutputPaused) {
+        terminalConsole.terminalWidget.stop()
+        return
+      }
 
+      super.write(b)
       if (!needToWaitForCommandInput) return
 
       if (b.contentEquals("\n".toByteArray()) || b.contentEquals("\r".toByteArray())) {
@@ -189,27 +191,31 @@ class TerminalCommandReceiver(terminalConsole: TerminalExecutionConsole) {
   }
 
   fun waitForCommandInput(onCommandEntered: (String) -> Unit) {
-    if (commandsInQueue.size > 1) {
-      val nextCommand = commandsInQueue.remove()
-      processHandler.notifyTextAvailable("$nextCommand\n", ProcessOutputType.STDOUT)
-      onCommandEntered(nextCommand)
-      return
-    }
-    this.onCommandEntered = onCommandEntered
-    if (commandsInQueue.size == 1) {
-      typedCommand = commandsInQueue.remove()
-      cursorPosition = this.typedCommand.length
-      textAfterCursor = ""
-      processHandler.notifyTextAvailable(typedCommand, ProcessOutputType.STDOUT)
+    if (terminalConsole.isOutputPaused) {
+      stopWaitingCommand()
     } else {
-      this.cleanCommand()
-    }
-    this.needToWaitForCommandInput = true
-    if(initialized) {
-      if (!expectParameters) {
-        processHandler.notifyTextAvailable("> ", ProcessOutputType.STDOUT)
+      if (commandsInQueue.size > 1) {
+        val nextCommand = commandsInQueue.remove()
+        processHandler.notifyTextAvailable("$nextCommand\n", ProcessOutputType.STDOUT)
+        onCommandEntered(nextCommand)
+        return
+      }
+      this.onCommandEntered = onCommandEntered
+      if (commandsInQueue.size == 1) {
+        typedCommand = commandsInQueue.remove()
+        cursorPosition = this.typedCommand.length
+        textAfterCursor = ""
+        processHandler.notifyTextAvailable(typedCommand, ProcessOutputType.STDOUT)
       } else {
-        processHandler.notifyTextAvailable("", ProcessOutputType.STDOUT)
+        this.cleanCommand()
+      }
+      this.needToWaitForCommandInput = true
+      if (initialized) {
+        if (!expectParameters) {
+          processHandler.notifyTextAvailable("> ", ProcessOutputType.STDOUT)
+        } else {
+          processHandler.notifyTextAvailable("", ProcessOutputType.STDOUT)
+        }
       }
     }
   }
