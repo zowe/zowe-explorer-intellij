@@ -8,6 +8,7 @@ build-job:
   script:
     - |
       ls -la
+      ./gradlew clean
       ./gradlew buildPlugin
       cd build/distributions
       ZIP_NAME_WITH_EXT=`ls *.zip`
