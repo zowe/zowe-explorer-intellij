@@ -1,0 +1,49 @@
+stages:
+  - build
+  - test-and-package
+
+build-job:
+  stage: build
+  image: openjdk:17
+  script:
+    - |
+      ls -la
+      ./gradlew buildPlugin
+      cd build/distributions
+      ZIP_NAME_WITH_EXT=`ls *.zip`
+      unzip "$ZIP_NAME_WITH_EXT" -d content
+      mv content ../../built-plugin
+  artifacts:
+    paths:
+      - build/
+      - built-plugin/
+    expire_in: 1 day
+
+test-job:
+  stage: test-and-package
+  image: openjdk:17
+  dependencies:
+    - build-job
+  script:
+    - pwd && ls -la
+    - ./gradlew test
+    - mv build/reports/tests test-results
+    - mv build/reports/kover/html kover-report
+  artifacts:
+    name: "for-mainframe-test-results"
+    paths:
+      - test-results/
+      - kover-report/
+    expire_in: 4 weeks
+
+package-job:
+  stage: test-and-package
+  dependencies:
+    - build-job
+  script:
+    - echo "This is just a step to upload the built plug-in"
+  artifacts:
+    name: "for-mainframe-private"
+    paths:
+      - built-plugin/
+    expire_in: 4 weeks
