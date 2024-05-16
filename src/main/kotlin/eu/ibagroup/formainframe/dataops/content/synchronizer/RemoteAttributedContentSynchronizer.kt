@@ -10,15 +10,20 @@
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.editor.FileContentChangeListener
 import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.vfs.MFBulkFileListener
+import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
@@ -42,6 +47,17 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       handler = object : FileContentChangeListener {
         override fun onUpdate(file: VirtualFile) {
           needToUpload.add(DocumentedSyncProvider(file))
+        }
+      }
+    )
+    subscribe(
+      componentManager = ApplicationManager.getApplication(),
+      topic = MFVirtualFileSystem.MF_VFS_CHANGES_TOPIC,
+      handler = object : MFBulkFileListener {
+        override fun after(events: List<VFileEvent>) {
+          events.filterIsInstance<VFileDeleteEvent>().forEach { event ->
+            fetchedAtLeastOnce.removeIf { it.file == event.file }
+          }
         }
       }
     )
