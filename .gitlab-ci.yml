@@ -7,8 +7,12 @@ build-job:
   image: openjdk:17
   script:
     - |
+      echo "Build is going to proceed with the next Java:"
+      java -version
+      echo "Gradle Wrapper:"
+      ./gradlew -v
+      echo "Current directory state:"
       ls -la
-      ./gradlew clean
       ./gradlew buildPlugin
       cd build/distributions
       ZIP_NAME_WITH_EXT=`ls *.zip`
