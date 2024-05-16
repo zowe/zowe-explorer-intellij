@@ -32,7 +32,7 @@ import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
-import eu.ibagroup.formainframe.utils.runWriteActionInEdt
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
 
@@ -204,6 +204,19 @@ class ExplorerPasteProvider : PasteProvider {
               )
             )
         }
+        // this step is necessary to clean old file after force overwriting performed
+        if (op.forceOverwriting) {
+          val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
+          op.destination.children
+            .filter { file ->
+              file == nameResolver.getConflictingChild(op.source, op.destination) && !file.isDirectory
+            }
+            .apply {
+              runWriteActionInEdtAndWait {
+                forEach { file -> file.delete(this) }
+              }
+            }
+        }
         explorerView.ignoreVFSChangeEvents.compareAndSet(false, true)
         it.text = "${op.source.name} to ${op.destination.name}"
         runCatching {
@@ -215,14 +228,6 @@ class ExplorerPasteProvider : PasteProvider {
           .onSuccess {
             if (explorerView.isCut.get()) {
               copyPasteSupport.removeFromBuffer { node -> node.file == op.source }
-            }
-
-            // this step is necessary to clean old file after force overwriting performed.
-            if (op.forceOverwriting) {
-              val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
-              op.destination.children
-                .filter { file -> file == nameResolver.getConflictingChild(op.source, op.destination) }
-                .forEach { file -> runWriteActionInEdt { file.delete(this) } }
             }
           }
           .onFailure { throwable ->
