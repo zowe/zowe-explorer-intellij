@@ -23,8 +23,8 @@
 test-job:
   stage: test
   image: openjdk:11
-  dependencies:
-    - build-job
+  # dependencies:
+  #   - build-job
   script:
     - |
       echo "Test is going to proceed with the next Java:"
