@@ -152,6 +152,10 @@ tasks {
       events("passed", "skipped", "failed")
     }
 
+    // reports {
+      // junitXml.required.set(true)
+    // }
+
 //    ignoreFailures = true
 
     finalizedBy("koverHtmlReport")
