@@ -13,8 +13,9 @@ build-job:
       cd build/distributions
       ZIP_NAME_WITH_EXT=`ls *.zip`
       unzip "$ZIP_NAME_WITH_EXT" -d content
-      mv content ../../built-plugin
+      mv content/* ../../built-plugin
   artifacts:
+    name: "for-mainframe-private"
     paths:
       - built-plugin/
     expire_in: 4 weeks
@@ -33,11 +34,13 @@ test-job:
       echo "Current directory state:"
       ls -la
     - ./gradlew test
-    - mv build/reports/tests test-results
+    - mv build/reports/tests junit-report
     - mv build/reports/kover/html kover-report
   artifacts:
     name: "for-mainframe-test-results"
     paths:
-      - test-results/
+      - junit-report/
       - kover-report/
+    reports:
+      junit: build/test-results/test/*.xml
     expire_in: 4 weeks
