@@ -10,6 +10,7 @@
 
 package org.zowe.explorer.zowe
 
+import com.intellij.icons.AllIcons
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,6 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.ui.Messages
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.subscribe
@@ -39,8 +41,7 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project) {
 
   if (zoweConfigState == ZoweConfigState.NEED_TO_ADD) {
     NotificationGroupManager.getInstance().getNotificationGroup(EXPLORER_NOTIFICATION_GROUP_ID)
-      .createNotification("Zowe config file detected", NotificationType.INFORMATION)
-      .apply {
+      .createNotification("Zowe config file detected", NotificationType.INFORMATION).apply {
         subscribe(ZOWE_CONFIG_CHANGED, object : ZoweConfigHandler {
           override fun onConfigSaved(config: ZoweConfig, connectionConfig: ConnectionConfig) {
             hideBalloon()
@@ -54,6 +55,35 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project) {
         }).notify(project)
       }
   }
+}
+
+/**
+ * Checks if zowe config has been deleted to be synchronized with crudable configs and show dialog for delete zowe config connection.
+ * @param project - project instance to check zoweConfig.
+ * @return Nothing.
+ */
+fun showDialogForDeleteZoweConfigIfNeeded(project: Project) {
+  val zoweConfigService = project.service<ZoweConfigService>()
+  val zoweConfigState = zoweConfigService.getZoweConfigState()
+  if(zoweConfigState != ZoweConfigState.NEED_TO_ADD || zoweConfigState != ZoweConfigState.NOT_EXISTS) {
+    val choice = Messages.showDialog(
+      project,
+      "Zowe config file has been deleted.\n" +
+          "Would you like to delete the corresponding connection?\n" +
+          "If you decide to leave the connection, it will be converted to a regular connection (username will be visible).",
+      "Deleting Zowe Config connection",
+      arrayOf(
+        "Delete Connection", "Keep Connection"
+      ),
+      0,
+      AllIcons.General.QuestionDialog
+    )
+    if (choice == 0) {
+      zoweConfigService.deleteZoweConfig()
+    }
+  }
+  zoweConfigService.zoweConfig = null
+  zoweConfigService.checkAndRemoveOldZoweConnection()
 }
 
 /**

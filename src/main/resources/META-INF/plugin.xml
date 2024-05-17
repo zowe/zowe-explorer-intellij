@@ -429,6 +429,12 @@ Thank you for considering IBA Group for your mainframe needs.
                 text="Connection"
                 icon="AllIcons.Javaee.WebService"/>
 
+        <action id="org.zowe.explorer.explorer.actions.AddZoweTeamConfigAction"
+                class="org.zowe.explorer.explorer.actions.AddZoweTeamConfigAction"
+                text="Zowe Team Configuration"
+                description="Create Zowe Team Configuration file"
+                icon="ForMainframeIcons.ExplorerToolbarIcon"/>
+
         <action id="org.zowe.explorer.explorer.actions.AllocateDatasetAction"
                 class="org.zowe.explorer.explorer.actions.AllocateDatasetAction"
                 text="Dataset"/>
@@ -741,6 +747,7 @@ Thank you for considering IBA Group for your mainframe needs.
                icon="AllIcons.General.Add"
                popup="true">
             <reference id="org.zowe.explorer.explorer.actions.AddConnectionAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.AddZoweTeamConfigAction"/>
             <reference id="org.zowe.explorer.explorer.actions.AddWorkingSetAction"/>
             <reference id="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"/>
             <reference id="org.zowe.explorer.explorer.actions.TsoSessionCreateAction"/>

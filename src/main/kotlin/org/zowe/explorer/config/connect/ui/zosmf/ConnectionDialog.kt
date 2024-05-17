@@ -12,21 +12,15 @@ package org.zowe.explorer.config.connect.ui.zosmf
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
-import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.DialogMode
-import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.*
@@ -47,52 +41,23 @@ import javax.swing.*
 
 /** Dialog to add a new connection */
 class ConnectionDialog(
-  private val crudable: Crudable,
-  override var state: ConnectionDialogState = ConnectionDialogState(),
-  val project: Project? = null
-) : StatefulDialog<ConnectionDialogState>(project) {
+  crudable: Crudable,
+  state: ConnectionDialogState = ConnectionDialogState(),
+  project: Project? = null
+) : CommonConnectionDialog(crudable, state, project) {
 
   /**
    * Private field
    * In case of DialogMode.UPDATE takes the last successful state from crudable, takes default state otherwise
    */
   private val lastSuccessfulState: ConnectionDialogState =
-    if(state.mode == DialogMode.UPDATE) crudable.find<ConnectionConfig> { it.uuid == state.connectionUuid }
+    if (state.mode == DialogMode.UPDATE) crudable.find<ConnectionConfig> { it.uuid == state.connectionUuid }
       .findAny()
       .orElseGet { state.connectionConfig }
       .toDialogState(crudable) else ConnectionDialogState()
+
   companion object {
-
-    /**
-     * Check if only the connection name has changed in the connection dialog
-     */
-    private fun isOnlyConnectionNameChanged(initialState: ConnectionDialogState, state: ConnectionDialogState): Boolean {
-      return initialState.connectionName != state.connectionName &&
-              initialState.connectionUrl == state.connectionUrl &&
-              initialState.username == state.username &&
-              initialState.password == state.password &&
-              initialState.isAllowSsl == state.isAllowSsl
-    }
-
-    /**
-     * Companion function which takes the instance of ConnectionDialog and checks its current state after OK button is pressed.
-     * @param dialog
-     * @return returns true if there are violations found, if no violations were found then returns false as a result of validation
-     */
-    private fun validateSecureConnectionUsage(dialog : ConnectionDialog) : Boolean {
-      val urlToCheck = dialog.urlTextField.text.trim().startsWith("http://", true)
-      val sslEnabledCheck = dialog.sslCheckbox.isSelected
-      if (urlToCheck || sslEnabledCheck) {
-        return dialog.showSelfSignedUsageWarningDialog(dialog.urlTextField, dialog.sslCheckbox)
-      }
-      return false
-    }
-
-    /** Show Test connection dialog and test the connection regarding the dialog state.
-     * First the method checks whether connection succeeds for specified user/password.
-     * If connection succeeds then the method automatically fill in z/OS version for this connection.
-     * We do not need to worry about choosing z/OS version manually from combo box.
-     * */
+    //Call showAndTestConnectionCommon for current class
     @JvmStatic
     fun showAndTestConnection(
       crudable: Crudable,
@@ -100,113 +65,24 @@ class ConnectionDialog(
       project: Project? = null,
       initialState: ConnectionDialogState
     ): ConnectionDialogState? {
-      var connectionDialog = ConnectionDialog(crudable, initialState, project)
-      val initState = initialState.clone()
-      return showUntilDone(
-        initialState = initialState,
-        factory = { connectionDialog },
-        test = { state ->
-
-          if (validateSecureConnectionUsage(connectionDialog)) {
-            state.connectionUrl = connectionDialog.urlTextField.text
-            state.isAllowSsl = connectionDialog.sslCheckbox.isSelected
-            connectionDialog = ConnectionDialog(crudable, state, project)
-            return@showUntilDone false
-          }
-
-          val newTestedConnConfig : ConnectionConfig
-          if (initialState.mode == DialogMode.UPDATE) {
-            if (isOnlyConnectionNameChanged(initState, state)) {
-              return@showUntilDone true
-            }
-            val newState = state.clone()
-            newState.initEmptyUuids(crudable)
-            newTestedConnConfig = ConnectionConfig(newState.connectionUuid, newState.connectionName, newState.connectionUrl, newState.isAllowSsl, newState.zVersion)
-            CredentialService.instance.setCredentials(
-              connectionConfigUuid = newState.connectionUuid,
-              username = newState.username,
-              password = newState.password
-            )
-          } else {
-            state.initEmptyUuids(crudable)
-            newTestedConnConfig = state.connectionConfig
-            CredentialService.instance.setCredentials(
-              connectionConfigUuid = state.connectionUuid,
-              username = state.username,
-              password = state.password)
-          }
-          val throwable = runTask(title = "Testing Connection to ${newTestedConnConfig.url}", project = project) {
-            return@runTask try {
-              runCatching {
-                service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
-              }.onSuccess {
-                state.owner = whoAmI(newTestedConnConfig) ?: ""
-                val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
-                state.zVersion = when (systemInfo.zosVersion) {
-                  "04.25.00" -> ZVersion.ZOS_2_2
-                  "04.26.00" -> ZVersion.ZOS_2_3
-                  "04.27.00" -> ZVersion.ZOS_2_4
-                  "04.28.00" -> ZVersion.ZOS_2_5
-                  else -> ZVersion.ZOS_2_1
-                }
-              }.onFailure {
-                throw it
-              }
-              null
-            } catch (t: Throwable) {
-              t
-            }
-          }
-          if (throwable != null) {
-            state.mode = DialogMode.UPDATE
-            val confirmMessage = "Do you want to add it anyway?"
-            val tMessage = if (throwable is ProcessCanceledException) {
-              message("explorer.cancel.by.user.error")
-            } else {
-              throwable.message?.let {
-                if (it.contains("Exception")) {
-                  it.substring(it.lastIndexOf(":") + 2)
-                    .replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString() }
-                } else {
-                  it
-                }
-              }
-            }
-            val message = if (tMessage != null) {
-              "$tMessage\n\n$confirmMessage"
-            } else {
-              confirmMessage
-            }
-            val addAnyway = MessageDialogBuilder
-              .yesNo(
-                title = "Error Creating Connection",
-                message = message
-              ).icon(AllIcons.General.ErrorDialog)
-              .run {
-                if (parentComponent != null) {
-                  ask(parentComponent)
-                } else {
-                  ask(project)
-                }
-              }
-            connectionDialog = ConnectionDialog(crudable, state, project)
-            addAnyway
-          } else {
-            true
-          }
-        }
-      )
+      val connectionDialog =
+        ConnectionDialog(crudable, initialState, project)
+      return connectionDialog.showAndTestConnectionCommon(crudable, parentComponent, project, initialState)
     }
   }
 
   private val initialState = state.clone()
 
-  private lateinit var urlTextField: JTextField
-
-  private lateinit var sslCheckbox: JCheckBox
-
   init {
     isResizable = false
+  }
+
+  override fun createConnectionDialog(
+    crudable: Crudable,
+    state: ConnectionDialogState,
+    project: Project?
+  ): CommonConnectionDialog {
+    return ConnectionDialog(crudable, state, project)
   }
 
   /** Create dialog with the fields */
@@ -254,11 +130,11 @@ class ConnectionDialog(
         label("Username")
           .widthGroup(sameWidthLabelsGroup)
         (
-          if (state.zoweConfigPath == null)
-            textField()
-          else
-            cell(JPasswordField())
-        )
+            if (state.zoweConfigPath == null)
+              textField()
+            else
+              cell(JPasswordField())
+            )
           .bindText(state::username)
           .validationOnApply {
             validateForBlank(it.text.trim(), it)
@@ -427,40 +303,5 @@ class ConnectionDialog(
     }
   }
 
-  /**
-   * Function shows the warning dialog if any violations found and resolves them in case "Back to safety" was clicked
-   * @param components - dialog components which have to be resolved to valid values
-   * @return result of the pressed button
-   */
-  private fun showSelfSignedUsageWarningDialog(vararg components : Component) : Boolean {
-    // default return backToSafety
-    val backToSafety = true
-    val choice = Messages.showDialog(
-      project,
-      "Creating an unsecure connection (HTTP instead of HTTP(s) and/or using self-signed certificates) is not recommended.\n" +
-          "You do this at your own peril and risk, and we do not bear any responsibility for the possible consequences of using this type of connection.\n" +
-          "Please contact your system administrator to configure your system to be able to create a secure connection.\n\n" +
-          "Do you want to proceed anyway?",
-      "Attempt to create an unsecured connection",
-      arrayOf(
-        "Back to safety",
-        "Proceed"
-      ),
-      0,
-      AllIcons.General.WarningDialog,
-      null
-    )
-    return when (choice) {
-      0 -> {
-        components.forEach {
-          if (it is JBCheckBox) it.isSelected = false
-          if (it is JBTextField) it.text = it.text.replace("http", "https", true)
-        }
-        backToSafety
-      }
-      1 -> !backToSafety
-      else -> backToSafety
-    }
-  }
 
 }

@@ -46,7 +46,7 @@ val junitVersion = "5.10.2"
 val mockkVersion = "1.13.10"
 val ibmMqVersion = "9.3.5.0"
 val jGraphTVersion = "1.5.2"
-val zoweKotlinSdkVersion = "0.4.0"
+val zoweKotlinSdkVersion = "0.5.0-rc.7"
 val javaKeytarVersion = "1.0.0"
 
 repositories {
@@ -162,8 +162,20 @@ tasks {
     )
   }
 
+  classpathIndexCleanup {
+    dependsOn("compileTestKotlin")
+  }
+
   test {
     useJUnitPlatform()
+
+    jvmArgs("--add-opens", "java.desktop/java.awt=ALL-UNNAMED")
+    jvmArgs("--add-opens", "java.desktop/sun.awt=ALL-UNNAMED")
+    jvmArgs("--add-opens", "java.desktop/java.awt.event=ALL-UNNAMED")
+    jvmArgs("--add-opens", "java.base/java.lang=ALL-UNNAMED")
+    jvmArgs("--add-exports", "java.base/jdk.internal.vm=ALL-UNNAMED")
+    jvmArgs("--add-opens", "java.base/java.nio.file=ALL-UNNAMED")
+
     testLogging {
       events("passed", "skipped", "failed")
     }
