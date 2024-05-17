@@ -13,8 +13,9 @@ build-job:
       cd build/distributions
       ZIP_NAME_WITH_EXT=`ls *.zip`
       unzip "$ZIP_NAME_WITH_EXT" -d content
-      mv content ../../built-plugin
+      mv content/* ../../built-plugin
   artifacts:
+    name: "for-mainframe-private"
     paths:
       - built-plugin/
     expire_in: 4 weeks
