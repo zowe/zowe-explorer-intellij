@@ -13,7 +13,7 @@ package eu.ibagroup.formainframe.testutils.testServiceImpl
 import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 
-class TestZosmfApiImpl : ZosmfApi {
+open class TestZosmfApiImpl : ZosmfApi {
   var testInstance = object : ZosmfApi {
     override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
       TODO("Not yet implemented")
