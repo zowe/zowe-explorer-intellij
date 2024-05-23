@@ -24,6 +24,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import javax.swing.JComponent
 import com.intellij.ui.dsl.builder.*
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
+import eu.ibagroup.formainframe.utils.getParamTextValueOrUnknown
 import eu.ibagroup.formainframe.utils.getSupportedEncodings
 import org.zowe.kotlinsdk.*
 import java.nio.charset.Charset
@@ -101,7 +102,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         label("Last modified: ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(state.ussAttributes.modificationTime ?: "")
+          .text(getParamTextValueOrUnknown(state.ussAttributes.modificationTime))
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -124,7 +125,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
           label("Symlink to: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(state.ussAttributes.symlinkTarget ?: "")
+            .text(getParamTextValueOrUnknown(state.ussAttributes.symlinkTarget))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -136,7 +137,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         label("Owner: ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(state.ussAttributes.owner ?: "")
+          .text(getParamTextValueOrUnknown(state.ussAttributes.owner))
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -144,7 +145,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         label("Group: ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(state.ussAttributes.groupId ?: "")
+          .text(getParamTextValueOrUnknown(state.ussAttributes.groupId))
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -152,7 +153,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         label("The numeric group ID (GID): ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(state.ussAttributes.gid?.toString() ?: "")
+          .text(getParamTextValueOrUnknown(state.ussAttributes.gid))
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
