@@ -20,6 +20,8 @@ import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.utils.UNKNOWN_PARAM_VALUE
+import eu.ibagroup.formainframe.utils.getParamTextValueOrUnknown
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.HasMigrated
 import javax.swing.JComponent
@@ -51,7 +53,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Dataset name type: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.dsnameType?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(dataset.dsnameType))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -59,7 +61,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Catalog name: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.catalogName ?: "")
+            .text(getParamTextValueOrUnknown(dataset.catalogName))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -67,7 +69,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Volume serials: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.volumeSerials ?: "")
+            .text(getParamTextValueOrUnknown(dataset.volumeSerials))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -75,7 +77,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Device type: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.deviceType ?: "")
+            .text(getParamTextValueOrUnknown(dataset.deviceType))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -100,7 +102,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
                 DatasetOrganization.PS -> "Sequential (PS)"
                 DatasetOrganization.PO -> "Partitioned (PO)"
                 DatasetOrganization.POE -> "Partitioned Extended (PO-E)"
-                else -> ""
+                else -> UNKNOWN_PARAM_VALUE
               }
             )
             .applyToComponent { isEditable = false }
@@ -110,7 +112,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Record format: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.recordFormat?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(dataset.recordFormat))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -118,7 +120,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Record length: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.recordLength?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(dataset.recordLength))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -126,7 +128,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Block size: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.blockSize?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(dataset.blockSize))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -134,7 +136,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Size in tracks: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.sizeInTracks?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(dataset.sizeInTracks))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -142,7 +144,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
           label("Space units: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(dataset.spaceUnits?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(dataset.spaceUnits))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -165,7 +167,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         label("Used tracks (blocks): ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(dataset.usedTracksOrBlocks?.toString() ?: "")
+          .text(getParamTextValueOrUnknown(dataset.usedTracksOrBlocks))
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -173,7 +175,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         label("Used extents: ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(dataset.extendsUsed?.toString() ?: "")
+          .text(getParamTextValueOrUnknown(dataset.extendsUsed))
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -185,7 +187,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         label("Creation date: ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(dataset.creationDate ?: "")
+          .text(getParamTextValueOrUnknown(dataset.creationDate))
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -193,7 +195,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         label("Referenced date: ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(dataset.lastReferenceDate ?: "")
+          .text(getParamTextValueOrUnknown(dataset.lastReferenceDate))
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
@@ -201,7 +203,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
         label("Expiration date: ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(dataset.expirationDate ?: "")
+          .text(getParamTextValueOrUnknown(dataset.expirationDate))
           .applyToComponent { isEditable = false }
           .horizontalAlign(HorizontalAlign.FILL)
       }
