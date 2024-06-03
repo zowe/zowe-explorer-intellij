@@ -20,11 +20,7 @@ import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.explorer.actions.DuplicateMemberAction
 import org.zowe.explorer.explorer.actions.RenameAction
-import org.zowe.explorer.utils.validateDatasetNameOnInput
-import org.zowe.explorer.utils.validateForBlank
-import org.zowe.explorer.utils.validateMemberName
-import org.zowe.explorer.utils.validateUssFileName
-import org.zowe.explorer.utils.validateUssFileNameAlreadyExists
+import org.zowe.explorer.utils.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -83,6 +79,9 @@ class RenameDialog(
    */
   private fun validateOnInput(component: JTextField): ValidationInfo? {
     val attributes = selectedNodeData.attributes
+
+    validateForTheSameValue(attributes?.name, component)?.let { return it }
+
     when (node) {
       is LibraryNode, is FileLikeDatasetNode -> {
         return if (attributes is RemoteDatasetAttributes) {

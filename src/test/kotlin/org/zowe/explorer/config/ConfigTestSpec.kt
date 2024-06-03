@@ -237,6 +237,73 @@ class ConfigTestSpec : WithApplicationShouldSpec({
 
         assertSoftly { actual shouldBe "ZOSMFAD" }
       }
+
+      should("return empty owner if TSO request returns empty data") {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            val tsoResponse = TsoResponse(
+              servletKey = "servletKey",
+              tsoData = listOf(TsoData())
+            )
+            if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
+              tsoResponse.tsoData = listOf(
+                TsoData(tsoMessage = MessageType("", ""))
+              )
+            }
+            @Suppress("UNCHECKED_CAST")
+            return tsoResponse as R
+          }
+        }
+
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe "" }
+      }
+
+      should("return empty owner if TSO request returns READY") {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            val tsoResponse = TsoResponse(
+              servletKey = "servletKey",
+              tsoData = listOf(TsoData())
+            )
+            if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
+              tsoResponse.tsoData = listOf(
+                TsoData(tsoMessage = MessageType("", "READY "))
+              )
+            }
+            @Suppress("UNCHECKED_CAST")
+            return tsoResponse as R
+          }
+        }
+
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe "" }
+      }
+
+      should("return empty owner if TSO request returns error message in TSO data") {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            val tsoResponse = TsoResponse(
+              servletKey = "servletKey",
+              tsoData = listOf(TsoData())
+            )
+            if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
+              tsoResponse.tsoData = listOf(
+                TsoData(tsoMessage = MessageType("", "OSHELL RC = 65210"))
+              )
+            }
+            @Suppress("UNCHECKED_CAST")
+            return tsoResponse as R
+          }
+        }
+        
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe "" }
+      }
+
       should("do not get the owner by TSO request if servlet key is null") {
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
