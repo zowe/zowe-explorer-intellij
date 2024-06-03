@@ -30,7 +30,8 @@ abstract class ConnectionsTableModelBase<ConnectionConfig : ConnectionConfigBase
   crudable,
   ConnectionNameColumn(),
   ConnectionUrlColumn(connectionUrlColumnName),
-  ConnectionUsernameColumn()
+  ConnectionUsernameColumn(),
+  ConnectionUssOwnerColumn()
 ) {
   abstract val connectionConfigClass: Class<out ConnectionConfig>
 

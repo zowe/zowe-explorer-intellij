@@ -4,6 +4,10 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 
 ## [Unreleased]
 
+* Feature: plug-in's description in JetBrains marketplace update ([5cc0086a](https://github.com/zowe/zowe-explorer-intellij/commit/5cc0086a))
+
+## [1.2.0-231] (2024-04-16)
+
 ### Features
 
 * Feature: GitHub issue #118: getActionUpdateThread function is overridden for each AnAction class inheritors ([639b60ee](https://github.com/zowe/zowe-explorer-intellij/commit/639b60ee))
@@ -460,6 +464,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.0-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.2-231...1.2.0-231
 [1.1.2-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-231...1.1.2-231
 [1.1.1-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.0-231...1.1.1-231
 [1.1.0-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.3-231...1.1.0-231

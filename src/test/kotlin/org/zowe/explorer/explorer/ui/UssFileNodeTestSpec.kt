@@ -208,11 +208,11 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
 
         var isErrorMessageInDialogCalled = false
         val showDialogSpecificMock: (
-          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+          Project?, String, String, Array<String>, Int, Icon?
         ) -> Int = Messages::showDialog
         mockkStatic(showDialogSpecificMock as KFunction<*>)
         every {
-          showDialogSpecificMock(any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any(), any())
+          showDialogSpecificMock(any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?)
         } answers {
           isErrorMessageInDialogCalled = true
           1

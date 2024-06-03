@@ -11,6 +11,9 @@
 package org.zowe.explorer.config.connect.ui.zosmf
 
 import com.intellij.icons.AllIcons
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
@@ -30,6 +33,7 @@ import org.zowe.explorer.config.connect.ui.ChangePasswordDialog
 import org.zowe.explorer.config.connect.ui.ChangePasswordDialogState
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.*
+import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
@@ -148,12 +152,29 @@ class ConnectionDialog(
             addAnyway
           } else {
             runTask(title = "Retrieving user information", project = project) {
+              // Could be empty if TSO request fails
               state.owner = whoAmI(newTestedConnConfig) ?: ""
             }
+            if (state.owner.isEmpty()) showWarningNotification(project)
             true
           }
         }
       )
+    }
+
+    /**
+     * Function shows a warning notification if USS owner cannot be retrieved
+     */
+    private fun showWarningNotification(project: Project?) {
+      Notification(
+        EXPLORER_NOTIFICATION_GROUP_ID,
+        "Unable to retrieve USS username",
+        "Cannot retrieve USS username. An error happened while executing TSO request.\n" +
+            "When working with USS files the same username will be used that was specified by the user when connecting.",
+        NotificationType.WARNING
+      ).let {
+        Notifications.Bus.notify(it, project)
+      }
     }
   }
 

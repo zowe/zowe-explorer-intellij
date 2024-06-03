@@ -49,6 +49,14 @@ private val volserRegex = Regex("[A-Za-z0-9]{1,6}")
 private val firstLetterRegex = Regex("[A-Z@\$#a-z]")
 private val memberRegex = Regex("[A-Z@$#a-z][A-Z@#\$a-z0-9]{0,7}")
 
+/**
+ * Validate text field for a match with the previous value
+ * @param prev of the current node
+ * @param component the component containing the invalid data
+ */
+fun validateForTheSameValue(prev: String?, component: JTextField): ValidationInfo? {
+  return if (component.text == prev) ValidationInfo("Field value matches the previous one", component) else null
+}
 
 /**
  * Validate text field for blank value

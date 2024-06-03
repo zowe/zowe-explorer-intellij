@@ -12,7 +12,6 @@ package org.zowe.explorer.dataops.content.synchronizer
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
-import okhttp3.ResponseBody
 import org.zowe.explorer.api.api
 import org.zowe.explorer.api.apiWithBytesConverter
 import org.zowe.explorer.config.connect.ConnectionConfig
@@ -20,8 +19,14 @@ import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.utils.applyIfNotNull
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.findAnyNullable
+import org.zowe.explorer.utils.log
+import org.zowe.explorer.utils.mapNotNull
 import org.zowe.explorer.vfs.MFVirtualFile
+import okhttp3.ResponseBody
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.XIBMDataType
@@ -186,15 +191,23 @@ class SeqDatasetContentSynchronizer(
   }
 
   /**
-   * Check if the content synchronizer accepts the provided file
+   * Check if the content synchronizer accepts the provided sequential dataset virtual file
    * @param file the file to check
-   * @return true if the file is not migrated and the dataset organization parameter is not VS
+   * @return true if:
+   * 1. The dataset is not migrated
+   * 2. The dataset organization parameter is not VS (it is not a VSAM or VSAM-related file)
+   * 3. It is not an ALIAS
    */
   override fun accepts(file: VirtualFile): Boolean {
-    return super.accepts(file) &&
-      dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {
-        !it.isMigrated && it.datasetInfo.datasetOrganization != DatasetOrganization.VS
-      } == true
+    val isOurVFile = super.accepts(file)
+    return if (isOurVFile) {
+      val dsAttributes = dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()
+      return dsAttributes != null
+          && !dsAttributes.isMigrated
+          && dsAttributes.datasetInfo.datasetOrganization != DatasetOrganization.VS
+          && dsAttributes.datasetInfo.volumeSerial != "*ALIAS"
+    } else {
+      false
+    }
   }
-
 }
