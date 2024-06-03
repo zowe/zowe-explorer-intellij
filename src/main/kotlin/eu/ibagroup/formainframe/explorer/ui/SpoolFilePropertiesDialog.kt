@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
+import eu.ibagroup.formainframe.utils.getParamTextValueOrUnknown
 import javax.swing.JComponent
 
 /** Class to create dialog for spool file properties*/
@@ -69,7 +70,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           label("Job correlator: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(spoolFile.jobCorrelator ?: "")
+            .text(getParamTextValueOrUnknown(spoolFile.jobCorrelator))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -101,7 +102,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           label("Step name: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(spoolFile.stepName ?: "")
+            .text(getParamTextValueOrUnknown(spoolFile.stepName))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -109,7 +110,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           label("Process step: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(spoolFile.procStep ?: "")
+            .text(getParamTextValueOrUnknown(spoolFile.procStep))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -161,7 +162,7 @@ class SpoolFilePropertiesDialog(val project: Project?, override var state: Spool
           label("Subsystem: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(spoolFile.subsystem ?: "")
+            .text(getParamTextValueOrUnknown(spoolFile.subsystem))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }

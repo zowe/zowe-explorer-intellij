@@ -20,6 +20,8 @@ import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.utils.UNKNOWN_PARAM_VALUE
+import eu.ibagroup.formainframe.utils.getParamTextValueOrUnknown
 import javax.swing.JComponent
 
 class MemberPropertiesDialog(var project: Project?, override var state: MemberState) : DialogWrapper(project),
@@ -54,7 +56,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
               if (member.versionNumber != null && member.modificationLevel != null) {
                 "${member.versionNumber}.${member.modificationLevel}"
               } else {
-                ""
+                UNKNOWN_PARAM_VALUE
               }
             )
             .applyToComponent { isEditable = false }
@@ -64,7 +66,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Create Date: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.creationDate ?: "")
+            .text(getParamTextValueOrUnknown(member.creationDate))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -72,7 +74,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Modification Date: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.modificationDate ?: "")
+            .text(getParamTextValueOrUnknown(member.modificationDate))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -80,7 +82,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Modification Time: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.lastChangeTime ?: "")
+            .text(getParamTextValueOrUnknown(member.lastChangeTime))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -88,7 +90,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Userid that Created/Modified: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.user ?: "")
+            .text(getParamTextValueOrUnknown(member.user))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -102,7 +104,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Current number of records: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.currentNumberOfRecords?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(member.currentNumberOfRecords))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -110,7 +112,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Beginning number of records: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.beginningNumberOfRecords?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(member.beginningNumberOfRecords))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -118,7 +120,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Number of changed records: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.numberOfChangedRecords?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(member.numberOfChangedRecords))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -144,7 +146,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Authorization code: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.authorizationCode ?: "")
+            .text(getParamTextValueOrUnknown(member.authorizationCode))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -152,7 +154,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Current Member is alias of: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.aliasOf ?: "")
+            .text(getParamTextValueOrUnknown(member.aliasOf))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -160,7 +162,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Load module attributes: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.loadModuleAttributes ?: "")
+            .text(getParamTextValueOrUnknown(member.loadModuleAttributes))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -168,7 +170,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Member AMODE: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.amode ?: "")
+            .text(getParamTextValueOrUnknown(member.amode))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -176,7 +178,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Member RMODE: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.rmode ?: "")
+            .text(getParamTextValueOrUnknown(member.rmode))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -184,7 +186,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Size: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.size ?: "")
+            .text(getParamTextValueOrUnknown(member.size))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -192,7 +194,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("Member TTR: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.ttr ?: "")
+            .text(getParamTextValueOrUnknown(member.ttr))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -200,7 +202,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
           label("SSI information for a load module: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(member.ssi ?: "")
+            .text(getParamTextValueOrUnknown(member.ssi))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }

@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.DialogState
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
+import eu.ibagroup.formainframe.utils.getParamTextValueOrUnknown
 import javax.swing.JComponent
 
 /** Class to create dialog for job file properties*/
@@ -67,7 +68,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("Subsystem: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.subSystem ?: "")
+            .text(getParamTextValueOrUnknown(job.subSystem))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -83,7 +84,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("Status: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.status?.toString() ?: "")
+            .text(getParamTextValueOrUnknown(job.status))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -99,7 +100,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("Job class: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.jobClass ?: "")
+            .text(getParamTextValueOrUnknown(job.jobClass))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -107,7 +108,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("Return code: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.returnedCode ?: "")
+            .text(getParamTextValueOrUnknown(job.returnedCode))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -115,7 +116,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("Job correlator: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.jobCorrelator ?: "")
+            .text(getParamTextValueOrUnknown(job.jobCorrelator))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -160,7 +161,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("System executor: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.execSystem ?: "")
+            .text(getParamTextValueOrUnknown(job.execSystem))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -168,7 +169,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("Reason not running: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.reasonNotRunning ?: "")
+            .text(getParamTextValueOrUnknown(job.reasonNotRunning))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -181,7 +182,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("Submitted (input end time): ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.execSubmitted ?: "")
+            .text(getParamTextValueOrUnknown(job.execSubmitted))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -189,7 +190,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("Job start time: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.execStarted ?: "")
+            .text(getParamTextValueOrUnknown(job.execStarted))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
@@ -197,7 +198,7 @@ class JobPropertiesDialog(val project: Project?, override var state: JobState) :
           label("Time ended: ")
             .widthGroup(sameWidthGroup)
           textField()
-            .text(job.execEnded ?: "")
+            .text(getParamTextValueOrUnknown(job.execEnded))
             .applyToComponent { isEditable = false }
             .horizontalAlign(HorizontalAlign.FILL)
         }
