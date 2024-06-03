@@ -201,7 +201,7 @@ class SeqDatasetContentSynchronizer(
   override fun accepts(file: VirtualFile): Boolean {
     val isOurVFile = super.accepts(file)
     return if (isOurVFile) {
-      val dsAttributes = attributesService.castOrNull<RemoteDatasetAttributes>()
+      val dsAttributes = dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()
       return dsAttributes != null
           && !dsAttributes.isMigrated
           && dsAttributes.datasetInfo.datasetOrganization != DatasetOrganization.VS

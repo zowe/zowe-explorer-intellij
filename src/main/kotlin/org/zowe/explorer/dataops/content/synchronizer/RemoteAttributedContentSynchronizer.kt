@@ -10,15 +10,20 @@
 
 package org.zowe.explorer.dataops.content.synchronizer
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.editor.FileContentChangeListener
 import org.zowe.explorer.utils.*
+import org.zowe.explorer.vfs.MFBulkFileListener
+import org.zowe.explorer.vfs.MFVirtualFileSystem
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
@@ -41,6 +46,17 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       handler = object : FileContentChangeListener {
         override fun onUpdate(file: VirtualFile) {
           needToUpload.add(DocumentedSyncProvider(file))
+        }
+      }
+    )
+    subscribe(
+      componentManager = ApplicationManager.getApplication(),
+      topic = MFVirtualFileSystem.MF_VFS_CHANGES_TOPIC,
+      handler = object : MFBulkFileListener {
+        override fun after(events: List<VFileEvent>) {
+          events.filterIsInstance<VFileDeleteEvent>().forEach { event ->
+            fetchedAtLeastOnce.removeIf { it.file == event.file }
+          }
         }
       }
     )

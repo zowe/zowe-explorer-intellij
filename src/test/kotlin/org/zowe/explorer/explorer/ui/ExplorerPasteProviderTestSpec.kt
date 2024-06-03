@@ -497,6 +497,8 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val childDestinationVirtualFile = mockk<MFVirtualFile>()
         val childDestFileAttributes = mockk<RemoteUssAttributes>()
         every { childDestinationVirtualFile.name } returns "test_folder_source"
+        every { childDestinationVirtualFile.isDirectory } returns false
+        every { childDestinationVirtualFile.delete(any()) } just Runs
         every { childDestFileAttributes.isDirectory } returns false
         every { mockedSourceFile.children } returns arrayOf(childDestinationVirtualFile)
 
@@ -1216,6 +1218,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
           every { childDestinationVirtualFile.isDirectory } returns isDirectory
           every { childDestinationVirtualFile.name } returns fileName
+          every { childDestinationVirtualFile.delete(any()) } just Runs
           every { childDestFileAttributes.isDirectory } returns isDirectory
           every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestFileAttributes
           destinationChildFiles.add(childDestinationVirtualFile)

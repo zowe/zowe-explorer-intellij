@@ -29,7 +29,7 @@ import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.getMinimalCommonParents
-import org.zowe.explorer.utils.runWriteActionInEdt
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
 
@@ -192,6 +192,19 @@ class ExplorerPasteProvider : PasteProvider {
     ) {
       it.isIndeterminate = false
       operations.forEach { op ->
+        // this step is necessary to clean old file after force overwriting performed
+        if (op.forceOverwriting) {
+          val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
+          op.destination.children
+            .filter { file ->
+              file == nameResolver.getConflictingChild(op.source, op.destination) && !file.isDirectory
+            }
+            .apply {
+              runWriteActionInEdtAndWait {
+                forEach { file -> file.delete(this) }
+              }
+            }
+        }
         explorerView.ignoreVFSChangeEvents.compareAndSet(false, true)
         it.text = "${op.source.name} to ${op.destination.name}"
         runCatching {
@@ -203,14 +216,6 @@ class ExplorerPasteProvider : PasteProvider {
           .onSuccess {
             if (explorerView.isCut.get()) {
               copyPasteSupport.removeFromBuffer { node -> node.file == op.source }
-            }
-
-            // this step is necessary to clean old file after force overwriting performed.
-            if (op.forceOverwriting) {
-              val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
-              op.destination.children
-                .filter { file -> file == nameResolver.getConflictingChild(op.source, op.destination) }
-                .forEach { file -> runWriteActionInEdt { file.delete(this) } }
             }
           }
           .onFailure { throwable ->
