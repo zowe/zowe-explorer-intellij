@@ -34,6 +34,6 @@ class SeqToPDSResolver(val dataOpsManager: DataOpsManager) : IndexedNameResolver
 
   override fun resolveNameWithIndex(source: VirtualFile, destination: VirtualFile, index: Int?): String {
     val lastQualifier = source.name.split(".").last()
-    return if (index == null) lastQualifier else "${lastQualifier.take(7)}${index}"
+    return if (index == null) lastQualifier else "${lastQualifier.take(8 - index.toString().length)}${index}"
   }
 }
