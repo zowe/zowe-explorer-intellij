@@ -700,7 +700,6 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           )
         } answers {
           isShowYesNoDialogCalled = true
-          isPastePerformed = false
           1
         }
 
@@ -710,7 +709,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
         } answers {
           val dialogTitle = firstArg<String>()
-          isShowYesNoDialogCalled = true
+          isPastePerformed = false
           !dialogTitle.contains("Downloading Files")
         }
 
@@ -747,7 +746,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val mockedSourceNode3 = mockk<UssFileNode>()
         val mockedSourceFile3 = mockk<MFVirtualFile>()
         val mockedSourceAttributes3 = mockk<RemoteUssAttributes>()
-        every { mockedSourceFile3.name } returns "test1"
+        every { mockedSourceFile3.name } returns "test3"
         every { mockedSourceFile3.isDirectory } returns false
         every { mockedSourceFile3.parent } returns null
         every { mockedSourceAttributes3.isPastePossible } returns false
@@ -787,7 +786,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val mockedSourceNode6 = mockk<UssFileNode>()
         val mockedSourceFile6 = mockk<MFVirtualFile>()
         val mockedSourceAttributes6 = mockk<RemoteUssAttributes>()
-        every { mockedSourceFile6.name } returns "test1"
+        every { mockedSourceFile6.name } returns "test6"
         every { mockedSourceFile6.isDirectory } returns true
         every { mockedSourceFile6.parent } returns null
         every { mockedSourceAttributes6.isPastePossible } returns false
@@ -1568,21 +1567,19 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
             )
           } returns Messages.YES
           every {
-            Messages.showDialog(
-              any() as Project?,
+            Messages.showOkCancelDialog(
               any() as String,
               any() as String,
-              any() as Array<String>,
-              0,
+              any() as String,
+              any() as String,
               any() as Icon?,
-              null
             )
           } answers {
             if (!decideOptionSelected) {
               decideOptionSelected = true
-              2
+              Messages.OK
             } else {
-              2
+              Messages.CANCEL
             }
           }
 
