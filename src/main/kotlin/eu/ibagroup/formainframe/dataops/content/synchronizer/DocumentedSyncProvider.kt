@@ -60,11 +60,11 @@ class DocumentedSyncProvider(
       lateinit var details: String
 
       if (th is CallException) {
-        title = (th.errorParams?.getOrDefault("message", th.headMessage) as String).replaceFirstChar { it.uppercase() }
+        title = ((th.errorParams?.getOrDefault("message", th.headMessage) ?: "") as String).replaceFirstChar { it.uppercase() }
         if (title.contains(".")) {
           title = title.split(".")[0]
         }
-        details = th.errorParams["details"]?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
+        details = th.errorParams?.get("details")?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
         if (details.contains(":")) {
           details = details.split(":").last()
         }
