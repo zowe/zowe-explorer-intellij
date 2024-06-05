@@ -24,6 +24,6 @@ data class MaskedRequester(
   override val connectionConfig: ConnectionConfig,
   val queryMask: DSMask,
 ) : Requester<ConnectionConfig> {
-  val queryVolser: String?
-    get() = queryMask.volser.nullIfBlank()
+  val queryVolser: String
+    get() = queryMask.volser
 }
