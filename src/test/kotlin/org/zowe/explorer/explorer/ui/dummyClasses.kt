@@ -84,6 +84,10 @@ open class TestFileEditorManager : FileEditorManager() {
     TODO("Not yet implemented")
   }
 
+  override fun getAllEditorList(file: VirtualFile): MutableList<FileEditor> {
+    TODO("Not yet implemented")
+  }
+
   override fun addTopComponent(editor: FileEditor, component: JComponent) {
     TODO("Not yet implemented")
   }
