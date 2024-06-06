@@ -36,7 +36,7 @@ group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 val remoteRobotVersion = "0.11.22"
 val okHttp3Version = "4.12.0"
-val kotestVersion = "5.8.1"
+val kotestVersion = "5.9.0"
 
 repositories {
   mavenCentral()
