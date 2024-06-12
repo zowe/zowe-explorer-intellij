@@ -2,9 +2,10 @@
 
 All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be documented in this file.
 
-## [Unreleased]
+## [1.2.1-223] (2024-06-12)
 
 ### Features
+
 * Feature: Change dialogs as DoNotAskOption is going to be removed soon ([0d6b5d57](https://github.com/zowe/zowe-explorer-intellij/commit/0d6b5d57))
 * Feature: Add 'Unknown' to fields in dataset properties dialog when there is no information for fields ([5b32a4df](https://github.com/zowe/zowe-explorer-intellij/commit/5b32a4df))
 * Feature: Validate owner when receiving information from TSO ([9db42fb8](https://github.com/zowe/zowe-explorer-intellij/commit/9db42fb8))
@@ -12,6 +13,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Feature: plug-in's description in JetBrains marketplace update ([5cc0086a](https://github.com/zowe/zowe-explorer-intellij/commit/5cc0086a))
 
 ### Bugfixes
+
 * Bugfix: Rename of the opened file causes exception ([09453311](https://github.com/zowe/zowe-explorer-intellij/commit/09453311))
 * Bugfix: Refresh does not work on the first try ([7af1c668](https://github.com/zowe/zowe-explorer-intellij/commit/7af1c668))
 * Bugfix: "File Cache Conflict" when downloading file ([3f84b02a](https://github.com/zowe/zowe-explorer-intellij/commit/3f84b02a))
@@ -476,6 +478,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.1-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.0-223...1.2.1-223
 [1.2.0-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.2-223...1.2.0-223
 [1.1.2-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-223...1.1.2-223
 [1.1.1-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.0-223...1.1.1-223
