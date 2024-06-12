@@ -44,7 +44,7 @@ fun whoAmI(connectionConfig: ConnectionConfig): String? {
           TsoOperation(
             state = tsoSession,
             mode = TsoOperationMode.SEND_MESSAGE,
-            messageType = MessageType.TSO_MESSAGE,
+            messageType = MessageType.TSO_RESPONSE,
             messageData = MessageData.DATA_DATA,
             message = "oshell whoami"
           )
