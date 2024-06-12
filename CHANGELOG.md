@@ -5,6 +5,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 ## [Unreleased]
 
 ### Features
+* Feature: GitHub issue #182 ([4631d76f](https://github.com/zowe/zowe-explorer-intellij/commit/4631d76f))
 * Feature: Change dialogs as DoNotAskOption is going to be removed soon ([0d6b5d57](https://github.com/zowe/zowe-explorer-intellij/commit/0d6b5d57))
 * Feature: Add 'Unknown' to fields in dataset properties dialog when there is no information for fields ([5b32a4df](https://github.com/zowe/zowe-explorer-intellij/commit/5b32a4df))
 * Feature: Validate owner when receiving information from TSO ([9db42fb8](https://github.com/zowe/zowe-explorer-intellij/commit/9db42fb8))
