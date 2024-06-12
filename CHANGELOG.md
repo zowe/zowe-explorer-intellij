@@ -5,6 +5,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 ## [Unreleased]
 
 ### Features
+* Feature: GitHub issue #182 ([4631d76f](https://github.com/zowe/zowe-explorer-intellij/commit/4631d76f))
 * Feature: Change dialogs as DoNotAskOption is going to be removed soon ([0d6b5d57](https://github.com/zowe/zowe-explorer-intellij/commit/0d6b5d57))
 * Feature: Add 'Unknown' to fields in dataset properties dialog when there is no information for fields ([5b32a4df](https://github.com/zowe/zowe-explorer-intellij/commit/5b32a4df))
 * Feature: Validate owner when receiving information from TSO ([9db42fb8](https://github.com/zowe/zowe-explorer-intellij/commit/9db42fb8))
@@ -12,6 +13,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Feature: plug-in's description in JetBrains marketplace update ([5cc0086a](https://github.com/zowe/zowe-explorer-intellij/commit/5cc0086a))
 
 ### Bugfixes
+* Bugfix: When all errors are corrected, the ok button is inactive ([4558495c](https://github.com/zowe/zowe-explorer-intellij/commit/4558495c))
 * Bugfix: Rename of the opened file causes exception ([09453311](https://github.com/zowe/zowe-explorer-intellij/commit/09453311))
 * Bugfix: Refresh does not work on the first try ([7af1c668](https://github.com/zowe/zowe-explorer-intellij/commit/7af1c668))
 * Bugfix: "File Cache Conflict" when downloading file ([3f84b02a](https://github.com/zowe/zowe-explorer-intellij/commit/3f84b02a))
