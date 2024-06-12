@@ -11,6 +11,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Feature: Conflicts dialog on copy/move improvement ([c8f4d525](https://github.com/zowe/zowe-explorer-intellij/commit/c8f4d525))
 
 ### Bugfixes
+* Bugfix: When all errors are corrected, the ok button is inactive ([4558495c](https://github.com/zowe/zowe-explorer-intellij/commit/4558495c))
 * Bugfix: Rename of the opened file causes exception ([09453311](https://github.com/zowe/zowe-explorer-intellij/commit/09453311))
 * Bugfix: Refresh does not work on the first try ([7af1c668](https://github.com/zowe/zowe-explorer-intellij/commit/7af1c668))
 * Bugfix: "File Cache Conflict" when downloading file ([3f84b02a](https://github.com/zowe/zowe-explorer-intellij/commit/3f84b02a))
