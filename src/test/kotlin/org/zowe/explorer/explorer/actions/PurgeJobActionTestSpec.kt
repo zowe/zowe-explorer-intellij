@@ -114,7 +114,7 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
         response.body()
       } answers {
         if (jobList.isNotEmpty()) {
-          jobList.removeFirst()
+          jobList.removeAt(0)
           jobList
         } else {
           null
