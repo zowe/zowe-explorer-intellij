@@ -10,6 +10,7 @@
 
 package eu.ibagroup.formainframe.utils.ui
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.UiInterceptors
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
@@ -28,10 +29,12 @@ class WindowsLikeMessageDialogTestSpec : WithApplicationShouldSpec({
   }
   
   context("Windows dialog common spec") {
-    
+    val application = ApplicationManager.getApplication()
     val project = ProjectManager.getInstance().defaultProject
     mockkStatic(EventQueue::class)
+    mockkObject(application)
     every { EventQueue.isDispatchThread() } returns true
+    every { application.isDispatchThread } returns true
     
     val actions = arrayOf(
       "Skip the conflicting file(s)",
@@ -91,6 +94,7 @@ class WindowsLikeMessageDialogTestSpec : WithApplicationShouldSpec({
         ((result.getComponent(2) as JPanel).getComponent(0) as JButton).text shouldBe "Decide for each file"
       }
     }
+    unmockkAll()
   }
   
   context("test showWindowsLikeMessageDialog static function") {
@@ -125,5 +129,6 @@ class WindowsLikeMessageDialogTestSpec : WithApplicationShouldSpec({
         exitCode shouldBe 1
       }
     }
+    unmockkAll()
   }
 })
