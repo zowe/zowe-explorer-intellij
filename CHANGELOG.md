@@ -5,6 +5,27 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 ## [Unreleased]
 
 ### Features
+* Feature: Change dialogs as DoNotAskOption is going to be removed soon ([0d6b5d57](https://github.com/zowe/zowe-explorer-intellij/commit/0d6b5d57))
+* Feature: Add 'Unknown' to fields in dataset properties dialog when there is no information for fields ([5b32a4df](https://github.com/zowe/zowe-explorer-intellij/commit/5b32a4df))
+* Feature: Validate owner when receiving information from TSO ([9db42fb8](https://github.com/zowe/zowe-explorer-intellij/commit/9db42fb8))
+* Feature: Conflicts dialog on copy/move improvement ([c8f4d525](https://github.com/zowe/zowe-explorer-intellij/commit/c8f4d525))
+
+### Bugfixes
+* Bugfix: Rename of the opened file causes exception ([09453311](https://github.com/zowe/zowe-explorer-intellij/commit/09453311))
+* Bugfix: Refresh does not work on the first try ([7af1c668](https://github.com/zowe/zowe-explorer-intellij/commit/7af1c668))
+* Bugfix: "File Cache Conflict" when downloading file ([3f84b02a](https://github.com/zowe/zowe-explorer-intellij/commit/3f84b02a))
+* Bugfix: Error opening an alias ([5b6ee654](https://github.com/zowe/zowe-explorer-intellij/commit/5b6ee654))
+* Bugfix: Duplicate error messages ([c8ae8ddc](https://github.com/zowe/zowe-explorer-intellij/commit/c8ae8ddc))
+* Bugfix: Rename file/folder to the same name causes exception ([3587a87b](https://github.com/zowe/zowe-explorer-intellij/commit/3587a87b))
+* Bugfix: SyncAction: AWT events are not allowed inside write action ([796a6b9b](https://github.com/zowe/zowe-explorer-intellij/commit/796a6b9b))
+* Bugfix: Warning dialog for downloading shows unnecessary scroll ([e7dc7427](https://github.com/zowe/zowe-explorer-intellij/commit/e7dc7427))
+* Bugfix: Local cache conflict when overwriting local files ([f3039ac6](https://github.com/zowe/zowe-explorer-intellij/commit/f3039ac6))
+* Bugfix: java.lang.RuntimeException: Cannot invoke (class=, method=onCacheUpdated, topic=cacheUpdated) ([2fedc7f5](https://github.com/zowe/zowe-explorer-intellij/commit/2fedc7f5))
+* Bugfix: "Allocate like" action causes exception when refresh on mask is started ([d13a1c72](https://github.com/zowe/zowe-explorer-intellij/commit/d13a1c72))
+
+## [1.2.0-221] (2024-04-16)
+
+### Features
 
 * Feature: GitHub issue #171: TSO CLI PA1 button functionality added ([48834cac](https://github.com/zowe/zowe-explorer-intellij/commit/48834cac))
 * Feature: GitHub issue #172: Allocation units clarification added ([1ff218e4](https://github.com/zowe/zowe-explorer-intellij/commit/1ff218e4))
