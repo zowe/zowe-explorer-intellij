@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.utils.ui.WindowsLikeMessageDialog
 
 class CommonComputeConflicts(
   dataOpsManager: DataOpsManager,
@@ -32,18 +33,18 @@ class CommonComputeConflicts(
     conflictsThatCannotBeOverwritten: List<Pair<VirtualFile, VirtualFile>>
   ): MutableList<ConflictResolution> {
     val result = mutableListOf<ConflictResolution>()
-    val choice = Messages.showDialog(
-      project,
-      "Please, select",
-      "Name conflicts in ${conflicts.size + conflictsThatCannotBeOverwritten.size} file(s)",
-      arrayOf(
-        //"Decide for Each",
-        "Skip for All",
-        "Overwrite for All",
-        "Decide for Each"
+    val choice = WindowsLikeMessageDialog.showWindowsLikeMessageDialog(
+      project = project,
+      message = "The destination already has file(s) with\nthe same name.\n" +
+          "Please, select an action.",
+      title = "Name conflicts in ${conflicts.size + conflictsThatCannotBeOverwritten.size} file(s)",
+      options = arrayOf(
+        "Skip the conflicting file(s)",
+        "Replace the file(s) in the destination",
+        "Decide for each file"
       ),
-      0,
-      AllIcons.General.QuestionDialog
+      defaultOptionIndex = 0,
+      focusedOptionIndex = 0
     )
 
     when (choice) {

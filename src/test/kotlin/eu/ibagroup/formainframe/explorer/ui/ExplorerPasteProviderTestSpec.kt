@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,6 +39,7 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.ui.WindowsLikeMessageDialog
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
@@ -457,16 +457,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         var isShowYesNoDialogCalled = false
         var isShowDialogCalled = false
         isPastePerformed = false
-
-        val showDialogMock: (
-          Project?, String, String, Array<String>, Int, Icon?
-        ) -> Int = Messages::showDialog
-        mockkStatic(showDialogMock as KFunction<*>)
-        every {
-          showDialogMock(
-            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?
-          )
-        } answers {
+        
+        mockkObject(WindowsLikeMessageDialog.Companion)
+        every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
           isShowDialogCalled = true
           0
         }
@@ -580,19 +573,13 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           isShowYesNoDialogCalled = true
           true
         }
-
-        val showDialogMock: (
-          Project?, String, String, Array<String>, Int, Icon?
-        ) -> Int = Messages::showDialog
-        mockkStatic(showDialogMock as KFunction<*>)
-        every {
-          showDialogMock(
-            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?
-          )
-        } answers {
+        
+        mockkObject(WindowsLikeMessageDialog.Companion)
+        every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
           isShowDialogCalled = true
           1
         }
+        
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
           isShowYesNoDialogCalled shouldBe true
@@ -603,15 +590,8 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
       should("return if unrecognized dialog message") {
         isPastePerformed = true
-        val showDialogSpecificMock: (
-          Project?, String, String, Array<String>, Int, Icon?
-        ) -> Int = Messages::showDialog
-        mockkStatic(showDialogSpecificMock as KFunction<*>)
-        every {
-          showDialogSpecificMock(
-            any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?
-          )
-        } answers {
+        mockkObject(WindowsLikeMessageDialog.Companion)
+        every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
           isPastePerformed = false
           3
         }
@@ -689,6 +669,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         isPastePerformed = true
 
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(false)
+        
+        mockkObject(WindowsLikeMessageDialog.Companion)
+        every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
+          isShowYesNoDialogCalled = true
+          1
+        }
 
         val showDialogSpecificMock: (
           Project?, String, String, Array<String>, Int, Icon?
@@ -700,7 +686,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           )
         } answers {
           isShowYesNoDialogCalled = true
-          1
+          0
         }
 
         val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
@@ -1318,8 +1304,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
             dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
           } returns DefaultNameResolver()
           mockkStatic(Messages::class)
-          var decideOptionSelected = false
           var skipNumber = 0
+          
+          mockkObject(WindowsLikeMessageDialog.Companion)
+          every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
+            2
+          }
 
           every {
             Messages.showYesNoDialog(
@@ -1337,13 +1327,8 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
               null
             )
           } answers {
-            if (!decideOptionSelected) {
-              decideOptionSelected = true
-              2
-            } else {
-              ++skipNumber
-              0
-            }
+            ++skipNumber
+            0
           }
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
           assertSoftly {
@@ -1361,9 +1346,13 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           } returns DefaultNameResolver()
 
           mockkStatic(Messages::class)
-          var decideOptionSelected = false
           var overwriteSelected = false
           var skipSelected = false
+          
+          mockkObject(WindowsLikeMessageDialog.Companion)
+          every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
+            2
+          }
 
           every {
             Messages.showYesNoDialog(
@@ -1381,10 +1370,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
               null
             )
           } answers {
-            if (!decideOptionSelected) {
-              decideOptionSelected = true
-              2
-            } else if (!overwriteSelected) {
+            if (!overwriteSelected) {
               overwriteSelected = true
               1
             } else {
@@ -1430,6 +1416,11 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           var decideOptionSelected = false
           var overwriteSelected = false
           var useNewNameSelected = false
+          
+          mockkObject(WindowsLikeMessageDialog.Companion)
+          every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
+            2
+          }
 
           every {
             Messages.showYesNoDialog(
@@ -1447,10 +1438,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
               null
             )
           } answers {
-            if (!decideOptionSelected) {
-              decideOptionSelected = true
-              2
-            } else if (!useNewNameSelected) {
+            if (!useNewNameSelected) {
               useNewNameSelected = true
               2
             } else {
@@ -1608,7 +1596,11 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           } returns DefaultNameResolver()
 
           mockkStatic(Messages::class)
-          var decideOptionSelected = false
+          
+          mockkObject(WindowsLikeMessageDialog.Companion)
+          every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
+            2
+          }
 
           every {
             Messages.showYesNoDialog(
@@ -1626,12 +1618,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
               null
             )
           } answers {
-            if (!decideOptionSelected) {
-              decideOptionSelected = true
-              2
-            } else {
-              1
-            }
+            1
           }
 
           var dir1NewName: String? = null
@@ -1708,12 +1695,19 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           mockkStatic(Messages::class)
           var overwriteSelected = false
           var notPossibleMessageShown = false
+          
+          mockkObject(WindowsLikeMessageDialog.Companion)
+          every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
+            overwriteSelected = true
+            1
+          }
 
           every {
             Messages.showYesNoDialog(
               any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
             )
           } returns Messages.YES
+          
           every {
             Messages.showDialog(
               any() as Project?,
@@ -1725,14 +1719,10 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
               null
             )
           } answers {
-            var valueToReturn = 0
-            if (!overwriteSelected) {
-              overwriteSelected = true
-              valueToReturn = 1
-            } else if (thirdArg<String>() == "Not Resolvable Conflicts") {
+            if (thirdArg<String>() == "Not Resolvable Conflicts") {
               notPossibleMessageShown = true
             }
-            valueToReturn
+            0
           }
 
           var operationPerformed = false
@@ -1761,7 +1751,11 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
             dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
           } returns DefaultNameResolver()
           mockkStatic(Messages::class)
-          var decideEachSelected = false
+          
+          mockkObject(WindowsLikeMessageDialog.Companion)
+          every { WindowsLikeMessageDialog.showWindowsLikeMessageDialog(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } answers {
+            2
+          }
 
           every {
             Messages.showYesNoDialog(
@@ -1779,10 +1773,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
               null
             )
           } answers {
-            if (!decideEachSelected) {
-              decideEachSelected = true
-              2
-            } else if (secondArg<String>().contains(sourceFile1.name)) {
+            if (secondArg<String>().contains(sourceFile1.name)) {
               1
             } else if (secondArg<String>().contains(sourceFile2.name)) {
               0
