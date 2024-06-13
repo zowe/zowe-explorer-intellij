@@ -387,7 +387,7 @@ class ExplorerPasteProvider : PasteProvider {
       val operationsToDownload = operations
         .filter { operation -> operation.destination !is MFVirtualFile }
 
-      if (operationsToDownload.isNotEmpty() && (!isAllConflictsResolvedBySkip(conflictsResolutions, operationsToDownload.size) || operationsToDownload.size == 1)) {
+      if (operationsToDownload.isNotEmpty()) {
         val filesToDownloadUpdated = operationsToDownload.map { operation -> operation.source.name }
 
         val startMessage = "You are going to DOWNLOAD files:"
