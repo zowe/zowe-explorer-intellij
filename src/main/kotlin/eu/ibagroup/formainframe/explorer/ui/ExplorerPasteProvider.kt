@@ -34,6 +34,7 @@ import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.ui.WindowsLikeMessageDialog
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
 
@@ -479,18 +480,18 @@ class ExplorerPasteProvider : PasteProvider {
     conflicts.removeAll(conflictsThatCannotBeOverwritten)
 
     if (conflicts.isNotEmpty() || conflictsThatCannotBeOverwritten.isNotEmpty()) {
-      val choice = Messages.showDialog(
-        project,
-        "Please, select",
-        "Name conflicts in ${conflicts.size + conflictsThatCannotBeOverwritten.size} file(s)",
-        arrayOf(
-          //"Decide for Each",
-          "Skip for All",
-          "Overwrite for All",
-          "Decide for Each"
+      val choice = WindowsLikeMessageDialog.showWindowsLikeMessageDialog(
+        project = project,
+        message = "The destination already has file(s) with\nthe same name.\n" +
+            "Please, select an action.",
+        title = "Name conflicts in ${conflicts.size + conflictsThatCannotBeOverwritten.size} file(s)",
+        options = arrayOf(
+          "Skip the conflicting file(s)",
+          "Replace the file(s) in the destination",
+          "Decide for each file"
         ),
-        0,
-        AllIcons.General.QuestionDialog
+        defaultOptionIndex = 0,
+        focusedOptionIndex = 0
       )
 
       when (choice) {
