@@ -94,7 +94,6 @@ class WindowsLikeMessageDialogTestSpec : WithApplicationShouldSpec({
         ((result.getComponent(2) as JPanel).getComponent(0) as JButton).text shouldBe "Decide for each file"
       }
     }
-    unmockkAll()
   }
   
   context("test showWindowsLikeMessageDialog static function") {
