@@ -73,7 +73,10 @@ class GetFilePropertiesAction : AnAction() {
                         progressIndicator = it
                       )
                     }.onFailure { t ->
-                        view.explorer.reportThrowable(t, e.project)
+                      initFileMode?.owner?.let{attributes.fileMode.owner = it}
+                      initFileMode?.group?.let{attributes.fileMode.group = it}
+                      initFileMode?.all?.let{attributes.fileMode.all = it}
+                      view.explorer.reportThrowable(t, e.project)
                     }
                     node.parent?.cleanCacheIfPossible(cleanBatchedQuery = false)
                   }
