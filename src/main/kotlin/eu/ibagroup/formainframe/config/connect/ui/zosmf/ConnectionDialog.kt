@@ -11,6 +11,7 @@
 package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.HelpTooltip
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -266,6 +267,7 @@ class ConnectionDialog(
           }
           .also { urlTextField = it.component }
           .align(AlignX.FILL)
+          .component.emptyText.setText("http(s)://host:port")
       }
       row {
         label("Username: ")
@@ -301,6 +303,13 @@ class ConnectionDialog(
                 }
                 sslCheckbox = this
               }
+            }
+          icon(AllIcons.General.ContextHelp)
+            .also {
+              val sslHelpText =
+                """Select this checkbox if your organization uses self-signed certificates (not recommended)."""
+                  .trimMargin()
+              HelpTooltip().setDescription(sslHelpText).installOn(it.component)
             }
         }
       }
