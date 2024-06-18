@@ -40,6 +40,7 @@ import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.ui.WindowsLikeMessageDialog
+import eu.ibagroup.formainframe.utils.getAncestorNodes
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
@@ -485,6 +486,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedSourceNodeData.node } returns mockedSourceNode
         every { mockedSourceNodeData.file } returns mockedSourceFile
         every { mockedSourceNodeData.attributes } returns mockedSourceAttributes
+        // needed for cleaning buffer function after paste is performed (because conflict)
+        mockkStatic("eu.ibagroup.formainframe.utils.OpenapiUtilsKt")
+        every { mockedSourceFile.getAncestorNodes() } returns mutableListOf()
 
         // children of target
         val childDestinationVirtualFile = mockk<MFVirtualFile>()

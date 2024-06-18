@@ -31,6 +31,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.getAncestorNodes
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.ui.WindowsLikeMessageDialog
@@ -312,7 +313,7 @@ class ExplorerPasteProvider : PasteProvider {
         ).let { proceed ->
           if (!proceed) {
             copyPasteSupport.removeFromBuffer { nodeData ->
-              nodeData.file?.let { fileNotNull -> sourceFiles.contains(fileNotNull) } ?: false
+              nodeData.file?.let { fileNotNull -> sourceFilesRaw.contains(fileNotNull) } ?: false
             }
             return@withLock
           }
@@ -431,6 +432,26 @@ class ExplorerPasteProvider : PasteProvider {
         explorerView,
         project
       )
+      
+      // If it was 'Cut' operation, any conflict which was resolved by skip, should be removed from cut buffer,
+      // because we automatically exclude them from "moving/copying"
+      cleanCutBufferAfterPaste(conflictsResolutions, explorerView)
+    }
+  }
+  
+  /**
+   * Function removes source files from cut buffer during Move/Copy operation which were resolved by skip
+   */
+  private fun cleanCutBufferAfterPaste(resolutions: List<ConflictResolution>, explorerView: FileExplorerView) {
+    resolutions.filter { it.shouldSkip() }.forEach {
+      if (explorerView.isCut.get()) {
+        val vFiles = it.sourceFile.getAncestorNodes()
+        explorerView.copyPasteSupport.apply {
+          removeFromBuffer { nodeData ->
+            nodeData.file?.let { file -> vFiles.contains(file) } ?: false
+          }
+        }
+      }
     }
   }
 
