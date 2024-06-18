@@ -14,16 +14,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclaration
-import eu.ibagroup.formainframe.config.connect.ZOSMFConnectionConfigDeclaration
-import eu.ibagroup.formainframe.config.connect.getOwner
-import eu.ibagroup.formainframe.config.connect.getUsername
+import eu.ibagroup.formainframe.config.connect.*
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialogState
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionsTableModel
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.initEmptyUuids
-import eu.ibagroup.formainframe.config.connect.whoAmI
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
@@ -362,6 +356,26 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         )
 
         assertSoftly { owner shouldBe "ZOSMF" }
+      }
+      
+      // tryToExtractOwnerFromConfig
+      should("get username if config owner is empty string") {
+        val possibleOwner = tryToExtractOwnerFromConfig(
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "")
+        )
+        assertSoftly { possibleOwner shouldBe "ZOSMF" }
+      }
+      should("get username if config owner is error string") {
+        val possibleOwner = tryToExtractOwnerFromConfig(
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "COMMAND RESTARTED DUE TO ERROR")
+        )
+        assertSoftly { possibleOwner shouldBe "ZOSMF" }
+      }
+      should("get owner if config contains valid owner string ") {
+        val possibleOwner = tryToExtractOwnerFromConfig(
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "ZOSMFAD")
+        )
+        assertSoftly { possibleOwner shouldBe "ZOSMFAD" }
       }
     }
     context("Credentials.hashCode") {
