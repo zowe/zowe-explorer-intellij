@@ -27,6 +27,7 @@ import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
@@ -367,7 +368,12 @@ class ExplorerPasteProvider : PasteProvider {
             val conflictResolution = conflictsResolutions
               .find { it.sourceFile == sourceFile && it.destinationFile == destFile }
             if (conflictResolution?.shouldSkip() == true) {
-              if (isDragAndDrop) {
+              val srcAttr = dataOpsManager.tryToGetAttributes(sourceFile)
+              val destAttr = dataOpsManager.tryToGetAttributes(destFile)
+              if (isDragAndDrop &&
+                (((srcAttr is RemoteMemberAttributes) && (destAttr is RemoteDatasetAttributes))
+                    || (srcAttr?.javaClass == destAttr?.javaClass))
+              ) {
                 copyPasteSupport.removeFromBuffer { it.file == sourceFile }
               }
               return@mapNotNull null
