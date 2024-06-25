@@ -80,7 +80,7 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
       contentSynchronizer?.synchronizeWithRemote(syncProvider, progressIndicator)
     }
 
-    var memberName = operation.newName ?: sourceFile.name.filter { it.isLetterOrDigit() }.take(8)
+    var memberName = operation.newName ?: dataOpsManager.getNameResolver(sourceFile, destFile).resolve(sourceFile, destFile)
     if (memberName.isEmpty()) {
       memberName = "empty"
     }
