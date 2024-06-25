@@ -28,11 +28,16 @@ interface ZoweConfigHandler {
 }
 
 /**
- * Instance of config changed topic.
+ * Instance of local config changed topic.
  */
 @JvmField
-val ZOWE_CONFIG_CHANGED = Topic.create("ZOWE_CONFIG_CHANGED", ZoweConfigHandler::class.java)
+val LOCAL_ZOWE_CONFIG_CHANGED = Topic.create("LOCAL_ZOWE_CONFIG_CHANGED", ZoweConfigHandler::class.java)
 
+/**
+ * Instance of global config changed topic.
+ */
+@JvmField
+val GLOBAL_ZOWE_CONFIG_CHANGED = Topic.create("GLOBAL_ZOWE_CONFIG_CHANGED", ZoweConfigHandler::class.java)
 
 /**
  * ZoweConfigService implements ability to interact
@@ -48,9 +53,14 @@ interface ZoweConfigService {
   val myProject: Project
 
   /**
-   * Instance of zowe config file object model.
+   * Instance of local zowe config file object model.
    */
-  var zoweConfig: ZoweConfig?
+  var localZoweConfig: ZoweConfig?
+
+  /**
+   * Instance of global zowe config file object model.
+   */
+  var globalZoweConfig: ZoweConfig?
 
   /**
    * Compares zoweConfig data with related connection config.
@@ -60,7 +70,7 @@ interface ZoweConfigService {
    *           SYNCHRONIZED if zowe.config.json and connection config are presented and their data are the same.
    *           NOT_EXISTS if zowe.config.json file is not presented in project.
    */
-  fun getZoweConfigState(scanProject: Boolean = true): ZoweConfigState
+  fun getZoweConfigState(scanProject: Boolean = true, type: ZoweConfigType): ZoweConfigState
 
   /**
    * Adds or updates connection config related to zoweConnection
@@ -68,13 +78,13 @@ interface ZoweConfigService {
    * @param checkConnection - Verify zowe connection by sending info request if true.
    * @return - ConnectionConfig that was added or updated.
    */
-  fun addOrUpdateZoweConfig(scanProject: Boolean = true, checkConnection: Boolean = true): ConnectionConfig?
+  fun addOrUpdateZoweConfig(scanProject: Boolean = true, checkConnection: Boolean = true, type: ZoweConfigType): ConnectionConfig?
 
   /**
    * Deletes connection config related to zoweConnection
    * @return - Nothing.
    */
-  fun deleteZoweConfig()
+  fun deleteZoweConfig(type: ZoweConfigType)
 
   /**
    * Creates zowe.schema.json for the currrent project and adds credentials to the secret store
@@ -84,23 +94,38 @@ interface ZoweConfigService {
   fun addZoweConfigFile(state: ConnectionDialogState)
 
   /**
-   * Checks all connections and removes linl to Zowe config file if it exists
+   * Checks all connections and removes link to Zowe config file if it exists
    * renames old connection if it is needed
    * @return - Nothing.
    */
-  fun checkAndRemoveOldZoweConnection()
+  fun checkAndRemoveOldZoweConnection(type: ZoweConfigType)
 
   companion object {
     fun getInstance(project: Project): ZoweConfigService = project.getService(ZoweConfigService::class.java)
   }
 }
 
+/**
+ * ZoweConfigState enum class that represents Zowe Team connection states
+ */
 enum class ZoweConfigState(val value: String) {
   NEED_TO_UPDATE("Update"),
   NEED_TO_ADD("Add"),
   SYNCHRONIZED("Synchronized"),
   NOT_EXISTS("NotExists"),
   ERROR("Error");
+
+  override fun toString(): String {
+    return value
+  }
+}
+
+/**
+ * ZoweConfigType enum class that represents type of Zowe Team Configuration
+ */
+enum class ZoweConfigType(val value: String) {
+  GLOBAL("global"),
+  LOCAL("local");
 
   override fun toString(): String {
     return value

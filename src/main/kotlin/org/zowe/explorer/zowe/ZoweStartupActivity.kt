@@ -22,11 +22,9 @@ import com.intellij.openapi.ui.Messages
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.subscribe
-import org.zowe.explorer.zowe.service.ZOWE_CONFIG_CHANGED
-import org.zowe.explorer.zowe.service.ZoweConfigHandler
-import org.zowe.explorer.zowe.service.ZoweConfigService
-import org.zowe.explorer.zowe.service.ZoweConfigState
+import org.zowe.explorer.zowe.service.*
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
+import java.util.regex.Pattern
 
 const val ZOWE_CONFIG_NAME = "zowe.config.json"
 
@@ -35,21 +33,29 @@ const val ZOWE_CONFIG_NAME = "zowe.config.json"
  * @param project - project instance to check zoweConfig.
  * @return Nothing.
  */
-fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project) {
+fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project, type: ZoweConfigType) {
   val zoweConfigService = project.service<ZoweConfigService>()
-  val zoweConfigState = zoweConfigService.getZoweConfigState()
+  val zoweConfigState = zoweConfigService.getZoweConfigState(type = type)
 
   if (zoweConfigState == ZoweConfigState.NEED_TO_ADD) {
+    val topic = if (type == ZoweConfigType.LOCAL)
+      LOCAL_ZOWE_CONFIG_CHANGED
+    else
+      GLOBAL_ZOWE_CONFIG_CHANGED
     NotificationGroupManager.getInstance().getNotificationGroup(EXPLORER_NOTIFICATION_GROUP_ID)
-      .createNotification("Zowe config file detected", NotificationType.INFORMATION).apply {
-        subscribe(ZOWE_CONFIG_CHANGED, object : ZoweConfigHandler {
+      .createNotification(
+        "${
+          Pattern.compile("^.").matcher(type.value).replaceFirst { m -> m.group().uppercase() }
+        } Zowe config file detected", NotificationType.INFORMATION
+      ).apply {
+        subscribe(topic, object : ZoweConfigHandler {
           override fun onConfigSaved(config: ZoweConfig, connectionConfig: ConnectionConfig) {
             hideBalloon()
           }
         })
-        addAction(object : DumbAwareAction("Add Zowe Connection") {
+        addAction(object : DumbAwareAction("Add $type Zowe Connection") {
           override fun actionPerformed(e: AnActionEvent) {
-            project.service<ZoweConfigService>().addOrUpdateZoweConfig(false, true)
+            project.service<ZoweConfigService>().addOrUpdateZoweConfig(false, true, type)
             hideBalloon()
           }
         }).notify(project)
@@ -62,13 +68,13 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project) {
  * @param project - project instance to check zoweConfig.
  * @return Nothing.
  */
-fun showDialogForDeleteZoweConfigIfNeeded(project: Project) {
+fun showDialogForDeleteZoweConfigIfNeeded(project: Project, type: ZoweConfigType) {
   val zoweConfigService = project.service<ZoweConfigService>()
-  val zoweConfigState = zoweConfigService.getZoweConfigState()
-  if(zoweConfigState != ZoweConfigState.NEED_TO_ADD || zoweConfigState != ZoweConfigState.NOT_EXISTS) {
+  val zoweConfigState = zoweConfigService.getZoweConfigState(type = type)
+  if (zoweConfigState != ZoweConfigState.NEED_TO_ADD || zoweConfigState != ZoweConfigState.NOT_EXISTS) {
     val choice = Messages.showDialog(
       project,
-      "Zowe config file has been deleted.\n" +
+      "$type Zowe config file has been deleted.\n" +
           "Would you like to delete the corresponding connection?\n" +
           "If you decide to leave the connection, it will be converted to a regular connection (username will be visible).",
       "Deleting Zowe Config connection",
@@ -79,11 +85,14 @@ fun showDialogForDeleteZoweConfigIfNeeded(project: Project) {
       AllIcons.General.QuestionDialog
     )
     if (choice == 0) {
-      zoweConfigService.deleteZoweConfig()
+      zoweConfigService.deleteZoweConfig(type)
     }
   }
-  zoweConfigService.zoweConfig = null
-  zoweConfigService.checkAndRemoveOldZoweConnection()
+  if (type == ZoweConfigType.LOCAL)
+    zoweConfigService.localZoweConfig = null
+  else
+    zoweConfigService.globalZoweConfig = null
+  zoweConfigService.checkAndRemoveOldZoweConnection(type)
 }
 
 /**
@@ -95,6 +104,7 @@ fun showDialogForDeleteZoweConfigIfNeeded(project: Project) {
 class ZoweStartupActivity : StartupActivity {
 
   override fun runActivity(project: Project) {
-    showNotificationForAddUpdateZoweConfigIfNeeded(project)
+    for (type in ZoweConfigType.entries)
+      showNotificationForAddUpdateZoweConfigIfNeeded(project, type)
   }
 }
