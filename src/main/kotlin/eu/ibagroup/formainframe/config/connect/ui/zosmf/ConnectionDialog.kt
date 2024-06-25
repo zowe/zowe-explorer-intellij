@@ -475,7 +475,7 @@ class ConnectionDialog(
       0 -> {
         components.forEach {
           if (it is JBCheckBox) it.isSelected = false
-          if (it is JBTextField) it.text = it.text.replace("http", "https", true)
+          if (it is JBTextField) it.text = it.text.replace("http://", "https://", true)
         }
         backToSafety
       }
