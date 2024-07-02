@@ -22,7 +22,11 @@ import eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import org.zowe.kotlinsdk.*
+import org.zowe.kotlinsdk.CopyDataZOS
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.MoveUssFile
+import org.zowe.kotlinsdk.RenameData
 
 /**
  * Class which represents factory for rename operation runner. Defined in plugin.xml
@@ -96,6 +100,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           }
         }
       }
+
       is RemoteMemberAttributes -> {
         val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
         parentAttributes.requesters.map {
@@ -147,6 +152,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           }
         }
       }
+
       is RemoteUssAttributes -> {
         val parentDirPath = attributes.parentDirPath
         attributes.requesters.map {

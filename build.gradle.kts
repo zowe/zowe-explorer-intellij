@@ -10,6 +10,7 @@
 
 import kotlinx.kover.api.KoverTaskExtension
 import org.jetbrains.changelog.Changelog
+import org.jetbrains.intellij.tasks.ClasspathIndexCleanupTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.LocalDate
 import java.time.ZoneId
@@ -135,6 +136,10 @@ tasks {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   }
 
+  withType<ClasspathIndexCleanupTask> {
+    dependsOn(compileTestKotlin)
+  }
+
   patchPluginXml {
     version.set(properties("pluginVersion").get())
     sinceBuild.set(properties("pluginSinceBuild").get())
@@ -176,7 +181,7 @@ tasks {
         if (desc.parent == null) { // will match the outermost suite
           val output =
             "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
-                "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+              "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
           val fileName = "./build/reports/tests/${result.resultType}.txt"
           File(fileName).writeText(output)
         }
