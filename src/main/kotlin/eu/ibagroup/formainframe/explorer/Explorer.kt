@@ -37,11 +37,16 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.exceptions.NotificationCompatibleException
 import eu.ibagroup.formainframe.editor.ChangeContentService
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.utils.crudable.anyEventAdaptor
 import eu.ibagroup.formainframe.utils.crudable.eventAdapter
+import eu.ibagroup.formainframe.utils.`is`
+import eu.ibagroup.formainframe.utils.nullable
+import eu.ibagroup.formainframe.utils.sendTopic
+import eu.ibagroup.formainframe.utils.subscribe
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -51,27 +56,27 @@ import kotlin.concurrent.write
  * @author Kiril Branavitski
  * @author Viktar Mushtsin
  */
-interface ExplorerListener{
+interface ExplorerListener {
   /**
    * Handler for update event for units.
    * @param explorer explorer units of which was updated.
    * @param unit unit that was updated.
    */
-  fun <Connection: ConnectionConfigBase> onChanged(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>)
+  fun <Connection : ConnectionConfigBase> onChanged(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>)
 
   /**
    * Handler for create event for units.
    * @param explorer explorer units of which was created.
    * @param unit unit that was created.
    */
-  fun <Connection: ConnectionConfigBase> onAdded(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>)
+  fun <Connection : ConnectionConfigBase> onAdded(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>)
 
   /**
    * Handler for delete event for units.
    * @param explorer explorer units of which was deleted.
    * @param unit unit that was deleted.
    */
-  fun <Connection: ConnectionConfigBase> onDeleted(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>)
+  fun <Connection : ConnectionConfigBase> onDeleted(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>)
 }
 
 /**
@@ -79,7 +84,7 @@ interface ExplorerListener{
  * @author Kiril Branavitski
  * @author Viktar Mushtsin
  */
-interface ExplorerFactory<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>, E : Explorer<Connection, U>> {
+interface ExplorerFactory<Connection : ConnectionConfigBase, U : WorkingSet<Connection, *>, E : Explorer<Connection, U>> {
   fun buildComponent(): E
 }
 
@@ -94,7 +99,7 @@ val UNITS_CHANGED = Topic.create("unitsChanged", ExplorerListener::class.java)
  * Abstract class for working with explorer logical representation.
  * @author Viktar Mushtsin
  */
-interface Explorer<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>> {
+interface Explorer<Connection : ConnectionConfigBase, U : WorkingSet<Connection, *>> {
 
   companion object {
     @JvmField
@@ -149,7 +154,7 @@ interface Explorer<Connection: ConnectionConfigBase, U : WorkingSet<Connection, 
  * @author Kiril Branavitski
  * @author Valiantsin Krus
  */
-abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>, UnitConfig : EntityWithUuid>
+abstract class AbstractExplorerBase<Connection : ConnectionConfigBase, U : WorkingSet<Connection, *>, UnitConfig : EntityWithUuid>
   : Explorer<Connection, U>, Disposable {
 
   val lock = ReentrantReadWriteLock()
@@ -214,6 +219,9 @@ abstract class AbstractExplorerBase<Connection: ConnectionConfigBase, U : Workin
       if (details.contains(":")) {
         details = details.split(":").last()
       }
+    } else if (t is NotificationCompatibleException) {
+      title = t.title
+      details = t.details
     } else {
       title = t.message ?: t.toString()
       details = "Unknown error"

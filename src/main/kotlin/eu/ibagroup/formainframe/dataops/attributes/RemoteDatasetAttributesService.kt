@@ -85,11 +85,10 @@ class RemoteDatasetAttributesService(
   }
 
   /**
-   * Method to reassign attributes when original path(folder) is being renamed
-   * @param file - virtual file to be renamed
-   * @param oldAttributes - old attributes of the virtual file
-   * @param newAttributes - new attributes of the virtual file after folder renaming
-   * @return Void
+   * Method to reassign attributes when original path(folder) is being moved, renamed or the file attribute is changed
+   * @param file virtual file to be renamed
+   * @param oldAttributes old attributes of the virtual file
+   * @param newAttributes new attributes of the virtual file after folder renaming
    */
   override fun reassignAttributesAfterUrlFolderRenaming(
     file: MFVirtualFile,
@@ -104,6 +103,9 @@ class RemoteDatasetAttributesService(
     }
     if (oldAttributes.name != newAttributes.name) {
       file.rename(this, newAttributes.name)
+    }
+    if (oldAttributes.isDirectory != newAttributes.isDirectory) {
+      fsModel.changeFileType(this, file, newAttributes.isDirectory)
     }
   }
 

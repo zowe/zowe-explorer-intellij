@@ -2,7 +2,12 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -38,26 +43,36 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
-import eu.ibagroup.formainframe.explorer.*
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.explorer.CutBufferListener
+import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.explorer.ExplorerListener
+import eu.ibagroup.formainframe.explorer.ExplorerUnit
+import eu.ibagroup.formainframe.explorer.UNITS_CHANGED
+import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
+import eu.ibagroup.formainframe.utils.getAncestorNodes
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.rwLocked
+import eu.ibagroup.formainframe.utils.subscribe
 import eu.ibagroup.formainframe.vfs.MFBulkFileListener
+import eu.ibagroup.formainframe.vfs.MFVFilePropertyChangeEvent
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
-import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.collectResults
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeWillExpandListener
-import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
 val EXPLORER_VIEW = DataKey.create<ExplorerTreeView<*, *, *>>("explorerView")
 
-fun <ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
+fun <ExplorerView : ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
   return getData(EXPLORER_VIEW).castOrNull(clazz)
 }
 
-inline fun <reified ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(): ExplorerView? {
+inline fun <reified ExplorerView : ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(): ExplorerView? {
   return getExplorerView(ExplorerView::class.java)
 }
 
@@ -70,7 +85,7 @@ inline fun <reified ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getEx
  * @param rootNodeProvider the root node provider for the root node of the explorer
  * @param cutProviderUpdater the cut provider updater to store the information about the cut elements
  */
-abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>, UnitConfig : EntityWithUuid>
+abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSet<Connection, *>, UnitConfig : EntityWithUuid>
   (
   val explorer: Explorer<Connection, U>,
   private val project: Project,
@@ -93,55 +108,60 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
   private var treeModel: AsyncTreeModel
 
   /**
-   * Get node by provided query and invalidate them. The nodes will be either collapsed or invalidated on this action, basing on the provided parameters
+   * Get nodes by the provided query
    * @param query the query to search nodes by
-   * @param [collapse] collapse the nodes if the parameter is true. False by default
-   * @param [invalidate] invalidate the nodes if the parameter is true. True by default
-   * @return the nodes found by the query
+   * @return collection of the nodes found by the provided query
    */
-  fun getNodesByQueryAndInvalidate(
-    query: Query<*, *>,
-    collapse: Boolean = false,
-    invalidate: Boolean = true
-  ): Collection<ExplorerTreeNode<*, *>> {
+  fun getNodesByQuery(query: Query<*, *>): Collection<ExplorerTreeNode<*, *>> {
     return myFsTreeStructure
       .findByPredicate {
-        if (it is FetchNode) {
-          it.query == query
-        } else false
+        it is FetchNode && it.query == query
       }
-      .onEach { foundNode ->
+  }
 
-        fun collapseIfNeeded(tp: TreePath) {
-          if (collapse) {
-            treeModel.onValidThread {
-              myTree.collapsePath(tp)
-              synchronized(myNodesToInvalidateOnExpand) {
-                val node = tp.lastPathComponent
-                myNodesToInvalidateOnExpand.add(node)
-              }
-            }
-          }
-        }
-
+  /**
+   * Invalidate the provided nodes. It will expand a selected node's path if it is collapsed
+   * @param nodes the nodes to invalidate
+   * @return a promise with the list of the invalidated nodes
+   */
+  fun invalidateNodes(nodes: Collection<ExplorerTreeNode<*, *>>): Promise<List<ExplorerTreeNode<*, *>>> {
+    return nodes
+      .map { foundNode ->
         myStructure
           .promisePath(foundNode, myTree)
           .thenAsync { nodePath ->
             if (myTree.isVisible(nodePath) && myTree.isCollapsed(nodePath) && mySelectedNodesData.any { it.node == nodePath }) {
               myTree.expandPath(nodePath)
             }
-            if (invalidate) {
-              myStructure
-                .invalidate(foundNode, true)
-                .onSuccess { tp ->
-                  collapseIfNeeded(tp)
-                }
-            } else {
-              collapseIfNeeded(nodePath)
-              AsyncPromise<TreePath>()
+            myStructure.invalidate(foundNode, true)
+          }
+          .then { foundNode }
+      }
+      .collectResults()
+  }
+
+  /**
+   * Collapse the provided nodes
+   * @param nodes the nodes to collapse
+   * @return a promise with the list of the collapsed nodes
+   */
+  fun collapseNodes(nodes: Collection<ExplorerTreeNode<*, *>>): Promise<List<ExplorerTreeNode<*, *>>> {
+    return nodes
+      .map { foundNode ->
+        myStructure
+          .promisePath(foundNode, myTree)
+          .then { nodePath ->
+            treeModel.onValidThread {
+              myTree.collapsePath(nodePath)
+              synchronized(myNodesToInvalidateOnExpand) {
+                val node = nodePath.lastPathComponent
+                myNodesToInvalidateOnExpand.add(node)
+              }
             }
+            foundNode
           }
       }
+      .collectResults()
   }
 
   /**
@@ -174,7 +194,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
       handler = object : ExplorerListener {
 
 
-        private fun <Connection: ConnectionConfigBase> onAddDelete(explorer: Explorer<Connection, *>) {
+        private fun <Connection : ConnectionConfigBase> onAddDelete(explorer: Explorer<Connection, *>) {
           if (explorer == this@ExplorerTreeView.explorer) {
             myFsTreeStructure.findByValue(explorer).forEach {
               myStructure.invalidate(it, true)
@@ -182,12 +202,18 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
           }
         }
 
-        override fun <Connection: ConnectionConfigBase> onAdded(explorer: Explorer<Connection, *>,unit: ExplorerUnit<Connection>) {
+        override fun <Connection : ConnectionConfigBase> onAdded(
+          explorer: Explorer<Connection, *>,
+          unit: ExplorerUnit<Connection>
+        ) {
           onAddDelete(explorer)
         }
 
 
-        override fun <Connection: ConnectionConfigBase> onChanged(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>) {
+        override fun <Connection : ConnectionConfigBase> onChanged(
+          explorer: Explorer<Connection, *>,
+          unit: ExplorerUnit<Connection>
+        ) {
           if (explorer == this@ExplorerTreeView.explorer) {
             myFsTreeStructure.findByValue(unit).forEach {
               myStructure.invalidate(it, true)
@@ -195,7 +221,10 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
           }
         }
 
-        override fun <Connection: ConnectionConfigBase> onDeleted(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>) {
+        override fun <Connection : ConnectionConfigBase> onDeleted(
+          explorer: Explorer<Connection, *>,
+          unit: ExplorerUnit<Connection>
+        ) {
           onAddDelete(explorer)
         }
       },
@@ -248,14 +277,14 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
                   null
                 }
 
-                it is VFileContentChangeEvent || it is VFilePropertyChangeEvent -> {
+                it is VFileContentChangeEvent || it is VFilePropertyChangeEvent || it is MFVFilePropertyChangeEvent -> {
                   nodes
                 }
 
                 it is VFileDeleteEvent &&
-                this@ExplorerTreeView
-                  .ignoreVFileDeleteEvents
-                  .compareAndSet(true, true) -> {
+                  this@ExplorerTreeView
+                    .ignoreVFileDeleteEvents
+                    .compareAndSet(true, true) -> {
                   null
                 }
 
@@ -302,19 +331,23 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
           query: Q,
           files: Collection<File>
         ) {
-          getNodesByQueryAndInvalidate(query)
+          val nodes = getNodesByQuery(query)
+          invalidateNodes(nodes)
         }
 
         override fun <R : Any, Q : Query<R, Unit>> onCacheCleaned(query: Q) {
-          getNodesByQueryAndInvalidate(query)
+          val nodes = getNodesByQuery(query)
+          invalidateNodes(nodes)
         }
 
         override fun <R : Any, Q : Query<R, Unit>> onFetchCancelled(query: Q) {
-          getNodesByQueryAndInvalidate(query, collapse = true, invalidate = false)
+          val nodes = getNodesByQuery(query)
+          collapseNodes(nodes)
         }
 
         override fun <R : Any, Q : Query<R, Unit>> onFetchFailure(query: Q, throwable: Throwable) {
-          getNodesByQueryAndInvalidate(query)
+          val nodes = getNodesByQuery(query)
+          invalidateNodes(nodes)
           //The ability to show exceptions for JES Explorer has been disabled.
           //All messages about exceptions that occur in TreeView components will be displayed using File Explorer.
           //This was done to avoid duplication of exception messages, since both explorers have a common EventBus and,
@@ -360,7 +393,8 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
 
     tree.selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
     tree.addTreeSelectionListener {
-      mySelectedNodesData = tree.selectionPaths?.mapNotNull { makeNodeDataFromTreePath<Connection>(explorer, it) } ?: listOf()
+      mySelectedNodesData =
+        tree.selectionPaths?.mapNotNull { makeNodeDataFromTreePath<Connection>(explorer, it) } ?: listOf()
     }
 
     tree.addTreeWillExpandListener(object : TreeWillExpandListener {

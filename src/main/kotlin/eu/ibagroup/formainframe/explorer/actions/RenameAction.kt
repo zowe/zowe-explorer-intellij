@@ -173,7 +173,7 @@ class RenameAction : AnAction() {
     val file = selectedNodesData[0].file
     if (file != null) {
       val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
-      if (attributes?.isMigrated == true) {
+      if (attributes?.hasDsOrg == false) {
         e.presentation.isEnabledAndVisible = false
         return
       }

@@ -13,9 +13,10 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
+import eu.ibagroup.formainframe.dataops.exceptions.NotificationCompatibleException
 import eu.ibagroup.formainframe.explorer.Explorer
-import java.util.LinkedList
-import java.util.WeakHashMap
+import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
+import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -39,13 +40,79 @@ class CommonExplorerTreeStructure<Expl : Explorer<*, *>>(
   private val fileToNodeMap = WeakHashMap<VirtualFile, MutableCollection<ExplorerTreeNode<*, *>>>()
 
   /**
-   * Put the node in the value to node map list and the file to node map list if the virtual file is present for the node
+   * Put the node in the value to node map list
+   * and the file to node map list if the virtual file is present for the node.
+   * Cleans up the maps from an old node first
+   * if the same node with old parameters is already registered for the same parent
    * @param node the node to be registered
    */
   override fun registerNode(node: ExplorerTreeNode<*, *>) {
     lock.withLock {
+      val alreadyRegisteredNodes = valueToNodeMap
+        .getOrPut(node.value) { LinkedList() }
+        .filter { it.parent != null && it.parent == node.parent }
+      if (alreadyRegisteredNodes.isNotEmpty()) {
+        alreadyRegisteredNodes.forEach { alreadyRegisteredNode ->
+          valueToNodeMap.getOrPut(node.value) { LinkedList() }
+            .removeIf { nodeInMap -> nodeInMap.parent == alreadyRegisteredNode.parent }
+          node.virtualFile?.let {
+            fileToNodeMap.getOrPut(it) { LinkedList() }
+              .removeIf { nodeInMap -> nodeInMap.parent == alreadyRegisteredNode.parent }
+          }
+        }
+      }
+
       valueToNodeMap.getOrPut(node.value) { LinkedList() }.add(node)
       node.virtualFile?.let { fileToNodeMap.getOrPut(it) { LinkedList() }.add(node) }
+    }
+  }
+
+  /**
+   * Refresh the nodes that belong to the same virtual file as the node provided with the new presentation.
+   * Will invalidate the parent of these nodes if the parent is a [DSMaskNode]
+   * @param node the node to search the similar nodes in the maps by
+   */
+  override fun refreshSimilarNodes(node: ExplorerTreeNode<*, *>) {
+    lock.withLock {
+      if (node.virtualFile == null) {
+        val exception = NotificationCompatibleException(
+          "Virtual file is not found",
+          "It is impossible to register new node. Virtual file is not found"
+        )
+        explorer.reportThrowable(exception, project)
+        return
+      }
+      val nodesToRefresh = valueToNodeMap
+        .getOrPut(node.virtualFile) { LinkedList() }
+        .filter { it.parent != null && node.parent != it.parent }
+      if (nodesToRefresh.isNotEmpty()) {
+        nodesToRefresh.forEach {
+          val virtualFile = it.virtualFile
+          if (virtualFile == null) {
+            val exception = NotificationCompatibleException(
+              "Virtual file is not found",
+              "It is impossible to register new node. Virtual file is not found"
+            )
+            explorer.reportThrowable(exception, project)
+            return
+          }
+          if (it.parent is DSMaskNode) {
+            val newChildNode = it.parent.prepareChildNodeFromMFVirtualFile(virtualFile)
+            it.parent.refreshChildNode(it, newChildNode)
+          }
+        }
+        nodesToRefresh
+          .mapNotNull { it.parent }
+          .filterIsInstance<DSMaskNode>()
+          .distinct()
+          .forEach {
+            val query = it.query ?: return@forEach
+            val view =
+              FileExplorerContentProvider.getInstance().getExplorerView(project) ?: return@forEach
+            val nodes = view.getNodesByQuery(query)
+            view.invalidateNodes(nodes)
+          }
+      }
     }
   }
 

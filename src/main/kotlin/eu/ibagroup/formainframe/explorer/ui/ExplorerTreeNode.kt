@@ -65,6 +65,14 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
       return OpenFileDescriptor(notNullProject, virtualFile ?: return null)
     }
 
+  /**
+   * Refresh nodes that are similar to the current one
+   * @see CommonExplorerTreeStructure.refreshSimilarNodes
+   */
+  fun refreshSimilarNodes() {
+    treeStructure.refreshSimilarNodes(this)
+  }
+
   public override fun getVirtualFile(): MFVirtualFile? {
     return null
   }

@@ -30,6 +30,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Operation
+import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
@@ -55,9 +56,11 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.spyk
 import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.HasMigrated
 import org.zowe.kotlinsdk.RecordFormat
 import org.zowe.kotlinsdk.SpaceUnits
 import java.util.*
@@ -473,7 +476,7 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         val nodeDataMock = NodeData(nodeMock, null, dsAttributesMock)
         val selectedNodesData = listOf(nodeDataMock)
 
-        every { dsAttributesMock.isMigrated } returns false
+        every { dsAttributesMock.hasDsOrg } returns true
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
 
@@ -497,13 +500,39 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         assertSoftly { isPresentationEnabledAndVisible shouldBe false }
       }
       should("not show the 'allocate like' action as the selected dataset is migrated") {
-        val viewMock = mockk<FileExplorerView>()
+        val dsInfo = mockk<Dataset>()
+        every { dsInfo.migrated } returns HasMigrated.YES
+
         val nodeMock = mockk<LibraryNode>()
-        val dsAttributesMock = mockk<RemoteDatasetAttributes>()
+
+        val requesters = mockk<MutableList<MaskedRequester>>()
+        val dsAttributesMock = spyk(RemoteDatasetAttributes(dsInfo, "test", requesters))
+
         val nodeDataMock = NodeData(nodeMock, null, dsAttributesMock)
         val selectedNodesData = listOf(nodeDataMock)
+        val viewMock = mockk<FileExplorerView>()
 
-        every { dsAttributesMock.isMigrated } returns true
+        every { viewMock.mySelectedNodesData } returns selectedNodesData
+        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+
+        allocateDsActionInst.update(anActionEventMock)
+
+        assertSoftly { isPresentationEnabledAndVisible shouldBe false }
+      }
+      should("not show the 'allocate like' action as the selected dataset does not have dataset organization") {
+        val dsInfo = mockk<Dataset>()
+        every { dsInfo.migrated } returns HasMigrated.NO
+        every { dsInfo.datasetOrganization } returns null
+
+        val nodeMock = mockk<LibraryNode>()
+
+        val requesters = mockk<MutableList<MaskedRequester>>()
+        val dsAttributesMock = spyk(RemoteDatasetAttributes(dsInfo, "test", requesters))
+
+        val nodeDataMock = NodeData(nodeMock, null, dsAttributesMock)
+        val selectedNodesData = listOf(nodeDataMock)
+        val viewMock = mockk<FileExplorerView>()
+
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
 

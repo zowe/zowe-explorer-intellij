@@ -140,31 +140,52 @@ class MFVirtualFileSystemModel {
   }
 
   /**
-   * Find the mainframe virtual file by provided path elements list
-   * @param pathElements list of path elements to search for virtual file
+   * Format the provided path to have only part after separator if it is placed at the start of the string.
+   * E.g.: "/some/path", as well as "//some/path", will be converted to "some/path". "other/path" will stay the same
+   * @param path the source path value to format
+   * @return the resulting string
    */
-  fun findFileByPath(pathElements: List<String>): MFVirtualFile? {
-    var pointerIndex = 1
-    return FilteringBFSIterator(fsGraph, root) { v, e ->
-      v.validReadLock(false) {
-        (pointerIndex < pathElements.size
-            && e.type == FSEdgeType.DIR
-            && pathElements[pointerIndex] == v.name)
-          .also { successful ->
-            if (successful) ++pointerIndex
-          }
+  private fun formatFSPath(path: String): String {
+    return path
+      .replace(Regex("${MFVirtualFileSystem.SEPARATOR}+"), MFVirtualFileSystem.SEPARATOR)
+      .let {
+        if (it.startsWith(MFVirtualFileSystem.SEPARATOR)) {
+          it.substringAfter(MFVirtualFileSystem.SEPARATOR)
+        } else {
+          it
+        }
       }
-    }.stream().skip(pathElements.size - 1L).findAny().nullable
   }
 
   /**
-   * Find the mainframe virtual file by provided path. Usually, the path is a URL string with "/" at the end,
-   * so the filter is used to remove empty element at the end
-   * @param path string path to search for the virtual file
+   * Find a virtual file by the provided path. It searches through the virtual file system graph, starting with its
+   * root. If the virtual file is found in the virtual file system graph, it is returned from the graph, otherwise
+   * "null" is returned. Usually, the path is a URL string with "/" at the end, so the filter is used to remove
+   * empty element at the end
+   * @param path the path to the virtual file
    */
   fun findFileByPath(path: String): MFVirtualFile? {
-    val pathElements = path.formatPath().split(MFVirtualFileSystem.SEPARATOR).filter(String::isEmpty)
-    return findFileByPath(pathElements)
+    val pathElements = formatFSPath(path).split(MFVirtualFileSystem.SEPARATOR).filter(String::isNotBlank)
+    var pathIndexToCheck = 1
+    return FilteringBFSIterator(fsGraph, root) { vertex, edge ->
+      // Will go through the vertices in the fs graph and check if the vertex belongs to the provided path.
+      // If the next vertex belongs to the path, increments the "pathIndexToCheck" and checks the next depth vertex,
+      // until it finds the correct one
+      vertex.validReadLock(false) {
+        (
+          pathIndexToCheck < pathElements.size
+            && edge.type == FSEdgeType.DIR
+            && pathElements[pathIndexToCheck] == vertex.name
+          )
+          .also { isVertexBelongsToPath ->
+            if (isVertexBelongsToPath) ++pathIndexToCheck
+          }
+      }
+    }
+      .stream()
+      .skip(pathElements.size - 1L)
+      .findAny()
+      .orElse(null)
   }
 
   fun refresh() {
@@ -318,6 +339,33 @@ class MFVirtualFileSystemModel {
       }
     }
     sendVfsChangesTopic().after(event)
+  }
+
+  /**
+   * Change the virtual file type
+   * @param requestor requester class for further processing
+   * @param vFile the virtual file to change type
+   * @param newIsDirectory new virtual file type
+   */
+  @Throws(IOException::class)
+  fun changeFileType(requestor: Any?, vFile: MFVirtualFile, newIsDirectory: Boolean) {
+    val event =
+      listOf(
+        MFVFilePropertyChangeEvent(
+          requestor,
+          vFile,
+          MFVirtualFile.PropName.IS_DIRECTORY,
+          vFile.isDirectory,
+          newIsDirectory
+        )
+      )
+    sendMFVfsChangesTopic().before(event)
+    vFile.validReadLock {
+      if (vFile.isDirectory != newIsDirectory) {
+        vFile.isDirectoryInternal = newIsDirectory
+      }
+    }
+    sendMFVfsChangesTopic().after(event)
   }
 
   @Throws(IOException::class)
