@@ -12,6 +12,7 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,21 +21,23 @@ import com.intellij.ui.tree.LeafState
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
-import eu.ibagroup.formainframe.dataops.*
+import eu.ibagroup.formainframe.dataops.BatchedRemoteQuery
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.Query
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.fetch.LibraryQuery
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.locked
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.utils.toHumanReadableFormat
 import java.time.LocalDateTime
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 /**
  * Abstract class to represent a tree node in explorer
  */
-abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit<Connection>>(
+abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R : Any, Q : Query<R, Unit>, File : VirtualFile, U : ExplorerUnit<Connection>>(
   value: Value,
   project: Project,
   parent: ExplorerTreeNode<Connection, *>,
@@ -45,11 +48,9 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
 
-  private val hasError = AtomicBoolean(false)
-
   private val connectionError = "Error: Check connection"
   private val refreshLabel = "latest refresh:"
-  private val outOfSync : String = "Out of sync"
+  private val outOfSync: String = "Out of sync"
 
   @Volatile
   private var needsToShowPlus = true
@@ -79,6 +80,19 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
   protected abstract fun Collection<File>.toChildrenNodes(): List<AbstractTreeNode<*>>
 
   protected abstract fun makeFetchTaskTitle(query: Q): String
+
+  /**
+   * Refresh child node in the children list. Updates the actual reference in the list
+   * @param oldChildNode the old child node reference to search through the list for
+   * @param newChildNode the new child node instance to put to the list
+   */
+  fun refreshChildNode(oldChildNode: AbstractTreeNode<*>, newChildNode: AbstractTreeNode<*>) {
+    lock.withLock {
+      (cachedChildren as? MutableList)?.replaceAll {
+        if (it.value == oldChildNode.value) newChildNode else it
+      }
+    }
+  }
 
   /**
    * Method to build a list of error nodes with specified error text
@@ -117,6 +131,12 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
                 }
               }
               .also {
+                it.forEach { fetchedNode ->
+                  if (fetchedNode is FileLikeDatasetNode || fetchedNode is LibraryNode) {
+                    val explorerNode = fetchedNode as ExplorerTreeNode<*, *>
+                    explorerNode.refreshSimilarNodes()
+                  }
+                }
                 cachedChildren = it
               }
           } else {
@@ -127,13 +147,28 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
                 project = project,
                 cancellable = true
               ) {
-                if (needToLoadMore) {
-                  fileFetchProvider.loadMode(q, it)
-                } else {
-                  fileFetchProvider.apply {
-                    reload(q, it)
-                    applyRefreshCacheDate(q, this@FileFetchNode, LocalDateTime.now())
+                var isMembersFetchOnInvalidDS = false
+                // This functionality is going to skip the fetch of dataset members
+                // in case the dataset became plain. This might happed when the dataset
+                // got new mainframe attributes that changed it state but not the presentation
+                if (q.request is LibraryQuery && this@FileFetchNode is LibraryNode) {
+                  val dsNode = this@FileFetchNode as LibraryNode
+                  val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+                  val attributes = dataOpsManager.tryToGetAttributes(dsNode.virtualFile)
+                  if (attributes is RemoteDatasetAttributes && !attributes.hasDsOrg) {
+                    isMembersFetchOnInvalidDS = true
                   }
+                }
+                if (!isMembersFetchOnInvalidDS) {
+                  if (needToLoadMore) {
+                    fileFetchProvider.loadMore(q, it)
+                  } else {
+                    fileFetchProvider.apply {
+                      reload(q, it)
+                      applyRefreshCacheDate(q, this@FileFetchNode, LocalDateTime.now())
+                    }
+                  }
+
                 }
                 needToLoadMore = false
                 possibleToFetch = true
@@ -142,7 +177,6 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
             (fetched?.toChildrenNodes()?.toMutableList() ?: mutableListOf()).apply { add(loadingNode) }
           }
         } else {
-          hasError.set(true)
           errorNode(
             if (unit.connectionConfig == null) {
               connectionError
@@ -184,7 +218,10 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
     if (q != null) {
       val lastKnownRefreshTime = fileFetchProvider.findCacheRefreshDateIfPresent(q)
       if (lastKnownRefreshTime != null) {
-        presentation.addText(" $refreshLabel ${lastKnownRefreshTime.toHumanReadableFormat()}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        presentation.addText(
+          " $refreshLabel ${lastKnownRefreshTime.toHumanReadableFormat()}",
+          SimpleTextAttributes.GRAYED_ATTRIBUTES
+        )
       }
     } else presentation.addText(" $outOfSync", SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }
@@ -204,9 +241,7 @@ abstract class FileFetchNode<Connection: ConnectionConfigBase, Value : Any, R : 
     sendTopic: Boolean = true
   ) {
     val children = cachedChildren
-    if (!hasError.compareAndSet(true, false)) {
-      cachedChildren = null
-    }
+    cachedChildren = null
     if (cleanFetchProviderCache) {
       query?.let {
         fileFetchProvider.cleanCache(it, sendTopic)

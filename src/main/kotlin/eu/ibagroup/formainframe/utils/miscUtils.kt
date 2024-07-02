@@ -333,3 +333,12 @@ fun LocalDateTime.toHumanReadableFormat(): String {
   return "$dayOfMonth ${month.name} ${toLocalTime().truncatedTo(ChronoUnit.SECONDS).format(
     DateTimeFormatter.ISO_LOCAL_TIME)}"
 }
+
+const val UNKNOWN_PARAM_VALUE = "<Unknown>"
+
+/**
+ * Replace empty or null parameter value with <Unknown>
+ */
+fun getParamTextValueOrUnknown(param: Any?):String{
+  return param?.toString()?.trim().orEmpty().ifEmpty { UNKNOWN_PARAM_VALUE }
+}

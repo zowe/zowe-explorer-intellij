@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileNavigator
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
@@ -208,11 +207,11 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
 
         var isErrorMessageInDialogCalled = false
         val showDialogSpecificMock: (
-          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+          Project?, String, String, Array<String>, Int, Icon?
         ) -> Int = Messages::showDialog
         mockkStatic(showDialogSpecificMock as KFunction<*>)
         every {
-          showDialogSpecificMock(any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any(), any())
+          showDialogSpecificMock(any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?)
         } answers {
           isErrorMessageInDialogCalled = true
           1

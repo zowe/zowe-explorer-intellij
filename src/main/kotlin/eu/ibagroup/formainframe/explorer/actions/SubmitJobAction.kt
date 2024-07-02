@@ -20,6 +20,7 @@ import eu.ibagroup.formainframe.analytics.events.JobAction
 import eu.ibagroup.formainframe.analytics.events.JobEvent
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitFilePathOperationParams
@@ -107,8 +108,14 @@ class SubmitJobAction : AnAction() {
       return
     }
     val selected = view.mySelectedNodesData
-    val node = selected.getOrNull(0)?.node
-    e.presentation.isVisible = selected.size == 1
-        && (node is FileLikeDatasetNode || node is UssFileNode)
+    if (selected.size != 1) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val node = selected[0].node
+    val attr = selected[0].attributes
+    e.presentation.isVisible =
+      (node is FileLikeDatasetNode || node is UssFileNode)
+        && !(attr is RemoteDatasetAttributes && !attr.hasDsOrg)
   }
 }

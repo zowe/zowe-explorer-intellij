@@ -20,12 +20,12 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
  * Common abstract class which represents attributed virtual file in VFS.
  * Every virtual file object with attributes in explorer(WS, JES) extends this class
  */
-abstract class RemoteAttributedFileFetchBase<Connection: ConnectionConfigBase, Request : Any, Response : FileAttributes, File : VirtualFile>(
+abstract class RemoteAttributedFileFetchBase<Connection : ConnectionConfigBase, Request : Any, Response : FileAttributes, File : VirtualFile>(
   dataOpsManager: DataOpsManager
 ) : RemoteFileFetchProviderBase<Connection, Request, Response, File>(dataOpsManager) {
 
   protected val attributesService: AttributesService<Response, File>
-          by lazy { dataOpsManager.getAttributesService(responseClass, vFileClass) }
+      by lazy { dataOpsManager.getAttributesService(responseClass, vFileClass) }
 
   /**
    * Overloaded method to create a virtual file with attributes in VFS from given response

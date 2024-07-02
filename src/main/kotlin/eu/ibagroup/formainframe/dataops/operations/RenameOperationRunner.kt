@@ -21,8 +21,12 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.formainframe.vfs.sendMFVfsChangesTopic
-import org.zowe.kotlinsdk.*
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import org.zowe.kotlinsdk.CopyDataZOS
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.FilePath
+import org.zowe.kotlinsdk.MoveUssFile
+import org.zowe.kotlinsdk.RenameData
 
 /**
  * Class which represents factory for rename operation runner. Defined in plugin.xml
@@ -81,7 +85,9 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               toDatasetName = operation.newName
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              sendMFVfsChangesTopic()
+              runWriteActionInEdtAndWait {
+                operation.file.rename(this, operation.newName)
+              }
             } else {
               throw CallException(response, "Unable to rename the selected dataset")
             }
@@ -94,6 +100,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           }
         }
       }
+
       is RemoteMemberAttributes -> {
         val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
         parentAttributes.requesters.map {
@@ -113,9 +120,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 toDatasetName = parentAttributes.datasetInfo.name,
                 memberName = operation.newName
               ).cancelByIndicator(progressIndicator).execute()
-              if (response.isSuccessful) {
-                sendMFVfsChangesTopic()
-              } else {
+              if (!response.isSuccessful) {
                 throw CallException(response, "Unable to duplicate the selected member")
               }
             } else {
@@ -131,7 +136,9 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 memberName = operation.newName
               ).cancelByIndicator(progressIndicator).execute()
               if (response.isSuccessful) {
-                sendMFVfsChangesTopic()
+                runWriteActionInEdtAndWait {
+                  operation.file.rename(this, operation.newName)
+                }
               } else {
                 throw CallException(response, "Unable to rename the selected member")
               }
@@ -145,6 +152,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
           }
         }
       }
+
       is RemoteUssAttributes -> {
         val parentDirPath = attributes.parentDirPath
         attributes.requesters.map {
@@ -158,7 +166,9 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               filePath = FilePath("$parentDirPath/${operation.newName}")
             ).cancelByIndicator(progressIndicator).execute()
             if (response.isSuccessful) {
-              sendMFVfsChangesTopic()
+              runWriteActionInEdtAndWait {
+                operation.file.rename(this, operation.newName)
+              }
             } else {
               throw CallException(response, "Unable to rename the selected file or directory")
             }

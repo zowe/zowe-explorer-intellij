@@ -490,23 +490,7 @@ class FileExplorerView(
             node.unit.removeUssPath(node.value)
           }
         }
-      val nodeDataAndPaths = selected
-        .filterNot {
-          it.node is FilesWorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isUssMask)
-        }.mapNotNull {
-          Pair(it, it.file?.getParentsChain() ?: return@mapNotNull null)
-        }
-      val nodeDataAndPathFiltered = nodeDataAndPaths.filter { orig ->
-        nodeDataAndPaths
-          .filter { orig.second.size > it.second.size }
-          .none { orig.second.containsAll(it.second) }
-      }
-      val nodeAndFilePairs = nodeDataAndPathFiltered.map { it.first }.filter {
-        val file = it.file ?: return@filter false
-        explorer.componentManager.service<DataOpsManager>().isOperationSupported(
-          DeleteOperation(file, dataOpsManager)
-        )
-      }.mapNotNull { Pair(it, it.file ?: return@mapNotNull null) }
+      val nodeAndFilePairs = optimizeDeletion(selected)
       if (nodeAndFilePairs.isNotEmpty()) {
         val files = nodeAndFilePairs.map { it.second }.toSet().toList()
         if (showYesNoDialog(
@@ -546,18 +530,69 @@ class FileExplorerView(
       }
     }
 
-    /** Checks if files corresponding to the selected nodes data can be deleted. */
+    /**
+     * Creates pairs of a node/file to optimize the removal of child element when deleting parent.
+     * The function excludes working sets from the original list.
+     * For other nodes - associates the corresponding parent's chain.
+     * Filters out elements whose parent's chain is completely contained in the chain of another element.
+     * Filters out elements that cannot be deleted
+     * @param selected list of nodes to delete.
+     * @return result list of pares node-file
+     */
+    private fun optimizeDeletion(selected: List<NodeData<ConnectionConfig>>): List<Pair<NodeData<ConnectionConfig>, MFVirtualFile>> {
+      val nodeDataAndPaths = selected
+        .filterNot {
+          it.node is FilesWorkingSetNode || it.node is DSMaskNode || (it.node is UssDirNode && it.node.isUssMask)
+        }.mapNotNull {
+          Pair(it, it.file?.getParentsChain() ?: return@mapNotNull null)
+        }
+      val nodeDataAndPathFiltered = nodeDataAndPaths.filter { orig ->
+        nodeDataAndPaths
+          .filter { orig.second.size > it.second.size }
+          .none { orig.second.containsAll(it.second) }
+      }
+      return nodeDataAndPathFiltered.map { it.first }.filter {
+        val file = it.file ?: return@filter false
+        explorer.componentManager.service<DataOpsManager>().isOperationSupported(
+          DeleteOperation(file, dataOpsManager)
+        )
+      }.mapNotNull { Pair(it, it.file ?: return@mapNotNull null) }
+    }
+
+    /**
+     * Checks if files corresponding to the selected nodes data can be deleted.
+     * Allows you to delete only elements of one type or
+     * some top-level elements (FilesWorkingSetNode/DSMaskNode/UssMask) or
+     * elements in the parent-child relationship (Dataset-Member, Dir-File).
+     */
     override fun canDeleteElement(dataContext: DataContext): Boolean {
       val selected = mySelectedNodesData
       val deleteOperations = selected.mapNotNull {
         DeleteOperation(it.file ?: return@mapNotNull null, it.attributes ?: return@mapNotNull null)
       }
-      return selected.any {
-        it.node is FilesWorkingSetNode
-            || it.node is DSMaskNode
-            || (it.node is UssDirNode && it.node.isUssMask)
-            || deleteOperations.any { op -> dataOpsManager.isOperationSupported(op) }
+      val nodesTypes = selected.map { it.node }
+      val wsNodes = nodesTypes.filter {
+        it is FilesWorkingSetNode || it is DSMaskNode || (it is UssDirNode && it.isUssMask)
       }
+      val filesNodes = nodesTypes - wsNodes.toSet()
+
+      if (nodesTypes.map { it::class.simpleName }.distinct().size == 1 &&
+        (filesNodes.isEmpty()) &&
+        ((nodesTypes[0] is FilesWorkingSetNode) ||
+            (nodesTypes[0] is DSMaskNode) ||
+            (nodesTypes[0] is UssDirNode && (nodesTypes[0] as UssDirNode).isUssMask))
+      )
+        return true
+      val nodeAndFilePairs = optimizeDeletion(selected)
+      return if (nodeAndFilePairs.isNotEmpty()) {
+        val filesAttrTypes = nodeAndFilePairs.mapNotNull { it.first.attributes }.map { it::class.simpleName }.distinct()
+        var checkForUss = true
+        if (filesAttrTypes.any { it == "RemoteUssAttributes" })
+          checkForUss = nodeAndFilePairs.map { it.first.node::class.simpleName }.distinct().size == 1
+        filesAttrTypes.size == 1 && wsNodes.isEmpty() && deleteOperations.any { op ->
+          dataOpsManager.isOperationSupported(op) && checkForUss
+        }
+      } else false
     }
   }
 

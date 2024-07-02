@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
@@ -103,10 +104,10 @@ class AllocateLikeAction : AllocateActionBase() {
       return
     }
     val selected = view.mySelectedNodesData
-    val entityAttributes = selected[0].attributes
-    e.presentation.isEnabledAndVisible = selected.size == 1
-        && entityAttributes is RemoteDatasetAttributes
-        && !entityAttributes.isMigrated
+    val entityAttributes = if (selected.size == 1) selected[0].attributes else null
+    e.presentation.isEnabledAndVisible = entityAttributes != null
+      && (entityAttributes is RemoteDatasetAttributes || entityAttributes is RemoteUssAttributes)
+      && !(entityAttributes is RemoteDatasetAttributes && !entityAttributes.hasDsOrg)
     e.presentation.icon = IconUtil.addText(AllIcons.FileTypes.Any_type, "DS")
   }
 

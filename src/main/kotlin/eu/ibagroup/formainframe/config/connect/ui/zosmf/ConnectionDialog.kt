@@ -11,6 +11,10 @@
 package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.HelpTooltip
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -34,6 +38,7 @@ import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialog
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialogState
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
@@ -192,10 +197,30 @@ class ConnectionDialog(
             connectionDialog = ConnectionDialog(crudable, state, project)
             addAnyway
           } else {
+            runTask(title = "Retrieving user information", project = project) {
+              // Could be empty if TSO request fails
+              state.owner = whoAmI(newTestedConnConfig) ?: ""
+            }
+            if (state.owner.isEmpty()) showWarningNotification(project)
             true
           }
         }
       )
+    }
+
+    /**
+     * Function shows a warning notification if USS owner cannot be retrieved
+     */
+    private fun showWarningNotification(project: Project?) {
+      Notification(
+        EXPLORER_NOTIFICATION_GROUP_ID,
+        "Unable to retrieve USS username",
+        "Cannot retrieve USS username. An error happened while executing TSO request.\n" +
+            "When working with USS files the same username will be used that was specified by the user when connecting.",
+        NotificationType.WARNING
+      ).let {
+        Notifications.Bus.notify(it, project)
+      }
     }
   }
 
@@ -242,6 +267,7 @@ class ConnectionDialog(
           }
           .also { urlTextField = it.component }
           .align(AlignX.FILL)
+          .component.emptyText.setText("http(s)://host:port")
       }
       row {
         label("Username: ")
@@ -277,6 +303,13 @@ class ConnectionDialog(
                 }
                 sslCheckbox = this
               }
+            }
+          icon(AllIcons.General.ContextHelp)
+            .also {
+              val sslHelpText =
+                """Select this checkbox if your organization uses self-signed certificates (not recommended)."""
+                  .trimMargin()
+              HelpTooltip().setDescription(sslHelpText).installOn(it.component)
             }
         }
       }
@@ -442,7 +475,7 @@ class ConnectionDialog(
       0 -> {
         components.forEach {
           if (it is JBCheckBox) it.isSelected = false
-          if (it is JBTextField) it.text = it.text.replace("http", "https", true)
+          if (it is JBTextField) it.text = it.text.replace("http://", "https://", true)
         }
         backToSafety
       }

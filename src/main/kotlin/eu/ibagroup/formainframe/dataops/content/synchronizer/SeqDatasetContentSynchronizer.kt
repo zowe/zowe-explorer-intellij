@@ -19,12 +19,17 @@ import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.applyIfNotNull
+import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.findAnyNullable
+import eu.ibagroup.formainframe.utils.log
+import eu.ibagroup.formainframe.utils.mapNotNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import okhttp3.ResponseBody
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.XIBMDataType
-import okhttp3.ResponseBody
 import retrofit2.Call
 import java.io.IOException
 
@@ -186,15 +191,23 @@ class SeqDatasetContentSynchronizer(
   }
 
   /**
-   * Check if the content synchronizer accepts the provided file
+   * Check if the content synchronizer accepts the provided sequential dataset virtual file
    * @param file the file to check
-   * @return true if the file is not migrated and the dataset organization parameter is not VS
+   * @return true if:
+   * 1. The dataset is not migrated
+   * 2. The dataset organization parameter is not VS (it is not a VSAM or VSAM-related file)
+   * 3. It is not an ALIAS
    */
   override fun accepts(file: VirtualFile): Boolean {
-    return super.accepts(file) &&
-            dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()?.let {
-              !it.isMigrated && it.datasetInfo.datasetOrganization != DatasetOrganization.VS
-            } == true
+    val isOurVFile = super.accepts(file)
+    return if (isOurVFile) {
+      val dsAttributes = dataOpsManager.tryToGetAttributes(file)?.castOrNull<RemoteDatasetAttributes>()
+      return dsAttributes != null
+          && !dsAttributes.isMigrated
+          && dsAttributes.datasetInfo.datasetOrganization != DatasetOrganization.VS
+          && dsAttributes.datasetInfo.volumeSerial != "*ALIAS"
+    } else {
+      false
+    }
   }
-
 }

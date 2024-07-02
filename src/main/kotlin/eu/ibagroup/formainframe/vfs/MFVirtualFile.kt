@@ -31,6 +31,10 @@ class MFVirtualFile internal constructor(
   private val initialAttributes: FileAttributes,
 ) : VirtualFile(), VirtualFileWithId, ReadWriteLock by ReentrantReadWriteLock() {
 
+  enum class PropName(propName: String) {
+    IS_DIRECTORY("isDirectory")
+  }
+
   companion object {
     private val fs by lazy { MFVirtualFileSystem.instance }
   }
@@ -57,9 +61,12 @@ class MFVirtualFile internal constructor(
   @Volatile
   internal var isWritableInternal = initialAttributes.isWritable
 
+  @Volatile
+  internal var isDirectoryInternal = initialAttributes.isDirectory
+
   val attributes
     get() = createAttributes(
-      directory = isDirectory,
+      directory = isDirectoryInternal,
       special = initialAttributes.isSpecial,
       symlink = fs.isSymLink(this),
       hidden = initialAttributes.isHidden,
@@ -99,7 +106,7 @@ class MFVirtualFile internal constructor(
     get() = validReadLock(false) { isReadableFlag }
     set(value) = validReadLock({}) { isReadableFlag = value }
 
-  override fun isDirectory() = initialAttributes.isDirectory
+  override fun isDirectory() = isDirectoryInternal
 
   /** Get virtual file if it is the symbolic link */
   override fun getCanonicalFile(): VirtualFile? {
@@ -113,7 +120,7 @@ class MFVirtualFile internal constructor(
   override fun getParent() = fs.model.getParent(this)
 
   /** Get children of the virtual directory */
-  override fun getChildren() = isDirectory.runIfTrue { fs.model.getChildren(this) }
+  override fun getChildren() = isDirectoryInternal.runIfTrue { fs.model.getChildren(this) }
 
   /**
    * Find child in the virtual directory
@@ -305,6 +312,7 @@ internal inline fun <T> genericVarargLockOr(
       1 -> {
         files[0].genericLockOr(locks[0], default(files[0]), block)
       }
+
       else -> {
         files.find { !it.isValid }?.let { return default(it)() }
         lock(*locks) {

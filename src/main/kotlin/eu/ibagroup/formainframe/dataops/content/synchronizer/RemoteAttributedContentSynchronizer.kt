@@ -10,17 +10,20 @@
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.editor.FileContentChangeListener
 import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.vfs.MFBulkFileListener
+import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
@@ -44,6 +47,17 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       handler = object : FileContentChangeListener {
         override fun onUpdate(file: VirtualFile) {
           needToUpload.add(DocumentedSyncProvider(file))
+        }
+      }
+    )
+    subscribe(
+      componentManager = ApplicationManager.getApplication(),
+      topic = MFVirtualFileSystem.MF_VFS_CHANGES_TOPIC,
+      handler = object : MFBulkFileListener {
+        override fun after(events: List<VFileEvent>) {
+          events.filterIsInstance<VFileDeleteEvent>().forEach { event ->
+            fetchedAtLeastOnce.removeIf { it.file == event.file }
+          }
         }
       }
     )
@@ -109,29 +123,6 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   }
 
   /**
-   * It is only necessary to remove old file from cache while force overwriting.
-   * TODO: Not the best solution. Think on how to rework.
-   * @param file - file to remove.
-   */
-  fun removeFromCacheAfterForceOverwriting(file: VirtualFile) {
-    val syncProvider = fetchedAtLeastOnce.firstOrNull { it.file == file } ?: return
-    fetchedAtLeastOnce.removeIf { it.file == file }
-    // if you will not delete the file than "Local cache conflict" dialog appear.
-    runWriteActionInEdtAndWait {
-      // close editor if file is opened to avoid IDE crash.
-      ProjectManager.getInstance().openProjects.forEach {
-        syncProvider.getDocument()?.let { document ->
-          val fileEditorManager = FileEditorManager.getInstance(it)
-          FileDocumentManager.getInstance().getFile(document)?.let { vf ->
-            fileEditorManager.closeFile(vf)
-          }
-        }
-      }
-      file.delete(this@RemoteAttributedContentSynchronizer)
-    }
-  }
-
-  /**
    * Base implementation of [ContentSynchronizer.synchronizeWithRemote] method for each synchronizer.
    * Doesn't need to be overridden in most cases
    * @see ContentSynchronizer.synchronizeWithRemote
@@ -159,7 +150,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
         fetchedAtLeastOnce.add(syncProvider)
       } else {
 
-        val fileContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+        val fileContent = runReadAction { syncProvider.retrieveCurrentContent() }
 
         if (!(fileContent contentEquals adaptedFetchedBytes)) {
           val oldStorageBytes = successfulStatesStorage.getBytes(recordId)
@@ -175,7 +166,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
           } else {
             log.info("Save strategy decided to accept remote file content.")
             successfulStatesStorage.writeStream(recordId).use { it.write(adaptedFetchedBytes) }
-            runWriteActionInEdt { syncProvider.loadNewContent(adaptedFetchedBytes) }
+            runWriteActionInEdtAndWait { syncProvider.loadNewContent(adaptedFetchedBytes) }
           }
         } else { /*do nothing*/
         }
