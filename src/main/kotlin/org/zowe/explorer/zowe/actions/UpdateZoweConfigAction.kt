@@ -16,9 +16,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
-import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.explorer.zowe.service.ZoweConfigService
+import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
 import org.zowe.explorer.zowe.service.ZoweConfigState
+import org.zowe.explorer.zowe.service.ZoweConfigType
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 
 /**
@@ -40,11 +41,17 @@ class UpdateZoweConfigAction : DumbAwareAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
+
+    var type = ZoweConfigType.GLOBAL
+    val zoweLocalConfigLocation = ZoweConfigServiceImpl.getZoweConfigLocation(project, ZoweConfigType.LOCAL)
+    if (e.getData(CommonDataKeys.VIRTUAL_FILE)?.path == zoweLocalConfigLocation)
+      type = ZoweConfigType.LOCAL
+
     FileDocumentManager.getInstance().saveDocument(editor.document)
 
     val zoweConfigService = project.service<ZoweConfigService>()
 
-    zoweConfigService.addOrUpdateZoweConfig(true)
+    zoweConfigService.addOrUpdateZoweConfig(true, type = type)
   }
 
   override fun update(e: AnActionEvent) {
@@ -57,21 +64,38 @@ class UpdateZoweConfigAction : DumbAwareAction() {
       return
     }
     val vFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    if (vFile?.path != "${project.basePath}/$ZOWE_CONFIG_NAME") {
+    var type = ZoweConfigType.GLOBAL
+    val zoweLocalConfigLocation = ZoweConfigServiceImpl.getZoweConfigLocation(project, ZoweConfigType.LOCAL)
+    val zoweGlobalConfigLocation = ZoweConfigServiceImpl.getZoweConfigLocation(project, ZoweConfigType.GLOBAL)
+    if (vFile?.path != zoweLocalConfigLocation && vFile?.path != zoweGlobalConfigLocation) {
       e.presentation.isEnabledAndVisible = false
       return
     }
+    if (vFile.path == zoweLocalConfigLocation)
+      type = ZoweConfigType.LOCAL
 
     val zoweConfigService = project.service<ZoweConfigService>()
 
-    val prevZoweConfig = zoweConfigService.zoweConfig
+    val prevZoweConfig = if (type == ZoweConfigType.LOCAL)
+      zoweConfigService.localZoweConfig
+    else
+      zoweConfigService.globalZoweConfig
     runCatching {
-      zoweConfigService.zoweConfig = parseConfigJson(editor.document.text)
-      zoweConfigService.zoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
+      if (type == ZoweConfigType.LOCAL) {
+        zoweConfigService.localZoweConfig = parseConfigJson(editor.document.text)
+        zoweConfigService.localZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
+      } else {
+        zoweConfigService.globalZoweConfig = parseConfigJson(editor.document.text)
+        zoweConfigService.globalZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
+      }
     }
-    val zoweState = zoweConfigService.getZoweConfigState(false)
+    val zoweState = zoweConfigService.getZoweConfigState(false, type = type)
     e.presentation.isEnabledAndVisible =
       zoweState == ZoweConfigState.NEED_TO_UPDATE || zoweState == ZoweConfigState.NEED_TO_ADD
-    zoweConfigService.zoweConfig = prevZoweConfig
+    if (type == ZoweConfigType.LOCAL) {
+      zoweConfigService.localZoweConfig = prevZoweConfig
+    } else {
+      zoweConfigService.globalZoweConfig = prevZoweConfig
+    }
   }
 }

@@ -32,7 +32,6 @@ class ZoweFileListener : BulkFileListener {
   /**
    * Updates zowe config by file events.
    * @param events - events that was triggered.
-   * @param isBefore - true if event triggered before changes action and false otherwise.
    * @return Nothing.
    */
   private fun updateZoweConfig(events: MutableList<out VFileEvent>) {
@@ -40,12 +39,17 @@ class ZoweFileListener : BulkFileListener {
       val file = e.file ?: return
       runIfTrue(file.name == ZOWE_CONFIG_NAME) {
         val projectForFile = ProjectLocator.getInstance().guessProjectForFile(file) ?: return
+        val type = if (file.canonicalPath == ZoweConfigServiceImpl.getZoweConfigLocation(projectForFile, ZoweConfigType.LOCAL))
+          ZoweConfigType.LOCAL
+        else if (file.canonicalPath == ZoweConfigServiceImpl.getZoweConfigLocation(projectForFile, ZoweConfigType.GLOBAL))
+          ZoweConfigType.GLOBAL
+        else return
         if (e is VFileDeleteEvent) {
           invokeLater {
-            showDialogForDeleteZoweConfigIfNeeded(projectForFile)
+            showDialogForDeleteZoweConfigIfNeeded(projectForFile, type = type)
           }
         } else {
-          showNotificationForAddUpdateZoweConfigIfNeeded(projectForFile)
+          showNotificationForAddUpdateZoweConfigIfNeeded(projectForFile, type = type)
         }
       }
     }

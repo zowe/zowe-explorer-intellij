@@ -10,14 +10,19 @@
 
 package org.zowe.explorer.config
 
+import com.intellij.notification.Notification
+import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.Messages.showOkCancelDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.*
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
@@ -37,16 +42,25 @@ import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.service
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
-import org.zowe.kotlinsdk.*
+import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl.Companion.getZoweConfigLocation
+import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl.Companion.getZoweConnectionName
+import org.zowe.explorer.zowe.service.ZoweConfigState
+import org.zowe.explorer.zowe.service.ZoweConfigType
+import org.zowe.kotlinsdk.InfoResponse
+import org.zowe.kotlinsdk.SystemsResponse
 import org.zowe.kotlinsdk.annotations.ZVersion
 import org.zowe.kotlinsdk.zowe.config.KeytarWrapper
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.io.InputStream
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
+import javax.swing.Icon
 import kotlin.reflect.KFunction
+import kotlin.reflect.full.declaredMemberFunctions
+import kotlin.reflect.jvm.isAccessible
 
 class ZoweConfigTestSpec : WithApplicationShouldSpec({
   val tmpZoweConfFile = "test/$ZOWE_CONFIG_NAME"
@@ -74,6 +88,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     var isZOSInfoCalled = false
     var isScanForZoweConfigCalled = false
     var isConnectionDeleted = false
+    var notified = false
 
     val mockedProject = mockk<Project>(relaxed = true)
     every { mockedProject.basePath } returns "test"
@@ -104,6 +119,39 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     every { crudableMockk.addOrUpdate(any<ConnectionConfig>()) } answers {
       isAddOrUpdateConnectionCalled = true
       Optional.of(ConnectionConfig())
+    }
+
+    afterEach {
+      isFilesWriteTriggered = false
+      isRunWriteActionCalled = false
+      isSaveNewSecurePropertiesCalled = false
+      isFindFileByNioPathCalled = false
+      isInputStreamCalled = false
+      isReturnedZoweConfig = false
+      isAddOrUpdateConnectionCalled = false
+      isZOSInfoCalled = false
+      isScanForZoweConfigCalled = false
+      isConnectionDeleted = false
+      notified = false
+    }
+
+    val mockedNotification: (
+      Notification
+    ) -> Unit = Notifications.Bus::notify
+    mockkStatic(mockedNotification as KFunction<*>)
+    every {
+      mockedNotification(
+        any<Notification>()
+      )
+    } answers {
+      notified = true
+    }
+
+    should("getResourceStream") {
+      ZoweConfigServiceImpl.Companion::class.declaredMemberFunctions.find { it.name == "getResourceStream" }?.let {
+        it.isAccessible = true
+        it.call(ZoweConfigServiceImpl, "test") shouldBe null
+      }
     }
 
     val mockedZoweConfigService = spyk(ZoweConfigServiceImpl(mockedProject), recordPrivateCalls = true)
@@ -142,21 +190,6 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     zoweConnConf.zoweConfigPath = tmpZoweConfFile.replace("\\", "/")
     zoweConnConf.name = "zowe-testProj"
 
-    afterEach {
-      isFilesWriteTriggered = false
-      isRunWriteActionCalled = false
-      isSaveNewSecurePropertiesCalled = false
-
-      isFindFileByNioPathCalled = false
-      isInputStreamCalled = false
-      isReturnedZoweConfig = false
-      isAddOrUpdateConnectionCalled = false
-      isZOSInfoCalled = false
-      isScanForZoweConfigCalled = false
-
-      isConnectionDeleted = false
-    }
-
     val vfMock = mockk<VirtualFile>()
     val isMock = mockk<InputStream>()
     val vfmMock: VirtualFileManager = mockk<VirtualFileManager>()
@@ -183,7 +216,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     every { zoweConfigMock.port } returns 555
     every { zoweConfigMock.host } returns "111.111.111.111"
     every { zoweConfigMock.protocol } returns "https"
-    every { zoweConfigMock.rejectUnauthorized } returns false
+    every { zoweConfigMock.rejectUnauthorized } returns null
 
     val parseConfigJsonFun: (InputStream) -> ZoweConfig = ::parseConfigJson
     mockkStatic(parseConfigJsonFun as KFunction<*>)
@@ -194,17 +227,24 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
 
     val explorerMock = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
     every { explorerMock.componentManager } returns ApplicationManager.getApplication()
+    var infoRes = InfoResponse(zosVersion = "04.27.00")
     val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
     dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
       override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
         if (operation is InfoOperation) {
+          if (infoRes.zosVersion == "throw1") {
+            throw Throwable("Test performInfoOperation throw")
+          }
           @Suppress("UNCHECKED_CAST")
           return SystemsResponse(numRows = 1) as R
         }
         if (operation is ZOSInfoOperation) {
           isZOSInfoCalled = true
+          if (infoRes.zosVersion == "throw2") {
+            throw Throwable("Test performOperation throw")
+          }
           @Suppress("UNCHECKED_CAST")
-          return InfoResponse(zosVersion = "04.27.00") as R
+          return infoRes as R
         }
         @Suppress("UNCHECKED_CAST")
         return InfoResponse() as R
@@ -213,6 +253,31 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
 
     mockkStatic(::whoAmI as KFunction<*>)
     every { whoAmI(any<ConnectionConfig>()) } returns "USERID"
+
+    should("getZoweConnectionName") {
+      getZoweConnectionName(mockedProject, ZoweConfigType.LOCAL) shouldBe "zowe-local-zosmf/testProj"
+      getZoweConnectionName(mockedProject, ZoweConfigType.GLOBAL) shouldBe "zowe-global-zosmf"
+      getZoweConnectionName(null, ZoweConfigType.GLOBAL) shouldBe "zowe-global-zosmf"
+    }
+
+    should("getZoweConfigLocation") {
+      getZoweConfigLocation(mockedProject, ZoweConfigType.LOCAL) shouldBe "test/zowe.config.json"
+      getZoweConfigLocation(
+        mockedProject,
+        ZoweConfigType.GLOBAL
+      ) shouldBe System.getProperty("user.home").replace("((\\*)|(/*))$", "") + "/.zowe/" + ZOWE_CONFIG_NAME
+      getZoweConfigLocation(null, ZoweConfigType.LOCAL) shouldBe "null/zowe.config.json"
+    }
+
+    should("notifyError") {
+      mockedZoweConfigService::class.declaredMemberFunctions.find { it.name == "notifyError" }?.let {
+        it.isAccessible = true
+        it.call(mockedZoweConfigService, Throwable("Test throwable"), "test title")
+        it.call(mockedZoweConfigService, Throwable("Test throwable"), null)
+        it.call(mockedZoweConfigService, Throwable(), null)
+        notified shouldBe true
+      }
+    }
 
     should("add zowe team config file") {
       mockkStatic(Files::class) {
@@ -227,8 +292,12 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       isSaveNewSecurePropertiesCalled shouldBe true
     }
 
-    should("add or update zowe team config connection") {
-      mockedZoweConfigService.addOrUpdateZoweConfig(scanProject = true, checkConnection = true)
+    should("add zowe team config connection") {
+      mockedZoweConfigService.addOrUpdateZoweConfig(
+        scanProject = true,
+        checkConnection = true,
+        type = ZoweConfigType.LOCAL
+      )
       isFindFileByNioPathCalled shouldBe true
       isInputStreamCalled shouldBe true
       isReturnedZoweConfig shouldBe true
@@ -237,11 +306,260 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       isZOSInfoCalled shouldBe true
     }
 
+    should("try to update zowe team config connection and throw") {
+      mockedZoweConfigService.addOrUpdateZoweConfig(
+        scanProject = true, checkConnection = false, type = ZoweConfigType.LOCAL
+      )
+      isFindFileByNioPathCalled shouldBe true
+      isInputStreamCalled shouldBe true
+      isReturnedZoweConfig shouldBe true
+      isScanForZoweConfigCalled shouldBe true
+      isAddOrUpdateConnectionCalled shouldBe true
+      isZOSInfoCalled shouldBe false
+    }
+
     should("delete zowe team config connection") {
-      mockedZoweConfigService.deleteZoweConfig()
+      mockedZoweConfigService.deleteZoweConfig(type = ZoweConfigType.LOCAL)
       isConnectionDeleted shouldBe true
     }
 
+    should("delete with FilesWorkingSet and JesWorkingSet with throw") {
+      clearMocks(crudableMockk)
+      connection.name = getZoweConnectionName(mockedProject, ZoweConfigType.LOCAL)
+      every { crudableMockk.getAll<ConnectionConfig>() } answers {
+        listOf(connection).stream()
+      }
+      every { crudableMockk.find<ConnectionConfig>(any(), any()) } answers {
+        listOf(connection).stream()
+      }
+      var f = false
+      var j = false
+      val fWSConf = FilesWorkingSetConfig()
+      fWSConf.connectionConfigUuid = connection.uuid
+      every { crudableMockk.getAll<FilesWorkingSetConfig>() } answers {
+        f = true
+        listOf(fWSConf).stream()
+      }
+      val jWSConf = JesWorkingSetConfig()
+      jWSConf.connectionConfigUuid = connection.uuid
+      every { crudableMockk.getAll<JesWorkingSetConfig>() } answers {
+        j = true
+        listOf(jWSConf).stream()
+      }
+      var isShowOkCancelDialogCalled = false
+      val showOkCancelDialogMock: (String, String, String, String, Icon?) -> Int = ::showOkCancelDialog
+      mockkStatic(showOkCancelDialogMock as KFunction<*>)
+      every {
+        showOkCancelDialogMock(any<String>(), any<String>(), any<String>(), any<String>(), any())
+      } answers {
+        isShowOkCancelDialogCalled = true
+        Messages.OK
+      }
+      mockedZoweConfigService.deleteZoweConfig(type = ZoweConfigType.LOCAL)
+
+      f shouldBe true
+      j shouldBe true
+      isShowOkCancelDialogCalled shouldBe true
+      isConnectionDeleted shouldBe false
+    }
+
+    should("checkAndRemoveOldZoweConnection") {
+      var isupdateConnectionCalled = false
+      every { crudableMockk.update(any<ConnectionConfig>()) } answers {
+        isupdateConnectionCalled = true
+        Optional.of(ConnectionConfig())
+      }
+      connection.zoweConfigPath = getZoweConfigLocation(mockedProject, ZoweConfigType.LOCAL)
+      mockedZoweConfigService.checkAndRemoveOldZoweConnection(ZoweConfigType.LOCAL)
+      isupdateConnectionCalled shouldBe true
+    }
+
+    clearMocks(crudableMockk)
+    every { crudableMockk.getAll<ConnectionConfig>() } returns Stream.of()
+    every { crudableMockk.getAll<FilesWorkingSetConfig>() } returns Stream.of()
+    every { crudableMockk.getAll<JesWorkingSetConfig>() } returns Stream.of()
+    mockkObject(ConfigService)
+    every { ConfigService.instance.crudable } returns crudableMockk
+    every { crudableMockk.find<ConnectionConfig>(any(), any()) } answers {
+      listOf(connection).stream()
+    }
+    every { crudableMockk.delete(any()) } answers {
+      isConnectionDeleted = true
+      Optional.of(ConnectionConfig())
+    }
+    every { crudableMockk.addOrUpdate(any<ConnectionConfig>()) } answers {
+      isAddOrUpdateConnectionCalled = true
+      Optional.of(ConnectionConfig())
+    }
+
+    should("testAndPrepareConnection") {
+      mockedZoweConfigService::class.declaredMemberFunctions.find { it.name == "testAndPrepareConnection" }?.let {
+        it.isAccessible = true
+        infoRes = InfoResponse(zosVersion = "04.25.00")
+        it.call(mockedZoweConfigService, connection)
+        connection.zVersion shouldBe ZVersion.ZOS_2_2
+        infoRes = InfoResponse(zosVersion = "04.26.00")
+        it.call(mockedZoweConfigService, connection)
+        connection.zVersion shouldBe ZVersion.ZOS_2_3
+        infoRes = InfoResponse(zosVersion = "04.28.00")
+        it.call(mockedZoweConfigService, connection)
+        connection.zVersion shouldBe ZVersion.ZOS_2_5
+        infoRes = InfoResponse(zosVersion = "00.00.00")
+        every { whoAmI(any<ConnectionConfig>()) } returns null
+        it.call(mockedZoweConfigService, connection)
+        connection.zVersion shouldBe ZVersion.ZOS_2_1
+        connection.owner shouldBe ""
+        infoRes = InfoResponse(zosVersion = "throw1")
+        try {
+          it.call(mockedZoweConfigService, connection)
+        } catch (e: Throwable) {
+          e.cause.toString() shouldContain "Test performInfoOperation throw"
+        }
+        infoRes = InfoResponse(zosVersion = "throw2")
+        try {
+          it.call(mockedZoweConfigService, connection)
+        } catch (e: Throwable) {
+          e.cause.toString() shouldContain "Test performOperation throw"
+        }
+      }
+    }
+
+    should("addOrUpdateZoweConfig throw Cannot get Zowe config") {
+      mockedZoweConfigService.addOrUpdateZoweConfig(
+        scanProject = false,
+        checkConnection = true,
+        type = ZoweConfigType.GLOBAL
+      )
+      notified shouldBe true
+    }
+
+    should("addOrUpdateZoweConfig throw Cannot get password") {
+      every { zoweConfigMock.password } returns null
+      mockedZoweConfigService.addOrUpdateZoweConfig(
+        scanProject = false,
+        checkConnection = true,
+        type = ZoweConfigType.LOCAL
+      )
+      every { zoweConfigMock.password } returns "password"
+      notified shouldBe true
+    }
+
+    should("addOrUpdateZoweConfig throw Cannot get username") {
+      every { zoweConfigMock.user } returns null
+      mockedZoweConfigService.addOrUpdateZoweConfig(
+        scanProject = false,
+        checkConnection = true,
+        type = ZoweConfigType.LOCAL
+      )
+      every { zoweConfigMock.user } returns "ZoweUserName"
+      notified shouldBe true
+    }
+
+    should("getOrCreateUuid") {
+      mockedZoweConfigService::class.declaredMemberFunctions.find { it.name == "getOrCreateUuid" }?.let {
+        it.isAccessible = true
+        it.call(mockedZoweConfigService, ZoweConfigType.LOCAL) shouldBe "ID000000000000"
+        every { crudableMockk.find<ConnectionConfig>(any(), any()) } answers {
+          emptyList<ConnectionConfig>().stream()
+        }
+        val randomUUID = it.call(mockedZoweConfigService, ZoweConfigType.GLOBAL)
+        randomUUID shouldNotBe null
+        randomUUID shouldNotBe "ID000000000000"
+      }
+    }
+
+    should("addOrUpdateZoweConfig New ConnectionConfig throw on check") {
+      mockedZoweConfigService.addOrUpdateZoweConfig(
+        scanProject = false,
+        checkConnection = true,
+        type = ZoweConfigType.LOCAL
+      )
+      notified shouldBe true
+    }
+
+    should("scanForZoweConfig throw") {
+      clearMocks(zoweConfigMock)
+      every { zoweConfigMock.extractSecureProperties(any<Array<String>>(), any<KeytarWrapper>()) } answers {
+        throw Exception("Test exception")
+      }
+      mockedZoweConfigService::class.declaredMemberFunctions.find { it.name == "scanForZoweConfig" }?.let {
+        it.isAccessible = true
+        try {
+          it.call(mockedZoweConfigService, ZoweConfigType.LOCAL)
+        } catch (e: Exception) {
+          e.cause.toString() shouldContain "Cannot parse ${ZoweConfigType.LOCAL} Zowe config file"
+        }
+      }
+    }
+
+    should("getZoweConfigState throw") {
+      mockedZoweConfigService.getZoweConfigState(true, ZoweConfigType.LOCAL)
+      notified shouldBe true
+    }
+
+    should("getZoweConfigState") {
+      for (type in ZoweConfigType.entries) {
+        connection.name = "testConnection"
+        mockedZoweConfigService.globalZoweConfig = null
+        mockedZoweConfigService.localZoweConfig = null
+        mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.NOT_EXISTS
+        mockedZoweConfigService.globalZoweConfig = zoweConfigMock
+        mockedZoweConfigService.localZoweConfig = zoweConfigMock
+        clearMocks(crudableMockk)
+        every { crudableMockk.find<ConnectionConfig>(any(), any()) } answers {
+          emptyList<ConnectionConfig>().stream()
+        }
+        mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.NEED_TO_ADD
+        every { zoweConfigMock.user } returns "testUser"
+        every { zoweConfigMock.password } returns "testPassword"
+        every { zoweConfigMock.basePath } returns "/base/config/path/"
+        every { zoweConfigMock.port } returns null
+        every { zoweConfigMock.host } returns "111.111.111.111"
+        every { zoweConfigMock.protocol } returns "https"
+        every { zoweConfigMock.rejectUnauthorized } returns true
+        clearMocks(crudableMockk)
+        every { crudableMockk.find<ConnectionConfig>(any(), any()) } answers {
+          listOf(connection).stream()
+        }
+        mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.NEED_TO_UPDATE
+        connection.name = getZoweConnectionName(mockedProject, type)
+        connection.url = "https://111.111.111.111/base/config/path"
+        connection.isAllowSelfSigned = false
+        connection.zVersion = ZVersion.ZOS_2_1
+        connection.zoweConfigPath = getZoweConfigLocation(mockedProject, type)
+        connection.owner = ""
+        mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.SYNCHRONIZED
+        every { zoweConfigMock.password } returns "wrongPass"
+        mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.NEED_TO_UPDATE
+        every { zoweConfigMock.password } returns "testPassword"
+        every { zoweConfigMock.user } returns "wrongUser"
+        mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.NEED_TO_UPDATE
+        every { zoweConfigMock.password } returns null
+        mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.ERROR
+        every { zoweConfigMock.password } returns "testPassword"
+        every { zoweConfigMock.user } returns null
+        mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.ERROR
+        every { zoweConfigMock.user } returns "testUser"
+      }
+    }
+
+    should("addZoweConfigFile") {
+      every { crudableMockk.getAll<ConnectionConfig>() } returns Stream.of()
+      clearMocks(mockedZoweConfigInputStream)
+      every { mockedZoweConfigInputStream.readAllBytes() } returns null
+      every { mockedZoweConfigInputStream.close() } returns Unit
+      try {
+        mockedZoweConfigService.addZoweConfigFile(connectionDialogState)
+      } catch (e: Exception) {
+        e.message shouldContain "zowe.config.json is not found"
+      }
+    }
+
+    should("deleteZoweConfig throw") {
+      every { crudableMockk.find<ConnectionConfig>(any(), any()) } returns emptyList<ConnectionConfig>().stream()
+      mockedZoweConfigService.deleteZoweConfig(type = ZoweConfigType.LOCAL)
+      notified shouldBe true
+    }
   }
 
 })

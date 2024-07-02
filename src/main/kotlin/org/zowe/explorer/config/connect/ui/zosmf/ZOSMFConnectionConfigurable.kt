@@ -301,6 +301,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     if (wasModified) {
       panel?.updateUI()
     }
+    zoweConfigStates.clear()
   }
 
   /** Reset the Connections table changes. Updates UI when the changes were introduced */

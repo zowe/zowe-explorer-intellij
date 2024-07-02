@@ -20,7 +20,8 @@ import org.zowe.explorer.utils.removeTrailingSlashes
 import org.zowe.explorer.utils.validateConnectionName
 import org.zowe.explorer.utils.validateForBlank
 import org.zowe.explorer.utils.validateZosmfUrl
-import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
+import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
+import org.zowe.explorer.zowe.service.ZoweConfigType
 import java.awt.Component
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -80,8 +81,8 @@ class ZoweTeamConfigDialog(
   override fun createCenterPanel(): JComponent {
     val sameWidthLabelsGroup = "CONNECTION_DIALOG_LABELS_WIDTH_GROUP"
 
-    state.zoweConfigPath = "${project?.basePath}/${ZOWE_CONFIG_NAME}"
-    val connectionName = "zowe-".plus(project?.name)
+    state.zoweConfigPath = ZoweConfigServiceImpl.getZoweConfigLocation(project, ZoweConfigType.LOCAL)
+    val connectionName = ZoweConfigServiceImpl.getZoweConnectionName(project, ZoweConfigType.LOCAL)
     return panel {
       row {
         label("Connection name")
