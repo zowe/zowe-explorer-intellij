@@ -2,6 +2,8 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
+## [Unreleased]
+
 ## [1.2.1-231] (2024-06-12)
 
 ### Features
