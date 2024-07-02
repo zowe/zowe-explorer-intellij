@@ -133,7 +133,8 @@ class PurgeJobAction : AnAction() {
           }
           if (foundJobsWaitingInPurgeQueue.isNotEmpty()) {
             foundJobsWaitingInPurgeQueue.clear()
-            val filterRefreshSize = jobsByFilterWaitingPurgeMap[filterNode]!!.size
+            val filterRefreshSize =
+              jobsByFilterWaitingPurgeMap[filterNode]?.size ?: throw Exception("Filter node is not found")
             runRefreshByFilter(
               filterNode,
               if (filterRefreshSize == 1) (filterRefreshSize.toLong() * 1000) else (filterRefreshSize / 2).toLong() * 1000
