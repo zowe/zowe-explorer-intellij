@@ -71,7 +71,7 @@ class UssFileFetchProvider(
       .listUssPath(
         authorizationToken = query.connectionConfig.authToken,
         path = query.request.path,
-        depth = 1,
+        depth = 0,
         followSymlinks = SymlinkMode.REPORT
       ).cancelByIndicator(progressIndicator)
       .execute()
