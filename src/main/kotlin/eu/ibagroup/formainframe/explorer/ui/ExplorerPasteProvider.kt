@@ -37,6 +37,7 @@ import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.ui.WindowsLikeMessageDialog
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import kotlin.concurrent.withLock
 
 object ExplorerDataKeys {
@@ -276,11 +277,13 @@ class ExplorerPasteProvider : PasteProvider {
     val draggedBuffer = dataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) ?: emptyList()
     val clipboardBuffer = copyPasteSupport.getSourceFilesFromClipboard()
     copyPasteSupport.bufferLock.withLock {
-      val sourceFilesRaw = clipboardBuffer.ifEmpty {
+      var sourceFilesRaw = clipboardBuffer.ifEmpty {
         copyPasteSupport.copyPasteBuffer
           .mapNotNull { it.file }
           .plus(draggedBuffer)
       }
+
+      sourceFilesRaw = optimizeOperation(sourceFilesRaw)
 
       val destinationSourceFilePairs = copyPasteSupport.getDestinationSourceFilePairs(
         sourceFiles = sourceFilesRaw,
@@ -444,7 +447,37 @@ class ExplorerPasteProvider : PasteProvider {
       cleanCutBufferAfterPaste(conflictsResolutions, explorerView)
     }
   }
-  
+
+  /**
+   * Optimizes copy/paste operations.
+   * Removes chils files if parent folder has been selected.
+   * Works only for remote files.
+   * @param sourceFilesRaw List of source files for operation.
+   * @return updated file list.
+   */
+  private fun optimizeOperation(sourceFilesRaw: List<VirtualFile>): List<VirtualFile> {
+    return sourceFilesRaw.filter { sourceFile ->
+      if (sourceFile.fileSystem !is MFVirtualFileSystem) return@filter true
+      if (sourceFile.parent == null) return@filter true
+      return@filter !hasParentInTheSameList(sourceFile, sourceFilesRaw)
+    }
+  }
+
+  /**
+   * Checks is file is child for one of folders/files in filesToSearch list
+   * @param file to check.
+   * @param filesToSearch list of source files.
+   */
+  private fun hasParentInTheSameList(file: VirtualFile, filesToSearch: List<VirtualFile>): Boolean {
+    val fileParentsHierarchy = mutableListOf<VirtualFile>()
+    var nextParent: VirtualFile? = file.parent
+    while (nextParent != null) {
+      fileParentsHierarchy.add(nextParent)
+      nextParent = nextParent.parent
+    }
+    return filesToSearch.find { fileParentsHierarchy.contains(it) } != null
+  }
+
   /**
    * Function removes source files from cut buffer during Move/Copy operation which were resolved by skip
    */
