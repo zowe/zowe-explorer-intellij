@@ -638,6 +638,11 @@ Example of how to see the output:<br/>
                 text="Cancel Job"
                 icon="AllIcons.Actions.Suspend"/>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.GoToJobAction"
+                class="eu.ibagroup.formainframe.explorer.actions.GoToJobAction"
+                text="Go To Job"
+                icon="AllIcons.Actions.AddFile"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"
                 class="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"
                 text="Purge Job"
@@ -826,6 +831,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.ReleaseJobAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.HoldJobAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.CancelJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.GoToJobAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.PurgeJobAction"/>
         </group>
 

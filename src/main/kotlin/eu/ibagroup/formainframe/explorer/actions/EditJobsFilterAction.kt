@@ -15,7 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
+import eu.ibagroup.formainframe.config.ws.JobFilterStateWithMultipleWS
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.EditJobsFilterDialog
@@ -45,7 +45,7 @@ class EditJobsFilterAction : AnAction() {
       val prefix = node.value.prefix
       val owner = node.value.owner
       val jobId = node.value.jobId
-      val state = JobFilterStateWithWS(ws = ws, prefix = prefix, owner = owner, jobId = jobId)
+      val state = JobFilterStateWithMultipleWS(wsList = mutableListOf(ws), prefix = prefix, owner = owner, jobId = jobId)
       val dialog = EditJobsFilterDialog(e.project, state)
       if (dialog.showAndGet()) {
         val newJobsFilter = dialog.state.toJobsFilter()
