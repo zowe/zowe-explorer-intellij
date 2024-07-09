@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.config.ws.JobFilterStateWithWS
+import eu.ibagroup.formainframe.config.ws.JobFilterStateWithMultipleWS
 import eu.ibagroup.formainframe.explorer.JesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.AddJobsFilterDialog
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
@@ -38,7 +38,7 @@ class AddJobsFilterAction : AnAction() {
     val workingSets = getSelectedNodesWorkingSets<JesWorkingSet>(view as ExplorerTreeView<*, *, *>)
     val ws = workingSets.firstOrNull() ?: return
     val owner = ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""
-    val initialState = JobFilterStateWithWS(ws = ws, owner = owner)
+    val initialState = JobFilterStateWithMultipleWS(wsList = mutableListOf(ws), owner = owner)
     val dialog = AddJobsFilterDialog(e.project, initialState)
     if (dialog.showAndGet()) {
       ws.addMask(dialog.state.toJobsFilter())
