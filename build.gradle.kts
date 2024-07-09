@@ -136,10 +136,6 @@ tasks {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   }
 
-  withType<ClasspathIndexCleanupTask> {
-    dependsOn(compileTestKotlin)
-  }
-
   patchPluginXml {
     version.set(properties("pluginVersion").get())
     sinceBuild.set(properties("pluginSinceBuild").get())
@@ -161,6 +157,12 @@ tasks {
         }
         .get()
     )
+  }
+
+  withType<Test> {
+    withType<ClasspathIndexCleanupTask> {
+        dependsOn(compileTestKotlin)
+    }
   }
 
   test {

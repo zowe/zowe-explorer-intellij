@@ -46,13 +46,11 @@ abstract class MFRemoteAttributesServiceBase<Connection : ConnectionConfigBase, 
 
   abstract val subFolderName: String
 
-  protected lateinit var subDirectory: MFVirtualFile
+  private val fs = MFVirtualFileSystem.instance
+  protected val fsModel = fs.model
+  protected val fsRoot = fs.root
 
-  protected companion object {
-    val fs = MFVirtualFileSystem.instance
-    val fsModel = fs.model
-    val fsRoot = fs.root
-  }
+  protected lateinit var subDirectory: MFVirtualFile
 
   /**
    * Find or create the virtual file by path element seed
