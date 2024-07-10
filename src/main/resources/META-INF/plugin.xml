@@ -91,9 +91,6 @@ Example of how to see the output:<br/>
         <extensionPoint name="logFetcher"
                         interface="eu.ibagroup.formainframe.dataops.log.LogFetcherFactory"/>
 
-        <extensionPoint name="oldConfigAdapter"
-                        interface="eu.ibagroup.formainframe.config.OldConfigAdapterFactory"/>
-
         <extensionPoint name="explorerContentProvider"
                         interface="eu.ibagroup.formainframe.explorer.ExplorerContentProviderFactory"/>
 
@@ -282,14 +279,6 @@ Example of how to see the output:<br/>
 
         <logFetcher implementation="eu.ibagroup.formainframe.dataops.log.JobLogFetcherFactory"/>
 
-        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldConnectionsAdapterFactory"/>
-
-        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldWorkingSetAdapterFactory"/>
-
-        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.connect.OldUsernameAdapterFactory"/>
-
-        <oldConfigAdapter implementation="eu.ibagroup.formainframe.config.ws.OldJesWorkingSetAdapterFactory"/>
-
         <explorer implementation="eu.ibagroup.formainframe.explorer.FileExplorerFactory"/>
         <explorer implementation="eu.ibagroup.formainframe.explorer.JesExplorerFactory"/>
 
@@ -353,9 +342,6 @@ Example of how to see the output:<br/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
                             serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
-
-        <applicationService serviceInterface="eu.ibagroup.formainframe.config.OldConfigService"
-                            serviceImplementation="eu.ibagroup.formainframe.config.OldConfigServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"
@@ -781,8 +767,8 @@ Example of how to see the output:<br/>
             <reference id="$Paste"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.actions.sort.uss.UssSortActionGroup"/>
-            <reference id ="eu.ibagroup.formainframe.actions.sort.datasets.DatasetsSortActionGroup"/>
-            <reference id ="eu.ibagroup.formainframe.actions.sort.members.MembersSortActionGroup"/>
+            <reference id="eu.ibagroup.formainframe.actions.sort.datasets.DatasetsSortActionGroup"/>
+            <reference id="eu.ibagroup.formainframe.actions.sort.members.MembersSortActionGroup"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.MigrateAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RecallAction"/>

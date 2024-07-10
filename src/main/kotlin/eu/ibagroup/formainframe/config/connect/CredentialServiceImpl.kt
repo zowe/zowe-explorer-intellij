@@ -15,6 +15,7 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.utils.sendTopic
 
 /**
@@ -65,8 +66,10 @@ class CredentialServiceImpl : CredentialService {
   override fun setCredentials(connectionConfigUuid: String, username: String, password: String) {
     val credentialAttributes = createCredentialAttributes(connectionConfigUuid)
     val credentials = Credentials(username, password)
-    service<PasswordSafe>().set(credentialAttributes, credentials)
-    sendTopic(CREDENTIALS_CHANGED).onChanged(connectionConfigUuid)
+    runBackgroundableTask("Setting user credentials") {
+      service<PasswordSafe>().set(credentialAttributes, credentials)
+      sendTopic(CREDENTIALS_CHANGED).onChanged(connectionConfigUuid)
+    }
   }
 
   /**
