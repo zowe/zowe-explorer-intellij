@@ -23,7 +23,6 @@ import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
-import eu.ibagroup.formainframe.utils.runReadActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
 
@@ -101,7 +100,7 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
-    val editor = getEditor(e) ?: return
+    getEditor(e) ?: return
 
     val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
     val syncProvider = DocumentedSyncProvider(file)
@@ -109,9 +108,9 @@ class SyncAction : DumbAwareAction() {
     val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
     val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
     e.presentation.isEnabledAndVisible = file.isWritable
-        && !service<ConfigService>().isAutoSyncEnabled
-        && !(currentContent contentEquals previousContent)
-        && needToUpload
+      && !service<ConfigService>().isAutoSyncEnabled
+      && !(currentContent contentEquals previousContent)
+      && needToUpload
   }
 
   /**
