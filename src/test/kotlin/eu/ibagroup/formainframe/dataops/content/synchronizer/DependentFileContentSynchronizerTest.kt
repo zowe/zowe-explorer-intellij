@@ -15,9 +15,13 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.*
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.dataops.attributes.AttributesService
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.JobsRequester
+import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributesService
+import eu.ibagroup.formainframe.dataops.attributes.RemoteSpoolFileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.log
@@ -116,15 +120,13 @@ class DependentFileContentSynchronizerTest : WithApplicationShouldSpec({
     every { mockedRemoteSpoolFileAttributes.parentFile } returns mockedMFVirtualFile
     val mockedProgressIndicator = mockk<ProgressIndicator>()
 
-    val mockedExplorer = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-    every { mockedExplorer.componentManager } returns ApplicationManager.getApplication()
     val mockedRemoteJobAttributesService = mockk<RemoteJobAttributesService>()
     val mockedRemoteJobAttributes = mockk<RemoteJobAttributes>()
     val mockedJobRequester = mockk<JobsRequester>()
     every { mockedRemoteJobAttributes.requesters } returns mutableListOf(mockedJobRequester)
     every { mockedRemoteJobAttributes.name } returns "RemoteJobAttributesName"
     every { mockedRemoteJobAttributesService.getAttributes(any<MFVirtualFile>()) } returns mockedRemoteJobAttributes
-    dataOpsManager.testInstance = object : TestDataOpsManagerImpl(mockedExplorer.componentManager) {
+    dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
       override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
         attributesClass: Class<out A>, vFileClass: Class<out F>
       ): AttributesService<A, F> {

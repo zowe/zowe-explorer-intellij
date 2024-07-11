@@ -189,7 +189,7 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
       should("perform purge on job successfully") {
 
         dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return jobAttr
           }
@@ -224,7 +224,7 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
       should("perform purge on job with error") {
 
         dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return jobAttr
           }

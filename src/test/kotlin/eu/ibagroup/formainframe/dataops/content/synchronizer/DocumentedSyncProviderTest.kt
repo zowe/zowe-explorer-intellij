@@ -24,18 +24,24 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingManager
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.service
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import io.mockk.verify
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
 import kotlin.reflect.KFunction
@@ -110,10 +116,8 @@ class DocumentedSyncProviderTest : WithApplicationShouldSpec({
     }
 
     val mockedFileAttributes = mockk<FileAttributes>()
-    val mockedExplorer = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-    every { mockedExplorer.componentManager } returns ApplicationManager.getApplication()
     val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-    dataOpsManager.testInstance = object : TestDataOpsManagerImpl(mockedExplorer.componentManager) {
+    dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
       override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
         return mockedFileAttributes
       }
@@ -244,7 +248,7 @@ class DocumentedSyncProviderTest : WithApplicationShouldSpec({
         isUssAttr = true
         DEFAULT_BINARY_CHARSET
       }
-      dataOpsManager.testInstance = object : TestDataOpsManagerImpl(mockedExplorer.componentManager) {
+      dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
           return mockedRemoteUssAttributes
         }

@@ -91,8 +91,37 @@ dependencies {
   testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junitVersion")
 }
 
+data class PluginDescriptor(
+  val since: String, // earliest version string this is compatible with
+  val until: String, // latest version string this is compatible with, can be wildcard like 202.*
+  // https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
+  val sdkVersion: String, // the version string passed to the intellij sdk gradle plugin
+  val sourceFolder: String, // used as the source root for specifics of this build
+  val deps: List<String> // dependent plugins of this plugin
+)
+
+val plugins = listOf(
+  PluginDescriptor(
+    since = properties("pluginSinceBuild").get(),
+    until = "232.*",
+    sdkVersion = "IC-2023.1",
+    sourceFolder = "IC-231",
+    deps = listOf("java", "org.jetbrains.plugins.gradle", "org.jetbrains.kotlin")
+  ),
+  PluginDescriptor(
+    since = "233.11799",
+    until = properties("pluginUntilBuild").get(),
+    sdkVersion = "IC-2023.3",
+    sourceFolder = "IC-233",
+    deps = listOf("java", "org.jetbrains.plugins.gradle", "org.jetbrains.kotlin")
+  )
+)
+val productName = System.getenv("PRODUCT_NAME") ?: "IC-231"
+val descriptor = plugins.first { it.sourceFolder == productName }
+
 intellij {
-  version.set(properties("platformVersion").get())
+  version.set(descriptor.sdkVersion)
+  plugins.addAll(*descriptor.deps.toTypedArray())
   // !Development only!
   // downloadSources.set(true)
   // In Settings | Advanced Settings enable option Download sources in section Build Tools. Gradle.
@@ -137,9 +166,9 @@ tasks {
   }
 
   patchPluginXml {
-    version.set(properties("pluginVersion").get())
-    sinceBuild.set(properties("pluginSinceBuild").get())
-    untilBuild.set(properties("pluginUntilBuild").get())
+    version.set("${properties("pluginVersion").get()}-${descriptor.since.substringBefore(".")}")
+    sinceBuild.set(descriptor.since)
+    untilBuild.set(descriptor.until)
 
     val changelog = project.changelog // local variable for configuration cache compatibility
     // Get the latest available change notes from the changelog file
@@ -161,7 +190,7 @@ tasks {
 
   withType<Test> {
     withType<ClasspathIndexCleanupTask> {
-        dependsOn(compileTestKotlin)
+      dependsOn(compileTestKotlin)
     }
   }
 
@@ -206,6 +235,7 @@ tasks {
 
   buildPlugin {
     dependsOn(createOpenApiSourceJar)
+    archiveClassifier.set(descriptor.sdkVersion)
     from(createOpenApiSourceJar) { into("lib/src") }
   }
 
@@ -225,12 +255,11 @@ tasks {
         .map {
           listOf(
             it.substringAfter('-', "")
-              .substringAfter('-', "")
-              .substringBefore('.')
               .ifEmpty { "stable" }
           )
         }
-        .map { it })
+        .map { it }
+    )
   }
 
   downloadRobotServerPlugin {
@@ -247,6 +276,14 @@ tasks {
  * Adds uiTest source sets
  */
 sourceSets {
+  main {
+    java {
+      srcDir("src/${descriptor.sourceFolder}/kotlin")
+    }
+    resources {
+      srcDir("src/${descriptor.sourceFolder}/resources")
+    }
+  }
   create("uiTest") {
     compileClasspath += sourceSets.main.get().output
     runtimeClasspath += sourceSets.main.get().output

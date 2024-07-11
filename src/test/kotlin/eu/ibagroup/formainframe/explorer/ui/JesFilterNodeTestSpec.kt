@@ -15,7 +15,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ws.JobsFilter
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.sort.SortQueryKeys
 import eu.ibagroup.formainframe.explorer.JesExplorer
 import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
@@ -26,7 +27,13 @@ import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContainExactly
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.Job
 
 class JesFilterNodeTestSpec : WithApplicationShouldSpec({
@@ -48,7 +55,8 @@ class JesFilterNodeTestSpec : WithApplicationShouldSpec({
     every { mockedWorkingSet.explorer } returns mockedExplorer
     every { mockedExplorerTreeStructure.registerNode(any()) } just Runs
 
-    val classUnderTest = spyk(JesFilterNode(mockedJobsFilter, mockedProject, mockedParent, mockedWorkingSet, mockedExplorerTreeStructure))
+    val classUnderTest =
+      spyk(JesFilterNode(mockedJobsFilter, mockedProject, mockedParent, mockedWorkingSet, mockedExplorerTreeStructure))
 
     context("sort children nodes") {
 
@@ -134,12 +142,17 @@ class JesFilterNodeTestSpec : WithApplicationShouldSpec({
       every { jobAttributes2.jobInfo } returns jobInfo2
       every { jobAttributes3.jobInfo } returns jobInfo3
 
-      val nodeToAttributesMap = mutableMapOf(Pair(virtualFile1, jobAttributes1), Pair(virtualFile2, jobAttributes2), Pair(virtualFile3, jobAttributes3))
+      val nodeToAttributesMap = mutableMapOf(
+        Pair(virtualFile1, jobAttributes1),
+        Pair(virtualFile2, jobAttributes2),
+        Pair(virtualFile3, jobAttributes3)
+      )
 
       val listToSort = listOf(jobNode1, jobNode2, jobNode3)
 
-      val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(ApplicationManager.getApplication()) {
+      val dataOpsManagerService =
+        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
           return nodeToAttributesMap[file]
         }

@@ -33,8 +33,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.formainframe.dataops.operations.TsoOperation
 import eu.ibagroup.formainframe.dataops.operations.TsoOperationMode
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.ui.build.tso.TSOWindowFactory
@@ -43,7 +41,14 @@ import eu.ibagroup.formainframe.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import io.mockk.verify
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.TsoResponse
@@ -190,14 +195,11 @@ class ConfigTestSpec : WithApplicationShouldSpec({
     context("connectUtils") {
       val connectionConfig = ConnectionConfig()
 
-      val explorerMock = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-      every { explorerMock.componentManager } returns ApplicationManager.getApplication()
-
       val dataOpsManagerService =
         ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
 
       beforeEach {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             val tsoResponse = TsoResponse(
               servletKey = "servletKey",
@@ -239,7 +241,7 @@ class ConfigTestSpec : WithApplicationShouldSpec({
       }
 
       should("return empty owner if TSO request returns empty data") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             val tsoResponse = TsoResponse(
               servletKey = "servletKey",
@@ -261,7 +263,7 @@ class ConfigTestSpec : WithApplicationShouldSpec({
       }
 
       should("return empty owner if TSO request returns READY") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             val tsoResponse = TsoResponse(
               servletKey = "servletKey",
@@ -283,7 +285,7 @@ class ConfigTestSpec : WithApplicationShouldSpec({
       }
 
       should("return empty owner if TSO request returns error message in TSO data") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             val tsoResponse = TsoResponse(
               servletKey = "servletKey",
@@ -298,14 +300,14 @@ class ConfigTestSpec : WithApplicationShouldSpec({
             return tsoResponse as R
           }
         }
-        
+
         val actual = whoAmI(connectionConfig)
 
         assertSoftly { actual shouldBe "" }
       }
 
       should("do not get the owner by TSO request if servlet key is null") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             @Suppress("UNCHECKED_CAST")
             return TsoResponse() as R
@@ -317,7 +319,7 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         assertSoftly { actual shouldBe null }
       }
       should("do not get the owner by TSO request if servlet key is empty") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             @Suppress("UNCHECKED_CAST")
             return TsoResponse(servletKey = "") as R
@@ -329,7 +331,7 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         assertSoftly { actual shouldBe null }
       }
       should("do not get the owner by TSO request if send message request fails") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             val tsoResponse = TsoResponse(
               servletKey = "servletKey",

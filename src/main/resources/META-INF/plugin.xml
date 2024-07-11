@@ -409,7 +409,7 @@ Example of how to see the output:<br/>
         <action id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"
                 text="Working Set"
-                icon="AllIcons.Nodes.Project"/>
+                icon="AllIcons.Actions.ShowAsTree"/>
 
         <action id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"
                 class="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"

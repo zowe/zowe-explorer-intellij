@@ -76,7 +76,7 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
       every { selectedNodeDataMock.attributes } returns mockk()
 
       renamed = false
-      dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+      dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
           return mockk()
         }
@@ -248,7 +248,7 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
       should("rename action is enabled and visible if file attributes are not dataset attributes") {
         every { selectedNodeDataMock.node } returns mockk<FileLikeDatasetNode>()
         every { selectedNodeDataMock.file } returns mockk()
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
             return null
           }
@@ -306,7 +306,7 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         assertSoftly { isEnabledAndVisible shouldBe false }
       }
       should("rename action is not enabled and not visible if dataset is migrated") {
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             val attributesMock = mockk<RemoteDatasetAttributes>()
             every { attributesMock.isMigrated } returns true

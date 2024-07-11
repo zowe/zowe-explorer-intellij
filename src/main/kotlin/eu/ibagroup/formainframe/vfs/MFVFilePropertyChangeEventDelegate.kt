@@ -13,7 +13,6 @@ package eu.ibagroup.formainframe.vfs
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.FileContentUtilCore
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem.Companion.MF_VFS_CHANGES_TOPIC
@@ -21,23 +20,8 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem.Companion.MF_VFS_CHANGES
 /**
  * MF virtual file property change event. Carries info about a property of a MF virtual file being changed.
  * Use it together with [MF_VFS_CHANGES_TOPIC]
- * @property requestor an instance to describe the event requester
- * @property file the MF virtual file to change property of
- * @property propName the name of the property to change
- * @property oldValue the old value of the property being changed
- * @property newValue the possible new value of the property being changed
  */
-class MFVFilePropertyChangeEvent(
-  requestor: Any?,
-  private val file: MFVirtualFile,
-  private val propName: MFVirtualFile.PropName,
-  private val oldValue: Any,
-  private val newValue: Any
-) : VFileEvent(requestor, false) {
-
-  init {
-    checkPropValid(requestor, propName, oldValue, newValue)
-  }
+class MFVFilePropertyChangeEventDelegate {
 
   /**
    * Check is the provided property valid (property name exists, old and new values are not same)
@@ -58,38 +42,52 @@ class MFVFilePropertyChangeEvent(
     }
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other == null || this.javaClass != other.javaClass) return false
-
-    val event = other as MFVFilePropertyChangeEvent
-    return file == event.file
-      && newValue == event.newValue
-      && oldValue == event.oldValue
-      && propName == event.propName
+  fun equals(
+    origin: MFVFilePropertyChangeEvent,
+    file: MFVirtualFile,
+    propName: MFVirtualFile.PropName,
+    oldValue: Any,
+    newValue: Any,
+    other: Any?,
+    otherFile: MFVirtualFile?,
+    otherPropName: MFVirtualFile.PropName?,
+    otherOldValue: Any?,
+    otherNewValue: Any?
+  ): Boolean {
+    if (origin === other) return true
+    if (other == null || origin.javaClass != other.javaClass) return false
+    return file == otherFile
+      && newValue == otherNewValue
+      && oldValue == otherOldValue
+      && propName == otherPropName
   }
 
-  override fun hashCode(): Int {
-    var result = file.hashCode();
+  fun hashCode(
+    propName: MFVirtualFile.PropName,
+    oldValue: Any,
+    newValue: Any,
+    file: MFVirtualFile
+  ): Int {
+    var result = file.hashCode()
     result = 31 * result + propName.hashCode()
     result = 31 * result + oldValue.hashCode()
     result = 31 * result + newValue.hashCode()
     return result
   }
 
-  override fun computePath(): String {
+  fun computePath(file: MFVirtualFile): String {
     return file.path
   }
 
-  override fun getFile(): VirtualFile {
+  fun getFile(file: MFVirtualFile): VirtualFile {
     return file
   }
 
-  override fun getFileSystem(): VirtualFileSystem {
+  fun getFileSystem(file: MFVirtualFile): VirtualFileSystem {
     return file.fileSystem
   }
 
-  override fun isValid(): Boolean {
+  fun isValid(file: MFVirtualFile): Boolean {
     return file.isValid
   }
 

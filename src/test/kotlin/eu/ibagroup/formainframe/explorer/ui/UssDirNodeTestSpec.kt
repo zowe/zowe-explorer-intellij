@@ -29,7 +29,14 @@ import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.spyk
+import io.mockk.unmockkAll
 
 class UssDirNodeTestSpec : WithApplicationShouldSpec({
 
@@ -50,8 +57,7 @@ class UssDirNodeTestSpec : WithApplicationShouldSpec({
     val mockedUssAttributesService = mockk<RemoteUssAttributesService>()
 
     val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-    val componentManager = dataOpsManagerService.componentManager
-    dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(componentManager) {
+    dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
       @Suppress("UNCHECKED_CAST")
       override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
         attributesClass: Class<out A>,
@@ -97,16 +103,46 @@ class UssDirNodeTestSpec : WithApplicationShouldSpec({
       }
 
       val mockedUssDirNodeChild1 = spyk(
-        UssDirNode(mockedPath, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure, mockedVFileChild1, isRootNode)
+        UssDirNode(
+          mockedPath,
+          mockedProject,
+          mockedExplorerTreeNodeParent,
+          mockedWorkingSet,
+          mockedExplorerTreeStructure,
+          mockedVFileChild1,
+          isRootNode
+        )
       )
       val mockedUssDirNodeChild2 = spyk(
-        UssDirNode(mockedPath, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure, mockedVFileChild2, isRootNode)
+        UssDirNode(
+          mockedPath,
+          mockedProject,
+          mockedExplorerTreeNodeParent,
+          mockedWorkingSet,
+          mockedExplorerTreeStructure,
+          mockedVFileChild2,
+          isRootNode
+        )
       )
       val mockedUssDirNode = spyk(
-        UssDirNode(mockedPath, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure, mockedVFile, isRootNode)
+        UssDirNode(
+          mockedPath,
+          mockedProject,
+          mockedExplorerTreeNodeParent,
+          mockedWorkingSet,
+          mockedExplorerTreeStructure,
+          mockedVFile,
+          isRootNode
+        )
       )
 
-      val mockedChildrenNodes = listOf<AbstractTreeNode<*>>(mockedUssDirNodeChild1, mockedUssDirNodeChild2, childNode3, childNode4, unexpectedNode)
+      val mockedChildrenNodes = listOf<AbstractTreeNode<*>>(
+        mockedUssDirNodeChild1,
+        mockedUssDirNodeChild2,
+        childNode3,
+        childNode4,
+        unexpectedNode
+      )
 
       should("sort by name ascending") {
 

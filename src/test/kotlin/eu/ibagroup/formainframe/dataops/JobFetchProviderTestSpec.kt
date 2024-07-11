@@ -143,7 +143,6 @@ class JobFetchProviderTestSpec : ShouldSpec({
 
       val dataOpsManagerService =
         ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-      val componentManager = dataOpsManagerService.componentManager
 
       // needed for cleanupUnusedFile test
       val mockedVirtualFile = mockk<MFVirtualFile>()
@@ -252,7 +251,7 @@ class JobFetchProviderTestSpec : ShouldSpec({
         val cleanupUnusedFileMethodRef =
           jobFetchProviderForTest::class.java.declaredMethods.first { it.name == "cleanupUnusedFile" }
         cleanupUnusedFileMethodRef.trySetAccessible()
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           @Suppress("UNCHECKED_CAST")
           override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
             attributesClass: Class<out A>,

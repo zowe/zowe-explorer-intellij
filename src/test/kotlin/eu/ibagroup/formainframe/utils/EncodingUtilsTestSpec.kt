@@ -27,13 +27,10 @@ import com.intellij.openapi.vfs.encoding.EncodingUtil.Magic8
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.explorer.ui.ChangeEncodingDialog
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
@@ -62,9 +59,6 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     val bytes = byteArrayOf(116, 101, 120, 116)
     val bytesByf = ByteBuffer.wrap(bytes)
     var isEncodingSet = false
-
-    val explorerMock = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-    every { explorerMock.componentManager } returns ApplicationManager.getApplication()
 
     val contentSynchronizerMock = mockk<ContentSynchronizer>()
     val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
@@ -143,7 +137,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     mockkStatic(showDialogRef as KFunction<*>)
 
     beforeEach {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
           return contentSynchronizerMock
         }
@@ -268,7 +262,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
       assertSoftly { throwable shouldBe expected }
     }
     should("inspect safe encoding change when content synchronizer is null") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
           return null
         }
