@@ -17,7 +17,6 @@ import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.properties.charset.Native2AsciiCharset
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.Project
@@ -33,7 +32,6 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.ConfigService
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
@@ -42,8 +40,6 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListene
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.editor.inspection.MFLossyEncodingInspection
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
@@ -108,8 +104,6 @@ class EditorTestSpec : WithApplicationShouldSpec({
 
     val projectMock = mockk<Project>()
     val virtualFileMock = mockk<MFVirtualFile>()
-    val explorerMock = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-    every { explorerMock.componentManager } returns ApplicationManager.getApplication()
 
     val contentSynchronizerMock = mockk<ContentSynchronizer>()
     val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
@@ -151,7 +145,7 @@ class EditorTestSpec : WithApplicationShouldSpec({
 
       every { virtualFileMock.isWritable } returns true
 
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
           return contentSynchronizerMock
         }
@@ -243,7 +237,7 @@ class EditorTestSpec : WithApplicationShouldSpec({
       assertSoftly { isSynced shouldBe false }
     }
     should("not perform auto file sync when content synchronizer is null") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
           return null
         }
@@ -279,9 +273,6 @@ class EditorTestSpec : WithApplicationShouldSpec({
 
     val languageMock = mockk<Language>()
     every { viewProviderMock.baseLanguage } returns languageMock
-
-    val explorerMock = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-    every { explorerMock.componentManager } returns ApplicationManager.getApplication()
 
     var attributesMock: FileAttributes
     val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
@@ -332,7 +323,7 @@ class EditorTestSpec : WithApplicationShouldSpec({
 
       attributesMock = mockk<RemoteUssAttributes>()
 
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
           return attributesMock
         }

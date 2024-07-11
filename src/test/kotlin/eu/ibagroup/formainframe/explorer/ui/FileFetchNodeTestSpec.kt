@@ -27,10 +27,18 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSetImpl
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.service
-import io.mockk.*
+import io.mockk.Called
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.unmockkAll
+import io.mockk.verify
 import java.time.LocalDateTime
 
-class FileFetchNodeTestSpec: WithApplicationShouldSpec({
+class FileFetchNodeTestSpec : WithApplicationShouldSpec({
 
   afterSpec {
     clearAllMocks()
@@ -40,7 +48,6 @@ class FileFetchNodeTestSpec: WithApplicationShouldSpec({
 
     val dataOpsManagerService =
       ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-    val componentManager = dataOpsManagerService.componentManager
     val datasetFileFetchProvider = mockk<DatasetFileFetchProvider>()
 
     val queryMock = mockk<RemoteQuery<ConnectionConfig, DSMask, Unit>>()
@@ -58,7 +65,7 @@ class FileFetchNodeTestSpec: WithApplicationShouldSpec({
     every { mockedExplorerTreeStructure.registerNode(any()) } just Runs
     every { mockedWorkingSet.connectionConfig } returns mockk()
 
-    dataOpsManagerService.testInstance = object: TestDataOpsManagerImpl(componentManager) {
+    dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
       @Suppress("UNCHECKED_CAST")
       override fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> getFileFetchProvider(
         requestClass: Class<out R>,
@@ -69,7 +76,8 @@ class FileFetchNodeTestSpec: WithApplicationShouldSpec({
       }
     }
 
-    val classUnderTest = DSMaskNode(mockedMask, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure)
+    val classUnderTest =
+      DSMaskNode(mockedMask, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure)
 
     context("updateRefreshDateAndTime") {
       should("should update node presentation with correct refresh date and time given valid query") {

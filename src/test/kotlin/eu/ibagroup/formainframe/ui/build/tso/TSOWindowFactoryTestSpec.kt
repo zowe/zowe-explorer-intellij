@@ -32,10 +32,17 @@ import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.slot
+import io.mockk.spyk
+import io.mockk.verify
 import org.zowe.kotlinsdk.TsoResponse
-import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
 
 class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
 
@@ -69,7 +76,13 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
         sendTopic(SESSION_RECONNECT_TOPIC).reconnect(project, console, oldSession)
 
         // then
-        verify(exactly = 1) { TSOWindowFactory.showSessionFailureNotification("Error getting TSO session info", "Could not find old TSO session ID", project) }
+        verify(exactly = 1) {
+          TSOWindowFactory.showSessionFailureNotification(
+            "Error getting TSO session info",
+            "Could not find old TSO session ID",
+            project
+          )
+        }
       }
     }
 
@@ -81,7 +94,7 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
         // given
         clearMocks(processHandler, verificationMarks = true, recordedCalls = true)
         val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(ApplicationManager.getApplication()) {
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             throw IllegalArgumentException("Error processing tso command")
           }
@@ -103,13 +116,41 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
         every { classUnderTest.wrapInlineCall(capture(capturedFunc)) } just Runs
 
         // when
-        sendTopic(SESSION_COMMAND_ENTERED).processCommand(project, console, session, command, messageType, messageData, processHandler)
+        sendTopic(SESSION_COMMAND_ENTERED).processCommand(
+          project,
+          console,
+          session,
+          command,
+          messageType,
+          messageData,
+          processHandler
+        )
 
         // then
-        verify(exactly = 1) { processHandler.notifyTextAvailable("Unsuccessful execution of the TSO request. Connection was broken.\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("Attempting to reconnect 3 times with timeout 10(s) each respectively...\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("Trying to connect (attempt 1 of 3)...\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("Successfully reconnected to the TSO session.\n" + "READY\n", ProcessOutputType.STDOUT) }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Unsuccessful execution of the TSO request. Connection was broken.\n",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Attempting to reconnect 3 times with timeout 10(s) each respectively...\n",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Trying to connect (attempt 1 of 3)...\n",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Successfully reconnected to the TSO session.\n" + "READY\n",
+            ProcessOutputType.STDOUT
+          )
+        }
       }
 
       should("should not reconnect 3 times to the tso session after unsuccessful execution of the command") {
@@ -138,16 +179,59 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
         val messageData = mockk<MessageData>()
 
         // when
-        sendTopic(SESSION_COMMAND_ENTERED).processCommand(project, console, session, command, messageType, messageData, processHandler)
+        sendTopic(SESSION_COMMAND_ENTERED).processCommand(
+          project,
+          console,
+          session,
+          command,
+          messageType,
+          messageData,
+          processHandler
+        )
 
         // then
-        verify(exactly = 1) { processHandler.notifyTextAvailable("Unsuccessful execution of the TSO request. Connection was broken.\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("Attempting to reconnect 3 times with timeout 10(s) each respectively...\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("Trying to connect (attempt 1 of 3)...\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("Trying to connect (attempt 2 of 3)...\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable("Trying to connect (attempt 3 of 3)...\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 3) { processHandler.notifyTextAvailable("Failed to reconnect. The error message is:\n $cause\n", ProcessOutputType.STDOUT) }
-        verify(exactly = 1) { processHandler.notifyTextAvailable(SESSION_RECONNECT_ERROR_MESSAGE, ProcessOutputType.STDOUT) }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Unsuccessful execution of the TSO request. Connection was broken.\n",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Attempting to reconnect 3 times with timeout 10(s) each respectively...\n",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Trying to connect (attempt 1 of 3)...\n",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Trying to connect (attempt 2 of 3)...\n",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Trying to connect (attempt 3 of 3)...\n",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 3) {
+          processHandler.notifyTextAvailable(
+            "Failed to reconnect. The error message is:\n $cause\n",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            SESSION_RECONNECT_ERROR_MESSAGE,
+            ProcessOutputType.STDOUT
+          )
+        }
 
         assertSoftly {
           session.unresponsive shouldBe true

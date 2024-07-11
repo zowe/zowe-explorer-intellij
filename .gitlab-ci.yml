@@ -1,6 +1,10 @@
 build-job:
   stage: build
   image: openjdk:17
+  parallel:
+    matrix:
+      - PRODUCT_NAME: "IC-231"
+      - PRODUCT_NAME: "IC-233"
   script:
     - |
       echo "Build is going to proceed with the next Java:"
@@ -23,8 +27,10 @@ build-job:
 test-job:
   stage: test
   image: openjdk:17
-  dependencies:
-    - build-job
+  parallel:
+    matrix:
+      - PRODUCT_NAME: "IC-231"
+      - PRODUCT_NAME: "IC-233"
   script:
     - |
       echo "Test is going to proceed with the next Java:"

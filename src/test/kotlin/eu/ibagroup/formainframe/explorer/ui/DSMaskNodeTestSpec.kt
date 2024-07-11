@@ -27,7 +27,13 @@ import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.Dataset
 
 class DSMaskNodeTestSpec : WithApplicationShouldSpec({
@@ -48,7 +54,15 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
     every { mockedWorkingSet.explorer } returns mockedExplorer
     every { mockedExplorerTreeStructure.registerNode(any()) } just Runs
 
-    val classUnderTest = spyk(DSMaskNode(mockedDSMask, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure))
+    val classUnderTest = spyk(
+      DSMaskNode(
+        mockedDSMask,
+        mockedProject,
+        mockedExplorerTreeNodeParent,
+        mockedWorkingSet,
+        mockedExplorerTreeStructure
+      )
+    )
 
     context("sort children nodes") {
       val unexpectedNode = mockk<UssDirNode>()
@@ -62,10 +76,15 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
       val datasetInfo2 = mockk<Dataset>()
       val datasetInfo3 = mockk<Dataset>()
 
-      val nodeToAttributesMap = mutableMapOf(Pair(mockedVFileChild1, mockedAttributes1), Pair(mockedVFileChild2, mockedAttributes2), Pair(mockedVFileChild3, mockedAttributes3))
+      val nodeToAttributesMap = mutableMapOf(
+        Pair(mockedVFileChild1, mockedAttributes1),
+        Pair(mockedVFileChild2, mockedAttributes2),
+        Pair(mockedVFileChild3, mockedAttributes3)
+      )
 
-      val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(ApplicationManager.getApplication()) {
+      val dataOpsManagerService =
+        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
           return nodeToAttributesMap[file]
         }
@@ -84,13 +103,31 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
       }
 
       val mockedDataset1 = spyk(
-        FileLikeDatasetNode(mockedVFileChild1, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure)
+        FileLikeDatasetNode(
+          mockedVFileChild1,
+          mockedProject,
+          mockedExplorerTreeNodeParent,
+          mockedWorkingSet,
+          mockedExplorerTreeStructure
+        )
       )
       val mockedDataset2 = spyk(
-        FileLikeDatasetNode(mockedVFileChild2, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure)
+        FileLikeDatasetNode(
+          mockedVFileChild2,
+          mockedProject,
+          mockedExplorerTreeNodeParent,
+          mockedWorkingSet,
+          mockedExplorerTreeStructure
+        )
       )
       val mockedDataset3 = spyk(
-        LibraryNode(mockedVFileChild3, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure)
+        LibraryNode(
+          mockedVFileChild3,
+          mockedProject,
+          mockedExplorerTreeNodeParent,
+          mockedWorkingSet,
+          mockedExplorerTreeStructure
+        )
       )
 
       every { mockedDataset1.virtualFile } returns mockedVFileChild1
@@ -102,7 +139,10 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
       should("sort by name ascending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.DATASET_NAME)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.DATASET_NAME, SortQueryKeys.ASCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.DATASET_NAME,
+          SortQueryKeys.ASCENDING
+        )
 
         val expected = listOf(mockedDataset1, mockedDataset2, mockedDataset3)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
@@ -115,7 +155,10 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
       should("sort by name descending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.DATASET_NAME)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.DATASET_NAME, SortQueryKeys.DESCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.DATASET_NAME,
+          SortQueryKeys.DESCENDING
+        )
 
         val expected = listOf(mockedDataset3, mockedDataset2, mockedDataset1)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
@@ -128,7 +171,10 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
       should("sort by date ascending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.DATASET_MODIFICATION_DATE)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.DATASET_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.DATASET_MODIFICATION_DATE,
+          SortQueryKeys.ASCENDING
+        )
 
         val expected = listOf(mockedDataset2, mockedDataset1, mockedDataset3)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
@@ -141,7 +187,10 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
       should("sort by date descending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.DATASET_MODIFICATION_DATE)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.DATASET_MODIFICATION_DATE, SortQueryKeys.DESCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.DATASET_MODIFICATION_DATE,
+          SortQueryKeys.DESCENDING
+        )
 
         val expected = listOf(mockedDataset3, mockedDataset1, mockedDataset2)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
@@ -154,7 +203,10 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
       should("sort by type ascending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.DATASET_TYPE)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.DATASET_TYPE, SortQueryKeys.ASCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.DATASET_TYPE,
+          SortQueryKeys.ASCENDING
+        )
 
         val expected = listOf(mockedDataset3, mockedDataset1, mockedDataset2)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
@@ -167,7 +219,10 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
       should("sort by type descending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.DATASET_TYPE)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.DATASET_TYPE, SortQueryKeys.DESCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.DATASET_TYPE,
+          SortQueryKeys.DESCENDING
+        )
 
         val expected = listOf(mockedDataset3, mockedDataset2, mockedDataset1)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
@@ -190,7 +245,8 @@ class DSMaskNodeTestSpec : WithApplicationShouldSpec({
 
       should("return unsorted nodes when passing invalid sort key") {
 
-        val mockedChildrenNodesForThisTest = listOf<AbstractTreeNode<*>>(mockedDataset1, mockedDataset2, mockedDataset3, unexpectedNode)
+        val mockedChildrenNodesForThisTest =
+          listOf<AbstractTreeNode<*>>(mockedDataset1, mockedDataset2, mockedDataset3, unexpectedNode)
         val sortQueryKeys = listOf(SortQueryKeys.JOB_NAME)
 
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodesForThisTest, sortQueryKeys)

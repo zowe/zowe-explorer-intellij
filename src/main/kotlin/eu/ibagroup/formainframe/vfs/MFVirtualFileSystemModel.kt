@@ -356,7 +356,8 @@ class MFVirtualFileSystemModel {
           vFile,
           MFVirtualFile.PropName.IS_DIRECTORY,
           vFile.isDirectory,
-          newIsDirectory
+          newIsDirectory,
+          MFVFilePropertyChangeEventDelegate()
         )
       )
     sendMFVfsChangesTopic().before(event)

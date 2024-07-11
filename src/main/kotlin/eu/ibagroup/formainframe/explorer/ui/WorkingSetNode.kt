@@ -22,7 +22,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.getUsername
 import eu.ibagroup.formainframe.explorer.WorkingSet
 
-private val regularIcon = AllIcons.Nodes.Project
+private val regularIcon = AllIcons.Actions.ShowAsTree
 private val errorIconElement = AllIcons.Nodes.ErrorMark
 private val grayscaleIcon = IconUtil.desaturate(regularIcon)
 private val errorIcon = LayeredIcon(grayscaleIcon, errorIconElement)

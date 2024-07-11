@@ -16,9 +16,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.attributes.*
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.dataops.attributes.AttributesService
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributesService
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
@@ -26,7 +29,11 @@ import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.XIBMDataType
 import org.zowe.kotlinsdk.annotations.ZVersion
@@ -38,8 +45,6 @@ class MemberContentSynchronizerTest : WithApplicationShouldSpec({
   }
 
   context("MemberContentSynchronizer:") {
-    val mockedExplorer = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-    every { mockedExplorer.componentManager } returns ApplicationManager.getApplication()
     val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
     val mockedRemoteDatasetAttributes = mockk<RemoteDatasetAttributes>()
     val mockedMaskedRequester = mockk<MaskedRequester>()
@@ -50,7 +55,7 @@ class MemberContentSynchronizerTest : WithApplicationShouldSpec({
     every { mockedRemoteDatasetAttributes.name } returns rdaName
     val mockedRemoteDatasetAttributesService = mockk<RemoteDatasetAttributesService>()
     every { mockedRemoteDatasetAttributesService.getAttributes(any<MFVirtualFile>()) } returns mockedRemoteDatasetAttributes
-    dataOpsManager.testInstance = object : TestDataOpsManagerImpl(mockedExplorer.componentManager) {
+    dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
       override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
         attributesClass: Class<out A>,
         vFileClass: Class<out F>

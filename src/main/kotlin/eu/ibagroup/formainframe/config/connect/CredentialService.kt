@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.config.connect
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnection
+import eu.ibagroup.formainframe.utils.runTask
 import okhttp3.Credentials
 
 /**
@@ -82,7 +83,7 @@ fun getInstance(): CredentialService = ApplicationManager.getApplication().getSe
  * @param connectionConfig connection config instance.
  * @return username of connection config.
  */
-fun <Connection: ConnectionConfigBase> getUsername(connectionConfig: Connection): String {
+fun <Connection : ConnectionConfigBase> getUsername(connectionConfig: Connection): String {
   return CredentialService.instance.getUsernameByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
     connectionConfig
   )
@@ -93,11 +94,13 @@ fun <Connection: ConnectionConfigBase> getUsername(connectionConfig: Connection)
  * @param connectionConfig connection config instance.
  * @return password of particular connection config.
  */
-fun <Connection: ConnectionConfigBase> getPassword(connectionConfig: Connection): String {
+fun <Connection : ConnectionConfigBase> getPassword(connectionConfig: Connection): String {
   return CredentialService.instance.getPasswordByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
     connectionConfig
   )
 }
 
 val ConnectionConfig.authToken: String
-  get() = Credentials.basic(getUsername(this), getPassword(this))
+  get() = runTask("Retrieving information for auth token") {
+    Credentials.basic(getUsername(this), getPassword(this))
+  }
