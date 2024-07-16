@@ -29,6 +29,7 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.dataops.operations.mover.names.DatasetOrDirResolver
 import eu.ibagroup.formainframe.dataops.operations.mover.names.DefaultNameResolver
@@ -152,6 +153,8 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { nodeToRefreshTarget.cleanCache(cleanBatchedQuery = true) } answers {
           isPastePerformed = true
         }
+
+        mockkStatic(::checkFileForSync)
       }
 
       // performPaste
@@ -1095,6 +1098,39 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
           isPastePerformed shouldBe false
+        }
+      }
+
+      should("filter operations with files that are currently being synchronized") {
+        var filesToMoveTotal = 1
+
+        every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns null
+        every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
+        every {
+          FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
+        } returns mockedFileExplorerView
+        every { mockedFileExplorerView.copyPasteSupport } returns mockedCopyPasterProvider
+        every { checkFileForSync(any(), any(), any()) } returns true
+
+        every { mockedExplorerPasteProvider["runMoveOrCopyTask"](
+          any<String>(),
+          any<Int>(),
+          any<Boolean>(),
+          any<List<MoveCopyOperation>>(),
+          any<FileExplorerView.ExplorerCopyPasteSupport>(),
+          any<FileExplorerView>(),
+          any<Project>()
+        ) } answers {
+          filesToMoveTotal = secondArg<Int>()
+          this
+        }
+
+        mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+        clearMocks(mockedExplorerPasteProvider)
+
+        assertSoftly {
+          filesToMoveTotal shouldBe 0
         }
       }
 

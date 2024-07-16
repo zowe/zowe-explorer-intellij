@@ -103,7 +103,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
     mockkObject(ConfigService)
 
-    every { contentSynchronizerMock.synchronizeWithRemote(any()) } answers {
+    every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
       isSynced = true
     }
 
@@ -254,7 +254,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns true
 
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
@@ -269,7 +269,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns true
 
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       every { ConfigService.instance.isAutoSyncEnabled } returns false
 
@@ -286,7 +286,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns true
 
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       every { ConfigService.instance.isAutoSyncEnabled } returns false
       every { MessageDialogBuilder.yesNo(any<String>(), any<String>()) } returns mockk {
@@ -305,7 +305,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     }
     should("run reload action when sync is not needed") {
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
@@ -324,7 +324,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       }
 
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       every { changeEncodingDialog["close"](any<Int>()) } answers {
         expectedExitCode = firstArg<Int>()
@@ -356,7 +356,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       } returns 0
 
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       every { changeEncodingDialog["close"](any<Int>()) } answers {
         expectedExitCode = firstArg<Int>()

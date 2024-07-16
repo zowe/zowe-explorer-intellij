@@ -110,15 +110,13 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
       throwable = CallException(response, "Cannot upload data to '${destAttributes.name}(${memberName})'")
     } else {
       destFile.children.firstOrNull { it.name.uppercase() == memberName.uppercase() }?.let { file ->
-        runWriteActionInEdtAndWait {
-          val syncProvider = DocumentedSyncProvider(file, { _, _, _ -> false }, { th -> throwable = th })
-          val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
+        val syncProvider = DocumentedSyncProvider(file, { _, _, _ -> false }, { th -> throwable = th })
+        val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
 
-          if (contentSynchronizer == null) {
-            throwable = IllegalArgumentException("Cannot get content synchronizer for file '${file.name}'")
-          } else {
-            contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
-          }
+        if (contentSynchronizer == null) {
+          throwable = IllegalArgumentException("Cannot get content synchronizer for file '${file.name}'")
+        } else {
+          contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
         }
       }
     }
