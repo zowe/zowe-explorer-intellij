@@ -29,6 +29,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.utils.castOrNull
@@ -417,7 +418,6 @@ class ExplorerPasteProvider : PasteProvider {
         }
       }
 
-      val filesToMoveTotal = operations.size
       val hasLocalFilesInOperationsSources = operations.any { it.source !is MFVirtualFile }
       val hasRemoteFilesInOperationsDestinations = operations.any { it.destination is MFVirtualFile }
       val titlePrefix = if (explorerView.isCut.get()) {
@@ -432,11 +432,20 @@ class ExplorerPasteProvider : PasteProvider {
         "Copying"
       }
 
+      val (filteredOperations, excludedOperations) = operations.partition { operation ->
+        !checkFileForSync(project, operation.source, checkDependentFiles = true) &&
+            !checkFileForSync(project, operation.destination, checkDependentFiles = true)
+      }
+      excludedOperations.forEach { operation ->
+        copyPasteSupport.removeFromBuffer { nodeData -> nodeData.file == operation.source }
+      }
+      val filesToMoveTotal = filteredOperations.size
+
       runMoveOrCopyTask(
         titlePrefix,
         filesToMoveTotal,
         isDragAndDrop,
-        operations,
+        filteredOperations,
         copyPasteSupport,
         explorerView,
         project

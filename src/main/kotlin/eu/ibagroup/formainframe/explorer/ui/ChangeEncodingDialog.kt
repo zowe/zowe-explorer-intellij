@@ -29,7 +29,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.utils.reloadIn
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.runWriteActionInEdt
 import eu.ibagroup.formainframe.utils.saveIn
 import eu.ibagroup.formainframe.utils.updateFileTag
 import java.awt.event.ActionEvent
@@ -114,16 +114,16 @@ class ChangeEncodingDialog(
           contentSynchronizer?.isFileUploadNeeded(syncProvider) == true &&
           (ConfigService.instance.isAutoSyncEnabled || showSyncOnReloadDialog(virtualFile.name, project))
         ) {
-          runModalTask("Syncing ${virtualFile.name}", project, cancellable = true) {
+          runModalTask("Syncing ${virtualFile.name}", project, cancellable = true) { progressIndicator ->
             attributes.charset = virtualFile.charset
-            runWriteActionInEdtAndWait { syncProvider.saveDocument() }
-            contentSynchronizer.synchronizeWithRemote(syncProvider)
+            runWriteActionInEdt { syncProvider.saveDocument() }
+            contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
           }
         }
-        runModalTask("Reloading ${virtualFile.name}", project, cancellable = false) {
+        runModalTask("Reloading ${virtualFile.name}", project, cancellable = false) { progressIndicator ->
           attributes.charset = charset
           updateFileTag(attributes)
-          reloadIn(project, virtualFile, charset)
+          reloadIn(project, virtualFile, charset, progressIndicator)
         }
         close(RELOAD_EXIT_CODE)
       }

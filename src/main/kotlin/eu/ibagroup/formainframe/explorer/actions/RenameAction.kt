@@ -24,6 +24,7 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.utils.service // TODO: remove in v1.*.*-223 and greater
@@ -122,10 +123,13 @@ class RenameAction : AnAction() {
           throw Exception("Error during rename action execution: Unknown attributes type. $attributes")
         }
       }
-      val dialog = RenameDialog(e.project, type, selectedNodeData, this, state)
-      if (dialog.showAndGet() && file != null) {
-        runRenameOperation(e.project, file, type, attributes, dialog.state, node)
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
+      if (file != null) {
+        if (checkFileForSync(e.project, file, checkDependentFiles = true)) return
+        val dialog = RenameDialog(e.project, type, selectedNodeData, this, state)
+        if (dialog.showAndGet()) {
+          runRenameOperation(e.project, file, type, attributes, dialog.state, node)
+          service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
+        }
       }
     }
   }
