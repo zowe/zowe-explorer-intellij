@@ -18,6 +18,22 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import org.zowe.explorer.common.ui.StatefulDialog
+import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
+import org.zowe.explorer.common.ui.showUntilDone
+import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.ws.DSMask
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.Operation
+import org.zowe.explorer.dataops.operations.DatasetAllocationParams
+import org.zowe.explorer.explorer.Explorer
+import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestAnalyticsServiceImpl
+import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
@@ -212,6 +228,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           )
         } answers {
           initState = firstArg<DatasetAllocationParams>()
+          initState.datasetName = "test.test.test"
           val thirdBlockResult = thirdArg<(DatasetAllocationParams) -> Boolean>()
           initState.allocationParameters.datasetOrganization = DatasetOrganization.PS
           initState.allocationParameters.managementClass = "test"
@@ -400,6 +417,78 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState.errorMessage shouldBe ""
         }
       }
+      should("perform allocate dataset action when dataset mask already exists") {
+        val workingSetMock = mockk<FilesWorkingSet>()
+        val nodeMock = mockk<LibraryNode>()
+        val nodeDataMock = NodeData(nodeMock, null, null)
+        val selectedNodesData = listOf(nodeDataMock)
+        val dsMaskNodeMock = mockk<DSMaskNode>()
+        lateinit var initState: DatasetAllocationParams
+        var isOperationPerformed = false
+        var isUpdateOnConfigCrudableCalled = false
+        var isShowUntilDoneSucceeded = false
+
+        val showUntilDoneMockk: (
+          DatasetAllocationParams,
+          (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
+          (DatasetAllocationParams) -> Boolean
+        ) -> DatasetAllocationParams? = ::showUntilDone
+        mockkStatic(showUntilDoneMockk as KFunction<*>)
+        every {
+          hint(DatasetAllocationParams::class)
+          showUntilDoneMockk(
+            any<DatasetAllocationParams>(),
+            any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
+            any<(DatasetAllocationParams) -> Boolean>()
+          )
+        } answers {
+          initState = firstArg<DatasetAllocationParams>()
+          initState.datasetName = "test.test.test"
+          val thirdBlockResult = thirdArg<(DatasetAllocationParams) -> Boolean>()
+          isShowUntilDoneSucceeded = thirdBlockResult(initState)
+          initState
+        }
+
+        val dsMaskMock = mockk<DSMask>()
+        every {dsMaskMock.mask} returns "test.test.*"
+        every {filesWorkingSetConfigMock.dsMasks} returns mutableListOf(dsMaskMock)
+
+        mockkObject(configCrudable)
+        every {
+          configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
+        } returns Optional.of(filesWorkingSetConfigMock)
+
+        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
+        every { nodeMock.parent } returns dsMaskNodeMock
+        every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
+        every { viewMock.mySelectedNodesData } returns selectedNodesData
+        every { workingSetMock.name } returns "test"
+        every { workingSetMock.uuid } returns "test"
+        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
+        every {
+          dataOpsManagerMock.hint(Boolean::class).performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+        } answers {
+          isOperationPerformed = true
+          true
+        }
+        every { workingSetMock.explorer } returns explorerMock
+        every { configCrudable.update(any(), any()) } answers {
+          isUpdateOnConfigCrudableCalled = true
+          Optional.of(mockk())
+        }
+
+        allocateDsActionInst.actionPerformed(anActionEventMock)
+
+        assertSoftly {
+          isCleanInvalidateOnExpandTriggered shouldBe true
+          isShowUntilDoneSucceeded shouldBe true
+          isAnalitycsTracked shouldBe true
+          isOperationPerformed shouldBe true
+          isUpdateOnConfigCrudableCalled shouldBe false
+          isThrowableReported shouldBe false
+          initState.errorMessage shouldBe ""
+        }
+      }
       should("perform allocate dataset action creating new dataset mask without adding as the connection config is not found") {
         val workingSetMock = mockk<FilesWorkingSet>()
         val nodeMock = mockk<FilesWorkingSetNode>()
@@ -454,7 +543,6 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
-        addMaskActionInst.actionPerformed(anActionEventMock)
 
         assertSoftly {
           isCleanInvalidateOnExpandTriggered shouldBe false

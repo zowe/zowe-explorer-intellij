@@ -17,7 +17,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import org.zowe.explorer.common.ui.StatefulComponent
-import org.zowe.explorer.config.ws.JobFilterStateWithWS
+import org.zowe.explorer.config.ws.JobFilterStateWithMultipleWS
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.utils.validateJobFilter
 import javax.swing.JComponent
@@ -26,8 +26,8 @@ import javax.swing.JComponent
 /** Edit jobs filter action dialog. Provides dialog view to change job filter values */
 class EditJobsFilterDialog(
   project: Project?,
-  override var state: JobFilterStateWithWS
-) : DialogWrapper(project), StatefulComponent<JobFilterStateWithWS> {
+  override var state: JobFilterStateWithMultipleWS
+) : DialogWrapper(project), StatefulComponent<JobFilterStateWithMultipleWS> {
 
   init {
     title = "Edit Jobs Filter"
@@ -46,7 +46,7 @@ class EditJobsFilterDialog(
       row {
         label("JES working set: ")
           .widthGroup(sameWidthGroup)
-        label(state.ws.name)
+        label(state.selectedWS.name)
       }
       row {
         label("Prefix: ")
@@ -55,7 +55,7 @@ class EditJobsFilterDialog(
           .bindText(state::prefix)
           .also { prefixField = it.component }
           .validationOnApply {
-            validateJobFilter(initJobFilter, it.text, ownerField.text, jobIdField.text, state.ws.masks, it, false)
+            validateJobFilter(initJobFilter, it.text, ownerField.text, jobIdField.text, state.selectedWS.masks, it, false)
           }
           .align(AlignX.FILL)
       }
@@ -66,7 +66,7 @@ class EditJobsFilterDialog(
           .bindText(state::owner)
           .also { ownerField = it.component }
           .validationOnApply {
-            validateJobFilter(initJobFilter, prefixField.text, it.text, jobIdField.text, state.ws.masks, it, false)
+            validateJobFilter(initJobFilter, prefixField.text, it.text, jobIdField.text, state.selectedWS.masks, it, false)
           }
           .align(AlignX.FILL)
       }
@@ -77,7 +77,7 @@ class EditJobsFilterDialog(
           .bindText(state::jobId)
           .also { jobIdField = it.component }
           .validationOnApply {
-            validateJobFilter(initJobFilter, prefixField.text, ownerField.text, it.text, state.ws.masks, it, true)
+            validateJobFilter(initJobFilter, prefixField.text, ownerField.text, it.text, state.selectedWS.masks, it, true)
           }
           .align(AlignX.FILL)
       }

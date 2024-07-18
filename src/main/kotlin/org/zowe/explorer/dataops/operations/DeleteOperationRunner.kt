@@ -147,7 +147,8 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   override val resultClass = Unit::class.java
 
   override fun canRun(operation: DeleteOperation): Boolean {
-    return true
+    val attr = operation.attributes
+    return !(attr is RemoteDatasetAttributes && !attr.hasDsOrg)
   }
 
 }

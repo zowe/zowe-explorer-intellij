@@ -52,19 +52,19 @@ const val JOBS_LOG_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.ExplorerN
  */
 @Suppress("UnstableApiUsage")
 class JobBuildTreeView(
-  jobLogInfo: JobProcessInfo,
+  val jobLogInfo: JobProcessInfo,
   consoleView: ConsoleView,
   dataOpsManager: DataOpsManager,
   workingDir: String = "",
   project: Project
 ) : ExecutionConsole, DataProvider, JBPanel<JobBuildTreeView>() {
-
+  
   private val buildId = jobLogInfo.jobId ?: "UNKNOWN JOB ID"
   private val jobNameNotNull = jobLogInfo.jobName ?: "UNKNOWN JOB"
   private val connectionConfig = jobLogInfo.connectionConfig
 
   private val buildDescriptor = DefaultBuildDescriptor(buildId, jobNameNotNull, workingDir, Date().time)
-  private val treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, consoleView) { false }
+  private val treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, consoleView)
 
   private val actionToolbarGroup: ActionGroup = ActionManager.getInstance().getAction("org.zowe.explorer.actions.JobsLogActionBarGroup") as ActionGroup
   private val place: String = "Jobs Log"

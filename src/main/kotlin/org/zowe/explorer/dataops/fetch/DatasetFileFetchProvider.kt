@@ -10,6 +10,9 @@
 
 package org.zowe.explorer.dataops.fetch
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
@@ -22,11 +25,18 @@ import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.UnitRemoteQueryImpl
 import org.zowe.explorer.dataops.attributes.MaskedRequester
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.exceptions.NotificationCompatibleException
+import org.zowe.explorer.dataops.exceptions.responseMessageMap
+import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.asMutableList
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.nullIfBlank
 import org.zowe.explorer.vfs.MFVirtualFile
+import org.zowe.explorer.vfs.MFVirtualFileSystem
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.DataSetsList
 import org.zowe.kotlinsdk.Dataset
@@ -59,7 +69,6 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   private var configService = service<ConfigService>()
 
-  // TODO: doc
   override fun fetchResponse(
     query: RemoteQuery<ConnectionConfig, DSMask, Unit>,
     progressIndicator: ProgressIndicator
@@ -101,6 +110,8 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   /**
    * Fetches 1 batch of datasets.
+   * If there is a failure due to a custom migration volume, proceeds with fetching a batch
+   * with the [XIBMAttr.Type.VOL] parameter to get at least basic attributes for the request
    * @see RemoteBatchedFileFetchProviderBase.fetchBatch
    */
   override fun fetchBatch(
@@ -109,14 +120,69 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
     start: String?
   ): Response<DataSetsList> {
     val batchSize = if (start != null) configService.batchSize + 1 else configService.batchSize
-    return api<DataAPI>(query.connectionConfig).listDataSets(
+
+    var response = api<DataAPI>(query.connectionConfig).listDataSets(
       authorizationToken = query.connectionConfig.authToken,
       dsLevel = query.request.mask,
       volser = query.request.volser.nullIfBlank(),
-      xIBMAttr = XIBMAttr(isTotal = true),
+      xIBMAttr = XIBMAttr(type = XIBMAttr.Type.BASE, isTotal = true),
       xIBMMaxItems = if (query is UnitRemoteQueryImpl) 0 else batchSize,
       start = start
     ).cancelByIndicator(progressIndicator).execute()
+
+    // https://github.com/zowe/zowe-explorer-intellij/issues/129
+    if (!response.isSuccessful && response.code() == 500) {
+      val responseErrorBody = response.errorBody()
+      val responseContentType = responseErrorBody?.contentType() ?: "application/json".toMediaType()
+      val responseErrorBodyStr = responseErrorBody?.string() ?: ""
+      response =
+        if (
+          responseErrorBodyStr.contains("ServletDispatcher failed - received TSO Prompt when expecting TsoServletResponse")
+          && responseErrorBodyStr.contains("DMS2987")
+        ) {
+          val custMigrVolComputed = responseErrorBodyStr
+            .split("DMS2987 DATA SET CATALOGED TO CA DISK PSEUDO-VOLUME ")
+            .getOrElse(1) { "" }
+            .split("\"")
+            .getOrElse(0) { "" }
+
+          val isCustMigrVolRecognized = MFVirtualFileSystem.belongsToCustMigrVols(custMigrVolComputed)
+          val furtherProcessingMessage =
+            if (isCustMigrVolRecognized)
+              " Plug-in is capable of processing datasets on this volume and won't try to fetch attributes or content for such datasets."
+            else
+              " Plug-in does not recognize this custom migration volume. Please, provide us with the diagnostics message in the issue below."
+
+          Notification(
+            EXPLORER_NOTIFICATION_GROUP_ID,
+            "Fetching datasets list error",
+            "Failed to fetch attributes for datasets."
+              + " The cause: there is a custom migration volume that z/OSMF does not recognize."
+              + " The volume: $custMigrVolComputed."
+              + furtherProcessingMessage
+              + " Current workaround: try to use a mask that omits the datasets on the custom migration volumes."
+              + " The issue to provide more diagnostics and get some understanding: https://github.com/zowe/zowe-explorer-intellij/issues/129."
+              + "\nDetailed message from z/OSMF REST API:"
+              + "\n"
+              + responseErrorBodyStr,
+            NotificationType.WARNING
+          ).let {
+            Notifications.Bus.notify(it)
+          }
+
+          api<DataAPI>(query.connectionConfig).listDataSets(
+            authorizationToken = query.connectionConfig.authToken,
+            dsLevel = query.request.mask,
+            volser = query.request.volser.nullIfBlank(),
+            xIBMAttr = XIBMAttr(type = XIBMAttr.Type.VOL, isTotal = true),
+            xIBMMaxItems = if (query is UnitRemoteQueryImpl) 0 else batchSize,
+            start = start
+          ).cancelByIndicator(progressIndicator).execute()
+        } else {
+          Response.error(500, responseErrorBodyStr.toResponseBody(responseContentType))
+        }
+    }
+    return response
   }
 
   /**
@@ -143,6 +209,40 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
         query.request
       ).asMutableList()
     )
+  }
+
+  override fun getSingleFetchedFile(
+    query: RemoteQuery<ConnectionConfig, DSMask, Unit>,
+    progressIndicator: ProgressIndicator
+  ): MFVirtualFile {
+    val response = api<DataAPI>(query.connectionConfig).listDataSets(
+      authorizationToken = query.connectionConfig.authToken,
+      dsLevel = query.request.mask,
+      volser = query.request.volser.nullIfBlank(),
+      xIBMMaxItems = 1,
+      xIBMAttr = XIBMAttr(type = XIBMAttr.Type.BASE, isTotal = true)
+    ).cancelByIndicator(progressIndicator).execute()
+    val fetchedItems = if (response.isSuccessful) {
+      convertResponseToBody(response.body()).items
+    } else {
+      val headMessage =
+        responseMessageMap[response.message()] ?: "Cannot retrieve ${query.request.mask} dataset attributes"
+      throw CallException(response, headMessage)
+    }
+    if (fetchedItems?.size != 1) {
+      val title = "Incompatible list of datasets with attributes"
+      val details =
+        "Expected exactly 1 item in list returned for the request to fetch single item attributes.\n" +
+          "The item: ${query.request.mask}, VOLSER: ${query.request.mask}.\n" +
+          "Actual elements amount: ${fetchedItems?.size ?: 0}"
+      throw NotificationCompatibleException(title, details)
+    }
+    val attributes = buildAttributes(query, fetchedItems[0])
+    return convertResponseToFile(attributes)
+      ?: throw NotificationCompatibleException(
+        "Unable to find or create virtual file",
+        "Unable to find or create virtual file for attributes of ${attributes.name}"
+      )
   }
 
 }

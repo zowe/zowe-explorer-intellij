@@ -19,6 +19,18 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        product: ["IC-231","IC-233"]
+        include:
+          - product: "IC-231"
+            distribution: "zulu"
+            java: "17"
+          - product: "IC-233"
+            distribution: "zulu"
+            java: "17"
+      max-parallel: 10
+      fail-fast: false
     outputs:
       pluginVerifierHomeDir: ${{ steps.properties.outputs.pluginVerifierHomeDir }}
     steps:
@@ -32,8 +44,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
-          java-version: 17
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -48,6 +60,7 @@ jobs:
         id: properties
         env:
           AUTO_SNAPSHOT_VERSION: false
+          PRODUCT_NAME: ${{ matrix.product }}
         shell: bash
         run: |
           PROPERTIES="$(./gradlew properties --console=plain -q)"
@@ -60,6 +73,8 @@ jobs:
       - name: Build plugin
         shell: bash
         run: ./gradlew buildPlugin
+        env:
+          PRODUCT_NAME: ${{ matrix.product }}
 
       - name: Prepare Plugin Artifact
         id: artifact
@@ -81,6 +96,18 @@ jobs:
   test_and_sonar:
     needs: [build]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        product: ["IC-231","IC-233"]
+        include:
+          - product: "IC-231"
+            distribution: "zulu"
+            java: "17"
+          - product: "IC-233"
+            distribution: "zulu"
+            java: "17"
+      max-parallel: 10
+      fail-fast: false
     steps:
 
       - name: Checkout the plugin GitHub repository
@@ -89,8 +116,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
-          java-version: 17
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -100,17 +127,19 @@ jobs:
       - name: Run tests
         shell: bash
         run: ./gradlew test
+        env:
+          PRODUCT_NAME: ${{ matrix.product }}
 
       - name: Publish tests result to artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tests-report
+          name: tests-report-${{ matrix.product }}
           path: ${{ github.workspace }}/build/reports/tests
 
       - name: Publish code coverage report to artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-report
+          name: code-coverage-report-${{ matrix.product }}
           path: ${{ github.workspace }}/build/reports/kover/html
 
       - name: SonarCloud scans
@@ -120,11 +149,24 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+          PRODUCT_NAME: ${{ matrix.product }}
 
   verify:
-    if: ${{ contains(github.ref, 'refs/heads/release/') }}
+    if: ${{ contains(github.ref, 'refs/heads/release/') || contains(github.ref, 'refs/heads/main') }}
     needs: [build]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        product: ["IC-231","IC-233"]
+        include:
+          - product: "IC-231"
+            distribution: "zulu"
+            java: "17"
+          - product: "IC-233"
+            distribution: "zulu"
+            java: "17"
+      max-parallel: 10
+      fail-fast: false
     steps:
 
       - name: Maximize Build Space
@@ -139,8 +181,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
-          java-version: 17
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -157,9 +199,11 @@ jobs:
         continue-on-error: true
         shell: bash
         run: ./gradlew runPluginVerifier -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+        env:
+          PRODUCT_NAME: ${{ matrix.product }}
 
       - name: Collect Plugin Verifier Result
         uses: actions/upload-artifact@v4
         with:
-          name: plugin-verifier-report
+          name: plugin-verifier-report-${{ matrix.product }}
           path: ${{ github.workspace }}/build/reports/pluginVerifier

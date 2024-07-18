@@ -37,7 +37,7 @@ class UnknownDataSetFileType : FileTypeIdentifiableByVirtualFile {
     return false
   }
 
-  override fun getCharset(file: VirtualFile, content: ByteArray?): String {
+  override fun getCharset(file: VirtualFile, content: ByteArray): String {
     return file.charset.name()
   }
 

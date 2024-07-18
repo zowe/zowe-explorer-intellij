@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileNavigator
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
@@ -128,7 +127,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
 
       should("perform navigate on file") {
         var isSyncWithRemotePerformed = false
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
@@ -168,7 +167,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       }
       should("perform navigate on file with failure due to permission denied") {
         var isSyncWithRemotePerformed = false
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
@@ -194,7 +193,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       }
       should("perform navigate on file with failure due to client is not authorized") {
         var isSyncWithRemotePerformed = false
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
@@ -208,11 +207,11 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
 
         var isErrorMessageInDialogCalled = false
         val showDialogSpecificMock: (
-          Project?, String, String, Array<String>, Int, Icon?, DialogWrapper.DoNotAskOption?
+          Project?, String, String, Array<String>, Int, Icon?
         ) -> Int = Messages::showDialog
         mockkStatic(showDialogSpecificMock as KFunction<*>)
         every {
-          showDialogSpecificMock(any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any(), any())
+          showDialogSpecificMock(any(), any<String>(), any<String>(), any<Array<String>>(), any<Int>(), any() as Icon?)
         } answers {
           isErrorMessageInDialogCalled = true
           1
@@ -223,7 +222,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         assertSoftly { isErrorMessageInDialogCalled shouldBe true }
       }
       should("exit 'navigate' when 'getContentSynchronizer' returns null") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
             return null
           }
@@ -281,7 +280,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         every { fileMock.isReadable } returns false
 
         var isNavigateContinued = false
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
@@ -299,7 +298,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       }
       should("perform navigate on a file that was already opened") {
         var isSyncWithRemotePerformed = false
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {

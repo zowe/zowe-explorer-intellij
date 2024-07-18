@@ -64,8 +64,24 @@ class GetFilePropertiesAction : AnAction() {
         val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)) {
           is RemoteDatasetAttributes -> {
-            val dialog = DatasetPropertiesDialog(project, DatasetState(attributes))
-            dialog.showAndGet()
+            if (node is FileLikeDatasetNode) {
+              node.fetchAttributesForNodeIfMissing(
+                attributes,
+                dataOpsManager,
+                {
+                  val dialog = DatasetPropertiesDialog(project, DatasetState(attributes))
+                  dialog.showAndGet()
+                },
+                {
+                  val newAttributes = dataOpsManager.tryToGetAttributes(virtualFile) as RemoteDatasetAttributes
+                  val dialog = DatasetPropertiesDialog(project, DatasetState(newAttributes))
+                  dialog.showAndGet()
+                }
+              )
+            } else {
+              val dialog = DatasetPropertiesDialog(project, DatasetState(attributes))
+              dialog.showAndGet()
+            }
           }
 
           is RemoteUssAttributes -> {
@@ -137,7 +153,7 @@ class GetFilePropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-        && (node is UssFileNode || node is FileLikeDatasetNode || node is LibraryNode || node is UssDirNode)
+      && (node is UssFileNode || node is FileLikeDatasetNode || node is LibraryNode || node is UssDirNode)
 
     // Mark the migrated dataset properties unavailable for clicking
     if (node != null && (node is FileLikeDatasetNode || node is LibraryNode)) {

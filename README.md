@@ -103,12 +103,16 @@ Firstly, you need to download it. Then, go to "Edit Configurations..." -> "Edit 
 In there, you need to enable VM options and add the following lines:
 
 ```
--Didea.force.use.core.classloader=true
---add-opens=java.desktop/java.awt=ALL-UNNAMED
---add-opens=java.desktop/sun.awt=ALL-UNNAMED
---add-opens=java.desktop/java.awt.event=ALL-UNNAMED
+-Didea.force.use.core.classloader=true 
 --add-opens=java.base/java.lang=ALL-UNNAMED
---add-exports=java.base/jdk.internal.vm=ALL-UNNAMED 
+--add-opens=java.base/java.nio.file=ALL-UNNAMED
+--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED
+--add-opens=java.desktop/java.awt=ALL-UNNAMED
+--add-opens=java.desktop/java.awt.event=ALL-UNNAMED
+--add-opens=java.desktop/javax.swing=ALL-UNNAMED
+--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED
+--add-opens=java.desktop/sun.awt=ALL-UNNAMED
+--add-opens=java.desktop/sun.font=ALL-UNNAMED
 ```
 
 After the "Kotest" is set up, just click on the green arrow near the test you want to run.
@@ -128,8 +132,9 @@ some of the communication chanels:
 * [For Mainframe Slack channel in IBA workspace](https://iba-mainframe-tools.slack.com/archives/C01V4MZL9DH)
 * [Zowe Explorer IntelliJ team Slack channel in Open Mainframe Project workspace](https://openmainframeproject.slack.com/archives/C020BGPSU0M)
 * [For Mainframe GitHub (create or review issues)](https://github.com/for-mainframe/For-Mainframe/issues)
-* [Zowe Explorer IntelliJ team GitHub (create or review issues)](https://github.com/zowe/zowe-explorer-intellij/issues)
-* Email to: <a href="mailto:ukalesnikau@ibagroup.eu">Uladzislau Kalesnikau (Team Lead of the IJMP)</a>
+* [Zowe Explorer plug-in for IntelliJ IDEA GitHub (create or review issues)](https://github.com/zowe/zowe-explorer-intellij/issues)
+* Email to: <a href="mailto:ukalesnikau@ibagroup.eu">Uladzislau Kalesnikau (Team Lead of the Zowe Explorer IntelliJ squad)</a>
+* Email to: <a href="mailto:aburak@ibagroup.eu">Alex Burak (our project manager)</a>
 
 **Note: GitHub issue is the preferred way of communicating in case of creating some bug/feature/request for enhancement.
 If you need direct consulting or you have any related questions, please, reach us out using Slack channels or E-mail**

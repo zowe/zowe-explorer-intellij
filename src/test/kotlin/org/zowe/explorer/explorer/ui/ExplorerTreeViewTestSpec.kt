@@ -17,16 +17,23 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
-import org.zowe.explorer.explorer.*
+import org.zowe.explorer.explorer.Explorer
+import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
 import kotlin.reflect.KFunction
 
-class ExplorerTreeViewTestSpec: WithApplicationShouldSpec({
+class ExplorerTreeViewTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
   }
@@ -76,7 +83,7 @@ class ExplorerTreeViewTestSpec: WithApplicationShouldSpec({
       mockkStatic(isAncestorRef as KFunction<*>)
       every { VfsUtilCore.isAncestor(any<VirtualFile>(), any<VirtualFile>(), any<Boolean>()) } returns true
 
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
           return contentSynchronizerMock
         }

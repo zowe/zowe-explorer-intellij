@@ -43,6 +43,8 @@ import javax.swing.JComponent
  * @param wsdStateClass Instance of Class for WSDState.
  * @property state Instance of WSDState.
  * @property initialState Initial state of dialog. (used only working set name from initial state ???).
+ * @property isSingleConnectionOnlyAllowed is used only in Go-To-Job feature, otherwise it is always false
+ * @property connectionConfigToSelect is used only in Go-To-Job feature, otherwise it is always null
  * @author Valiantsin Krus
  * @author Viktar Mushtsin
  */
@@ -50,7 +52,9 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
   crudable: Crudable,
   wsdStateClass: Class<out WSDState>,
   override var state: WSDState,
-  var initialState: WSDState = state.clone(wsdStateClass)
+  var initialState: WSDState = state.clone(wsdStateClass),
+  open val isSingleConnectionOnlyAllowed: Boolean = false,
+  open val connectionConfigToSelect: Connection? = null
 ) : DialogWrapper(false), StatefulComponent<WSDState> {
 
   companion object {
@@ -92,7 +96,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
    * @return applied state.
    */
   open fun onWSApplied(state: WSDState): WSDState = state
-
+  
   private val panel by lazy {
     panel {
       row {
@@ -112,28 +116,38 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
       row {
         label("Specify connection")
         comboBox(connectionComboBoxModel, SimpleListCellRenderer.create("") { it?.name })
-          .bindItem(
-            {
-              return@bindItem crudable.getByUniqueKey(connectionClass, state.connectionUuid).nullable
-                ?: if (!crudable.getAll(connectionClass).isEmpty()) {
-                  crudable.getAll(connectionClass).findAny().nullable?.also {
-                    state.connectionUuid = it.uuid
-                  }
-                } else {
-                  null
-                }
-            },
-            { config -> state.connectionUuid = config?.uuid ?: "" }
-          ).applyToComponent {
-            addActionListener {
-              state.connectionUuid = (selectedItem as ConnectionConfig).uuid
-            }
-          }
-          .validationOnApply {
-            if (it.selectedItem == null) {
-              ValidationInfo("You must provide a connection", it)
+          .apply {
+            if (isSingleConnectionOnlyAllowed) {
+              bindItem(
+                { return@bindItem connectionConfigToSelect?.also { state.connectionUuid = it.uuid } },
+                { config -> state.connectionUuid = config?.uuid ?: "" }
+              )
+                .enabled(false)
             } else {
-              null
+              bindItem(
+                {
+                  return@bindItem crudable.getByUniqueKey(connectionClass, state.connectionUuid).nullable
+                    ?: if (!crudable.getAll(connectionClass).isEmpty()) {
+                      crudable.getAll(connectionClass).findAny().nullable?.also {
+                        state.connectionUuid = it.uuid
+                      }
+                    } else {
+                      null
+                    }
+                },
+                { config -> state.connectionUuid = config?.uuid ?: "" }
+              ).applyToComponent {
+                addActionListener {
+                  state.connectionUuid = (selectedItem as ConnectionConfig).uuid
+                }
+              }
+                .validationOnApply {
+                  if (it.selectedItem == null) {
+                    ValidationInfo("You must provide a connection", it)
+                  } else {
+                    null
+                  }
+                }
             }
           }
       }
@@ -164,6 +178,13 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
     panel.registerValidators(myDisposable) { map ->
       isOKActionEnabled = map.isEmpty()
     }
+  }
+
+  /**
+   * Enables continuous validation of the dialog components
+   */
+  override fun continuousValidation(): Boolean {
+    return true
   }
 
   override fun createCenterPanel(): JComponent {

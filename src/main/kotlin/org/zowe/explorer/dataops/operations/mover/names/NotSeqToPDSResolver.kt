@@ -33,7 +33,7 @@ class NotSeqToPDSResolver(val dataOpsManager: DataOpsManager) : IndexedNameResol
 
   override fun resolveNameWithIndex(source: VirtualFile, destination: VirtualFile, index: Int?): String {
     val memberName = source.name.filter { it.isLetterOrDigit() }.uppercase().ifEmpty { "EMPTY" }
-    return if (index == null) memberName.take(8) else "${memberName.take(7)}$index"
+    return if (index == null) memberName.take(8) else "${memberName.take(8 - index.toString().length)}$index"
   }
 
 }

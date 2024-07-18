@@ -13,7 +13,7 @@ package org.zowe.explorer.testutils.testServiceImpl
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 
-class TestZosmfApiImpl : ZosmfApi {
+open class TestZosmfApiImpl : ZosmfApi {
   var testInstance = object : ZosmfApi {
     override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
       TODO("Not yet implemented")

@@ -11,6 +11,7 @@
 package org.zowe.explorer.testutils.testServiceImpl
 
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,7 +30,9 @@ import org.zowe.explorer.dataops.operations.mover.names.CopyPasteNameResolver
 import io.mockk.every
 import io.mockk.mockk
 
-open class TestDataOpsManagerImpl(override val componentManager: ComponentManager) : DataOpsManager {
+open class TestDataOpsManagerImpl : DataOpsManager {
+  override val componentManager: ComponentManager
+    get() = ApplicationManager.getApplication()
 
   /**
    * Test instance for the DataOpsManager.

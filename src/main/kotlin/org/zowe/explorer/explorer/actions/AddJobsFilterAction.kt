@@ -14,9 +14,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.config.ws.JobFilterStateWithWS
+import org.zowe.explorer.config.ws.JobFilterStateWithMultipleWS
 import org.zowe.explorer.explorer.JesWorkingSet
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.AddJobsFilterDialog
+import org.zowe.explorer.explorer.ui.ExplorerTreeView
+import org.zowe.explorer.explorer.ui.JesExplorerView
+import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.getSelectedNodesWorkingSets
 
 /**
@@ -35,7 +38,7 @@ class AddJobsFilterAction : AnAction() {
     val workingSets = getSelectedNodesWorkingSets<JesWorkingSet>(view as ExplorerTreeView<*, *, *>)
     val ws = workingSets.firstOrNull() ?: return
     val owner = ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""
-    val initialState = JobFilterStateWithWS(ws = ws, owner = owner)
+    val initialState = JobFilterStateWithMultipleWS(wsList = mutableListOf(ws), owner = owner)
     val dialog = AddJobsFilterDialog(e.project, initialState)
     if (dialog.showAndGet()) {
       ws.addMask(dialog.state.toJobsFilter())

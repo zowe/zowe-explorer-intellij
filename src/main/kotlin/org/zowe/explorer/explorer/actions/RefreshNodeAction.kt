@@ -42,7 +42,8 @@ class RefreshNodeAction : AnAction() {
           cleanInvalidateOnExpand(node, view)
           node.cleanCache(cleanBatchedQuery = true)
           val query = node.query ?: return@forEach
-          view.getNodesByQueryAndInvalidate(query)
+          val nodes = view.getNodesByQuery(query)
+          view.invalidateNodes(nodes)
         }
 
         is WorkingSetNode<*, *> -> {

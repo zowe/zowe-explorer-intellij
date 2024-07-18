@@ -10,26 +10,22 @@
 
 package org.zowe.explorer.config
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.rd.util.UUID
-import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
-import org.zowe.explorer.config.connect.whoAmI
-import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.clone
-import org.zowe.explorer.utils.crudable.*
+import org.zowe.explorer.utils.crudable.AddFilter
+import org.zowe.explorer.utils.crudable.ConcurrentCrudable
+import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.crudable.CrudableLists
+import org.zowe.explorer.utils.crudable.SimpleReadWriteAdapter
+import org.zowe.explorer.utils.crudable.UpdateFilter
 import org.zowe.explorer.utils.loadConfigClass
 import org.zowe.explorer.utils.runIfTrue
-import java.nio.file.Paths
 import java.time.Duration
-import javax.xml.parsers.DocumentBuilderFactory
 
 /**
  * Configure crudable object to work with. Will create a new CrudableLists, wrapped by the ConcurrentCrudable
@@ -133,59 +129,6 @@ class ConfigServiceImpl : ConfigService {
     return configDeclarations.toList()
   }
 
-  /**
-   * Migrates configurations from old [ConfigState] to the new one [ConfigStateV2].
-   * @param state instance of old [ConfigState].
-   */
-  override fun migrateOldConfigState(state: ConfigState) {
-    if (!state.migrated) {
-      myState.settings = state.settings.clone()
-
-      val newConnections = myState.get<ConnectionConfig>()
-      val newFilesWorkingSets = myState.get<FilesWorkingSetConfig>()
-      val newJesWorkingSets = myState.get<JesWorkingSetConfig>()
-
-      val connectionsToAdd = state.connections.filter { con ->
-        newConnections?.find { it.uuid == con.uuid } == null
-      }
-      val filesWorkingSetsToAdd = state.filesWorkingSets.filter { ws ->
-        newFilesWorkingSets?.find { it.uuid == ws.uuid } == null
-      }
-      val jesWorkingSetsToAdd = state.jesWorkingSets.filter { ws ->
-        newJesWorkingSets?.find { it.uuid == ws.uuid } == null
-      }
-
-      newConnections?.addAll(connectionsToAdd)
-      newFilesWorkingSets?.addAll(filesWorkingSetsToAdd)
-      newJesWorkingSets?.addAll(jesWorkingSetsToAdd)
-
-      state.migrated = true
-
-      // acceptOldConfigs()
-    }
-  }
-
-  /** Fills the owner tag, if it is empty, with the value obtained from the TSO request. */
-  override fun updateOldConfigs() {
-    myState.get<ConnectionConfig>()?.filter { it.owner.isEmpty() }?.forEach { it.owner = whoAmI(it) ?: "" }
-  }
-
-  /**
-   * Adapt all configs in old style to the new one and update config file.
-   * Notice: update of the file happens only when the config is changed by user (e.g.: mask change, job filter change, mask add)
-   */
-  private fun acceptOldConfigs() {
-
-    val configLocation =
-      Paths.get(PathManager.getConfigPath(), PathManager.OPTIONS_DIRECTORY, "zowe_explorer_intellij_config.xml")
-    val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configLocation?.toFile())
-    val oldConfigsAdapters = OldConfigAdapter.EP.extensions.map { it.buildAdapter(document) }
-    oldConfigsAdapters.forEach { adapter ->
-      adapter.getOldConfigsIds().forEach { crudable.deleteByUniqueKey(adapter.configClass, it) }
-      adapter.castOldConfigs().forEach { crudable.addOrUpdate(it) }
-    }
-    ApplicationManager.getApplication().saveSettings()
-  }
 }
 
 
@@ -202,13 +145,13 @@ internal fun makeCrudableWithoutListeners(
   stateGetter: () -> ConfigStateV2
 ): Crudable {
   val crudableLists = CrudableLists(
-    addFilter = object: AddFilter {
+    addFilter = object : AddFilter {
       override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
         return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
       }
     },
-    updateFilter = object: UpdateFilter {
-      override operator fun <T: Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
+    updateFilter = object : UpdateFilter {
+      override operator fun <T : Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
         return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
       }
     },

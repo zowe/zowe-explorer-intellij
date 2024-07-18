@@ -135,7 +135,10 @@ abstract class RemoteBatchedFileFetchProviderBase<ResponseList : Any, ResponseIt
    * @param batchedItem item that was created in converting process for BatchedBody.
    * @return created attributes.
    */
-  abstract fun buildAttributes(query: RemoteQuery<ConnectionConfig, Request, Unit>, batchedItem: BatchedItem<ResponseItem>): Response
+  abstract fun buildAttributes(
+    query: RemoteQuery<ConnectionConfig, Request, Unit>,
+    batchedItem: BatchedItem<ResponseItem>
+  ): Response
 }
 
 /**

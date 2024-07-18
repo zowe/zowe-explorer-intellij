@@ -19,6 +19,31 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.showWarningDialog
+import org.zowe.explorer.common.ui.StatefulDialog
+import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
+import org.zowe.explorer.common.ui.showUntilDone
+import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.ws.FilesWorkingSetConfig
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.Operation
+import org.zowe.explorer.dataops.attributes.MaskedRequester
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
+import org.zowe.explorer.dataops.operations.DatasetAllocationParams
+import org.zowe.explorer.explorer.Explorer
+import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.explorer.ui.DSMaskNode
+import org.zowe.explorer.explorer.ui.ExplorerTreeNode
+import org.zowe.explorer.explorer.ui.ExplorerTreeView
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.JobNode
+import org.zowe.explorer.explorer.ui.LibraryNode
+import org.zowe.explorer.explorer.ui.NodeData
+import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestAnalyticsServiceImpl
+import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
@@ -28,6 +53,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.spyk
 import io.mockk.unmockkAll
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
@@ -53,6 +79,7 @@ import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
+import org.zowe.kotlinsdk.HasMigrated
 import org.zowe.kotlinsdk.RecordFormat
 import org.zowe.kotlinsdk.SpaceUnits
 import java.util.*
@@ -452,7 +479,7 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         val nodeDataMock = NodeData(nodeMock, null, dsAttributesMock)
         val selectedNodesData = listOf(nodeDataMock)
 
-        every { dsAttributesMock.isMigrated } returns false
+        every { dsAttributesMock.hasDsOrg } returns true
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
 
@@ -476,13 +503,39 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         assertSoftly { isPresentationEnabledAndVisible shouldBe false }
       }
       should("not show the 'allocate like' action as the selected dataset is migrated") {
-        val viewMock = mockk<FileExplorerView>()
+        val dsInfo = mockk<Dataset>()
+        every { dsInfo.migrated } returns HasMigrated.YES
+
         val nodeMock = mockk<LibraryNode>()
-        val dsAttributesMock = mockk<RemoteDatasetAttributes>()
+
+        val requesters = mockk<MutableList<MaskedRequester>>()
+        val dsAttributesMock = spyk(RemoteDatasetAttributes(dsInfo, "test", requesters))
+
         val nodeDataMock = NodeData(nodeMock, null, dsAttributesMock)
         val selectedNodesData = listOf(nodeDataMock)
+        val viewMock = mockk<FileExplorerView>()
 
-        every { dsAttributesMock.isMigrated } returns true
+        every { viewMock.mySelectedNodesData } returns selectedNodesData
+        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+
+        allocateDsActionInst.update(anActionEventMock)
+
+        assertSoftly { isPresentationEnabledAndVisible shouldBe false }
+      }
+      should("not show the 'allocate like' action as the selected dataset does not have dataset organization") {
+        val dsInfo = mockk<Dataset>()
+        every { dsInfo.migrated } returns HasMigrated.NO
+        every { dsInfo.datasetOrganization } returns null
+
+        val nodeMock = mockk<LibraryNode>()
+
+        val requesters = mockk<MutableList<MaskedRequester>>()
+        val dsAttributesMock = spyk(RemoteDatasetAttributes(dsInfo, "test", requesters))
+
+        val nodeDataMock = NodeData(nodeMock, null, dsAttributesMock)
+        val selectedNodesData = listOf(nodeDataMock)
+        val viewMock = mockk<FileExplorerView>()
+
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
 

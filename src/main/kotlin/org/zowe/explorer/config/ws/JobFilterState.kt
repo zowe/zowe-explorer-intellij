@@ -22,19 +22,8 @@ open class JobFilterState(
   open var prefix: String = "",
   open var owner: String = "",
   open var jobId: String = ""
-) : TableRow
-
-/**
- * Job filter extension that stores working set reference
- * @param ws the JES working set for the job filter
- */
-class JobFilterStateWithWS(
-  var ws: JesWorkingSet,
-  override var prefix: String = "*",
-  override var owner: String = "*",
-  override var jobId: String = ""
-) : JobFilterState() {
-
+) : TableRow {
+  
   /** Transform job filter state to the job filter */
   fun toJobsFilter(): JobsFilter {
     val resultOwner = owner.ifBlank { "" }.uppercase()
@@ -42,5 +31,17 @@ class JobFilterStateWithWS(
     val resultJobId = jobId.ifBlank { "" }.uppercase()
     return JobsFilter(resultOwner, resultPrefix, resultJobId)
   }
+}
 
+/**
+ *  * Job filter extension that stores working set references
+ *  * @param wsList - the JES working sets for the job filter
+ */
+class JobFilterStateWithMultipleWS(
+  var wsList: List<JesWorkingSet>,
+  override var prefix: String = "*",
+  override var owner: String = "*",
+  override var jobId: String = ""
+) : JobFilterState() {
+  var selectedWS: JesWorkingSet = wsList[0]
 }

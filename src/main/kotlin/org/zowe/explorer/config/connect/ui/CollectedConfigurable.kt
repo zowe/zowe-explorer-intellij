@@ -32,11 +32,9 @@ class CollectedConfigurable(
     mainPanel.layout = BoxLayout(mainPanel, BoxLayout.Y_AXIS)
     configurables.forEach {
       val p = it.createComponent()
-      p?.let {
-        p.minimumSize = Dimension(p.width, PANEL_MIN_HEIGHT)
-        p.preferredSize = Dimension(p.width, PANEL_MIN_HEIGHT)
-        mainPanel.add(p)
-      }
+      p.minimumSize = Dimension(p.width, PANEL_MIN_HEIGHT)
+      p.preferredSize = Dimension(p.width, PANEL_MIN_HEIGHT)
+      mainPanel.add(p)
     }
     return mainPanel
   }

@@ -17,6 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.operations.jobs.SubmitFilePathOperationParams
@@ -103,8 +104,14 @@ class SubmitJobAction : AnAction() {
       return
     }
     val selected = view.mySelectedNodesData
-    val node = selected.getOrNull(0)?.node
-    e.presentation.isVisible = selected.size == 1
-        && (node is FileLikeDatasetNode || node is UssFileNode)
+    if (selected.size != 1) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val node = selected[0].node
+    val attr = selected[0].attributes
+    e.presentation.isVisible =
+      (node is FileLikeDatasetNode || node is UssFileNode)
+        && !(attr is RemoteDatasetAttributes && !attr.hasDsOrg)
   }
 }

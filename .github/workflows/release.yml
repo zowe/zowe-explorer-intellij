@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  release:
+  changelog-and-preparations:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -28,7 +28,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
+          distribution: "zulu"
           java-version: 17
 
       - name: Setup Gradle
@@ -44,19 +44,11 @@ jobs:
           PLUGIN_VERSION_FULL="$(echo "$PROPERTIES" | grep "^pluginVersion:" | cut -f2- -d ' ')"
           CURR_COMMIT="$(git rev-parse HEAD)"
 
-          echo "pluginVersionFull: $PLUGIN_VERSION_FULL"
+          echo "pluginVersionSemVer: $PLUGIN_VERSION_FULL"
           echo "currCommit: $CURR_COMMIT"
 
-          echo "pluginVersionFull=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
+          echo "pluginVersionSemVer=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
           echo "currCommit=$CURR_COMMIT" >> $GITHUB_OUTPUT
-
-      - name: Publish Plugin
-        env:
-          ZOWE_INTELLIJ_MARKET_TOKEN: ${{ secrets.ZOWE_INTELLIJ_MARKET_TOKEN }}
-          INTELLIJ_SIGNING_CERTIFICATE_CHAIN: ${{ secrets.INTELLIJ_SIGNING_CERTIFICATE_CHAIN }}
-          INTELLIJ_SIGNING_PRIVATE_KEY: ${{ secrets.INTELLIJ_SIGNING_PRIVATE_KEY }}
-          INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: ./gradlew publishPlugin
 
       - name: Prepare release notes
         id: release_notes
@@ -75,23 +67,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git tag ${{ steps.properties.outputs.pluginVersionFull }}
-          git push origin ${{ steps.properties.outputs.pluginVersionFull }}
-          gh release create ${{ steps.properties.outputs.pluginVersionFull }} --title ${{ steps.properties.outputs.pluginVersionFull }} --target ${{ steps.properties.outputs.currCommit }} -F- <<EOF
+          git tag ${{ steps.properties.outputs.pluginVersionSemVer }}
+          git push origin ${{ steps.properties.outputs.pluginVersionSemVer }}
+          gh release create ${{ steps.properties.outputs.pluginVersionSemVer }} --title ${{ steps.properties.outputs.pluginVersionSemVer }} --target ${{ steps.properties.outputs.currCommit }} -F- <<EOF
           ${{ steps.release_notes.outputs.version_release_notes }}
           EOF
-
-      - name: Upload Release Built Artifact
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ steps.properties.outputs.pluginVersionFull }} ./build/distributions/*
 
       - name: Create Pull Request
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ steps.properties.outputs.pluginVersionFull }}"
+          VERSION="${{ steps.properties.outputs.pluginVersionSemVer }}"
           BRANCH="release-changelog-update-$VERSION"
 
           git config user.email "action@github.com"
@@ -113,5 +99,67 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api repos/{owner}/{repo}/milestones \
-            --jq '.[] | select(.title == "${{ steps.properties.outputs.pluginVersionFull }}") | .number' \
+            --jq '.[] | select(.title == "${{ steps.properties.outputs.pluginVersionSemVer }}") | .number' \
             | xargs -I '{}' gh api -X PATCH repos/{owner}/{repo}/milestones/{} -F state='closed'
+
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        product: ["IC-231","IC-233"]
+        include:
+          - product: "IC-231"
+            distribution: "zulu"
+            java: "17"
+          - product: "IC-233"
+            distribution: "zulu"
+            java: "17"
+      max-parallel: 10
+      fail-fast: false
+    steps:
+
+      - name: Checkout the plugin GitHub repository
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
+
+      - name: Fetch Gradle properties for a specific product
+        id: properties
+        shell: bash
+        run: |
+          PROPERTIES="$(./gradlew properties --console=plain -q)"
+          PLUGIN_VERSION_FULL="$(echo "$PROPERTIES" | grep "^pluginVersion:" | cut -f2- -d ' ')-$PRODUCT_NAME"
+          CURR_COMMIT="$(git rev-parse HEAD)"
+
+          echo "pluginVersionFull: $PLUGIN_VERSION_FULL"
+          echo "currCommit: $CURR_COMMIT"
+
+          echo "pluginVersionFull=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
+          echo "currCommit=$CURR_COMMIT" >> $GITHUB_OUTPUT
+
+      - name: Publish Plugin
+        env:
+          INTELLIJ_SIGNING_PUBLISH_TOKEN: ${{ secrets.INTELLIJ_SIGNING_PUBLISH_TOKEN }}
+          INTELLIJ_SIGNING_CERTIFICATE_CHAIN: ${{ secrets.INTELLIJ_SIGNING_CERTIFICATE_CHAIN }}
+          INTELLIJ_SIGNING_PRIVATE_KEY: ${{ secrets.INTELLIJ_SIGNING_PRIVATE_KEY }}
+          INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD }}
+          PRODUCT_NAME: ${{ matrix.product }}
+        run: ./gradlew publishPlugin
+
+      - name: Upload Release Built Artifact
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ steps.properties.outputs.pluginVersionFull }} ./build/distributions/*

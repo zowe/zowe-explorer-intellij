@@ -11,6 +11,10 @@
 package org.zowe.explorer.config.connect.ui.zosmf
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.HelpTooltip
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
@@ -20,7 +24,9 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.*
+import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.DialogMode
+import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.*
@@ -28,6 +34,7 @@ import org.zowe.explorer.config.connect.ui.ChangePasswordDialog
 import org.zowe.explorer.config.connect.ui.ChangePasswordDialogState
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.*
+import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
@@ -65,9 +72,122 @@ class ConnectionDialog(
       project: Project? = null,
       initialState: ConnectionDialogState
     ): ConnectionDialogState? {
-      val connectionDialog =
-        ConnectionDialog(crudable, initialState, project)
-      return connectionDialog.showAndTestConnectionCommon(crudable, parentComponent, project, initialState)
+      val connectionDialog = ConnectionDialog(crudable, initialState, project)
+      val initState = initialState.clone()
+      return showUntilDone(
+        initialState = initialState,
+        factory = { connectionDialog },
+        test = { state ->
+
+          if (validateSecureConnectionUsage(connectionDialog)) {
+            state.connectionUrl = connectionDialog.urlTextField.text
+            state.isAllowSsl = connectionDialog.sslCheckbox.isSelected
+            connectionDialog = ConnectionDialog(crudable, state, project)
+            return@showUntilDone false
+          }
+
+          val newTestedConnConfig : ConnectionConfig
+          if (initialState.mode == DialogMode.UPDATE) {
+            if (isOnlyConnectionNameChanged(initState, state)) {
+              return@showUntilDone true
+            }
+            val newState = state.clone()
+            newState.initEmptyUuids(crudable)
+            newTestedConnConfig = ConnectionConfig(newState.connectionUuid, newState.connectionName, newState.connectionUrl, newState.isAllowSsl, newState.zVersion)
+            CredentialService.instance.setCredentials(
+              connectionConfigUuid = newState.connectionUuid,
+              username = newState.username,
+              password = newState.password
+            )
+          } else {
+            state.initEmptyUuids(crudable)
+            newTestedConnConfig = state.connectionConfig
+            CredentialService.instance.setCredentials(
+              connectionConfigUuid = state.connectionUuid,
+              username = state.username,
+              password = state.password)
+          }
+          val throwable = runTask(title = "Testing Connection to ${newTestedConnConfig.url}", project = project) {
+            return@runTask try {
+              runCatching {
+                service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
+              }.onSuccess {
+                state.owner = whoAmI(newTestedConnConfig) ?: ""
+                val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
+                state.zVersion = when (systemInfo.zosVersion) {
+                  "04.25.00" -> ZVersion.ZOS_2_2
+                  "04.26.00" -> ZVersion.ZOS_2_3
+                  "04.27.00" -> ZVersion.ZOS_2_4
+                  "04.28.00" -> ZVersion.ZOS_2_5
+                  else -> ZVersion.ZOS_2_1
+                }
+              }.onFailure {
+                throw it
+              }
+              null
+            } catch (t: Throwable) {
+              t
+            }
+          }
+          if (throwable != null) {
+            state.mode = DialogMode.UPDATE
+            val confirmMessage = "Do you want to add it anyway?"
+            val tMessage = if (throwable is ProcessCanceledException) {
+              message("explorer.cancel.by.user.error")
+            } else {
+              throwable.message?.let {
+                if (it.contains("Exception")) {
+                  it.substring(it.lastIndexOf(":") + 2)
+                    .replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString() }
+                } else {
+                  it
+                }
+              }
+            }
+            val message = if (tMessage != null) {
+              "$tMessage\n\n$confirmMessage"
+            } else {
+              confirmMessage
+            }
+            val addAnyway = MessageDialogBuilder
+              .yesNo(
+                title = "Error Creating Connection",
+                message = message
+              ).icon(AllIcons.General.ErrorDialog)
+              .run {
+                if (parentComponent != null) {
+                  ask(parentComponent)
+                } else {
+                  ask(project)
+                }
+              }
+            connectionDialog = ConnectionDialog(crudable, state, project)
+            addAnyway
+          } else {
+            runTask(title = "Retrieving user information", project = project) {
+              // Could be empty if TSO request fails
+              state.owner = whoAmI(newTestedConnConfig) ?: ""
+            }
+            if (state.owner.isEmpty()) showWarningNotification(project)
+            true
+          }
+        }
+      )
+    }
+
+    /**
+     * Function shows a warning notification if USS owner cannot be retrieved
+     */
+    private fun showWarningNotification(project: Project?) {
+      Notification(
+        EXPLORER_NOTIFICATION_GROUP_ID,
+        "Unable to retrieve USS username",
+        "Cannot retrieve USS username. An error happened while executing TSO request.\n" +
+            "When working with USS files the same username will be used that was specified by the user when connecting.",
+        NotificationType.WARNING
+      ).let {
+        Notifications.Bus.notify(it, project)
+      }
     }
   }
 
@@ -125,6 +245,7 @@ class ConnectionDialog(
           }
           .also { urlTextField = it.component }
           .align(AlignX.FILL)
+          .component.emptyText.setText("http(s)://host:port")
       }
       row {
         label("Username")
@@ -165,6 +286,13 @@ class ConnectionDialog(
                 }
                 sslCheckbox = this
               }
+            }
+          icon(AllIcons.General.ContextHelp)
+            .also {
+              val sslHelpText =
+                """Select this checkbox if your organization uses self-signed certificates (not recommended)."""
+                  .trimMargin()
+              HelpTooltip().setDescription(sslHelpText).installOn(it.component)
             }
         }
       }
@@ -303,5 +431,40 @@ class ConnectionDialog(
     }
   }
 
+  /**
+   * Function shows the warning dialog if any violations found and resolves them in case "Back to safety" was clicked
+   * @param components - dialog components which have to be resolved to valid values
+   * @return result of the pressed button
+   */
+  private fun showSelfSignedUsageWarningDialog(vararg components : Component) : Boolean {
+    // default return backToSafety
+    val backToSafety = true
+    val choice = Messages.showDialog(
+      project,
+      "Creating an unsecure connection (HTTP instead of HTTP(s) and/or using self-signed certificates) is not recommended.\n" +
+          "You do this at your own peril and risk, and we do not bear any responsibility for the possible consequences of using this type of connection.\n" +
+          "Please contact your system administrator to configure your system to be able to create a secure connection.\n\n" +
+          "Do you want to proceed anyway?",
+      "Attempt to create an unsecured connection",
+      arrayOf(
+        "Back to safety",
+        "Proceed"
+      ),
+      0,
+      AllIcons.General.WarningDialog,
+      null
+    )
+    return when (choice) {
+      0 -> {
+        components.forEach {
+          if (it is JBCheckBox) it.isSelected = false
+          if (it is JBTextField) it.text = it.text.replace("http://", "https://", true)
+        }
+        backToSafety
+      }
+      1 -> !backToSafety
+      else -> backToSafety
+    }
+  }
 
 }

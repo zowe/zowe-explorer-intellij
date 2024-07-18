@@ -12,8 +12,13 @@ package org.zowe.explorer.ui.build.tso
 
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.openapi.application.runInEdt
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -26,6 +31,7 @@ import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
+import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
 import org.zowe.explorer.ui.build.tso.ui.TSOConsoleView
 import org.zowe.explorer.ui.build.tso.ui.TSOSessionParams
@@ -33,6 +39,10 @@ import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.utils.subscribe
 import org.zowe.kotlinsdk.TsoResponse
 import java.net.ConnectException
+import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 /**
  * Interface class which represents create topic handler
@@ -129,18 +139,19 @@ val SESSION_CLOSED_TOPIC = Topic.create("tsoSessionClosed", TSOSessionCloseHandl
 @JvmField
 val SESSION_REOPEN_TOPIC = Topic.create("tsoSessionReopen", TSOSessionReopenHandler::class.java)
 
+const val SESSION_RECONNECT_ERROR_MESSAGE = "Unable to reconnect to the TSO session. Session is closed."
 /**
  * Factory class for building an instance of TSO tool window when TSO session is created
  */
-class TSOWindowFactory : ToolWindowFactory {
+class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
+
+  private var currentTsoSession: TSOConfigWrapper? = null
+  private val tsoSessionToConfigMap = mutableMapOf<String, TSOSessionParams>()
 
   /**
    * Static companion object for TSO tool window class
    */
   companion object {
-
-    private var currentTsoSession: TSOConfigWrapper? = null
-    private val tsoSessionToConfigMap = mutableMapOf<String, TSOSessionParams>()
 
     /**
      * Method is used to parse response for every TSO session created
@@ -173,8 +184,22 @@ class TSOWindowFactory : ToolWindowFactory {
             mode = TsoOperationMode.GET_MESSAGES
           )
         )
-      }.onSuccess { return it }.onFailure { throw it }
+      }.onSuccess { return it }.onFailure { showSessionFailureNotification("Error getting TSO response messages", it.message, project = null) }
       return TsoResponse()
+    }
+
+    /** Method reports an error notification if any error happens during any operation
+     *  @param project
+     *  */
+    fun showSessionFailureNotification(title: String, message: String?, project: Project?) {
+      Notification(
+        EXPLORER_NOTIFICATION_GROUP_ID,
+        title,
+        message ?: "",
+        NotificationType.ERROR
+      ).let {
+        Notifications.Bus.notify(it, project)
+      }
     }
   }
 
@@ -187,9 +212,6 @@ class TSOWindowFactory : ToolWindowFactory {
    */
   fun addToolWindowContent(project: Project, toolWindow: ToolWindow, tsoSession: TSOConfigWrapper) {
     runInEdt {
-      toolWindow.setAvailable(true, null)
-      toolWindow.activate(null)
-      toolWindow.show(null)
       val contentManager = toolWindow.contentManager
 
       val tsoContent = TSOConsoleView(project, tsoSession)
@@ -198,9 +220,11 @@ class TSOWindowFactory : ToolWindowFactory {
         tsoContent,
         tsoSession.getConnectionConfig().name + " TSO session. ServletKey: " + tsoSession.getTSOResponse().servletKey,
         false
-      )
+      ).apply {
+        preferredFocusableComponent = tsoContent.preferredFocusableComponent
+      }
+
       contentManager.addContent(content)
-      contentManager.setSelectedContent(content)
 
       fetchNewSessionResponseMessages(tsoContent, tsoSession)
     }
@@ -227,9 +251,21 @@ class TSOWindowFactory : ToolWindowFactory {
 
     toolWindow.addContentManagerListener(object : ContentManagerListener {
       override fun contentRemoved(event: ContentManagerEvent) {
+        val contentManager = toolWindow.contentManager
         val component = event.content.component as TSOConsoleView
         val session = component.getTsoSession()
-        sendTopic(SESSION_CLOSED_TOPIC, project).close(project, session)
+        wrapInlineCall { sendTopic(SESSION_CLOSED_TOPIC, project).close(project, session) }
+        if (contentManager.contents.isEmpty()) toolWindow.isAvailable = false
+      }
+
+      override fun contentAdded(event: ContentManagerEvent) {
+        val contentManager = toolWindow.contentManager
+        contentManager.setSelectedContent(event.content, true)
+        toolWindow.apply {
+          activate(null, true)
+          isAvailable = true
+          show()
+        }
       }
     })
 
@@ -239,9 +275,16 @@ class TSOWindowFactory : ToolWindowFactory {
       handler = object : TSOSessionCreateHandler {
 
         override fun create(project: Project, newSession: TSOConfigWrapper) {
-          val servletKey = newSession.getTSOResponse().servletKey ?: throw Exception("Cannot create a new session, because new session ID was not recognized.")
-          addToolWindowContent(project, toolWindow, newSession)
-          tsoSessionToConfigMap[servletKey] = newSession.getTSOSessionParams()
+          val servletKey = newSession.getTSOResponse().servletKey?.let {
+            addToolWindowContent(project, toolWindow, newSession)
+            tsoSessionToConfigMap[it] = newSession.getTSOSessionParams()
+            it
+          }
+          if(servletKey.isNullOrBlank()) showSessionFailureNotification(
+            "Error getting TSO session servletKey",
+            "Cannot create a new session, because new session ID was not recognized",
+            project
+          )
         }
       }
     )
@@ -254,20 +297,18 @@ class TSOWindowFactory : ToolWindowFactory {
         override fun reconnect(project: Project, console: TSOConsoleView, oldSession: TSOConfigWrapper) {
           val oldServletKey = oldSession.getTSOResponse().servletKey
           if (tsoSessionToConfigMap[oldServletKey] != null) {
-            val newSessionConfig = createNewSessionFromOldConfig(oldSession)
-            if (newSessionConfig != null) {
-              val sessionResponse = newSessionConfig.getTSOResponse()
-              val newServletKey = sessionResponse.servletKey ?: throw Exception("Cannot reconnect to the session, because new session ID was not recognized.")
-              currentTsoSession = newSessionConfig
-              console.setTsoSession(newSessionConfig)
-              fetchNewSessionResponseMessages(console, newSessionConfig)
+            tryToStartNewSessionFromOldConfig(oldSession)?.let {
+              val sessionResponse = it.getTSOResponse()
+              val newServletKey =
+                sessionResponse.servletKey ?: throw Exception("TSO session servletKey must not be null.")
+              currentTsoSession = it
+              console.setTsoSession(it)
+              fetchNewSessionResponseMessages(console, it)
               tsoSessionToConfigMap.remove(oldServletKey)
-              tsoSessionToConfigMap[newServletKey] = newSessionConfig.getTSOSessionParams()
-            } else {
-              throw Exception("Cannot reconnect to the session, because new session config is missing.")
+              tsoSessionToConfigMap[newServletKey] = it.getTSOSessionParams()
             }
           } else {
-            throw Exception("Cannot reconnect to the session, because session ID was not found.")
+            showSessionFailureNotification("Error getting TSO session info", "Could not find old TSO session ID", project)
           }
         }
       }
@@ -296,7 +337,6 @@ class TSOWindowFactory : ToolWindowFactory {
                 message = command
               )
             )
-
           }.onSuccess {
             processHandler.notifyTextAvailable(parseTSODataResponse(it), ProcessOutputType.STDOUT)
             var response = it
@@ -306,18 +346,11 @@ class TSOWindowFactory : ToolWindowFactory {
             }
           }.onFailure {
             processHandler.notifyTextAvailable(
-              "Unsuccessful execution of the TSO request. Session already closed.\n",
+              "Unsuccessful execution of the TSO request. Connection was broken.\n",
               ProcessOutputType.STDOUT
             )
-            processHandler.notifyTextAvailable("Attempting to reconnect...\n", ProcessOutputType.STDOUT)
-            try {
-              sendTopic(SESSION_RECONNECT_TOPIC, project).reconnect(project, console, session)
-              processHandler.notifyTextAvailable(
-                "Successfully reconnected to the TSO session.\nREADY\n",
-                ProcessOutputType.STDOUT
-              )
-            } catch (e: Exception) {
-              throw e
+            executeTsoReconnectWithTimeout(timeout = 10, maxAttempts = 3, tsoConsole = console) {
+              wrapInlineCall { sendTopic(SESSION_RECONNECT_TOPIC, project).reconnect(project, console, session) }
             }
           }
         }
@@ -367,28 +400,44 @@ class TSOWindowFactory : ToolWindowFactory {
               selectedContent?.let { removeContent(it, true) }
             }
           }
-          val newConfig = createNewSessionFromOldConfig(oldConfig) ?: throw Exception("Unable to establish a new TSO session with parameters: ${oldConfig.getTSOSessionParams()}")
-          sendTopic(SESSION_ADDED_TOPIC).create(project, newConfig)
+          runCatching {
+            tryToStartNewSessionFromOldConfig(oldConfig)?.let {
+              wrapInlineCall { sendTopic(SESSION_ADDED_TOPIC).create(project, it) }
+            }
+          }.onFailure { showSessionFailureNotification("Error starting a new TSO session", it.cause?.message, project) }
         }
       }
     )
   }
 
   /**
-   * Method is used to create a new session config from the parameters of the old session config
+   * Wrapper function to call a block of inline code
+   */
+  fun wrapInlineCall(inlineBlock: () -> Unit) {
+    inlineBlock()
+  }
+
+  /**
+   * Method is used to start a new session from the parameters of the old session config
    * @param oldConfig
    * @return a new instance of TSOConfigWrapper if a new session was successfully created, null otherwise
    */
-  private fun createNewSessionFromOldConfig(oldConfig: TSOConfigWrapper) : TSOConfigWrapper? {
+  private fun tryToStartNewSessionFromOldConfig(oldConfig: TSOConfigWrapper) : TSOConfigWrapper? {
+    var newConfig: TSOConfigWrapper? = null
     val params = oldConfig.getTSOSessionParams()
-    val tsoResponse = service<DataOpsManager>().performOperation(
-      TsoOperation(
-        params,
-        TsoOperationMode.START
+    runCatching {
+      service<DataOpsManager>().performOperation(
+        TsoOperation(
+          params,
+          TsoOperationMode.START
+        )
       )
-    )
-    val servletKey = tsoResponse.servletKey
-    return if (servletKey != null) TSOConfigWrapper(params, tsoResponse) else null
+    }.onSuccess {
+      if (it.servletKey != null) newConfig = TSOConfigWrapper(params, it)
+    }.onFailure {
+      throw it
+    }
+    return newConfig
   }
 
   /**
@@ -409,5 +458,93 @@ class TSOWindowFactory : ToolWindowFactory {
     }
     processHandler.notifyTextAvailable("> ", ProcessOutputType.STDOUT)
   }
+
+  /**
+   * Function tries to reconnect to the TSO session with specified timeout and attempts if the connection was broken for some reason.
+   * @param timeout - the time interval between executing each reconnect attempt
+   * @param maxAttempts - the number of attempts to make
+   * @param tsoConsole
+   * @param block - the function to call
+   */
+  private fun executeTsoReconnectWithTimeout(
+    timeout: Long,
+    maxAttempts: Int,
+    tsoConsole: TSOConsoleView,
+    block: () -> Unit)
+  {
+    val processHandler = tsoConsole.getProcessHandler()
+    processHandler.notifyTextAvailable("Attempting to reconnect $maxAttempts times with timeout $timeout(s) each respectively...\n", ProcessOutputType.STDOUT)
+    var isTaskComplete = false
+    val scheduledService = Executors.newSingleThreadScheduledExecutor()
+    val tsoReconnectTask = createExecutableTask(scheduledService, tsoConsole, block, maxAttempts)
+    scheduledService.scheduleAtFixedRate(tsoReconnectTask, 0L, timeout, TimeUnit.SECONDS)
+    while (!isTaskComplete) {
+      isTaskComplete = scheduledService.awaitTermination(1L, TimeUnit.MINUTES)
+    }
+  }
+
+  /**
+   * Method creates an executable reconnect task with the specified block to execute
+   * @param service
+   * @param tsoConsole
+   * @param block
+   * @param maxAttempts
+   * @return an instance of @see TsoReconnectTask
+   */
+  private fun createExecutableTask(
+    service: ScheduledExecutorService,
+    tsoConsole: TSOConsoleView,
+    block: () -> Unit,
+    maxAttempts: Int)
+  : TimerTask {
+    return object : TsoReconnectTask(service) {
+      override fun run() {
+        val tsoSession = tsoConsole.getTsoSession()
+        val processHandler = tsoConsole.getProcessHandler()
+        runCatching {
+          tsoSession.incrementReconnectAttempt()
+          processHandler.notifyTextAvailable("Trying to connect (attempt ${tsoSession.reconnectAttempts} of $maxAttempts)...\n", ProcessOutputType.STDOUT)
+          block()
+        }.onSuccess {
+          processHandler.notifyTextAvailable(
+            "Successfully reconnected to the TSO session.\nREADY\n",
+            ProcessOutputType.STDOUT
+          )
+          tsoSession.clearReconnectAttempts()
+          cancel()
+          service.shutdown()
+        }.onFailure { throwable ->
+          val cause = throwable.cause.toString()
+          processHandler.notifyTextAvailable(
+            "Failed to reconnect. The error message is:\n $cause\n",
+            ProcessOutputType.STDOUT
+          )
+          if (tsoSession.reconnectAttempts == maxAttempts) {
+            processHandler.notifyTextAvailable(
+              SESSION_RECONNECT_ERROR_MESSAGE,
+              ProcessOutputType.STDOUT
+            )
+            tsoSession.markSessionUnresponsive()
+            processHandler.destroyProcess()
+            cancel()
+            service.shutdown()
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Identifies that tool window is dumb aware
+   */
+  override fun isDumbAware(): Boolean {
+    return true
+  }
+
+  /**
+   * Class represents reconnect runnable task to be submitted in case of any connection problems.
+   * It requires an overriden @see TimerTask.run() method
+   */
+  abstract class TsoReconnectTask(val service: ScheduledExecutorService) : TimerTask()
 
 }

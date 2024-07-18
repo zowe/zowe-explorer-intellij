@@ -22,6 +22,9 @@ import org.zowe.kotlinsdk.TsoResponse
  */
 class TSOConfigWrapper(private var sessionParams: TSOSessionParams, private var response: TsoResponse) {
 
+  var reconnectAttempts: Int = 0
+  var unresponsive: Boolean = false
+
   /**
    * Getter for TSO session parameters
    */
@@ -56,6 +59,27 @@ class TSOConfigWrapper(private var sessionParams: TSOSessionParams, private var 
    */
   fun getConnectionConfig() : ConnectionConfig {
     return sessionParams.connectionConfig
+  }
+
+  /**
+   * Clears reconnect attempts of this session
+   */
+  fun clearReconnectAttempts() {
+    reconnectAttempts = 0
+  }
+
+  /**
+   * Increments reconnect attempt of this session
+   */
+  fun incrementReconnectAttempt() {
+    reconnectAttempts++
+  }
+
+  /**
+   * Method marks the session as unresponsive after reconnect failure
+   */
+  fun markSessionUnresponsive() {
+    unresponsive = true
   }
 
 }

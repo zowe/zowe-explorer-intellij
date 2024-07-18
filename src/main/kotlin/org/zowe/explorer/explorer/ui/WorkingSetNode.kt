@@ -22,7 +22,7 @@ import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.explorer.WorkingSet
 
-private val regularIcon = AllIcons.Nodes.Project
+private val regularIcon = AllIcons.Actions.ShowAsTree
 private val errorIconElement = AllIcons.Nodes.ErrorMark
 private val grayscaleIcon = IconUtil.desaturate(regularIcon)
 private val errorIcon = LayeredIcon(grayscaleIcon, errorIconElement)

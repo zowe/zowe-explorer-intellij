@@ -13,6 +13,7 @@ package org.zowe.explorer.dataops.content.synchronizer
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -22,7 +23,6 @@ import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.checkEncodingCompatibility
-import org.zowe.explorer.utils.runReadActionInEdtAndWait
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.utils.showSaveAnywayDialog
 
@@ -77,10 +77,8 @@ class SyncAction : DumbAwareAction() {
       project = e.project,
       cancellable = true
     ) { indicator ->
-      runWriteActionInEdtAndWait {
-        syncProvider.saveDocument()
-        service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
-      }
+      runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+      service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
     }
   }
 
@@ -102,17 +100,17 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
-    val editor = getEditor(e) ?: return
+    getEditor(e) ?: return
 
     val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
     val syncProvider = DocumentedSyncProvider(file)
-    val currentContent = runReadActionInEdtAndWait { syncProvider.retrieveCurrentContent() }
+    val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
     val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
     val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
     e.presentation.isEnabledAndVisible = file.isWritable
-        && !service<ConfigService>().isAutoSyncEnabled
-        && !(currentContent contentEquals previousContent)
-        && needToUpload
+      && !service<ConfigService>().isAutoSyncEnabled
+      && !(currentContent contentEquals previousContent)
+      && needToUpload
   }
 
   /**

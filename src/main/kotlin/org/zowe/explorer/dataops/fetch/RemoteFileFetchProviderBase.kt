@@ -17,7 +17,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.rd.util.firstOrNull
 import org.zowe.explorer.config.connect.ConnectionConfigBase
-import org.zowe.explorer.dataops.*
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.Query
+import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.services.ErrorSeparatorService
 import org.zowe.explorer.utils.castOrNull
@@ -45,7 +47,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
 
   private val cache = mutableMapOf<RemoteQuery<Connection, Request, Unit>, Collection<File>>()
   private val cacheState = mutableMapOf<RemoteQuery<Connection, Request, Unit>, CacheState>()
-  private val refreshCacheState = mutableMapOf<Pair<AbstractTreeNode<*>, RemoteQuery<Connection, Request, Unit>>, LocalDateTime>()
+  private val refreshCacheState =
+    mutableMapOf<Pair<AbstractTreeNode<*>, RemoteQuery<Connection, Request, Unit>>, LocalDateTime>()
   private var errorMessages = mutableMapOf<RemoteQuery<Connection, Request, Unit>, String>()
 
   /**
@@ -89,6 +92,18 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
   protected abstract fun convertResponseToFile(response: Response): File?
 
   protected abstract fun cleanupUnusedFile(file: File, query: RemoteQuery<Connection, Request, Unit>)
+
+  /**
+   * Get attributes for the single fetched element
+   * @param query query with basic info about the element to get attributes
+   * @param progressIndicator progress indicator to display progress of fetching items in UI
+   */
+  protected open fun getSingleFetchedFile(
+    query: RemoteQuery<Connection, Request, Unit>,
+    progressIndicator: ProgressIndicator
+  ): File {
+    TODO("Not implemented yet")
+  }
 
   /**
    * Compares the old and new file by their paths.
@@ -155,6 +170,29 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
   }
 
   /**
+   * Refresh cache of the queries that carry the same information for virtual files as the one that
+   * is going to be updated
+   * @param originalQuery the query that triggered the changes (null if you want to update the whole cache)
+   * @param fetchedFiles the files that were fetched by the original query to update the cache
+   */
+  private fun refreshCacheOfCollidingQuery(
+    originalQuery: RemoteQuery<Connection, Request, Unit>?,
+    fetchedFiles: List<File>
+  ) {
+    fetchedFiles.forEach { fetchedFile ->
+      for ((cacheQuery, values) in cache) {
+        if (cacheQuery != originalQuery && values.contains(fetchedFile)) {
+          val newCacheForQuery = values.toMutableList()
+          newCacheForQuery.replaceAll { if (compareOldAndNewFile(it, fetchedFile)) fetchedFile else it }
+          cache[cacheQuery] = newCacheForQuery
+          cacheState[cacheQuery] = CacheState.FETCHED
+          publishCacheUpdated(cacheQuery, cache[cacheQuery] as List)
+        }
+      }
+    }
+  }
+
+  /**
    * Method for reloading remote files. The files are fetched again, the old cache is cleared, the new cache is loaded.
    * All the old files attributes are set to invalid
    * @param query query with all necessary information to send request.
@@ -165,7 +203,6 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
     progressIndicator: ProgressIndicator
   ) {
     runCatching {
-
       val files: List<File> = getFetchedFiles(query, progressIndicator)
 
       // Cleans up attributes of invalid files
@@ -182,6 +219,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
           }
         }
 
+      refreshCacheOfCollidingQuery(query, files)
+
       cache[query] = files
       cacheState[query] = CacheState.FETCHED
       files
@@ -195,12 +234,15 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
    * @param query query with all necessary information to send the request
    * @param progressIndicator progress indicator to display progress of fetching items in UI
    */
-  override fun loadMode(
+  override fun loadMore(
     query: RemoteQuery<Connection, Request, Unit>,
     progressIndicator: ProgressIndicator
   ) {
     runCatching {
       val files = getFetchedFiles(query, progressIndicator)
+
+      refreshCacheOfCollidingQuery(query, files)
+
       val newCache = cache[query]?.toMutableList() ?: mutableListOf()
       newCache.addAll(files)
       cache[query] = newCache
@@ -211,9 +253,26 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
       .onFailure { publishFetchCancelledOrFailed(query, it) }
   }
 
-  override fun applyRefreshCacheDate(query: RemoteQuery<Connection, Request, Unit>, node: AbstractTreeNode<*>, lastRefresh: LocalDateTime) {
+  override fun fetchSingleElemAttributes(
+    elemQuery: RemoteQuery<Connection, Request, Unit>,
+    fullListQuery: RemoteQuery<Connection, Request, Unit>,
+    progressIndicator: ProgressIndicator
+  ) {
+    runCatching {
+      val file = getSingleFetchedFile(elemQuery, progressIndicator)
+      refreshCacheOfCollidingQuery(null, listOf(file))
+    }
+      .onFailure { publishFetchCancelledOrFailed(fullListQuery, it) }
+  }
+
+  override fun applyRefreshCacheDate(
+    query: RemoteQuery<Connection, Request, Unit>,
+    node: AbstractTreeNode<*>,
+    lastRefresh: LocalDateTime
+  ) {
     lock.withLock { refreshCacheState.computeIfAbsent(Pair(node, query)) { _ -> lastRefresh } }
   }
+
   override fun findCacheRefreshDateIfPresent(query: RemoteQuery<Connection, Request, Unit>): LocalDateTime? {
     return refreshCacheState.filter { it.key.second == query }.firstOrNull()?.value
   }

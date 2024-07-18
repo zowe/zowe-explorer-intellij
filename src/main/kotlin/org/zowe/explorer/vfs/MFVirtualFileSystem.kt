@@ -59,12 +59,23 @@ class MFVirtualFileSystem : VirtualFileSystem(), FileSystemInterface, Disposable
     const val PROTOCOL = "zowemf"
     const val ROOT_NAME = "Zowe Explorer"
     const val ROOT_ID = 0
+    private val custMigrVols = listOf("ARCIVE")
 
     val MF_VFS_CHANGES_TOPIC = Topic.create("mfVfsChanges", MFBulkFileListener::class.java)
 
     @JvmStatic
     val instance: MFVirtualFileSystem
-      get() = VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as MFVirtualFileSystem
+      get() = VirtualFileManager.getInstance().getFileSystem(MFVirtualFileSystem.PROTOCOL) as MFVirtualFileSystem
+
+    /**
+     * Check if the provided volume belongs to custom migration volumes list
+     * @param vol the volume to check
+     * @return true if belongs, false otherwise
+     */
+    @JvmStatic
+    fun belongsToCustMigrVols(vol: String): Boolean {
+      return custMigrVols.contains(vol)
+    }
   }
 
   init {

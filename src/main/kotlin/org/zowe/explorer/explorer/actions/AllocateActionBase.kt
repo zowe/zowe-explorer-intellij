@@ -176,26 +176,32 @@ abstract class AllocateActionBase : AnAction() {
     state: DatasetAllocationParams,
     workingSet: ExplorerUnit<*>
   ) {
-    val notification = Notification(
-      ALLOCATE_ACTION_NOTIFICATION_GROUP_ID,
-      "Dataset ${state.datasetName} has been created",
-      "Would you like to add mask \"${state.datasetName}\" to ${workingSet.name}?",
-      NotificationType.INFORMATION
-    )
-    notification.addActions(
-      setOf(
-        NotificationAction.createSimpleExpiring("Add mask") {
-          val filesWorkingSetConfig =
-            configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
-          if (filesWorkingSetConfig != null) {
-            filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = state.datasetName })
-            configCrudable.update(filesWorkingSetConfig)
-          }
-        },
-        NotificationAction.createSimpleExpiring("Skip") { }
+    var maskedDataset = state.datasetName
+    val lastIndexOfDot = maskedDataset.lastIndexOf('.')
+    if (lastIndexOfDot > 0) {
+      maskedDataset = state.datasetName.substring(0, lastIndexOfDot)
+    }
+    maskedDataset +=".*"
+    val filesWorkingSetConfig =
+      configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
+    if (filesWorkingSetConfig?.dsMasks?.any { it.mask == maskedDataset } == false) {
+      val notification = Notification(
+        ALLOCATE_ACTION_NOTIFICATION_GROUP_ID,
+        "Dataset ${state.datasetName} has been created",
+        "Would you like to add mask \"$maskedDataset\" to see the created dataset?",
+        NotificationType.INFORMATION
       )
-    )
-    notification.setSuggestionType(true)
-    Notifications.Bus.notify(notification)
+      notification.addActions(
+        setOf(
+          NotificationAction.createSimpleExpiring("Add mask") {
+            filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = maskedDataset })
+            configCrudable.update(filesWorkingSetConfig)
+          },
+          NotificationAction.createSimpleExpiring("Skip") { }
+        )
+      )
+      notification.setSuggestionType(true)
+      Notifications.Bus.notify(notification)
+    }
   }
 }

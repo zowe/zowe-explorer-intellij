@@ -51,8 +51,8 @@ class MFPastePreprocessor : CopyPastePostProcessor<TextBlockTransferableData>() 
   override fun collectTransferableData(
     file: PsiFile,
     editor: Editor,
-    startOffsets: IntArray?,
-    endOffsets: IntArray?
+    startOffsets: IntArray,
+    endOffsets: IntArray
   ): MutableList<TextBlockTransferableData> {
     return mutableListOf()
   }

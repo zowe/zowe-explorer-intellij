@@ -36,16 +36,18 @@ interface CopyPasteNameResolver {
   /**
    * Finds child in destination folder that conflicts with source file.
    * @param source source file to copy in destination folder (or folder-like entity).
+   * @param sourceFiles list of all source files to copy.
    * @param destination folder-like entity to copy file to.
    * @return instance of conflicting child file or null if it was not found.
    */
-  fun getConflictingChild(source: VirtualFile, destination: VirtualFile): VirtualFile?
+  fun getConflictingChild(source: VirtualFile, sourceFiles: List<VirtualFile>, destination: VirtualFile): VirtualFile?
 
   /**
    * Creates new name for source file to make it possible to be copied in destination folder.
    * @param source source file to copy in destination folder (or folder-like entity).
+   * @param sourceFiles list of all source files to copy
    * @param destination folder-like entity to copy file to.
    * @return string with new file name.
    */
-  fun resolve(source: VirtualFile, destination: VirtualFile): String
+  fun resolve(source: VirtualFile, sourceFiles: List<VirtualFile>, destination: VirtualFile): String
 }

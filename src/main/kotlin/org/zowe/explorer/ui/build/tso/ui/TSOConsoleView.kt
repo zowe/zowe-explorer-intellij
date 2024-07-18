@@ -14,12 +14,13 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.TerminalExecutionConsole
+import com.intellij.terminal.*
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBPanel
@@ -63,7 +64,11 @@ class TSOConsoleView(
   private var tsoDataTypeComboBoxModel = CollectionComboBoxModel(tsoDataTypes)
   private var inputRecognizer: InputRecognizer
 
-  private val consoleView: TerminalExecutionConsole = TerminalExecutionConsole(project, null)
+  private val consoleView: TerminalExecutionConsole = object : TerminalExecutionConsole(project, null) {
+    override fun isOutputPaused(): Boolean {
+      return tsoSession.unresponsive
+    }
+  }
   private val terminalCommandReceiver: TerminalCommandReceiver = TerminalCommandReceiver(consoleView)
   private val processHandler: ProcessHandler = terminalCommandReceiver.processHandler
 
@@ -156,15 +161,17 @@ class TSOConsoleView(
 
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
         cancelCommandButton.isEnabled =
-          !terminalCommandReceiver.isPrevCommandEndsWithReady() && terminalCommandReceiver.isNeedToWaitForCommandInput()
+          !terminalCommandReceiver.isPrevCommandEndsWithReady() && terminalCommandReceiver.isNeedToWaitForCommandInput() && !tsoSession.unresponsive
       }
     })
 
+    processHandler.startNotify()
+
     Disposer.register(this, consoleView)
     layout = BorderLayout()
-    add(this.component, BorderLayout.WEST)
-    add(this.consoleView.component, BorderLayout.CENTER)
-    this.preferredFocusableComponent.requestFocusInWindow()
+    add(tsoPanel, BorderLayout.WEST)
+    add(preferredFocusableComponent, BorderLayout.CENTER)
+    preferredFocusableComponent.requestFocusInWindow()
   }
 
   /**
@@ -193,6 +200,13 @@ class TSOConsoleView(
   }
 
   /**
+   * Getter for console view
+   */
+  fun getTerminalConsole() : TerminalExecutionConsole {
+    return consoleView
+  }
+
+  /**
    * Getter for process handler object instance
    */
   fun getProcessHandler(): ProcessHandler {
@@ -210,7 +224,7 @@ class TSOConsoleView(
    * Getter for UI control panel
    */
   override fun getComponent(): JComponent {
-    return tsoPanel
+    return this
   }
 
   /**

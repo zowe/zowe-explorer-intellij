@@ -15,7 +15,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.dataops.attributes.FileAttributes
+import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.explorer.FileExplorer
 import org.zowe.explorer.explorer.FilesWorkingSetImpl
@@ -25,7 +26,13 @@ import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.Member
 
 class LibraryNodeTestSpec : WithApplicationShouldSpec({
@@ -46,7 +53,15 @@ class LibraryNodeTestSpec : WithApplicationShouldSpec({
     every { mockedWorkingSet.explorer } returns mockedExplorer
     every { mockedExplorerTreeStructure.registerNode(any()) } just Runs
 
-    val classUnderTest = spyk(LibraryNode(mockedLibrary, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure))
+    val classUnderTest = spyk(
+      LibraryNode(
+        mockedLibrary,
+        mockedProject,
+        mockedExplorerTreeNodeParent,
+        mockedWorkingSet,
+        mockedExplorerTreeStructure
+      )
+    )
 
     context("sort children nodes") {
       val mockedVFileChild1 = mockk<MFVirtualFile>()
@@ -59,10 +74,15 @@ class LibraryNodeTestSpec : WithApplicationShouldSpec({
       val memberInfo2 = mockk<Member>()
       val memberInfo3 = mockk<Member>()
 
-      val nodeToAttributesMap = mutableMapOf(Pair(mockedVFileChild1, mockedAttributes1), Pair(mockedVFileChild2, mockedAttributes2), Pair(mockedVFileChild3, mockedAttributes3))
+      val nodeToAttributesMap = mutableMapOf(
+        Pair(mockedVFileChild1, mockedAttributes1),
+        Pair(mockedVFileChild2, mockedAttributes2),
+        Pair(mockedVFileChild3, mockedAttributes3)
+      )
 
-      val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(ApplicationManager.getApplication()) {
+      val dataOpsManagerService =
+        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
           return nodeToAttributesMap[file]
         }
@@ -81,13 +101,31 @@ class LibraryNodeTestSpec : WithApplicationShouldSpec({
       }
 
       val mockedMember1 = spyk(
-        FileLikeDatasetNode(mockedVFileChild1, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure)
+        FileLikeDatasetNode(
+          mockedVFileChild1,
+          mockedProject,
+          mockedExplorerTreeNodeParent,
+          mockedWorkingSet,
+          mockedExplorerTreeStructure
+        )
       )
       val mockedMember2 = spyk(
-        FileLikeDatasetNode(mockedVFileChild2, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure)
+        FileLikeDatasetNode(
+          mockedVFileChild2,
+          mockedProject,
+          mockedExplorerTreeNodeParent,
+          mockedWorkingSet,
+          mockedExplorerTreeStructure
+        )
       )
       val mockedMember3 = spyk(
-        FileLikeDatasetNode(mockedVFileChild3, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure)
+        FileLikeDatasetNode(
+          mockedVFileChild3,
+          mockedProject,
+          mockedExplorerTreeNodeParent,
+          mockedWorkingSet,
+          mockedExplorerTreeStructure
+        )
       )
 
       every { mockedMember1.virtualFile } returns mockedVFileChild1
@@ -99,7 +137,10 @@ class LibraryNodeTestSpec : WithApplicationShouldSpec({
       should("sort by name ascending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.MEMBER_NAME)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.MEMBER_NAME, SortQueryKeys.ASCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.MEMBER_NAME,
+          SortQueryKeys.ASCENDING
+        )
 
         val expected = listOf(mockedMember1, mockedMember2, mockedMember3)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
@@ -112,7 +153,10 @@ class LibraryNodeTestSpec : WithApplicationShouldSpec({
       should("sort by name descending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.MEMBER_NAME)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.MEMBER_NAME, SortQueryKeys.DESCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.MEMBER_NAME,
+          SortQueryKeys.DESCENDING
+        )
 
         val expected = listOf(mockedMember3, mockedMember2, mockedMember1)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
@@ -125,7 +169,10 @@ class LibraryNodeTestSpec : WithApplicationShouldSpec({
       should("sort by date ascending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.MEMBER_MODIFICATION_DATE)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.MEMBER_MODIFICATION_DATE, SortQueryKeys.ASCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.MEMBER_MODIFICATION_DATE,
+          SortQueryKeys.ASCENDING
+        )
 
         val expected = listOf(mockedMember2, mockedMember1, mockedMember3)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)
@@ -138,7 +185,10 @@ class LibraryNodeTestSpec : WithApplicationShouldSpec({
       should("sort by date descending") {
 
         val sortQueryKeys = listOf(SortQueryKeys.MEMBER_MODIFICATION_DATE)
-        every { classUnderTest.currentSortQueryKeysList } returns listOf(SortQueryKeys.MEMBER_MODIFICATION_DATE, SortQueryKeys.DESCENDING)
+        every { classUnderTest.currentSortQueryKeysList } returns listOf(
+          SortQueryKeys.MEMBER_MODIFICATION_DATE,
+          SortQueryKeys.DESCENDING
+        )
 
         val expected = listOf(mockedMember3, mockedMember1, mockedMember2)
         val actual = classUnderTest.sortChildrenNodes(mockedChildrenNodes, sortQueryKeys)

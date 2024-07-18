@@ -23,7 +23,7 @@ import org.zowe.explorer.utils.castOrNull
  * @param filesLeft - count of files that was not fetched yet.
  * @author Valiantsin Krus
  */
-class LoadMoreNode<Connection: ConnectionConfigBase>(
+class LoadMoreNode<Connection : ConnectionConfigBase>(
   project: Project,
   parent: ExplorerTreeNode<Connection, *>,
   explorer: Explorer<Connection, *>,
@@ -42,12 +42,7 @@ class LoadMoreNode<Connection: ConnectionConfigBase>(
 
     parentNode.cleanCache(recursively = false, cleanFetchProviderCache = false)
     cleanInvalidateOnExpand(parentNode, view)
-    view.myFsTreeStructure
-      .findByPredicate {
-        if (it is FetchNode) {
-          it.query == query
-        } else false
-      }
+    view.getNodesByQuery(query)
       .onEach { foundNode ->
         synchronized(view.myStructure) {
           view.myStructure.invalidate(foundNode, true)

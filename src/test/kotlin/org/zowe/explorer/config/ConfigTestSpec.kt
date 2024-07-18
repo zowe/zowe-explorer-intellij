@@ -33,8 +33,6 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
-import org.zowe.explorer.explorer.Explorer
-import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.ui.build.tso.TSOWindowFactory
@@ -43,7 +41,14 @@ import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import io.mockk.verify
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.TsoResponse
@@ -190,14 +195,11 @@ class ConfigTestSpec : WithApplicationShouldSpec({
     context("connectUtils") {
       val connectionConfig = ConnectionConfig()
 
-      val explorerMock = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-      every { explorerMock.componentManager } returns ApplicationManager.getApplication()
-
       val dataOpsManagerService =
         ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
 
       beforeEach {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             val tsoResponse = TsoResponse(
               servletKey = "servletKey",
@@ -237,8 +239,75 @@ class ConfigTestSpec : WithApplicationShouldSpec({
 
         assertSoftly { actual shouldBe "ZOSMFAD" }
       }
+
+      should("return empty owner if TSO request returns empty data") {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            val tsoResponse = TsoResponse(
+              servletKey = "servletKey",
+              tsoData = listOf(TsoData())
+            )
+            if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
+              tsoResponse.tsoData = listOf(
+                TsoData(tsoMessage = MessageType("", ""))
+              )
+            }
+            @Suppress("UNCHECKED_CAST")
+            return tsoResponse as R
+          }
+        }
+
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe "" }
+      }
+
+      should("return empty owner if TSO request returns READY") {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            val tsoResponse = TsoResponse(
+              servletKey = "servletKey",
+              tsoData = listOf(TsoData())
+            )
+            if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
+              tsoResponse.tsoData = listOf(
+                TsoData(tsoMessage = MessageType("", "READY "))
+              )
+            }
+            @Suppress("UNCHECKED_CAST")
+            return tsoResponse as R
+          }
+        }
+
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe "" }
+      }
+
+      should("return empty owner if TSO request returns error message in TSO data") {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            val tsoResponse = TsoResponse(
+              servletKey = "servletKey",
+              tsoData = listOf(TsoData())
+            )
+            if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
+              tsoResponse.tsoData = listOf(
+                TsoData(tsoMessage = MessageType("", "OSHELL RC = 65210"))
+              )
+            }
+            @Suppress("UNCHECKED_CAST")
+            return tsoResponse as R
+          }
+        }
+
+        val actual = whoAmI(connectionConfig)
+
+        assertSoftly { actual shouldBe "" }
+      }
+
       should("do not get the owner by TSO request if servlet key is null") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             @Suppress("UNCHECKED_CAST")
             return TsoResponse() as R
@@ -250,7 +319,7 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         assertSoftly { actual shouldBe null }
       }
       should("do not get the owner by TSO request if servlet key is empty") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             @Suppress("UNCHECKED_CAST")
             return TsoResponse(servletKey = "") as R
@@ -262,7 +331,7 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         assertSoftly { actual shouldBe null }
       }
       should("do not get the owner by TSO request if send message request fails") {
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             val tsoResponse = TsoResponse(
               servletKey = "servletKey",

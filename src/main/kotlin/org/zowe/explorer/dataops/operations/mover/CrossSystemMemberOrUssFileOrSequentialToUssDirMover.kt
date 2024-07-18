@@ -101,7 +101,7 @@ class CrossSystemMemberOrUssFileOrSequentialToUssDirMover(val dataOpsManager: Da
     }.execute()
 
     if (!response.isSuccessful) {
-      throw CallException(response, "Cannot upload data to ${op.destination.path}${newName}")
+      throw CallException(response, "Cannot upload data to $pathToFile")
     } else {
       setUssFileTag(op.source.charset.name(), pathToFile, destConnectionConfig)
       if (op.isMove) {

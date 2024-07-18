@@ -18,16 +18,12 @@ import com.intellij.openapi.startup.ProjectActivity
  * Activity to prepare configs.
  * @author Valiantsin Krus.
  */
-class ConfigStartupActivity: ProjectActivity {
+class ConfigStartupActivity : ProjectActivity {
 
   /** Registers all config classes and migrate configs to state v2. */
   override suspend fun execute(project: Project) {
     service<ConfigService>().apply {
       registerAllConfigClasses()
-      service<OldConfigService>().state?.let { oldState ->
-        migrateOldConfigState(oldState)
-      }
-      updateOldConfigs()
     }
   }
 }

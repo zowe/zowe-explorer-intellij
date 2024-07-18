@@ -230,7 +230,7 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedFileExplorer.componentManager } returns ApplicationManager.getApplication()
         val mockedAttributeService = mockk<AttributesService<FileAttributes, VirtualFile>>()
         val mockedParentDatasetAttributes = mockk<RemoteDatasetAttributes>()
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(mockedFileExplorer.componentManager) {
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
             attributesClass: Class<out A>,
             vFileClass: Class<out F>

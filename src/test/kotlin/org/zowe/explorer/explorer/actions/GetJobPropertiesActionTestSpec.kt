@@ -76,7 +76,7 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
         val jobAttr = spyk(RemoteJobAttributes(job, "test", mutableListOf(JobsRequester(connectionConfig, jobsFilter))))
 
         val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return jobAttr
           }
@@ -128,7 +128,7 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
         val spoolFileAttr = spyk(RemoteSpoolFileAttributes(spoolFile, parentFile))
 
         val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl(explorer.componentManager) {
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return spoolFileAttr
           }

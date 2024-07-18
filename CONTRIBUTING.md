@@ -4,6 +4,12 @@
 
 This document is a living summary of conventions and best practices for development within Zowe™ Explorer plug-in for IntelliJ IDEA™.
 
+  - [General](#general)
+  - [Coding standards](#coding-standards)
+  - [Testing Guidelines](#testing-guidelines)
+  - [Branch Naming Guidelines](#branch-naming-guidelines)
+  - [Steps To Contribute](#steps-to-contribute)
+
 ## General
 The following list describes general conventions for contributing to Zowe™ Explorer plug-in for IntelliJ IDEA™:
 * Feel free to ask any questions related to the project or its components.
@@ -35,6 +41,27 @@ Our project follows the next coding rules:
 - [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
 - [Java Coding Conventions](https://google.github.io/styleguide/javaguide.html)
 
+## Testing Guidelines
+To provide stable and reliable code, our project is regularly tested, either manually or through the automated test suite.
+There are two types of tests, used in here:
+- Unit-tests
+- UI regression tests
+
+Unit-tests are written using chain [Kotest](https://kotest.io/) + [MockK](https://mockk.io/) + [Kover](https://github.com/Kotlin/kotlinx-kover).
+All the unit-tests are stored under [src/test](src/test/).
+We use Kotest's `ShouldSpec` testing style to write our tests.
+To provide mocked interfaces and semi-initialized IntelliJ platform's components during the tests execution time, there is a [WithApplicationShouldSpec](src/test/kotlin/eu/ibagroup/formainframe/testutils/WithApplicationShouldSpec.kt) abstract class. This class allows testers to mock out some services without the need to fully initialize them, and provides the IntelliJ application in a lightweight headless mode.
+To see how we mock our services, investigate [this folder](src/test/kotlin/eu/ibagroup/formainframe/testutils/testServiceImpl/)
+For more info on how to deal with tests in IntelliJ platform, refer to [this guide](https://plugins.jetbrains.com/docs/intellij/testing-plugins.html).
+
+UI regression tests are written using chain [JUnit](https://junit.org/) + [IntellIJ UI test framework](https://github.com/JetBrains/intellij-ui-test-robot).
+The UI tests are stored under [srv/uiTest](src/uiTest/).
+These tests are too heavy to run after each build and are meant to run separately from the common development flow to make sure that there are no core-breaking changes to the plug-in's functionality.
+
+***Important: These tests are running interactively. If you want to run the UI tests, consider do it on some other device or place, different from the main one where you are working. For these tests to run successfully, it is needed to exclude any other interactions with your device until they are finished to simulate all the actions, the same as user would do working with the plug-in.***
+
+For the guides on how to run tests, see [this README section](README.md/#how-to-run-tests)
+
 ## Branch Naming Guidelines
 This project follows the branching strategy:
 - **main** - the main project branch with the latest stable code changes. It is changed as soon as the new version of the project is released.
@@ -55,11 +82,12 @@ Consider some new feature for the plugin. The first that you need is to create a
 1. Create a fork of this repository
 2. Create a branch using [Branch Naming Guidelines](#branch-naming-guidelines)
 3. Make any changes you want
-4. When you are ready, create an issue for your changes with "to be defined" label
-5. Describe the issue:
+4. Provide at least 80% of test coverage for all the new methods and their branches
+5. When you are ready, create an issue for your changes with "to be defined" label
+6. Describe the issue:
    - In case of bug - make a reproduction scheme or short description on how to achieve this;
    - In case of new feature or improvement - describe, what you are trying to implement, how it should work, and (if applicable) why it should be introduced in the plugin;
-6. After the changes are made, create a pull request on any of the main branches in the project repo. ***It is not a problem if you specified an incorrect target branch, we will help you with it before the changes are pushed***
-7. Assign Uladzislau Kalesnikau and Valiantsin Krus as reviewers to the pull request
-8. Attach the issue to the pull request
-9. Wait on the approval (thanks in advance)
+7. After the changes are made, create a pull request on any of the main branches in the project repo. ***It is not a problem if you specified an incorrect target branch, we will help you with it before the changes are pushed***
+8. Assign Uladzislau Kalesnikau as a reviewer to the pull request
+9. Attach the issue to the pull request
+10. Wait on the approval (thanks in advance)

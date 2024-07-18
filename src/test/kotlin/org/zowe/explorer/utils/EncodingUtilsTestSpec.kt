@@ -27,13 +27,10 @@ import com.intellij.openapi.vfs.encoding.EncodingUtil.Magic8
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
-import org.zowe.explorer.explorer.Explorer
-import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.explorer.ui.ChangeEncodingDialog
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
@@ -62,9 +59,6 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     val bytes = byteArrayOf(116, 101, 120, 116)
     val bytesByf = ByteBuffer.wrap(bytes)
     var isEncodingSet = false
-
-    val explorerMock = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
-    every { explorerMock.componentManager } returns ApplicationManager.getApplication()
 
     val contentSynchronizerMock = mockk<ContentSynchronizer>()
     val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
@@ -143,7 +137,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     mockkStatic(showDialogRef as KFunction<*>)
 
     beforeEach {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
           return contentSynchronizerMock
         }
@@ -268,7 +262,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
       assertSoftly { throwable shouldBe expected }
     }
     should("inspect safe encoding change when content synchronizer is null") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
           return null
         }

@@ -165,12 +165,11 @@ class MigrateAction : DumbAwareAction() {
       return
     }
     val selected = view.mySelectedNodesData
-    val wrongNode = selected.find {
+    val hasWrongNode = selected.find {
       val attributes = it.attributes as? RemoteDatasetAttributes
-      val isMigrated = attributes?.isMigrated ?: false
-      isMigrated || attributes !is RemoteDatasetAttributes
+      attributes !is RemoteDatasetAttributes || !attributes.hasDsOrg
     }
-    e.presentation.isEnabledAndVisible = wrongNode == null
+    e.presentation.isEnabledAndVisible = hasWrongNode == null
   }
 
 }

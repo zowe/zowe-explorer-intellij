@@ -62,16 +62,27 @@ class DSMaskNode(
     }
 
   /**
+   * Prepare child node instance from the provided [MFVirtualFile].
+   * Creates [LibraryNode] if the MF virtual file is a directory or [FileLikeDatasetNode] otherwise
+   * @param file the MF virtual file instance
+   * @return the created node
+   */
+  fun prepareChildNodeFromMFVirtualFile(file: MFVirtualFile): ExplorerTreeNode<*, *> {
+    return if (file.isDirectory) {
+      LibraryNode(file, notNullProject, this@DSMaskNode, unit, treeStructure)
+    } else {
+      FileLikeDatasetNode(file, notNullProject, this@DSMaskNode, unit, treeStructure)
+    }
+  }
+
+  /**
    * Returns map of children nodes (datasets and uss files).
    */
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
-    return map {
-      if (it.isDirectory) {
-        LibraryNode(it, notNullProject, this@DSMaskNode, unit, treeStructure)
-      } else {
-        FileLikeDatasetNode(it, notNullProject, this@DSMaskNode, unit, treeStructure)
-      }
-    }.let { sortChildrenNodes(it, currentSortQueryKeysList) }
+    return sortChildrenNodes(
+      map { prepareChildNodeFromMFVirtualFile(it) },
+      currentSortQueryKeysList
+    )
   }
 
   override val requestClass = DSMask::class.java
@@ -147,6 +158,26 @@ class DSMaskNode(
         else -> null
       }
     }
+  }
+
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + (query?.hashCode() ?: 0)
+    result = 31 * result + requestClass.hashCode()
+    return result
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    if (!super.equals(other)) return false
+
+    other as DSMaskNode
+
+    if (query != other.query) return false
+    if (requestClass != other.requestClass) return false
+
+    return true
   }
 
 }

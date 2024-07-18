@@ -34,7 +34,7 @@ private fun String.trimUrl(): String {
  * Base abstract service class to handle attributes on virtual file
  * @param dataOpsManager data ops manager to get component manager
  */
-abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, Attributes : MFRemoteFileAttributes<Connection, *>>(
+abstract class MFRemoteAttributesServiceBase<Connection : ConnectionConfigBase, Attributes : MFRemoteFileAttributes<Connection, *>>(
   val dataOpsManager: DataOpsManager
 ) : AttributesService<Attributes, MFVirtualFile> {
 
@@ -46,13 +46,11 @@ abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, A
 
   abstract val subFolderName: String
 
-  protected lateinit var subDirectory: MFVirtualFile
+  private val fs = MFVirtualFileSystem.instance
+  protected val fsModel = fs.model
+  protected val fsRoot = fs.root
 
-  protected companion object {
-    val fs = MFVirtualFileSystem.instance
-    val fsModel = fs.model
-    val fsRoot = fs.root
-  }
+  protected lateinit var subDirectory: MFVirtualFile
 
   /**
    * Find or create the virtual file by path element seed
@@ -60,7 +58,9 @@ abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, A
    * @param seed the path element seed to search for the file by
    */
   protected fun findOrCreate(current: MFVirtualFile, seed: PathElementSeed): MFVirtualFile {
-    return fsModel.findOrCreate(this, current, seed.name, seed.fileAttributes).apply(seed.postCreateAction)
+    return fsModel
+      .findOrCreate(this, current, seed.name, seed.fileAttributes)
+      .apply(seed.postCreateAction)
   }
 
   /**
@@ -100,6 +100,10 @@ abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, A
     reassignAttributesAfterUrlFolderRenaming(file, oldAttributes, newAttributes)
   }
 
+  /**
+   * Build specific attributes instance that uniquely describes the entry related to them (without requesters preserved)
+   * @param attributes the original attributes instance to reuse
+   */
   protected abstract fun buildUniqueAttributes(attributes: Attributes): Attributes
 
   /**
@@ -145,7 +149,8 @@ abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, A
   protected abstract fun continuePathChain(attributes: Attributes): List<PathElementSeed>
 
   /**
-   * Create a path chain from the provided file or folder attributes. Uses the sub folder name to describe, for which system the path chain is being created
+   * Create a path chain from the provided file or folder attributes.
+   * Uses the [subFolderName] to describe, for which system the path chain is being created
    * @param attributes the attributes to build the path chain from
    */
   protected fun createPathChain(attributes: Attributes): List<PathElementSeed> {
@@ -157,16 +162,20 @@ abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, A
   }
 
   /**
-   * Find or create file function for internal processing purposes. Also initializes the subdirectory as the system path element if it is not initialized yet
+   * Find or create file function for internal processing purposes.
+   * Also initializes the root path for the file system entities as the system path element if it is not yet initialized
+   * Example: there are four path seeds for datasets (<connection-name>/<entities-name>/<volume>/<the-dataset>).
+   * The <entities-name> [subDirectory] variable is initialized here with the path seed with [subFolderName]
    * @param attributes the attributes to find or create the file by
    */
   private fun findOrCreateFileInternal(attributes: Attributes): MFVirtualFile {
     var current = fsRoot
-    createPathChain(attributes)
+    val pathChain = createPathChain(attributes)
       .map { seed ->
-        findOrCreate(current, seed).also { current = it }
-      }[1]
-      .also { if (!this::subDirectory.isInitialized) subDirectory = it }
+        findOrCreate(current, seed)
+          .also { current = it }
+      }
+    if (!this::subDirectory.isInitialized) subDirectory = pathChain[1]
     return current
   }
 
@@ -188,7 +197,7 @@ abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, A
       val createdFile = findOrCreateFileInternal(attributes)
       fileToAttributesMap[createdFile] = attributes
       attributesToFileMap[buildUniqueAttributes(attributes)] = createdFile
-      sendTopic(AttributesService.ATTRIBUTES_CHANGED).onCreate(attributes, createdFile)
+      sendTopic(AttributesService.ATTRIBUTES_CHANGED, dataOpsManager.componentManager).onCreate(attributes, createdFile)
 
       createdFile
     }

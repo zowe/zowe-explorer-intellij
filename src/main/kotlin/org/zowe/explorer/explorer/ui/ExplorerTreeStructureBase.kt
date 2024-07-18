@@ -28,6 +28,8 @@ abstract class ExplorerTreeStructureBase(
 
   abstract fun registerNode(node: ExplorerTreeNode<*, *>)
 
+  abstract fun refreshSimilarNodes(node: ExplorerTreeNode<*, *>)
+
   abstract fun <V : Any> findByValue(value: V): Collection<ExplorerTreeNode<*, V>>
 
   abstract fun findByPredicate(predicate: (ExplorerTreeNode<*, *>) -> Boolean): Collection<ExplorerTreeNode<*, *>>

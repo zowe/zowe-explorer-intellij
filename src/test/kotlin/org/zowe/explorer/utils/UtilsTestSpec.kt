@@ -13,7 +13,6 @@ package org.zowe.explorer.utils
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.ui.components.JBTextField
 import org.zowe.explorer.config.ConfigStateV2
@@ -43,8 +42,10 @@ import io.mockk.mockkObject
 import io.mockk.spyk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions.*
-import org.junit.platform.commons.util.StringUtils
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import retrofit2.Response
@@ -135,7 +136,6 @@ class UtilsTestSpec : ShouldSpec({
       }
       should("validate connection name when there are other connections and the name is not unique") {
         jTextField.text = "a"
-        val existingName = "aaaa"
         val initialConName = "initialName"
 
         every { mockCrud.getAll(ConnectionConfig::class.java) } returns Stream.of(
@@ -266,7 +266,7 @@ class UtilsTestSpec : ShouldSpec({
         val actual = validateWorkingSetMaskName(jTextField, mockMaskStateWithWs)
         val expected = ValidationInfo(
           "You must provide unique mask in working set. Working Set " +
-              "\"${mockWs.name}\" already has mask - ${jTextField.text}", jTextField
+            "\"${mockWs.name}\" already has mask - ${jTextField.text}", jTextField
         )
 
         assertSoftly {
@@ -646,13 +646,6 @@ class UtilsTestSpec : ShouldSpec({
             attributes = null
           )
         )
-        val mockNode2 = spyk(
-          NodeData(
-            node = mockFileNode2,
-            file = mockVirtualFile,
-            attributes = null
-          )
-        )
 
         every { mockFileNode1.parent?.children } returns listOf(mockFileNode1, mockFileNode2)
         every { mockFileNode1.value.filenameInternal } returns "filename1"
@@ -695,13 +688,6 @@ class UtilsTestSpec : ShouldSpec({
         val mockNode1 = spyk(
           NodeData(
             node = mockDirNode1,
-            file = mockVirtualFile,
-            attributes = null
-          )
-        )
-        val mockNode2 = spyk(
-          NodeData(
-            node = mockDirNode2,
             file = mockVirtualFile,
             attributes = null
           )

@@ -25,6 +25,10 @@ open class TestExplorerTreeStructureBase(
     TODO("Not yet implemented")
   }
 
+  override fun refreshSimilarNodes(node: ExplorerTreeNode<*, *>) {
+    TODO("Not yet implemented")
+  }
+
   override fun <V : Any> findByValue(value: V): Collection<ExplorerTreeNode<*, V>> {
     TODO("Not yet implemented")
   }

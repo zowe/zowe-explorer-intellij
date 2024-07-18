@@ -41,7 +41,20 @@ interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
   fun reload(query: Q, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE)
 
   /** Function for "load more" nodes */
-  fun loadMode(query: Q, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE)
+  fun loadMore(query: Q, progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE)
+
+  /**
+   * Function to fetch attributes for single element. The main purpose - to update the element's attributes without
+   * reloading the full elements list
+   * @param elemQuery the query related exactly to the element to fetch attributes
+   * @param fullListQuery the parent query for the element's parent to make further updates to the whole list
+   * @param progressIndicator the progress indicator to make it possible to cancel the operation
+   */
+  fun fetchSingleElemAttributes(
+    elemQuery: Q,
+    fullListQuery: Q,
+    progressIndicator: ProgressIndicator = DumbProgressIndicator.INSTANCE
+  )
 
   /**
    * Function adds (node,query) pair with @param lastRefresh into the corresponding fetch provider refreshCacheState map

@@ -85,9 +85,6 @@ Thank you for considering IBA Group for your mainframe needs.
         <extensionPoint name="logFetcher"
                         interface="org.zowe.explorer.dataops.log.LogFetcherFactory"/>
 
-        <extensionPoint name="oldConfigAdapter"
-                        interface="org.zowe.explorer.config.OldConfigAdapterFactory"/>
-
         <extensionPoint name="explorerContentProvider"
                         interface="org.zowe.explorer.explorer.ExplorerContentProviderFactory"/>
 
@@ -276,14 +273,6 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <logFetcher implementation="org.zowe.explorer.dataops.log.JobLogFetcherFactory"/>
 
-        <oldConfigAdapter implementation="org.zowe.explorer.config.connect.OldConnectionsAdapterFactory"/>
-
-        <oldConfigAdapter implementation="org.zowe.explorer.config.ws.OldWorkingSetAdapterFactory"/>
-
-        <oldConfigAdapter implementation="org.zowe.explorer.config.connect.OldUsernameAdapterFactory"/>
-
-        <oldConfigAdapter implementation="org.zowe.explorer.config.ws.OldJesWorkingSetAdapterFactory"/>
-
         <explorer implementation="org.zowe.explorer.explorer.FileExplorerFactory"/>
         <explorer implementation="org.zowe.explorer.explorer.JesExplorerFactory"/>
 
@@ -417,7 +406,7 @@ Thank you for considering IBA Group for your mainframe needs.
         <action id="org.zowe.explorer.explorer.actions.AddWorkingSetAction"
                 class="org.zowe.explorer.explorer.actions.AddWorkingSetAction"
                 text="Working Set"
-                icon="AllIcons.Nodes.Project"/>
+                icon="AllIcons.Actions.ShowAsTree"/>
 
         <action id="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"
                 class="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"
@@ -638,6 +627,11 @@ Thank you for considering IBA Group for your mainframe needs.
                 text="Cancel Job"
                 icon="AllIcons.Actions.Suspend"/>
 
+        <action id="org.zowe.explorer.explorer.actions.GoToJobAction"
+                class="org.zowe.explorer.explorer.actions.GoToJobAction"
+                text="Go To Job"
+                icon="AllIcons.Actions.AddFile"/>
+
         <action id="org.zowe.explorer.explorer.actions.PurgeJobAction"
                 class="org.zowe.explorer.explorer.actions.PurgeJobAction"
                 text="Purge Job"
@@ -777,8 +771,8 @@ Thank you for considering IBA Group for your mainframe needs.
             <reference id="$Paste"/>
             <separator/>
             <reference id="org.zowe.explorer.actions.sort.uss.UssSortActionGroup"/>
-            <reference id ="org.zowe.explorer.actions.sort.datasets.DatasetsSortActionGroup"/>
-            <reference id ="org.zowe.explorer.actions.sort.members.MembersSortActionGroup"/>
+            <reference id="org.zowe.explorer.actions.sort.datasets.DatasetsSortActionGroup"/>
+            <reference id="org.zowe.explorer.actions.sort.members.MembersSortActionGroup"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.MigrateAction"/>
             <reference id="org.zowe.explorer.explorer.actions.RecallAction"/>
@@ -834,6 +828,7 @@ Thank you for considering IBA Group for your mainframe needs.
             <reference id="org.zowe.explorer.explorer.actions.ReleaseJobAction"/>
             <reference id="org.zowe.explorer.explorer.actions.HoldJobAction"/>
             <reference id="org.zowe.explorer.explorer.actions.CancelJobAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.GoToJobAction"/>
             <reference id="org.zowe.explorer.explorer.actions.PurgeJobAction"/>
         </group>
 

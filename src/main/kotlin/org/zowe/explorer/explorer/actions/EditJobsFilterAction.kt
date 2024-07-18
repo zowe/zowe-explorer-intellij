@@ -15,7 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
-import org.zowe.explorer.config.ws.JobFilterStateWithWS
+import org.zowe.explorer.config.ws.JobFilterStateWithMultipleWS
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.explorer.JesWorkingSet
 import org.zowe.explorer.explorer.ui.EditJobsFilterDialog
@@ -45,7 +45,7 @@ class EditJobsFilterAction : AnAction() {
       val prefix = node.value.prefix
       val owner = node.value.owner
       val jobId = node.value.jobId
-      val state = JobFilterStateWithWS(ws = ws, prefix = prefix, owner = owner, jobId = jobId)
+      val state = JobFilterStateWithMultipleWS(wsList = mutableListOf(ws), prefix = prefix, owner = owner, jobId = jobId)
       val dialog = EditJobsFilterDialog(e.project, state)
       if (dialog.showAndGet()) {
         val newJobsFilter = dialog.state.toJobsFilter()

@@ -28,10 +28,14 @@ import javax.swing.JTextField
  * Dialog of JES Working Set configurations.
  * @param crudable Crudable instance to change data in after dialog applied.
  * @param state state of JES Working Set configuration data.
+ * @property isSingleConnectionOnlyAllowed overrides default property assignment in super class, allows creating specific binding for panel
+ * @property connectionConfigToSelect overrides default property assignment in super class
  */
 class JesWsDialog(
   crudable: Crudable,
-  state: JesWorkingSetDialogState
+  state: JesWorkingSetDialogState,
+  override val isSingleConnectionOnlyAllowed: Boolean = false,
+  override val connectionConfigToSelect: ConnectionConfig? = null,
 ) : AbstractWsDialog<ConnectionConfig, JesWorkingSetConfig, JobFilterState, JesWorkingSetDialogState>(
   crudable,
   JesWorkingSetDialogState::class.java,
@@ -39,7 +43,6 @@ class JesWsDialog(
 ) {
   override val wsConfigClass = JesWorkingSetConfig::class.java
   override val connectionClass = ConnectionConfig::class.java
-
 
   /**
    * TableView with Job Prefix, Owner, JobId columns for representation of jobs filters.

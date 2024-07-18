@@ -26,11 +26,11 @@ import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.dataops.content.synchronizer.RemoteAttributedContentSynchronizer
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.getMinimalCommonParents
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 import kotlin.concurrent.withLock
 
@@ -175,6 +175,7 @@ class ExplorerPasteProvider : PasteProvider {
    * Run move or copy task. Cleans cache on subtrees after the operation is completed
    * @param titlePrefix the operation title
    * @param filesToMoveTotal count of files to perform operation on
+   * @param sourceFiles list of source files to operation
    * @param isDragAndDrop value to indicate whether the operation is DnD
    * @param operations the operation instances that carry all the necessary information about the operations
    * @param copyPasteSupport the copy-paste support to control the custom clipboard
@@ -184,6 +185,7 @@ class ExplorerPasteProvider : PasteProvider {
   private fun runMoveOrCopyTask(
     titlePrefix: String,
     filesToMoveTotal: Int,
+    sourceFiles: List<VirtualFile>,
     isDragAndDrop: Boolean,
     operations: List<MoveCopyOperation>,
     copyPasteSupport: FileExplorerView.ExplorerCopyPasteSupport,
@@ -197,6 +199,19 @@ class ExplorerPasteProvider : PasteProvider {
     ) {
       it.isIndeterminate = false
       operations.forEach { op ->
+        // this step is necessary to clean old file after force overwriting performed
+        if (op.forceOverwriting) {
+          val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
+          op.destination.children
+            .filter { file ->
+              file == nameResolver.getConflictingChild(op.source, sourceFiles, op.destination) && !file.isDirectory
+            }
+            .apply {
+              runWriteActionInEdtAndWait {
+                forEach { file -> file.delete(this) }
+              }
+            }
+        }
         explorerView.ignoreVFSChangeEvents.compareAndSet(false, true)
         it.text = "${op.source.name} to ${op.destination.name}"
         runCatching {
@@ -208,17 +223,6 @@ class ExplorerPasteProvider : PasteProvider {
           .onSuccess {
             if (explorerView.isCut.get()) {
               copyPasteSupport.removeFromBuffer { node -> node.file == op.source }
-            }
-
-            // this step is necessary to clean old file after force overwriting performed.
-            if (op.forceOverwriting) {
-              val nameResolver = dataOpsManager.getNameResolver(op.source, op.destination)
-              op.destination.children
-                .filter { file -> file == nameResolver.getConflictingChild(op.source, op.destination) }
-                .forEach { file ->
-                  dataOpsManager.getContentSynchronizer(file)
-                    .castOrNull<RemoteAttributedContentSynchronizer<*>>()?.removeFromCacheAfterForceOverwriting(file)
-                }
             }
           }
           .onFailure { throwable ->
@@ -311,8 +315,11 @@ class ExplorerPasteProvider : PasteProvider {
 
       // conflicts start
       val conflictsResolutions = runCatching {
-        computeConflictAndAskForResolution(sourceFiles, pasteDestinations, project).toMutableList()
-      }.getOrNull() ?: return
+        if (dataOpsManager.tryToGetAttributes(pasteDestinations[0]) is RemoteDatasetAttributes)
+          RemoteDatasetComputeConflicts(dataOpsManager, sourceFiles, pasteDestinations, project).computeConflictAndAskForResolution().toMutableList()
+        else
+          CommonComputeConflicts(dataOpsManager, sourceFiles, pasteDestinations, project).computeConflictAndAskForResolution().toMutableList()
+    }.getOrNull() ?: return
 
       // conflicts end
       // specific configs resolution
@@ -331,7 +338,7 @@ class ExplorerPasteProvider : PasteProvider {
         }
         .flatten()
 
-      if (ussOrLocalFileToPdsWarnings.isNotEmpty()) {
+      if (ussOrLocalFileToPdsWarnings.isNotEmpty() && !isAllConflictsResolvedBySkip(conflictsResolutions, ussOrLocalFileToPdsWarnings.size )) {
         val isLocalFilesPresent = ussOrLocalFileToPdsWarnings.find { it.second.isInLocalFileSystem } != null
         val fileTypesPattern = if (isLocalFilesPresent) "Local Files" else "USS Files"
         if (!showYesNoDialog(
@@ -343,9 +350,10 @@ class ExplorerPasteProvider : PasteProvider {
             AllIcons.General.WarningDialog
           )
         ) {
-          conflictsResolutions.addAll(
-            ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
-          )
+          conflictsResolutions.apply {
+            clear()
+            addAll(ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } })
+          }
         }
       }
       // specific conflicts resolution end
@@ -386,7 +394,7 @@ class ExplorerPasteProvider : PasteProvider {
         if (
           !showYesNoDialog(
             "Downloading Files",
-            createHtmlMessageWithItemsList(startMessage, filesToDownloadUpdated, finishMessage),
+            ComputeConflicts.createHtmlMessageWithItemsList(startMessage, filesToDownloadUpdated, finishMessage),
             null,
             "Yes",
             "No",
@@ -415,6 +423,7 @@ class ExplorerPasteProvider : PasteProvider {
       runMoveOrCopyTask(
         titlePrefix,
         filesToMoveTotal,
+        sourceFiles,
         isDragAndDrop,
         operations,
         copyPasteSupport,
@@ -424,178 +433,8 @@ class ExplorerPasteProvider : PasteProvider {
     }
   }
 
-  /**
-   * Finds name conflicts between source and target child files.
-   * @param sourceFiles Files to be copied.
-   * @param pasteDestinations Files (directories) to be copy to.
-   * @param project Opened project.
-   * @return List of [ConflictResolution] that indicates list of conflicts and how to resolve them.
-   */
-  private fun computeConflictAndAskForResolution(
-    sourceFiles: List<VirtualFile>,
-    pasteDestinations: List<VirtualFile>,
-    project: Project?
-  ): List<ConflictResolution> {
-    val result = mutableListOf<ConflictResolution>()
-
-    val conflicts = pasteDestinations.map { destFile ->
-
-      val conflictingSources = sourceFiles.filter { source ->
-        val nameResolver = dataOpsManager.getNameResolver(source, destFile)
-        nameResolver.getConflictingChild(source, destFile) != null
-      }
-      val foundConflicts = mutableListOf<Pair<VirtualFile, VirtualFile>>()
-      if (conflictingSources.isNotEmpty()) {
-        conflictingSources.forEach { foundConflict -> foundConflicts.add(Pair(destFile, foundConflict)) }
-      }
-      foundConflicts
-    }
-      .flatten()
-      .toMutableList()
-
-    // Handle conflicts with different file type (file - directory, directory - file)
-
-    val conflictsThatCannotBeOverwritten = conflicts.filter {
-      val conflictChild = it.first.findChild(it.second.name)
-      (conflictChild?.isDirectory == true && !it.second.isDirectory)
-          || (conflictChild?.isDirectory == false && it.second.isDirectory)
-          || it.first == it.second.parent
-    }
-    conflicts.removeAll(conflictsThatCannotBeOverwritten)
-
-    if (conflicts.isNotEmpty() || conflictsThatCannotBeOverwritten.isNotEmpty()) {
-      val choice = Messages.showDialog(
-        project,
-        "Please, select",
-        "Name conflicts in ${conflicts.size + conflictsThatCannotBeOverwritten.size} file(s)",
-        arrayOf(
-          //"Decide for Each",
-          "Skip for All",
-          "Overwrite for All",
-          "Decide for Each"
-        ),
-        0,
-        AllIcons.General.QuestionDialog,
-        null
-      )
-
-      when (choice) {
-        0 -> {
-          result.addAll(conflicts.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } })
-          result.addAll(
-            conflictsThatCannotBeOverwritten.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
-          )
-        }
-
-        1 -> {
-          result.addAll(conflicts.map { ConflictResolution(it.second, it.first).apply { resolveByOverwrite() } })
-          result.addAll(
-            conflictsThatCannotBeOverwritten.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } }
-          )
-          if (conflictsThatCannotBeOverwritten.isNotEmpty()) {
-            val startMessage = "There are some conflicts that cannot be resolved:"
-            val finishMessage = "File(s) above will be skipped."
-            val conflictsToShow = conflictsThatCannotBeOverwritten.map {
-              if (it.first == it.second.parent) {
-                "The file '${it.second.name}' cannot overwrite itself"
-              } else if (it.second.isDirectory) {
-                "Directory '${it.second.name}' cannot replace file '${it.second.name}'"
-              } else {
-                "File '${it.second.name}' cannot replace directory '${it.second.name}'"
-              }
-            }
-            Messages.showDialog(
-              project,
-              createHtmlMessageWithItemsList(startMessage, conflictsToShow, finishMessage),
-              "Not Resolvable Conflicts",
-              arrayOf("Ok"),
-              0,
-              Messages.getErrorIcon(),
-              null
-            )
-          }
-        }
-
-        2 -> result.addAll(askUserAboutConflictResolution(conflicts, conflictsThatCannotBeOverwritten, project))
-        else -> throw Exception("Selected option is not supported.")
-      }
-    }
-
-    return result
-  }
-
-  /**
-   * Resolve conflicts one by one for case when user select option "Decide for Each".
-   * @param conflicts Conflict pairs (target - source) that could be resolved using any method.
-   * @param conflictsThatCannotBeOverwritten Conflict pairs (target - source) that couldn't be resolved
-   *                                         using "Overwrite" option.
-   * @param project Opened project.
-   * @return List of [ConflictResolution] that indicates list of conflicts and how to resolve them.
-   */
-  private fun askUserAboutConflictResolution(
-    conflicts: List<Pair<VirtualFile, VirtualFile>>,
-    conflictsThatCannotBeOverwritten: List<Pair<VirtualFile, VirtualFile>>,
-    project: Project?
-  ): List<ConflictResolution> {
-    val result = mutableListOf<ConflictResolution>()
-    val allConflicts = arrayListOf<Pair<VirtualFile, VirtualFile>>().apply {
-      addAll(conflicts)
-      addAll(conflictsThatCannotBeOverwritten)
-    }
-
-    allConflicts.forEach { conflict ->
-
-      val newName =
-        dataOpsManager.getNameResolver(conflict.second, conflict.first).resolve(conflict.second, conflict.first)
-
-      val newNameMessage = "If you select option \"Use new name\", the following name will be selected: <b>$newName</b>"
-
-      if (!conflictsThatCannotBeOverwritten.contains(conflict)) {
-        // Conflicts between text/binary files.
-        val choice = Messages.showDialog(
-          project,
-          "Cannot move '${conflict.second.name}' to ${conflict.first.name}\n\n$newNameMessage",
-          "Name Conflict",
-          arrayOf("Skip", "Overwrite", "Use new name"),
-          0,
-          Messages.getWarningIcon()
-        )
-        val resolution = ConflictResolution(conflict.second, conflict.first)
-        when (choice) {
-          0 -> resolution.resolveBySkip()
-          1 -> resolution.resolveByOverwrite()
-          2 -> resolution.resolveByUsingNewName(newName)
-          else -> throw Exception("Selected option is not supported.")
-        }
-        result.add(resolution)
-      } else {
-        // Conflicts between text/binary files and directories.
-        val messageToShow = if (conflict.first == conflict.second.parent) {
-          "The file '${conflict.second.name}' cannot replace itself"
-        } else if (conflict.second.isDirectory) {
-          "Directory '${conflict.second.name}' cannot replace file '${conflict.second.name}'"
-        } else {
-          "File '${conflict.second.name}' cannot replace directory '${conflict.second.name}'"
-        }
-        val choice = Messages.showDialog(
-          project,
-          "$messageToShow\n\n$newNameMessage",
-          "Name Conflict",
-          arrayOf("Skip", "Use new name"),
-          0,
-          Messages.getWarningIcon()
-        )
-        val resolution = ConflictResolution(conflict.second, conflict.first)
-        when (choice) {
-          0 -> resolution.resolveBySkip()
-          1 -> resolution.resolveByUsingNewName(newName)
-          else -> throw Exception("Selected option is not supported.")
-        }
-        result.add(resolution)
-      }
-    }
-
-    return result
+  private fun isAllConflictsResolvedBySkip(conflicts: List<ConflictResolution>, filesToProcessSize: Int) : Boolean {
+    return conflicts.isNotEmpty() && conflicts.map { it.shouldSkip() }.filter { it }.size == conflicts.size && filesToProcessSize == conflicts.size
   }
 
   /**
@@ -621,25 +460,11 @@ class ExplorerPasteProvider : PasteProvider {
     return isPastePossibleAndEnabled(dataContext)
   }
 
-
   /**
    * Does the same as isPastePossibleAndEnabled.
    * @see ExplorerPasteProvider.isPastePossibleAndEnabled
    */
   override fun isPasteEnabled(dataContext: DataContext): Boolean {
     return isPastePossibleAndEnabled(dataContext)
-  }
-
-  private fun createHtmlMessageWithItemsList(
-    startMessage: String, items: List<String>, finishMessage: String, maxItems: Int = 5
-  ): String {
-    val tagP = "<p style=\"margin-left: 10px\">"
-    val itemsToShow = if (items.size > maxItems) {
-      items.subList(0, maxItems).toMutableList().apply { add("more ...") }
-    } else {
-      items
-    }
-    val itemsString = "$tagP${itemsToShow.joinToString("</p>$tagP")}</p>"
-    return "<html><span>$startMessage\n</span>\n$itemsString\n<span>$finishMessage</span></html>"
   }
 }

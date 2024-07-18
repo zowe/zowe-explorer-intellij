@@ -97,7 +97,7 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     }.execute()
 
     if (!response.isSuccessful) {
-      throwable = CallException(response, "Cannot upload data to ${destAttributes.path}${newName}")
+      throwable = CallException(response, "Cannot upload data to $pathToFile")
     } else {
       destFile.children.firstOrNull { it.name == newName }?.let { file ->
         runWriteActionInEdtAndWait {

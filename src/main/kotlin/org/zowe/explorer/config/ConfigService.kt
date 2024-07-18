@@ -27,9 +27,6 @@ fun sendConfigServiceTopic(): EventHandler = sendTopic(CONFIGS_CHANGED)
 @JvmField
 val CONFIGS_CHANGED = Topic.create("configsChanged", EventHandler::class.java)
 
-@JvmField
-val CONFIGS_LOADED = Topic.create("configsLoaded", Runnable::class.java)
-
 /** Interface to represent the config service */
 interface ConfigService : PersistentStateComponent<ConfigStateV2> {
 
@@ -89,11 +86,6 @@ interface ConfigService : PersistentStateComponent<ConfigStateV2> {
    */
   fun getRegisteredConfigDeclarations(): List<ConfigDeclaration<*>>
 
-  /** Inserts all configs from old state in a new one if they were not migrated before. */
-  fun migrateOldConfigState(state: ConfigState)
-
-  /** Update the contents of the old config if the config structure has not been changed. */
-  fun updateOldConfigs()
 }
 
 val configCrudable: Crudable

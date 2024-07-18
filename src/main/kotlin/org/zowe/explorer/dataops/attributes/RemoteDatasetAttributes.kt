@@ -46,6 +46,8 @@ data class RemoteDatasetAttributes(
 
   override val length = 0L
 
+  val hasDsOrg = !isMigrated && datasetInfo.datasetOrganization != null
+
   val isMigrated
     get() = datasetInfo.migrated == HasMigrated.YES
 
@@ -59,9 +61,9 @@ data class RemoteDatasetAttributes(
   override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.TEXT)
 
   override val isCopyPossible: Boolean
-    get() = !isMigrated
+    get() = hasDsOrg
 
   override val isPastePossible: Boolean
-    get() = isDirectory && !isMigrated
+    get() = isDirectory && hasDsOrg
 
 }
