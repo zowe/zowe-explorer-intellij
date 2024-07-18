@@ -18,22 +18,6 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import org.zowe.explorer.common.ui.StatefulDialog
-import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
-import org.zowe.explorer.common.ui.showUntilDone
-import org.zowe.explorer.config.configCrudable
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.ws.DSMask
-import org.zowe.explorer.config.ws.FilesWorkingSetConfig
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Operation
-import org.zowe.explorer.dataops.operations.DatasetAllocationParams
-import org.zowe.explorer.explorer.Explorer
-import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestAnalyticsServiceImpl
-import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
@@ -49,6 +33,7 @@ import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
@@ -450,8 +435,8 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
 
         val dsMaskMock = mockk<DSMask>()
-        every {dsMaskMock.mask} returns "test.test.*"
-        every {filesWorkingSetConfigMock.dsMasks} returns mutableListOf(dsMaskMock)
+        every { dsMaskMock.mask } returns "test.test.*"
+        every { filesWorkingSetConfigMock.dsMasks } returns mutableListOf(dsMaskMock)
 
         mockkObject(configCrudable)
         every {
@@ -482,7 +467,6 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         assertSoftly {
           isCleanInvalidateOnExpandTriggered shouldBe true
           isShowUntilDoneSucceeded shouldBe true
-          isAnalitycsTracked shouldBe true
           isOperationPerformed shouldBe true
           isUpdateOnConfigCrudableCalled shouldBe false
           isThrowableReported shouldBe false

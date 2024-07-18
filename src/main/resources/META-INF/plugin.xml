@@ -290,7 +290,6 @@ Thank you for considering IBA Group for your mainframe needs.
 
     <extensions defaultExtensionNs="com.intellij">
 
-        <preloadingActivity implementation="org.zowe.explorer.config.ZoweOldConfigConvertPreloadingActivity"/>
         <postStartupActivity implementation="org.zowe.explorer.zowe.ZoweStartupActivity"/>
         <filePasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
         <customPasteProvider implementation="org.zowe.explorer.explorer.ui.ExplorerPasteProvider"/>
@@ -340,9 +339,6 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <applicationService serviceInterface="org.zowe.explorer.config.ConfigService"
                             serviceImplementation="org.zowe.explorer.config.ConfigServiceImpl"/>
-
-        <applicationService serviceInterface="org.zowe.explorer.config.OldConfigService"
-                            serviceImplementation="org.zowe.explorer.config.OldConfigServiceImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.config.connect.CredentialService"
                             serviceImplementation="org.zowe.explorer.config.connect.CredentialServiceImpl"

@@ -229,7 +229,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     every { explorerMock.componentManager } returns ApplicationManager.getApplication()
     var infoRes = InfoResponse(zosVersion = "04.27.00")
     val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-    dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
+    dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
       override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
         if (operation is InfoOperation) {
           if (infoRes.zosVersion == "throw1") {
