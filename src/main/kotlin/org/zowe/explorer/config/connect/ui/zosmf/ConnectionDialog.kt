@@ -16,13 +16,17 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.DialogMode
@@ -48,23 +52,52 @@ import javax.swing.*
 
 /** Dialog to add a new connection */
 class ConnectionDialog(
-  crudable: Crudable,
-  state: ConnectionDialogState = ConnectionDialogState(),
-  project: Project? = null
-) : CommonConnectionDialog(crudable, state, project) {
+  private val crudable: Crudable,
+  override var state: ConnectionDialogState = ConnectionDialogState(),
+  val project: Project? = null
+) : StatefulDialog<ConnectionDialogState>(project) {
 
   /**
    * Private field
    * In case of DialogMode.UPDATE takes the last successful state from crudable, takes default state otherwise
    */
   private val lastSuccessfulState: ConnectionDialogState =
-    if (state.mode == DialogMode.UPDATE) crudable.find<ConnectionConfig> { it.uuid == state.connectionUuid }
+    if(state.mode == DialogMode.UPDATE) crudable.find<ConnectionConfig> { it.uuid == state.connectionUuid }
       .findAny()
       .orElseGet { state.connectionConfig }
       .toDialogState(crudable) else ConnectionDialogState()
-
   companion object {
-    //Call showAndTestConnectionCommon for current class
+
+    /**
+     * Check if only the connection name has changed in the connection dialog
+     */
+    private fun isOnlyConnectionNameChanged(initialState: ConnectionDialogState, state: ConnectionDialogState): Boolean {
+      return initialState.connectionName != state.connectionName &&
+              initialState.connectionUrl == state.connectionUrl &&
+              initialState.username == state.username &&
+              initialState.password == state.password &&
+              initialState.isAllowSsl == state.isAllowSsl
+    }
+
+    /**
+     * Companion function which takes the instance of ConnectionDialog and checks its current state after OK button is pressed.
+     * @param dialog
+     * @return returns true if there are violations found, if no violations were found then returns false as a result of validation
+     */
+    private fun validateSecureConnectionUsage(dialog : ConnectionDialog) : Boolean {
+      val urlToCheck = dialog.urlTextField.text.trim().startsWith("http://", true)
+      val sslEnabledCheck = dialog.sslCheckbox.isSelected
+      if (urlToCheck || sslEnabledCheck) {
+        return dialog.showSelfSignedUsageWarningDialog(dialog.urlTextField, dialog.sslCheckbox)
+      }
+      return false
+    }
+
+    /** Show Test connection dialog and test the connection regarding the dialog state.
+     * First the method checks whether connection succeeds for specified user/password.
+     * If connection succeeds then the method automatically fill in z/OS version for this connection.
+     * We do not need to worry about choosing z/OS version manually from combo box.
+     * */
     @JvmStatic
     fun showAndTestConnection(
       crudable: Crudable,
@@ -72,7 +105,7 @@ class ConnectionDialog(
       project: Project? = null,
       initialState: ConnectionDialogState
     ): ConnectionDialogState? {
-      val connectionDialog = ConnectionDialog(crudable, initialState, project)
+      var connectionDialog = ConnectionDialog(crudable, initialState, project)
       val initState = initialState.clone()
       return showUntilDone(
         initialState = initialState,
@@ -193,16 +226,12 @@ class ConnectionDialog(
 
   private val initialState = state.clone()
 
+  private lateinit var urlTextField: JTextField
+
+  private lateinit var sslCheckbox: JCheckBox
+
   init {
     isResizable = false
-  }
-
-  override fun createConnectionDialog(
-    crudable: Crudable,
-    state: ConnectionDialogState,
-    project: Project?
-  ): CommonConnectionDialog {
-    return ConnectionDialog(crudable, state, project)
   }
 
   /** Create dialog with the fields */
@@ -212,7 +241,7 @@ class ConnectionDialog(
 
     return panel {
       row {
-        label("Connection name")
+        label("Connection name: ")
           .widthGroup(sameWidthLabelsGroup)
         if (state.zoweConfigPath == null) {
           textField()
@@ -248,20 +277,20 @@ class ConnectionDialog(
           .component.emptyText.setText("http(s)://host:port")
       }
       row {
-        label("Username")
+        label("Username: ")
           .widthGroup(sameWidthLabelsGroup)
-        (
+          (
             if (state.zoweConfigPath == null)
               textField()
             else
               cell(JPasswordField())
-            )
+          )
           .bindText(state::username)
           .validationOnApply {
-            validateForBlank(it.text.trim(), it)
-          }
-          .onApply {
-            state.username = state.username.trim().uppercase()
+            it.text = it.text.trim()
+            validateForBlank(it)
+          }.onApply {
+            state.username = state.username.uppercase()
           }
           .align(AlignX.FILL)
       }
