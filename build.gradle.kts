@@ -263,7 +263,6 @@ tasks {
   }
 
   publishPlugin {
-    dependsOn("patchChangelog")
     token.set(environment("ZOWE_INTELLIJ_MARKET_TOKEN").map { it })
     // The pluginVersion is based on the SemVer (https://semver.org)
     // Read more: https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel

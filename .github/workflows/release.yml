@@ -50,6 +50,10 @@ jobs:
           echo "pluginVersionSemVer=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
           echo "currCommit=$CURR_COMMIT" >> $GITHUB_OUTPUT
 
+      - name: Prepare changelog
+        shell: bash
+        run: ./gradlew patchChangelog
+
       - name: Prepare release notes
         id: release_notes
         shell: bash
@@ -103,6 +107,7 @@ jobs:
             | xargs -I '{}' gh api -X PATCH repos/{owner}/{repo}/milestones/{} -F state='closed'
 
   release:
+    needs: [changelog-and-preparations]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -140,14 +145,11 @@ jobs:
         shell: bash
         run: |
           PROPERTIES="$(./gradlew properties --console=plain -q)"
-          PLUGIN_VERSION_FULL="$(echo "$PROPERTIES" | grep "^pluginVersion:" | cut -f2- -d ' ')-$PRODUCT_NAME"
-          CURR_COMMIT="$(git rev-parse HEAD)"
+          PLUGIN_VERSION="$(echo "$PROPERTIES" | grep "^pluginVersion:" | cut -f2- -d ' ')"
 
-          echo "pluginVersionFull: $PLUGIN_VERSION_FULL"
-          echo "currCommit: $CURR_COMMIT"
+          echo "pluginVersion: $PLUGIN_VERSION"
 
-          echo "pluginVersionFull=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
-          echo "currCommit=$CURR_COMMIT" >> $GITHUB_OUTPUT
+          echo "pluginVersion=$PLUGIN_VERSION" >> $GITHUB_OUTPUT
 
       - name: Publish Plugin
         env:
@@ -162,4 +164,4 @@ jobs:
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ steps.properties.outputs.pluginVersionFull }} ./build/distributions/*
+        run: gh release upload ${{ steps.properties.outputs.pluginVersion }} ./build/distributions/*
