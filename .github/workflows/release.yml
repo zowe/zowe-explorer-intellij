@@ -52,7 +52,7 @@ jobs:
 
       - name: Prepare changelog
         shell: bash
-        run: ./gradlew changelog
+        run: ./gradlew patchChangelog
 
       - name: Prepare release notes
         id: release_notes
