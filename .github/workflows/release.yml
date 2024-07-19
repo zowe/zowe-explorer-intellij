@@ -37,7 +37,7 @@ jobs:
           gradle-home-cache-cleanup: true
 
       - name: Fetch Gradle properties for a specific product
-        id: properties
+        id: properties_test
         shell: bash
         run: |
           PROPERTIES="$(./gradlew properties --console=plain -q)"
