@@ -149,7 +149,7 @@ jobs:
 
           echo "pluginVersion: $PLUGIN_VERSION"
 
-          echo "pluginVersion=$PLUGIN_VERSION >> $GITHUB_OUTPUT"
+          echo "pluginVersion=$PLUGIN_VERSION" >> $GITHUB_OUTPUT
 
       - name: Publish Plugin
         env:
