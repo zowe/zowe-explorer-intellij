@@ -50,6 +50,10 @@ jobs:
           echo "pluginVersionSemVer=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
           echo "currCommit=$CURR_COMMIT" >> $GITHUB_OUTPUT
 
+      - name: Prepare changelog
+        shell: bash
+        run: ./gradlew changelog
+
       - name: Prepare release notes
         id: release_notes
         shell: bash
@@ -103,6 +107,7 @@ jobs:
             | xargs -I '{}' gh api -X PATCH repos/{owner}/{repo}/milestones/{} -F state='closed'
 
   release:
+    needs: [changelog-and-preparations]
     runs-on: ubuntu-latest
     strategy:
       matrix:

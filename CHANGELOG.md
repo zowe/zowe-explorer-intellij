@@ -4,6 +4,12 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+* Feature: Some test feature
+
+### Bugfixes
+* Bugfix: Some test bugfix
+
 ## [1.2.1-231] (2024-06-12)
 
 ### Features
