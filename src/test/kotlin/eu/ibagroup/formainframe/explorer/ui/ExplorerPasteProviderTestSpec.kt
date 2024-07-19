@@ -51,6 +51,8 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.spyk
+import org.zowe.kotlinsdk.Dataset
+import org.zowe.kotlinsdk.DatasetOrganization
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
@@ -272,6 +274,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
       }
 
       should("perform paste without conflicts USS file -> PDS without skipping") {
+        var dialogTitleCapture = ""
         var isShowYesNoDialogCalled = false
         isPastePerformed = false
 
@@ -281,6 +284,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
         } answers {
           isShowYesNoDialogCalled = true
+          dialogTitleCapture = firstArg()
           true
         }
 
@@ -302,6 +306,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         // children of target
         val childDestinationVirtualFile = mockk<MFVirtualFile>()
         val childDestFileAttributes = mockk<RemoteMemberAttributes>()
+        val datasetInfo = Dataset(datasetOrganization = DatasetOrganization.POE)
         every { childDestinationVirtualFile.name } returns "EMPTY"
 
         // target to paste
@@ -311,6 +316,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val targetAttributes = mockk<RemoteDatasetAttributes>()
         every { mockedTargetFile.name } returns "test_library"
         every { targetAttributes.isDirectory } returns true
+        every { targetAttributes.datasetInfo } returns datasetInfo
         every { mockedTargetFile.children } returns arrayOf(childDestinationVirtualFile)
         every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
         every { mockedNodeTarget.virtualFile } returns mockedTargetFile
@@ -346,10 +352,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         assertSoftly {
           isShowYesNoDialogCalled shouldBe true
           isPastePerformed shouldBe true
+          dialogTitleCapture shouldBe "USS Files to PDS/E Placing"
         }
       }
 
       should("perform paste without conflicts USS file -> PDS with skipping") {
+        var dialogTitleCapture = ""
         var isShowYesNoDialogCalled = false
         isPastePerformed = false
 
@@ -359,6 +367,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
         } answers {
           isShowYesNoDialogCalled = true
+          dialogTitleCapture = firstArg()
           false
         }
 
@@ -367,6 +376,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
           isShowYesNoDialogCalled shouldBe true
+          dialogTitleCapture shouldBe "USS Files to PDS/E Placing"
           isPastePerformed shouldBe false
         }
       }
