@@ -92,11 +92,7 @@ class RenameDialog(
       }
 
       is UssDirNode, is UssFileNode -> {
-        return if (currentAction is RenameAction) {
-          validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNodeData)
-        } else {
-          validateUssFileName(component)
-        }
+        return validateUssFileName(component) ?: validateUssFileNameAlreadyExists(component, selectedNodeData)
       }
     }
     return null
