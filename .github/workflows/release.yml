@@ -36,6 +36,29 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
 
+      - name: Fetch Gradle properties for a specific product
+        id: properties
+        shell: bash
+        run: |
+          PROPERTIES="$(./gradlew properties --console=plain -q)"
+          PLUGIN_VERSION="$(echo "$PROPERTIES" | grep "^pluginVersion:" | cut -f2- -d ' ')"
+          PLUGIN_VERSION_FULL="$PLUGIN_VERSION-231"
+          CURR_COMMIT="$(git rev-parse HEAD)"
+
+          echo "pluginVersion: $PLUGIN_VERSION"
+          echo "pluginVersionFull: $PLUGIN_VERSION_FULL"
+          echo "currCommit: $CURR_COMMIT"
+
+          echo "pluginVersion=$PLUGIN_VERSION >> $GITHUB_OUTPUT"
+          echo "pluginVersionFull=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
+          echo "currCommit=$CURR_COMMIT" >> $GITHUB_OUTPUT
+
+          exit 1
+
+
+
+
+
       - name: Fetch Gradle properties
         id: properties
         shell: bash
@@ -145,12 +168,15 @@ jobs:
         shell: bash
         run: |
           PROPERTIES="$(./gradlew properties --console=plain -q)"
-          PLUGIN_VERSION_FULL="$(echo "$PROPERTIES" | grep "^pluginVersion:" | cut -f2- -d ' ')-$PRODUCT_NAME"
+          PLUGIN_VERSION="$(echo "$PROPERTIES" | grep "^pluginVersion:" | cut -f2- -d ' ')"
+          PLUGIN_VERSION_FULL="$PLUGIN_VERSION-$PRODUCT_NAME"
           CURR_COMMIT="$(git rev-parse HEAD)"
 
+          echo "pluginVersion: $PLUGIN_VERSION"
           echo "pluginVersionFull: $PLUGIN_VERSION_FULL"
           echo "currCommit: $CURR_COMMIT"
 
+          echo "pluginVersion=$PLUGIN_VERSION >> $GITHUB_OUTPUT"
           echo "pluginVersionFull=$PLUGIN_VERSION_FULL" >> $GITHUB_OUTPUT
           echo "currCommit=$CURR_COMMIT" >> $GITHUB_OUTPUT
 
