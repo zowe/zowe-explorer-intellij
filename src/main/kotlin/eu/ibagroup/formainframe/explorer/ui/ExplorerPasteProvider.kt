@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.analytics.AnalyticsService
@@ -35,6 +34,7 @@ import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import org.zowe.kotlinsdk.DatasetOrganization
 import kotlin.concurrent.withLock
 
 object ExplorerDataKeys {
@@ -351,11 +351,17 @@ class ExplorerPasteProvider : PasteProvider {
         .flatten()
 
       if (ussOrLocalFileToPdsWarnings.isNotEmpty() && !isAllConflictsResolvedBySkip(conflictsResolutions, ussOrLocalFileToPdsWarnings.size )) {
-        val isLocalFilesPresent = ussOrLocalFileToPdsWarnings.find { it.second.isInLocalFileSystem } != null
-        val fileTypesPattern = if (isLocalFilesPresent) "Local Files" else "USS Files"
+        val foundDestAttributes = ussOrLocalFileToPdsWarnings
+          .mapNotNull { it.first.let { file -> dataOpsManager.tryToGetAttributes(file) } }
+          .map { it as RemoteDatasetAttributes }
+          .mapNotNull { it.datasetInfo.datasetOrganization }
+          .distinct()
+        val destFilesPattern = foundDestAttributes.let { if (it.contains(DatasetOrganization.PO) && it.contains(DatasetOrganization.POE)) "PDS and PDS/E" else if (it.contains(DatasetOrganization.PO)) "PDS" else "PDS/E" }
+        val isLocalFilesPresentInSources = ussOrLocalFileToPdsWarnings.find { it.second.isInLocalFileSystem } != null
+        val sourceFileTypesPattern = if (isLocalFilesPresentInSources) "Local Files" else "USS Files"
         if (!showYesNoDialog(
-            "$fileTypesPattern to PDS Placing",
-            "You are about to place $fileTypesPattern to PDS. All lines exceeding the record length will be truncated.",
+            "$sourceFileTypesPattern to $destFilesPattern Placing",
+            "You are about to place $sourceFileTypesPattern to $destFilesPattern. All lines exceeding the record length will be truncated.",
             null,
             "Ok",
             "Skip This Files",
