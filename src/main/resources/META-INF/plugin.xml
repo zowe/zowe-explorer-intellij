@@ -240,9 +240,6 @@ Example of how to see the output:<br/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.RenameOperationRunnerFactory"/>
 
-        <operationRunner
-                implementation="eu.ibagroup.formainframe.dataops.operations.mover.ForceRenameOperationRunnerFactory"/>
-
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.InfoOperationRunnerFactory"/>
 
         <operationRunner implementation="eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperationRunnerFactory"/>
@@ -565,13 +562,6 @@ Example of how to see the output:<br/>
             <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
         </action>
 
-        <action id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
-                class="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"
-                text="Force Rename"
-                use-shortcut-of="ForceRefresh">
-            <keyboard-shortcut first-keystroke="shift F2" keymap="$default"/>
-        </action>
-
         <action id="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"
                 class="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"
                 text="Duplicate"
@@ -775,7 +765,6 @@ Example of how to see the output:<br/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RenameAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.ForceRenameAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.EditMaskAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"/>
             <separator/>
