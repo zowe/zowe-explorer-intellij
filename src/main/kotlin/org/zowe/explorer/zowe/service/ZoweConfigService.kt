@@ -78,7 +78,7 @@ interface ZoweConfigService {
    * @param checkConnection - Verify zowe connection by sending info request if true.
    * @return - ConnectionConfig that was added or updated.
    */
-  fun addOrUpdateZoweConfig(scanProject: Boolean = true, checkConnection: Boolean = true, type: ZoweConfigType): ConnectionConfig?
+  fun addOrUpdateZoweConfig(scanProject: Boolean = true, checkConnection: Boolean = true, type: ZoweConfigType)
 
   /**
    * Deletes connection config related to zoweConnection
