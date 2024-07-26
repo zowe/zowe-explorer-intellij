@@ -43,7 +43,7 @@ val junitVersion = "5.10.2"
 val mockkVersion = "1.13.10"
 val ibmMqVersion = "9.3.5.0"
 val jGraphTVersion = "1.5.2"
-val zoweKotlinSdkVersion = "0.4.0"
+val zoweKotlinSdkVersion = "0.5.0-rc.8"
 val javaAnalyticsVersion = "3.5.1"
 
 repositories {
