@@ -287,7 +287,8 @@ class ConnectionDialog(
           )
           .bindText(state::username)
           .validationOnApply {
-            it.text = it.text.trim()
+           if (it !is JPasswordField)
+              it.text = it.text.trim()
             validateForBlank(it)
           }.onApply {
             state.username = state.username.uppercase()
@@ -299,7 +300,8 @@ class ConnectionDialog(
           .widthGroup(sameWidthLabelsGroup)
         passField = cell(JPasswordField())
           .bindText(state::password)
-          .validationOnApply { validateForBlank(it) }
+          .validationOnApply {
+            validateForBlank(it) }
           .align(AlignX.FILL)
       }
       indent {
