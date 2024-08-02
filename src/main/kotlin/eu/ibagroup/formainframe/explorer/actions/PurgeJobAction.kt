@@ -257,7 +257,6 @@ class PurgeJobAction : AnAction() {
     e: AnActionEvent,
     view: JesExplorerView
   ) {
-    val dataOpsManager = service<DataOpsManager>()
     nodes.forEach { nodeData ->
       val jobAttributes = nodeData.attributes as RemoteJobAttributes
       val jobStatus = jobAttributes.jobInfo
@@ -268,7 +267,7 @@ class PurgeJobAction : AnAction() {
         cancellable = true
       ) {
         runCatching {
-          dataOpsManager.performOperation(
+          service<DataOpsManager>().performOperation(
             operation = PurgeJobOperation(
               request = BasicPurgeJobParams(jobStatus.jobName, jobStatus.jobId),
               connectionConfig = connectionConfig
@@ -309,7 +308,7 @@ class PurgeJobAction : AnAction() {
       val selected = view.mySelectedNodesData
       val wrongNode = selected.find { it.node !is JobNode }
       e.presentation.apply {
-        isEnabledAndVisible = wrongNode == null && isSelectedJobNodesFromSameWS(selected)
+        isEnabledAndVisible = selected.isNotEmpty() && wrongNode == null && isSelectedJobNodesFromSameWS(selected)
         text = if (isEnabledAndVisible && selected.size > 1) "Purge Jobs" else "Purge Job"
       }
     } else if (view is JobBuildTreeView) {
