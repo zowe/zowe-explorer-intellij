@@ -11,8 +11,8 @@ package workingset.auxiliary.components.dialogs
 
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.search.locators.Locator
+import workingset.Constants.remoteRobotUrl
 import workingset.DELETION_OF_DS_MASK
-import workingset.REMOTE_ROBOT_URL
 import workingset.YES_TEXT
 import workingset.auxiliary.components.elements.ButtonElement
 
@@ -20,10 +20,10 @@ class DeletionOfDSMask (fixtureStack: MutableList<Locator>, remoteRobot: RemoteR
 
     override var dialogTitle: String = DELETION_OF_DS_MASK
 
-    var yes_button = ButtonElement()
+    private var yesButton = ButtonElement()
 
-    constructor() : this(mutableListOf<Locator>(), RemoteRobot(REMOTE_ROBOT_URL)){
-        yes_button = ButtonElement(YES_TEXT, fixtureStack, remoteRobot)
+    constructor() : this(mutableListOf<Locator>(), RemoteRobot(remoteRobotUrl)){
+        yesButton = ButtonElement(YES_TEXT, fixtureStack, remoteRobot)
     }
 
 }

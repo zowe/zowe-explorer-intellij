@@ -10,7 +10,6 @@
 package workingset.auxiliary.components.dialogs
 
 import auxiliary.RemoteRobotExtension
-import auxiliary.clickButton
 import auxiliary.containers.dialog
 import auxiliary.containers.ideFrameImpl
 import com.intellij.remoterobot.RemoteRobot
@@ -20,6 +19,7 @@ import com.intellij.remoterobot.search.locators.Locator
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import workingset.*
+import workingset.Constants.remoteRobotUrl
 import workingset.auxiliary.components.elements.ButtonElement
 import java.time.Duration
 
@@ -29,7 +29,7 @@ abstract class AbstractDialog(internal var fixtureStack: MutableList<Locator>, i
 
     abstract val dialogTitle: String
 
-    constructor() : this(mutableListOf<Locator>(), RemoteRobot(REMOTE_ROBOT_URL))
+    constructor() : this(mutableListOf<Locator>(), RemoteRobot(remoteRobotUrl))
 
     internal fun isShown(): Boolean = with(remoteRobot) {
         var status = false
@@ -39,10 +39,10 @@ abstract class AbstractDialog(internal var fixtureStack: MutableList<Locator>, i
         return status
     }
 
-    internal fun fillFirstFilld(fild_text: String) = with(remoteRobot) {
+    internal fun fillFirstField(fieldText: String) = with(remoteRobot) {
         ideFrameImpl(PROJECT_NAME, fixtureStack) {
             dialog(dialogTitle) {
-                find<JTextFieldFixture>(datasetNameInputLoc).text = fild_text
+                find<JTextFieldFixture>(datasetNameInputLoc).text = fieldText
             }
         }
     }
@@ -55,8 +55,17 @@ abstract class AbstractDialog(internal var fixtureStack: MutableList<Locator>, i
         }
     }
 
-    internal fun waitTitle(duration: Long=3) = with(remoteRobot){
+
+    internal open fun waitTitle(duration: Long=3) = with(remoteRobot){
         find<HeavyWeightWindowFixture>(myDialogXpathLoc, Duration.ofSeconds(duration)).findText(dialogTitle)
+    }
+
+    fun moveToText(text:String, fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) = with(remoteRobot){
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
+            dialog(dialogTitle) {//sub dialog locators
+                findText(text).moveMouse()
+            }
+        }
     }
 
 }

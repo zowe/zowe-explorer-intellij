@@ -89,6 +89,8 @@ dependencies {
   testImplementation("com.squareup.okhttp3:okhttp-tls:$okHttp3Version")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
   testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junitVersion")
+  testImplementation("com.intellij.remoterobot:ide-launcher:$remoteRobotVersion")
+
 }
 
 data class PluginDescriptor(
@@ -310,6 +312,12 @@ configurations["uiTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.g
 val uiTest = task<Test>("uiTest") {
   description = "Runs the integration tests for UI."
   group = "verification"
+  systemProperty("ideLaunchFolder", System.getProperty("ideLaunchFolder"))
+  systemProperty("forMainframePath", System.getProperty("forMainframePath"))
+  systemProperty("remoteRobotUrl", System.getProperty("remoteRobotUrl"))
+  systemProperty("ideaVersionForTest", System.getProperty("ideaVersionForTest"))
+  systemProperty("ideaBuildVersionForTest", System.getProperty("ideaBuildVersionForTest"))
+  systemProperty("robotServerForTest", System.getProperty("robotServerForTest"))
   testClassesDirs = sourceSets["uiTest"].output.classesDirs
   classpath = sourceSets["uiTest"].runtimeClasspath
   useJUnitPlatform() {

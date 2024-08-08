@@ -10,7 +10,7 @@
 
 package auxiliary.containers
 
-import auxiliary.ClosableCommonContainerFixture
+import auxiliary.closable.ClosableCommonContainerFixture
 import auxiliary.clickButton
 import auxiliary.closable.ClosableFixtureCollector
 import com.intellij.remoterobot.RemoteRobot

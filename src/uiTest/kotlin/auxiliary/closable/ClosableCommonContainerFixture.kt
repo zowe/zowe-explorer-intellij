@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package auxiliary
+package auxiliary.closable
 
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.data.RemoteComponent

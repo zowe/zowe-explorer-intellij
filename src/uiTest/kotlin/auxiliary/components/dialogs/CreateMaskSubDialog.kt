@@ -14,12 +14,12 @@ import auxiliary.containers.ideFrameImpl
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.search.locators.Locator
 import workingset.CREATE_MASK_DIALOG
+import workingset.Constants.remoteRobotUrl
 import workingset.PROJECT_NAME
-import workingset.REMOTE_ROBOT_URL
 
 class CreateMaskSubDialog(fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) :AbstractDialog(fixtureStack, remoteRobot) {
     override val dialogTitle: String = CREATE_MASK_DIALOG
-    constructor() : this(mutableListOf<Locator>(), RemoteRobot(REMOTE_ROBOT_URL))
+    constructor() : this(mutableListOf<Locator>(), RemoteRobot(remoteRobotUrl))
 
     fun setMask(mask: Pair<String, String>) = with(remoteRobot) {
         ideFrameImpl(PROJECT_NAME, fixtureStack) {

@@ -22,6 +22,10 @@ import com.intellij.remoterobot.fixtures.FixtureName
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.keyboard
+import workingset.addWsLoc
+import workingset.editWsLoc
+import workingset.removeButtonFromConfigLoc
+import workingset.wsLineLoc
 import java.awt.event.KeyEvent
 import java.time.Duration
 
@@ -50,7 +54,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
      * Clicks on the add action and adds the Add Connection Dialog to the list of fixtures needed to close.
      */
     fun add(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
-        clickActionButton(byXpath("//div[@accessiblename='Add' and @class='ActionButton' and @myaction='Add (Add)']"))
+        clickActionButton(addWsLoc)
         closableFixtureCollector.add(AddConnectionDialog.xPath(), fixtureStack)
     }
 
@@ -58,7 +62,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
      * Clicks on the add action and adds the Add Working Set Dialog to the list of fixtures needed to close.
      */
     fun addWS(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
-        clickActionButton(byXpath("//div[@accessiblename='Add' and @class='ActionButton' and @myaction='Add (Add)']"))
+        clickActionButton(addWsLoc)
         closableFixtureCollector.add(AddWorkingSetDialog.xPath(), fixtureStack)
     }
 
@@ -71,7 +75,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
         fixtureStack: List<Locator>
     ) {
         findText(workingSetName).click()
-        clickActionButton(byXpath("//div[@accessiblename='Edit' and @class='ActionButton' and @myaction='Edit (Edit)']"))
+        clickActionButton(editWsLoc)
         closableFixtureCollector.add(EditWorkingSetDialog.xPath(), fixtureStack)
     }
 
@@ -79,7 +83,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
      * Clicks on the add action and adds the Add JES Working Set Dialog to the list of fixtures needed to close.
      */
     fun addJWS(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
-        clickActionButton(byXpath("//div[@accessiblename='Add' and @class='ActionButton' and @myaction='Add (Add)']"))
+        clickActionButton(addWsLoc)
         closableFixtureCollector.add(AddJesWorkingSetDialog.xPath(), fixtureStack)
     }
 
@@ -92,7 +96,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
         fixtureStack: List<Locator>
     ) {
         findText(jesWorkingSetName).click()
-        clickActionButton(byXpath("//div[@accessiblename='Edit' and @class='ActionButton' and @myaction='Edit (Edit)']"))
+        clickActionButton(editWsLoc)
         closableFixtureCollector.add(EditJesWorkingSetDialog.xPath(), fixtureStack)
     }
 
@@ -105,7 +109,7 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
         fixtureStack: List<Locator>
     ) {
         findText(connectionName).click()
-        clickActionButton(byXpath("//div[@accessiblename='Edit' and @class='ActionButton' and @myaction='Edit (Edit)']"))
+        clickActionButton(editWsLoc)
         closableFixtureCollector.add(EditConnectionDialog.xPath(), fixtureStack)
     }
 
@@ -114,19 +118,19 @@ class ConfigurableEditor(remoteRobot: RemoteRobot, remoteComponent: RemoteCompon
      */
     fun deleteItem(itemName: String) {
         findText(itemName).click()
-        clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
+        clickActionButton(removeButtonFromConfigLoc)
     }
 
     /**
      * Press Ctrl+A and clicks on the remove action to delete all items from the table.
      */
     fun deleteAllItems() {
-        find<ComponentFixture>(byXpath("//div[@class='DialogPanel']//div[@class='JPanel']")).click()
+        find<ComponentFixture>(wsLineLoc).click()
         keyboard {
             hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_A)
         }
-        if (button(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']")).isEnabled()) {
-            clickActionButton(byXpath("//div[@accessiblename='Remove' and @class='ActionButton' and @myaction='Remove (Remove)']"))
+        if (button(removeButtonFromConfigLoc).isEnabled()) {
+            clickActionButton(removeButtonFromConfigLoc)
         }
     }
 
