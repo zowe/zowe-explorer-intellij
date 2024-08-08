@@ -45,7 +45,7 @@ class ClosableFixtureCollector {
     /**
      * Finds the closable fixture by its Locator.
      */
-    fun findClosable(remoteRobot: RemoteRobot, locator: Locator) = with(remoteRobot) {
+    private fun findClosable(remoteRobot: RemoteRobot, locator: Locator) = with(remoteRobot) {
         when (locator.byDescription) {
             SettingsDialog.name -> find<SettingsDialog>(locator, Duration.ofSeconds(60))
             AddConnectionDialog.name -> find<AddConnectionDialog>(locator, Duration.ofSeconds(60))

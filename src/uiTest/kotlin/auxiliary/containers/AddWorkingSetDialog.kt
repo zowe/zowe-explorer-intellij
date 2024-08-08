@@ -10,7 +10,7 @@
 
 package auxiliary.containers
 
-import auxiliary.ClosableCommonContainerFixture
+import auxiliary.closable.ClosableCommonContainerFixture
 import auxiliary.clickActionButton
 import auxiliary.clickButton
 import com.intellij.remoterobot.RemoteRobot
@@ -19,7 +19,7 @@ import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.keyboard
-import workingset.removeEMaskButtonLoc
+import workingset.removeButtonLoc
 import java.awt.event.KeyEvent
 import java.time.Duration
 
@@ -83,7 +83,7 @@ open class AddWorkingSetDialog(
       findText("${maskName.substring(0, 46)}...").moveMouse()
     }
     findText(maskName).click()
-    clickActionButton(removeEMaskButtonLoc)
+    clickActionButton(removeButtonLoc)
   }
 
   /**

@@ -10,7 +10,7 @@
 
 package auxiliary.containers
 
-import auxiliary.ClosableCommonContainerFixture
+import auxiliary.closable.ClosableCommonContainerFixture
 import auxiliary.components.actionMenu
 import auxiliary.components.actionMenuItem
 import auxiliary.components.stripeButton

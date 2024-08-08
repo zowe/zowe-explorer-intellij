@@ -17,12 +17,13 @@ import com.intellij.remoterobot.search.locators.Locator
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
-import workingset.testutils.injectMemberContent
 import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import testutils.ProcessManager
+import testutils.injectSingleMember
 import workingset.testutils.injectListAllAllocatedDatasetsWithContents
+import workingset.testutils.injectMemberContent
 import workingset.testutils.injectPsDatasetContent
-import workingset.testutils.injectSingleMember
 import java.util.stream.Stream
 
 /**
@@ -30,7 +31,7 @@ import java.util.stream.Stream
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class ViewDatasetTest :WorkingSetBase(){
+class ViewDatasetTest :IdeaInteractionClass(){
   private var closableFixtureCollector = ClosableFixtureCollector()
   private var fixtureStack = mutableListOf<Locator>()
   private var wantToClose = mutableListOf("Add Working Set Dialog", "Create Mask Dialog")
@@ -43,13 +44,15 @@ class ViewDatasetTest :WorkingSetBase(){
   private val userIdPrefix = ZOS_USERID.uppercase()
   private val emptyPdsDatasetNameTell = ".EMPTY.PDS".uppercase()
   private val pdsDatasetName = "$ZOS_USERID.NONEMPTY.PDS".uppercase()
+  private lateinit var processManager: ProcessManager
+
 
   companion object {
     @JvmStatic
     fun pairProvider(): Stream<out Arguments> {
       return Stream.of(
-        Arguments.of(WS_NAME_WS_2, EMPTY_MEMBER_CONTENT, ".EMPTY.PS"),
-        Arguments.of(WS_NAME_WS_3, SHORT_MEMBER_CONTENT, ".NONEMPTY.PS"),
+        Arguments.of(WS_NAME_2, EMPTY_MEMBER_CONTENT, ".EMPTY.PS"),
+        Arguments.of(WS_NAME_3, SHORT_MEMBER_CONTENT, ".NONEMPTY.PS"),
       )
     }
   }
@@ -59,6 +62,7 @@ class ViewDatasetTest :WorkingSetBase(){
    */
   @BeforeAll
   fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+    processManager = ProcessManager()
     startMockServer()
     setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
     createValidConnectionWithMock(
@@ -68,17 +72,15 @@ class ViewDatasetTest :WorkingSetBase(){
       closableFixtureCollector,
       remoteRobot
     )
-
   }
 
   /**
    * Closes the project and clears test environment.
    */
   @AfterAll
-  fun tearDownAll(remoteRobot: RemoteRobot) {
+  fun tearDownAll() {
+    processManager.close()
     mockServer.shutdown()
-    clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-    closeIntelligentProject(fixtureStack, remoteRobot)
   }
 
   /**
@@ -123,8 +125,8 @@ class ViewDatasetTest :WorkingSetBase(){
    */
   @Test
   fun testViewNonEmptyPDS(testInfo: TestInfo, remoteRobot: RemoteRobot) {
-    createWsAndMaskWithMock(WS_NAME_WS_4, pdsDatasetName, SHORT_MEMBER_CONTENT, PDS_TYPE, PO_ORG_SHORT, testInfo, remoteRobot)
-    openOrCloseWorkingSetInExplorer(WS_NAME_WS_4, fixtureStack, remoteRobot)
+    createWsAndMaskWithMock(WS_NAME_4, pdsDatasetName, SHORT_MEMBER_CONTENT, PDS_TYPE, PO_ORG_SHORT, testInfo, remoteRobot)
+    openOrCloseWorkingSetInExplorer(WS_NAME_4, fixtureStack, remoteRobot)
 
     injectMemberContent(testInfo,pdsDatasetName, MEMBER_NAME_1)
     openTreesElement(MEMBER_NAME_1, remoteRobot)

@@ -21,6 +21,7 @@ import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.extension.ExtendWith
+import testutils.ProcessManager
 import workingset.auxiliary.components.dialogs.AddWorkingSetSubDialog
 import workingset.testutils.injectListEmptyData
 
@@ -31,7 +32,7 @@ import workingset.testutils.injectListEmptyData
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class WorkingSetViaActionButtonTest : WorkingSetBase() {
+class WorkingSetViaActionButtonTest : IdeaInteractionClass() {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf("Add Working Set Dialog")
@@ -40,12 +41,14 @@ class WorkingSetViaActionButtonTest : WorkingSetBase() {
     private val wsName3 = "WS3"
     private val wsName4 = "WS4"
     private val wsName5 = "WS5"
+    private lateinit var processManager: ProcessManager
 
     /**
      * Opens the project and Explorer, clears test environment.
      */
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot, testInfo:TestInfo) {
+        processManager = ProcessManager()
         startMockServer()
         setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createValidConnectionWithMock(testInfo, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
@@ -56,10 +59,9 @@ class WorkingSetViaActionButtonTest : WorkingSetBase() {
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot) {
+    fun tearDownAll() {
+        processManager.close()
         mockServer.shutdown()
-        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        closeIntelligentProject(fixtureStack, remoteRobot)
     }
 
     /**
@@ -71,19 +73,11 @@ class WorkingSetViaActionButtonTest : WorkingSetBase() {
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
     }
 
-    /**
-     * Tests to add new working set without connection, checks that correct message is returned.
-     */
-
-
-
-
 
     /**
      * Tests to add new empty working set with very long name, checks that correct message is returned.
      */
     @Test
-    @Disabled("https://jira.ibagroup.eu/browse/IJMP-977")
     fun testAddEmptyWorkingSetWithVeryLongNameViaActionButton(remoteRobot: RemoteRobot) = with(remoteRobot) {
         val wsName: String = "B".repeat(200)
         callCreateWorkingSetFromActionButton(fixtureStack, remoteRobot)
@@ -150,7 +144,7 @@ class WorkingSetViaActionButtonTest : WorkingSetBase() {
         addWorkingSetDialog.fillAddWorkingSet(connectionName, wsName3, masks, fixtureStack, remoteRobot)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        compressAndDecompressTree(wsName3, fixtureStack, remoteRobot)
+        compressWsIfcDecompressed(wsName3,validUSSMasks[0], fixtureStack, remoteRobot)
         validUSSMasks.forEach { openWSOpenMaskInExplorer(wsName3, it, fixtureStack, remoteRobot) }
     }
 
@@ -179,7 +173,7 @@ class WorkingSetViaActionButtonTest : WorkingSetBase() {
             assertFalse(isButtonEnableByTextAddWorkingSet(OK_TEXT, fixtureStack, remoteRobot))
             clickToByTextAddWorkingSet(it.key.uppercase(), fixtureStack,remoteRobot)
             Thread.sleep(3000)
-            clickActionButtonByXpath(removeEMaskButtonLoc, fixtureStack, remoteRobot)
+            clickActionButtonByXpath(removeButtonLoc, fixtureStack, remoteRobot)
         }
         clickByText(CANCEL_TEXT, fixtureStack,remoteRobot)
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
@@ -208,22 +202,24 @@ class WorkingSetViaActionButtonTest : WorkingSetBase() {
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class WorkingSetViaActionButtonNoConnectionTest : WorkingSetBase(){
+class WorkingSetViaActionButtonNoConnectionTest : IdeaInteractionClass(){
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
+    private lateinit var processManager: ProcessManager
+
     @BeforeAll
-    fun setUpAll(remoteRobot: RemoteRobot, testInfo:TestInfo){
+    fun setUpAll(remoteRobot: RemoteRobot){
         startMockServer()
-        Thread.sleep(3000)
+        processManager = ProcessManager()
         setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot){
+    fun tearDownAll(){
+        processManager.close()
         mockServer.shutdown()
-        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        closeIntelligentProject(fixtureStack, remoteRobot)
     }
+
     @Test
     @Disabled("https://jira.ibagroup.eu/browse/IJMP-977")
     fun testAddWorkingSetWithoutConnectionViaActionButton(testInfo: TestInfo, remoteRobot: RemoteRobot) =
@@ -245,7 +241,7 @@ class WorkingSetViaActionButtonNoConnectionTest : WorkingSetBase(){
                 }
 
                 createConnectionFromActionButton(closableFixtureCollector, fixtureStack)
-                fillConnectionFilds(fixtureStack=fixtureStack, remoteRobot=remoteRobot)
+                fillConnectionFields(fixtureStack=fixtureStack, remoteRobot=remoteRobot)
                 clickByText(OK_TEXT, fixtureStack, remoteRobot)
                 callCreateWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
                 addWorkingSetDialog(fixtureStack) {

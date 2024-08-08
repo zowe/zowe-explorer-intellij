@@ -12,17 +12,26 @@ package workingset
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
-import auxiliary.components.actionMenu
-import auxiliary.components.actionMenuItem
-import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
-import com.intellij.remoterobot.fixtures.ComponentFixture
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.search.locators.byXpath
-import okhttp3.mockwebserver.MockResponse
+import com.intellij.remoterobot.stepsProcessing.step
 import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
+import testutils.ProcessManager
+import workingset.auxiliary.components.dialogs.CreateDirectoryDialog
+import workingset.auxiliary.components.dialogs.CreateFileDialog
+import workingset.auxiliary.components.dialogs.CreateMaskSubDialog
+import workingset.auxiliary.components.elements.ButtonElement
+import workingset.testutils.injectAllocateUssFile
+import workingset.testutils.injectErrorFileCreating
+import workingset.testutils.injectListAllUssFiles
+import java.util.stream.Stream
 
 /**
  * Tests allocating uss file and directory with valid and invalid parameters.
@@ -30,49 +39,68 @@ import org.junit.jupiter.api.extension.ExtendWith
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class CreateUssFileAndDirTest {
+class CreateUssFileAndDirTest :IdeaInteractionClass(){
     private val closableFixtureCollector = ClosableFixtureCollector()
     private val fixtureStack = mutableListOf<Locator>()
     private val mapListUssFiles = mutableMapOf<String, String>()
+    override val wsName = "WS1"
 
-    private val projectName = "untitled"
-    private val connectionName = "con1"
-    private val wsName = "WS name"
-    private val ussMaskName = "/u/${ZOS_USERID.uppercase()}"
-    private val ussFileName = "testFile"
-    private val ussDirName = "testFolder"
-    private val invalidFileName = "invalid/name"
-    private val errorHeader = "Error in plugin For Mainframe"
     private val errorType = "Cannot allocate file"
     private val fileErrorDetail = "The specified file already exists"
     private val dirErrorDetail = "The specified directory already exists"
 
+    companion object {
 
-    private val fileList = "{\"name\":\"$ussFileName\",\"mode\":\"-rwxr--rw-\",\"size\":20,\"uid\":0,\"user\":\"${ZOS_USERID.uppercase()}\",\"gid\":1,\n" +
+        private val fileNameA = "a".repeat(256)
+        private val fileNameB = "b".repeat(256)
+        private const val invalidFileName = "invalid/name"
+
+        private val incorrectFileName = mapOf(
+            Pair(FILE_NAME_LENGTH_MESSAGE, fileNameA),
+            Pair(FILE_RESRVED_SYMBOL_MESSAGE, invalidFileName),
+        )
+        @JvmStatic
+        fun valuesProviderIncorrectFileName(): Stream<Arguments> {
+            return incorrectFileName.entries.stream().map { entry ->
+                Arguments.of(entry.key, entry.value)
+            }
+        }
+
+        private val incorrectDirName = mapOf(
+            Pair(FILE_RESRVED_SYMBOL_MESSAGE, invalidFileName),
+            Pair(    FILE_NAME_LENGTH_MESSAGE, fileNameB),
+        )
+
+        @JvmStatic
+        fun valuesProviderIncorrectDirName(): Stream<Arguments> {
+            return incorrectDirName.entries.stream().map { entry ->
+                Arguments.of(entry.key, entry.value)
+            }
+        }
+    }
+
+
+    private val fileList = "{\"name\":\"$USS_FILE_NAME\",\"mode\":\"-rwxr--rw-\",\"size\":20,\"uid\":0,\"user\":\"${ZOS_USERID.uppercase()}\",\"gid\":1,\n" +
             "\"group\":\"OMVSGRP\",\"mtime\":\"2015-11-24T02:12:04\"},"
-    private val dirList = "{\"name\":\"$ussDirName\",\"mode\":\"drwxr--rw-\",\"size\":888, \"uid\":0, \"user\":\"${ZOS_USERID.uppercase()}\",\"gid\":1,\n" +
+    private val dirList = "{\"name\":\"$USS_DIR_NAME\",\"mode\":\"drwxr--rw-\",\"size\":888, \"uid\":0, \"user\":\"${ZOS_USERID.uppercase()}\",\"gid\":1,\n" +
             "\"group\":\"OMVSGRP\",\"mtime\":\"2013-05-07T11:23:08\"},"
     private val dirHereList = "{\"name\":\".\", \"mode\":\"drwxrwxrwx\", \"size\":8192, \"uid\":0, \"user\":\"${ZOS_USERID.uppercase()}\", \"gid\":1, \n" +
             "\"group\":\"OMVSGRP\", \"mtime\":\"2015-11-24T02:12:04\"},"
     private val dirParentList = "{\"name\":\"..\", \"mode\":\"drwxr-xr-x\", \"size\":8192, \"uid\":0, \"user\":\"${ZOS_USERID.uppercase()}\", \"gid\":1, \n" +
             "\"group\":\"OMVSGRP\", \"mtime\":\"2015-09-15T02:38:29\"},"
+    private val ussFileExistError = "{\"category\":\"1.0\",\"message\":\"The specified file already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}"
+    private val ussFileSpecSymbolError = "{\"category\":\"1.0\",\"message\":\"The specified directory already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}"
+    private lateinit var processManager: ProcessManager
 
     /**
      * Opens the project and Explorer, clears test environment, creates uss mask.
      */
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
+        processManager = ProcessManager()
         startMockServer()
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_info",
-            { it?.requestLine?.contains("zosmf/info") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_resttopology",
-            { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
+        responseDispatcher.injectTestInfo(testInfo)
+        responseDispatcher.injectTestInfoRestTopology(testInfo)
         setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createConnection(
             fixtureStack,
@@ -82,27 +110,20 @@ class CreateUssFileAndDirTest {
             remoteRobot,
             "https://${mockServer.hostName}:${mockServer.port}"
         )
+        createMaskSubDialog = CreateMaskSubDialog(fixtureStack, remoteRobot)
+        createFileDialog = CreateFileDialog(fixtureStack, remoteRobot)
+        createDirectoryDialog = CreateDirectoryDialog(fixtureStack, remoteRobot)
+
         createWsWithoutMask(wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
         mapListUssFiles["."] = dirHereList
         mapListUssFiles[".."] = dirParentList
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            createMask(wsName, fixtureStack, closableFixtureCollector)
-            createMaskDialog(fixtureStack) {
-                createMask(Pair(ussMaskName, "USS"))
-                clickButton("OK")
-                Thread.sleep(1000)
-            }
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(wsName).doubleClick()
-                Thread.sleep(1000)
-            }
-        }
+//        injectListAllUssFiles(mapListUssFiles)
+        callCreateMask(wsName, fixtureStack, remoteRobot)
+        createMaskSubDialog.setMask(singleUssMask)
+        createMaskSubDialog.clickButtonByName(OK_TEXT)
+        compressAndDecompressTree(wsName, fixtureStack, remoteRobot)
+
+        cancelButton = ButtonElement(CANCEL_TEXT, fixtureStack, remoteRobot)
     }
 
     /**
@@ -110,103 +131,54 @@ class CreateUssFileAndDirTest {
      */
     @AfterAll
     fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+        processManager.close()
         mockServer.shutdown()
-
-        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            close()
-        }
     }
 
     @AfterEach
-    fun tearDown() {
+    fun tearDown(remoteRobot: RemoteRobot) = with(remoteRobot){
         responseDispatcher.removeAllEndpoints()
+        refreshWorkSpace(wsName,  fixtureStack, remoteRobot)
     }
 
     /**
      * Test to create uss file with valid parameters
      */
     @Test
-    @Order(1)
     fun testCreateUssFile(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "allocateUssFile_restfiles",
-            { it?.requestLine?.contains("POST /zosmf/restfiles/fs$ussMaskName/$ussFileName") ?: false },
-            { MockResponse().setResponseCode(201) }
-        )
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            createUssFile(ussMaskName, ussFileName, UssFileType.File, fixtureStack, remoteRobot)
-            mapListUssFiles[ussFileName] = fileList
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(wsName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Refresh").click()
-        }
+        injectAllocateUssFile(ussMask, USS_FILE_NAME)
+        injectListAllUssFiles(mapListUssFiles)
+        createUssFileForMask(ussMask,USS_FILE_NAME, remoteRobot)
+
+        mapListUssFiles[USS_FILE_NAME] = fileList
+        refreshWorkSpace(wsName, fixtureStack, remoteRobot)
     }
 
     /**
-     * Test to create uss file with too long name
+     * Test to create uss file with too long name and create uss file with invalid name
      */
-    @Test
-    @Order(2)
-    fun testCreateUssFileWithLongName(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
-            }
-            actionMenu(remoteRobot, "New").click()
-            actionMenuItem(remoteRobot, UssFileType.File.name).click()
-            createUssFileDialog(fixtureStack) {
-                createFile("a".repeat(256), "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
-                clickButton("OK")
-            }
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                FILE_NAME_LENGTH_MESSAGE
-            )
-            Thread.sleep(1000)
-            clickButton("Cancel")
-        }
+    @ParameterizedTest
+    @MethodSource("valuesProviderIncorrectFileName")
+    fun testCreateUssFileWithIncorrectFileName(errorText: String, invalidValue: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
+        injectListAllUssFiles(mapListUssFiles)
+        createUssFileForMask(ussMask,invalidValue, remoteRobot)
+
+        find<HeavyWeightWindowFixture>(messageLoc).findText(errorText)
+        createFileDialog.clickButtonByName(CANCEL_TEXT)
     }
 
     /**
-     * Test to create uss file with invalid name
+     * Test to create uss directory with invalid name and
+     * with too long name
      */
-    @Test
-    @Order(3)
-    fun testCreateUssFileWithReservedSymbol(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
-            }
-            actionMenu(remoteRobot, "New").click()
-            actionMenuItem(remoteRobot, UssFileType.File.name).click()
-            createUssFileDialog(fixtureStack) {
-                createFile(invalidFileName, "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
-                clickButton("OK")
-            }
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                FILE_RESRVED_SYMBOL_MESSAGE
-            )
-            Thread.sleep(1000)
-            clickButton("Cancel")
+    @ParameterizedTest
+    @MethodSource("valuesProviderIncorrectDirName")
+    fun testCreateUssDirWithIncorrectDirName(errorText: String, invalidValue: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
+        injectListAllUssFiles(mapListUssFiles)
+        step("try create with long dir name"){
+            createUssDirForMask(ussMask, invalidValue, remoteRobot)
+            find<HeavyWeightWindowFixture>(messageLoc).findText(errorText)
+            createDirectoryDialog.clickButtonByName(CANCEL_TEXT)
         }
     }
 
@@ -214,230 +186,65 @@ class CreateUssFileAndDirTest {
      * Test to create uss file when file with the same name already exists
      */
     @Test
-    @Order(4)
     fun testCreateUssFileWithExistingFileName(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        responseDispatcher.injectEndpoint(
-            "CreateFileWhenDirWithTheSameNameExists_restfiles",
-            { it?.requestLine?.contains("POST /zosmf/restfiles/fs${ussMaskName}/${ussFileName}") ?: false },
-            {
-                MockResponse().setResponseCode(500)
-                    .setBody("{\"category\":\"1.0\",\"message\":\"The specified file already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}")
-            }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
-            }
-            actionMenu(remoteRobot, "New").click()
-            actionMenuItem(remoteRobot, UssFileType.File.name).click()
-            createUssFileDialog(fixtureStack) {
-                createFile(ussFileName, "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
-                clickButton("OK")
-            }
-            clickButton("Cancel")
-            checkErrorNotification(fileErrorDetail, errorType, fileErrorDetail, fixtureStack, remoteRobot)
-            closeNotificztion(fixtureStack, remoteRobot)
+        step("Injection for tests"){
+            injectListAllUssFiles(mapListUssFiles)
+            injectErrorFileCreating(ussMask, USS_FILE_NAME,500, ussFileExistError)
+            injectAllocateUssFile(ussMask, USS_FILE_NAME)
         }
+        step("try create file"){
+            createUssFileForMask(ussMask, USS_FILE_NAME, remoteRobot)
+            cancelButton.click()
+        }
+        assertTrue(isErrorNotificationValid(fileErrorDetail, errorType, fileErrorDetail, fixtureStack, remoteRobot))
+        closeNotificztion(fixtureStack, remoteRobot)
     }
 
     /**
      * Test to create uss directory with valid parameters
      */
     @Test
-    @Order(5)
     fun testCreateUssDir(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        responseDispatcher.injectEndpoint(
-            "allocateUssDir_restfiles",
-            { it?.requestLine?.contains("POST /zosmf/restfiles/fs$ussMaskName/$ussDirName") ?: false },
-            { MockResponse().setResponseCode(201) }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            createUssFile(ussMaskName, ussDirName, UssFileType.Directory, fixtureStack, remoteRobot)
-            mapListUssFiles[ussDirName] = dirList
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(wsName).rightClick()
-            }
-            actionMenuItem(remoteRobot, "Refresh").click()
-        }
+        injectListAllUssFiles(mapListUssFiles)
+        injectAllocateUssFile(ussMask, USS_DIR_NAME)
+        createUssDirForMask(ussMask, USS_DIR_NAME, remoteRobot)
+
+        mapListUssFiles[USS_DIR_NAME] = dirList
+
+        refreshWorkSpace(wsName,fixtureStack, remoteRobot)
     }
 
     /**
      * Test to create uss file when directory with the same name already exists
      */
     @Test
-    @Order(6)
     fun testCreateUssFileWithExistingDirName(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        responseDispatcher.injectEndpoint(
-            "FileAlreadyExists_restfiles",
-            { it?.requestLine?.contains("POST /zosmf/restfiles/fs${ussMaskName}/${ussDirName}") ?: false },
-            {
-                MockResponse().setResponseCode(500)
-                    .setBody("{\"category\":\"1.0\",\"message\":\"The specified file already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}")
-            }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
-            }
-            actionMenu(remoteRobot, "New").click()
-            actionMenuItem(remoteRobot, UssFileType.File.name).click()
-            createUssFileDialog(fixtureStack) {
-                createFile(ussDirName, "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
-                clickButton("OK")
-            }
-            clickButton("Cancel")
-            checkErrorNotification(fileErrorDetail, errorType, fileErrorDetail, fixtureStack, remoteRobot)
-            closeNotificztion(fixtureStack, remoteRobot)
+        injectListAllUssFiles(mapListUssFiles)
+        injectErrorFileCreating(ussMask, USS_DIR_NAME,500, ussFileExistError)
+
+        step("try create file"){
+            createUssDirForMask(ussMask, USS_DIR_NAME, remoteRobot)
+            cancelButton.click()
         }
+        assertTrue(isErrorNotificationValid(fileErrorDetail, errorType, fileErrorDetail, fixtureStack, remoteRobot))
+        closeNotificztion(fixtureStack, remoteRobot)
     }
 
     /**
-     * Test to create uss directory with too long name
+     * Test to create uss directory when file with the same name already exists and
+     * when directory with the same name already exists
      */
-    @Test
-    @Order(7)
-    fun testCreateUssDirWithLongName(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
-            }
-            actionMenu(remoteRobot, "New").click()
-            actionMenuItem(remoteRobot, UssFileType.Directory.name).click()
-            createUssFileDialog(fixtureStack) {
-                createFile("a".repeat(256), "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
-                clickButton("OK")
-            }
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                FILE_NAME_LENGTH_MESSAGE
-            )
-            Thread.sleep(1000)
-            clickButton("Cancel")
-        }
-    }
+    @ParameterizedTest
+    @ValueSource(strings = [USS_FILE_NAME, USS_DIR_NAME])
+    fun testCreateUssDirWithExistingFileName(itemName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
+        injectListAllUssFiles(mapListUssFiles)
 
-    /**
-     * Test to create uss directory with invalid name
-     */
-    @Test
-    @Order(8)
-    fun testCreateUssDirWithReservedSymbol(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
-            }
-            actionMenu(remoteRobot, "New").click()
-            actionMenuItem(remoteRobot, UssFileType.Directory.name).click()
-            createUssFileDialog(fixtureStack) {
-                createFile(invalidFileName, "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
-                clickButton("OK")
-            }
-            find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                FILE_RESRVED_SYMBOL_MESSAGE
-            )
-            Thread.sleep(1000)
-            clickButton("Cancel")
+        injectErrorFileCreating(ussMask, itemName,500, ussFileSpecSymbolError)
+        step("try create directory"){
+            createUssDirForMask(ussMask, itemName, remoteRobot)
+            cancelButton.click()
         }
-    }
-
-    /**
-     * Test to create uss directory when file with the same name already exists
-     */
-    @Test
-    @Order(9)
-    fun testCreateUssDirWithExistingFileName(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        responseDispatcher.injectEndpoint(
-            "DirAlreadyExists_restfiles",
-            { it?.requestLine?.contains("POST /zosmf/restfiles/fs${ussMaskName}/${ussFileName}") ?: false },
-            {
-                MockResponse().setResponseCode(500)
-                    .setBody("{\"category\":\"1.0\",\"message\":\"The specified directory already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}")
-            }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
-            }
-            actionMenu(remoteRobot, "New").click()
-            actionMenuItem(remoteRobot, UssFileType.Directory.name).click()
-            createUssFileDialog(fixtureStack) {
-                createFile(ussFileName, "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
-                clickButton("OK")
-            }
-            clickButton("Cancel")
-            checkErrorNotification(dirErrorDetail, errorType, dirErrorDetail, fixtureStack, remoteRobot)
-            closeNotificztion(fixtureStack, remoteRobot)
-        }
-    }
-
-    /**
-     * Test to create uss directory when directory with the same name already exists
-     */
-    @Test
-    @Order(10)
-    fun testCreateUssDirWithExistingDirName(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "listAllUssFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/fs?path") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListUssFiles, true)) }
-        )
-        responseDispatcher.injectEndpoint(
-            "DirAlreadyExists_restfiles",
-            { it?.requestLine?.contains("POST /zosmf/restfiles/fs${ussMaskName}/${ussDirName}") ?: false },
-            {
-                MockResponse().setResponseCode(500)
-                    .setBody("{\"category\":\"1.0\",\"message\":\"The specified directory already exists\",\"rc\":\"4.0\",\"reason\":\"19.0\"}")
-            }
-        )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
-            }
-            actionMenu(remoteRobot, "New").click()
-            actionMenuItem(remoteRobot, UssFileType.Directory.name).click()
-            createUssFileDialog(fixtureStack) {
-                createFile(ussDirName, "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
-                clickButton("OK")
-            }
-            clickButton("Cancel")
-            checkErrorNotification(dirErrorDetail, errorType, dirErrorDetail, fixtureStack, remoteRobot)
-            closeNotificztion(fixtureStack, remoteRobot)
-        }
+        assertTrue(isErrorNotificationValid(dirErrorDetail, errorType, dirErrorDetail, fixtureStack, remoteRobot))
+        closeNotificztion(fixtureStack, remoteRobot)
     }
 }
