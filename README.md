@@ -148,8 +148,10 @@ We have two options of tests:
 ### To run UI tests:
 
 1. change values for ZOS_USERID, ZOS_PWD, CONNECTION_URL in src/uiTest/kotlin/auxiliary/utils.kt
-2. run the script uiTest.sh
-3. once IdeForUiTests started make it as main window on the screen and do not touch mouse anymore
+2. run ./gradlew buildPlugin in console
+4. run the script uiTest.sh
+5. once IdeForUiTests started make it as main window on the screen and do not touch mouse anymore
+6. on first launch a ide_for_launch folder will be created and ide will be downloaded
 
 UI tests results: build/reports/tests/uiTest/index.html
 
