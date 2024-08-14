@@ -10,7 +10,6 @@
 package eu.ibagroup.formainframe.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
@@ -108,30 +107,25 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
     val attributesService =
       dataOpsManager.getAttributesService(RemoteUssAttributes::class.java, MFVirtualFile::class.java)
-    var createdDirFile: VirtualFile? = null
-    runWriteActionInEdtAndWait {
-      createdDirFile = attributesService.getOrCreateVirtualFile(
-        RemoteUssAttributes(
-          destAttributes.path,
-          UssFile(sourceFile.name, "drwxrwxrwx"),
-          destConnectionConfig.url,
-          destConnectionConfig
-        )
+    val createdDirFile = attributesService.getOrCreateVirtualFile(
+      RemoteUssAttributes(
+        destAttributes.path,
+        UssFile(sourceFile.name, "drwxrwxrwx"),
+        destConnectionConfig.url,
+        destConnectionConfig
       )
-    }
+    )
 
-    createdDirFile?.let { createdDirFileNotNull ->
-      sourceFile.children.forEach {
-        val op = MoveCopyOperation(
-          it,
-          createdDirFileNotNull,
-          isMove = false,
-          forceOverwriting = false,
-          newName = null,
-          dataOpsManager = dataOpsManager
-        )
-        dataOpsManager.performOperation(op, progressIndicator)
-      }
+    sourceFile.children.forEach {
+      val op = MoveCopyOperation(
+        it,
+        createdDirFile,
+        isMove = false,
+        forceOverwriting = false,
+        newName = null,
+        dataOpsManager = dataOpsManager
+      )
+      dataOpsManager.performOperation(op, progressIndicator)
     }
 
     if (sourceFile is MFVirtualFile && operation.isMove) {

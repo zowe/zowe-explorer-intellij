@@ -12,7 +12,10 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.explorer.ui.*
 
 /**
@@ -21,14 +24,51 @@ import eu.ibagroup.formainframe.explorer.ui.*
 class RefreshNodeAction : AnAction() {
 
   /**
+   * Check if the file related with the node or files related with child nodes are currently synchronized
+   * @return true if synchronization is not running anf false otherwise
+   */
+  private fun checkNodeForSync(project: Project?, node: ExplorerTreeNode<*, *>): Boolean {
+    val file = node.virtualFile
+    return if (file != null) {
+      !checkFileForSync(project, file, checkDependentFiles = true)
+    } else if (node is DSMaskNode) {
+      node.children.none {
+        val vFile = it.value as? VirtualFile
+        vFile != null && checkFileForSync(project, vFile, checkDependentFiles = true)
+      }
+    } else true
+  }
+
+  /**
+   * Filter out nodes data that cannot be refreshed due to synchronization
+   */
+  private fun filterNodesData(project: Project?, nodesData: List<NodeData<*>>): List<NodeData<*>> {
+    return nodesData.filter { data ->
+      when (val node = data.node) {
+        is FetchNode -> {
+          checkNodeForSync(project, node)
+        }
+
+        is WorkingSetNode<*, *> -> {
+          node.cachedChildren.filterIsInstance<FetchNode>().none {
+            !checkNodeForSync(project, it)
+          }
+        }
+
+        else -> true
+      }
+    }
+  }
+
+  /**
    * Overloaded method of AnAction abstract class. Tells what to do if an action was submitted
    */
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(EXPLORER_VIEW) ?: return
 
-    val selected = view.mySelectedNodesData
+    val filteredNodesData = filterNodesData(e.project, view.mySelectedNodesData)
 
-    selected.parallelStream().forEach { data ->
+    filteredNodesData.parallelStream().forEach { data ->
       when (val node = data.node) {
         is FetchNode -> {
           cleanInvalidateOnExpand(node, view)

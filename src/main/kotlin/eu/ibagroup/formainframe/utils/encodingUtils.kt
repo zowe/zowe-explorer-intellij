@@ -18,8 +18,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -64,12 +64,13 @@ fun saveIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
  * @param project the project in which the file is open.
  * @param virtualFile file to change encoding.
  * @param charset new encoding.
+ * @param indicator progress indicator to reflect reloading process.
  */
-fun reloadIn(project: Project?, virtualFile: VirtualFile, charset: Charset) {
+fun reloadIn(project: Project?, virtualFile: VirtualFile, charset: Charset, indicator: ProgressIndicator?) {
   val syncProvider = DocumentedSyncProvider(virtualFile, SaveStrategy.syncOnOpen(project))
   val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
   runWriteActionInEdtAndWait { changeEncodingTo(virtualFile, charset) }
-  contentSynchronizer?.synchronizeWithRemote(syncProvider)
+  contentSynchronizer?.synchronizeWithRemote(syncProvider, indicator)
 }
 
 /** Changes the file encoding to the specified one. */
@@ -125,7 +126,7 @@ fun inspectSafeEncodingChange(virtualFile: VirtualFile, charset: Charset): Encod
   val fileNotSynced = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
   val text = syncProvider.getDocument()?.text
     ?: throw IllegalArgumentException("Cannot get document text")
-  val bytes = if (fileNotSynced) runReadAction { syncProvider.retrieveCurrentContent() }
+  val bytes = if (fileNotSynced) syncProvider.retrieveCurrentContent()
   else contentSynchronizer?.successfulContentStorage(syncProvider)
     ?: throw IllegalArgumentException("Cannot get content bytes")
   val safeToReload = isSafeToReloadIn(virtualFile, text, bytes, charset)
@@ -242,4 +243,3 @@ fun showSaveAnywayDialog(charset: Charset): Boolean {
   )
   return result == 0
 }
-

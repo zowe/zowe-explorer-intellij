@@ -96,15 +96,13 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       throwable = CallException(response, "Cannot upload data to $pathToFile")
     } else {
       destFile.children.firstOrNull { it.name == newName }?.let { file ->
-        runWriteActionInEdtAndWait {
-          val syncProvider = DocumentedSyncProvider(file, { _, _, _ -> false }, { th -> throwable = th })
-          val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
+        val syncProvider = DocumentedSyncProvider(file, { _, _, _ -> false }, { th -> throwable = th })
+        val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
 
-          if (contentSynchronizer == null) {
-            throwable = IllegalArgumentException("Cannot get content synchronizer for file '${file.name}'")
-          } else {
-            contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
-          }
+        if (contentSynchronizer == null) {
+          throwable = IllegalArgumentException("Cannot get content synchronizer for file '${file.name}'")
+        } else {
+          contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
         }
       }
     }

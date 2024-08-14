@@ -15,7 +15,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -31,10 +31,11 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
+import eu.ibagroup.formainframe.utils.runInEdtAndWait
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
@@ -103,11 +104,12 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
           project = project,
           icon = AllIcons.General.WarningDialog
         )
+        if (checkFileForSync(project, file)) return
         runBackgroundableTask("Navigating to ${file.name}") { indicator ->
           if (doSync) {
             val onThrowableHandler: (Throwable) -> Unit = {
               if (it.message?.contains("Client is not authorized for file access") == true) {
-                invokeLater {
+                runInEdt {
                   Messages.showDialog(
                     project,
                     "You do not have permissions to read this file",
@@ -125,7 +127,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
               dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
                 service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
               }
-              runWriteActionInEdtAndWait {
+              runInEdtAndWait {
                 fileDescriptor.navigate(requestFocus)
               }
             }
@@ -147,7 +149,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
               }
             } else {
               runCatching {
-                invokeLater {
+                runInEdt {
                   FileEditorManager.getInstance(project).openFile(file, true)
                 }
               }

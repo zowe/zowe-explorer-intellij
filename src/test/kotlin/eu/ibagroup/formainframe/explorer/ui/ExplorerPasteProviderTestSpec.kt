@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -28,6 +29,7 @@ import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.dataops.operations.mover.names.DatasetOrDirResolver
 import eu.ibagroup.formainframe.dataops.operations.mover.names.DefaultNameResolver
@@ -39,23 +41,21 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.getAncestorNodes
 import eu.ibagroup.formainframe.utils.ui.WindowsLikeMessageDialog
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
+import eu.ibagroup.formainframe.vfs.MFVirtualFileSystemModel
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.spyk
+import io.mockk.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.reflect.KFunction
+import kotlin.reflect.full.declaredMemberFunctions
+import kotlin.reflect.jvm.isAccessible
 
 class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
   afterSpec {
@@ -132,10 +132,26 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         } returns DefaultNameResolver()
 
         // we do not need to refresh the nodes in below tests, so lets return default list for each node to refresh (USS for example)
+        val mockedSourceVFile = mockk<MFVirtualFile>()
+        val mockedDestinationVFile = mockk<MFVirtualFile>()
+        val sourceParentFile = mockk<MFVirtualFile>()
+        val targetParentFile = mockk<MFVirtualFile>()
         every { mockedFileExplorerView.myFsTreeStructure } returns mockk()
         every { mockedFileExplorerView.myStructure } returns mockk()
         every { nodeToRefreshSource.parent } returns nodeToRefreshSource
         every { nodeToRefreshTarget.parent } returns nodeToRefreshTarget
+        every { nodeToRefreshSource.virtualFile } returns mockedSourceVFile
+        every { nodeToRefreshTarget.virtualFile } returns mockedDestinationVFile
+        every { mockedSourceVFile.parent } returns sourceParentFile
+        every { mockedDestinationVFile.parent } returns targetParentFile
+        every { sourceParentFile.parent } returns null
+        every { targetParentFile.parent } returns null
+        every { mockedSourceVFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceVFile.fileSystem.model } returns mockk<MFVirtualFileSystemModel>()
+        every { mockedSourceVFile.fileSystem.model.deleteFile(any(), any()) } just Runs
+        every { mockedDestinationVFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedDestinationVFile.fileSystem.model } returns mockk<MFVirtualFileSystemModel>()
+        every { mockedDestinationVFile.fileSystem.model.deleteFile(any(), any()) } just Runs
         every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(any() as VirtualFile) } returns listOf(
           nodeToRefreshSource,
           nodeToRefreshTarget
@@ -154,6 +170,8 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { nodeToRefreshTarget.cleanCache(cleanBatchedQuery = true) } answers {
           isPastePerformed = true
         }
+
+        mockkStatic(::checkFileForSync)
       }
 
       // performPaste
@@ -167,6 +185,8 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val mockedSourceFile = mockk<MFVirtualFile>()
         val mockedSourceAttributes = mockk<RemoteUssAttributes>()
         every { mockedSourceFile.name } returns "test5"
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceFile.parent } returns null
         every { mockedSourceAttributes.isPastePossible } returns false
         every { mockedSourceAttributes.isDirectory } returns false
         every { mockedSourceNodeData.node } returns mockedSourceNode
@@ -289,9 +309,18 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         // source to paste
         val mockedSourceNodeData = mockk<NodeData<ConnectionConfig>>()
         val mockedSourceNode = mockk<UssFileNode>()
+        val mockedSourceNodeParent = mockk<UssDirNode>()
+        val mockedSourceFileParent = mockk<MFVirtualFile>()
         val mockedSourceFile = mockk<MFVirtualFile>()
         val mockedSourceAttributes = mockk<RemoteUssAttributes>()
         every { mockedSourceFile.name } returns "test_file_source"
+        every { mockedSourceNode.virtualFile } returns mockedSourceFile
+        every { mockedSourceNode.parent } returns mockedSourceNodeParent
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceFile.fileSystem.model } returns mockk<MFVirtualFileSystemModel>()
+        every { mockedSourceFile.fileSystem.model.deleteFile(any(), any()) } just Runs
+        every { mockedSourceFile.parent } returns mockedSourceFileParent
+        every { mockedSourceFileParent.parent } returns null
         every { mockedSourceAttributes.isPastePossible } returns false
         every { mockedSourceAttributes.isDirectory } returns false
         every { mockedSourceNodeData.node } returns mockedSourceNode
@@ -335,6 +364,18 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
         // selected node data ( always remote files )
         every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData)
+
+        // overwrite default behavior to check if nodes are actually refreshed
+        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile) } returns listOf(mockedSourceNode)
+        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile) } returns listOf(mockedNodeTarget)
+        every { mockedFileExplorerView.myStructure.invalidate(mockedSourceNodeParent, true) } returns mockk()
+        every { mockedFileExplorerView.myStructure.invalidate(mockedNodeTarget, true) } returns mockk()
+        every { mockedSourceNodeParent.cleanCache(cleanBatchedQuery = true) } answers {
+          isPastePerformed = true
+        }
+        every { mockedNodeTarget.cleanCache(cleanBatchedQuery = true) } answers {
+          isPastePerformed = true
+        }
 
         every {
           mockedCopyPasterProvider.getDestinationSourceFilePairs(
@@ -388,11 +429,19 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
         // source to paste
         val mockedSourceNodeData = mockk<NodeData<ConnectionConfig>>()
-        val mockedSourceNode = mockk<LibraryNode>()
+        val mockedSourceNode = mockk<FileLikeDatasetNode>()
         val mockedSourceFile = mockk<MFVirtualFile>()
+        val mockedSourceNodeParent = mockk<DSMaskNode>()
+        val mockedSourceFileParent = mockk<MFVirtualFile>()
         val mockedSourceAttributes = mockk<RemoteDatasetAttributes>()
+        every { mockedSourceNode.virtualFile } returns mockedSourceFile
+        every { mockedSourceNode.parent } returns mockedSourceNodeParent
         every { mockedSourceFile.name } returns "TEST.FILE"
         every { mockedSourceFile.isInLocalFileSystem } returns false
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceFile.parent } returns mockedSourceFileParent
+        every { mockedSourceFileParent.parent } returns null
+        every { mockedSourceFile.parent } returns null
         every { mockedSourceAttributes.name } returns "TEST.FILE"
         every { mockedSourceAttributes.isPastePossible } returns false
         every { mockedSourceAttributes.isDirectory } returns false
@@ -436,6 +485,18 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
         // selected node data ( always remote files )
         every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData)
+
+        // special config for PS/PDS files
+        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile) } returns listOf(mockedSourceNode)
+        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile) } returns listOf(mockedNodeTarget)
+        every { mockedFileExplorerView.myStructure.invalidate(mockedSourceNodeParent, true) } returns mockk()
+        every { mockedFileExplorerView.myStructure.invalidate(mockedNodeTarget, true) } returns mockk()
+        every { mockedSourceNodeParent.cleanCache(cleanBatchedQuery = true) } answers {
+          isPastePerformed = true
+        }
+        every { mockedNodeTarget.cleanCache(cleanBatchedQuery = true) } answers {
+          isPastePerformed = true
+        }
 
         every {
           mockedCopyPasterProvider.getDestinationSourceFilePairs(
@@ -482,9 +543,13 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedSourceAttributes.isPastePossible } returns true
         every { mockedSourceFile.name } returns "test_folder_source"
         every { mockedSourceFile.parent } returns null
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
         every { mockedSourceNodeData.node } returns mockedSourceNode
         every { mockedSourceNodeData.file } returns mockedSourceFile
         every { mockedSourceNodeData.attributes } returns mockedSourceAttributes
+        // needed for cleaning buffer function after paste is performed (because conflict)
+        mockkStatic("eu.ibagroup.formainframe.utils.OpenapiUtilsKt")
+        every { mockedSourceFile.getAncestorNodes() } returns mutableListOf()
 
         // children of target
         val childDestinationVirtualFile = mockk<MFVirtualFile>()
@@ -609,6 +674,8 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val mockedSourceFile = mockk<MFVirtualFile>()
         val mockedSourceAttributes = mockk<RemoteUssAttributes>()
         every { mockedSourceFile.name } returns "test5"
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceFile.parent } returns null
         every { mockedSourceAttributes.isPastePossible } returns false
         every { mockedSourceAttributes.isDirectory } returns false
         every { mockedSourceNodeData.node } returns mockedSourceNode
@@ -695,6 +762,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedSourceFile1.name } returns "test1"
         every { mockedSourceFile1.isDirectory } returns false
         every { mockedSourceFile1.parent } returns null
+        every { mockedSourceFile1.fileSystem } returns mockk<MFVirtualFileSystem>()
         every { mockedSourceAttributes1.isPastePossible } returns false
         every { mockedSourceAttributes1.isDirectory } returns false
         every { mockedSourceNodeData1.node } returns mockedSourceNode1
@@ -709,6 +777,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedSourceFile2.name } returns "test2"
         every { mockedSourceFile2.isDirectory } returns true
         every { mockedSourceFile2.parent } returns null
+        every { mockedSourceFile2.fileSystem } returns mockk<MFVirtualFileSystem>()
         every { mockedSourceAttributes2.isPastePossible } returns false
         every { mockedSourceAttributes2.isDirectory } returns false
         every { mockedSourceNodeData2.node } returns mockedSourceNode2
@@ -723,6 +792,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedSourceFile3.name } returns "test1"
         every { mockedSourceFile3.isDirectory } returns false
         every { mockedSourceFile3.parent } returns null
+        every { mockedSourceFile3.fileSystem } returns mockk<MFVirtualFileSystem>()
         every { mockedSourceAttributes3.isPastePossible } returns false
         every { mockedSourceAttributes3.isDirectory } returns false
         every { mockedSourceNodeData3.node } returns mockedSourceNode3
@@ -736,6 +806,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val mockedSourceAttributes4 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile4.name } returns "test4"
         every { mockedSourceFile4.parent } returns null
+        every { mockedSourceFile4.fileSystem } returns mockk<MFVirtualFileSystem>()
         every { mockedSourceAttributes4.isPastePossible } returns false
         every { mockedSourceAttributes4.isDirectory } returns false
         every { mockedSourceNodeData4.node } returns mockedSourceNode4
@@ -749,6 +820,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val mockedSourceAttributes5 = mockk<RemoteUssAttributes>()
         every { mockedSourceFile5.name } returns "test5"
         every { mockedSourceFile5.parent } returns null
+        every { mockedSourceFile5.fileSystem } returns mockk<MFVirtualFileSystem>()
         every { mockedSourceAttributes5.isPastePossible } returns false
         every { mockedSourceAttributes5.isDirectory } returns false
         every { mockedSourceNodeData5.node } returns mockedSourceNode5
@@ -763,6 +835,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedSourceFile6.name } returns "test1"
         every { mockedSourceFile6.isDirectory } returns true
         every { mockedSourceFile6.parent } returns null
+        every { mockedSourceFile6.fileSystem } returns mockk<MFVirtualFileSystem>()
         every { mockedSourceAttributes6.isPastePossible } returns false
         every { mockedSourceAttributes6.isDirectory } returns true
         every { mockedSourceNodeData6.node } returns mockedSourceNode6
@@ -908,6 +981,8 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val mockedSourceFile = mockk<VirtualFile>()
         val mockedSourceAttributes = null
         every { mockedSourceFile.name } returns "test_local_file"
+        every { mockedSourceFile.parent } returns null
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
 
         // Clipboard buffer
         val mockedClipboardBufferLocal = listOf(mockedSourceFile)
@@ -1080,6 +1155,39 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         }
       }
 
+      should("filter operations with files that are currently being synchronized") {
+        var filesToMoveTotal = 1
+
+        every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns null
+        every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
+        every {
+          FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
+        } returns mockedFileExplorerView
+        every { mockedFileExplorerView.copyPasteSupport } returns mockedCopyPasterProvider
+        every { checkFileForSync(any(), any(), any()) } returns true
+
+        every { mockedExplorerPasteProvider["runMoveOrCopyTask"](
+          any<String>(),
+          any<Int>(),
+          any<Boolean>(),
+          any<List<MoveCopyOperation>>(),
+          any<FileExplorerView.ExplorerCopyPasteSupport>(),
+          any<FileExplorerView>(),
+          any<Project>()
+        ) } answers {
+          filesToMoveTotal = secondArg<Int>()
+          this
+        }
+
+        mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+        clearMocks(mockedExplorerPasteProvider)
+
+        assertSoftly {
+          filesToMoveTotal shouldBe 0
+        }
+      }
+
       should("paste is not enabled and possible if project is null") {
         var isPasteEnabled = true
         var isPastePossible = true
@@ -1155,6 +1263,39 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         assertSoftly {
           isPasteEnabled shouldBe true
           isPastePossible shouldBe true
+        }
+      }
+
+      should("optimizeOperation remote source") {
+        val mockedSourceDir = mockk<MFVirtualFile>()
+        every { mockedSourceDir.name } returns "dir5"
+        every { mockedSourceDir.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceDir.parent } returns null
+        val mockedSourceFile = mockk<MFVirtualFile>()
+        every { mockedSourceFile.name } returns "test5"
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceFile.parent } returns mockedSourceDir
+        val sourceFilesRaw = listOf(mockedSourceDir, mockedSourceFile)
+        mockedExplorerPasteProvider::class.declaredMemberFunctions.find { it.name == "optimizeOperation" }?.let {
+          it.isAccessible = true
+          val ret: List<VirtualFile> = it.call(mockedExplorerPasteProvider, sourceFilesRaw) as List<VirtualFile>
+          ret.size shouldBe 1
+          ret[0].name shouldBe "dir5"
+        }
+      }
+
+      should("optimizeOperation local source") {
+        val mockedSourceDir = mockk<VirtualFile>()
+        every { mockedSourceDir.name } returns "dir5"
+        every { mockedSourceDir.fileSystem } returns mockk<LocalFileSystem>()
+        val mockedSourceFile = mockk<VirtualFile>()
+        every { mockedSourceFile.name } returns "test5"
+        every { mockedSourceFile.fileSystem } returns mockk<LocalFileSystem>()
+        val sourceFilesRaw = listOf(mockedSourceDir, mockedSourceFile)
+        mockedExplorerPasteProvider::class.declaredMemberFunctions.find { it.name == "optimizeOperation" }?.let {
+          it.isAccessible = true
+          val ret: List<VirtualFile> = it.call(mockedExplorerPasteProvider, sourceFilesRaw) as List<VirtualFile>
+          ret.size shouldBe 2
         }
       }
 
