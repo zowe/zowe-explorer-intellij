@@ -29,6 +29,7 @@ const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 8
 const val WHO_AM_I: String = "oshell whoami"
 val LOGGER = logger<ConnectionDialog>()
 
+const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 7
 
 /**
  * Sends TSO request "oshell whoami", with which it receives the name of the real user (owner) of the system.
@@ -156,4 +157,17 @@ fun tryToExtractRealOwnerEnhanced(tsoData: List<TsoCmdResult>) : String {
  */
 fun getOwner(connectionConfig: ConnectionConfig): String {
   return connectionConfig.owner.ifEmpty { getUsername(connectionConfig) }
+}
+
+/**
+ * Function tries to extract owner from the connection config.
+ * If whoAmI function failed for some reason it could contain empty "" or error string inside owner variable.
+ * If it is such a case then return username of the connection config.
+ * @return username of the connection config or extracted owner
+ */
+fun tryToExtractOwnerFromConfig(connectionConfig: ConnectionConfig): String {
+  val possibleOwner = connectionConfig.owner
+  return if (possibleOwner.isEmpty() || possibleOwner.chars().count() > USER_OR_OWNER_SYMBOLS_MAX_SIZE)
+    getUsername(connectionConfig)
+  else possibleOwner
 }

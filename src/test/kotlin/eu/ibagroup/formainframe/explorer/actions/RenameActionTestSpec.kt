@@ -19,6 +19,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.formainframe.dataops.attributes.*
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
@@ -108,6 +109,7 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
       }
 
       mockkStatic(ExplorerTreeNode<ConnectionConfig, *>::cleanCacheIfPossible)
+      mockkStatic(::checkFileForSync)
     }
     afterEach {
       unmockkAll()
@@ -143,6 +145,13 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
         should("not perform rename on dataset if virtual file is null") {
           every { (libraryNodeMock as ExplorerTreeNode<ConnectionConfig, *>).virtualFile } returns null
+
+          renameAction.actionPerformed(anActionEventMock)
+
+          assertSoftly { renamed shouldBe false }
+        }
+        should("not perform rename on dataset if virtual file is syncing now") {
+          every { checkFileForSync(any(), any(), any()) } returns true
 
           renameAction.actionPerformed(anActionEventMock)
 

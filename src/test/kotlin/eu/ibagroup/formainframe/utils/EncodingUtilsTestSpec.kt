@@ -172,9 +172,9 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     }
     // reloadIn
     should("reload file content to new encoding") {
-      every { contentSynchronizerMock.synchronizeWithRemote(any()) } returns Unit
+      every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } returns Unit
 
-      reloadIn(null, virtualFileMock, charsetMock)
+      reloadIn(null, virtualFileMock, charsetMock, mockk())
 
       assertSoftly { isEncodingSet shouldBe true }
     }

@@ -44,6 +44,7 @@ import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.Explorer
@@ -500,22 +501,26 @@ class FileExplorerView(
             icon = AllIcons.General.QuestionDialog
           )
         ) {
+          val filteredNodeAndFilePairs = nodeAndFilePairs.filter {
+            !checkFileForSync(project, it.second, checkDependentFiles = true)
+          }
+          val filteredFiles = filteredNodeAndFilePairs.map { it.second }.toSet().toList()
           runModalTask(
-            title = "Deletion of ${files.size} file(s)",
+            title = "Deletion of ${filteredFiles.size} file(s)",
             project = project,
             cancellable = true
           ) { indicator ->
             indicator.isIndeterminate = false
             ignoreVFileDeleteEvents.compareAndSet(false, true)
-            files.map { DeleteOperation(it, dataOpsManager) }
+            filteredFiles.map { DeleteOperation(it, dataOpsManager) }
               .forEach { op ->
                 indicator.text = "Deleting file ${op.file.name}"
                 runCatching {
                   dataOpsManager.performOperation(op, indicator)
                 }.onFailure { explorer.reportThrowable(it, project) }
-                indicator.fraction = indicator.fraction + 1.0 / files.size
+                indicator.fraction = indicator.fraction + 1.0 / filteredFiles.size
               }
-            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }.distinctBy { it.path }
+            filteredNodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }.distinctBy { it.path }
               .filterIsInstance<FileFetchNode<*, *, *, *, *, *>>()
               .forEach {
                 it.cleanCache(

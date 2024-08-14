@@ -372,6 +372,9 @@ Example of how to see the output:<br/>
         <applicationService serviceInterface="eu.ibagroup.formainframe.editor.ChangeContentService"
                             serviceImplementation="eu.ibagroup.formainframe.editor.ChangeContentServiceImpl"/>
 
+        <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.content.service.SyncProcessService"
+                            serviceImplementation="eu.ibagroup.formainframe.dataops.content.service.SyncProcessServiceImpl"/>
+
         <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
                                 order="after Position"/>

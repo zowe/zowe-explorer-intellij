@@ -29,6 +29,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.FileExplorer
@@ -123,6 +124,8 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         )
         every { ussFileNode.update() } returns false
         every { ussFileNode.virtualFile } returns fileMock
+
+        mockkStatic(::checkFileForSync)
       }
 
       should("perform navigate on file") {
@@ -348,6 +351,30 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         assertSoftly { isNavigatePerformed shouldBe false }
         assertSoftly { isOnSyncSuccessTriggered shouldBe false }
         assertSoftly { isOpenFileCalled shouldBe true }
+      }
+      should("exit 'navigate' when the file is currently being synchronized ") {
+        every { checkFileForSync(any(), any(), any()) } returns true
+
+        var isNavigateContinued = false
+        mockkStatic(FileNavigator::getInstance)
+        every { FileNavigator.getInstance() } answers {
+          object : FileNavigator {
+            override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
+              isNavigateContinued = true
+              return
+            }
+
+            override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
+              return true
+            }
+          }
+        }
+
+        ussFileNode.navigate(requestFocus)
+
+        assertSoftly {
+          isNavigateContinued shouldBe false
+        }
       }
     }
 

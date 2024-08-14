@@ -27,13 +27,14 @@ import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.getMinimalCommonParents
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
+import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import org.zowe.kotlinsdk.DatasetOrganization
 import kotlin.concurrent.withLock
 
@@ -102,6 +103,12 @@ class ConflictResolution(
 }
 
 /**
+ * Sources and destinations to refresh (string representation)
+ */
+const val SOURCES = "sourcesToRefresh"
+const val DESTINATIONS = "destinationsToRefresh"
+
+/**
  * Implementation of Intellij PasteProvider.
  * Used to perform paste of files (in MF File Explorer and in Local File Explorer).
  * @author Valiantsin Krus
@@ -127,7 +134,7 @@ class ExplorerPasteProvider : PasteProvider {
   private fun getNodesToRefresh(
     operations: List<MoveCopyOperation>,
     explorerView: FileExplorerView
-  ): List<ExplorerTreeNode<*, *>> {
+  ): MutableMap<String, List<ExplorerTreeNode<*, *>>> {
     fun List<MoveCopyOperation>.collectByFile(
       fileChooser: (MoveCopyOperation) -> VirtualFile
     ): List<VirtualFile> {
@@ -138,24 +145,24 @@ class ExplorerPasteProvider : PasteProvider {
     }
 
     val destinationFilesToRefresh = operations.collectByFile { it.destination }
+
     val sourceFilesToRefresh = if (explorerView.isCut.get()) {
       operations.collectByFile { it.source }
     } else {
       emptyList()
     }
-    val destinationNodes = destinationFilesToRefresh
+    val destinationNodesToRefresh = destinationFilesToRefresh
       .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed() }
       .flatten()
       .distinct()
     return if (explorerView.isCut.get()) {
       val sourceNodesToRefresh = sourceFilesToRefresh
-        .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed().map { it.parent } }
+        .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed().map { it } }
         .flatten()
-        .filterNotNull()
         .distinct()
-      sourceNodesToRefresh.plus(destinationNodes)
+      mutableMapOf(Pair(SOURCES, sourceNodesToRefresh), Pair(DESTINATIONS, destinationNodesToRefresh))
     } else {
-      destinationNodes
+      mutableMapOf(Pair(DESTINATIONS, destinationNodesToRefresh))
     }
   }
 
@@ -164,14 +171,50 @@ class ExplorerPasteProvider : PasteProvider {
    * @param nodesToRefresh the nodes to refresh
    * @param explorerView the explorer view to clean "invalidate on expand" for nodes
    */
-  private fun refreshNodes(nodesToRefresh: List<ExplorerTreeNode<*, *>>, explorerView: FileExplorerView) {
-    nodesToRefresh
-      .forEach { node ->
-        val parentNode = node.castOrNull<FileFetchNode<*, *, *, *, *, *>>() ?: return
-        parentNode.query ?: return
-        cleanInvalidateOnExpand(parentNode, explorerView)
-        parentNode.cleanCache(cleanBatchedQuery = true).let { explorerView.myStructure.invalidate(parentNode, true) }
+  private fun refreshNodes(nodesToRefresh: MutableMap<String, List<ExplorerTreeNode<*, *>>>, explorerView: FileExplorerView) {
+    val sourcesToRefresh = nodesToRefresh[SOURCES]
+    val destinationsToRefresh = nodesToRefresh[DESTINATIONS]
+
+    if (sourcesToRefresh != null) {
+
+      sourcesToRefresh.forEach { node ->
+        if (node is UssDirNode || node is UssFileNode) {
+          // If we have SOURCES in map, that means we performed Move/Cut operation,
+          // so, in order to have appropriate nodes representation (without any error) during refresh
+          // we have to delete "moved" nodes from Virtual File System first
+          runWriteActionInEdtAndWait {
+            node.virtualFile?.let {
+              it.fileSystem.model.deleteFile(ExplorerPasteProvider::class.java, it)
+            }
+          }
+        }
       }
+
+      // get the common parent nodes for each child node in the provided SOURCES key
+      val parentNodes = sourcesToRefresh.mapNotNull { it.virtualFile }
+        .getMinimalCommonParents()
+        .map { vFile ->
+          explorerView.myFsTreeStructure.findByVirtualFile(vFile).reversed().mapNotNull { it.parent }
+        }
+        .flatten()
+        .distinct()
+
+      // TODO: Need to think about... Sometimes it looks like Swing model is not ready yet which still causes refresh to fail, but putting a little delay fixes it
+      Thread.sleep(1000).let { runParentNodesRefresh(parentNodes, explorerView) }
+    }
+
+    destinationsToRefresh?.let { runParentNodesRefresh(it, explorerView) }
+  }
+
+  private fun runParentNodesRefresh(parentNodes: List<ExplorerTreeNode<*,*>>, explorerView: FileExplorerView) {
+    parentNodes.forEach { node ->
+      val parentNode = node.castOrNull<FileFetchNode<*, *, *, *, *, *>>() ?: return@forEach
+      cleanInvalidateOnExpand(parentNode, explorerView)
+      // we have to invalidate all parent nodes before cleaning the cache
+      // to say that Swing tree model has been changed for them
+      explorerView.myStructure.invalidate(parentNode, true)
+      parentNode.cleanCache(cleanBatchedQuery = true)
+    }
   }
 
   /**
@@ -280,11 +323,13 @@ class ExplorerPasteProvider : PasteProvider {
     val draggedBuffer = dataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) ?: emptyList()
     val clipboardBuffer = copyPasteSupport.getSourceFilesFromClipboard()
     copyPasteSupport.bufferLock.withLock {
-      val sourceFilesRaw = clipboardBuffer.ifEmpty {
+      var sourceFilesRaw = clipboardBuffer.ifEmpty {
         copyPasteSupport.copyPasteBuffer
           .mapNotNull { it.file }
           .plus(draggedBuffer)
       }
+
+      sourceFilesRaw = optimizeOperation(sourceFilesRaw)
 
       val destinationSourceFilePairs = copyPasteSupport.getDestinationSourceFilePairs(
         sourceFiles = sourceFilesRaw,
@@ -318,7 +363,7 @@ class ExplorerPasteProvider : PasteProvider {
         ).let { proceed ->
           if (!proceed) {
             copyPasteSupport.removeFromBuffer { nodeData ->
-              nodeData.file?.let { fileNotNull -> sourceFiles.contains(fileNotNull) } ?: false
+              nodeData.file?.let { fileNotNull -> sourceFilesRaw.contains(fileNotNull) } ?: false
             }
             return@withLock
           }
@@ -382,7 +427,12 @@ class ExplorerPasteProvider : PasteProvider {
             val conflictResolution = conflictsResolutions
               .find { it.sourceFile == sourceFile && it.destinationFile == destFile }
             if (conflictResolution?.shouldSkip() == true) {
-              if (isDragAndDrop) {
+              val srcAttr = dataOpsManager.tryToGetAttributes(sourceFile)
+              val destAttr = dataOpsManager.tryToGetAttributes(destFile)
+              if (isDragAndDrop &&
+                (((srcAttr is RemoteMemberAttributes) && (destAttr is RemoteDatasetAttributes))
+                    || (srcAttr?.javaClass == destAttr?.javaClass))
+              ) {
                 copyPasteSupport.removeFromBuffer { it.file == sourceFile }
               }
               return@mapNotNull null
@@ -423,7 +473,6 @@ class ExplorerPasteProvider : PasteProvider {
         }
       }
 
-      val filesToMoveTotal = operations.size
       val hasLocalFilesInOperationsSources = operations.any { it.source !is MFVirtualFile }
       val hasRemoteFilesInOperationsDestinations = operations.any { it.destination is MFVirtualFile }
       val titlePrefix = if (explorerView.isCut.get()) {
@@ -438,16 +487,75 @@ class ExplorerPasteProvider : PasteProvider {
         "Copying"
       }
 
+      val (filteredOperations, excludedOperations) = operations.partition { operation ->
+        !checkFileForSync(project, operation.source, checkDependentFiles = true) &&
+            !checkFileForSync(project, operation.destination, checkDependentFiles = true)
+      }
+      excludedOperations.forEach { operation ->
+        copyPasteSupport.removeFromBuffer { nodeData -> nodeData.file == operation.source }
+      }
+      val filesToMoveTotal = filteredOperations.size
+
       runMoveOrCopyTask(
         titlePrefix,
         filesToMoveTotal,
         sourceFiles,
         isDragAndDrop,
-        operations,
+        filteredOperations,
         copyPasteSupport,
         explorerView,
         project
       )
+
+      // If it was 'Cut' operation, any conflict which was resolved by skip, should be removed from cut buffer,
+      // because we automatically exclude them from "moving/copying"
+      cleanCutBufferAfterPaste(conflictsResolutions, explorerView)
+    }
+  }
+
+  /**
+   * Optimizes copy/paste operations.
+   * Removes chils files if parent folder has been selected.
+   * Works only for remote files.
+   * @param sourceFilesRaw List of source files for operation.
+   * @return updated file list.
+   */
+  private fun optimizeOperation(sourceFilesRaw: List<VirtualFile>): List<VirtualFile> {
+    return sourceFilesRaw.filter { sourceFile ->
+      if (sourceFile.fileSystem !is MFVirtualFileSystem) return@filter true
+      if (sourceFile.parent == null) return@filter true
+      return@filter !hasParentInTheSameList(sourceFile, sourceFilesRaw)
+    }
+  }
+
+  /**
+   * Checks is file is child for one of folders/files in filesToSearch list
+   * @param file to check.
+   * @param filesToSearch list of source files.
+   */
+  private fun hasParentInTheSameList(file: VirtualFile, filesToSearch: List<VirtualFile>): Boolean {
+    val fileParentsHierarchy = mutableListOf<VirtualFile>()
+    var nextParent: VirtualFile? = file.parent
+    while (nextParent != null) {
+      fileParentsHierarchy.add(nextParent)
+      nextParent = nextParent.parent
+    }
+    return filesToSearch.find { fileParentsHierarchy.contains(it) } != null
+  }
+
+  /**
+   * Function removes source files from cut buffer during Move/Copy operation which were resolved by skip
+   */
+  private fun cleanCutBufferAfterPaste(resolutions: List<ConflictResolution>, explorerView: FileExplorerView) {
+    resolutions.filter { it.shouldSkip() }.forEach {
+      if (explorerView.isCut.get()) {
+        val vFiles = it.sourceFile.getAncestorNodes()
+        explorerView.copyPasteSupport.apply {
+          removeFromBuffer { nodeData ->
+            nodeData.file?.let { file -> vFiles.contains(file) } ?: false
+          }
+        }
+      }
     }
   }
 

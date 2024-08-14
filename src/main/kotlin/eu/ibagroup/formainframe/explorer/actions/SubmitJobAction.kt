@@ -21,8 +21,7 @@ import eu.ibagroup.formainframe.analytics.events.JobEvent
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
-import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
+import eu.ibagroup.formainframe.dataops.content.synchronizer.*
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitFilePathOperationParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
@@ -57,9 +56,10 @@ class SubmitJobAction : AnAction() {
 
     val requestData = getRequestDataForNode(node)
     if (requestData != null) {
+      val file = requestData.first
+      if (checkFileForSync(e.project, file)) return
       runBackgroundableTask("Preparing for job submission") {
         val dataOpsManager = service<DataOpsManager>()
-        val file = requestData.first
         if (service<ConfigService>().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
           contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)
