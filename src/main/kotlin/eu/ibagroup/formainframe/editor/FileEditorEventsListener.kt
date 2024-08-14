@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
 import eu.ibagroup.formainframe.dataops.content.synchronizer.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -69,7 +70,7 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
       val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
       val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
       val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-      if (!(currentContent contentEquals previousContent) && needToUpload) {
+      if (!(currentContent contentEquals previousContent) && needToUpload && !isFileSyncingNow(file)) {
         val incompatibleEncoding = !checkEncodingCompatibility(file, project)
         if (!configService.isAutoSyncEnabled) {
           if (showSyncOnCloseDialog(file.name, project)) {
@@ -81,7 +82,7 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
               project = project,
               cancellable = true
             ) {
-              runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+              runInEdtAndWait { syncProvider.saveDocument() }
               contentSynchronizer?.synchronizeWithRemote(syncProvider, it)
             }
           }

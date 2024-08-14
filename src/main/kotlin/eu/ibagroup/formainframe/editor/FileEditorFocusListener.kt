@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.isComponentUnderMouse
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
 import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListener
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy

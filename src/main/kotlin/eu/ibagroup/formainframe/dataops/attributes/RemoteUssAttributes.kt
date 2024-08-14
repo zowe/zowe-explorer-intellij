@@ -12,6 +12,8 @@ package eu.ibagroup.formainframe.dataops.attributes
 
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.getOwner
+import eu.ibagroup.formainframe.config.connect.getUsername
+import eu.ibagroup.formainframe.config.connect.tryToExtractOwnerFromConfig
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import eu.ibagroup.formainframe.utils.Copyable
 import eu.ibagroup.formainframe.utils.castOrNull
@@ -118,7 +120,7 @@ data class RemoteUssAttributes(
   val isWritable: Boolean
     get() {
       val hasFileOwnerInRequesters = requesters.any {
-        runCatching { getOwner(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
+        runCatching { tryToExtractOwnerFromConfig(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
       }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner

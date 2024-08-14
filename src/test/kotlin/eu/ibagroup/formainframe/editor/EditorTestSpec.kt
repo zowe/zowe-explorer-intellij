@@ -38,6 +38,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
 import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListener
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
@@ -139,6 +140,8 @@ class EditorTestSpec : WithApplicationShouldSpec({
       every { autoSyncFileListenerMock.sync(virtualFileMock) } returns Unit
       autoSyncFileListenerMock
     }
+
+    mockkStatic(::isFileSyncingNow)
 
     beforeEach {
       every { editorComponentMock.isComponentUnderMouse() } returns false
@@ -255,6 +258,15 @@ class EditorTestSpec : WithApplicationShouldSpec({
     }
     should("not perform auto file sync when file upload is not needed") {
       every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns false
+
+      fileEditorFocusListener.focusLost(editorMock, focusEventMock)
+
+      assertSoftly { isSynced shouldBe false }
+    }
+    should("not perform auto file sync when file is syncing now") {
+      currentBytes = byteArrayOf(116, 101, 120, 116, 33)
+
+      every { isFileSyncingNow(any()) } returns true
 
       fileEditorFocusListener.focusLost(editorMock, focusEventMock)
 

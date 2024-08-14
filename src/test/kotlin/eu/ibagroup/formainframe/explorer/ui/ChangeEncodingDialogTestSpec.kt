@@ -17,10 +17,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingUtil.Magic8
 import eu.ibagroup.formainframe.common.message
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -59,6 +61,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
 
     lateinit var changeEncodingDialog: ChangeEncodingDialog
     var expectedExitCode = 0
+    var isSynced = false
 
     val projectMock = mockk<Project>()
 
@@ -98,7 +101,11 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     val showDialogRef: (String, String, Array<String>, Int, Icon) -> Int = Messages::showDialog
     mockkStatic(showDialogRef as KFunction<*>)
 
-    every { contentSynchronizerMock.synchronizeWithRemote(any()) } returns Unit
+    mockkObject(ConfigService)
+
+    every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
+      isSynced = true
+    }
 
     every { attributesMock.charset = charsetMock } returns Unit
 
@@ -110,9 +117,13 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     mockkStatic(ProjectManager::getInstance)
     every { ProjectManager.getInstance() } returns projectManagerMock
 
+    mockkObject(MessageDialogBuilder.Companion)
+
     beforeEach {
       safeToReload = Magic8.ABSOLUTELY
       safeToConvert = Magic8.ABSOLUTELY
+
+      isSynced = false
 
       dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
@@ -142,6 +153,14 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       every { changeEncodingDialog["close"](any<Int>()) } answers {
         expectedExitCode = firstArg<Int>()
         this
+      }
+
+      every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns false
+      every { ConfigService.instance.isAutoSyncEnabled } returns true
+
+      every { MessageDialogBuilder.yesNo(any<String>(), any<String>()) } returns mockk {
+        every { asWarning() } returns this
+        every { ask(any<Project>()) } returns true
       }
     }
 
@@ -186,6 +205,17 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     should("create actions when conversion is disabled") {
       every { projectManagerMock.openProjects } returns arrayOf(mockk(), mockk())
 
+      changeEncodingDialog = spyk(
+        ChangeEncodingDialog(
+          projectMock,
+          virtualFileMock,
+          attributesMock,
+          charsetMock,
+          safeToReload,
+          safeToConvert
+        )
+      )
+
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       val actualConvertAction = actions?.get(1)
 
@@ -220,27 +250,71 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       assertSoftly { icon2 shouldBe AllIcons.General.Warning }
     }
     // reloadAction
-    should("run reload action when sync is needed") {
+    should("run reload action when sync is needed and auto sync is enabled") {
       every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns true
 
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
-      assertSoftly { expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE }
+      assertSoftly {
+        isSynced shouldBe true
+        expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE
+      }
+    }
+    should("run reload action when sync is needed and user wants to sync it") {
+      every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns true
+
+      mockkStatic(::reloadIn)
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
+
+      every { ConfigService.instance.isAutoSyncEnabled } returns false
+
+      val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
+      val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
+      reloadAction?.actionPerformed(actionEventMock)
+
+      assertSoftly {
+        isSynced shouldBe true
+        expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE
+      }
+    }
+    should("run reload action when sync is needed but user doesn't want to sync it") {
+      every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns true
+
+      mockkStatic(::reloadIn)
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
+
+      every { ConfigService.instance.isAutoSyncEnabled } returns false
+      every { MessageDialogBuilder.yesNo(any<String>(), any<String>()) } returns mockk {
+        every { asWarning() } returns this
+        every { ask(any<Project>()) } returns false
+      }
+
+      val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
+      val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
+      reloadAction?.actionPerformed(actionEventMock)
+
+      assertSoftly {
+        isSynced shouldBe false
+        expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE
+      }
     }
     should("run reload action when sync is not needed") {
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       val actions = createActionsRef.invoke(changeEncodingDialog).castOrNull<Array<Action>>()
       val reloadAction = actions?.first { it.getValue(Action.NAME) == IdeBundle.message("button.reload") }
       reloadAction?.actionPerformed(actionEventMock)
 
-      assertSoftly { expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE }
+      assertSoftly {
+        isSynced shouldBe false
+        expectedExitCode shouldBe ChangeEncodingDialog.RELOAD_EXIT_CODE
+      }
     }
     should("run reload action when content synchronizer is null") {
       dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl(explorerMock.componentManager) {
@@ -249,19 +323,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
         }
       }
 
-      changeEncodingDialog = spyk(
-        ChangeEncodingDialog(
-          projectMock,
-          virtualFileMock,
-          attributesMock,
-          charsetMock,
-          safeToReload,
-          safeToConvert
-        )
-      )
-
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       every { changeEncodingDialog["close"](any<Int>()) } answers {
         expectedExitCode = firstArg<Int>()
@@ -293,7 +356,7 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
       } returns 0
 
       mockkStatic(::reloadIn)
-      every { reloadIn(any(), virtualFileMock, charsetMock) } returns Unit
+      every { reloadIn(any(), virtualFileMock, charsetMock, any()) } returns Unit
 
       every { changeEncodingDialog["close"](any<Int>()) } answers {
         expectedExitCode = firstArg<Int>()

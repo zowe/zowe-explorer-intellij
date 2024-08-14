@@ -22,7 +22,7 @@ import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.runIfTrue
-import eu.ibagroup.formainframe.utils.runWriteActionOnWriteThread
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.set
@@ -109,10 +109,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
     progressIndicator: ProgressIndicator
   ): List<File> {
     val fetched = fetchResponse(query, progressIndicator)
-    return runWriteActionOnWriteThread {
-      fetched.mapNotNull {
-        convertResponseToFile(it)
-      }
+    return fetched.mapNotNull {
+      convertResponseToFile(it)
     }
   }
 
@@ -174,7 +172,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
         }
         ?.toList()
         ?.apply {
-          runWriteActionOnWriteThread {
+          runWriteActionInEdtAndWait {
             forEach { cleanupUnusedFile(it, query) }
           }
         }

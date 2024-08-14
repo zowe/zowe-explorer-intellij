@@ -11,10 +11,10 @@
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
+import eu.ibagroup.formainframe.utils.runInEdtAndWait
 
 /**
  * Functional interface to decide if file content can be uploaded or should be updated from mainframe.
@@ -41,8 +41,9 @@ fun interface SaveStrategy {
       remoteLastSame: Boolean
     ): Boolean {
       return if (!remoteLastSame) {
-        invokeAndWaitIfNeeded {
-          showYesNoDialog(
+        var result = shouldUpload
+        runInEdtAndWait {
+          result = showYesNoDialog(
             title = "Remote Conflict in File ${file.name}",
             message = "The file you are currently editing was changed on remote. Do you want to accept remote changes and discard local ones, or overwrite content on the mainframe by local version?",
             noText = "Accept Remote",
@@ -51,6 +52,7 @@ fun interface SaveStrategy {
             icon = AllIcons.General.WarningDialog
           )
         }
+        result
       } else {
         shouldUpload
       }

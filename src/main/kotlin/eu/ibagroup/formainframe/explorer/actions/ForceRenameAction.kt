@@ -24,6 +24,7 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.ForceRenameOperation
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.Explorer
@@ -55,6 +56,7 @@ class ForceRenameAction : AnAction() {
     if (selectedNode.node is UssDirNode || selectedNode.node is UssFileNode) {
       val attributes = selectedNode.attributes as RemoteUssAttributes
       val file = selectedNode.file as MFVirtualFile
+      if (checkFileForSync(e.project, file, checkDependentFiles = true)) return
       val type = if (attributes.isDirectory) {
         "Directory"
       } else {
