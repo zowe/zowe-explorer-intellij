@@ -18,6 +18,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
@@ -138,7 +139,12 @@ fun inspectSafeEncodingChange(virtualFile: VirtualFile, charset: Charset): Encod
  * Change file encoding action that invokes the change encoding dialog.
  * @return true if changed or false otherwise.
  */
-fun changeFileEncodingAction(project: Project?, virtualFile: VirtualFile, attributes: RemoteUssAttributes, charset: Charset): Boolean {
+fun changeFileEncodingAction(
+  project: Project?,
+  virtualFile: VirtualFile,
+  attributes: RemoteUssAttributes,
+  charset: Charset
+): Boolean {
   val encodingInspection = inspectSafeEncodingChange(virtualFile, charset)
   val safeToReload = encodingInspection.safeToReload
   val safeToConvert = encodingInspection.safeToConvert
@@ -234,7 +240,7 @@ fun showSaveAnywayDialog(charset: Charset): Boolean {
   val result = Messages.showDialog(
     XmlStringUtil.wrapInHtml(
       IdeBundle.message("encoding.unsupported.characters.message", charset.displayName()) +
-      "<br><br>Content may change after saving."
+        "<br><br>Content may change after saving."
     ),
     IdeBundle.message("incompatible.encoding.dialog.title", charset.displayName()),
     arrayOf("Save Anyway", CommonBundle.getCancelButtonText()),

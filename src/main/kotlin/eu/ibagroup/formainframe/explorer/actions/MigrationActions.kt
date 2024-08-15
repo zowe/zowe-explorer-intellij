@@ -32,6 +32,7 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
