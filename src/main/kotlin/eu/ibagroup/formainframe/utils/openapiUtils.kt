@@ -11,7 +11,10 @@
 package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -181,13 +184,13 @@ fun runInEdtAndWait(runnable: () -> Unit) {
   ApplicationManager.getApplication().invokeAndWait(runnable)
 }
 
-inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
+fun runWriteActionInEdt(block: () -> Unit) {
   runInEdt {
     runWriteAction(block)
   }
 }
 
-inline fun runWriteActionInEdtAndWait(crossinline block: () -> Unit) {
+fun runWriteActionInEdtAndWait(block: () -> Unit) {
   runInEdtAndWait {
     runWriteAction(block)
   }
