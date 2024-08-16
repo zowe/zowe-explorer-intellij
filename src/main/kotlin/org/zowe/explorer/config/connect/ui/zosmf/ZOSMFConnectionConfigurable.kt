@@ -34,7 +34,7 @@ import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
-import org.zowe.explorer.utils.runWriteActionOnWriteThread
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.utils.toMutableList
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
@@ -98,7 +98,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
       val zoweConfig = parseConfigJson(configFile.inputStream)
       zoweConfig.extractSecureProperties(configFile.path.split("/").toTypedArray())
       zoweConfig.updateFromState(state)
-      runWriteActionOnWriteThread {
+      runWriteActionInEdtAndWait {
         zoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
         configFile.setBinaryContent(zoweConfig.toJson().toByteArray(configFile.charset))
       }
@@ -298,7 +298,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   /** Check are the Credentials and Connections sandboxes modified */
   override fun isModified(): Boolean {
     return isSandboxModified<Credentials>()
-        || isSandboxModified<ConnectionConfig>()
+      || isSandboxModified<ConnectionConfig>()
   }
 
   override fun cancel() {
