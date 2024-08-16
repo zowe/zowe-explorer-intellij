@@ -380,6 +380,9 @@ Thank you for considering IBA Group for your mainframe needs.
         <projectService serviceInterface="org.zowe.explorer.zowe.service.ZoweConfigService"
                         serviceImplementation="org.zowe.explorer.zowe.service.ZoweConfigServiceImpl"/>
 
+        <applicationService serviceInterface="org.zowe.explorer.dataops.content.service.SyncProcessService"
+                            serviceImplementation="org.zowe.explorer.dataops.content.service.SyncProcessServiceImpl"/>
+
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
                                 order="after positionWidget"/>

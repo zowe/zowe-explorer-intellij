@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.content.service.isFileSyncingNow
 import org.zowe.explorer.dataops.content.synchronizer.*
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -81,7 +82,7 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
       val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
       val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
       val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-      if (!(currentContent contentEquals previousContent) && needToUpload) {
+      if (!(currentContent contentEquals previousContent) && needToUpload && !isFileSyncingNow(file)) {
         val incompatibleEncoding = !checkEncodingCompatibility(file, project)
         if (!configService.isAutoSyncEnabled) {
           if (showSyncOnCloseDialog(file.name, project)) {
@@ -93,7 +94,7 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
               project = project,
               cancellable = true
             ) {
-              runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+              runInEdtAndWait { syncProvider.saveDocument() }
               contentSynchronizer?.synchronizeWithRemote(syncProvider, it)
             }
           }

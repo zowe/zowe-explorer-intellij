@@ -22,7 +22,7 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.content.synchronizer.AutoSyncFileListener
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.explorer.UIComponentManager
-import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.explorer.utils.subscribe
 
 /** Explorer window. This is the main class to represent the plugin */
@@ -53,7 +53,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
           runBackgroundableTask("Synchronizing file ${file.name} with mainframe") { indicator ->
             val syncProvider = DocumentedSyncProvider(file)
-            runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+            runInEdtAndWait { syncProvider.saveDocument() }
             contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
           }
         }

@@ -30,6 +30,7 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SyncProvider
+import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.explorer.FileExplorer
@@ -124,6 +125,8 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         )
         every { ussFileNode.update() } returns false
         every { ussFileNode.virtualFile } returns fileMock
+
+        mockkStatic(::checkFileForSync)
       }
 
       should("perform navigate on file") {
@@ -349,6 +352,30 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         assertSoftly { isNavigatePerformed shouldBe false }
         assertSoftly { isOnSyncSuccessTriggered shouldBe false }
         assertSoftly { isOpenFileCalled shouldBe true }
+      }
+      should("exit 'navigate' when the file is currently being synchronized ") {
+        every { checkFileForSync(any(), any(), any()) } returns true
+
+        var isNavigateContinued = false
+        mockkStatic(FileNavigator::getInstance)
+        every { FileNavigator.getInstance() } answers {
+          object : FileNavigator {
+            override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
+              isNavigateContinued = true
+              return
+            }
+
+            override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
+              return true
+            }
+          }
+        }
+
+        ussFileNode.navigate(requestFocus)
+
+        assertSoftly {
+          isNavigateContinued shouldBe false
+        }
       }
     }
 

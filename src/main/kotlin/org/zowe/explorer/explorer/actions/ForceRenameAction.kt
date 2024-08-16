@@ -20,6 +20,7 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.ForceRenameOperation
 import org.zowe.explorer.dataops.operations.RenameOperation
 import org.zowe.explorer.explorer.Explorer
@@ -40,6 +41,7 @@ class ForceRenameAction : AnAction() {
     if (selectedNode.node is UssDirNode || selectedNode.node is UssFileNode) {
       val attributes = selectedNode.attributes as RemoteUssAttributes
       val file = selectedNode.file as MFVirtualFile
+      if (checkFileForSync(e.project, file, checkDependentFiles = true)) return
       val type = if (attributes.isDirectory) {
         "Directory"
       } else {

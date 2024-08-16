@@ -4,6 +4,8 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## [1.2.1-221] (2024-06-12)
 
+## [1.2.1-221] (2024-06-12)
+
 ### Features
 
 * Feature: Change dialogs as DoNotAskOption is going to be removed soon ([0d6b5d57](https://github.com/zowe/zowe-explorer-intellij/commit/0d6b5d57))

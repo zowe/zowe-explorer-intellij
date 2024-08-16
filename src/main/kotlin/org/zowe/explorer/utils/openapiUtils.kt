@@ -118,34 +118,6 @@ fun <L : Any> subscribe(topic: Topic<L>, handler: L, project: Project) = project
 /** Asserts whether write access is allowed */
 fun assertWriteAllowed() = ApplicationManager.getApplication().assertWriteAccessAllowed()
 
-/**
- * Schedule the given task's execution, or cancel the task if it's no longer needed.
- * Gives the result of the executed task
- */
-fun <T> submitOnWriteThread(block: () -> T): T {
-  @Suppress("UnstableApiUsage")
-  return AppUIExecutor.onWriteThread(ModalityState.defaultModalityState()).submit(block).get()
-}
-
-@Suppress("UnstableApiUsage")
-inline fun <T> runWriteActionOnWriteThread(crossinline block: () -> T): T {
-  val app = ApplicationManager.getApplication()
-  return if (app.isWriteThread) {
-    if (app.isWriteAccessAllowed) {
-      block()
-    } else {
-      runWriteAction(block)
-    }
-  } else
-    submitOnWriteThread {
-      runWriteAction(block)
-    }
-}
-
-inline fun <T> runReadActionInEdtAndWait(crossinline block: () -> T): T {
-  return invokeAndWaitIfNeeded { runReadAction(block) }
-}
-
 inline fun <reified S : Any> ComponentManager.service(): S {
   return getService(S::class.java)
 }
@@ -205,6 +177,10 @@ inline fun <reified T> runTask(
   })
 }
 
+fun runInEdtAndWait(runnable: () -> Unit) {
+  ApplicationManager.getApplication().invokeAndWait(runnable)
+}
+
 inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
   runInEdt {
     runWriteAction(block)
@@ -212,7 +188,7 @@ inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
 }
 
 inline fun runWriteActionInEdtAndWait(crossinline block: () -> Unit) {
-  invokeAndWaitIfNeeded {
+  runInEdtAndWait {
     runWriteAction(block)
   }
 }

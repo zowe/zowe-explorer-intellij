@@ -188,7 +188,7 @@ private fun notifyError(th: Throwable, title: String) {
 }
 
 private val unsupportedEncodings = listOf(
-  "GBK", "x-IBM300"
+  "GBK", "x-IBM300", "UTF-16"
 )
 
 /**

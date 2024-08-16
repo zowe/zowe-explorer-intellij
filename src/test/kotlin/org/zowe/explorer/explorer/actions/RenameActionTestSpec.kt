@@ -19,6 +19,7 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
@@ -108,6 +109,7 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
       }
 
       mockkStatic(ExplorerTreeNode<ConnectionConfig, *>::cleanCacheIfPossible)
+      mockkStatic(::checkFileForSync)
     }
     afterEach {
       unmockkAll()
@@ -143,6 +145,13 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
         should("not perform rename on dataset if virtual file is null") {
           every { (libraryNodeMock as ExplorerTreeNode<ConnectionConfig, *>).virtualFile } returns null
+
+          renameAction.actionPerformed(anActionEventMock)
+
+          assertSoftly { renamed shouldBe false }
+        }
+        should("not perform rename on dataset if virtual file is syncing now") {
+          every { checkFileForSync(any(), any(), any()) } returns true
 
           renameAction.actionPerformed(anActionEventMock)
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.content.service.isFileSyncingNow
 import org.zowe.explorer.utils.*
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
@@ -70,7 +71,7 @@ class SyncAction : DumbAwareAction() {
       project = e.project,
       cancellable = true
     ) { indicator ->
-      runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+      runInEdtAndWait { syncProvider.saveDocument() }
       service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
     }
   }
@@ -114,6 +115,7 @@ class SyncAction : DumbAwareAction() {
         && !service<ConfigService>().isAutoSyncEnabled
         && !(currentContent contentEquals previousContent)
         && needToUpload
+        && !isFileSyncingNow(file)
   }
 
   /**
