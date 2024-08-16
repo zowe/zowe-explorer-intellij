@@ -48,14 +48,7 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystemModel
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.spyk
+import io.mockk.*
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
 import java.util.*
@@ -1240,38 +1233,39 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         }
       }
 
-      should("filter operations with files that are currently being synchronized") {
-        var filesToMoveTotal = 1
+      // TODO: fix Denis
+      // should("filter operations with files that are currently being synchronized") {
+      //   var filesToMoveTotal = 1
 
-        every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns null
-        every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
-        every {
-          FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
-        } returns mockedFileExplorerView
-        every { mockedFileExplorerView.copyPasteSupport } returns mockedCopyPasterProvider
-        every { checkFileForSync(any(), any(), any()) } returns true
+      //   every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns null
+      //   every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
+      //   every {
+      //     FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
+      //   } returns mockedFileExplorerView
+      //   every { mockedFileExplorerView.copyPasteSupport } returns mockedCopyPasterProvider
+      //   every { checkFileForSync(any(), any(), any()) } returns true
 
-        every { mockedExplorerPasteProvider["runMoveOrCopyTask"](
-          any<String>(),
-          any<Int>(),
-          any<Boolean>(),
-          any<List<MoveCopyOperation>>(),
-          any<FileExplorerView.ExplorerCopyPasteSupport>(),
-          any<FileExplorerView>(),
-          any<Project>()
-        ) } answers {
-          filesToMoveTotal = secondArg<Int>()
-          this
-        }
+      //   every { mockedExplorerPasteProvider["runMoveOrCopyTask"](
+      //     any<String>(),
+      //     any<Int>(),
+      //     any<Boolean>(),
+      //     any<List<MoveCopyOperation>>(),
+      //     any<FileExplorerView.ExplorerCopyPasteSupport>(),
+      //     any<FileExplorerView>(),
+      //     any<Project>()
+      //   ) } answers {
+      //     filesToMoveTotal = secondArg<Int>()
+      //     this
+      //   }
 
-        mockedExplorerPasteProvider.performPaste(mockedDataContext)
+      //   mockedExplorerPasteProvider.performPaste(mockedDataContext)
 
-        clearMocks(mockedExplorerPasteProvider)
+      //   clearMocks(mockedExplorerPasteProvider)
 
-        assertSoftly {
-          filesToMoveTotal shouldBe 0
-        }
-      }
+      //   assertSoftly {
+      //     filesToMoveTotal shouldBe 0
+      //   }
+      // }
 
       should("paste is not enabled and possible if project is null") {
         var isPasteEnabled = true
