@@ -14,7 +14,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.utils.runInEdtAndWait
+import org.zowe.explorer.utils.runInEdtAndWait
 
 /**
  * Functional interface to decide if file content can be uploaded or should be updated from mainframe.

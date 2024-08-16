@@ -15,11 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.dataops.content.service.SyncProcessService
-import eu.ibagroup.formainframe.dataops.content.service.areDependentFilesSyncingNow
-import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
-import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
-import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.dataops.content.service.SyncProcessService
+import org.zowe.explorer.dataops.content.service.areDependentFilesSyncingNow
+import org.zowe.explorer.dataops.content.service.isFileSyncingNow
+import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*

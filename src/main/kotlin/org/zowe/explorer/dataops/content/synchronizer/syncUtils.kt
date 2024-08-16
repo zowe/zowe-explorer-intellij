@@ -13,8 +13,8 @@ package org.zowe.explorer.dataops.content.synchronizer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.dataops.content.service.areDependentFilesSyncingNow
-import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
+import org.zowe.explorer.dataops.content.service.areDependentFilesSyncingNow
+import org.zowe.explorer.dataops.content.service.isFileSyncingNow
 import java.nio.charset.Charset
 
 private const val NEW_LINE = "\n"

@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.dataops.content.service
+package org.zowe.explorer.dataops.content.service
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VfsUtilCore
