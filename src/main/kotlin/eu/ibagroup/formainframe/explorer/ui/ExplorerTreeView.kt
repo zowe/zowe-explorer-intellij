@@ -49,12 +49,8 @@ import eu.ibagroup.formainframe.explorer.ExplorerListener
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.UNITS_CHANGED
 import eu.ibagroup.formainframe.explorer.WorkingSet
-import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
-import eu.ibagroup.formainframe.utils.getAncestorNodes
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.rwLocked
-import eu.ibagroup.formainframe.utils.subscribe
 import eu.ibagroup.formainframe.vfs.MFBulkFileListener
 import eu.ibagroup.formainframe.vfs.MFVFilePropertyChangeEvent
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem

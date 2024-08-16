@@ -25,11 +25,9 @@ import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import org.zowe.kotlinsdk.*
 import org.zowe.kotlinsdk.annotations.ZVersion
 
-const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 8
+const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 7
 const val WHO_AM_I: String = "oshell whoami"
 val LOGGER = logger<ConnectionDialog>()
-
-const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 7
 
 /**
  * Sends TSO request "oshell whoami", with which it receives the name of the real user (owner) of the system.
