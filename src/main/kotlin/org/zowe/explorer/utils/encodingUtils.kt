@@ -165,7 +165,7 @@ fun createCharsetsActionGroup(virtualFile: VirtualFile, attributes: RemoteUssAtt
         super.update(e)
       }
 
-      override fun getActionUpdateThread() = ActionUpdateThread.EGT
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
   }
 
