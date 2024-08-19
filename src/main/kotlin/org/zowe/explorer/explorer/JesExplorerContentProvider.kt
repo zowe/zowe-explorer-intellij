@@ -13,6 +13,7 @@ package org.zowe.explorer.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.ui.ExplorerTreeView
@@ -30,17 +31,18 @@ class JesExplorerContentProviderFactory : ExplorerContentProviderFactory<Connect
 
 /** Class to provide content for JES Explorer */
 class JesExplorerContentProvider : ExplorerContentProviderBase<ConnectionConfig, JesExplorer>(
-  contextMenu = ActionManager.getInstance().getAction("org.zowe.explorer.actions.JESContextMenuGroup") as ActionGroup
+  contextMenu = ActionManager.getInstance()
+    .getAction("org.zowe.explorer.actions.JESContextMenuGroup") as ActionGroup
 ) {
 
-  override val explorer: JesExplorer = UIComponentManager.INSTANCE.getExplorer(JesExplorer::class.java)
+  override val explorer: JesExplorer = service<UIComponentManager>().getExplorer(JesExplorer::class.java)
   override val displayName: String = "JES Explorer"
   override val isLockable: Boolean = false
   override val actionGroup: ActionGroup = ActionManager.getInstance().getAction("org.zowe.explorer.actions.JESActionBarGroup") as ActionGroup
   override val place: String = "JES Explorer"
   private val jesExplorerViews = mutableMapOf<Project, JesExplorerView>()
 
-  override fun getExplorerView(project: Project): ExplorerTreeView<*, *, *>?  {
+  override fun getExplorerView(project: Project): ExplorerTreeView<*, *, *>? {
     return jesExplorerViews[project]
   }
 

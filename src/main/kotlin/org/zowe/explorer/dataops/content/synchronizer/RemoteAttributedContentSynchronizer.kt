@@ -20,6 +20,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.content.service.SyncProcessService
+import org.zowe.explorer.dataops.content.service.isFileSyncingNow
 import org.zowe.explorer.editor.FileContentChangeListener
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.vfs.MFBulkFileListener
@@ -132,7 +134,15 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   ) {
     runCatching {
       log.info("Starting synchronization for file ${syncProvider.file.name}.")
+      if (isFileSyncingNow(syncProvider.file)) {
+        log.info("Synchronization is interrupted because it is already running for file ${syncProvider.file.name}.")
+        return
+      }
       progressIndicator?.text = "Synchronizing file ${syncProvider.file.name} with mainframe"
+      progressIndicator?.let {
+        SyncProcessService.instance.startFileSync(syncProvider.file, it)
+      }
+
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
       val ussAttributes = attributes.castOrNull<RemoteUssAttributes>()
@@ -177,6 +187,9 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       }
       .onFailure {
         syncProvider.onThrowable(it)
+      }
+      .also {
+        SyncProcessService.instance.stopFileSync(syncProvider.file)
       }
   }
 

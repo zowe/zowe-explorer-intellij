@@ -11,15 +11,10 @@
 package org.zowe.explorer.explorer
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 
 /** UI component manager service interface */
 interface UIComponentManager : Disposable {
-
-  companion object {
-    val INSTANCE = ApplicationManager.getApplication().getService(UIComponentManager::class.java)
-  }
 
   fun getExplorerContentProviders(): List<ExplorerContentProvider<*, *>>
 

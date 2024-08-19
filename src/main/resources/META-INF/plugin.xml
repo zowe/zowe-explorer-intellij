@@ -371,7 +371,8 @@ Thank you for considering IBA Group for your mainframe needs.
                             testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.explorer.UIComponentManager"
-                            serviceImplementation="org.zowe.explorer.explorer.UIComponentManagerImpl"/>
+                            serviceImplementation="org.zowe.explorer.explorer.UIComponentManagerImpl"
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager"/>
 
         <applicationService serviceInterface="org.zowe.explorer.dataops.services.ErrorSeparatorService"
                             serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"/>
@@ -381,6 +382,9 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <projectService serviceInterface="org.zowe.explorer.zowe.service.ZoweConfigService"
                         serviceImplementation="org.zowe.explorer.zowe.service.ZoweConfigServiceImpl"/>
+
+        <applicationService serviceInterface="org.zowe.explorer.dataops.content.service.SyncProcessService"
+                            serviceImplementation="org.zowe.explorer.dataops.content.service.SyncProcessServiceImpl"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"

@@ -17,8 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
-import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
+import org.zowe.explorer.dataops.content.synchronizer.*
 import org.zowe.explorer.dataops.operations.jobs.SubmitFilePathOperationParams
 import org.zowe.explorer.dataops.operations.jobs.SubmitJobOperation
 import org.zowe.explorer.explorer.ui.FileExplorerView
@@ -52,9 +51,10 @@ class SubmitJobAction : AnAction() {
 
     val requestData = getRequestDataForNode(node)
     if (requestData != null) {
+      val file = requestData.first
+      if (checkFileForSync(e.project, file)) return
       runBackgroundableTask("Preparing for job submission") {
         val dataOpsManager = service<DataOpsManager>()
-        val file = requestData.first
         if (service<ConfigService>().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
           contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)

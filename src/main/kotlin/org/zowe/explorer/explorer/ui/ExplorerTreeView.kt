@@ -399,7 +399,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
         val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(openFile)
         val syncProvider = DocumentedSyncProvider(openFile)
         contentSynchronizer?.markAsNotNeededForSync(syncProvider)
-        runWriteActionInEdtAndWait {
+        runInEdtAndWait {
           fileEditorManager.closeFile(openFile)
         }
       }

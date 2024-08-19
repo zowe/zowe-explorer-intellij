@@ -94,7 +94,7 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       setCreatedFileParams(createdFileJava, sourceFile)
     }
     createdFileJava.writeBytes(sourceContent)
-    runReadActionInEdtAndWait {
+    runInEdtAndWait {
       destFile.refresh(false, false)
     }
     return null
