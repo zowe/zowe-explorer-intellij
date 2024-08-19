@@ -25,7 +25,7 @@ import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import org.zowe.kotlinsdk.*
 import org.zowe.kotlinsdk.annotations.ZVersion
 
-const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 7
+const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 8
 const val WHO_AM_I: String = "oshell whoami"
 val LOGGER = logger<ConnectionDialog>()
 
