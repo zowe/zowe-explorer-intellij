@@ -145,7 +145,6 @@ class ConnectionDialog(
               runCatching {
                 service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
               }.onSuccess {
-                state.owner = whoAmI(newTestedConnConfig) ?: ""
                 val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
                 state.zVersion = when (systemInfo.zosVersion) {
                   "04.25.00" -> ZVersion.ZOS_2_2
@@ -154,6 +153,7 @@ class ConnectionDialog(
                   "04.28.00" -> ZVersion.ZOS_2_5
                   else -> ZVersion.ZOS_2_1
                 }
+                newTestedConnConfig.zVersion = state.zVersion
               }.onFailure {
                 throw it
               }

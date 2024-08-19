@@ -11,13 +11,13 @@ package workingset.auxiliary.components.dialogs
 
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.search.locators.Locator
+import workingset.Constants.remoteRobotUrl
 import workingset.DELETION_OF_USS_PATH_ROOT
-import workingset.REMOTE_ROBOT_URL
 
 class DeletionOfUssPathRoot (fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) :AbstractDialog(fixtureStack, remoteRobot) {
 
     override var dialogTitle: String = DELETION_OF_USS_PATH_ROOT
 
-    constructor() : this(mutableListOf<Locator>(), RemoteRobot(REMOTE_ROBOT_URL))
+    constructor() : this(mutableListOf<Locator>(), RemoteRobot(remoteRobotUrl))
 
 }

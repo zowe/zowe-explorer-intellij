@@ -234,9 +234,6 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.RenameOperationRunnerFactory"/>
 
-        <operationRunner
-                implementation="org.zowe.explorer.dataops.operations.mover.ForceRenameOperationRunnerFactory"/>
-
         <operationRunner implementation="org.zowe.explorer.dataops.operations.InfoOperationRunnerFactory"/>
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.ZOSInfoOperationRunnerFactory"/>
@@ -568,13 +565,6 @@ Thank you for considering IBA Group for your mainframe needs.
             <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
         </action>
 
-        <action id="org.zowe.explorer.explorer.actions.ForceRenameAction"
-                class="org.zowe.explorer.explorer.actions.ForceRenameAction"
-                text="Force Rename"
-                use-shortcut-of="ForceRefresh">
-            <keyboard-shortcut first-keystroke="shift F2" keymap="$default"/>
-        </action>
-
         <action id="org.zowe.explorer.explorer.actions.DuplicateMemberAction"
                 class="org.zowe.explorer.explorer.actions.DuplicateMemberAction"
                 text="Duplicate"
@@ -779,7 +769,6 @@ Thank you for considering IBA Group for your mainframe needs.
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.EditFilesWorkingSetAction"/>
             <reference id="org.zowe.explorer.explorer.actions.RenameAction"/>
-            <reference id="org.zowe.explorer.explorer.actions.ForceRenameAction"/>
             <reference id="org.zowe.explorer.explorer.actions.EditMaskAction"/>
             <reference id="org.zowe.explorer.explorer.actions.DuplicateMemberAction"/>
             <separator/>

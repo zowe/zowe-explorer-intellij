@@ -30,11 +30,6 @@ class ExplorerTestSpec : WithApplicationShouldSpec({
     should("get dataset member properties") {}
     should("get USS file properties") {}
   }
-  context("explorer module: actions/ForceRenameAction") {
-    // actionPerformed
-    should("perform force rename on USS file") {}
-    should("not rename dataset") {}
-  }
   context("explorer module: actions/ChangeContentModeAction") {
     // isSelected
     should("check if the 'Use binary mode' selected for a file") {}

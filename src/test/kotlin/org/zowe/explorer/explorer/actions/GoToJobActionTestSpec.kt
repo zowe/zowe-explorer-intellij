@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ToolWindow
@@ -23,26 +24,47 @@ import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.config.ws.ui.AbstractWsDialog
 import org.zowe.explorer.config.ws.ui.jes.JesWsDialog
 import org.zowe.explorer.dataops.log.AbstractMFLoggerBase
 import org.zowe.explorer.dataops.log.JobLogFetcher
 import org.zowe.explorer.dataops.log.JobProcessInfo
-import org.zowe.explorer.explorer.*
+import org.zowe.explorer.explorer.Explorer
+import org.zowe.explorer.explorer.ExplorerContentProvider
+import org.zowe.explorer.explorer.JesExplorerContentProvider
+import org.zowe.explorer.explorer.JesWorkingSetImpl
+import org.zowe.explorer.explorer.UIComponentManager
 import org.zowe.explorer.explorer.actions.GoToJobAction.Companion.JOB_FILTER_CREATED_TITLE
 import org.zowe.explorer.explorer.actions.GoToJobAction.Companion.JOB_FILTER_NOT_CREATED_TITLE
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.AddJobsFilterDialog
+import org.zowe.explorer.explorer.ui.CommonExplorerTreeStructure
+import org.zowe.explorer.explorer.ui.JesExplorerView
+import org.zowe.explorer.explorer.ui.JesFilterNode
+import org.zowe.explorer.explorer.ui.JesWsNode
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager
 import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
+import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkObject
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import io.mockk.verify
 import org.zowe.kotlinsdk.Job
 import javax.swing.JComponent
 
-class GoToJobActionTestSpec: WithApplicationShouldSpec({
+class GoToJobActionTestSpec : WithApplicationShouldSpec({
 
   afterSpec {
     clearAllMocks()
@@ -64,22 +86,33 @@ class GoToJobActionTestSpec: WithApplicationShouldSpec({
     val contentManagerMock = mockk<ContentManager>()
     val contentMock = mockk<ContentImpl>()
     val myFsTreeStructureMock = mockk<CommonExplorerTreeStructure<Explorer<ConnectionConfig, JesWorkingSetImpl>>>()
-    val myStructureMock = mockk<StructureTreeModel<CommonExplorerTreeStructure<Explorer<ConnectionConfig, JesWorkingSetImpl>>>>()
+    val myStructureMock =
+      mockk<StructureTreeModel<CommonExplorerTreeStructure<Explorer<ConnectionConfig, JesWorkingSetImpl>>>>()
     val myTreeMock = mockk<Tree>()
-    mockkObject(UIComponentManager.INSTANCE)
+    val uiComponentManagerService: TestUIComponentManager =
+      ApplicationManager.getApplication().service<UIComponentManager>() as TestUIComponentManager
+    uiComponentManagerService.testInstance = object : TestUIComponentManager() {
+      override fun <E : Explorer<*, *>> getExplorerContentProvider(
+        clazz: Class<out E>
+      ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>>? {
+        return explorerContentProviderMock
+      }
+    }
     mockkObject(ToolWindowManager)
 
     // job process info for test
     val jobProcessInfo = JobProcessInfo("JOB_ID", "TEST_JOB", connectionConfigMock)
 
     // defined common mocks behavior
-    every { UIComponentManager.INSTANCE.getExplorerContentProvider<JesExplorer>(any()) } returns explorerContentProviderMock
     every { explorerContentProviderMock.getExplorerView(any()) } returns jesExplorerViewMock
-    every { jesExplorerMock.showNotification(
-      any() as String,
-      any() as String,
-      any() as NotificationType,
-      any() as Project) } just Runs
+    every {
+      jesExplorerMock.showNotification(
+        any() as String,
+        any() as String,
+        any() as NotificationType,
+        any() as Project
+      )
+    } just Runs
     every { contentManagerMock.getContent(any() as JComponent) } returns contentMock
     every { contentManagerMock.setSelectedContent(any(), any()) } just Runs
     every { toolWindowMock.contentManager } returns contentManagerMock
@@ -103,7 +136,8 @@ class GoToJobActionTestSpec: WithApplicationShouldSpec({
     val classUnderTest = spyk(GoToJobAction(), "Go To Job", recordPrivateCalls = true)
 
     should("createJesWorkingSetWithDefinedFilter_whenActionPerformed_givenJobIdAndNoJesWSNodesFound") {
-      val expectedNotificationMessage = "Job Filter(s): JobID=JOB_ID, successfully created on connection: $connectionConfigMock"
+      val expectedNotificationMessage =
+        "Job Filter(s): JobID=JOB_ID, successfully created on connection: $connectionConfigMock"
       val jesWsNodesTest = mutableListOf<JesWsNode>()
       mockkObject(AbstractWsDialog)
       every { AbstractWsDialog["initialize"](any<() -> Unit>()) } returns Unit
@@ -113,7 +147,13 @@ class GoToJobActionTestSpec: WithApplicationShouldSpec({
 
       classUnderTest.actionPerformed(actionEventMock)
 
-      verify { jesExplorerMock.showNotification(title = JOB_FILTER_CREATED_TITLE, content = expectedNotificationMessage, project = projectMock) }
+      verify {
+        jesExplorerMock.showNotification(
+          title = JOB_FILTER_CREATED_TITLE,
+          content = expectedNotificationMessage,
+          project = projectMock
+        )
+      }
       verify { contentManagerMock.setSelectedContent(contentMock, true) }
 
     }
@@ -121,7 +161,8 @@ class GoToJobActionTestSpec: WithApplicationShouldSpec({
     should("createJobFilterInExistingJesWorkingSet_whenActionPerformed_givenJobIdAndJesWsDoesNotContainFilter") {
       clearMocks(jesExplorerMock, answers = false, recordedCalls = true, verificationMarks = true)
       val jobFilterToSaveExpected = JobsFilter("", "", "JOB_ID")
-      val expectedNotificationMessage = "Job Filter(s): JobID=JOB_ID, successfully created in the working set JES_WS_TEST on connection: $connectionConfigMock"
+      val expectedNotificationMessage =
+        "Job Filter(s): JobID=JOB_ID, successfully created in the working set JES_WS_TEST on connection: $connectionConfigMock"
       val jobFilter1 = JobsFilter("ARST", "ARST*", "")
       val jobFilter2 = JobsFilter("", "", "JOB_ID_TEST")
       val jesFilterNodeForTest1 = mockk<JesFilterNode>()
@@ -150,7 +191,13 @@ class GoToJobActionTestSpec: WithApplicationShouldSpec({
       classUnderTest.actionPerformed(actionEventMock)
 
       verify { jesWorkingSet.addMask(jobFilterToSaveExpected) }
-      verify { jesExplorerMock.showNotification(title = JOB_FILTER_CREATED_TITLE, content = expectedNotificationMessage, project = projectMock) }
+      verify {
+        jesExplorerMock.showNotification(
+          title = JOB_FILTER_CREATED_TITLE,
+          content = expectedNotificationMessage,
+          project = projectMock
+        )
+      }
       verify { contentManagerMock.setSelectedContent(contentMock, true) }
 
     }
@@ -164,7 +211,8 @@ class GoToJobActionTestSpec: WithApplicationShouldSpec({
       val jesWsNodeForTest = mockk<JesWsNode>()
       val jesWorkingSet = mockk<JesWorkingSetImpl>()
       val jesWsNodesTest = mutableListOf(jesWsNodeForTest)
-      val expectedNotificationMessage = "Cannot create job filter, because all working sets ([JES_WS_TEST]) on connection $connectionConfigMock already contain job filter with jobId = JOB_ID"
+      val expectedNotificationMessage =
+        "Cannot create job filter, because all working sets ([JES_WS_TEST]) on connection $connectionConfigMock already contain job filter with jobId = JOB_ID"
 
       val jesFilterNodes = mutableListOf(jesFilterNodeForTest1, jesFilterNodeForTest2)
 
@@ -179,7 +227,13 @@ class GoToJobActionTestSpec: WithApplicationShouldSpec({
 
       classUnderTest.actionPerformed(actionEventMock)
 
-      verify { jesExplorerMock.showNotification(title = JOB_FILTER_NOT_CREATED_TITLE, content = expectedNotificationMessage, project = projectMock) }
+      verify {
+        jesExplorerMock.showNotification(
+          title = JOB_FILTER_NOT_CREATED_TITLE,
+          content = expectedNotificationMessage,
+          project = projectMock
+        )
+      }
       verify { contentManagerMock.setSelectedContent(contentMock, true) }
 
     }

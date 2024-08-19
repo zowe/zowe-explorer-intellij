@@ -13,6 +13,7 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.impl.ContentImpl
@@ -28,7 +29,10 @@ import org.zowe.explorer.explorer.JesExplorer
 import org.zowe.explorer.explorer.JesExplorerContentProvider
 import org.zowe.explorer.explorer.JesWorkingSet
 import org.zowe.explorer.explorer.UIComponentManager
-import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.explorer.ui.AddJobsFilterDialog
+import org.zowe.explorer.explorer.ui.ExplorerTreeView
+import org.zowe.explorer.explorer.ui.JesFilterNode
+import org.zowe.explorer.explorer.ui.JesWsNode
 import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 
 /**
@@ -60,7 +64,8 @@ class GoToJobAction : AnAction() {
     var message = ""
     val jobsLogsView = e.getData(JOBS_LOG_VIEW) ?: return
     val jobId = jobsLogsView.jobLogInfo.jobId ?: return
-    val jesContentProvider = UIComponentManager.INSTANCE.getExplorerContentProvider(JesExplorer::class.java) as JesExplorerContentProvider
+    val jesContentProvider =
+      service<UIComponentManager>().getExplorerContentProvider(JesExplorer::class.java) as JesExplorerContentProvider
     val view = e.project?.let { jesContentProvider.getExplorerView(it) } ?: return
     val connectionConfig = jobsLogsView.getConnectionConfig()
 
@@ -70,12 +75,20 @@ class GoToJobAction : AnAction() {
 
     if (jesWSOnSameConnection.isEmpty()) {
       val maskRow = mutableListOf(JobFilterState(jobId = jobId))
-      val dialog = JesWsDialog(configCrudable, JesWorkingSetDialogState(maskRow = maskRow).initEmptyUuids(configCrudable), true, connectionConfig)
+      val dialog = JesWsDialog(
+        configCrudable,
+        JesWorkingSetDialogState(maskRow = maskRow).initEmptyUuids(configCrudable),
+        true,
+        connectionConfig
+      )
       if (dialog.showAndGet()) {
         val wsConfigToSave = dialog.state.workingSetConfig
         configCrudable.add(wsConfigToSave)
         jobFilterCreated = true
-        message = createNotificationSuccessMessage(jobFilters = wsConfigToSave.jobsFilters.toMutableList(), connection = connectionConfig)
+        message = createNotificationSuccessMessage(
+          jobFilters = wsConfigToSave.jobsFilters.toMutableList(),
+          connection = connectionConfig
+        )
       }
     } else {
       val filteredJesWSNodes = jesWSOnSameConnection.filter { it.name != null }.distinct()
@@ -105,7 +118,7 @@ class GoToJobAction : AnAction() {
       } else {
         val wsNamesWithCreationFailure = filteredJesWSNodes.mapNotNull { it.name }
         message = "Cannot create job filter, because all working sets ($wsNamesWithCreationFailure) " +
-            "on connection $connectionConfig already contain job filter with jobId = $jobId"
+          "on connection $connectionConfig already contain job filter with jobId = $jobId"
         view.explorer.showNotification(title = JOB_FILTER_NOT_CREATED_TITLE, content = message, project = e.project)
         e.project?.let { navigateToJesExplorer(view, it) }
       }
@@ -134,7 +147,11 @@ class GoToJobAction : AnAction() {
    * @param connection
    * @return String representation of the message
    */
-  private fun createNotificationSuccessMessage(wsNode: JesWsNode? = null, jobFilters: List<JobsFilter>, connection: ConnectionConfig): String {
+  private fun createNotificationSuccessMessage(
+    wsNode: JesWsNode? = null,
+    jobFilters: List<JobsFilter>,
+    connection: ConnectionConfig
+  ): String {
     val messageBuilder = StringBuilder().append("Job Filter(s): ")
     jobFilters.forEach { messageBuilder.append(it.toString().plus(", ")) }
     messageBuilder.append("successfully created ")
@@ -148,7 +165,7 @@ class GoToJobAction : AnAction() {
    * @param view
    * @param project
    */
-  private fun navigateToJesExplorer(view: ExplorerTreeView<*,*,*>, project: Project) {
+  private fun navigateToJesExplorer(view: ExplorerTreeView<*, *, *>, project: Project) {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("For Mainframe")
     val content = toolWindow?.contentManager?.getContent(view) as ContentImpl
     toolWindow.contentManager.setSelectedContent(content, true)

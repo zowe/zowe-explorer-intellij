@@ -19,13 +19,16 @@ import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
 import com.intellij.remoterobot.utils.keyboard
-import okhttp3.mockwebserver.MockResponse
+import com.intellij.remoterobot.utils.waitFor
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
-import workingset.EMPTY_DATASET_MESSAGE
-import workingset.PROJECT_NAME
+import testutils.ProcessManager
+import testutils.injectSingleMember
+import workingset.*
+import workingset.auxiliary.components.elements.ButtonElement
+import workingset.testutils.*
 import java.awt.event.KeyEvent
-import java.io.File
+import java.time.Duration
 
 /**
  * Tests cancelling, holding, releasing jobs and checks results.
@@ -39,92 +42,61 @@ class CancelHoldReleaseJobTest {
     private var wantToClose = mutableListOf(
         "Allocate Dataset Dialog", "Add JES Working Set Dialog", "Add Working Set Dialog"
     )
-    private val projectName = "untitled"
-    private val connectionName = "valid connection"
 
+    private val connectionName = "valid connection"
+    private val datasetBody = "{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":1,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255}"
     private val wsName = "WS1"
     private val datasetName = "$ZOS_USERID.CANCEL.JOBS".uppercase()
+    private val datasetMaskPair = Pair(datasetName, ZOS_MASK)
     private val jobName = "TEST1"
     private val filePath = System.getProperty("user.dir") + "/src/uiTest/resources/"
     private val fileName = "job_rc0.txt"
+    private val spoolFileName = "getSpoolFiles"
+    private val statusFileName = "getStatus"
+    private val dirFileNameForCancelSpool = "mock/getSpoolFileContentCanceled.txt"
+    private val dirFileNameForFileContent = "mock/getSpoolFileContentRC00.txt"
 
-    private enum class JobAction { SUBMIT, CANCEL, HOLD, RELEASE }
+    private enum class JobAction { SUBMIT, CANCEL, HOLD, RELEASE}
 
     private var mapListDatasets = mutableMapOf<String, String>()
     private var listMembersInDataset = mutableListOf<String>()
-    private var isFirst = true
+    private var utilObject = IdeaInteractionClass()
+    private lateinit var processManager: ProcessManager
+
 
     /**
      * Opens the project and Explorer, clears test environment, creates working set and dataset.
      */
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+        processManager = ProcessManager()
         startMockServer()
         setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        createValidConnectionWithMock(
-            testInfo,
-            connectionName,
-            fixtureStack,
-            closableFixtureCollector,
-            remoteRobot
-        )
-        createWS(remoteRobot)
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_${datasetName}_restfiles_post",
-            { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${datasetName}") ?: false },
-            { MockResponse().setBody("{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":1,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255}") }
-        )
-        mapListDatasets[datasetName] = listDS(datasetName, "PDS", "PO")
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restfiles",
-            {
-                it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName}")
-                    ?: false
-            },
-            { MockResponse().setBody(buildFinalListDatasetJson()) }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restfiles_listmembers",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${datasetName}/member") ?: false },
-            {
-                MockResponse().setBody(buildListMembersJson())
-            }
-        )
-        allocatePDSAndCreateMask(wsName, datasetName, fixtureStack, closableFixtureCollector, remoteRobot)
-        createJob(testInfo, remoteRobot)
+        createValidConnectionWithMock(testInfo, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
+        injectTestInfoForPdsDataset(testInfo.displayName, datasetBody, datasetName)
+        mapListDatasets[datasetName] = listDS(datasetName, PDS_TYPE, PO_ORG_SHORT)
+        injectListAllAllocatedDatasetsWithContents(testInfo,datasetName,mapListDatasets)
+        injectSingleMember(testInfo, datasetName, listMembersInDataset)
+        utilObject.createWsAndMask(wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot,datasetMaskPair)
+        openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
+        createMemberAndPasteContentWithMock(testInfo, datasetName, jobName, fileName, remoteRobot)
+
     }
 
     /**
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restfiles",
-            {
-                it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName.uppercase()}")
-                    ?: false
-            },
-            { MockResponse().setBody("{}") }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_delete",
-            { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/${datasetName.uppercase()}") ?: false },
-            { MockResponse().setBody("{}") }
-        )
-        deleteDataset(datasetName, fixtureStack, remoteRobot)
+    fun tearDownAll(){
+        processManager.close()
         mockServer.shutdown()
-        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            close()
-        }
     }
 
     /**
      * Closes all unclosed closable fixtures that we want to close.
      */
     @AfterEach
-    fun tearDown(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun tearDown(remoteRobot: RemoteRobot){
         closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
         closeNotificationsAndJobsTabsIfExist(remoteRobot)
         responseDispatcher.removeAllEndpoints()
@@ -133,14 +105,14 @@ class CancelHoldReleaseJobTest {
     /**
      * Test to cancel one job and check that correct info is returned.
      */
+
     @Test
-    @Order(1)
     fun testCancelOneJob(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
         submitJobWithMock(testInfo, datasetName, jobName, JobStatus.ACTIVE, remoteRobot)
-        val jobId = getIdSubmittedJob(remoteRobot)
+        Thread.sleep(2000)
+        val jobId = find<ContainerFixture>(jobSubmittedIdLoc).findAllText()[2].text.trim()
         checkNotificationAfterJobAction(JobAction.SUBMIT, jobId, remoteRobot)
         doActionOnRunningJob(testInfo, JobAction.CANCEL, remoteRobot)
-        Thread.sleep(2000)
         checkNotificationAfterJobAction(JobAction.CANCEL, jobId, remoteRobot)
         checkJobResultInConsole(JobAction.CANCEL, jobId, remoteRobot)
         closeJobTabInJobsPanel(remoteRobot)
@@ -150,18 +122,14 @@ class CancelHoldReleaseJobTest {
      * Test to hold, then to release one job and check that correct info is returned.
      */
     @Test
-    @Order(2)
     fun testHoldReleaseOneJob(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
         submitJobWithMock(testInfo, datasetName, jobName, JobStatus.INPUT, remoteRobot)
-        val jobId = getIdSubmittedJob(remoteRobot)
+        val jobId = find<ContainerFixture>(jobSubmittedIdLoc).findAllText()[2].text.trim()
         checkNotificationAfterJobAction(JobAction.SUBMIT, jobId, remoteRobot)
         doActionOnRunningJob(testInfo, JobAction.HOLD, remoteRobot)
-        Thread.sleep(2000)
         checkNotificationAfterJobAction(JobAction.HOLD, jobId, remoteRobot)
         doActionOnRunningJob(testInfo, JobAction.RELEASE, remoteRobot)
-        Thread.sleep(2000)
         checkNotificationAfterJobAction(JobAction.RELEASE, jobId, remoteRobot)
-        Thread.sleep(2000)
         checkJobResultInConsole(JobAction.SUBMIT, jobId, remoteRobot)
         closeJobTabInJobsPanel(remoteRobot)
     }
@@ -170,16 +138,16 @@ class CancelHoldReleaseJobTest {
      * Test to hold, then to cancel one job and check that correct info is returned.
      */
     @Test
-    @Order(3)
     fun testHoldCancelOneJob(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
         submitJobWithMock(testInfo, datasetName, jobName, JobStatus.INPUT, remoteRobot)
-        val jobId = getIdSubmittedJob(remoteRobot)
+        Thread.sleep(2000)
+        val jobId = find<ContainerFixture>(jobSubmittedIdLoc).findAllText()[2].text.trim()
         checkNotificationAfterJobAction(JobAction.SUBMIT, jobId, remoteRobot)
+
         doActionOnRunningJob(testInfo, JobAction.HOLD, remoteRobot)
-        Thread.sleep(2000)
         checkNotificationAfterJobAction(JobAction.HOLD, jobId, remoteRobot)
-        doActionOnRunningJob(testInfo, JobAction.CANCEL, remoteRobot)
         Thread.sleep(2000)
+        doActionOnRunningJob(testInfo, JobAction.CANCEL, remoteRobot)
         checkNotificationAfterJobAction(JobAction.CANCEL, jobId, remoteRobot)
         checkJobResultInConsole(JobAction.CANCEL, jobId, remoteRobot)
         closeJobTabInJobsPanel(remoteRobot)
@@ -189,19 +157,16 @@ class CancelHoldReleaseJobTest {
      * Test to hold, then to release, then to cancel one job and check that correct info is returned.
      */
     @Test
-    @Order(4)
     fun testHoldReleaseCancelOneJob(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
         submitJobWithMock(testInfo, datasetName, jobName, JobStatus.INPUT, remoteRobot)
-        val jobId = getIdSubmittedJob(remoteRobot)
+        Thread.sleep(2000)
+        val jobId = find<ContainerFixture>(jobSubmittedIdLoc).findAllText()[2].text.trim()
         checkNotificationAfterJobAction(JobAction.SUBMIT, jobId, remoteRobot)
         doActionOnRunningJob(testInfo, JobAction.HOLD, remoteRobot)
-        Thread.sleep(2000)
         checkNotificationAfterJobAction(JobAction.HOLD, jobId, remoteRobot)
         doActionOnRunningJob(testInfo, JobAction.RELEASE, remoteRobot, JobStatus.INPUT)
-        Thread.sleep(2000)
         checkNotificationAfterJobAction(JobAction.RELEASE, jobId, remoteRobot)
         doActionOnRunningJob(testInfo, JobAction.CANCEL, remoteRobot)
-        Thread.sleep(2000)
         checkNotificationAfterJobAction(JobAction.CANCEL, jobId, remoteRobot)
         checkJobResultInConsole(JobAction.CANCEL, jobId, remoteRobot)
         closeJobTabInJobsPanel(remoteRobot)
@@ -213,9 +178,8 @@ class CancelHoldReleaseJobTest {
     private fun closeNotificationsAndJobsTabsIfExist(remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(PROJECT_NAME, fixtureStack) {
             try {
-                find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']"))
-                    .click()
-                find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
+                find<JLabelFixture>(notificationTitle).click()
+                find<ComponentFixture>(closeNotificationLoc).click()
             } catch (ex: Exception) {
                 when (ex) {
                     !is WaitForConditionTimeoutException -> throw ex
@@ -223,7 +187,7 @@ class CancelHoldReleaseJobTest {
             }
 
             try {
-                findAll<ComponentFixture>(byXpath("//div[@class='TabPanel'][.//div[@text='Jobs:']]//div[@class='ContentTabLabel']")).forEach {
+                findAll<ComponentFixture>(jobConsoleHeaderLoc).forEach {
                     it.click()
                     keyboard {
                         hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_F4)
@@ -237,16 +201,6 @@ class CancelHoldReleaseJobTest {
         }
     }
 
-    /**
-     * Gets jobId for submitted job.
-     */
-    private fun getIdSubmittedJob(remoteRobot: RemoteRobot): String = with(remoteRobot) {
-        var jobId = ""
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            jobId = find<ContainerFixture>(byXpath("//div[@class='Tree']")).findAllText()[2].text.trim()
-        }
-        return jobId
-    }
 
     /**
      * Checks jobs result.
@@ -255,19 +209,17 @@ class CancelHoldReleaseJobTest {
         with(remoteRobot) {
             val rc = when (action) {
                 JobAction.CANCEL -> "CANCELED"
-                JobAction.SUBMIT -> "CC 0000"
+                JobAction.SUBMIT -> RC_0000
                 else -> throw Exception("Unknown action")
             }
             ideFrameImpl(PROJECT_NAME, fixtureStack) {
-                find<ComponentFixture>(byXpath("//div[contains(@accessiblename.key, 'editor.accessible.name')]")).findText(
-                    "JOB $jobName($jobId) EXECUTED"
-                )
-                find<ComponentFixture>(byXpath("//div[contains(@accessiblename.key, 'editor.accessible.name')]")).findText(
-                    "OWNER: ${ZOS_USERID.uppercase()}"
-                )
-                find<ComponentFixture>(byXpath("//div[contains(@accessiblename.key, 'editor.accessible.name')]")).findText(
-                    "RETURN CODE: $rc"
-                )
+                waitFor(Duration.ofSeconds(20)) {
+                    find<ComponentFixture>(editorLoc).hasText(jobExecutedConsoleText.format(jobName, jobId))
+
+                }
+                find<ComponentFixture>(editorLoc).findText(jobExecutedConsoleText.format(jobName, jobId))
+                find<ComponentFixture>(editorLoc).findText(jobOwnerConsoleText.format(ZOS_USERID.uppercase()))
+                find<ComponentFixture>(editorLoc).findText(jobReturnCodeConsoleText.format(rc))
             }
         }
 
@@ -276,7 +228,7 @@ class CancelHoldReleaseJobTest {
      */
     private fun closeJobTabInJobsPanel(remoteRobot: RemoteRobot) = with(remoteRobot) {
         ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            findAll<ComponentFixture>(byXpath("//div[@class='TabPanel'][.//div[@text='Jobs:']]//div[@class='ContentTabLabel']")).last()
+            findAll<ComponentFixture>(jobConsoleHeaderLoc).last()
                 .findText(
                     "//'$datasetName($jobName)'"
                 ).click()
@@ -294,123 +246,42 @@ class CancelHoldReleaseJobTest {
         action: JobAction,
         remoteRobot: RemoteRobot,
         jobStatus: JobStatus = JobStatus.OUTPUT
-    ) =
-        with(remoteRobot) {
+    ){
             responseDispatcher.removeAllEndpoints()
             val myAction: String
             when (action) {
                 JobAction.CANCEL -> {
-                    myAction = "Cancel Job ()"
-                    responseDispatcher.injectEndpoint(
-                        "${testInfo.displayName}_cancel",
-                        { it?.requestLine?.contains("PUT /zosmf/restjobs/jobs/$jobName/JOB07380 ") ?: false },
-                        {
-                            MockResponse().setBody("{\"request\":\"CANCEL\",\"version\":\"2.0\"}")
-                                .setBody(setBodyJobCancelled(jobName))
-                        }
-                    )
-                    responseDispatcher.injectEndpoint(
-                        "${testInfo.displayName}_cancel_files",
-                        { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files HTTP") ?: false },
-                        { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
-                                Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", "CC 0000"),
-                                Pair("jobStatus", JobStatus.OUTPUT.name)))) }
-                    )
-                    responseDispatcher.injectEndpoint(
-                        "${testInfo.displayName}_cancel_files2",
-                        {
-                            it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files/2/records")
-                                ?: false
-                        },
-                        {
-                            MockResponse().setBody(
-                                File(filePath + "mock/getSpoolFileContentCanceled.txt").readText(
-                                    Charsets.UTF_8
-                                )
-                            )
-                        }
-                    )
-                    responseDispatcher.injectEndpoint(
-                        "${testInfo.displayName}_cancel_files3",
-                        { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-                        { MockResponse().setBody(setBodyJobCancelled(jobName)) }
-                    )
+                    myAction = buttonCancelActionName
+                    injectJobToCanceled(testInfo, jobName)
+                    injectJobLogHttp(testInfo, jobName, spoolFileName )
+                    injectJobLog2Records(testInfo, jobName, filePath, dirFileNameForCancelSpool)
+                    injectJobLogCanceledJobNotHttp(testInfo, jobName)
                 }
 
                 JobAction.HOLD -> {
-                    myAction = "Hold Job ()"
-                    responseDispatcher.injectEndpoint(
-                        "${testInfo.displayName}_hold",
-                        { it?.requestLine?.contains("PUT /zosmf/restjobs/jobs/$jobName/JOB07380 ") ?: false },
-                        {
-                            MockResponse().setBody("{\"request\":\"HOLD\",\"version\":\"2.0\"}")
-                                .setBody(setBodyJobHeldOrReleased(jobName))
-                        }
-                    )
-                    responseDispatcher.injectEndpoint(
-                        "${testInfo.displayName}_hold_files3",
-                        { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-                        { MockResponse().setBody(setBodyJobSubmit(jobName, JobStatus.INPUT)) }
-                    )
+                    myAction = buttonHoldActionName
+                    injectJobLogHoldOrReleased(testInfo,jobName, holdWord)
+                    injectJobLogHoldOrReleasedJobNotHttp(testInfo, jobName)
                 }
 
                 JobAction.RELEASE -> {
-                    myAction = "Release Job ()"
-                    responseDispatcher.injectEndpoint(
-                        "${testInfo.displayName}_release",
-                        { it?.requestLine?.contains("PUT /zosmf/restjobs/jobs/$jobName/JOB07380 ") ?: false },
-                        {
-                            MockResponse().setBody("{\"request\":\"RELEASE\",\"version\":\"2.0\"}")
-                                .setBody(setBodyJobHeldOrReleased(jobName))
-                        }
-                    )
+                    myAction = buttonReleaseActionName
+                    injectJobToRelease(testInfo, jobName)
                     if (jobStatus == JobStatus.OUTPUT) {
-                        responseDispatcher.injectEndpoint(
-                            "${testInfo.displayName}_release_files",
-                            {
-                                it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files HTTP")
-                                    ?: false
-                            },
-                            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
-                                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", "CC 0000"),
-                                    Pair("jobStatus", JobStatus.OUTPUT.name)))) }
-                        )
-                        responseDispatcher.injectEndpoint(
-                            "${testInfo.displayName}_release_files2",
-                            {
-                                it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files/2/records")
-                                    ?: false
-                            },
-                            {
-                                MockResponse().setBody(
-                                    File(filePath + "mock/getSpoolFileContentRC00.txt").readText(
-                                        Charsets.UTF_8
-                                    )
-                                )
-                            }
-                        )
-                        responseDispatcher.injectEndpoint(
-                            "${testInfo.displayName}_release_files3",
-                            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-                            { MockResponse().setBody(replaceInJson("getStatus", mapOf(Pair("hostName", mockServer.hostName),
-                                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", "CC 0000"),
-                                    Pair("jobStatus", JobStatus.OUTPUT.name))))}
-                        )
+                        injectJobLogHttp(testInfo, jobName, spoolFileName)
+                        injectJobLog2Records(testInfo, jobName, filePath, dirFileNameForFileContent)
+                        injectJobLogHttp(testInfo, jobName,  statusFileName)
+                        injectJobLogHoldOrReleasedJobNotHttpAsSubmit(testInfo, jobName, statusFileName)
+
                     } else {
-                        responseDispatcher.injectEndpoint(
-                            "${testInfo.displayName}_release_files3",
-                            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-                            { MockResponse().setBody(setBodyJobSubmit(jobName, JobStatus.INPUT)) }
-                        )
+                        injectJobLogHoldOrReleasedJobNotHttp(testInfo, jobName)
                     }
                 }
 
                 else -> throw Exception("Unknown action")
             }
 
-            ideFrameImpl(PROJECT_NAME, fixtureStack) {
-                clickActionButton(byXpath("//div[@class='ActionButton' and @myaction='$myAction']"))
-            }
+            ButtonElement(byXpath(actionLocPattern.format(myAction)), fixtureStack, remoteRobot).click()
         }
 
     /**
@@ -422,46 +293,17 @@ class CancelHoldReleaseJobTest {
         remoteRobot: RemoteRobot
     ) = with(remoteRobot) {
         val textToFind = when (action) {
-            JobAction.CANCEL -> "$jobName: $jobId has been cancelled"
-            JobAction.HOLD -> "$jobName: $jobId has been held"
-            JobAction.RELEASE -> "$jobName: $jobId has been released"
-            JobAction.SUBMIT -> "Job $jobName has been submitted"
+            JobAction.CANCEL -> jobCancelNotification.format(jobName, jobId)
+            JobAction.HOLD -> jobHoldNotification.format(jobName, jobId)
+            JobAction.RELEASE -> jobReleseNotification.format(jobName, jobId)
+            JobAction.SUBMIT -> jobSubmitNotification.format(jobName)
         }
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            find<JLabelFixture>(byXpath("//div[@javaclass='javax.swing.JLabel']")).findText(textToFind)
-                .click()
-            find<ComponentFixture>(byXpath("//div[@tooltiptext.key='tooltip.close.notification']")).click()
+        waitFor(Duration.ofSeconds(30)) {
+            findAll<JLabelFixture>(notificationTitle).last().hasText(textToFind)
         }
+        ButtonElement(closeNotificationLoc,fixtureStack,remoteRobot).click()
     }
 
-    /**
-     * Creates empty working set.
-     */
-    private fun createWS(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            createWSFromContextMenu(fixtureStack, closableFixtureCollector)
-            addWorkingSetDialog(fixtureStack) {
-                addWorkingSet(wsName, connectionName)
-                clickButton("OK")
-                Thread.sleep(500)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                    EMPTY_DATASET_MESSAGE
-                )
-                clickButton("OK")
-                Thread.sleep(500)
-            }
-            closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        }
-    }
-
-    /**
-     * Creates job in dataset.
-     */
-    private fun createJob(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
-        openLocalFileAndCopyContent(filePath + fileName, fixtureStack, remoteRobot)
-        Thread.sleep(3000)
-        createMemberAndPasteContentWithMock(testInfo, datasetName, jobName, fileName, remoteRobot)
-    }
 
     /**
      * Creates member in dataset and pastes content from buffer.
@@ -470,69 +312,11 @@ class CancelHoldReleaseJobTest {
         testInfo: TestInfo, datasetName: String,
         memberName: String, fileName: String, remoteRobot: RemoteRobot
     ) {
-        var isFirstRequest = true
         listMembersInDataset.add(memberName)
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_${memberName}in${datasetName}_restfiles",
-            { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${datasetName}(${memberName})") ?: false && isFirstRequest && isFirst },
-            { MockResponse().setBody("") }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_fill_${memberName}_restfiles",
-            { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/${datasetName}(${memberName})") ?: false && !isFirstRequest && isFirst },
-            { MockResponse().setBody(File(filePath + fileName).readText(Charsets.UTF_8)) }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restfiles_listmembers1",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${datasetName}/member") ?: false },
-            { MockResponse().setBody(buildListMembersJson()) }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restfiles_getmember1",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${datasetName}($memberName)") ?: false && isFirst },
-            { MockResponse().setBody("") }
-        )
-
-        createEmptyDatasetMember(
-            datasetName, memberName, fixtureStack, remoteRobot
-        )
-        isFirstRequest = false
-        pasteContent(memberName, fixtureStack, remoteRobot)
-        Thread.sleep(3000)
-        isFirst = false
+        injectMemberFromFile(testInfo, datasetName, memberName, filePath, fileName)
+        injectSingleMember(testInfo, datasetName,  listMembersInDataset)
+        utilObject.refreshWorkSpace(datasetName, fixtureStack, remoteRobot)
     }
-
-    /**
-     * Creates json for dataset list to display it in File Explorer.
-     */
-    private fun buildFinalListDatasetJson(): String {
-        var result = "{}"
-        if (mapListDatasets.isNotEmpty()) {
-            var listDatasetsJson = "{\"items\":["
-            mapListDatasets.forEach {
-                listDatasetsJson += it.value
-            }
-            result = listDatasetsJson.dropLast(1) + "],\n" +
-                "  \"returnedRows\": ${mapListDatasets.size},\n" +
-                "  \"totalRows\": ${mapListDatasets.size},\n" +
-                "  \"JSONversion\": 1\n" +
-                "}"
-        }
-        return result
-    }
-
-    /**
-     * Creates json for dataset members to display it in File Explorer.
-     */
-    private fun buildListMembersJson(): String {
-        var members = "[ "
-        if (listMembersInDataset.isNotEmpty()) {
-            listMembersInDataset.forEach { members += "{\"member\": \"${it}\"}," }
-        }
-        members = members.dropLast(1) + "]"
-        return "{\"items\":$members,\"returnedRows\": ${listMembersInDataset.size},\"JSONversion\": 1}"
-    }
-
 
     /**
      * Submits job on mock server.
@@ -544,67 +328,17 @@ class CancelHoldReleaseJobTest {
         jobStatus: JobStatus,
         remoteRobot: RemoteRobot
     ) = with(remoteRobot) {
-        val spoolFileContent = "mock/getSpoolFileContentRC00.txt"
-        val rc = "CC 0000"
         val statusJson: String = when (jobStatus) {
             JobStatus.ACTIVE -> "getActiveStatus"
             else -> "getStatus"
         }
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restjobs",
-            { it?.requestLine?.contains("PUT /zosmf/restjobs/jobs") ?: false },
-            {
-                MockResponse().setBody("{\"file\":\"//'$datasetName($jobName)'\"}")
-                    .setBody(setBodyJobSubmit(jobName, jobStatus))
-            }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restjobs_files",
-            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files HTTP") ?: false },
-            { MockResponse().setBody(replaceInJson("getSpoolFiles", mapOf(Pair("hostName", mockServer.hostName),
-                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
-                    Pair("jobStatus", JobStatus.OUTPUT.name)))) }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restjobs_files2",
-            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380/files/2/records") ?: false },
-            { MockResponse().setBody(File(filePath + spoolFileContent).readText(Charsets.UTF_8)) }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_restjobs_files3",
-            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/$jobName/JOB07380?") ?: false },
-            { MockResponse().setBody(replaceInJson(statusJson, mapOf(Pair("hostName", mockServer.hostName),
-                    Pair("port", mockServer.port.toString()), Pair("jobName", jobName), Pair("retCode", rc),
-                    Pair("jobStatus", jobStatus.name)))) }
-        )
+        injectJobToSubmit(testInfo, jobName, jobStatus,"{\"file\":\"//'$datasetName($jobName)'\"}")
+        injectJobDetailsFromJson(testInfo, jobName, UNIVERSAL_JOB_ID)
+
+        injectSpoolTextFromFile(testInfo, jobName, UNIVERSAL_JOB_ID, filePath, SPOOL_FILE_CONTENT)
+
+        injectJobDetailsFromJsonNotHttp(testInfo, jobName, statusJson, jobStatus)
         submitJob(jobName, fixtureStack, remoteRobot)
-        responseDispatcher.removeAllEndpoints()
     }
 
-    private fun setBodyJobCancelled(jobName: String): String {
-        return "{\n" +
-            "\"jobid\":\"JOB07380\",\n" +
-            "\"jobname\":\"$jobName\",\n" +
-            "\"original-jobid\":\"JOB07380\",\n" +
-            "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
-            "\"member\":\"JES2\",\n" +
-            "\"sysname\":\"SY1\",\n" +
-            "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
-            "\"status\":\"0\",\n" +
-            "\"retcode\":\"CANCELED\"\n" +
-            "}"
-    }
-
-    private fun setBodyJobHeldOrReleased(jobName: String): String {
-        return "{\n" +
-            "\"jobid\":\"JOB07380\",\n" +
-            "\"jobname\":\"$jobName\",\n" +
-            "\"original-jobid\":\"JOB07380\",\n" +
-            "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
-            "\"member\":\"JES2\",\n" +
-            "\"sysname\":\"SY1\",\n" +
-            "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
-            "\"status\":\"0\"\n" +
-            "}"
-    }
 }

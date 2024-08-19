@@ -61,10 +61,10 @@ import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
-import org.zowe.kotlinsdk.MessageType
-import org.zowe.kotlinsdk.TsoData
-import org.zowe.kotlinsdk.TsoResponse
+import org.zowe.kotlinsdk.*
 import org.zowe.kotlinsdk.annotations.ZVersion
+import retrofit2.Call
+import retrofit2.Response
 import java.util.*
 import java.util.stream.Stream
 import javax.swing.JComponent
@@ -205,7 +205,27 @@ class ConfigTestSpec : WithApplicationShouldSpec({
       }
     }
     context("connectUtils") {
-      val connectionConfig = ConnectionConfig()
+
+      // z/OS > 2.3 call setup
+      fun setupTsoEnhancedCall(tsoResultBody: MutableList<TsoCmdResult>, shouldThrowException: Boolean, success: Boolean) {
+        val responseBody = TsoCmdResponse(cmdResponse = tsoResultBody)
+        val tsoApi = mockk<TsoApi>()
+        val call = mockk<Call<TsoCmdResponse>>()
+        val response = mockk<Response<TsoCmdResponse>>()
+        mockkObject(ZosmfApi)
+        every { ZosmfApi.instance.hint(TsoApi::class).getApi<TsoApi>(any(), any()) } returns tsoApi
+        every { tsoApi.executeTsoCommand(any(), any(), any()) } returns call
+        every { call.execute() } answers {
+          if (shouldThrowException) throw IllegalStateException("Test call failed") else response
+        }
+        every { response.isSuccessful } returns success
+        every { response.body() } returns responseBody
+      }
+
+      val connectionConfigZOS23 = ConnectionConfig()
+      connectionConfigZOS23.zVersion = ZVersion.ZOS_2_3
+      val connectionConfigZOS24 = ConnectionConfig()
+      connectionConfigZOS24.zVersion = ZVersion.ZOS_2_4
 
       val dataOpsManagerService =
         ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
@@ -245,9 +265,38 @@ class ConfigTestSpec : WithApplicationShouldSpec({
       }
 
       // whoAmI
-      should("get the owner by TSO request") {
+      should("get the owner by TSO request if z/OS version = 2.4") {
 
-        val actual = whoAmI(connectionConfig)
+        val tsoResultBody = mutableListOf(TsoCmdResult(message = "ZOSMFAD"))
+        setupTsoEnhancedCall(tsoResultBody, success = true, shouldThrowException = false)
+
+        val actual = whoAmI(connectionConfigZOS24)
+
+        assertSoftly { actual shouldBe "ZOSMFAD" }
+      }
+
+      should("return empty owner by TSO request if z/OS version = 2.4 and owner cannot be retrieved") {
+
+        val tsoResultBody = mutableListOf(TsoCmdResult(message = ""), TsoCmdResult(message = "OSHELL RC = 2020"), TsoCmdResult(message = "READY "))
+        setupTsoEnhancedCall(tsoResultBody, success = true, shouldThrowException = false)
+
+        val actual = whoAmI(connectionConfigZOS24)
+
+        assertSoftly { actual shouldBe "" }
+      }
+
+      should("return empty owner by TSO request if z/OS version = 2.4 and tso request fails") {
+
+        setupTsoEnhancedCall(mutableListOf(), success = false, shouldThrowException = true)
+
+        val actual = whoAmI(connectionConfigZOS24)
+
+        assertSoftly { actual shouldBe "" }
+      }
+
+      should("get the owner by TSO request if z/OS version = 2.3") {
+
+        val actual = whoAmI(connectionConfigZOS23)
 
         assertSoftly { actual shouldBe "ZOSMFAD" }
       }
@@ -269,10 +318,11 @@ class ConfigTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        val actual = whoAmI(connectionConfig)
+        val actual = whoAmI(connectionConfigZOS23)
 
         assertSoftly { actual shouldBe "" }
       }
+
 
       should("return empty owner if TSO request returns READY") {
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
@@ -291,7 +341,7 @@ class ConfigTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        val actual = whoAmI(connectionConfig)
+        val actual = whoAmI(connectionConfigZOS23)
 
         assertSoftly { actual shouldBe "" }
       }
@@ -313,12 +363,12 @@ class ConfigTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        val actual = whoAmI(connectionConfig)
+        val actual = whoAmI(connectionConfigZOS23)
 
         assertSoftly { actual shouldBe "" }
       }
 
-      should("do not get the owner by TSO request if servlet key is null") {
+      should("return empty owner by TSO request if servlet key is null") {
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             @Suppress("UNCHECKED_CAST")
@@ -326,11 +376,11 @@ class ConfigTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        val actual = whoAmI(connectionConfig)
+        val actual = whoAmI(connectionConfigZOS23)
 
-        assertSoftly { actual shouldBe null }
+        assertSoftly { actual shouldBe "" }
       }
-      should("do not get the owner by TSO request if servlet key is empty") {
+      should("return empty owner by TSO request if servlet key is empty") {
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             @Suppress("UNCHECKED_CAST")
@@ -338,11 +388,11 @@ class ConfigTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        val actual = whoAmI(connectionConfig)
+        val actual = whoAmI(connectionConfigZOS23)
 
-        assertSoftly { actual shouldBe null }
+        assertSoftly { actual shouldBe "" }
       }
-      should("do not get the owner by TSO request if send message request fails") {
+      should("return empty owner by TSO request if request fails") {
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
             val tsoResponse = TsoResponse(
@@ -357,9 +407,9 @@ class ConfigTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        val actual = whoAmI(connectionConfig)
+        val actual = whoAmI(connectionConfigZOS23)
 
-        assertSoftly { actual shouldBe null }
+        assertSoftly { actual shouldBe "" }
       }
 
       // getOwner

@@ -22,6 +22,7 @@ import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.extension.ExtendWith
+import testutils.ProcessManager
 import workingset.auxiliary.components.dialogs.*
 import workingset.auxiliary.components.elements.ButtonElement
 import workingset.testutils.*
@@ -33,7 +34,7 @@ import java.time.Duration
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class WorkingSetViaContextMenuTest : WorkingSetBase()  {
+class WorkingSetViaContextMenuTest : IdeaInteractionClass()  {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf(EDIT_WORKING_SET, CREATE_MASK_DIALOG, ADD_WORKING_SET_DIALOG)
@@ -52,12 +53,15 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
     private val wsWithAlreadyExistsMask = "ws with already exists mask"
     private val wsWithMaskForRename = "ws with mask for rename"
     private val wsWithMaskForDelete = "ws with mask for delete"
-    
-     /**
+    private lateinit var processManager: ProcessManager
+
+
+    /**
      * Opens the project and Explorer, clears test environment.
      */
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot, testInfo:TestInfo) {
+        processManager = ProcessManager()
         addWorkingSetDialog = AddWorkingSetSubDialog(fixtureStack, remoteRobot)
         startMockServer()
         setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
@@ -72,17 +76,15 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
         okButton = ButtonElement(OK_TEXT, fixtureStack, remoteRobot)
         cancelButton = ButtonElement(CANCEL_TEXT, fixtureStack, remoteRobot)
         yesButton = ButtonElement(YES_TEXT, fixtureStack, remoteRobot)
-
     }
 
     /**
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot) {
+    fun tearDownAll() {
+        processManager.close()
         mockServer.shutdown()
-        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        return closeIntelligentProject(fixtureStack, remoteRobot)
     }
 
     /**
@@ -115,10 +117,10 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
     @Test
     fun testAddWorkingSetWithOneValidMaskViaContextMenu(remoteRobot: RemoteRobot) {
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
-        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_1, singleMask, fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_1, singleMask, fixtureStack, remoteRobot)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        return deleteWSFromContextMenu(WS_NAME_WS_1, fixtureStack, remoteRobot)
+        return deleteWSFromContextMenu(WS_NAME_1, fixtureStack, remoteRobot)
     }
 
     /**
@@ -131,19 +133,19 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
         validZOSMasks.forEach {masks.add(Pair(it, ZOS_MASK))}
         injectListEmptyData(testInfo)
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
-        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_2, masks, fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_2, masks, fixtureStack, remoteRobot)
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        compressWsIfcDecompressed(WS_NAME_WS_2, validZOSMasks[0],fixtureStack,remoteRobot)
+        compressWsIfcDecompressed(WS_NAME_2, validZOSMasks[0],fixtureStack,remoteRobot)
         validZOSMasks.forEach {
             openWSOpenMaskInExplorer(
-                WS_NAME_WS_2,
+                WS_NAME_2,
                 it.uppercase(),
                 fixtureStack,
                 remoteRobot
             )
         }
-        return deleteWSFromContextMenu(WS_NAME_WS_2, fixtureStack, remoteRobot)
+        return deleteWSFromContextMenu(WS_NAME_2, fixtureStack, remoteRobot)
     }
 
     /**
@@ -157,12 +159,12 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
         }
         injectListEmptyData(testInfo, false)
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
-        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_3, masks, fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_3, masks, fixtureStack, remoteRobot)
         addWorkingSetDialog.okButton.click()
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        compressAndDecompressTree(WS_NAME_WS_3, fixtureStack, remoteRobot)
-        validUSSMasks.forEach { openWSOpenMaskInExplorer(WS_NAME_WS_3, it, fixtureStack, remoteRobot) }
-        deleteWSFromContextMenu(WS_NAME_WS_3, fixtureStack, remoteRobot)
+        compressAndDecompressTree(WS_NAME_3, fixtureStack, remoteRobot)
+        validUSSMasks.forEach { openWSOpenMaskInExplorer(WS_NAME_3, it, fixtureStack, remoteRobot) }
+        deleteWSFromContextMenu(WS_NAME_3, fixtureStack, remoteRobot)
         }
 
 
@@ -174,7 +176,7 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
         maskMessageMap.forEach {
             val mask = Pair(it.key, ZOS_MASK)
-            addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_4, mask, fixtureStack, remoteRobot)
+            addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_4, mask, fixtureStack, remoteRobot)
             if(addWorkingSetDialog.okButton.isEnabled()){
                 addWorkingSetDialog.okButton.click()
             } else {
@@ -190,7 +192,7 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
             assertFalse(addWorkingSetDialog.okButton.isEnabled())
             clickToByTextAddWorkingSet(it.key.uppercase(), fixtureStack,remoteRobot)
             Thread.sleep(3000)
-            clickActionButtonByXpath(removeEMaskButtonLoc, fixtureStack, remoteRobot)
+            clickActionButtonByXpath(removeButtonLoc, fixtureStack, remoteRobot)
         }
         cancelButton.click()
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
@@ -202,8 +204,8 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
     @Test
     fun testAddWorkingSetWithTheSameMasksViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
-        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_5, singleMask, fixtureStack, remoteRobot)
-        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_5, singleMask, fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_5, singleMask, fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_5, singleMask, fixtureStack, remoteRobot)
         addWorkingSetDialog.okButton.click()
         Thread.sleep(2000)
         find<HeavyWeightWindowFixture>(messageLoc).findText(IDENTICAL_MASKS_MESSAGE)
@@ -219,16 +221,16 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
     fun testEditWorkingSetAddOneMaskViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         injectListEmptyData(testInfo)
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
-        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_6, singleMask, fixtureStack, remoteRobot)
+        addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_6, singleMask, fixtureStack, remoteRobot)
         okButton.click()
-        callEditWSFromContextMenu(WS_NAME_WS_6, fixtureStack, remoteRobot)
-        fillEditWorkingSet(connectionName,WS_NAME_WS_6,singleUssMask,fixtureStack, remoteRobot)
+        callEditWSFromContextMenu(WS_NAME_6, fixtureStack, remoteRobot)
+        fillEditWorkingSet(connectionName,WS_NAME_6,singleUssMask,fixtureStack, remoteRobot)
         okButton.click()
         closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
-        decompressWsIfCompressed(WS_NAME_WS_6, ussMask, fixtureStack, remoteRobot)
+        decompressWsIfCompressed(WS_NAME_6, ussMask, fixtureStack, remoteRobot)
         openMaskInExplorer(ussMask,"", fixtureStack, remoteRobot)
-        openOrCloseWorkingSetInExplorer(WS_NAME_WS_6, fixtureStack, remoteRobot)
-        return deleteWSFromContextMenu(WS_NAME_WS_6, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(WS_NAME_6, fixtureStack, remoteRobot)
+        return deleteWSFromContextMenu(WS_NAME_6, fixtureStack, remoteRobot)
     }
 
     /**
@@ -238,16 +240,17 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
     fun testEditWorkingSetDeleteMasksViaContextMenu(remoteRobot: RemoteRobot) {
         val masks = listOf(zosUserDatasetMask, "Q.*", ZOS_USERID.uppercase())
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
-        masks.forEach {addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_7, Pair(it, ZOS_MASK), fixtureStack, remoteRobot)}
+        masks.forEach {addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_7, Pair(it, ZOS_MASK), fixtureStack, remoteRobot)}
         okButton.click()
-        callEditWSFromContextMenu(WS_NAME_WS_7, fixtureStack, remoteRobot)
+        callEditWSFromContextMenu(WS_NAME_7, fixtureStack, remoteRobot)
         deleteInEditWorkingSet(masks, fixtureStack, remoteRobot)
+        okButton.click()
         okButton.click()
 
         masks.forEach { checkItemWasDeletedWSRefreshed(it.uppercase(), fixtureStack, remoteRobot) }
-        openOrCloseWorkingSetInExplorer(WS_NAME_WS_7, fixtureStack, remoteRobot)
-        deleteWSFromContextMenu(WS_NAME_WS_7, fixtureStack, remoteRobot)
-        return closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
+        openOrCloseWorkingSetInExplorer(WS_NAME_7, fixtureStack, remoteRobot)
+        deleteWSFromContextMenu(WS_NAME_7, fixtureStack, remoteRobot)
+        closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
     }
 
     /**
@@ -257,10 +260,10 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
     @Disabled("https://jira.ibagroup.eu/browse/IJMP-977")
     fun testEditWorkingSetDeleteAllMasksViaContextMenu(remoteRobot: RemoteRobot) = with(remoteRobot) {
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
-        validZOSMasks.forEach {addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_8, Pair(it, ZOS_MASK), fixtureStack, remoteRobot)}
+        validZOSMasks.forEach {addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_8, Pair(it, ZOS_MASK), fixtureStack, remoteRobot)}
         addWorkingSetDialog.okButton.click()
-        openOrCloseWorkingSetInExplorer(WS_NAME_WS_8, fixtureStack, remoteRobot)
-        callEditWSFromContextMenu(WS_NAME_WS_8, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(WS_NAME_8, fixtureStack, remoteRobot)
+        callEditWSFromContextMenu(WS_NAME_8, fixtureStack, remoteRobot)
         deleteInEditWorkingSet(validZOSMasks, fixtureStack, remoteRobot)
         okButton.click()
         ideFrameImpl(PROJECT_NAME, fixtureStack) {
@@ -272,7 +275,7 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
             closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
         }
         validZOSMasks.forEach { checkItemWasDeletedWSRefreshed(it.uppercase(), fixtureStack, remoteRobot) }
-        openOrCloseWorkingSetInExplorer(WS_NAME_WS_8, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(WS_NAME_8, fixtureStack, remoteRobot)
     }
 
     /**
@@ -285,11 +288,11 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
         createConnection(fixtureStack, closableFixtureCollector, newInvalidName, false, remoteRobot, "https://${mockServer.hostName}:$PORT_104431")
 
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
-        validZOSMasks.forEach {addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_WS_9, Pair(it, ZOS_MASK), fixtureStack, remoteRobot)}
+        validZOSMasks.forEach {addWorkingSetDialog.fillAddWorkingSet(connectionName, WS_NAME_9, Pair(it, ZOS_MASK), fixtureStack, remoteRobot)}
         addWorkingSetDialog.okButton.click()
 
-        openOrCloseWorkingSetInExplorer(WS_NAME_WS_9, fixtureStack, remoteRobot)
-        callEditWSFromContextMenu(WS_NAME_WS_9, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(WS_NAME_9, fixtureStack, remoteRobot)
+        callEditWSFromContextMenu(WS_NAME_9, fixtureStack, remoteRobot)
         setInComboBox(newInvalidName,fixtureStack,remoteRobot)
         okButton.click()
         closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
@@ -297,7 +300,7 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
         openMaskInExplorer(
             zosUserDatasetMask, INVALID_URL_PORT.format(PORT_104431_AND_1), fixtureStack, remoteRobot
         )
-        return deleteWSFromContextMenu(WS_NAME_WS_9, fixtureStack, remoteRobot)
+        return deleteWSFromContextMenu(WS_NAME_9, fixtureStack, remoteRobot)
     }
 
     /**
@@ -307,21 +310,21 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
     fun testEditWorkingSetChangeConnectionToValidViaContextMenu(testInfo: TestInfo, remoteRobot: RemoteRobot) {
         injectInvalidUrlPortInfo(testInfo,PORT_104431_AND_1)
         injectTestInfoRestTopology(testInfo)
-        createConnection(fixtureStack, closableFixtureCollector, WS_NAME_WS_10, false, remoteRobot, "https://${mockServer.hostName}:$PORT_104431")
+        createConnection(fixtureStack, closableFixtureCollector, WS_NAME_10, false, remoteRobot, "https://${mockServer.hostName}:$PORT_104431")
 
         callCreateWSFromContextMenu(fixtureStack, remoteRobot)
-        validZOSMasks.forEach {addWorkingSetDialog.fillAddWorkingSet(WS_NAME_WS_10, WS_NAME_WS_10, Pair(it, ZOS_MASK), fixtureStack, remoteRobot)}
+        validZOSMasks.forEach {addWorkingSetDialog.fillAddWorkingSet(WS_NAME_10, WS_NAME_10, Pair(it, ZOS_MASK), fixtureStack, remoteRobot)}
         addWorkingSetDialog.okButton.click()
 
         injectEmptyZosmfRestfilesPath(testInfo)
-        callEditWSFromContextMenu(WS_NAME_WS_10, fixtureStack, remoteRobot)
+        callEditWSFromContextMenu(WS_NAME_10, fixtureStack, remoteRobot)
         changeConnectionInEditWorkingSet(connectionName, fixtureStack, remoteRobot)
         okButton.click()
 
-        openOrCloseWorkingSetInExplorer(WS_NAME_WS_10, fixtureStack, remoteRobot)
+        openOrCloseWorkingSetInExplorer(WS_NAME_10, fixtureStack, remoteRobot)
         checkItemWasDeletedWSRefreshed(INVALID_URL_PORT.format(PORT_104431_AND_1), fixtureStack, remoteRobot)
         closableFixtureCollector.closeOnceIfExists(EditWorkingSetDialog.name)
-        return deleteWSFromContextMenu(WS_NAME_WS_10, fixtureStack, remoteRobot)
+        return deleteWSFromContextMenu(WS_NAME_10, fixtureStack, remoteRobot)
     }
 
     /**
@@ -445,11 +448,11 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
         compressAndDecompressTree(wsWithMaskForRename, fixtureStack, remoteRobot)
 
         callEditWSFromContextMenu(zosUserDatasetMask, fixtureStack, remoteRobot)
-        renameDatasetMaskDialog.renameMaskFromContextMenu(zosUserDatasetMaskDoubleStar, remoteRobot)
+        renameDatasetMaskDialog.renameMaskFromContextMenu(zosUserDatasetMaskDoubleStar)
         okButton.click()
 
         callEditWSFromContextMenu(ussMask, fixtureStack, remoteRobot)
-        renameDatasetMaskDialog.renameMaskFromContextMenu(defaultNewUssMask, remoteRobot)
+        renameDatasetMaskDialog.renameMaskFromContextMenu(defaultNewUssMask)
         okButton.click()
 
         refreshWorkSpace(wsWithMaskForRename, fixtureStack,remoteRobot)
@@ -484,7 +487,7 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
 
         //test
         callEditWSFromContextMenu(zosUserDatasetMask, fixtureStack, remoteRobot)
-        renameDatasetMaskDialog.renameMaskFromContextMenu(zosUserDatasetMaskDoubleStar, remoteRobot)
+        renameDatasetMaskDialog.renameMaskFromContextMenu(zosUserDatasetMaskDoubleStar)
         okButton.click()
 
         assertFalse(okButton.isEnabled())
@@ -493,7 +496,7 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
         cancelButton.click()
 
         callEditWSFromContextMenu(ussMask, fixtureStack, remoteRobot)
-        renameDatasetMaskDialog.renameMaskFromContextMenu(defaultNewUssMask, remoteRobot)
+        renameDatasetMaskDialog.renameMaskFromContextMenu(defaultNewUssMask)
         okButton.click()
 
         assertFalse(okButton.isEnabled())
@@ -532,22 +535,23 @@ class WorkingSetViaContextMenuTest : WorkingSetBase()  {
     }
 }
 
-
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class WorkingSetViaContextMenuNoConnectionTest : WorkingSetBase(){
+class WorkingSetViaContextMenuNoConnectionTest : IdeaInteractionClass(){
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf("Add Working Set Dialog", "Edit Working Set Dialog", "Create Mask Dialog")
 //    private var addWorkingSetDialog = AddWorkingSetSubDialog()
     override val wsName = "first ws"
+    private lateinit var processManager: ProcessManager
 
     /**
      * Opens the project and Explorer, clears test environment.
      */
     @BeforeAll
     fun setUpAll(remoteRobot: RemoteRobot) {
+        processManager = ProcessManager()
         addWorkingSetDialog = AddWorkingSetSubDialog(fixtureStack, remoteRobot)
         startMockServer()
         setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
@@ -556,10 +560,9 @@ class WorkingSetViaContextMenuNoConnectionTest : WorkingSetBase(){
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot) {
+    fun tearDownAll() {
+        processManager.close()
         mockServer.shutdown()
-        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        return closeIntelligentProject(fixtureStack, remoteRobot)
     }
 
     /**

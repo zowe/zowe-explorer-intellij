@@ -5,10 +5,33 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 ## [Unreleased]
 
 ### Features
-* Feature: Some test feature
+* Feature: GitHub issue #119: Space units are clarified with a hint ([451f3528](https://github.com/zowe/zowe-explorer-intellij/commit/451f3528))
+* Feature: GitHub issue #129: Workaround for custom migration volumes ([e125325a](https://github.com/zowe/zowe-explorer-intellij/commit/e125325a))
+* Feature: GitHub issue #131: Tests adding policy added ([9c77deef](https://github.com/zowe/zowe-explorer-intellij/commit/9c77deef))
+* Feature: GitHub issue #137: USS sorting feature introduced ([c154e027](https://github.com/zowe/zowe-explorer-intellij/commit/c154e027))
+* Feature: GitHub issue #149: Clicking "Cancel" button is not so intrusive now ([c01926de](https://github.com/zowe/zowe-explorer-intellij/commit/c01926de))
+* Feature: GitHub issue #150: Connection test request is not being sent after connection name change ([207389f3](https://github.com/zowe/zowe-explorer-intellij/commit/207389f3))
+* Feature: GitHub issue #190: Warning dialog for "Allow self-signed..." and HTTP usage ([62fc8de4](https://github.com/zowe/zowe-explorer-intellij/commit/62fc8de4))
+* Feature: GitHub issue #192: Jobs sorting feature introduced ([e5e37437](https://github.com/zowe/zowe-explorer-intellij/commit/e5e37437))
+* Feature: GitHub issue #193: Error notification is made compact and readable ([83375d25](https://github.com/zowe/zowe-explorer-intellij/commit/83375d25))
+* Feature: GitHub issue #194: TSO Session reopen button introduced ([e3e32dd3](https://github.com/zowe/zowe-explorer-intellij/commit/e3e32dd3))
+* Feature: GitHub issue #195: Last refresh date and time is added ([b4e4c37b](https://github.com/zowe/zowe-explorer-intellij/commit/b4e4c37b))
+* Feature: GitHub issue #196: Datasets sorting feature introduced ([e8f564db](https://github.com/zowe/zowe-explorer-intellij/commit/e8f564db))
+* Feature: GitHub issue #198: TSO reconnection timeout and attempts are introduced ([9bc02a0b](https://github.com/zowe/zowe-explorer-intellij/commit/9bc02a0b))
+* Feature: "Force rename" feature is removed due to the lack of clarity ([1cec9c79](https://github.com/zowe/zowe-explorer-intellij/commit/1cec9c79))
+* Feature: "Connection name" column made a bit wider ([0b8816f7](https://github.com/zowe/zowe-explorer-intellij/commit/0b8816f7))
+* Feature: "horizontalAlign" and "verticalAlign" are removed as they are deprecated ([cc34a8d3](https://github.com/zowe/zowe-explorer-intellij/commit/cc34a8d3))
+* Feature: Now the content is being synchronized before it is reloaded with new encoding ([605eeabd](https://github.com/zowe/zowe-explorer-intellij/commit/605eeabd))
+* Feature: TSO CLI gets focus when it is just opened ([9bc02a0b](https://github.com/zowe/zowe-explorer-intellij/commit/9bc02a0b))
+* Feature: Notification after a dataset is created is improved ([8d62771c](https://github.com/zowe/zowe-explorer-intellij/commit/8d62771c))
+* Feature: Some enhancements to the connection creation dialog ([5a7a56de](https://github.com/zowe/zowe-explorer-intellij/commit/5a7a56de))
 
 ### Bugfixes
-* Bugfix: Some test bugfix
+* Bugfix: Slow operations in EDT ([8e9266d5](https://github.com/zowe/zowe-explorer-intellij/commit/8e9266d5))
+* Bugfix: Dialog for PDS/E instead of PDS now appears if there is an entity being placed under a PDS/E ([005aadd3](https://github.com/zowe/zowe-explorer-intellij/commit/005aadd3))
+* Bugfix: Owner is now recognized correctly ([08355c8c](https://github.com/zowe/zowe-explorer-intellij/commit/08355c8c))
+* Bugfix: USS files are no more displayed after they are deleted ([c130ea52](https://github.com/zowe/zowe-explorer-intellij/commit/c130ea52))
+* Bugfix: Files with long name placing as a z/OS dataset is fixed ([1afd501e](https://github.com/zowe/zowe-explorer-intellij/commit/1afd501e))
 
 ## [1.2.1-231] (2024-06-12)
 

@@ -12,18 +12,18 @@ package jes
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
-import auxiliary.components.actionMenuItem
 import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.ComponentFixture
-import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.search.locators.byXpath
-import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
-import workingset.EMPTY_DATASET_MESSAGE
-import workingset.PROJECT_NAME
+import testutils.ProcessManager
+import workingset.*
+import workingset.auxiliary.components.dialogs.JobPropertiesDialog
+import workingset.auxiliary.components.dialogs.SpoolFilePropertyDialog
+import workingset.testutils.*
 
 /**
  * Tests viewing job and spool file properties.
@@ -34,29 +34,78 @@ import workingset.PROJECT_NAME
 class ViewJwsPropertyTest {
     private val closableFixtureCollector = ClosableFixtureCollector()
     private val fixtureStack = mutableListOf<Locator>()
-
+    private var utilObject = IdeaInteractionClass()
     private val connectionName = "con1"
-    private val jwsName = "JWS name"
-    private val jobsFilterName = Triple("*", ZOS_USERID.uppercase(), "")
-    private val jobName = "jobName"
+    private val jwsName = "JWS1"
+    private val jobName = "TEST1"
+    private val jesFileName = jobMemberCombo.format(jobName, UNIVERSAL_JOB_ID)
+    private val jobsFilter = Triple(jobName, ZOS_USERID, "")
+
+
     private val spoolFileName = "JESMSGLG"
+    private var jobPropertiesDialog = JobPropertiesDialog()
+    private var spoolFilePropertyDialog = SpoolFilePropertyDialog()
+    private var url = "https://%s:%s/zosmf/restjobs/jobs/$jobName/JOB07380"
+    private var fileUrl = "https://%s:%s/zosmf/restjobs/jobs/$jobName/JOB07380/files"
+    private var recUrk = "https://%s:%s/zosmf/restjobs/jobs/JOB07380S0W1....DB9E6D9D......."
+    private var recUrkNonFormat = "%3A/files/2/records"
+    private val generalTabProperty = mapOf(
+            "jobId" to "JOB07380",
+            "jobName" to jobName,
+            "subsystem" to "<Unknown>",
+            "owner" to ZOS_USERID.uppercase(),
+            "status" to "OUTPUT",
+            "jobType" to "JOB",
+            "jobClass" to "A",
+            "returnCode" to "CC 0000",
+            "correlator" to "JOB07380S0W1....DB9E6D9D.......:",
+    )
+    private val dataTabProperty = mutableMapOf(
+            "phase" to "0",
+            "phaseName" to "PHASE1",
+            "url" to url,
+            "filesUrl" to fileUrl,
+            "executor" to "SY1",
+            "reasonNotRunning" to "<Unknown>",
+            "submitted" to "2018-11-03T09:05:15.000Z",
+            "startTime" to "2018-11-03T09:05:18.010Z",
+            "endTime" to "2018-11-03T09:05:25.332Z"
+    )
+    private val generalSpoolTabProperty = mapOf(
+            "jobId" to "JOB07380",
+            "jobName" to jobName,
+            "jobcorrelator" to "JOB07380S0W1....DB9E6D9D.......:",
+            "class" to "K",
+            "id" to "2",
+            "dd" to spoolFileName,
+            "step" to "STEP1",
+            "process" to "<Unknown>",
+
+    )
+    private val dataSpoolTabProperty = mutableMapOf(
+            "record format" to "UA",
+            "byte content" to "0",
+            "recocrd count" to "2",
+            "record url" to recUrk,
+            "length" to "133",
+            "subsys" to "JES2"
+    )
+    private lateinit var processManager: ProcessManager
+
 
     /**
      * Opens the project and Explorer, clears test environment, creates jes working set with jobs filter.
      */
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) = with(remoteRobot) {
+        processManager = ProcessManager()
         startMockServer()
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_info",
-            { it?.requestLine?.contains("zosmf/info") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
-        responseDispatcher.injectEndpoint(
-            "${testInfo.displayName}_resttopology",
-            { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-            { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-        )
+        jobPropertiesDialog = JobPropertiesDialog(fixtureStack, remoteRobot)
+        spoolFilePropertyDialog = SpoolFilePropertyDialog(fixtureStack, remoteRobot)
+
+        injectTestInfo(testInfo)
+
+        injectTestInfoRestTopology(testInfo)
         setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createConnection(
             fixtureStack,
@@ -66,101 +115,49 @@ class ViewJwsPropertyTest {
             remoteRobot,
             "https://${mockServer.hostName}:${mockServer.port}"
         )
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            createJWSFromContextMenu(fixtureStack, closableFixtureCollector)
-            addJesWorkingSetDialog(fixtureStack) {
-                addJesWorkingSet(jwsName, connectionName)
-                clickButton("OK")
-                Thread.sleep(2000)
-                find<HeavyWeightWindowFixture>(byXpath("//div[@class='HeavyWeightWindow']")).findText(
-                    EMPTY_DATASET_MESSAGE
-                )
-                clickButton("OK")
-                Thread.sleep(2000)
-            }
-            closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
-            createJobsFilter(jwsName, fixtureStack, closableFixtureCollector)
-            createJobsFilterDialog(fixtureStack) {
-                createJobsFilter(jobsFilterName)
-                clickButton("OK")
-            }
-        }
-        responseDispatcher.injectEndpoint(
-            "listJobs_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs?owner=USER&prefix=*") ?: false },
-            { MockResponse().setBody(replaceInJson("getJob", mapOf(Pair("jobName", jobName), Pair("retCode", "CC 0000"),
-                    Pair("jobStatus", "OUTPUT")))) })
-        responseDispatcher.injectEndpoint(
-            "listSpoolFiles_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restjobs/jobs/") ?: false },
-            { MockResponse().setBody(replaceInJson("getSingleSpoolFile", mapOf(Pair("jobName", jobName), Pair("spoolFileName", spoolFileName)))) })
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                jesExplorer.click()
-                find<ComponentFixture>(viewTree).findText(jwsName).doubleClick()
-                Thread.sleep(1000)
-            }
-        }
+        dataTabProperty["url"] = url.format(mockServer.hostName, mockServer.port)
+        dataTabProperty["filesUrl"] = fileUrl.format(mockServer.hostName, mockServer.port)
+        dataSpoolTabProperty["record url"] = recUrk.format(mockServer.hostName, mockServer.port)+recUrkNonFormat
+
+        injectEmptySpoolFiles(testInfo,jobName)
+        injectOwnerPrefixJobDetails(testInfo,jobName,ZOS_USERID.uppercase())
+        injectJobLogHttp(testInfo,jobName,GET_SINGLE_SPOOL_FILE)
+
+        injectEmptySpoolFiles(testInfo,jobName)
+        utilObject.createJWS(jwsName,connectionName,jobsFilter, fixtureStack, closableFixtureCollector, remoteRobot)
     }
 
     /**
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+    fun tearDownAll() {
+        processManager.close()
         mockServer.shutdown()
-
-        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            close()
-        }
     }
 
     /**
      * Test to check if job properties in opened dialog and expected values are matching
      */
     @Test
-    @Order(1)
     fun testViewJobProperties(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                find<ComponentFixture>(viewTree).findAllText{ it.text.startsWith("$jobName (JOB07380)") }.first()
-                    .rightClick()
-            }
-            actionMenuItem(remoteRobot, "Properties").click()
-            jobPropertiesDialog(fixtureStack) {
-                if (!areJobPropertiesValid("JOB07380", jobName, "", ZOS_USERID.uppercase(), "OUTPUT", "JOB",
-                        "A", "CC 0000", "JOB07380S0W1....DB9E6D9D.......:", "0", "PHASE1",
-                        "https://hostName:port/zosmf/restjobs/jobs/$jobName/JOB07380", "https://hostName:port/zosmf/restjobs/jobs/$jobName/JOB07380/files",
-                        "SY1", "", "2018-11-03T09:05:15.000Z", "2018-11-03T09:05:18.010Z", "2018-11-03T09:05:25.332Z")) {
-                    throw Exception("Properties in opened 'Job Properties' dialog are different from expected")
-                }
-                clickButton("OK")
-            }
-        }
+        utilObject.callTreesElementProperty(jesFileName,fixtureStack,remoteRobot, false)
+        assertTrue(jobPropertiesDialog.checkTabParam(jobGeneralTabParams, generalTabProperty))
+        find<ComponentFixture>(dataTabLoc).click()
+        assertTrue(jobPropertiesDialog.checkTabParam(jobDataTabParams, dataTabProperty))
+        jobPropertiesDialog.okButton.click()
     }
 
     /**
      * Test to check if spool file properties in opened dialog and expected values are matching
      */
     @Test
-    @Order(2)
     fun testViewSpoolFileProperties(remoteRobot: RemoteRobot) = with(remoteRobot) {
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            explorer {
-                jesExplorer.click()
-                Thread.sleep(1000)
-                find<ComponentFixture>(viewTree).findAllText{ it.text.startsWith(spoolFileName) }.first().rightClick()
-            }
-            actionMenuItem(remoteRobot, "Properties").click()
-            spoolFilePropertiesDialog(fixtureStack) {
-                if (!areSpoolFilePropertiesValid("JOB07380", jobName, "JOB07380S0W1....DB9E6D9D.......:", "K", "2", spoolFileName,
-                        "STEP1", "", "UA", "0", "2",
-                        "https://hostName:port/zosmf/restjobs/jobs/JOB07380S0W1....DB9E6D9D.......%3A/files/2/records", "133", "JES2")) {
-                    throw Exception("Properties in opened 'Spool File Properties' dialog are different from expected")
-                }
-                clickButton("OK")
-            }
-        }
+        utilObject.callTreesElementProperty(spoolFileName,fixtureStack,remoteRobot, false)
+
+        assertTrue(spoolFilePropertyDialog.checkTabParam(spoolGeneralTabParams, generalSpoolTabProperty ))
+        find<ComponentFixture>(dataTabLoc).click()
+        assertTrue(spoolFilePropertyDialog.checkTabParam(spoolDataTabParams, dataSpoolTabProperty))
+        spoolFilePropertyDialog.okButton.click()
     }
 }

@@ -19,7 +19,7 @@ import com.intellij.remoterobot.fixtures.CommonContainerFixture
 import com.intellij.remoterobot.fixtures.ContainerFixture
 import com.intellij.remoterobot.fixtures.FixtureName
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.search.locators.byXpath
+import workingset.*
 import java.time.Duration
 
 /**
@@ -29,14 +29,14 @@ import java.time.Duration
 class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
     CommonContainerFixture(remoteRobot, remoteComponent) {
 
-    val fileExplorer = contentTabLabel(remoteRobot, "File Explorer")
-    val jesExplorer = contentTabLabel(remoteRobot, "JES Explorer")
+    val fileExplorer = contentTabLabel(remoteRobot, FILE_EXPLORER_W)
+    val jesExplorer = contentTabLabel(remoteRobot, JES_EXPLORER_W)
 
     /**
      * Clicks on the settings action and adds the Settings Dialog to the list of fixtures needed to close.
      */
     fun settings(closableFixtureCollector: ClosableFixtureCollector, fixtureStack: List<Locator>) {
-        clickActionButton(byXpath("//div[@class='ActionButton' and @myicon='settings.svg' and @myaction=' ()']"))
+        clickActionButton(callSettingButtonLoc)
         closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
     }
 
@@ -44,7 +44,7 @@ class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
      * Clicks on the add action button.
      */
     fun createConfigItem() {
-        clickActionButton(byXpath("//div[@class='ActionButton' and @myicon='add.svg' and @myaction=' ()']"))
+        clickActionButton(actionButtonLoc)
     }
 
     companion object {
@@ -52,7 +52,7 @@ class Explorer(remoteRobot: RemoteRobot, remoteComponent: RemoteComponent) :
          * Returns the xPath of the Explorer.
          */
         @JvmStatic
-        fun xPath() = byXpath("//div[@class='InternalDecoratorImpl']")
+        fun xPath() = explorerLoc
     }
 }
 
