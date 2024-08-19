@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
@@ -27,9 +28,10 @@ class FileExplorerContentProviderFactory : ExplorerContentProviderFactory<Connec
 }
 
 /** Class to provide content for File Explorer */
-class FileExplorerContentProvider private constructor() : ExplorerContentProviderBase<ConnectionConfig, FileExplorer>() {
+class FileExplorerContentProvider private constructor() :
+  ExplorerContentProviderBase<ConnectionConfig, FileExplorer>() {
 
-  override val explorer: FileExplorer = UIComponentManager.INSTANCE.getExplorer(FileExplorer::class.java)
+  override val explorer: FileExplorer = service<UIComponentManager>().getExplorer(FileExplorer::class.java)
   override val displayName: String = "File Explorer"
   override val isLockable: Boolean = false
   override val actionGroup: ActionGroup =
@@ -38,13 +40,13 @@ class FileExplorerContentProvider private constructor() : ExplorerContentProvide
   private val fileExplorerViews = mutableMapOf<Project, FileExplorerView>()
 
   companion object {
-    private val fileExplorerContentProvider = FileExplorerContentProvider()
+    private val fileExplorerContentProvider by lazy { FileExplorerContentProvider() }
     fun getInstance(): FileExplorerContentProvider {
       return fileExplorerContentProvider
     }
   }
 
-  override fun getExplorerView(project: Project): ExplorerTreeView<*, *, *>?  {
+  override fun getExplorerView(project: Project): ExplorerTreeView<*, *, *>? {
     return fileExplorerViews[project]
   }
 

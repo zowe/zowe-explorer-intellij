@@ -1,6 +1,7 @@
 .gradle
 .idea
 build
+/ide_for_launch
 
 libs
 verifier-all.jar

@@ -19,11 +19,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileNavigator
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
@@ -32,6 +32,7 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.explorer.ExplorerContentProvider
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.FileExplorer
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
@@ -39,6 +40,7 @@ import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.explorer.WorkingSet
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestUIComponentManager
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
 import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -73,6 +75,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       lateinit var explorer: Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>
       lateinit var explorerUnitMock: ExplorerUnit<ConnectionConfig>
       lateinit var dataOpsManagerService: TestDataOpsManagerImpl
+      lateinit var uiComponentManagerService: TestUIComponentManager
       lateinit var ussFileNode: UssFileNode
 
       beforeEach {
@@ -94,12 +97,21 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         mockkStatic(TreeAnchorizer::class)
         every { TreeAnchorizer.getService().createAnchor(any()) } returns mockk()
 
-        mockkObject(UIComponentManager)
-        every {
-          UIComponentManager
-            .INSTANCE
-            .getExplorerContentProvider<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, UssFileNode>>>(any())
-        } returns mockk()
+        uiComponentManagerService =
+          ApplicationManager.getApplication().service<UIComponentManager>() as TestUIComponentManager
+        uiComponentManagerService.testInstance = object : TestUIComponentManager() {
+          override fun <E : Explorer<*, *>> getExplorerContentProvider(
+            clazz: Class<out E>
+          ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>>? {
+            return mockk()
+          }
+        }
+//        mockkObject(TestUIComponentManager)
+//        every {
+//          UIComponentManager
+//            .INSTANCE
+//            .getExplorerContentProvider<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, UssFileNode>>>(any())
+//        } returns mockk()
 
         explorerTreeNodeMock = mockk()
 
@@ -397,20 +409,20 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       val treeStructure = mockk<ExplorerTreeStructureBase>()
       every { treeStructure.registerNode(any()) } just Runs
 
-      mockkObject(UIComponentManager)
-      every {
-        UIComponentManager
-          .INSTANCE
-          .getExplorer<FileExplorer>(any())
-      } returns explorer
-
       val explorerContentProviderMock = mockk<FileExplorerContentProvider>()
+      val uiComponentManagerService: TestUIComponentManager =
+        ApplicationManager.getApplication().service<UIComponentManager>() as TestUIComponentManager
+      uiComponentManagerService.testInstance = object : TestUIComponentManager() {
+        override fun <E : Explorer<*, *>> getExplorer(clazz: Class<out E>): E {
+          return explorer as E
+        }
 
-      every {
-        UIComponentManager
-          .INSTANCE
-          .getExplorerContentProvider(explorer::class.java)
-      } returns explorerContentProviderMock
+        override fun <E : Explorer<*, *>> getExplorerContentProvider(
+          clazz: Class<out E>
+        ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>>? {
+          return explorerContentProviderMock
+        }
+      }
 
       val mockedUssNode = UssFileNode(virtualFileMock, mockedProject, parentNode, explorerUnit, treeStructure)
       val ussFileMockToSpy = spyk(mockedUssNode, recordPrivateCalls = true)
@@ -465,11 +477,13 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
           val explorerUnitToTest = mockk<ExplorerUnit<ConnectionConfig>>()
           val explorerToTest = mockk<FileExplorer>()
           every { explorerUnitToTest.explorer } returns explorerToTest
-          every {
-            UIComponentManager
-              .INSTANCE
-              .getExplorerContentProvider(explorerToTest::class.java)
-          } returns null
+          uiComponentManagerService.testInstance = object : TestUIComponentManager() {
+            override fun <E : Explorer<*, *>> getExplorerContentProvider(
+              clazz: Class<out E>
+            ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>>? {
+              return null
+            }
+          }
           val mockedUssNodeToTest =
             UssFileNode(virtualFileMock, mockedProject, parentNode, explorerUnitToTest, treeStructure)
           val ussFileMockToSpyTest = spyk(mockedUssNodeToTest, recordPrivateCalls = true)
