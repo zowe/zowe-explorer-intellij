@@ -21,6 +21,7 @@ import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.RenameOperation
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -118,9 +119,12 @@ class RenameAction : AnAction() {
           throw Exception("Error during rename action execution: Unknown attributes type. $attributes")
         }
       }
-      val dialog = RenameDialog(e.project, type, selectedNodeData, this, state)
-      if (dialog.showAndGet() && file != null) {
-        runRenameOperation(e.project, file, type, attributes, dialog.state, node)
+      if (file != null) {
+        if (checkFileForSync(e.project, file, checkDependentFiles = true)) return
+        val dialog = RenameDialog(e.project, type, selectedNodeData, this, state)
+        if (dialog.showAndGet()) {
+          runRenameOperation(e.project, file, type, attributes, dialog.state, node)
+        }
       }
     }
   }

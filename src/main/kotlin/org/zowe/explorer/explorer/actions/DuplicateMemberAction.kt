@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
+import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.RenameOperation
 import org.zowe.explorer.explorer.ui.*
 
@@ -34,6 +35,8 @@ class DuplicateMemberAction : AnAction() {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0]
     val attributes = selectedNode.attributes ?: return
+    val file = selectedNode.file ?: return
+    if (checkFileForSync(e.project, file)) return
     val initialState = ""
     val dialog = RenameDialog(project, "Member", selectedNode, this, initialState)
     if (dialog.showAndGet()) {

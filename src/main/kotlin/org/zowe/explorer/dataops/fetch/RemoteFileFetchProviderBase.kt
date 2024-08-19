@@ -22,7 +22,7 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.services.ErrorSeparatorService
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.runIfTrue
-import org.zowe.explorer.utils.runWriteActionOnWriteThread
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.utils.sendTopic
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.set
@@ -109,10 +109,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
     progressIndicator: ProgressIndicator
   ): List<File> {
     val fetched = fetchResponse(query, progressIndicator)
-    return runWriteActionOnWriteThread {
-      fetched.mapNotNull {
-        convertResponseToFile(it)
-      }
+    return fetched.mapNotNull {
+      convertResponseToFile(it)
     }
   }
 
@@ -174,7 +172,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
         }
         ?.toList()
         ?.apply {
-          runWriteActionOnWriteThread {
+          runWriteActionInEdtAndWait {
             forEach { cleanupUnusedFile(it, query) }
           }
         }

@@ -15,18 +15,22 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.zowe.explorer.config.ConfigService
-import org.zowe.explorer.config.connect.*
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.config.connect.getPassword
+import org.zowe.explorer.config.connect.getUsername
+import org.zowe.explorer.config.connect.whoAmI
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.crudable.find
-import org.zowe.explorer.utils.runReadActionInEdtAndWait
 import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
@@ -80,7 +84,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   private fun scanForZoweConfig(): ZoweConfig? {
     val zoweConfigLocation = "${myProject.basePath}/$ZOWE_CONFIG_NAME"
-    val zoweFile = runReadActionInEdtAndWait {
+    val zoweFile = runReadAction {
       VirtualFileManager.getInstance().findFileByNioPath(Path.of(zoweConfigLocation))
     } ?: return null
     return try {
@@ -120,17 +124,18 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @return Nothing.
    */
   private fun notifyUiOnConnectionFailure(title: String, content: String) {
-    NotificationGroupManager.getInstance().getNotificationGroup(EXPLORER_NOTIFICATION_GROUP_ID)
-        .createNotification(title, content, NotificationType.ERROR)
-        .apply {
-          addAction(object : DumbAwareAction("Add Anyway") {
-            override fun actionPerformed(e: AnActionEvent) {
-              addOrUpdateZoweConfig(checkConnection = false)
-              hideBalloon()
-            }
-          })
-          notify(myProject)
-        }
+    NotificationGroupManager.getInstance()
+      .getNotificationGroup(EXPLORER_NOTIFICATION_GROUP_ID)
+      .createNotification(title, content, NotificationType.ERROR)
+      .apply {
+        addAction(object : DumbAwareAction("Add Anyway") {
+          override fun actionPerformed(e: AnActionEvent) {
+            addOrUpdateZoweConfig(checkConnection = false)
+            hideBalloon()
+          }
+        })
+        notify(myProject)
+      }
   }
 
   /**
@@ -212,20 +217,24 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @param uuid - uuid returned connection.
    * @return converted ConnectionConfig.
    */
-  fun ZoweConfig.toConnectionConfig(uuid: String, zVersion: ZVersion = ZVersion.ZOS_2_1, owner: String = ""): ConnectionConfig {
+  fun ZoweConfig.toConnectionConfig(
+    uuid: String,
+    zVersion: ZVersion = ZVersion.ZOS_2_1,
+    owner: String = ""
+  ): ConnectionConfig {
     val basePath = if (basePath.last() == '/') basePath.dropLast(1) else basePath
     val domain = if (port == null) host else "${host}:${port}"
     val zoweUrl = "${protocol}://${domain}${basePath}"
     val isAllowSelfSigned = !(rejectUnauthorized ?: false)
 
     return ConnectionConfig(
-        uuid,
-        zoweConnectionName,
-        zoweUrl,
-        isAllowSelfSigned,
-        zVersion,
-        "${myProject.basePath}/${ZOWE_CONFIG_NAME}",
-        owner
+      uuid,
+      zoweConnectionName,
+      zoweUrl,
+      isAllowSelfSigned,
+      zVersion,
+      "${myProject.basePath}/${ZOWE_CONFIG_NAME}",
+      owner
     )
   }
 
@@ -235,7 +244,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @return converted ConnectionConfig.
    */
   fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1): ConnectionConfig =
-      toConnectionConfig(getOrCreateUuid(), zVersion)
+    toConnectionConfig(getOrCreateUuid(), zVersion)
 
 
   /**
@@ -252,15 +261,15 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val zoweConfig = zoweConfig ?: return ZoweConfigState.NOT_EXISTS
     val existingConnection = findExistingConnection() ?: return ZoweConfigState.NEED_TO_ADD
     val newConnection = zoweConfig.toConnectionConfig(
-        existingConnection.uuid, existingConnection.zVersion, existingConnection.owner
+      existingConnection.uuid, existingConnection.zVersion, existingConnection.owner
     )
 
     val zoweUsername = zoweConfig.user ?: return ZoweConfigState.ERROR
     val zowePassword = zoweConfig.password ?: return ZoweConfigState.ERROR
 
     return if (existingConnection == newConnection &&
-        getUsername(newConnection) == zoweUsername &&
-        getPassword(newConnection) == zowePassword
+      getUsername(newConnection) == zoweUsername &&
+      getPassword(newConnection) == zowePassword
     ) {
       ZoweConfigState.SYNCHRONIZED
     } else {
@@ -269,4 +278,3 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   }
 
 }
-

@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.ui.isComponentUnderMouse
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.content.service.isFileSyncingNow
 import org.zowe.explorer.dataops.content.synchronizer.AutoSyncFileListener
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
@@ -67,7 +68,7 @@ class FileEditorFocusListener: FocusChangeListener {
             val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
             val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
             val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-            if (!(currentContent contentEquals previousContent) && needToUpload) {
+            if (!(currentContent contentEquals previousContent) && needToUpload && !isFileSyncingNow(file)) {
               val incompatibleEncoding = !checkEncodingCompatibility(file, project)
               if (incompatibleEncoding && !showSaveAnywayDialog(file.charset)) {
                 return

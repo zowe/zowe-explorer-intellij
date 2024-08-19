@@ -12,6 +12,8 @@ package org.zowe.explorer.dataops.attributes
 
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.getOwner
+import org.zowe.explorer.config.connect.getUsername
+import org.zowe.explorer.config.connect.tryToExtractOwnerFromConfig
 import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import org.zowe.explorer.utils.Copyable
 import org.zowe.explorer.utils.castOrNull
@@ -118,7 +120,7 @@ data class RemoteUssAttributes(
   val isWritable: Boolean
     get() {
       val hasFileOwnerInRequesters = requesters.any {
-        runCatching { getOwner(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
+        runCatching { tryToExtractOwnerFromConfig(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
       }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
