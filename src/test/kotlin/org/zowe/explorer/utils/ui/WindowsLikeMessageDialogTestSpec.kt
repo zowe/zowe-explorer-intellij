@@ -11,12 +11,21 @@
 package org.zowe.explorer.utils.ui
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.UiInterceptors
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.awt.EventQueue
 import javax.swing.Action
 import javax.swing.JButton
@@ -46,7 +55,7 @@ class WindowsLikeMessageDialogTestSpec : WithApplicationShouldSpec({
       project,
       null,
       "The destination already has file(s) with\nthe same name.\n" +
-          "Please, select an action.",
+        "Please, select an action.",
       "Name conflicts in 1 file(s)",
       actions,
       0,
@@ -111,20 +120,24 @@ class WindowsLikeMessageDialogTestSpec : WithApplicationShouldSpec({
     should("call showWindowsLikeMessageDialog") {
       mockkStatic(UiInterceptors::class)
       every { UiInterceptors.tryIntercept(any()) } returns true
-      val exitCode = WindowsLikeMessageDialog.showWindowsLikeMessageDialog(
-        project,
-        null,
-        "The destination already has file(s) with\nthe same name.\n" +
-            "Please, select an action.",
-        "Name conflicts in 1 file(s)",
-        actions,
-        0,
-        0,
-        null,
-        null,
-        false,
-        null
-      )
+      val exitCode = runBlocking {
+        withContext(Dispatchers.EDT) {
+          WindowsLikeMessageDialog.showWindowsLikeMessageDialog(
+            project,
+            null,
+            "The destination already has file(s) with\nthe same name.\n" +
+              "Please, select an action.",
+            "Name conflicts in 1 file(s)",
+            actions,
+            0,
+            0,
+            null,
+            null,
+            false,
+            null
+          )
+        }
+      }
       assertSoftly {
         exitCode shouldBe 1
       }
