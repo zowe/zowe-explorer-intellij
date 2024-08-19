@@ -93,7 +93,7 @@ abstract class ExplorerContentProviderBase<Connection: ConnectionConfigBase, E :
    */
   override fun isFileInCutBuffer(virtualFile: VirtualFile): Boolean {
     return lock.withLock {
-      filesToCut.map { it.getAncestorNodes() }.flatten().distinct().contains(virtualFile)
+      filesToCut.distinct().contains(virtualFile)
     }
   }
 

@@ -15,7 +15,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -28,10 +28,11 @@ import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
+import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.UIComponentManager
 import org.zowe.explorer.utils.isBeingEditingNow
-import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
@@ -55,7 +56,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
     init()
   }
 
-  private val contentProvider = UIComponentManager.INSTANCE.getExplorerContentProvider(explorer::class.java)
+  private val contentProvider = service<UIComponentManager>().getExplorerContentProvider(explorer::class.java)
 
   private val descriptor: OpenFileDescriptor?
     get() {
@@ -108,11 +109,12 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
           project = project,
           icon = AllIcons.General.WarningDialog
         )
+        if (checkFileForSync(project, file)) return
         runBackgroundableTask("Navigating to ${file.name}") { indicator ->
           if (doSync) {
             val onThrowableHandler: (Throwable) -> Unit = {
               if (it.message?.contains("Client is not authorized for file access") == true) {
-                invokeLater {
+                runInEdt {
                   Messages.showDialog(
                     project,
                     "You do not have permissions to read this file",
@@ -127,7 +129,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
               }
             }
             val onSyncSuccessHandler: () -> Unit = {
-              runWriteActionInEdtAndWait {
+              runInEdtAndWait {
                 fileDescriptor.navigate(requestFocus)
               }
             }
@@ -149,7 +151,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
               }
             } else {
               runCatching {
-                invokeLater {
+                runInEdt {
                   FileEditorManager.getInstance(project).openFile(file, true)
                 }
               }

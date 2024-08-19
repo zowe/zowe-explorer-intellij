@@ -30,6 +30,7 @@ import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.locked
 import org.zowe.explorer.utils.toHumanReadableFormat
+import org.zowe.explorer.utils.service
 import java.time.LocalDateTime
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock

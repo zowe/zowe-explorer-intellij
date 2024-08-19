@@ -181,7 +181,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       .apply {
         addAction(object : DumbAwareAction("Add Anyway") {
           override fun actionPerformed(e: AnActionEvent) {
-            addOrUpdateZoweConfig(checkConnection = false,type = type)
+            addOrUpdateZoweConfig(checkConnection = false, type = type)
             hideBalloon()
           }
         })
@@ -405,7 +405,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * related to zowe config or generates a new one.
    * @return converted ConnectionConfig.
    */
-  fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1,type: ZoweConfigType): ConnectionConfig =
+  fun ZoweConfig.toConnectionConfig(zVersion: ZVersion = ZVersion.ZOS_2_1, type: ZoweConfigType): ConnectionConfig =
     toConnectionConfig(getOrCreateUuid(type), zVersion, type = type)
 
 

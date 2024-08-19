@@ -11,7 +11,10 @@
 package org.zowe.explorer.utils
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -118,34 +121,6 @@ fun <L : Any> subscribe(topic: Topic<L>, handler: L, project: Project) = project
 /** Asserts whether write access is allowed */
 fun assertWriteAllowed() = ApplicationManager.getApplication().assertWriteAccessAllowed()
 
-/**
- * Schedule the given task's execution, or cancel the task if it's no longer needed.
- * Gives the result of the executed task
- */
-fun <T> submitOnWriteThread(block: () -> T): T {
-  @Suppress("UnstableApiUsage")
-  return AppUIExecutor.onWriteThread(ModalityState.defaultModalityState()).submit(block).get()
-}
-
-@Suppress("UnstableApiUsage")
-fun <T> runWriteActionOnWriteThread(block: () -> T): T {
-  val app = ApplicationManager.getApplication()
-  return if (app.isWriteIntentLockAcquired) {
-    if (app.isWriteAccessAllowed) {
-      block()
-    } else {
-      runWriteAction(block)
-    }
-  } else
-    submitOnWriteThread {
-      runWriteAction(block)
-    }
-}
-
-fun <T> runReadActionInEdtAndWait(block: () -> T): T {
-  return invokeAndWaitIfNeeded { runReadAction(block) }
-}
-
 inline fun <reified S : Any> ComponentManager.service(): S {
   return getService(S::class.java)
 }
@@ -205,6 +180,10 @@ inline fun <reified T> runTask(
   })
 }
 
+fun runInEdtAndWait(runnable: () -> Unit) {
+  ApplicationManager.getApplication().invokeAndWait(runnable)
+}
+
 fun runWriteActionInEdt(block: () -> Unit) {
   runInEdt {
     runWriteAction(block)
@@ -212,7 +191,7 @@ fun runWriteActionInEdt(block: () -> Unit) {
 }
 
 fun runWriteActionInEdtAndWait(block: () -> Unit) {
-  invokeAndWaitIfNeeded {
+  runInEdtAndWait {
     runWriteAction(block)
   }
 }

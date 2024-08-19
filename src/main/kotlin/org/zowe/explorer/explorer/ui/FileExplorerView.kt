@@ -41,6 +41,7 @@ import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.DeleteOperation
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.explorer.Explorer
@@ -495,22 +496,26 @@ class FileExplorerView(
             icon = AllIcons.General.QuestionDialog
           )
         ) {
+          val filteredNodeAndFilePairs = nodeAndFilePairs.filter {
+            !checkFileForSync(project, it.second, checkDependentFiles = true)
+          }
+          val filteredFiles = filteredNodeAndFilePairs.map { it.second }.toSet().toList()
           runModalTask(
-            title = "Deletion of ${files.size} file(s)",
+            title = "Deletion of ${filteredFiles.size} file(s)",
             project = project,
             cancellable = true
           ) { indicator ->
             indicator.isIndeterminate = false
             ignoreVFileDeleteEvents.compareAndSet(false, true)
-            files.map { DeleteOperation(it, dataOpsManager) }
+            filteredFiles.map { DeleteOperation(it, dataOpsManager) }
               .forEach { op ->
                 indicator.text = "Deleting file ${op.file.name}"
                 runCatching {
                   dataOpsManager.performOperation(op, indicator)
                 }.onFailure { explorer.reportThrowable(it, project) }
-                indicator.fraction = indicator.fraction + 1.0 / files.size
+                indicator.fraction = indicator.fraction + 1.0 / filteredFiles.size
               }
-            nodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }.distinctBy { it.path }
+            filteredNodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }.distinctBy { it.path }
               .filterIsInstance<FileFetchNode<*, *, *, *, *, *>>()
               .forEach {
                 it.cleanCache(

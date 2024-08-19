@@ -13,13 +13,16 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 ## [1.2.1-231] (2024-06-12)
 
 ### Features
+
 * Feature: GitHub issue #182 ([4631d76f](https://github.com/zowe/zowe-explorer-intellij/commit/4631d76f))
 * Feature: Change dialogs as DoNotAskOption is going to be removed soon ([0d6b5d57](https://github.com/zowe/zowe-explorer-intellij/commit/0d6b5d57))
 * Feature: Add 'Unknown' to fields in dataset properties dialog when there is no information for fields ([5b32a4df](https://github.com/zowe/zowe-explorer-intellij/commit/5b32a4df))
 * Feature: Validate owner when receiving information from TSO ([9db42fb8](https://github.com/zowe/zowe-explorer-intellij/commit/9db42fb8))
 * Feature: Conflicts dialog on copy/move improvement ([c8f4d525](https://github.com/zowe/zowe-explorer-intellij/commit/c8f4d525))
+* Feature: plug-in's description in JetBrains marketplace update ([5cc0086a](https://github.com/zowe/zowe-explorer-intellij/commit/5cc0086a))
 
 ### Bugfixes
+
 * Bugfix: When all errors are corrected, the ok button is inactive ([4558495c](https://github.com/zowe/zowe-explorer-intellij/commit/4558495c))
 * Bugfix: Rename of the opened file causes exception ([09453311](https://github.com/zowe/zowe-explorer-intellij/commit/09453311))
 * Bugfix: Refresh does not work on the first try ([7af1c668](https://github.com/zowe/zowe-explorer-intellij/commit/7af1c668))
@@ -278,7 +281,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
   PDS ([ec94b39e](https://github.com/zowe/zowe-explorer-intellij/commit/ec94b39e))
 * Bugfix: USS file empty after rename ([71c49b24](https://github.com/zowe/zowe-explorer-intellij/commit/71c49b24))
 
-## [1.0.0] (2023-03-13)
+## 1.0.0 (2023-03-13)
 
 ### Breaking changes
 
@@ -400,7 +403,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: Policy agreement is gone wild ([d600f58e](https://github.com/zowe/zowe-explorer-intellij/commit/d600f58e))
 * Bugfix: Exception while opening TSO CLI ([540bfa80](https://github.com/zowe/zowe-explorer-intellij/commit/540bfa80))
 
-## [0.3.1] (2022-11-30)
+## 0.3.1 (2022-11-30)
 
 ### Features
 
@@ -417,7 +420,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: Ctrl+C/Ctrl+V does not work if copy file from remote to
   local ([e5601e7f](https://github.com/zowe/zowe-explorer-intellij/commit/e5601e7f))
 
-## [0.3.0] (2022-11-18)
+## 0.3.0 (2022-11-18)
 
 ### Breaking changes
 
@@ -491,6 +494,8 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.1-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.0-231...1.2.1-231
+[1.2.0-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.2-231...1.2.0-231
 [1.1.2-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-231...1.1.2-231
 [1.1.1-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.0-231...1.1.1-231
 [1.1.0-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.0.3-231...1.1.0-231

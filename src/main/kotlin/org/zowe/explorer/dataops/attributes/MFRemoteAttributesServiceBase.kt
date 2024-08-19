@@ -13,6 +13,7 @@ package org.zowe.explorer.dataops.attributes
 import com.intellij.openapi.util.io.FileAttributes
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
@@ -97,7 +98,9 @@ abstract class MFRemoteAttributesServiceBase<Connection : ConnectionConfigBase, 
    */
   private fun reassignAttributesToFile(file: MFVirtualFile, oldAttributes: Attributes, newAttributes: Attributes) {
     obtainAndRenameUrlDirIfNeeded(newAttributes)
-    reassignAttributesAfterUrlFolderRenaming(file, oldAttributes, newAttributes)
+    runWriteActionInEdtAndWait {
+      reassignAttributesAfterUrlFolderRenaming(file, oldAttributes, newAttributes)
+    }
   }
 
   /**

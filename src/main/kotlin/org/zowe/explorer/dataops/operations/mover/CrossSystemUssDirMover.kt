@@ -10,7 +10,6 @@
 package org.zowe.explorer.dataops.operations.mover
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
@@ -23,18 +22,9 @@ import org.zowe.explorer.dataops.fetch.UssQuery
 import org.zowe.explorer.dataops.operations.DeleteOperation
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
-import org.zowe.explorer.utils.applyIfNotNull
-import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.log
-import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.vfs.MFVirtualFile
-import org.zowe.kotlinsdk.CreateUssFile
-import org.zowe.kotlinsdk.DataAPI
-import org.zowe.kotlinsdk.FileMode
-import org.zowe.kotlinsdk.FilePath
-import org.zowe.kotlinsdk.FileType
-import org.zowe.kotlinsdk.UssFile
+import org.zowe.kotlinsdk.*
 
 /**
  * Factory for registering CrossSystemUssDirMover in Intellij IoC container.
@@ -117,30 +107,25 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
     val attributesService =
       dataOpsManager.getAttributesService(RemoteUssAttributes::class.java, MFVirtualFile::class.java)
-    var createdDirFile: VirtualFile? = null
-    runWriteActionInEdtAndWait {
-      createdDirFile = attributesService.getOrCreateVirtualFile(
-        RemoteUssAttributes(
-          destAttributes.path,
-          UssFile(sourceFile.name, "drwxrwxrwx"),
-          destConnectionConfig.url,
-          destConnectionConfig
-        )
+    val createdDirFile = attributesService.getOrCreateVirtualFile(
+      RemoteUssAttributes(
+        destAttributes.path,
+        UssFile(sourceFile.name, "drwxrwxrwx"),
+        destConnectionConfig.url,
+        destConnectionConfig
       )
-    }
+    )
 
-    createdDirFile?.let { createdDirFileNotNull ->
-      sourceFile.children.forEach {
-        val op = MoveCopyOperation(
-          it,
-          createdDirFileNotNull,
-          isMove = false,
-          forceOverwriting = false,
-          newName = null,
-          dataOpsManager = dataOpsManager
-        )
-        dataOpsManager.performOperation(op, progressIndicator)
-      }
+    sourceFile.children.forEach {
+      val op = MoveCopyOperation(
+        it,
+        createdDirFile,
+        isMove = false,
+        forceOverwriting = false,
+        newName = null,
+        dataOpsManager = dataOpsManager
+      )
+      dataOpsManager.performOperation(op, progressIndicator)
     }
 
     if (sourceFile is MFVirtualFile && operation.isMove) {

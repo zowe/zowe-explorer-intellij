@@ -36,6 +36,7 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.content.service.isFileSyncingNow
 import org.zowe.explorer.dataops.content.synchronizer.AutoSyncFileListener
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
@@ -133,6 +134,8 @@ class EditorTestSpec : WithApplicationShouldSpec({
       every { autoSyncFileListenerMock.sync(virtualFileMock) } returns Unit
       autoSyncFileListenerMock
     }
+
+    mockkStatic(::isFileSyncingNow)
 
     beforeEach {
       every { editorComponentMock.isComponentUnderMouse() } returns false
@@ -254,6 +257,15 @@ class EditorTestSpec : WithApplicationShouldSpec({
 
       assertSoftly { isSynced shouldBe false }
     }
+     should("not perform auto file sync when file is syncing now") {
+       currentBytes = byteArrayOf(116, 101, 120, 116, 33)
+
+       every { isFileSyncingNow(any()) } returns true
+
+       fileEditorFocusListener.focusLost(editorMock, focusEventMock)
+
+       assertSoftly { isSynced shouldBe false }
+     }
 
     unmockkAll()
   }

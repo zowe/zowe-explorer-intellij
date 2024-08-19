@@ -14,11 +14,11 @@
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
-Zowe Explorer for IntelliJ IDEA is an open-source plugin by the <a href="https://github.com/zowe/community">Zowe Community</a> which gives access to mainframes from a modern IDE.
+Zowe® Explorer for IntelliJ IDEA™ is an open-source plugin by the <a href="https://github.com/zowe/community">Zowe Community</a>, which gives access to mainframes from a modern IDE.
 With the help of the plugin, developers can work with mainframes through a modern interface, using a single toolbar, structured trees, and drag-and-drop operations.
 The solution suits those who need to work with z/OS datasets, USS files, and Jobs from the IntelliJ IDEA.
 <br/>
-Zowe™ Explorer plug-in for IntelliJ IDEA™ extends IntelliJ IDEA™ platform’s tools similar to that of VS Code Zowe™ Explorer, giving developers a modern way to interact with Mainframe.
+Zowe is a project hosted under the Open Mainframe Project™ of the Linux Foundation™. Zowe Explorer plug-in for IntelliJ IDEA extends the IntelliJ IDEA platform’s tools in a way similar to that of the Zowe Explorer extension for Visual Studio Code™, giving developers a modern way to interact with the mainframe.
 <br/>
 <br/>
 It also:
@@ -356,7 +356,8 @@ Thank you for considering IBA Group for your mainframe needs.
                             testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.explorer.UIComponentManager"
-                            serviceImplementation="org.zowe.explorer.explorer.UIComponentManagerImpl"/>
+                            serviceImplementation="org.zowe.explorer.explorer.UIComponentManagerImpl"
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager"/>
 
         <applicationService serviceInterface="org.zowe.explorer.dataops.services.ErrorSeparatorService"
                             serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"/>
@@ -366,6 +367,9 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <projectService serviceInterface="org.zowe.explorer.zowe.service.ZoweConfigService"
                         serviceImplementation="org.zowe.explorer.zowe.service.ZoweConfigServiceImpl"/>
+
+        <applicationService serviceInterface="org.zowe.explorer.dataops.content.service.SyncProcessService"
+                            serviceImplementation="org.zowe.explorer.dataops.content.service.SyncProcessServiceImpl"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"

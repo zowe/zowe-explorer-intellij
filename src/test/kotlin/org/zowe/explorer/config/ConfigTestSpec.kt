@@ -14,12 +14,24 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import io.mockk.verify
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.connect.CredentialsConfigDeclaration
 import org.zowe.explorer.config.connect.ZOSMFConnectionConfigDeclaration
 import org.zowe.explorer.config.connect.getOwner
 import org.zowe.explorer.config.connect.getUsername
+import org.zowe.explorer.config.connect.tryToExtractOwnerFromConfig
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionsTableModel
 import org.zowe.explorer.config.connect.ui.zosmf.initEmptyUuids
@@ -364,6 +376,26 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         )
 
         assertSoftly { owner shouldBe "ZOSMF" }
+      }
+
+      // tryToExtractOwnerFromConfig
+      should("get username if config owner is empty string") {
+        val possibleOwner = tryToExtractOwnerFromConfig(
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, null, "")
+        )
+        assertSoftly { possibleOwner shouldBe "ZOSMF" }
+      }
+      should("get username if config owner is error string") {
+        val possibleOwner = tryToExtractOwnerFromConfig(
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, null, "COMMAND RESTARTED DUE TO ERROR")
+        )
+        assertSoftly { possibleOwner shouldBe "ZOSMF" }
+      }
+      should("get owner if config contains valid owner string ") {
+        val possibleOwner = tryToExtractOwnerFromConfig(
+          ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, null, "ZOSMFAD")
+        )
+        assertSoftly { possibleOwner shouldBe "ZOSMFAD" }
       }
     }
     context("Credentials.hashCode") {
