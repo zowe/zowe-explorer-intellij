@@ -70,7 +70,7 @@ class FileEditorFocusListener: FocusChangeListener {
             val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
             val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
             val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-            if (!(currentContent contentEquals previousContent) && needToUpload) {
+            if (!(currentContent contentEquals previousContent) && needToUpload && !isFileSyncingNow(file)) {
               runBackgroundableTask(
                 title = "Synchronizing ${file.name}...",
                 project = project,

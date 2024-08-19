@@ -364,7 +364,8 @@ Example of how to see the output:<br/>
                             serviceImplementation="eu.ibagroup.formainframe.analytics.PolicyProviderImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.explorer.UIComponentManager"
-                            serviceImplementation="eu.ibagroup.formainframe.explorer.UIComponentManagerImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.explorer.UIComponentManagerImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestUIComponentManager"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorService"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.services.ErrorSeparatorServiceImpl"/>

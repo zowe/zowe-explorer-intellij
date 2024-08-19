@@ -34,8 +34,8 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.UIComponentManager
-import eu.ibagroup.formainframe.utils.runInEdtAndWait
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
+import eu.ibagroup.formainframe.utils.runInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
 
@@ -59,7 +59,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
     init()
   }
 
-  private val contentProvider = UIComponentManager.INSTANCE.getExplorerContentProvider(explorer::class.java)
+  private val contentProvider = service<UIComponentManager>().getExplorerContentProvider(explorer::class.java)
 
   private val descriptor: OpenFileDescriptor?
     get() {
