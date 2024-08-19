@@ -4,7 +4,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 
 ## [Unreleased]
 
-## [1.2.1-223] (2024-06-12)
+## [1.2.1-231] (2024-06-12)
 
 ### Features
 

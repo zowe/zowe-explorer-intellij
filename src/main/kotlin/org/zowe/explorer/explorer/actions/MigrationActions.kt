@@ -17,17 +17,22 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
-import org.zowe.explorer.dataops.operations.migration.MigrateOperation
-import org.zowe.explorer.dataops.operations.migration.MigrateOperationParams
-import org.zowe.explorer.dataops.operations.migration.RecallOperation
-import org.zowe.explorer.dataops.operations.migration.RecallOperationParams
-import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.vfs.MFVirtualFile
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
+import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperation
+import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationParams
+import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperation
+import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationParams
+import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import org.zowe.explorer.explorer.ui.ExplorerTreeNode
+import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
+import org.zowe.explorer.explorer.ui.FileExplorerView
+import org.zowe.explorer.explorer.ui.NodeData
+import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
+import org.zowe.explorer.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
  * Get data for explorer node

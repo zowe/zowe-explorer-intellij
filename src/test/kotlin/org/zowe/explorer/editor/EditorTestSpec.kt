@@ -263,15 +263,15 @@ class EditorTestSpec : WithApplicationShouldSpec({
 
       assertSoftly { isSynced shouldBe false }
     }
-    should("not perform auto file sync when file is syncing now") {
-      currentBytes = byteArrayOf(116, 101, 120, 116, 33)
+     should("not perform auto file sync when file is syncing now") {
+       currentBytes = byteArrayOf(116, 101, 120, 116, 33)
 
-      every { isFileSyncingNow(any()) } returns true
+       every { isFileSyncingNow(any()) } returns true
 
-      fileEditorFocusListener.focusLost(editorMock, focusEventMock)
+       fileEditorFocusListener.focusLost(editorMock, focusEventMock)
 
-      assertSoftly { isSynced shouldBe false }
-    }
+       assertSoftly { isSynced shouldBe false }
+     }
 
     unmockkAll()
   }
