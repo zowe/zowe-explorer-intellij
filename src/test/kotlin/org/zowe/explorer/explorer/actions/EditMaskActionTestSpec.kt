@@ -11,15 +11,20 @@
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.MaskState
 import org.zowe.explorer.config.ws.MaskStateWithWS
 import org.zowe.explorer.config.ws.UssPath
+import org.zowe.explorer.explorer.Explorer
+import org.zowe.explorer.explorer.ExplorerContentProvider
 import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.explorer.UIComponentManager
 import org.zowe.explorer.explorer.ui.AddOrEditMaskDialog
 import org.zowe.explorer.explorer.ui.DSMaskNode
 import org.zowe.explorer.explorer.ui.ExplorerTreeNode
@@ -28,8 +33,10 @@ import org.zowe.explorer.explorer.ui.NodeData
 import org.zowe.explorer.explorer.ui.UssDirNode
 import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager
 import org.zowe.explorer.utils.MaskType
 import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
@@ -63,6 +70,16 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
     }
 
     beforeEach {
+      val uiComponentManagerService: TestUIComponentManager =
+        ApplicationManager.getApplication().service<UIComponentManager>() as TestUIComponentManager
+      uiComponentManagerService.testInstance = object : TestUIComponentManager() {
+        override fun <E : Explorer<*, *>> getExplorerContentProvider(
+          clazz: Class<out E>
+        ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>> {
+          return mockk()
+        }
+      }
+
       every { filesWorkingSetMock.explorer } returns mockk()
 
       // Needed here to initialize other components somewhere (probably bug?)

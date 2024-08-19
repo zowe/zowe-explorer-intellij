@@ -31,8 +31,8 @@ import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.UIComponentManager
-import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.explorer.utils.isBeingEditingNow
+import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.explorer.utils.service // TODO: remove in v1.*.*-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 import javax.swing.tree.TreePath
@@ -57,7 +57,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
     init()
   }
 
-  private val contentProvider = UIComponentManager.INSTANCE.getExplorerContentProvider(explorer::class.java)
+  private val contentProvider = service<UIComponentManager>().getExplorerContentProvider(explorer::class.java)
 
   private val descriptor: OpenFileDescriptor?
     get() {
