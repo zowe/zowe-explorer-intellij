@@ -11,15 +11,20 @@
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.MaskState
 import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
 import eu.ibagroup.formainframe.config.ws.UssPath
+import eu.ibagroup.formainframe.explorer.Explorer
+import eu.ibagroup.formainframe.explorer.ExplorerContentProvider
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import eu.ibagroup.formainframe.explorer.UIComponentManager
 import eu.ibagroup.formainframe.explorer.ui.AddOrEditMaskDialog
 import eu.ibagroup.formainframe.explorer.ui.DSMaskNode
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
@@ -28,8 +33,10 @@ import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestUIComponentManager
 import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
+import eu.ibagroup.formainframe.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
@@ -63,6 +70,16 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
     }
 
     beforeEach {
+      val uiComponentManagerService: TestUIComponentManager =
+        ApplicationManager.getApplication().service<UIComponentManager>() as TestUIComponentManager
+      uiComponentManagerService.testInstance = object : TestUIComponentManager() {
+        override fun <E : Explorer<*, *>> getExplorerContentProvider(
+          clazz: Class<out E>
+        ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>> {
+          return mockk()
+        }
+      }
+
       every { filesWorkingSetMock.explorer } returns mockk()
 
       // Needed here to initialize other components somewhere (probably bug?)
