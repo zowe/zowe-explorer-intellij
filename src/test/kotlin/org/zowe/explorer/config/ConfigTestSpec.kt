@@ -25,6 +25,7 @@ import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.connect.CredentialsConfigDeclaration
@@ -50,18 +51,12 @@ import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.ui.build.tso.TSOWindowFactory
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.service
-import io.kotest.assertions.assertSoftly
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkConstructor
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import io.mockk.verify
-import org.zowe.kotlinsdk.*
+import org.zowe.kotlinsdk.MessageType
+import org.zowe.kotlinsdk.TsoApi
+import org.zowe.kotlinsdk.TsoCmdResponse
+import org.zowe.kotlinsdk.TsoCmdResult
+import org.zowe.kotlinsdk.TsoData
+import org.zowe.kotlinsdk.TsoResponse
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import retrofit2.Response
@@ -207,7 +202,11 @@ class ConfigTestSpec : WithApplicationShouldSpec({
     context("connectUtils") {
 
       // z/OS > 2.3 call setup
-      fun setupTsoEnhancedCall(tsoResultBody: MutableList<TsoCmdResult>, shouldThrowException: Boolean, success: Boolean) {
+      fun setupTsoEnhancedCall(
+        tsoResultBody: MutableList<TsoCmdResult>,
+        shouldThrowException: Boolean,
+        success: Boolean
+      ) {
         val responseBody = TsoCmdResponse(cmdResponse = tsoResultBody)
         val tsoApi = mockk<TsoApi>()
         val call = mockk<Call<TsoCmdResponse>>()
@@ -277,7 +276,11 @@ class ConfigTestSpec : WithApplicationShouldSpec({
 
       should("return empty owner by TSO request if z/OS version = 2.4 and owner cannot be retrieved") {
 
-        val tsoResultBody = mutableListOf(TsoCmdResult(message = ""), TsoCmdResult(message = "OSHELL RC = 2020"), TsoCmdResult(message = "READY "))
+        val tsoResultBody = mutableListOf(
+          TsoCmdResult(message = ""),
+          TsoCmdResult(message = "OSHELL RC = 2020"),
+          TsoCmdResult(message = "READY ")
+        )
         setupTsoEnhancedCall(tsoResultBody, success = true, shouldThrowException = false)
 
         val actual = whoAmI(connectionConfigZOS24)

@@ -15,6 +15,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
@@ -37,7 +38,6 @@ import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getAll
-import org.zowe.explorer.utils.runReadActionInEdtAndWait
 import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.utils.toMutableList
@@ -85,7 +85,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
      * Returns Zowe connection name
      */
     fun getZoweConnectionName(myProject: Project?, type: ZoweConfigType): String {
-      return  if (type == ZoweConfigType.LOCAL)
+      return if (type == ZoweConfigType.LOCAL)
         "${ZOWE_PROJECT_PREFIX}${type}-zosmf/${myProject?.name}"
       else
         "${ZOWE_PROJECT_PREFIX}${type}-zosmf"
@@ -131,14 +131,14 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   private fun scanForZoweConfig(type: ZoweConfigType): ZoweConfig? {
 
-    val zoweFile = runReadActionInEdtAndWait {
+    val zoweFile = runReadAction {
       VirtualFileManager.getInstance().findFileByNioPath(Path.of(getZoweConfigLocation(myProject, type)))
     } ?: return null
     return try {
       zoweFile.inputStream.use { zoweFileInputStream ->
         parseConfigJson(zoweFileInputStream).also { tmpZoweConfig ->
           tmpZoweConfig.extractSecureProperties(zoweFile.path.split("/").toTypedArray())
-          if(type == ZoweConfigType.LOCAL)
+          if (type == ZoweConfigType.LOCAL)
             localZoweConfig = tmpZoweConfig
           else
             globalZoweConfig = tmpZoweConfig
@@ -230,7 +230,11 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   /**
    * @see ZoweConfigService.addOrUpdateZoweConfig
    */
-  override fun addOrUpdateZoweConfig(scanProject: Boolean, checkConnection: Boolean, type: ZoweConfigType): ConnectionConfig? {
+  override fun addOrUpdateZoweConfig(
+    scanProject: Boolean,
+    checkConnection: Boolean,
+    type: ZoweConfigType
+  ): ConnectionConfig? {
     return try {
       val zoweConfig = if (scanProject) {
         scanForZoweConfig(type)
@@ -243,7 +247,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       val password = zoweConfig.password ?: throw Exception("Cannot get password for $type Zowe config")
       val zoweConnection = findExistingConnection(type)?.let {
         zoweConfig.toConnectionConfig(it.uuid, it.zVersion, type = type)
-      } ?: zoweConfig.toConnectionConfig(UUID.randomUUID().toString(),type = type)
+      } ?: zoweConfig.toConnectionConfig(UUID.randomUUID().toString(), type = type)
       CredentialService.instance.setCredentials(zoweConnection.uuid, username, password)
 
       if (checkConnection) {
@@ -349,7 +353,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val allConnections = configCrudable.getAll<ConnectionConfig>().toList()
     val allConnectionsNames: MutableList<String> = allConnections.map { it.name }.toMutableList()
 
-    allConnections.filter {it.zoweConfigPath == getZoweConfigLocation(myProject, type)}.forEach {
+    allConnections.filter { it.zoweConfigPath == getZoweConfigLocation(myProject, type) }.forEach {
       var index = 1
       var newName = it.name
       while (allConnectionsNames.contains(newName)) {
