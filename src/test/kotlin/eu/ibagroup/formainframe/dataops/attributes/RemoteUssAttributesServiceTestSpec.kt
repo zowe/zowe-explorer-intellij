@@ -14,8 +14,10 @@
 
 package eu.ibagroup.formainframe.dataops.attributes
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -27,15 +29,7 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.runs
-import io.mockk.spyk
-import io.mockk.unmockkAll
+import io.mockk.*
 import org.zowe.kotlinsdk.UssFile
 import org.zowe.kotlinsdk.XIBMDataType
 import kotlin.reflect.KFunction
@@ -70,6 +64,15 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
           attributesListenerMock.onCreate(any(), any())
         } just runs
         attributesListenerMock
+      }
+
+      mockkStatic(ApplicationManager::getApplication)
+      every { ApplicationManager.getApplication().assertWriteAccessAllowed() } just runs
+      every { ApplicationManager.getApplication().invokeAndWait(any()) } answers {
+        firstArg<Runnable>().run()
+      }
+      every { ApplicationManager.getApplication().runWriteAction<Any>(any()) } answers  {
+        firstArg<Computable<() -> Unit>>().compute()
       }
     }
 
@@ -148,117 +151,110 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         existingUSSFile shouldBe createdUSSFile
       }
     }
-// TODO: fix Uladzislau
-//    should("reassign attributes after folder is renamed") {
-//      var isFileRenameCalled = false
-//      val remoteUssAttributesService = spyk(RemoteUssAttributesService(dataOpsManager))
-//
-//      val attributes = RemoteUssAttributes(
-//        "test",
-//        UssFile(),
-//        "test",
-//        ConnectionConfig()
-//      )
-//
-//      val mfVirtualFileMock = mockk<MFVirtualFile>()
-//      every { mfVirtualFileMock.findChild(any()) } returns mfVirtualFileMock
-//      every { mfVirtualFileMock.isValid } returns true
-//      every { mfVirtualFileMock.isReadable } returns true
-//      every { mfVirtualFileMock.isReadable = any() } just runs
-//      every { mfVirtualFileMock.name } returns "test"
-//      every { mfVirtualFileMock.fileSystem } returns mfVFileSystemMock
-//      every { mfVirtualFileMock.rename(any(), any()) } answers {
-//        isFileRenameCalled = true
-//      }
-//      every { mfVFileSystemMock.isValidName(any()) } returns true
-//      every { mfVFileSystemMock.renameFile(any(), any(), any()) } answers { callOriginal() }
-//
-//      every { remoteUssAttributesService.getVirtualFile(any()) } returns null
-//      every { fsRootMock.findChild(any()) } returns null
-//      every { fsModelMock.findOrCreate(any(), any(), any(), any()) } answers { callOriginal() }
-//      every { fsModelMock.createChildWithAttributes(any(), any(), any(), any(), any()) } returns mfVirtualFileMock
-//
-//      val createdUSSFile = remoteUssAttributesService.getOrCreateVirtualFile(attributes)
-//
-//      every { remoteUssAttributesService.getVirtualFile(any()) } answers { callOriginal() }
-//      every { fsModelMock.setWritable(any(), any()) } just runs
-//
-//      val updatedAttributes = RemoteUssAttributes(
-//        "test1",
-//        UssFile(),
-//        "test",
-//        ConnectionConfig()
-//      )
-//
-//      mockkStatic(ApplicationManager::getApplication)
-//      every { ApplicationManager.getApplication().assertWriteAccessAllowed() } just runs
-//
-//      remoteUssAttributesService.updateAttributes(createdUSSFile, updatedAttributes)
-//
-//      val actual = remoteUssAttributesService.getAttributes(createdUSSFile)
-//
-//      assertSoftly {
-//        isFileRenameCalled shouldBe true
-//        actual shouldNotBe null
-//        actual shouldNotBe attributes
-//        actual shouldBe updatedAttributes
-//      }
-//    }
-//    should("reassign attributes after folder path is changed") {
-//      var isFileMoveCalled = false
-//      val remoteUssAttributesService = spyk(RemoteUssAttributesService(dataOpsManager))
-//
-//      val attributes = RemoteUssAttributes(
-//        "test",
-//        UssFile(),
-//        "test",
-//        ConnectionConfig()
-//      )
-//
-//      val mfVirtualFileMock = mockk<MFVirtualFile>()
-//      every { mfVirtualFileMock.findChild(any()) } returns mfVirtualFileMock
-//      every { mfVirtualFileMock.isValid } returns true
-//      every { mfVirtualFileMock.isReadable } returns true
-//      every { mfVirtualFileMock.isReadable = any() } just runs
-//      every { mfVirtualFileMock.name } returns "test"
-//      every { mfVirtualFileMock.fileSystem } returns mfVFileSystemMock
-//      every { mfVirtualFileMock.move(any(), any()) } answers {
-//        isFileMoveCalled = true
-//      }
-//      every { mfVFileSystemMock.isValidName(any()) } returns true
-//      every { mfVFileSystemMock.moveFile(any(), any(), any()) } answers { callOriginal() }
-//
-//      every { remoteUssAttributesService.getVirtualFile(any()) } returns null
-//      every { fsRootMock.findChild(any()) } returns null
-//      every { fsModelMock.findOrCreate(any(), any(), any(), any()) } answers { callOriginal() }
-//      every { fsModelMock.createChildWithAttributes(any(), any(), any(), any(), any()) } returns mfVirtualFileMock
-//
-//      val createdUSSFile = remoteUssAttributesService.getOrCreateVirtualFile(attributes)
-//
-//      every { remoteUssAttributesService.getVirtualFile(any()) } answers { callOriginal() }
-//      every { fsModelMock.setWritable(any(), any()) } just runs
-//
-//      val updatedAttributes = RemoteUssAttributes(
-//        "/test1/test",
-//        UssFile(),
-//        "test",
-//        ConnectionConfig()
-//      )
-//
-//      mockkStatic(ApplicationManager::getApplication)
-//      every { ApplicationManager.getApplication().assertWriteAccessAllowed() } just runs
-//
-//      remoteUssAttributesService.updateAttributes(createdUSSFile, updatedAttributes)
-//
-//      val actual = remoteUssAttributesService.getAttributes(createdUSSFile)
-//
-//      assertSoftly {
-//        isFileMoveCalled shouldBe true
-//        actual shouldNotBe null
-//        actual shouldNotBe attributes
-//        actual shouldBe updatedAttributes
-//      }
-//    }
+    should("reassign attributes after folder is renamed") {
+      var isFileRenameCalled = false
+      val remoteUssAttributesService = spyk(RemoteUssAttributesService(dataOpsManager))
+
+      val attributes = RemoteUssAttributes(
+        "test",
+        UssFile(),
+        "test",
+        ConnectionConfig()
+      )
+
+      val mfVirtualFileMock = mockk<MFVirtualFile>()
+      every { mfVirtualFileMock.findChild(any()) } returns mfVirtualFileMock
+      every { mfVirtualFileMock.isValid } returns true
+      every { mfVirtualFileMock.isReadable } returns true
+      every { mfVirtualFileMock.isReadable = any() } just runs
+      every { mfVirtualFileMock.name } returns "test"
+      every { mfVirtualFileMock.fileSystem } returns mfVFileSystemMock
+      every { mfVirtualFileMock.rename(any(), any()) } answers {
+        isFileRenameCalled = true
+      }
+      every { mfVFileSystemMock.isValidName(any()) } returns true
+      every { mfVFileSystemMock.renameFile(any(), any(), any()) } answers { callOriginal() }
+
+      every { remoteUssAttributesService.getVirtualFile(any()) } returns null
+      every { fsRootMock.findChild(any()) } returns null
+      every { fsModelMock.findOrCreate(any(), any(), any(), any()) } answers { callOriginal() }
+      every { fsModelMock.createChildWithAttributes(any(), any(), any(), any(), any()) } returns mfVirtualFileMock
+
+      val createdUSSFile = remoteUssAttributesService.getOrCreateVirtualFile(attributes)
+
+      every { remoteUssAttributesService.getVirtualFile(any()) } answers { callOriginal() }
+      every { fsModelMock.setWritable(any(), any()) } just runs
+
+      val updatedAttributes = RemoteUssAttributes(
+        "test1",
+        UssFile(),
+        "test",
+        ConnectionConfig()
+      )
+
+      remoteUssAttributesService.updateAttributes(createdUSSFile, updatedAttributes)
+
+      val actual = remoteUssAttributesService.getAttributes(createdUSSFile)
+
+      assertSoftly {
+        isFileRenameCalled shouldBe true
+        actual shouldNotBe null
+        actual shouldNotBe attributes
+        actual shouldBe updatedAttributes
+      }
+    }
+    should("reassign attributes after folder path is changed") {
+      var isFileMoveCalled = false
+      val remoteUssAttributesService = spyk(RemoteUssAttributesService(dataOpsManager))
+
+      val attributes = RemoteUssAttributes(
+        "test",
+        UssFile(),
+        "test",
+        ConnectionConfig()
+      )
+
+      val mfVirtualFileMock = mockk<MFVirtualFile>()
+      every { mfVirtualFileMock.findChild(any()) } returns mfVirtualFileMock
+      every { mfVirtualFileMock.isValid } returns true
+      every { mfVirtualFileMock.isReadable } returns true
+      every { mfVirtualFileMock.isReadable = any() } just runs
+      every { mfVirtualFileMock.name } returns "test"
+      every { mfVirtualFileMock.fileSystem } returns mfVFileSystemMock
+      every { mfVirtualFileMock.move(any(), any()) } answers {
+        isFileMoveCalled = true
+      }
+      every { mfVFileSystemMock.isValidName(any()) } returns true
+      every { mfVFileSystemMock.moveFile(any(), any(), any()) } answers { callOriginal() }
+
+      every { remoteUssAttributesService.getVirtualFile(any()) } returns null
+      every { fsRootMock.findChild(any()) } returns null
+      every { fsModelMock.findOrCreate(any(), any(), any(), any()) } answers { callOriginal() }
+      every { fsModelMock.createChildWithAttributes(any(), any(), any(), any(), any()) } returns mfVirtualFileMock
+
+      val createdUSSFile = remoteUssAttributesService.getOrCreateVirtualFile(attributes)
+
+      every { remoteUssAttributesService.getVirtualFile(any()) } answers { callOriginal() }
+      every { fsModelMock.setWritable(any(), any()) } just runs
+
+      val updatedAttributes = RemoteUssAttributes(
+        "/test1/test",
+        UssFile(),
+        "test",
+        ConnectionConfig()
+      )
+
+      remoteUssAttributesService.updateAttributes(createdUSSFile, updatedAttributes)
+
+      val actual = remoteUssAttributesService.getAttributes(createdUSSFile)
+
+      assertSoftly {
+        isFileMoveCalled shouldBe true
+        actual shouldNotBe null
+        actual shouldNotBe attributes
+        actual shouldBe updatedAttributes
+      }
+    }
     should("update writable flag when content is binary") {
       val remoteUssAttributesService = spyk(RemoteUssAttributesService(dataOpsManager))
 
