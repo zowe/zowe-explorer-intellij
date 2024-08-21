@@ -23,13 +23,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.zowe.explorer.config.ConfigService
-import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.config.connect.getPassword
-import org.zowe.explorer.config.connect.getUsername
+import org.zowe.explorer.config.connect.*
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.ui.zosmf.ZOSMFConnectionConfigurable.Companion.warningMessageForDeleteConfig
-import org.zowe.explorer.config.connect.whoAmI
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
@@ -391,15 +387,17 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     createZoweSchemaJsonIfNotExists()
 
     val urlRegex =
-      "(https?:\\/\\/)(www\\.)?([-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6})\b?([-a-zA-Z0-9()@:%_\\+.~#?&\\/\\/=]*)"
+      "^(https?|http)://([-a-zA-Z0-9+&@#/%?=~_|!,.;]*)(:((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|([1-5][0-9]{4})|([0-5]{1,5})|([0-9]{1,4})))?"
     val pattern: Pattern = Pattern.compile(urlRegex)
     val matcher: Matcher = pattern.matcher(state.connectionUrl)
 
     var host = "localhost"
-    var port = "443"
+    var port = "10443"
     if (matcher.matches()) {
-      host = matcher.group(3)
-      port = matcher.group(4).substring(1)
+      if (matcher.group(2) != null)
+        host = matcher.group(2)
+      if (matcher.group(3) != null)
+        port = matcher.group(3).substring(1)
     }
 
     val content = getResourceStream("files/${ZOWE_CONFIG_NAME}")

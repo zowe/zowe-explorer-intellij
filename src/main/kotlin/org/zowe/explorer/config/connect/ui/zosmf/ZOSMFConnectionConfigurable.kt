@@ -64,11 +64,18 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     showAndTestConnection()?.let { connectionsTableModel?.addRow(it) }
   }
 
+  /**Unable to save invalid URL
+   * Updates the selected profilef or current connection.
+   * If update is not possible(brocken  URL), throws IllegalStateException exception
+   */
+  @Throws(IllegalStateException::class)
   private fun ZoweConfig.updateFromState(state: ConnectionDialogState) {
-    setProfile(ZoweConfigServiceImpl.getProfileNameFromConnName(state.connectionName))
     val uri = URI(state.connectionUrl)
+    if (uri.host.isNullOrEmpty())
+      throw IllegalStateException("Unable to save invalid URL: ${state.connectionUrl}")
+    setProfile(ZoweConfigServiceImpl.getProfileNameFromConnName(state.connectionName))
     host = uri.host
-    port = uri.port.toLong()
+    port = if (uri.port==-1) 10443 else uri.port.toLong()
     protocol = state.connectionUrl.split("://")[0]
     user = state.username
     password = state.password
@@ -100,13 +107,21 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
 
       val zoweConfig = parseConfigJson(configFile.inputStream)
       zoweConfig.extractSecureProperties(configFile.path.split("/").toTypedArray())
-      zoweConfig.updateFromState(state)
-      runWriteActionInEdtAndWait {
-        zoweConfig.setProfile(ZoweConfigServiceImpl.getProfileNameFromConnName(state.connectionName))
-        zoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
-        zoweConfig.restoreProfile()
-        configFile.setBinaryContent(zoweConfig.toJson().toByteArray(configFile.charset))
+      kotlin.runCatching {
+        zoweConfig.updateFromState(state)
       }
+        .onSuccess {
+          runWriteActionInEdtAndWait {
+            zoweConfig.setProfile(ZoweConfigServiceImpl.getProfileNameFromConnName(state.connectionName))
+            zoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
+            zoweConfig.restoreProfile()
+            configFile.setBinaryContent(zoweConfig.toJson().toByteArray(configFile.charset))
+          }
+        }
+        .onFailure {
+          Messages.showErrorDialog("Unable to save invalid URL: ${state.connectionUrl}", "Invalid URL")
+          return
+        }
     }
   }
 
@@ -120,7 +135,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
         mode = DialogMode.UPDATE
       })
       state?.let {
-        zoweConfigStates[it.connectionName] = state
+        if (it.zoweConfigPath != null)
+          zoweConfigStates[it.connectionName] = state
       }
       if (state != null) {
         connectionsTableModel?.set(idx, state)
