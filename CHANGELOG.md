@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be documented in this file.
 
-## [Unreleased]
+## [1.2.2-223] (2024-08-21)
 
 ### Features
 
@@ -249,7 +249,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: Unknown file type after delete member after
   move ([02b8090f](https://github.com/zowe/zowe-explorer-intellij/commit/02b8090f))
 
-## 1.0.1 (2023-04-18)
+## [1.0.1] (2023-04-18)
 
 ### Features
 
@@ -286,7 +286,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
   PDS ([ec94b39e](https://github.com/zowe/zowe-explorer-intellij/commit/ec94b39e))
 * Bugfix: USS file empty after rename ([71c49b24](https://github.com/zowe/zowe-explorer-intellij/commit/71c49b24))
 
-## 1.0.0 (2023-03-13)
+## [1.0.0] (2023-03-13)
 
 ### Breaking changes
 
@@ -408,7 +408,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: Policy agreement is gone wild ([d600f58e](https://github.com/zowe/zowe-explorer-intellij/commit/d600f58e))
 * Bugfix: Exception while opening TSO CLI ([540bfa80](https://github.com/zowe/zowe-explorer-intellij/commit/540bfa80))
 
-## 0.3.1 (2022-11-30)
+## [0.3.1] (2022-11-30)
 
 ### Features
 
@@ -425,7 +425,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: Ctrl+C/Ctrl+V does not work if copy file from remote to
   local ([e5601e7f](https://github.com/zowe/zowe-explorer-intellij/commit/e5601e7f))
 
-## 0.3.0 (2022-11-18)
+## [0.3.0] (2022-11-18)
 
 ### Breaking changes
 
@@ -499,6 +499,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.2-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.1-223...1.2.2-223
 [1.2.1-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.0-223...1.2.1-223
 [1.2.0-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.2-223...1.2.0-223
 [1.1.2-223]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-223...1.1.2-223
