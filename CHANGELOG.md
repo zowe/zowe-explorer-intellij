@@ -11,6 +11,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Feature: GitHub issue #137: USS sorting feature introduced ([c154e027](https://github.com/zowe/zowe-explorer-intellij/commit/c154e027))
 * Feature: GitHub issue #149: Clicking "Cancel" button is not so intrusive now ([c01926de](https://github.com/zowe/zowe-explorer-intellij/commit/c01926de))
 * Feature: GitHub issue #150: Connection test request is not being sent after connection name change ([207389f3](https://github.com/zowe/zowe-explorer-intellij/commit/207389f3))
+* Feature: GitHub issue #151: Profiles merging functionality added ([86936fae](https://github.com/zowe/zowe-explorer-intellij/commit/86936fae))
 * Feature: GitHub issue #190: Warning dialog for "Allow self-signed..." and HTTP usage ([62fc8de4](https://github.com/zowe/zowe-explorer-intellij/commit/62fc8de4))
 * Feature: GitHub issue #192: Jobs sorting feature introduced ([e5e37437](https://github.com/zowe/zowe-explorer-intellij/commit/e5e37437))
 * Feature: GitHub issue #193: Error notification is made compact and readable ([83375d25](https://github.com/zowe/zowe-explorer-intellij/commit/83375d25))
