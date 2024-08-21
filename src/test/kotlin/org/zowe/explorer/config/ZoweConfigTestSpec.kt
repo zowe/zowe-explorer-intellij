@@ -105,12 +105,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
 
     val connectionId = "000000000000"
     val connection = ConnectionConfig(
-      "ID$connectionId",
-      connectionId,
-      "URL$connectionId",
-      true,
-      ZVersion.ZOS_2_4,
-      zoweConfigPath = "/zowe/config/path"
+      "ID$connectionId", connectionId, "URL$connectionId", true, ZVersion.ZOS_2_4, zoweConfigPath = "/zowe/config/path"
     )
     val crudableMockk = mockk<Crudable>()
     every { crudableMockk.getAll<ConnectionConfig>() } returns Stream.of()
@@ -255,19 +250,16 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
           if (infoRes.zosVersion == "throw1") {
             throw Throwable("Test performInfoOperation throw")
           }
-          @Suppress("UNCHECKED_CAST")
-          return SystemsResponse(numRows = 1) as R
+          @Suppress("UNCHECKED_CAST") return SystemsResponse(numRows = 1) as R
         }
         if (operation is ZOSInfoOperation) {
           isZOSInfoCalled = true
           if (infoRes.zosVersion == "throw2") {
             throw Throwable("Test performOperation throw")
           }
-          @Suppress("UNCHECKED_CAST")
-          return infoRes as R
+          @Suppress("UNCHECKED_CAST") return infoRes as R
         }
-        @Suppress("UNCHECKED_CAST")
-        return InfoResponse() as R
+        @Suppress("UNCHECKED_CAST") return InfoResponse() as R
       }
     }
 
@@ -284,8 +276,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     should("getZoweConfigLocation") {
       getZoweConfigLocation(mockedProject, ZoweConfigType.LOCAL) shouldBe "test/zowe.config.json"
       getZoweConfigLocation(
-        mockedProject,
-        ZoweConfigType.GLOBAL
+        mockedProject, ZoweConfigType.GLOBAL
       ) shouldBe System.getProperty("user.home").replace("((\\*)|(/*))$", "") + "/.zowe/" + ZOWE_CONFIG_NAME
       getZoweConfigLocation(null, ZoweConfigType.LOCAL) shouldBe "null/zowe.config.json"
     }
@@ -447,9 +438,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
 
     should("addOrUpdateZoweConfig throw Cannot get Zowe config") {
       mockedZoweConfigService.addOrUpdateZoweConfig(
-        scanProject = false,
-        checkConnection = true,
-        type = ZoweConfigType.GLOBAL
+        scanProject = false, checkConnection = true, type = ZoweConfigType.GLOBAL
       )
       notified shouldBe true
     }
@@ -457,9 +446,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     should("addOrUpdateZoweConfig throw Cannot get password") {
       every { zoweConfigMock.password } returns null
       mockedZoweConfigService.addOrUpdateZoweConfig(
-        scanProject = false,
-        checkConnection = true,
-        type = ZoweConfigType.LOCAL
+        scanProject = false, checkConnection = true, type = ZoweConfigType.LOCAL
       )
       every { zoweConfigMock.password } returns "password"
       notified shouldBe true
@@ -468,9 +455,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     should("addOrUpdateZoweConfig throw Cannot get username") {
       every { zoweConfigMock.user } returns null
       mockedZoweConfigService.addOrUpdateZoweConfig(
-        scanProject = false,
-        checkConnection = true,
-        type = ZoweConfigType.LOCAL
+        scanProject = false, checkConnection = true, type = ZoweConfigType.LOCAL
       )
       every { zoweConfigMock.user } returns "ZoweUserName"
       notified shouldBe true
@@ -491,9 +476,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
 
     should("addOrUpdateZoweConfig New ConnectionConfig throw on check") {
       mockedZoweConfigService.addOrUpdateZoweConfig(
-        scanProject = false,
-        checkConnection = true,
-        type = ZoweConfigType.LOCAL
+        scanProject = false, checkConnection = true, type = ZoweConfigType.LOCAL
       )
       notified shouldBe true
     }
@@ -642,28 +625,23 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       credentialsGetter: () -> MutableList<Credentials> = { mutableListOf() },
       stateGetter: () -> ConfigStateV2
     ): Crudable {
-      val crudableLists = CrudableLists(
-        addFilter = object : AddFilter {
-          override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
-            return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
-          }
-        },
-        updateFilter = object : UpdateFilter {
-          override operator fun <T : Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
-            return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
-          }
-        },
-        nextUuidProvider = { UUID.randomUUID().toString() },
-        getListByClass = {
-          if (it == Credentials::class.java) {
-            withCredentials.runIfTrue {
-              credentialsGetter()
-            }
-          } else {
-            stateGetter().get(it)
-          }
+      val crudableLists = CrudableLists(addFilter = object : AddFilter {
+        override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
+          return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
         }
-      )
+      }, updateFilter = object : UpdateFilter {
+        override operator fun <T : Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
+          return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
+        }
+      }, nextUuidProvider = { UUID.randomUUID().toString() }, getListByClass = {
+        if (it == Credentials::class.java) {
+          withCredentials.runIfTrue {
+            credentialsGetter()
+          }
+        } else {
+          stateGetter().get(it)
+        }
+      })
       return ConcurrentCrudable(crudableLists, SimpleReadWriteAdapter())
     }
 
@@ -674,10 +652,8 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
         Pair(JesWorkingSetConfig::class.java.name, mutableListOf<ConnectionConfig>()),
       )
       val sandboxState = SandboxState(ConfigStateV2(configCollections))
-      val crudable =
-        org.zowe.explorer.config.makeCrudableWithoutListeners(
-          true,
-          { sandboxState.credentials }) { sandboxState.configState }
+      val crudable = org.zowe.explorer.config.makeCrudableWithoutListeners(true,
+        { sandboxState.credentials }) { sandboxState.configState }
 
       mockedZoweConfigService::class.declaredMemberProperties.find { it.name == "configCrudable" }?.let {
         it.isAccessible = true
@@ -688,9 +664,9 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
         it.isAccessible = true
         (it.call(mockedZoweConfigService, ZoweConfigType.LOCAL) as List<ConnectionConfig>).size shouldBe 1
         it.call(mockedZoweConfigService, ZoweConfigType.GLOBAL) shouldBe null
-        connection.name="zowe-global-zosmf"
+        connection.name = "zowe-global-zosmf"
         it.call(mockedZoweConfigService, ZoweConfigType.GLOBAL) shouldBe null
-        connection.zoweConfigPath=getZoweConfigLocation(mockedProject, ZoweConfigType.GLOBAL)
+        connection.zoweConfigPath = getZoweConfigLocation(mockedProject, ZoweConfigType.GLOBAL)
         (it.call(mockedZoweConfigService, ZoweConfigType.GLOBAL) as List<ConnectionConfig>).size shouldBe 1
       }
     }
@@ -698,17 +674,21 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     should("findExistingConnection") {
       mockedZoweConfigService::class.declaredMemberFunctions.find { it.name == "findExistingConnection" }?.let {
         it.isAccessible = true
-        connection.name="zowe-local-zosmf/testProj"
-        connection.zoweConfigPath=getZoweConfigLocation(mockedProject, ZoweConfigType.LOCAL)
-        (it.call(mockedZoweConfigService, ZoweConfigType.LOCAL, "zosmf") as ConnectionConfig).name shouldBe connection.name
-        connection.name="zowe-global-zosmf"
-        connection.zoweConfigPath=getZoweConfigLocation(mockedProject, ZoweConfigType.LOCAL)
+        connection.name = "zowe-local-zosmf/testProj"
+        connection.zoweConfigPath = getZoweConfigLocation(mockedProject, ZoweConfigType.LOCAL)
+        (it.call(
+          mockedZoweConfigService,
+          ZoweConfigType.LOCAL,
+          "zosmf"
+        ) as ConnectionConfig).name shouldBe connection.name
+        connection.name = "zowe-global-zosmf"
+        connection.zoweConfigPath = getZoweConfigLocation(mockedProject, ZoweConfigType.LOCAL)
         it.call(mockedZoweConfigService, ZoweConfigType.LOCAL, "zosmf") shouldBe null
         it.call(mockedZoweConfigService, ZoweConfigType.GLOBAL, "zosmf") shouldBe null
       }
     }
 
-    should ("validateForBlank"){
+    should("validateForBlank") {
       validateForBlank(JPasswordField())?.message shouldBe "This field must not be blank"
       validateForBlank(JTextField())?.message shouldBe "This field must not be blank"
     }
@@ -734,8 +714,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       connection.name = "zowe-global-lpar.zosmf"
       every {
         mockedZoweConfigService["findExistingConnection"](
-          any<ZoweConfigType>(),
-          any<String>()
+          any<ZoweConfigType>(), any<String>()
         )
       } returns connection
       mockedZoweConfigService.getZoweConfigState(false, ZoweConfigType.LOCAL) shouldBe ZoweConfigState.NEED_TO_ADD

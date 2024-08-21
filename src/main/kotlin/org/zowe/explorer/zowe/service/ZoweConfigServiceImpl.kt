@@ -32,12 +32,14 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.utils.toMutableList
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
+import org.zowe.explorer.zowe.service.ZoweConfigService.Companion.lock
 import org.zowe.kotlinsdk.annotations.ZVersion
 import org.zowe.kotlinsdk.zowe.client.sdk.core.ZOSConnection
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
@@ -145,10 +147,12 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       zoweFile.inputStream.use { zoweFileInputStream ->
         parseConfigJson(zoweFileInputStream).also { tmpZoweConfig ->
           tmpZoweConfig.extractSecureProperties(zoweFile.path.split("/").toTypedArray())
-          if(type == ZoweConfigType.LOCAL)
-            localZoweConfig = tmpZoweConfig
-          else
-            globalZoweConfig = tmpZoweConfig
+          lock.write {
+            if (type == ZoweConfigType.LOCAL)
+              localZoweConfig = tmpZoweConfig
+            else
+              globalZoweConfig = tmpZoweConfig
+          }
         }
       }
     } catch (e: Exception) {
@@ -283,12 +287,9 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         }
       }
       for (zosmfConnection in zoweConfig.getListOfZosmfConections()) {
-        val username = zosmfConnection.user
-        val password = zosmfConnection.password
         val zoweConnection = prepareConnection(zosmfConnection, type)
         val connectionOpt = configCrudable.addOrUpdate(zoweConnection)
         if (!connectionOpt.isEmpty) {
-          CredentialService.instance.setCredentials(connectionOpt.get().uuid, username, password)
           var topic = if (type == ZoweConfigType.LOCAL)
             LOCAL_ZOWE_CONFIG_CHANGED
           else

@@ -15,6 +15,7 @@ import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
 
 /**
@@ -102,6 +103,7 @@ interface ZoweConfigService {
 
   companion object {
     fun getInstance(project: Project): ZoweConfigService = project.getService(ZoweConfigService::class.java)
+    val lock = ReentrantReadWriteLock()
   }
 }
 

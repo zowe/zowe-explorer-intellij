@@ -208,18 +208,32 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
       zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
         ?.let {
           it.isAccessible = true
+          state.connectionUrl = "https://testhost.com:10443"
           it.call(zOSMFConnectionConfigurableMock, state)
-          isShowOkCancelDialogCalled shouldBe true
-          isFindFileByNioPathCalled shouldBe true
-          isInputStreamCalled shouldBe true
         }
+      isShowOkCancelDialogCalled shouldBe true
+      isFindFileByNioPathCalled shouldBe true
+      isInputStreamCalled shouldBe true
+    }
+
+    should("updateZoweConfigIfNeeded empty port") {
+      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
+        ?.let {
+          it.isAccessible = true
+          state.isAllowSsl = true
+          state.connectionUrl = "https://testhost.com"
+          it.call(zOSMFConnectionConfigurableMock, state)
+        }
+      isShowOkCancelDialogCalled shouldBe true
+      isFindFileByNioPathCalled shouldBe true
+      isInputStreamCalled shouldBe true
     }
 
     should("updateZoweConfigIfNeeded  failed") {
       zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
         ?.let {
           it.isAccessible = true
-          state.connectionUrl = "111@@@:8080"
+          state.connectionUrl = "https://111@@@:8080"
           try {
             it.call(zOSMFConnectionConfigurableMock, state)
           } catch (t: Throwable) {
@@ -227,7 +241,7 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
           }
         }
     }
-    
+
   }
 }
 )
