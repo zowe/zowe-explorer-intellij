@@ -81,7 +81,10 @@ fun validateForPassword(password: String, component: JPasswordField): Validation
  * @param component the component to check the text in
  */
 fun validateForBlank(component: JTextField): ValidationInfo? {
-  return validateForBlank(component.text, component)
+  return if(component is JPasswordField){
+    validateForBlank(String(component.password).trim(), component)
+  }
+  else validateForBlank(component.text, component)
 }
 
 /**

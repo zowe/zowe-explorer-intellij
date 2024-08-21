@@ -79,7 +79,7 @@ fun showDialogForDeleteZoweConfigIfNeeded(project: Project, type: ZoweConfigType
           "If you decide to leave the connection, it will be converted to a regular connection (username will be visible).",
       "Deleting Zowe Config connection",
       arrayOf(
-        "Delete Connection", "Keep Connection"
+        "Delete Connection(s)", "Keep Connection(s)"
       ),
       0,
       AllIcons.General.QuestionDialog

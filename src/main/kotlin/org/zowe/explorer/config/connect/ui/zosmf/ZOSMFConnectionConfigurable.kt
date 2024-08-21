@@ -33,6 +33,7 @@ import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.utils.toMutableList
+import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.awt.event.MouseAdapter
@@ -64,6 +65,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   }
 
   private fun ZoweConfig.updateFromState(state: ConnectionDialogState) {
+    setProfile(ZoweConfigServiceImpl.getProfileNameFromConnName(state.connectionName))
     val uri = URI(state.connectionUrl)
     host = uri.host
     port = uri.port.toLong()
@@ -71,6 +73,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     user = state.username
     password = state.password
     rejectUnauthorized = !state.isAllowSsl
+    restoreProfile()
   }
 
   /**
@@ -81,7 +84,9 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   private fun updateZoweConfigIfNeeded(state: ConnectionDialogState?) {
     val res = showOkCancelDialog(
       title = "Zowe Config Update",
-      message = "Do you want to update zowe config file?\n${state?.zoweConfigPath}",
+      message = "Do you want to update zowe config file and credentials in secret store?"
+          + "\n${state?.connectionName}"
+          + "\n${state?.zoweConfigPath}",
       okText = "Yes",
       cancelText = "No"
     )
@@ -97,7 +102,9 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
       zoweConfig.extractSecureProperties(configFile.path.split("/").toTypedArray())
       zoweConfig.updateFromState(state)
       runWriteActionInEdtAndWait {
+        zoweConfig.setProfile(ZoweConfigServiceImpl.getProfileNameFromConnName(state.connectionName))
         zoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
+        zoweConfig.restoreProfile()
         configFile.setBinaryContent(zoweConfig.toJson().toByteArray(configFile.charset))
       }
     }
@@ -112,8 +119,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
       val state = showAndTestConnection(connectionsTableModel!![idx].apply {
         mode = DialogMode.UPDATE
       })
-      state?.zoweConfigPath?.let {
-        zoweConfigStates[it] = state
+      state?.let {
+        zoweConfigStates[it.connectionName] = state
       }
       if (state != null) {
         connectionsTableModel?.set(idx, state)
@@ -319,7 +326,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   /** Check are the Credentials and Connections sandboxes modified */
   override fun isModified(): Boolean {
     return isSandboxModified<Credentials>()
-      || isSandboxModified<ConnectionConfig>()
+        || isSandboxModified<ConnectionConfig>()
   }
 
   override fun cancel() {
