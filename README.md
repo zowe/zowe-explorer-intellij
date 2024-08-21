@@ -1,4 +1,4 @@
-# Zowe™ Explorer plug-in for IntelliJ IDEA™
+# Zowe® Explorer plug-in for IntelliJ IDEA™
 
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/18688-zowe-explorer)](https://plugins.jetbrains.com/plugin/18688-zowe-explorer)
 [![Rating](https://img.shields.io/jetbrains/plugin/r/rating/18688-zowe-explorer)](https://plugins.jetbrains.com/plugin/18688-zowe-explorer)
