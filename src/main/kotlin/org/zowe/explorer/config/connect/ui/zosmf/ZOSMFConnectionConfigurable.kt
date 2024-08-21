@@ -33,6 +33,7 @@ import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.utils.toMutableList
+import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.awt.event.MouseAdapter
@@ -63,14 +64,23 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     showAndTestConnection()?.let { connectionsTableModel?.addRow(it) }
   }
 
+  /**Unable to save invalid URL
+   * Updates the selected profilef or current connection.
+   * If update is not possible(brocken  URL), throws IllegalStateException exception
+   */
+  @Throws(IllegalStateException::class)
   private fun ZoweConfig.updateFromState(state: ConnectionDialogState) {
     val uri = URI(state.connectionUrl)
+    if (uri.host.isNullOrEmpty())
+      throw IllegalStateException("Unable to save invalid URL: ${state.connectionUrl}")
+    setProfile(ZoweConfigServiceImpl.getProfileNameFromConnName(state.connectionName))
     host = uri.host
-    port = uri.port.toLong()
+    port = if (uri.port==-1) 10443 else uri.port.toLong()
     protocol = state.connectionUrl.split("://")[0]
     user = state.username
     password = state.password
     rejectUnauthorized = !state.isAllowSsl
+    restoreProfile()
   }
 
   /**
@@ -81,7 +91,9 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   private fun updateZoweConfigIfNeeded(state: ConnectionDialogState?) {
     val res = showOkCancelDialog(
       title = "Zowe Config Update",
-      message = "Do you want to update zowe config file?\n${state?.zoweConfigPath}",
+      message = "Do you want to update zowe config file and credentials in secret store?"
+          + "\n${state?.connectionName}"
+          + "\n${state?.zoweConfigPath}",
       okText = "Yes",
       cancelText = "No"
     )
@@ -95,11 +107,21 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
 
       val zoweConfig = parseConfigJson(configFile.inputStream)
       zoweConfig.extractSecureProperties(configFile.path.split("/").toTypedArray())
-      zoweConfig.updateFromState(state)
-      runWriteActionInEdtAndWait {
-        zoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
-        configFile.setBinaryContent(zoweConfig.toJson().toByteArray(configFile.charset))
+      kotlin.runCatching {
+        zoweConfig.updateFromState(state)
       }
+        .onSuccess {
+          runWriteActionInEdtAndWait {
+            zoweConfig.setProfile(ZoweConfigServiceImpl.getProfileNameFromConnName(state.connectionName))
+            zoweConfig.saveSecureProperties(configFile.path.split("/").toTypedArray())
+            zoweConfig.restoreProfile()
+            configFile.setBinaryContent(zoweConfig.toJson().toByteArray(configFile.charset))
+          }
+        }
+        .onFailure {
+          Messages.showErrorDialog("Unable to save invalid URL: ${state.connectionUrl}", "Invalid URL")
+          return
+        }
     }
   }
 
@@ -112,8 +134,9 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
       val state = showAndTestConnection(connectionsTableModel!![idx].apply {
         mode = DialogMode.UPDATE
       })
-      state?.zoweConfigPath?.let {
-        zoweConfigStates[it] = state
+      state?.let {
+        if (it.zoweConfigPath != null)
+          zoweConfigStates[it.connectionName] = state
       }
       if (state != null) {
         connectionsTableModel?.set(idx, state)
@@ -319,7 +342,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   /** Check are the Credentials and Connections sandboxes modified */
   override fun isModified(): Boolean {
     return isSandboxModified<Credentials>()
-      || isSandboxModified<ConnectionConfig>()
+        || isSandboxModified<ConnectionConfig>()
   }
 
   override fun cancel() {

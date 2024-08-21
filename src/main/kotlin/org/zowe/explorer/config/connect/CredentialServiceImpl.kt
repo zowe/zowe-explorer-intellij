@@ -33,12 +33,29 @@ private fun createCredentialAttributes(key: String): CredentialAttributes {
 class CredentialServiceImpl : CredentialService {
 
   /**
+   * Get PasswordSafe service
+   * Required for test purposes
+   */
+  private fun getPasswordSafeService(): PasswordSafe {
+    return service<PasswordSafe>()
+  }
+
+  /**
    * Get user credentials by connection config UUID.
    * @param connectionConfigUuid connection configuration universally unique identifier.
    * @return user credentials [Credentials] if they are.
    */
   private fun getCredentials(connectionConfigUuid: String): Credentials? {
-    return service<PasswordSafe>().get(createCredentialAttributes(connectionConfigUuid))
+    val credentialAttributes = createCredentialAttributes(connectionConfigUuid)
+    var ret = service<PasswordSafe>().get(credentialAttributes)
+    //Another attempt to read the password was added, since the saving of credentials occurs in a separate thread
+    //and depends on the operating system. If we saved the credentials and try to read them in another thread,
+    //but they have not yet actually been saved in storage.
+      if (ret==null){
+        Thread.sleep(10)
+        ret = getPasswordSafeService().get(credentialAttributes)
+      }
+      return ret
   }
 
   /**
@@ -67,7 +84,7 @@ class CredentialServiceImpl : CredentialService {
     val credentialAttributes = createCredentialAttributes(connectionConfigUuid)
     val credentials = Credentials(username, password)
     runBackgroundableTask("Setting user credentials") {
-      service<PasswordSafe>().set(credentialAttributes, credentials)
+      getPasswordSafeService().set(credentialAttributes, credentials)
       sendTopic(CREDENTIALS_CHANGED).onChanged(connectionConfigUuid)
     }
   }
@@ -78,7 +95,7 @@ class CredentialServiceImpl : CredentialService {
    */
   override fun clearCredentials(connectionConfigUuid: String) {
     val credentialAttributes = createCredentialAttributes(connectionConfigUuid)
-    service<PasswordSafe>().set(credentialAttributes, null)
+    getPasswordSafeService().set(credentialAttributes, null)
   }
 
 }

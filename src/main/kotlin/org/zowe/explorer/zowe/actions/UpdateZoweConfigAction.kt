@@ -16,7 +16,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
+import org.zowe.explorer.utils.write
 import org.zowe.explorer.zowe.service.ZoweConfigService
+import org.zowe.explorer.zowe.service.ZoweConfigService.Companion.lock
 import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
 import org.zowe.explorer.zowe.service.ZoweConfigState
 import org.zowe.explorer.zowe.service.ZoweConfigType
@@ -29,8 +31,7 @@ import org.zowe.kotlinsdk.zowe.config.parseConfigJson
  * @since 2021-02-12
  */
 class UpdateZoweConfigAction : DumbAwareAction() {
-
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: let {
@@ -75,12 +76,11 @@ class UpdateZoweConfigAction : DumbAwareAction() {
       type = ZoweConfigType.LOCAL
 
     val zoweConfigService = project.service<ZoweConfigService>()
-
-    val prevZoweConfig = if (type == ZoweConfigType.LOCAL)
-      zoweConfigService.localZoweConfig
-    else
-      zoweConfigService.globalZoweConfig
-    runCatching {
+    lock.write {
+      val prevZoweConfig = if (type == ZoweConfigType.LOCAL)
+        zoweConfigService.localZoweConfig
+      else
+        zoweConfigService.globalZoweConfig
       if (type == ZoweConfigType.LOCAL) {
         zoweConfigService.localZoweConfig = parseConfigJson(editor.document.text)
         zoweConfigService.localZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
@@ -88,14 +88,14 @@ class UpdateZoweConfigAction : DumbAwareAction() {
         zoweConfigService.globalZoweConfig = parseConfigJson(editor.document.text)
         zoweConfigService.globalZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
       }
-    }
-    val zoweState = zoweConfigService.getZoweConfigState(false, type = type)
-    e.presentation.isEnabledAndVisible =
-      zoweState == ZoweConfigState.NEED_TO_UPDATE || zoweState == ZoweConfigState.NEED_TO_ADD
-    if (type == ZoweConfigType.LOCAL) {
-      zoweConfigService.localZoweConfig = prevZoweConfig
-    } else {
-      zoweConfigService.globalZoweConfig = prevZoweConfig
+      val zoweState = zoweConfigService.getZoweConfigState(false, type = type)
+      e.presentation.isEnabledAndVisible =
+        zoweState == ZoweConfigState.NEED_TO_UPDATE || zoweState == ZoweConfigState.NEED_TO_ADD
+      if (type == ZoweConfigType.LOCAL) {
+        zoweConfigService.localZoweConfig = prevZoweConfig
+      } else {
+        zoweConfigService.globalZoweConfig = prevZoweConfig
+      }
     }
   }
 }

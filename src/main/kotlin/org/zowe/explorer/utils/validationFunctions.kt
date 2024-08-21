@@ -21,12 +21,12 @@ import org.zowe.explorer.explorer.ui.UssDirNode
 import org.zowe.explorer.explorer.ui.UssFileNode
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
-import org.zowe.kotlinsdk.DatasetOrganization
 import javax.swing.JComponent
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 
-private val urlRegex = Regex("^(https?|http)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")
+private val urlRegex =
+  Regex("^(https?|http)://[-a-zA-Z0-9+&@#/%?=~_|!,.;]*(:((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|([1-5][0-9]{4})|([0-5]{1,5})|([0-9]{1,4})))?")
 private val maskRegex = Regex("^[A-Za-z\\$\\*%@#][A-Za-z0-9\\-\\$\\*%@#]{0,7}")
 private val ussPathRegex = Regex("^/$|^(/[^/]+)+$")
 private val forbiddenSymbol = "/"
@@ -81,7 +81,10 @@ fun validateForPassword(password: String, component: JPasswordField): Validation
  * @param component the component to check the text in
  */
 fun validateForBlank(component: JTextField): ValidationInfo? {
-  return validateForBlank(component.text, component)
+  return if(component is JPasswordField){
+    validateForBlank(String(component.password).trim(), component)
+  }
+  else validateForBlank(component.text, component)
 }
 
 /**

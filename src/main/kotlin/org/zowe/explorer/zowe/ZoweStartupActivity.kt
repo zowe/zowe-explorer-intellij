@@ -23,8 +23,10 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.utils.subscribe
 import org.zowe.explorer.zowe.service.*
+import org.zowe.explorer.zowe.service.ZoweConfigService.Companion.lock
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import java.util.regex.Pattern
+import kotlin.concurrent.write
 
 const val ZOWE_CONFIG_NAME = "zowe.config.json"
 
@@ -71,7 +73,7 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project, type: ZoweC
 fun showDialogForDeleteZoweConfigIfNeeded(project: Project, type: ZoweConfigType) {
   val zoweConfigService = project.service<ZoweConfigService>()
   val zoweConfigState = zoweConfigService.getZoweConfigState(type = type)
-  if (zoweConfigState != ZoweConfigState.NEED_TO_ADD || zoweConfigState != ZoweConfigState.NOT_EXISTS) {
+  if (zoweConfigState != ZoweConfigState.NEED_TO_ADD && zoweConfigState != ZoweConfigState.NOT_EXISTS) {
     val choice = Messages.showDialog(
       project,
       "$type Zowe config file has been deleted.\n" +
@@ -79,7 +81,7 @@ fun showDialogForDeleteZoweConfigIfNeeded(project: Project, type: ZoweConfigType
           "If you decide to leave the connection, it will be converted to a regular connection (username will be visible).",
       "Deleting Zowe Config connection",
       arrayOf(
-        "Delete Connection", "Keep Connection"
+        "Delete Connection(s)", "Keep Connection(s)"
       ),
       0,
       AllIcons.General.QuestionDialog
@@ -88,10 +90,12 @@ fun showDialogForDeleteZoweConfigIfNeeded(project: Project, type: ZoweConfigType
       zoweConfigService.deleteZoweConfig(type)
     }
   }
-  if (type == ZoweConfigType.LOCAL)
-    zoweConfigService.localZoweConfig = null
-  else
-    zoweConfigService.globalZoweConfig = null
+  lock.write {
+    if (type == ZoweConfigType.LOCAL)
+      zoweConfigService.localZoweConfig = null
+    else
+      zoweConfigService.globalZoweConfig = null
+  }
   zoweConfigService.checkAndRemoveOldZoweConnection(type)
 }
 

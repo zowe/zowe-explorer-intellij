@@ -15,6 +15,7 @@ import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
 
 /**
@@ -78,7 +79,7 @@ interface ZoweConfigService {
    * @param checkConnection - Verify zowe connection by sending info request if true.
    * @return - ConnectionConfig that was added or updated.
    */
-  fun addOrUpdateZoweConfig(scanProject: Boolean = true, checkConnection: Boolean = true, type: ZoweConfigType): ConnectionConfig?
+  fun addOrUpdateZoweConfig(scanProject: Boolean = true, checkConnection: Boolean = true, type: ZoweConfigType)
 
   /**
    * Deletes connection config related to zoweConnection
@@ -102,6 +103,7 @@ interface ZoweConfigService {
 
   companion object {
     fun getInstance(project: Project): ZoweConfigService = project.getService(ZoweConfigService::class.java)
+    val lock = ReentrantReadWriteLock()
   }
 }
 

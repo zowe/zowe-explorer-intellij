@@ -34,6 +34,7 @@ subprojects {
         properties {
             property "sonar.sources", "src/main/kotlin"
             property "sonar.tests", "src/test/kotlin"
+            property 'sonar.exclusions', "**/src/IC-231/**, **/src/IC-223/**"
         }
     }
 }
