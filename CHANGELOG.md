@@ -2,7 +2,7 @@
 
 All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
-## [Unreleased]
+## [1.2.2-221] (2024-08-21)
 
 ### Features
 
@@ -47,7 +47,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: java.lang.RuntimeException: Cannot invoke (class=, method=onCacheUpdated, topic=cacheUpdated) ([2fedc7f5](https://github.com/zowe/zowe-explorer-intellij/commit/2fedc7f5))
 * Bugfix: "Allocate like" action causes exception when refresh on mask is started ([d13a1c72](https://github.com/zowe/zowe-explorer-intellij/commit/d13a1c72))
 
-## 1.2.0-221 (2024-04-16)
+## [1.2.0-221] (2024-04-16)
 
 ### Features
 
@@ -72,7 +72,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: TSO EXEC command without operands causes the CLI to hang ([d071960a](https://github.com/zowe/zowe-explorer-intellij/commit/d071960a))
 * Bugfix: Connection is not fully reset to the last successful state and it causes errors ([f6d5a72e](https://github.com/zowe/zowe-explorer-intellij/commit/f6d5a72e))
 
-## 1.1.2-221 (2024-01-22)
+## [1.1.2-221] (2024-01-22)
 
 ### Bugfixes
 
@@ -88,7 +88,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Conflicting VFS and content storage name ([3a2c8d60](https://github.com/zowe/zowe-explorer-intellij/commit/3a2c8d60))
 * Bugfix: GitHub issue #167: Zowe explorer config is not converted ([b5eae7a2](https://github.com/zowe/zowe-explorer-intellij/commit/b5eae7a2))
 
-## 1.1.1-221 (2023-11-23)
+## [1.1.1-221] (2023-11-23)
 
 ### Bugfixes
 
@@ -119,7 +119,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #162: Sync does not work on files and datasets in
   autosync ([da93cf9b](https://github.com/zowe/zowe-explorer-intellij/commit/da93cf9b))
 
-## 1.1.0-221 (2023-09-07)
+## [1.1.0-221] (2023-09-07)
 
 ### Features
 
@@ -213,7 +213,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: ClassCastException: class java.util.ArrayList cannot be cast to class
   com.intellij.openapi.vfs.VirtualFile ([cdc0a458](https://github.com/zowe/zowe-explorer-intellij/commit/cdc0a458))
 
-## 1.0.3-221 (2023-07-18)
+## [1.0.3-221] (2023-07-18)
 
 ### Features
 
@@ -249,7 +249,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Unknown file type after delete member after
   move ([02b8090f](https://github.com/zowe/zowe-explorer-intellij/commit/02b8090f))
 
-## 1.0.1 (2023-04-18)
+## [1.0.1] (2023-04-18)
 
 ### Features
 
@@ -286,7 +286,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
   PDS ([ec94b39e](https://github.com/zowe/zowe-explorer-intellij/commit/ec94b39e))
 * Bugfix: USS file empty after rename ([71c49b24](https://github.com/zowe/zowe-explorer-intellij/commit/71c49b24))
 
-## 1.0.0 (2023-03-13)
+## [1.0.0] (2023-03-13)
 
 ### Breaking changes
 
@@ -408,7 +408,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Policy agreement is gone wild ([d600f58e](https://github.com/zowe/zowe-explorer-intellij/commit/d600f58e))
 * Bugfix: Exception while opening TSO CLI ([540bfa80](https://github.com/zowe/zowe-explorer-intellij/commit/540bfa80))
 
-## 0.3.1 (2022-11-30)
+## [0.3.1] (2022-11-30)
 
 ### Features
 
@@ -425,7 +425,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Ctrl+C/Ctrl+V does not work if copy file from remote to
   local ([e5601e7f](https://github.com/zowe/zowe-explorer-intellij/commit/e5601e7f))
 
-## 0.3.0 (2022-11-18)
+## [0.3.0] (2022-11-18)
 
 ### Breaking changes
 
@@ -499,6 +499,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.2-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.1-221...1.2.2-221
 [1.2.1-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.0-221...1.2.1-221
 [1.2.0-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.2-221...1.2.0-221
 [1.1.2-221]: https://github.com/zowe/zowe-explorer-intellij/compare/1.1.1-221...1.1.2-221
