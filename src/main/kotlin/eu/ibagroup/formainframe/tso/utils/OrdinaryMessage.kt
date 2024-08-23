@@ -8,9 +8,9 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.ui.build.tso.utils
+package eu.ibagroup.formainframe.tso.utils
 
-import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
+import eu.ibagroup.formainframe.tso.config.TSOConfigWrapper
 
 /**
  * Basic class for an ordinary TSO message

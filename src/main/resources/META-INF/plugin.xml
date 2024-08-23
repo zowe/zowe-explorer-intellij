@@ -119,6 +119,8 @@ Example of how to see the output:<br/>
 
         <configDeclaration implementation="eu.ibagroup.formainframe.config.connect.ConnectionConfigDeclarationFactory"/>
 
+        <configDeclaration implementation="eu.ibagroup.formainframe.tso.config.TSOSessionConfigDeclarationFactory"/>
+
         <configDeclaration implementation="eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfigDeclarationFactory"/>
 
         <configDeclaration implementation="eu.ibagroup.formainframe.config.ws.JesWorkingSetConfigDeclarationFactory"/>
@@ -325,7 +327,7 @@ Example of how to see the output:<br/>
                     doNotActivateOnStart="true"/>
 
         <toolWindow id="TSO CLI" anchor="bottom"
-                    factoryClass="eu.ibagroup.formainframe.ui.build.tso.TSOWindowFactory"
+                    factoryClass="eu.ibagroup.formainframe.tso.TSOWindowFactory"
                     canCloseContents="true"
                     doNotActivateOnStart="true"/>
 
@@ -543,8 +545,8 @@ Example of how to see the output:<br/>
                 id="eu.ibagroup.formainframe.explorer.actions.SettingAction"
                 icon="AllIcons.General.Settings"/>
 
-        <action class="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"
-                id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"
+        <action class="eu.ibagroup.formainframe.explorer.actions.TsoConsoleCreateAction"
+                id="eu.ibagroup.formainframe.explorer.actions.TsoConsoleCreateAction"
                 icon="AllIcons.Debugger.Console"/>
 
 
@@ -734,7 +736,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddConnectionAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddWorkingSetAction"/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AddJesWorkingSetAction"/>
-            <reference id="eu.ibagroup.formainframe.explorer.actions.TsoSessionCreateAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.TsoConsoleCreateAction"/>
         </group>
 
         <group id="eu.ibagroup.formainframe.actions.FilesActionBarGroup">

@@ -342,3 +342,9 @@ const val UNKNOWN_PARAM_VALUE = "<Unknown>"
 fun getParamTextValueOrUnknown(param: Any?):String{
   return param?.toString()?.trim().orEmpty().ifEmpty { UNKNOWN_PARAM_VALUE }
 }
+
+// TODO: Remove when it becomes possible to mock class constructor with init section.
+/** Wrapper for init() method. It is necessary only for test purposes for now. */
+fun initialize(init: () -> Unit) {
+  init()
+}
