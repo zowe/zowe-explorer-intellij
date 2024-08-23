@@ -8,12 +8,12 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.ui.build.tso.utils
+package eu.ibagroup.formainframe.tso.utils
 
 import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.authToken
-import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
+import eu.ibagroup.formainframe.tso.config.TSOConfigWrapper
 import org.zowe.kotlinsdk.DataAPI
 import io.ktor.util.*
 
@@ -24,8 +24,8 @@ import io.ktor.util.*
  */
 class InputRecognizer(
   private val project: Project?,
-  private val session : TSOConfigWrapper)
-{
+  private val session : TSOConfigWrapper
+) {
 
   private var previousCommand : String = ""
   private var isProgram : Boolean = false

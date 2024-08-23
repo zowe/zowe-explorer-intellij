@@ -8,14 +8,14 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.ui.build
+package eu.ibagroup.formainframe.tso
 
 import com.intellij.execution.process.*
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.TerminalExecutionConsole
 import com.jediterm.terminal.TerminalKeyEncoder
-import eu.ibagroup.formainframe.ui.build.tso.utils.InputRecognizer
-import eu.ibagroup.formainframe.ui.build.tso.utils.ProgramMessage
+import eu.ibagroup.formainframe.tso.utils.InputRecognizer
+import eu.ibagroup.formainframe.tso.utils.ProgramMessage
 import java.awt.event.KeyEvent
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream

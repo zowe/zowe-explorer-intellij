@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.tso.config.TSOSessionConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -40,7 +41,8 @@ interface ConfigService : PersistentStateComponent<ConfigStateV2> {
     entities = [
       FilesWorkingSetConfig::class,
       ConnectionConfig::class,
-      JesWorkingSetConfig::class
+      JesWorkingSetConfig::class,
+      TSOSessionConfig::class
     ]
   )
   val crudable: Crudable

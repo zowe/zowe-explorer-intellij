@@ -8,13 +8,12 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.ui.build.tso.ui
+package eu.ibagroup.formainframe.tso.ui
 
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ExecutionConsole
-import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -29,10 +28,11 @@ import com.intellij.util.ui.JBEmptyBorder
 import eu.ibagroup.formainframe.common.isDebugModeEnabled
 import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
-import eu.ibagroup.formainframe.ui.build.TerminalCommandReceiver
-import eu.ibagroup.formainframe.ui.build.tso.*
-import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
-import eu.ibagroup.formainframe.ui.build.tso.utils.InputRecognizer
+import eu.ibagroup.formainframe.tso.SESSION_COMMAND_ENTERED
+import eu.ibagroup.formainframe.tso.SESSION_REOPEN_TOPIC
+import eu.ibagroup.formainframe.tso.TerminalCommandReceiver
+import eu.ibagroup.formainframe.tso.config.TSOConfigWrapper
+import eu.ibagroup.formainframe.tso.utils.InputRecognizer
 import eu.ibagroup.formainframe.utils.log
 import eu.ibagroup.formainframe.utils.sendTopic
 import java.awt.BorderLayout

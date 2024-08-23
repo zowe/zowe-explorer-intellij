@@ -8,9 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.ui.build.tso.utils
-
-import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
+package eu.ibagroup.formainframe.tso.utils
 
 /**
  * Basic interface for type of the message.

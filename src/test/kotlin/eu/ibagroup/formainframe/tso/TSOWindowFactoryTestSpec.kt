@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package eu.ibagroup.formainframe.ui.build.tso
+package eu.ibagroup.formainframe.tso
 
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.process.ProcessOutputType
@@ -19,15 +19,19 @@ import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.TerminalExecutionConsole
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl.MockToolWindow
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.tso.config.TSOSessionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
-import eu.ibagroup.formainframe.ui.build.tso.ui.TSOConsoleView
-import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
+import eu.ibagroup.formainframe.tso.SESSION_COMMAND_ENTERED
+import eu.ibagroup.formainframe.tso.SESSION_RECONNECT_ERROR_MESSAGE
+import eu.ibagroup.formainframe.tso.SESSION_RECONNECT_TOPIC
+import eu.ibagroup.formainframe.tso.TSOWindowFactory
+import eu.ibagroup.formainframe.tso.config.TSOConfigWrapper
+import eu.ibagroup.formainframe.tso.ui.TSOConsoleView
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.utils.service
 import io.kotest.assertions.assertSoftly
@@ -58,6 +62,10 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
     val toolWindow = spyk(MockToolWindow(project))
     val classUnderTest = spyk(TSOWindowFactory(), recordPrivateCalls = true)
 
+    val tsoSessionConfig = mockk<TSOSessionConfig>()
+    every { tsoSessionConfig.timeout } returns 10
+    every { tsoSessionConfig.maxAttempts } returns 3
+
     // initialize topics to be able to call them
     classUnderTest.init(toolWindow)
 
@@ -69,8 +77,7 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
       should("should call showSessionFailureNotification if session was not found in map") {
         // given
         val oldSessionResponse = TsoResponse(servletKey = "test-servletKey-1")
-        val oldSessionParams = TSOSessionParams(connectionConfig = connectionConfig)
-        val oldSession = TSOConfigWrapper(oldSessionParams, oldSessionResponse)
+        val oldSession = TSOConfigWrapper(tsoSessionConfig, connectionConfig, oldSessionResponse)
 
         // when
         sendTopic(SESSION_RECONNECT_TOPIC).reconnect(project, console, oldSession)
@@ -102,8 +109,7 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
         }
 
         val oldSessionResponse = TsoResponse(servletKey = "test-servletKey-1")
-        val oldSessionParams = TSOSessionParams(connectionConfig = connectionConfig)
-        val session = TSOConfigWrapper(oldSessionParams, oldSessionResponse)
+        val session = TSOConfigWrapper(tsoSessionConfig, connectionConfig, oldSessionResponse)
         val command = "TIME"
         val messageType = mockk<MessageType>()
         val messageData = mockk<MessageData>()
@@ -164,8 +170,7 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
         }
 
         val oldSessionResponse = TsoResponse(servletKey = "test-servletKey-1")
-        val oldSessionParams = TSOSessionParams(connectionConfig = connectionConfig)
-        val session = TSOConfigWrapper(oldSessionParams, oldSessionResponse)
+        val session = TSOConfigWrapper(tsoSessionConfig, connectionConfig, oldSessionResponse)
         val consoleView = mockk<TerminalExecutionConsole>()
         val widget = mockk<JBTerminalWidget>()
 
