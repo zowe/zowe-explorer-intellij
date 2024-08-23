@@ -287,6 +287,9 @@ class ExplorerPasteProvider : PasteProvider {
                 node.file == op.source && operations.minus(op).none { operation -> operation.source == op.source }
               }
             }
+            else if(explorerView.isCut.get()) {
+              copyPasteSupport.removeFromBuffer { node -> node.file == op.source }
+            }
           }
         it.fraction = it.fraction + 1.0 / filesToMoveTotal
       }
