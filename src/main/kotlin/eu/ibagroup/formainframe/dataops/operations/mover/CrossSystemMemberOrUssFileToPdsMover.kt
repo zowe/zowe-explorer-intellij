@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_TEXT_CHARSE
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.addNewLine
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.*
@@ -120,6 +121,27 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
             contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
           }
         }
+      }
+      if (operation.isMove) {
+        log.info("Trying to delete source file")
+        val sourceAttributes = operation.sourceAttributes
+        runCatching {
+          if (sourceAttributes != null) {
+            dataOpsManager.performOperation(DeleteOperation(operation.source, sourceAttributes))
+          }
+        }
+          .onFailure { t ->
+            log.warn("Can't delete source file $sourceFile")
+            val rollbackResponse = apiWithBytesConverter<DataAPI>(destConnectionConfig).deleteDatasetMember(
+              authorizationToken = destConnectionConfig.authToken,
+              datasetName = destAttributes.name,
+              memberName = memberName
+            ).execute()
+            if (!rollbackResponse.isSuccessful) {
+              log.warn("Cannot delete ${destAttributes.name}. Rollback failed.")
+            }
+            throwable = t
+          }
       }
     }
 
