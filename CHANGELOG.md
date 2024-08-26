@@ -32,6 +32,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: Owner is now recognized correctly ([08355c8c](https://github.com/zowe/zowe-explorer-intellij/commit/08355c8c))
 * Bugfix: USS files are no more displayed after they are deleted ([c130ea52](https://github.com/zowe/zowe-explorer-intellij/commit/c130ea52))
 * Bugfix: Files with long name placing as a z/OS dataset is fixed ([1afd501e](https://github.com/zowe/zowe-explorer-intellij/commit/1afd501e))
+* Bugfix: Fixed source file removal when cut is performed ([c1b88348](https://github.com/zowe/zowe-explorer-intellij/commit/c1b88348))
 
 ## [1.2.1-231] (2024-06-12)
 
