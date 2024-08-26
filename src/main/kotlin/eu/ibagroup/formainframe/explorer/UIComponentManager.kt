@@ -11,15 +11,10 @@
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 
 /** UI component manager service interface */
 interface UIComponentManager : Disposable {
-
-  companion object {
-    val INSTANCE = ApplicationManager.getApplication().getService(UIComponentManager::class.java)
-  }
 
   fun getExplorerContentProviders(): List<ExplorerContentProvider<*, *>>
 
