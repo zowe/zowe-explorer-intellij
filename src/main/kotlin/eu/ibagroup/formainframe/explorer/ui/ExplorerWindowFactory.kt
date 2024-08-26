@@ -39,7 +39,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
         val content = contentFactory
           .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)
         toolWindow.contentManager.addContent(content)
-    }
+      }
   }
 
   override fun init(toolWindow: ToolWindow) {
