@@ -34,10 +34,11 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val contentFactory = ContentFactory.getInstance()
-    UIComponentManager.INSTANCE.getExplorerContentProviders().forEach {
-      val content = contentFactory
-        .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)
-      toolWindow.contentManager.addContent(content)
+    service<UIComponentManager>().getExplorerContentProviders()
+      .forEach {
+        val content = contentFactory
+          .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)
+        toolWindow.contentManager.addContent(content)
     }
   }
 
@@ -45,19 +46,19 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
     subscribe(
       project = toolWindow.project,
       topic = AutoSyncFileListener.AUTO_SYNC_FILE,
-      handler = object: AutoSyncFileListener {
-      override fun sync(file: VirtualFile) {
-        val dataOpsManager = service<DataOpsManager>()
-        if (dataOpsManager.isSyncSupported(file)) {
-          val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
-          runBackgroundableTask("Synchronizing file ${file.name} with mainframe") { indicator ->
-            val syncProvider = DocumentedSyncProvider(file)
-            runInEdtAndWait { syncProvider.saveDocument() }
-            contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
+      handler = object : AutoSyncFileListener {
+        override fun sync(file: VirtualFile) {
+          val dataOpsManager = service<DataOpsManager>()
+          if (dataOpsManager.isSyncSupported(file)) {
+            val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
+            runBackgroundableTask("Synchronizing file ${file.name} with mainframe") { indicator ->
+              val syncProvider = DocumentedSyncProvider(file)
+              runInEdtAndWait { syncProvider.saveDocument() }
+              contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
+            }
           }
         }
-      }
-    })
+      })
   }
 
   override fun shouldBeAvailable(project: Project): Boolean {
