@@ -271,8 +271,10 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         this.globalZoweConfig
       zoweConfig ?: throw Exception("Cannot get $type Zowe config")
 
+      var allPreparedConn = mutableListOf<ConnectionConfig>()
       if (checkConnection) {
-        val failedURLs = testAndPrepareAllZosmfConnections(zoweConfig, type)
+        val failedURLs = mutableListOf<String>()
+        allPreparedConn = testAndPrepareAllZosmfConnections(zoweConfig, type, failedURLs)
         if (failedURLs.isNotEmpty()) {
           val andMore = if (failedURLs.size > 3)
             "..."
@@ -286,15 +288,14 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
           return
         }
       }
-      for (zosmfConnection in zoweConfig.getListOfZosmfConections()) {
-        val zoweConnection = prepareConnection(zosmfConnection, type)
-        val connectionOpt = configCrudable.addOrUpdate(zoweConnection)
+      for (zosmfConnection in allPreparedConn) {
+        val connectionOpt = configCrudable.addOrUpdate(zosmfConnection)
         if (!connectionOpt.isEmpty) {
           var topic = if (type == ZoweConfigType.LOCAL)
             LOCAL_ZOWE_CONFIG_CHANGED
           else
             GLOBAL_ZOWE_CONFIG_CHANGED
-          sendTopic(topic).onConfigSaved(zoweConfig, zoweConnection)
+          sendTopic(topic).onConfigSaved(zoweConfig, zosmfConnection)
         }
       }
 
@@ -325,8 +326,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @param type of zowe config
    * @return list of URLs which did not pass the test
    */
-  private fun testAndPrepareAllZosmfConnections(zoweConfig: ZoweConfig, type: ZoweConfigType): List<String> {
-    var failedURLs = mutableListOf<String>()
+  private fun testAndPrepareAllZosmfConnections(zoweConfig: ZoweConfig, type: ZoweConfigType, failedURLs: MutableList<String>): MutableList<ConnectionConfig> {
+    var allPreparedConn = mutableListOf<ConnectionConfig>()
     for (zosmfConnection in zoweConfig.getListOfZosmfConections()) {
       val zoweConnection = prepareConnection(zosmfConnection, type)
       try {
@@ -334,8 +335,9 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       } catch (t: Throwable) {
         failedURLs.add(zoweConnection.url)
       }
+      allPreparedConn.add(zoweConnection)
     }
-    return failedURLs
+    return allPreparedConn
   }
 
   /**

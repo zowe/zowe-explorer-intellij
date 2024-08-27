@@ -12,6 +12,7 @@ package org.zowe.explorer.config.connect.ui.renderer
 
 import com.intellij.icons.AllIcons
 import com.intellij.util.ui.table.IconTableCellRenderer
+import org.zowe.explorer.config.connect.ui.ConnectionDialogStateBase
 import javax.swing.Icon
 import javax.swing.JTable
 import java.awt.Component
@@ -21,7 +22,7 @@ const val WARNING_TOOLTIP_TEXT = "The last TSO request failed. Unable to get the
 /**
  * Renderer class for USS Owner column in the connections table view
  */
-class UssOwnerColumnRenderer : IconTableCellRenderer<String>() {
+class UssOwnerColumnRenderer(private val connState: ConnectionDialogStateBase<*>) : IconTableCellRenderer<String>() {
 
   /**
    * Function returns a warning icon or null if the value is not present
@@ -41,7 +42,14 @@ class UssOwnerColumnRenderer : IconTableCellRenderer<String>() {
     row: Int,
     column: Int
   ): Component {
-    super.getTableCellRendererComponent(table, value, selected, focus, row, column)
+    super.getTableCellRendererComponent(
+      table,
+      if (connState.connectionConfig.zoweConfigPath == null) value else "*".repeat(8),
+      selected,
+      focus,
+      row,
+      column
+    )
     if (icon != null) {
       toolTipText = WARNING_TOOLTIP_TEXT
     }

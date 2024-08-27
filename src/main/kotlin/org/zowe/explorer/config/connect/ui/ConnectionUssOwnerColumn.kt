@@ -42,7 +42,7 @@ class ConnectionUssOwnerColumn<ConnectionState : ConnectionDialogStateBase<*>>
    * Specifies a renderer for this cell
    */
   override fun getRenderer(o: ConnectionState): TableCellRenderer {
-    return UssOwnerColumnRenderer()
+    return UssOwnerColumnRenderer(o)
   }
 
 }
