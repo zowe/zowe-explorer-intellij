@@ -48,7 +48,7 @@ import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.ui.build.tso.TSOWindowFactory
+import org.zowe.explorer.tso.TSOWindowFactory
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.service
 import org.zowe.kotlinsdk.MessageType
