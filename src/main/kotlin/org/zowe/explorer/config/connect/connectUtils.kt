@@ -14,14 +14,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialog
+import org.zowe.explorer.tso.config.ui.TSOSessionDialogState
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.operations.*
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
-import org.zowe.explorer.dataops.operations.TsoOperation
-import org.zowe.explorer.dataops.operations.TsoOperationMode
-import org.zowe.explorer.ui.build.tso.TSOWindowFactory
-import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
-import org.zowe.explorer.ui.build.tso.ui.TSOSessionParams
+import org.zowe.explorer.tso.TSOWindowFactory
+import org.zowe.explorer.tso.config.TSOConfigWrapper
+import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.*
 import org.zowe.kotlinsdk.annotations.ZVersion
 
@@ -35,17 +35,21 @@ val LOGGER = logger<ConnectionDialog>()
  */
 fun whoAmI(connectionConfig: ConnectionConfig): String? {
   val zVersion = connectionConfig.zVersion
-  val tsoSessionParams = TSOSessionParams(connectionConfig)
   var owner: String? = null
   if (zVersion < ZVersion.ZOS_2_4) {
+    val state = TSOSessionDialogState()
+    state.connectionConfigUuid = connectionConfig.uuid
     val emptyOwner = ""
     val queuedMessages: MutableList<TsoData> = mutableListOf()
     runCatching {
       val tsoStartResponse = service<DataOpsManager>().performOperation(
-        TsoOperation(tsoSessionParams, TsoOperationMode.START)
+        TsoOperation(
+          TSOConfigWrapper(state.tsoSessionConfig, connectionConfig),
+          TsoOperationMode.START
+        )
       )
       if (tsoStartResponse.servletKey?.isNotEmpty() == true) {
-        val tsoSession = TSOConfigWrapper(tsoSessionParams, tsoStartResponse)
+        val tsoSession = TSOConfigWrapper(state.tsoSessionConfig, connectionConfig, tsoStartResponse)
         while (tsoSession.getTSOResponseMessageQueue().last().tsoPrompt == null) {
           val response = TSOWindowFactory.getTsoMessageQueue(tsoSession)
           tsoSession.setTSOResponseMessageQueue(response.tsoData)

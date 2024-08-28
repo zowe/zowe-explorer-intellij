@@ -10,9 +10,11 @@
 
 package org.zowe.explorer.utils
 
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTextField
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.tso.config.TSOSessionConfig
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.config.ws.MaskStateWithWS
 import org.zowe.explorer.config.ws.WorkingSetConfig
@@ -21,6 +23,7 @@ import org.zowe.explorer.explorer.ui.UssDirNode
 import org.zowe.explorer.explorer.ui.UssFileNode
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
+import org.zowe.explorer.utils.crudable.getByUniqueKey
 import javax.swing.JComponent
 import javax.swing.JPasswordField
 import javax.swing.JTextField
@@ -450,7 +453,7 @@ fun validateVolser(component: JTextField): ValidationInfo? {
 }
 
 /**
- * Validate the number to be positive
+ * Validate the number of type Int to be positive
  * @param component the component with the number to validate
  */
 fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
@@ -458,19 +461,41 @@ fun validateForPositiveInteger(component: JTextField): ValidationInfo? {
 }
 
 /**
+ * Validate the number of type Long to be positive
+ * @param component the component with the number to validate
+ */
+fun validateForPositiveLong(component: JTextField): ValidationInfo? {
+  return validateForGreaterOrEqualValue(component, 0L)
+}
+
+/**
  * Validate the component value is greater than or equal to the provided value
  * @param component the component to check the value
- * @param value the value to check that the component's value is greater
+ * @param value the value of type Int to check that the component's value is greater
  */
 fun validateForGreaterOrEqualValue(component: JTextField, value: Int): ValidationInfo? {
-  return if ((component.text.toIntOrNull() ?: -1) < value) {
+  val number = component.text.toIntOrNull() ?: return ValidationInfo("Enter a valid number", component)
+  return if (number < value) {
     ValidationInfo(
       if (value == 0) "Enter a positive number" else "Enter a number greater than or equal to $value",
       component
     )
-  } else {
-    null
-  }
+  } else null
+}
+
+/**
+ * Validate the component value is greater than or equal to the provided value
+ * @param component the component to check the value
+ * @param value the value of type Long to check that the component's value is greater
+ */
+fun validateForGreaterOrEqualValue(component: JTextField, value: Long): ValidationInfo? {
+  val number = component.text.toLongOrNull() ?: return ValidationInfo("Enter a valid number", component)
+  return if (number < value) {
+    ValidationInfo(
+      if (value == 0L) "Enter a positive number" else "Enter a number greater than or equal to $value",
+      component
+    )
+  } else null
 }
 
 /**
@@ -500,4 +525,52 @@ fun validateBatchSize(component: JTextField): ValidationInfo? {
     ValidationInfo("Setting 0 may lead to performance issues due to elements long fetch processing.").asWarning()
       .withOKEnabled()
   else null
+}
+
+/**
+ * Validate the TSO session name not to be the same as the existing one
+ * @param component the component to check the TSO session name
+ * @param ignoreValue the value to ignore during the validation (blank value at the start)
+ * @param crudable crudable object to find the TSO session config
+ */
+fun validateTsoSessionName(component: JTextField, ignoreValue: String? = null, crudable: Crudable): ValidationInfo? {
+  val sessionAlreadyExist =
+    crudable.find<TSOSessionConfig> {
+      ignoreValue != it.name && it.name == component.text
+    }.count() > 0
+  return if (sessionAlreadyExist) {
+    ValidationInfo(
+      "You must provide unique TSO session name. TSO session \"${component.text}\" already exists.",
+      component
+    )
+  } else null
+}
+
+/**
+ * Validate that the connection is selected
+ * @param component the combobox component to check the selection
+ */
+fun validateConnectionSelection(component: ComboBox<*>): ValidationInfo?  {
+  return if (component.selectedItem == null) {
+    ValidationInfo("You must provide a connection", component)
+  } else {
+    null
+  }
+}
+
+/**
+ * Validate that the TSO session is selected and contains an existing connection
+ * @param component the combobox component to check
+ * @param crudable the crudable object to find the connection config
+ */
+fun validateTsoSessionSelection(component: ComboBox<*>, crudable: Crudable): ValidationInfo? {
+  return if (component.selectedItem == null) {
+    ValidationInfo("You must provide a TSO session", component)
+  } else {
+    val tsoSessionConfig = component.selectedItem as TSOSessionConfig
+    val connectionConfig = crudable.getByUniqueKey<ConnectionConfig>(tsoSessionConfig.connectionConfigUuid)
+    if (connectionConfig == null) {
+      ValidationInfo("TSO session must contain a connection", component)
+    } else null
+  }
 }

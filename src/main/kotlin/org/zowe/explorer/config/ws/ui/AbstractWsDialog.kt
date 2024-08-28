@@ -25,11 +25,8 @@ import org.zowe.explorer.common.ui.tableWithToolbar
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.ws.WorkingSetConfig
-import org.zowe.explorer.utils.clone
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
-import org.zowe.explorer.utils.nullable
-import org.zowe.explorer.utils.validateForBlank
-import org.zowe.explorer.utils.validateWorkingSetName
 import java.awt.Dimension
 import javax.swing.JComponent
 
@@ -96,7 +93,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
    * @return applied state.
    */
   open fun onWSApplied(state: WSDState): WSDState = state
-  
+
   private val panel by lazy {
     panel {
       row {
@@ -141,13 +138,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
                   state.connectionUuid = (selectedItem as ConnectionConfig).uuid
                 }
               }
-                .validationOnApply {
-                  if (it.selectedItem == null) {
-                    ValidationInfo("You must provide a connection", it)
-                  } else {
-                    null
-                  }
-                }
+                .validationOnApply { validateConnectionSelection(it) }
             }
           }
       }

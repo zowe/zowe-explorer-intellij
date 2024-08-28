@@ -8,14 +8,14 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.ui.build
+package org.zowe.explorer.tso
 
 import com.intellij.execution.process.*
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.TerminalExecutionConsole
 import com.jediterm.terminal.TerminalKeyEncoder
-import org.zowe.explorer.ui.build.tso.utils.InputRecognizer
-import org.zowe.explorer.ui.build.tso.utils.ProgramMessage
+import org.zowe.explorer.tso.utils.InputRecognizer
+import org.zowe.explorer.tso.utils.ProgramMessage
 import java.awt.event.KeyEvent
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream

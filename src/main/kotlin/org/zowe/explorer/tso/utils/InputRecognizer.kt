@@ -8,12 +8,12 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.ui.build.tso.utils
+package org.zowe.explorer.tso.utils
 
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.authToken
-import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
+import org.zowe.explorer.tso.config.TSOConfigWrapper
 import org.zowe.kotlinsdk.DataAPI
 import io.ktor.util.*
 
@@ -24,8 +24,8 @@ import io.ktor.util.*
  */
 class InputRecognizer(
   private val project: Project?,
-  private val session : TSOConfigWrapper)
-{
+  private val session : TSOConfigWrapper
+) {
 
   private var previousCommand : String = ""
   private var isProgram : Boolean = false

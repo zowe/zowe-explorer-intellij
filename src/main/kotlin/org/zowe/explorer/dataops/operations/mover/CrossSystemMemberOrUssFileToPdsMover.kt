@@ -18,13 +18,10 @@ import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_TEXT_CHARSET
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.addNewLine
 import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.operations.DeleteOperation
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
-import org.zowe.explorer.utils.applyIfNotNull
-import org.zowe.explorer.utils.cancelByIndicator
-import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.log
-import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.XIBMDataType
@@ -122,6 +119,27 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
         } else {
           contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
         }
+      }
+      if (operation.isMove) {
+        log.info("Trying to delete source file")
+        val sourceAttributes = operation.sourceAttributes
+        runCatching {
+          if (sourceAttributes != null) {
+            dataOpsManager.performOperation(DeleteOperation(operation.source, sourceAttributes))
+          }
+        }
+          .onFailure { t ->
+            log.warn("Can't delete source file $sourceFile")
+            val rollbackResponse = apiWithBytesConverter<DataAPI>(destConnectionConfig).deleteDatasetMember(
+              authorizationToken = destConnectionConfig.authToken,
+              datasetName = destAttributes.name,
+              memberName = memberName
+            ).execute()
+            if (!rollbackResponse.isSuccessful) {
+              log.warn("Cannot delete ${destAttributes.name}. Rollback failed.")
+            }
+            throwable = t
+          }
       }
     }
 

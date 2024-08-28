@@ -13,14 +13,13 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.HyperlinkAdapter
-import com.intellij.ui.content.ContentManagerUtil
 import org.zowe.explorer.config.configCrudable
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialog
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.ui.zosmf.initEmptyUuids
+import org.zowe.explorer.explorer.ACTION_TOOLBAR
 import org.zowe.explorer.explorer.hints.Hint
 import org.zowe.explorer.explorer.ui.EXPLORER_VIEW
 import org.zowe.explorer.explorer.ui.FileExplorerView
@@ -68,9 +67,7 @@ class AddConnectionAction : AnAction() {
 private fun showHint(e: AnActionEvent) {
   val view = e.getData(EXPLORER_VIEW)
   if (view?.myTree?.isEmpty == true) {
-    val contentManager = ContentManagerUtil.getContentManagerFromContext(e.dataContext, true)
-    val selectedContent = contentManager?.selectedContent
-    val toolbar = (selectedContent?.component.castOrNull<SimpleToolWindowPanel>())?.toolbar
+    val toolbar = e.getData(ACTION_TOOLBAR)?.component
     val component = if (toolbar?.components?.isNotEmpty() == true) {
       toolbar.components?.get(0).castOrNull<JComponent>()
     } else {

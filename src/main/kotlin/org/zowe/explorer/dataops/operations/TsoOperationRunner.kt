@@ -15,8 +15,7 @@ import org.zowe.explorer.api.api
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
-import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
-import org.zowe.explorer.ui.build.tso.ui.TSOSessionParams
+import org.zowe.explorer.tso.config.TSOConfigWrapper
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.dataops.operations.MessageType as MessageTypeEnum
@@ -60,18 +59,19 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
     var response: Response<TsoResponse>? = null
     when (mode) {
       TsoOperationMode.START -> {
-        val state = operation.state as TSOSessionParams
-        response = api<TsoApi>(state.connectionConfig)
+        val state = operation.state as TSOConfigWrapper
+        val tsoSessionConfig = state.getTSOSessionConfig()
+        response = api<TsoApi>(state.getConnectionConfig())
           .startTso(
-            state.connectionConfig.authToken,
-            proc = state.logonproc.toUpperCasePreservingASCIIRules(),
-            chset = state.charset,
-            cpage = state.codepage.toString(),
-            rows = state.rows.toInt(),
-            cols = state.cols.toInt(),
-            acct = state.acct.toUpperCasePreservingASCIIRules(),
-            ugrp = state.usergroup.toUpperCasePreservingASCIIRules(),
-            rsize = state.region.toInt()
+            state.getConnectionConfig().authToken,
+            proc = tsoSessionConfig.logonProcedure.toUpperCasePreservingASCIIRules(),
+            chset = tsoSessionConfig.charset,
+            cpage = tsoSessionConfig.codepage.toString(),
+            rows = tsoSessionConfig.rows,
+            cols = tsoSessionConfig.columns,
+            acct = tsoSessionConfig.accountNumber?.toUpperCasePreservingASCIIRules(),
+            ugrp = tsoSessionConfig.userGroup?.toUpperCasePreservingASCIIRules(),
+            rsize = tsoSessionConfig.regionSize
           )
           .cancelByIndicator(progressIndicator)
           .execute()
@@ -124,8 +124,15 @@ class TsoOperationRunner : OperationRunner<TsoOperation, TsoResponse> {
       val body = response.body()
       if (body != null) {
         if (!response.isSuccessful || body.msgData.isNotEmpty()) {
-          val errorMsg = body.msgData.toString()
-          throw CallException(response, errorMsg)
+          var errorMsg = ""
+          for (msg in body.msgData) {
+            errorMsg += msg.messageText + "\n"
+          }
+          if (errorMsg.isNotEmpty()) {
+            throw Exception(errorMsg)
+          } else {
+            throw CallException(response, response.message())
+          }
         }
       } else {
         throw CallException(response, response.message())

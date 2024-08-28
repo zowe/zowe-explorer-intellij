@@ -8,9 +8,9 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.ui.build.tso.utils
+package org.zowe.explorer.tso.utils
 
-import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
+import org.zowe.explorer.tso.config.TSOConfigWrapper
 
 /**
  * Basic class for an ordinary TSO message

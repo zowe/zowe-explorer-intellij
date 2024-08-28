@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.tso.config.TSOSessionConfig
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.Crudable
@@ -40,7 +41,8 @@ interface ConfigService : PersistentStateComponent<ConfigStateV2> {
     entities = [
       FilesWorkingSetConfig::class,
       ConnectionConfig::class,
-      JesWorkingSetConfig::class
+      JesWorkingSetConfig::class,
+      TSOSessionConfig::class
     ]
   )
   val crudable: Crudable

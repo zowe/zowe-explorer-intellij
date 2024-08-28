@@ -113,6 +113,8 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <configDeclaration implementation="org.zowe.explorer.config.connect.ConnectionConfigDeclarationFactory"/>
 
+        <configDeclaration implementation="org.zowe.explorer.tso.config.TSOSessionConfigDeclarationFactory"/>
+
         <configDeclaration implementation="org.zowe.explorer.config.ws.FilesWorkingSetConfigDeclarationFactory"/>
 
         <configDeclaration implementation="org.zowe.explorer.config.ws.JesWorkingSetConfigDeclarationFactory"/>
@@ -323,7 +325,7 @@ Thank you for considering IBA Group for your mainframe needs.
                     doNotActivateOnStart="true"/>
 
         <toolWindow id="Zowe TSO CLI" anchor="bottom"
-                    factoryClass="org.zowe.explorer.ui.build.tso.TSOWindowFactory"
+                    factoryClass="org.zowe.explorer.tso.TSOWindowFactory"
                     canCloseContents="true"
                     doNotActivateOnStart="true"/>
 
@@ -542,8 +544,8 @@ Thank you for considering IBA Group for your mainframe needs.
                 id="org.zowe.explorer.explorer.actions.SettingAction"
                 icon="AllIcons.General.Settings"/>
 
-        <action class="org.zowe.explorer.explorer.actions.TsoSessionCreateAction"
-                id="org.zowe.explorer.explorer.actions.TsoSessionCreateAction"
+        <action class="org.zowe.explorer.explorer.actions.TsoConsoleCreateAction"
+                id="org.zowe.explorer.explorer.actions.TsoConsoleCreateAction"
                 icon="AllIcons.Debugger.Console"/>
 
 
@@ -734,7 +736,7 @@ Thank you for considering IBA Group for your mainframe needs.
             <reference id="org.zowe.explorer.explorer.actions.AddZoweTeamConfigAction"/>
             <reference id="org.zowe.explorer.explorer.actions.AddWorkingSetAction"/>
             <reference id="org.zowe.explorer.explorer.actions.AddJesWorkingSetAction"/>
-            <reference id="org.zowe.explorer.explorer.actions.TsoSessionCreateAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.TsoConsoleCreateAction"/>
         </group>
 
         <group id="org.zowe.explorer.actions.FilesActionBarGroup">

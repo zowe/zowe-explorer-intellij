@@ -8,7 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.ui.build.tso
+package org.zowe.explorer.tso
 
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputType
@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.Topic
+import org.zowe.explorer.tso.config.TSOSessionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.MessageData
@@ -32,9 +33,8 @@ import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
-import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
-import org.zowe.explorer.ui.build.tso.ui.TSOConsoleView
-import org.zowe.explorer.ui.build.tso.ui.TSOSessionParams
+import org.zowe.explorer.tso.config.TSOConfigWrapper
+import org.zowe.explorer.tso.ui.TSOConsoleView
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.utils.subscribe
 import org.zowe.kotlinsdk.TsoResponse
@@ -146,7 +146,7 @@ const val SESSION_RECONNECT_ERROR_MESSAGE = "Unable to reconnect to the TSO sess
 class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
 
   private var currentTsoSession: TSOConfigWrapper? = null
-  private val tsoSessionToConfigMap = mutableMapOf<String, TSOSessionParams>()
+  private val tsoSessionToConfigMap = mutableMapOf<String, TSOSessionConfig>()
 
   /**
    * Static companion object for TSO tool window class
@@ -277,7 +277,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
         override fun create(project: Project, newSession: TSOConfigWrapper) {
           val servletKey = newSession.getTSOResponse().servletKey?.let {
             addToolWindowContent(project, toolWindow, newSession)
-            tsoSessionToConfigMap[it] = newSession.getTSOSessionParams()
+            tsoSessionToConfigMap[it] = newSession.getTSOSessionConfig()
             it
           }
           if(servletKey.isNullOrBlank()) showSessionFailureNotification(
@@ -305,7 +305,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               console.setTsoSession(it)
               fetchNewSessionResponseMessages(console, it)
               tsoSessionToConfigMap.remove(oldServletKey)
-              tsoSessionToConfigMap[newServletKey] = it.getTSOSessionParams()
+              tsoSessionToConfigMap[newServletKey] = it.getTSOSessionConfig()
             }
           } else {
             showSessionFailureNotification("Error getting TSO session info", "Could not find old TSO session ID", project)
@@ -349,7 +349,11 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               "Unsuccessful execution of the TSO request. Connection was broken.\n",
               ProcessOutputType.STDOUT
             )
-            executeTsoReconnectWithTimeout(timeout = 10, maxAttempts = 3, tsoConsole = console) {
+            executeTsoReconnectWithTimeout(
+              timeout = session.getTSOSessionConfig().timeout,
+              maxAttempts = session.getTSOSessionConfig().maxAttempts,
+              tsoConsole = console
+            ) {
               wrapInlineCall { sendTopic(SESSION_RECONNECT_TOPIC, project).reconnect(project, console, session) }
             }
           }
@@ -404,7 +408,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
             tryToStartNewSessionFromOldConfig(oldConfig)?.let {
               wrapInlineCall { sendTopic(SESSION_ADDED_TOPIC).create(project, it) }
             }
-          }.onFailure { showSessionFailureNotification("Error starting a new TSO session", it.cause?.message, project) }
+          }.onFailure { showSessionFailureNotification("Error starting a new TSO session", it.message, project) }
         }
       }
     )
@@ -424,16 +428,16 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
    */
   private fun tryToStartNewSessionFromOldConfig(oldConfig: TSOConfigWrapper) : TSOConfigWrapper? {
     var newConfig: TSOConfigWrapper? = null
-    val params = oldConfig.getTSOSessionParams()
+    val tsoSessionConfig = oldConfig.getTSOSessionConfig()
     runCatching {
       service<DataOpsManager>().performOperation(
         TsoOperation(
-          params,
+          TSOConfigWrapper(tsoSessionConfig, oldConfig.getConnectionConfig()),
           TsoOperationMode.START
         )
       )
     }.onSuccess {
-      if (it.servletKey != null) newConfig = TSOConfigWrapper(params, it)
+      if (it.servletKey != null) newConfig = TSOConfigWrapper(tsoSessionConfig, oldConfig.getConnectionConfig(), it)
     }.onFailure {
       throw it
     }

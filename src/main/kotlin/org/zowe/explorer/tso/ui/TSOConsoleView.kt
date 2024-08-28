@@ -8,13 +8,12 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.ui.build.tso.ui
+package org.zowe.explorer.tso.ui
 
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ExecutionConsole
-import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -29,10 +28,11 @@ import com.intellij.util.ui.JBEmptyBorder
 import org.zowe.explorer.common.isDebugModeEnabled
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
-import org.zowe.explorer.ui.build.TerminalCommandReceiver
-import org.zowe.explorer.ui.build.tso.*
-import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
-import org.zowe.explorer.ui.build.tso.utils.InputRecognizer
+import org.zowe.explorer.tso.SESSION_COMMAND_ENTERED
+import org.zowe.explorer.tso.SESSION_REOPEN_TOPIC
+import org.zowe.explorer.tso.TerminalCommandReceiver
+import org.zowe.explorer.tso.config.TSOConfigWrapper
+import org.zowe.explorer.tso.utils.InputRecognizer
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.sendTopic
 import java.awt.BorderLayout

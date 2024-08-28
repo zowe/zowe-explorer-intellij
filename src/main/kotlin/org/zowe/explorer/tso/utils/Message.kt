@@ -8,9 +8,7 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.ui.build.tso.utils
-
-import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
+package org.zowe.explorer.tso.utils
 
 /**
  * Basic interface for type of the message.

@@ -8,28 +8,32 @@
  * Copyright IBA Group 2020
  */
 
-package org.zowe.explorer.ui.build.tso.config
+package org.zowe.explorer.tso.config
 
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.ui.build.tso.ui.TSOSessionParams
 import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.TsoResponse
 
 /**
  * Class which is used to consolidate all the information about TSO session created
- * @param sessionParams - parameters of the TSO session created
+ * @param tsoSessionConfig - the config of the TSO session
+ * @param connectionConfig - the config of the connection where the TSO session is created
  * @param response - an instance of TSO response. It contains necessary info about the TSO session created
  */
-class TSOConfigWrapper(private var sessionParams: TSOSessionParams, private var response: TsoResponse) {
+class TSOConfigWrapper(
+  private var tsoSessionConfig: TSOSessionConfig,
+  private var connectionConfig: ConnectionConfig,
+  private var response: TsoResponse = TsoResponse()
+) {
 
   var reconnectAttempts: Int = 0
   var unresponsive: Boolean = false
 
   /**
-   * Getter for TSO session parameters
+   * Getter for TSO session config
    */
-  fun getTSOSessionParams() : TSOSessionParams {
-    return sessionParams
+  fun getTSOSessionConfig() : TSOSessionConfig {
+    return tsoSessionConfig
   }
 
   /**
@@ -58,7 +62,7 @@ class TSOConfigWrapper(private var sessionParams: TSOSessionParams, private var 
    * Getter for connection config where TSO session is created
    */
   fun getConnectionConfig() : ConnectionConfig {
-    return sessionParams.connectionConfig
+    return connectionConfig
   }
 
   /**
