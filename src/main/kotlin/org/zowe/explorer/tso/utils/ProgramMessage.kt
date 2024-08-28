@@ -12,7 +12,6 @@ package org.zowe.explorer.tso.utils
 
 import org.zowe.explorer.tso.config.TSOConfigWrapper
 import io.ktor.util.*
-import org.zowe.explorer.ui.build.tso.config.TSOConfigWrapper
 
 /**
  * Basic class for a program TSO message
