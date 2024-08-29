@@ -18,7 +18,9 @@ import com.intellij.remoterobot.search.locators.Locator
 import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
+import testutils.ProcessManager
 import workingset.testutils.injectAllocateUssFile
+import workingset.testutils.injectListAllAllocatedDatasets
 import workingset.testutils.injectListAllUssFiles
 import workingset.testutils.injectSingleSpecificMember
 
@@ -28,20 +30,20 @@ import workingset.testutils.injectSingleSpecificMember
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class ViewWsPropertyTest : WorkingSetBase() {
+class ViewWsPropertyTest : IdeaInteractionClass() {
     private val closableFixtureCollector = ClosableFixtureCollector()
     private val fixtureStack = mutableListOf<Locator>()
     private val mapListDatasets = mutableMapOf<String, String>()
     private val mapListDatasetMembers = mutableMapOf<String, String>()
     private val mapListUssFiles = mutableMapOf<String, String>()
 
-    private val projectName = "untitled"
     override val connectionName = "con1"
     override val wsName = "WS name"
     private val pdsName = "${ZOS_USERID.uppercase()}.UI.TEST"
     private val memberName = "TESTM"
     private val dsName = "${ZOS_USERID.uppercase()}.UI.TESTD"
     private val maskName = "${ZOS_USERID.uppercase()}.UI.TEST*"
+    override val datasetName = "${ZOS_USERID.uppercase()}.UI.TEST"
     private val ussMaskName = "/u/${ZOS_USERID.uppercase()}"
     private val ussFileName = "testFile"
     private val ussDirName = "testFolder"
@@ -61,6 +63,8 @@ class ViewWsPropertyTest : WorkingSetBase() {
     private val dirParentList =
         "{\"name\":\"..\", \"mode\":\"drwxr-xr-x\", \"size\":8192, \"uid\":0, \"user\":\"${ZOS_USERID.uppercase()}\", \"gid\":1, \n" +
                 "\"group\":\"OMVSGRP\", \"mtime\":\"2015-09-15T02:38:29\"},"
+    private lateinit var processManager: ProcessManager
+
 
     /**
      * Opens the project and Explorer, clears test environment, creates working set with dataset and uss masks,
@@ -68,6 +72,7 @@ class ViewWsPropertyTest : WorkingSetBase() {
      */
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+        processManager = ProcessManager()
         startMockServer()
         responseDispatcher.injectTestInfo(testInfo)
         responseDispatcher.injectTestInfoRestTopology(testInfo)
@@ -81,11 +86,8 @@ class ViewWsPropertyTest : WorkingSetBase() {
             "https://${mockServer.hostName}:${mockServer.port}"
         )
         createWsWithoutMask(wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
-        responseDispatcher.injectEndpoint(
-            "listAllAllocatedDatasets_restfiles",
-            { it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${maskName}") ?: false },
-            { MockResponse().setBody(buildResponseListJson(mapListDatasets, true)) }
-        )
+        injectListAllAllocatedDatasets(datasetName, mapListDatasets)
+
         responseDispatcher.injectEndpoint(
             "listAllDatasetMembers_restfiles",
             { it?.requestLine?.contains("GET /zosmf/restfiles/ds/$pdsName/member") ?: false },
@@ -130,10 +132,9 @@ class ViewWsPropertyTest : WorkingSetBase() {
      * Closes the project and clears test environment.
      */
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot) {
+    fun tearDownAll() {
+        processManager.close()
         mockServer.shutdown()
-        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        closeIntelligentProject(fixtureStack, remoteRobot)
     }
 
     /**
@@ -165,7 +166,7 @@ class ViewWsPropertyTest : WorkingSetBase() {
     fun testViewDatasetProperties(remoteRobot: RemoteRobot) {
         openPropertyDatasetName(dsName, fixtureStack, remoteRobot)
         val datasetPropertyValid = isDatasetPropertyValid(
-            dsName, "", "TEST.CATALOG.MASTER", "TESTVOL",
+            dsName, "<Unknown>", "TEST.CATALOG.MASTER", "TESTVOL",
             "3390", "Sequential (PS)", "VB", "255", "3200", "10",
             "TRACKS", "1", "1", "2021/11/15", "2021/11/17", "***None***", remoteRobot
         )
@@ -219,29 +220,6 @@ class ViewWsPropertyTest : WorkingSetBase() {
         Assertions.assertTrue(validPropertyStatus)
     }
 
-    private fun isMemberPropertyValid(
-        memName: String,
-        version: String,
-        createDate: String,
-        modDate: String,
-        modTime: String,
-        userId: String,
-        curRecNum: String,
-        begRecNum: String,
-        changedRecNum: String,
-        remoteRobot: RemoteRobot,
-    ): Boolean = with(remoteRobot) {
-        var isValid = false
-        ideFrameImpl(PROJECT_NAME, fixtureStack) {
-            memberPropertiesDialog(fixtureStack) {
-                isValid = areMemberPropertiesValid(
-                    memName, version, createDate, modDate, modTime, userId, curRecNum, begRecNum, changedRecNum
-                )
-            }
-        }
-        return isValid
-    }
-
     private fun isDatasetPropertyValid(
         dsName: String, dsNameType: String, catalogName: String, volumeSerials: String, deviceType: String,
         organization: String, recordFormat: String, recordLength: String, blockSize: String, sizeInTracks: String,
@@ -261,6 +239,20 @@ class ViewWsPropertyTest : WorkingSetBase() {
         return isValid
     }
 
+    private fun isMemberPropertyValid(
+        memName: String, version: String, createDate: String, modDate: String, modTime: String,
+        userId: String, curRecNum: String, begRecNum: String, changedRecNum: String, remoteRobot: RemoteRobot,
+    ): Boolean = with(remoteRobot) {
+        var isValid = false
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
+            memberPropertiesDialog(fixtureStack) {
+                isValid = areMemberPropertiesValid(
+                    memName, version, createDate, modDate, modTime, userId, curRecNum, begRecNum, changedRecNum
+                )
+            }
+        }
+        return isValid
+    }
     private fun isUssFilePropertyValid(
         fileName: String, location: String, path: String, size: String, modDate: String,
         owner: String, group: String, groupId: String, ownerPerm: String, groupPerm: String,

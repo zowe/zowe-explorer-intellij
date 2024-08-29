@@ -19,6 +19,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import testutils.ProcessManager
 import workingset.testutils.injectListAllAllocatedDatasets
 
 
@@ -27,7 +28,7 @@ import workingset.testutils.injectListAllAllocatedDatasets
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class DeleteDatasetTest : WorkingSetBase() {
+class DeleteDatasetTest : IdeaInteractionClass() {
     private var closableFixtureCollector = ClosableFixtureCollector()
     private var fixtureStack = mutableListOf<Locator>()
     private var wantToClose = mutableListOf(ALLOCATE_DATASET_DIALOG)
@@ -35,12 +36,14 @@ class DeleteDatasetTest : WorkingSetBase() {
     private val recordFormats = mutableListOf(F_RECORD_FORMAT_SHORT, FB_RECORD_FORMAT_SHORT, V_RECORD_FORMAT_SHORT, VA_RECORD_FORMAT_SHORT, VB_RECORD_FORMAT_SHORT)
     private var datasetsToBeDeleted = mutableListOf<String>()
     private var mapListDatasets = mutableMapOf<String, String>()
+    private lateinit var processManager: ProcessManager
 
     /**
      * Opens the project and Explorer, clears test environment, creates working set and mask.
      */
     @BeforeAll
     fun setUpAll(testInfo: TestInfo, remoteRobot: RemoteRobot) {
+        processManager = ProcessManager()
         startMockServer()
         setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createValidConnectionWithMock(
@@ -57,11 +60,9 @@ class DeleteDatasetTest : WorkingSetBase() {
      * Closes the project and clears test environment, deletes created datasets.
      */
     @AfterAll
-    fun tearDownAll(remoteRobot: RemoteRobot) {
-        deleteDatasets(remoteRobot)
+    fun tearDownAll() {
+        processManager.close()
         mockServer.shutdown()
-        clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-        closeIntelligentProject(fixtureStack, remoteRobot)
     }
 
     /**

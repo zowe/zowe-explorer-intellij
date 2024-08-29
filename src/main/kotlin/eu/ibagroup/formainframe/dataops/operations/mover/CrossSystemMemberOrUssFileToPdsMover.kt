@@ -18,6 +18,7 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_TEXT_CHARSE
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.addNewLine
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.OperationRunner
 import eu.ibagroup.formainframe.dataops.operations.OperationRunnerFactory
 import eu.ibagroup.formainframe.utils.*
@@ -80,7 +81,7 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
       contentSynchronizer?.synchronizeWithRemote(syncProvider, progressIndicator)
     }
 
-    var memberName = operation.newName ?: sourceFile.name.filter { it.isLetterOrDigit() }.take(8)
+    var memberName = operation.newName ?: dataOpsManager.getNameResolver(sourceFile, destFile).resolve(sourceFile, listOf(sourceFile), destFile)
     if (memberName.isEmpty()) {
       memberName = "empty"
     }
@@ -110,16 +111,35 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
       throwable = CallException(response, "Cannot upload data to '${destAttributes.name}(${memberName})'")
     } else {
       destFile.children.firstOrNull { it.name.uppercase() == memberName.uppercase() }?.let { file ->
-        runWriteActionInEdtAndWait {
-          val syncProvider = DocumentedSyncProvider(file, { _, _, _ -> false }, { th -> throwable = th })
-          val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
+        val syncProvider = DocumentedSyncProvider(file, { _, _, _ -> false }, { th -> throwable = th })
+        val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
 
-          if (contentSynchronizer == null) {
-            throwable = IllegalArgumentException("Cannot get content synchronizer for file '${file.name}'")
-          } else {
-            contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
+        if (contentSynchronizer == null) {
+          throwable = IllegalArgumentException("Cannot get content synchronizer for file '${file.name}'")
+        } else {
+          contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
+        }
+      }
+      if (operation.isMove) {
+        log.info("Trying to delete source file")
+        val sourceAttributes = operation.sourceAttributes
+        runCatching {
+          if (sourceAttributes != null) {
+            dataOpsManager.performOperation(DeleteOperation(operation.source, sourceAttributes))
           }
         }
+          .onFailure { t ->
+            log.warn("Can't delete source file $sourceFile")
+            val rollbackResponse = apiWithBytesConverter<DataAPI>(destConnectionConfig).deleteDatasetMember(
+              authorizationToken = destConnectionConfig.authToken,
+              datasetName = destAttributes.name,
+              memberName = memberName
+            ).execute()
+            if (!rollbackResponse.isSuccessful) {
+              log.warn("Cannot delete ${destAttributes.name}. Rollback failed.")
+            }
+            throwable = t
+          }
       }
     }
 

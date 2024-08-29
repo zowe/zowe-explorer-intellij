@@ -47,20 +47,22 @@ lateinit var responseDispatcher: MockResponseDispatcher
 enum class JobStatus { ACTIVE, INPUT, OUTPUT }
 
 //Change ZOS_USERID, ZOS_PWD, CONNECTION_URL with valid values before UI tests execution
-const val ZOS_USERID = "User"
-const val ZOS_PWD = "changeme"
-const val CONNECTION_URL = "changeme"
+const val ZOS_USERID = "ZOSMFAD"
+const val ZOS_PWD = "ZOSMF"
+const val CONNECTION_URL = "127.0.0.1"
+const val REMOTE_URL = "127.0.0.1"
+const val REMOTE_PORT = "8580"
+const val CONNECTION_URL_UI = "http://$REMOTE_URL:$REMOTE_PORT"
 
 const val ENTER_VALID_DS_MASK_MESSAGE = "Enter valid dataset mask"
 
 
 const val TEXT_FIELD_LENGTH_MESSAGE = "Text field must not exceed 8 characters."
 const val MEMBER_NAME_LENGTH_MESSAGE = "Member name must not exceed 8 characters."
-const val FILE_NAME_LENGTH_MESSAGE = "Filename must not exceed 255 characters."
 const val JOB_ID_LENGTH_MESSAGE = "Job ID length must be 8 characters."
 const val TEXT_FIELD_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z, 0-9, *, %."
 const val JOBID_CONTAIN_MESSAGE = "Text field should contain only A-Z, a-z, 0-9"
-const val FILE_RESRVED_SYMBOL_MESSAGE = "Filename must not contain reserved '/' symbol."
+
 const val PREFIX_OWNER_JOBID_MESSAGE = "You must provide either an owner and a prefix or a job ID."
 const val IDENTICAL_FILTERS_MESSAGE = "You cannot add several identical job filters to table"
 const val QUALIFIER_ONE_TO_EIGHT = "Qualifier must be in 1 to 8 characters"
@@ -75,36 +77,13 @@ val maskWithLength45 =
 
 
 
-val validJobsFilters = listOf(
-    Triple("*", ZOS_USERID, ""),
-    Triple("TEST1", ZOS_USERID, ""),
-    Triple("", "", "JOB01234"),
-    Triple("TEST*", ZOS_USERID, ""),
-    Triple("TEST**", ZOS_USERID, ""),
-    Triple("TEST***", ZOS_USERID, ""),
-    Triple("TEST1", "$ZOS_USERID*", ""),
-    Triple("TEST1", "$ZOS_USERID**", ""),
-    Triple("TEST1", "$ZOS_USERID***", ""),
-    Triple("TEST***", "$ZOS_USERID***", "")
-)
 
-val invalidJobsFiltersMap = mapOf(
-    Pair(Triple("123456789", ZOS_USERID, ""), 1) to TEXT_FIELD_LENGTH_MESSAGE,
-    Pair(Triple("123456789", "A23456789", ""), 1) to TEXT_FIELD_LENGTH_MESSAGE,
-    Pair(Triple("*", "A23456789", ""), 2) to TEXT_FIELD_LENGTH_MESSAGE,
-    Pair(Triple("", "", "A23456789"), 3) to JOB_ID_LENGTH_MESSAGE,
-    Pair(Triple("", "", "A2"), 3) to JOB_ID_LENGTH_MESSAGE,
-    Pair(Triple("@", ZOS_USERID, ""), 1) to TEXT_FIELD_CONTAIN_MESSAGE,
-    Pair(Triple("*", "@", ""), 2) to TEXT_FIELD_CONTAIN_MESSAGE,
-    Pair(Triple("", "", "@@@@@@@@"), 3) to JOBID_CONTAIN_MESSAGE,
-    Pair(Triple("*", ZOS_USERID, "JOB45678"), 1) to PREFIX_OWNER_JOBID_MESSAGE,
-    Pair(Triple("*", "", "JOB45678"), 1) to PREFIX_OWNER_JOBID_MESSAGE,
-    Pair(Triple("", ZOS_USERID, "JOB45678"), 2) to PREFIX_OWNER_JOBID_MESSAGE
-)
+
+
 
 val viewTree = byXpath("//div[@class='JBViewport'][.//div[@class='DnDAwareTree']]")
 
-enum class UssFileType { File, Directory }
+//enum class UssFileType { File, Directory }
 
 /**
  * Waits 60 seconds for the button to be enabled and then clicks on it.
@@ -205,7 +184,6 @@ fun ContainerFixture.deleteWSFromContextMenu(wsName: String) {
         fileExplorer.click()
         find<ComponentFixture>(viewTree).findText(wsName)
             .rightClick()
-        Thread.sleep(3000)
     }
     actionMenuItem(remoteRobot, DELETE_TEXT).click()
 }
@@ -218,11 +196,27 @@ fun ContainerFixture.deleteJWSFromContextMenu(jwsName: String) {
         jesExplorer.click()
         find<ComponentFixture>(viewTree).findText(jwsName)
             .rightClick()
-        Thread.sleep(3000)
+//        Thread.sleep(3000)
     }
     actionMenuItem(remoteRobot, DELETE_TEXT).click()
     find<ComponentFixture>(byXpath("//div[@class='MyDialog' and @title='Deletion of JES Working Set $jwsName']"))
 }
+
+/**
+ * Deletes a JES working set via context menu from explorer.
+ */
+fun ContainerFixture.deleteJobFromContextMenu(jwsName: String) {
+    explorer {
+        jesExplorer.click()
+        find<ComponentFixture>(viewTree).findText(jwsName)
+            .rightClick()
+//        Thread.sleep(3000)
+    }
+    actionMenuItem(remoteRobot, DELETE_TEXT).click()
+    find<ComponentFixture>(byXpath("//div[@class='MyDialog' and @title='Deletion Of Jobs Filter']"))
+}
+
+
 
 /**
  * Creates a JES working set via context menu from explorer.
@@ -371,9 +365,11 @@ fun createConnection(
                 } else {
                     addConnection(connectionName, "${url}1", user, password, true)
                 }
+                clickButton(PROCEED_TEXT)
                 clickButton(OK_TEXT)
-                Thread.sleep(3000)
             }
+            clickButton(PROCEED_TEXT)
+            Thread.sleep(3000)
             closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
             if (isValidConnection.not()) {
                 errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
@@ -381,7 +377,7 @@ fun createConnection(
                 }
                 closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
             }
-            clickButton("OK")
+            clickButton(OK_TEXT)
         }
         closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
     }
@@ -525,31 +521,13 @@ fun openMaskInExplorer(
         }
     }
 
-/**
- * Double-clicks on the job filter in explorer to open it and checks the message if required.
- */
-fun openJobFilterInExplorer(
-  filter: Triple<String, String, String>, expectedError: String,
-  fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot,
-) = with(remoteRobot) {
-    val textToFind = if (filter.third == "") {
-        "PREFIX=${filter.first} OWNER=${filter.second}".uppercase()
+fun convertJobFilterToString(jobFilter: Triple<String, String, String>): String {
+    val textToFind = if (jobFilter.third == "") {
+        "PREFIX=${jobFilter.first} OWNER=${jobFilter.second}".uppercase()
     } else {
-        "JobID=${filter.third}"
+        "JobID=${jobFilter.third}"
     }
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-        explorer {
-            jesExplorer.click()
-            find<ComponentFixture>(viewTree).findText(textToFind).doubleClick()
-            Thread.sleep(2000)
-            waitFor(Duration.ofSeconds(20)) { find<ComponentFixture>(viewTree).hasText("loading…").not() }
-            if (expectedError.isEmpty().not()) {
-                find<ComponentFixture>(viewTree).findText(expectedError)
-            } else {
-                find<ComponentFixture>(viewTree).findAllText().shouldNotContain("Error")
-            }
-        }
-    }
+    return textToFind
 }
 
 /**
@@ -612,11 +590,7 @@ fun checkFilterWasDeletedJWSRefreshed(
   deletedFilter: Triple<String, String, String>,
   fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot,
 ) = with(remoteRobot) {
-    val textToFind = if (deletedFilter.third == "") {
-        "PREFIX=${deletedFilter.first} OWNER=${deletedFilter.second}"
-    } else {
-        "JobID=${deletedFilter.third}"
-    }
+    val textToFind = convertJobFilterToString(deletedFilter)
     ideFrameImpl(PROJECT_NAME, fixtureStack) {
         explorer {
             jesExplorer.click()
@@ -658,7 +632,7 @@ fun openLocalFileAndCopyContent(
         actionMenu(remoteRobot, "File").click()
         runJs(
             """
-            const point = new java.awt.Point(${locationOnScreen.x}, ${locationOnScreen.y});
+            const point = new java.awt.Point(${-8}, ${25});
             robot.moveMouse(component, point);
         """
         )
@@ -692,7 +666,7 @@ fun submitJob(
             fileExplorer.click()
             find<ComponentFixture>(viewTree).findText(jobName).rightClick()
         }
-        actionMenuItem(remoteRobot, "Submit Job").click()
+        actionMenuItem(remoteRobot, SUBMIT_JOB_POINT).click()
     }
 }
 
@@ -768,21 +742,18 @@ fun allocatePDSAndCreateMask(
             Thread.sleep(500)
         }
 
-//        val textToFind = "Dataset ${datasetName.uppercase()} Has Been Created"
-//        val dialog = find<ContainerFixture>(byXpath("//div[@class='MyDialog']"))
-//        val dialogContents = dialog.findAllText().map(RemoteText::text).joinToString("")
-//        val hasText = dialogContents.contains(textToFind)
-//        if (!hasText) {
-//            throw Exception("Text is not found in dialog: $textToFind")
-//        }
+        val textToFind = "Dataset ${datasetName.uppercase()} has been created"
+        val dialog = find<ContainerFixture>(byXpath("(//div[@class='JPanel'][.//div[@class='LinkLabel']])[1]"))
+        val dialogContents = dialog.findAllText().map(RemoteText::text).joinToString("")
+        val hasText = dialogContents.contains(textToFind)
+        if (!hasText) {
+            throw Exception("Text is not found in dialog: $textToFind")
+        }
 
-//        if (maskName != null) {
-//            clickButton("No")
-//            Thread.sleep(200)
-//        } else {
-//            clickButton("Yes")
-//            Thread.sleep(200)
-//        }
+        if (maskName == null) {
+            clickButton("Add mask")
+            Thread.sleep(200)
+        }
     }
     if (openWs) {
         openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
@@ -804,6 +775,7 @@ fun createWsWithoutMask(
         addWorkingSetDialog(fixtureStack) {
             addWorkingSet(wsName, connectionName)
             clickButton(OK_TEXT)
+            clickButton(OK_TEXT)
         }
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
     }
@@ -823,6 +795,7 @@ fun createWsWithoutMaskActionButton(
         callCreateWorkingSetFromActionButton(closableFixtureCollector, fixtureStack)
         addWorkingSetDialog(fixtureStack) {
             addWorkingSet(wsName, connectionName)
+            clickButton(OK_TEXT)
             clickButton(OK_TEXT)
         }
         closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
@@ -929,29 +902,28 @@ fun checkErrorNotification(
     }
 }
 
-/**
- * Creates uss file or directory for provided mask name
- */
-fun createUssFile(
-  ussMaskName: String,
-  fileName: String,
-  fileType: UssFileType,
-  fixtureStack: MutableList<Locator>,
-  remoteRobot: RemoteRobot,
-) = with(remoteRobot) {
+fun isErrorNotificationValid(
+    errorHeader: String,
+    errorType: String,
+    errorDetail: String,
+    fixtureStack: MutableList<Locator>,
+    remoteRobot: RemoteRobot,
+): Boolean = with(remoteRobot) {
+    var errorMessage = ""
     ideFrameImpl(PROJECT_NAME, fixtureStack) {
-        explorer {
-            fileExplorer.click()
-            find<ComponentFixture>(viewTree).findText(ussMaskName).rightClick()
+        try {
+            find<ComponentFixture>(linkLoc).click()
+        } catch (e: WaitForConditionTimeoutException) {
+            e.message.shouldContain(ABSENT_ERROR_MSG)
         }
-        actionMenu(remoteRobot, "New").click()
-        actionMenuItem(remoteRobot, fileType.name).click()
-        createUssFileDialog(fixtureStack) {
-            createFile(fileName, "READ_WRITE_EXECUTE", "READ", "READ_WRITE")
-            clickButton("OK")
-            Thread.sleep(1000)
+        find<JLabelFixture>(errorDetailHeaderLoc).findText(errorHeader)
+        find<ContainerFixture>(errorDetailBodyLocAlt).findAllText().forEach {
+            errorMessage += it.text
         }
+        find<ComponentFixture>(closeDialogLoc).click()
+        find<ComponentFixture>(closeDialogLoc).click()
     }
+    return errorMessage.contains(errorType) && errorMessage.contains(errorDetail)
 }
 
 fun buildFinalListDatasetJson(mapListDatasets: MutableMap<String, String>): String {
@@ -1020,6 +992,9 @@ fun startMockServer() {
     mockServer.useHttps(serverCertificates.sslSocketFactory(), false)
     mockServer.start()
 }
+
+
+
 
 /**
  * Creates working set and a mask.
@@ -1147,6 +1122,19 @@ fun pasteContent(
             }
         }
     }
+fun closeTabByKeyboard(
+  fixtureStack: MutableList<Locator>,
+  remoteRobot: RemoteRobot,
+) =
+    with(remoteRobot) {
+        ideFrameImpl(PROJECT_NAME, fixtureStack) {
+            with(textEditor()) {
+                keyboard {
+                    hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_F4)
+                }
+            }
+        }
+    }
 
 /**
  * Creates json for submitted job.
@@ -1206,3 +1194,44 @@ fun buildListMembersJson(listMembersInDataset:  MutableList<String>): String {
     return "{\"items\":$members,\"returnedRows\": ${listMembersInDataset.size},\"JSONversion\": 1}"
 }
 
+/**
+ * build text for cansel job nessage in console.
+ */
+fun setBodyJobCancelled(jobName: String): String {
+    return "{\n" +
+            "\"jobid\":\"JOB07380\",\n" +
+            "\"jobname\":\"$jobName\",\n" +
+            "\"original-jobid\":\"JOB07380\",\n" +
+            "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
+            "\"member\":\"JES2\",\n" +
+            "\"sysname\":\"SY1\",\n" +
+            "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
+            "\"status\":\"0\",\n" +
+            "\"retcode\":\"CANCELED\"\n" +
+            "}"
+}
+
+fun setBodyJobHoldOrReleased(jobName: String): String {
+    return "{\n" +
+            "\"jobid\":\"JOB07380\",\n" +
+            "\"jobname\":\"$jobName\",\n" +
+            "\"original-jobid\":\"JOB07380\",\n" +
+            "\"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
+            "\"member\":\"JES2\",\n" +
+            "\"sysname\":\"SY1\",\n" +
+            "\"job-correlator\":\"JOB07380SY1.....CC20F378.......:\",\n" +
+            "\"status\":\"0\"\n" +
+            "}"
+}
+fun setBodyJobPurged(jobName: String): String {
+    return "{\n" +
+    "  \"jobid\":\"JOB07380\",\n" +
+    "  \"jobname\":\"${jobName}\",\n" +
+    "  \"original-jobid\":\"JOB07380\",\n" +
+    "  \"owner\":\"${ZOS_USERID.uppercase()}\",\n" +
+    "  \"member\":\"JES2\",\n" +
+    "  \"sysname\":\"SY1\",\n" +
+    "  \"job-correlator\":\"JOB07380SY1.....CC20F380.......:\",\n" +
+    "  \"status\":\"0\"\n" +
+    "}\n"
+}

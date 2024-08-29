@@ -21,10 +21,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
-import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
+import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
+import eu.ibagroup.formainframe.utils.*
 
 /** Sync action event. It will handle the manual sync button action when it is clicked */
 class SyncAction : DumbAwareAction() {
@@ -77,7 +75,7 @@ class SyncAction : DumbAwareAction() {
       project = e.project,
       cancellable = true
     ) { indicator ->
-      runWriteActionInEdtAndWait { syncProvider.saveDocument() }
+      runInEdtAndWait { syncProvider.saveDocument() }
       service<DataOpsManager>().getContentSynchronizer(vFile)?.synchronizeWithRemote(syncProvider, indicator)
     }
   }
@@ -102,6 +100,15 @@ class SyncAction : DumbAwareAction() {
     }
     getEditor(e) ?: return
 
+    val isDumbMode = ActionUtil.isDumbMode(e.project)
+    if (!isDumbMode && file.isWritable) {
+      editor.document.setReadOnly(false)
+      editor.isViewer = false
+    } else {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
     val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
     val syncProvider = DocumentedSyncProvider(file)
     val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
@@ -111,6 +118,7 @@ class SyncAction : DumbAwareAction() {
       && !service<ConfigService>().isAutoSyncEnabled
       && !(currentContent contentEquals previousContent)
       && needToUpload
+      && !isFileSyncingNow(file)
   }
 
   /**

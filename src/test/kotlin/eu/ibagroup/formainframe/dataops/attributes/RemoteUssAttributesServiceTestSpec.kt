@@ -17,6 +17,7 @@ package eu.ibagroup.formainframe.dataops.attributes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -63,6 +64,15 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
           attributesListenerMock.onCreate(any(), any())
         } just runs
         attributesListenerMock
+      }
+
+      mockkStatic(ApplicationManager::getApplication)
+      every { ApplicationManager.getApplication().assertWriteAccessAllowed() } just runs
+      every { ApplicationManager.getApplication().invokeAndWait(any()) } answers {
+        firstArg<Runnable>().run()
+      }
+      every { ApplicationManager.getApplication().runWriteAction<Any>(any()) } answers  {
+        firstArg<Computable<() -> Unit>>().compute()
       }
     }
 
@@ -182,9 +192,6 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         ConnectionConfig()
       )
 
-      mockkStatic(ApplicationManager::getApplication)
-      every { ApplicationManager.getApplication().assertWriteAccessAllowed() } just runs
-
       remoteUssAttributesService.updateAttributes(createdUSSFile, updatedAttributes)
 
       val actual = remoteUssAttributesService.getAttributes(createdUSSFile)
@@ -236,9 +243,6 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test",
         ConnectionConfig()
       )
-
-      mockkStatic(ApplicationManager::getApplication)
-      every { ApplicationManager.getApplication().assertWriteAccessAllowed() } just runs
 
       remoteUssAttributesService.updateAttributes(createdUSSFile, updatedAttributes)
 

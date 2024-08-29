@@ -4,6 +4,57 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+* Feature: GitHub issue #119: Space units are clarified with a hint ([451f3528](https://github.com/zowe/zowe-explorer-intellij/commit/451f3528))
+* Feature: GitHub issue #129: Workaround for custom migration volumes ([e125325a](https://github.com/zowe/zowe-explorer-intellij/commit/e125325a))
+* Feature: GitHub issue #131: Tests adding policy added ([9c77deef](https://github.com/zowe/zowe-explorer-intellij/commit/9c77deef))
+* Feature: GitHub issue #137: USS sorting feature introduced ([c154e027](https://github.com/zowe/zowe-explorer-intellij/commit/c154e027))
+* Feature: GitHub issue #149: Clicking "Cancel" button is not so intrusive now ([c01926de](https://github.com/zowe/zowe-explorer-intellij/commit/c01926de))
+* Feature: GitHub issue #150: Connection test request is not being sent after connection name change ([207389f3](https://github.com/zowe/zowe-explorer-intellij/commit/207389f3))
+* Feature: GitHub issue #190: Warning dialog for "Allow self-signed..." and HTTP usage ([62fc8de4](https://github.com/zowe/zowe-explorer-intellij/commit/62fc8de4))
+* Feature: GitHub issue #192: Jobs sorting feature introduced ([e5e37437](https://github.com/zowe/zowe-explorer-intellij/commit/e5e37437))
+* Feature: GitHub issue #193: Error notification is made compact and readable ([83375d25](https://github.com/zowe/zowe-explorer-intellij/commit/83375d25))
+* Feature: GitHub issue #194: TSO Session reopen button introduced ([e3e32dd3](https://github.com/zowe/zowe-explorer-intellij/commit/e3e32dd3))
+* Feature: GitHub issue #195: Last refresh date and time is added ([b4e4c37b](https://github.com/zowe/zowe-explorer-intellij/commit/b4e4c37b))
+* Feature: GitHub issue #196: Datasets sorting feature introduced ([e8f564db](https://github.com/zowe/zowe-explorer-intellij/commit/e8f564db))
+* Feature: GitHub issue #198: TSO reconnection timeout and attempts are introduced ([9bc02a0b](https://github.com/zowe/zowe-explorer-intellij/commit/9bc02a0b))
+* Feature: "Force rename" feature is removed due to the lack of clarity ([1cec9c79](https://github.com/zowe/zowe-explorer-intellij/commit/1cec9c79))
+* Feature: "Connection name" column made a bit wider ([0b8816f7](https://github.com/zowe/zowe-explorer-intellij/commit/0b8816f7))
+* Feature: "horizontalAlign" and "verticalAlign" are removed as they are deprecated ([cc34a8d3](https://github.com/zowe/zowe-explorer-intellij/commit/cc34a8d3))
+* Feature: Now the content is being synchronized before it is reloaded with new encoding ([605eeabd](https://github.com/zowe/zowe-explorer-intellij/commit/605eeabd))
+* Feature: TSO CLI gets focus when it is just opened ([9bc02a0b](https://github.com/zowe/zowe-explorer-intellij/commit/9bc02a0b))
+* Feature: Notification after a dataset is created is improved ([8d62771c](https://github.com/zowe/zowe-explorer-intellij/commit/8d62771c))
+* Feature: Some enhancements to the connection creation dialog ([5a7a56de](https://github.com/zowe/zowe-explorer-intellij/commit/5a7a56de))
+
+### Bugfixes
+* Bugfix: Slow operations in EDT ([8e9266d5](https://github.com/zowe/zowe-explorer-intellij/commit/8e9266d5))
+* Bugfix: Dialog for PDS/E instead of PDS now appears if there is an entity being placed under a PDS/E ([005aadd3](https://github.com/zowe/zowe-explorer-intellij/commit/005aadd3))
+* Bugfix: Owner is now recognized correctly ([08355c8c](https://github.com/zowe/zowe-explorer-intellij/commit/08355c8c))
+* Bugfix: USS files are no more displayed after they are deleted ([c130ea52](https://github.com/zowe/zowe-explorer-intellij/commit/c130ea52))
+* Bugfix: Files with long name placing as a z/OS dataset is fixed ([1afd501e](https://github.com/zowe/zowe-explorer-intellij/commit/1afd501e))
+* Bugfix: Fixed source file removal when cut is performed ([c1b88348](https://github.com/zowe/zowe-explorer-intellij/commit/c1b88348))
+
+## [1.2.2-231] (2024-08-21)
+
+### Features
+
+* Feature: Removed "openApiUtils" functions that were duplicating the ones already implemented in IntelliJ IDEA platform ([fbf7db62](https://github.com/zowe/zowe-explorer-intellij/commit/fbf7db62))
+
+### Bugfixes
+
+* Bugfix: Fixed "/" and "/u" is not displayed correctly in USS Explorer ([547b9678](https://github.com/zowe/zowe-explorer-intellij/commit/547b9678))
+* Bugfix: "UTF-16" encoding is now either LE or BE available only ([f4b7e9de](https://github.com/zowe/zowe-explorer-intellij/commit/f4b7e9de))
+* Bugfix: The possibility to delete unrelated selected entities is disabled ([f7f9f019](https://github.com/zowe/zowe-explorer-intellij/commit/f7f9f019))
+* Bugfix: Fixed cross-system copy-paste for Sequential to PDS ([fb1943e3](https://github.com/zowe/zowe-explorer-intellij/commit/fb1943e3))
+* Bugfix: Fixed file permissions change is not reset after failure ([0ce02146](https://github.com/zowe/zowe-explorer-intellij/commit/0ce02146))
+* Bugfix: Fixed error notification displayed on uploading USS file ([b84c8beb](https://github.com/zowe/zowe-explorer-intellij/commit/b84c8beb))
+* Bugfix: Fixed colouring of entity when it was cut but the operation is changed to download ([3cdb982f](https://github.com/zowe/zowe-explorer-intellij/commit/3cdb982f))
+* Bugfix: Fixed folder copying when both parent and child directories are selected ([d8a44d98](https://github.com/zowe/zowe-explorer-intellij/commit/d8a44d98))
+* Bugfix: Fixed "Decide for Each -> Skip" option on Cut/Copy ([70089fcc](https://github.com/zowe/zowe-explorer-intellij/commit/70089fcc))
+* Bugfix: Fixed rename of datasets was saving names in lowercase in local cache ([18ebcee2](https://github.com/zowe/zowe-explorer-intellij/commit/18ebcee2))
+* Bugfix: Fixed downloading of USS files when there are conflicts on a local machine ([ccb48dda](https://github.com/zowe/zowe-explorer-intellij/commit/ccb48dda))
+* Bugfix: Fixed copying folder with contents not displaying the contents right after it is copied ([82c7b7a6](https://github.com/zowe/zowe-explorer-intellij/commit/82c7b7a6))
+
 ## [1.2.1-231] (2024-06-12)
 
 ### Features
@@ -469,11 +520,14 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[1.2.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.2.1-231...1.2.2-231
+[1.2.1-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.2.0-231...1.2.1-231
+[1.2.0-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.2-231...1.2.0-231
 [1.1.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.1-231...1.1.2-231
 [1.1.1-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.1.0-231...1.1.1-231
 [1.1.0-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.2-231...1.1.0-231
-[1.0.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.1-231...1.0.2-231
-[1.0.1-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.0...1.0.1-231
+[1.0.2-231]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.1...1.0.2-231
+[1.0.1]: https://github.com/for-mainframe/For-Mainframe/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/for-mainframe/For-Mainframe/compare/0.7.1...1.0.0
 [0.7.1]: https://github.com/for-mainframe/For-Mainframe/compare/0.7.0...0.7.1
 [0.7.0]: https://github.com/for-mainframe/For-Mainframe/commits/0.7.0

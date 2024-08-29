@@ -145,7 +145,6 @@ class ConnectionDialog(
               runCatching {
                 service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
               }.onSuccess {
-                state.owner = whoAmI(newTestedConnConfig) ?: ""
                 val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
                 state.zVersion = when (systemInfo.zosVersion) {
                   "04.25.00" -> ZVersion.ZOS_2_2
@@ -154,6 +153,7 @@ class ConnectionDialog(
                   "04.28.00" -> ZVersion.ZOS_2_5
                   else -> ZVersion.ZOS_2_1
                 }
+                newTestedConnConfig.zVersion = state.zVersion
               }.onFailure {
                 throw it
               }
@@ -195,7 +195,9 @@ class ConnectionDialog(
                 }
               }
             connectionDialog = ConnectionDialog(crudable, state, project)
-            addAnyway
+            // In case of any error during connection, we should clean the owner field, because actually it cannot be retrieved at this moment
+            // Clear owner field only in case the user pressed "add anyway", leave old owner as it is otherwise
+            addAnyway.also { runIfTrue(it) { state.owner = ""} }
           } else {
             runTask(title = "Retrieving user information", project = project) {
               // Could be empty if TSO request fails

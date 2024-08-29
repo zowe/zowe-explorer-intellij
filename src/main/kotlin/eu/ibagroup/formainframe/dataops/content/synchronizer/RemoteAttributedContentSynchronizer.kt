@@ -17,9 +17,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.content.service.SyncProcessService
+import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
 import eu.ibagroup.formainframe.editor.FileContentChangeListener
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFBulkFileListener
@@ -57,6 +60,14 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
         override fun after(events: List<VFileEvent>) {
           events.filterIsInstance<VFileDeleteEvent>().forEach { event ->
             fetchedAtLeastOnce.removeIf { it.file == event.file }
+          }
+
+          events.filterIsInstance<VFilePropertyChangeEvent>().forEach { event ->
+            if (event.propertyName == VirtualFile.PROP_WRITABLE && !event.file.isDirectory) {
+              event.newValue.castOrNull<Boolean>()?.let {
+                DocumentedSyncProvider.findDocumentForFile(event.file)?.setReadOnly(!it)
+              }
+            }
           }
         }
       }
@@ -133,7 +144,15 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   ) {
     runCatching {
       log.info("Starting synchronization for file ${syncProvider.file.name}.")
+      if (isFileSyncingNow(syncProvider.file)) {
+        log.info("Synchronization is interrupted because it is already running for file ${syncProvider.file.name}.")
+        return
+      }
       progressIndicator?.text = "Synchronizing file ${syncProvider.file.name} with mainframe"
+      progressIndicator?.let {
+        SyncProcessService.instance.startFileSync(syncProvider.file, it)
+      }
+
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
       val attributes = attributesService.getAttributes(syncProvider.file) ?: throw IOException("No Attributes found")
       val ussAttributes = attributes.castOrNull<RemoteUssAttributes>()
@@ -178,6 +197,9 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
       }
       .onFailure {
         syncProvider.onThrowable(it)
+      }
+      .also {
+        SyncProcessService.instance.stopFileSync(syncProvider.file)
       }
   }
 

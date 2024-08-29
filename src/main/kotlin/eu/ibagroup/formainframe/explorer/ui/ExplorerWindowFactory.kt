@@ -22,7 +22,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListener
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.explorer.UIComponentManager
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.runInEdtAndWait
 import eu.ibagroup.formainframe.utils.subscribe
 
 /** Explorer window. This is the main class to represent the plugin */
@@ -34,30 +34,31 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val contentFactory = ContentFactory.getInstance()
-    UIComponentManager.INSTANCE.getExplorerContentProviders().forEach {
-      val content = contentFactory
-        .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)
-      toolWindow.contentManager.addContent(content)
-    }
+    service<UIComponentManager>().getExplorerContentProviders()
+      .forEach {
+        val content = contentFactory
+          .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)
+        toolWindow.contentManager.addContent(content)
+      }
   }
 
   override fun init(toolWindow: ToolWindow) {
     subscribe(
       project = toolWindow.project,
       topic = AutoSyncFileListener.AUTO_SYNC_FILE,
-      handler = object: AutoSyncFileListener {
-      override fun sync(file: VirtualFile) {
-        val dataOpsManager = service<DataOpsManager>()
-        if (dataOpsManager.isSyncSupported(file)) {
-          val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
-          runBackgroundableTask("Synchronizing file ${file.name} with mainframe") { indicator ->
-            val syncProvider = DocumentedSyncProvider(file)
-            runWriteActionInEdtAndWait { syncProvider.saveDocument() }
-            contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
+      handler = object : AutoSyncFileListener {
+        override fun sync(file: VirtualFile) {
+          val dataOpsManager = service<DataOpsManager>()
+          if (dataOpsManager.isSyncSupported(file)) {
+            val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
+            runBackgroundableTask("Synchronizing file ${file.name} with mainframe") { indicator ->
+              val syncProvider = DocumentedSyncProvider(file)
+              runInEdtAndWait { syncProvider.saveDocument() }
+              contentSynchronizer.synchronizeWithRemote(syncProvider, indicator)
+            }
           }
         }
-      }
-    })
+      })
   }
 
   override fun shouldBeAvailable(project: Project): Boolean {

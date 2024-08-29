@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.MigrateActionType
@@ -22,6 +23,7 @@ import eu.ibagroup.formainframe.analytics.events.MigrateEvent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperation
 import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationParams
 import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperation
@@ -30,6 +32,7 @@ import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
 import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -61,6 +64,15 @@ private fun makeUniqueCacheClean(nodes: List<ExplorerTreeNode<*, *>>) {
 }
 
 /**
+ * Filter out nodes data that cannot be migrated due to synchronization
+ */
+private fun filterNodesData(project: Project?, nodesData: List<NodeData<*>>): List<NodeData<*>> {
+  return nodesData.filter {
+    it.file != null && !checkFileForSync(project, it.file, checkDependentFiles = true)
+  }
+}
+
+/**
  * Action class for recall a migrated dataset
  * @see MigrateAction
  */
@@ -77,8 +89,9 @@ class RecallAction : DumbAwareAction() {
     val view = e.getExplorerView<FileExplorerView>()
     val project = e.project
     if (view != null) {
-      val triples = view.mySelectedNodesData.mapNotNull { getRequestDataForNode(it.node) }
-      val operations: List<RecallOperation> = triples.map {
+      val filteredNodesData = filterNodesData(e.project, view.mySelectedNodesData)
+      val pairs = filteredNodesData.mapNotNull { getRequestDataForNode(it.node) }
+      val operations: List<RecallOperation> = pairs.map {
         RecallOperation(
           request = RecallOperationParams(it.first),
           connectionConfig = it.second
@@ -98,7 +111,7 @@ class RecallAction : DumbAwareAction() {
           view.explorer.reportThrowable(it, project)
         }
       }
-      makeUniqueCacheClean(view.mySelectedNodesData.map { it.node })
+      makeUniqueCacheClean(filteredNodesData.map { it.node })
     }
 
   }
@@ -138,8 +151,9 @@ class MigrateAction : DumbAwareAction() {
     val view = e.getExplorerView<FileExplorerView>()
     val project = e.project
     if (view != null) {
-      val triples = view.mySelectedNodesData.mapNotNull { getRequestDataForNode(it.node) }
-      val operations: List<MigrateOperation> = triples.map {
+      val filteredNodesData = filterNodesData(e.project, view.mySelectedNodesData)
+      val pairs = filteredNodesData.mapNotNull { getRequestDataForNode(it.node) }
+      val operations: List<MigrateOperation> = pairs.map {
         MigrateOperation(
           request = MigrateOperationParams(it.first),
           connectionConfig = it.second
@@ -159,7 +173,7 @@ class MigrateAction : DumbAwareAction() {
           view.explorer.reportThrowable(it, project)
         }
       }
-      makeUniqueCacheClean(view.mySelectedNodesData.map { it.node })
+      makeUniqueCacheClean(filteredNodesData.map { it.node })
     }
   }
 

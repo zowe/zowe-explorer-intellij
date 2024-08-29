@@ -70,6 +70,8 @@ class WindowsLikeMessageDialogTestSpec : WithApplicationShouldSpec({
       }
     }
 
+    val classUnderTest = spyk(customDialog, "testDialog")
+
     should("create right side empty actions of the dialog") {
       val classUnderTest = spyk(customDialog, "testDialog")
       val methodToTest = classUnderTest::class.java.declaredMethods.single { it.name == "createActions" }

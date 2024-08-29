@@ -11,7 +11,7 @@
 package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.DialogPanel
@@ -206,7 +206,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
         panel = it
         panel?.updateUI()
         if (openAddDialog) {
-          invokeLater {
+          runInEdt {
             addConnection()
             openAddDialog = false
           }

@@ -16,14 +16,16 @@ import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.search.locators.byXpath
-import io.kotest.matchers.string.shouldContain
-import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.ExtendWith
-import workingset.PROJECT_NAME
+import testutils.ProcessManager
+import workingset.*
+import workingset.auxiliary.components.dialogs.AddConnectionDialogUtil
+import workingset.auxiliary.components.dialogs.EditConnectionDialogUtil
+import workingset.auxiliary.components.dialogs.SettingsDialogUtil
+import workingset.auxiliary.components.elements.ButtonElement
+import workingset.testutils.*
 import java.time.Duration
 
 /**
@@ -32,36 +34,72 @@ import java.time.Duration
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(RemoteRobotExtension::class)
-class ConnectionManager {
+class ConnectionManager : IdeaInteractionClass()  {
   private var closableFixtureCollector = ClosableFixtureCollector()
   private var fixtureStack = mutableListOf<Locator>()
   private val wantToClose = listOf(
     "Settings Dialog", "Add Connection Dialog", "Error Creating Connection Dialog",
     "Edit Connection Dialog", "Add JES Working Set Dialog"
   )
-  private val projectName = "untitled"
+  private val aHost = "a.com"
+  private val aPassword = "a"
+  private val cPassword = "a"
+  private val aLogin = "a"
+  private val cLogin = "a"
+  private val spaceWithLogin = " testuser "
+  private val aConnection = "a"
+  private val bConnection = "b"
+  private val dConnection = "d"
+  private val cConnection = "c"
+  private val invalidCredConnection = "invalidCredConnection"
+  private val invalidUrl = "zzz"
+  private val validConnectionName2 = "zzz"
+  private val invalidConnectionName2 = "zzz2"
 
+  private val validConnectionName = "valid connection"
+  private val independentConnectionName = "independent connection"
+  private val wsDependentConnectionName = "ws dependent connection"
+  private val jesDependentConnectionName = "jes dependent connection"
+  private val wsAndJesDependentConnectionName = "ws and jes dependent connection"
+
+  private lateinit var settingsDialog: SettingsDialogUtil
+  private lateinit var addConnectionDialog: AddConnectionDialogUtil
+  private lateinit var editConnectionDialog: EditConnectionDialogUtil
+
+  private lateinit var okButtonSub: ButtonElement
+  private lateinit var proceedButton: ButtonElement
+  private lateinit var cancelButtonSub: ButtonElement
+  private lateinit var processManager: ProcessManager
 
   /**
    * Creates and starts mock server, opens the project and Explorer, clears test environment.
    */
   @BeforeAll
   fun setUpAll(remoteRobot: RemoteRobot) {
+    processManager = ProcessManager()
     startMockServer()
     setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
+    settingsDialog = SettingsDialogUtil(fixtureStack, remoteRobot)
+    addConnectionDialog = AddConnectionDialogUtil(fixtureStack, remoteRobot)
+    editConnectionDialog = EditConnectionDialogUtil(fixtureStack, remoteRobot)
+
+    okButton = ButtonElement(OK_TEXT, fixtureStack, remoteRobot)
+    okButtonSub = ButtonElement(subOkButtonLoc, fixtureStack, remoteRobot)
+    cancelButton = ButtonElement(CANCEL_TEXT, fixtureStack, remoteRobot)
+    cancelButtonSub = ButtonElement(subCancelButtonLoc, fixtureStack, remoteRobot)
+    yesButton = ButtonElement(YES_TEXT, fixtureStack, remoteRobot)
+    noButton = ButtonElement(NO_TEXT, fixtureStack, remoteRobot)
+    proceedButton = ButtonElement(PROCEED_TEXT, fixtureStack, remoteRobot)
+
   }
 
   /**
    * Shutdowns mock server and closes the project and clears test environment.
    */
   @AfterAll
-  fun tearDownAll(remoteRobot: RemoteRobot) = with(remoteRobot) {
+  fun tearDownAll() {
+    processManager.close()
     mockServer.shutdown()
-
-    clearEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      close()
-    }
   }
 
   /**
@@ -77,99 +115,61 @@ class ConnectionManager {
    * Test that should pass and leave a bunch of opened dialogs.
    */
   @Test
-  @Order(1)
   fun testAddWrongConnection(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    val host = "a.com"
 
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          conTab.click()
-          add(closableFixtureCollector, fixtureStack)
-        }
-        addConnectionDialog(fixtureStack) {
-          addConnection("a", "https://${host}", "a", "a", true)
-          clickButton("OK")
-        }
-        errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
-          findText("No such host is known (${host})")
-          assertTrue(true)
-        }
-      }
-    }
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.callAddConnection(fixtureStack,remoteRobot)
+    addConnectionDialog.addConnection(aConnection, "https://${aHost}", aLogin, aPassword, true)
+    addConnectionDialog.okButton.click()
+
+    closableFixtureCollector.add(EditConnectionDialog.xPath(), fixtureStack)
+    closableFixtureCollector.add(ErrorCreatingConnectionDialog.xPath(), fixtureStack)
+
+    assertTrue(find<HeavyWeightWindowFixture>(errorConnectionNotification, Duration.ofSeconds(5)).hasText(hostUnknowableError.format(aHost)))
   }
 
   /**
    * Tests that checks whether it is possible on UI level to add two connections with the same name.
    */
+  
   @Test
-  @Order(2)
-  fun testAddTwoConnectionsWithTheSameName(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    val connectionName = "a"
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          conTab.click()
-          add(closableFixtureCollector, fixtureStack)
-        }
-        addConnectionDialog(fixtureStack) {
-          addConnection(connectionName, "https://a.com", "a", "a", true)
-          clickButton("OK")
-        }
-        closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
-        errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
-          clickButton("Yes")
-        }
-        closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
-        configurableEditor {
-          add(closableFixtureCollector, fixtureStack)
-        }
-        addConnectionDialog(fixtureStack) {
-          addConnection(connectionName, "https://b.com", "b", "b", true)
-          clickButton("OK")
-          findText(connectionName).moveMouse()
-          find<HeavyWeightWindowFixture>(
-            byXpath("//div[@class='HeavyWeightWindow']"),
-            Duration.ofSeconds(30)
-          ).findText("You must provide unique connection name. Connection $connectionName already exists.")
-          assertFalse(button("OK").isEnabled())
-          clickButton("Cancel")
-        }
-        closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
-        clickButton("Cancel")
-      }
-      closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-    }
+  fun testAddTwoConnectionsWithTheSameName(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
+    createConnection(
+      fixtureStack, closableFixtureCollector, dConnection, true, remoteRobot,
+      "https://${mockServer.hostName}:${mockServer.port}"
+    )
+    callSettingsByAction(fixtureStack,remoteRobot)
+
+    settingsDialog.callAddConnection(fixtureStack,remoteRobot)
+    addConnectionDialog.addConnection(dConnection, "https://${mockServer.hostName}:${mockServer.port}", aLogin, aPassword, true)
+    addConnectionDialog.okButton.click()
+    closableFixtureCollector.closeOnceIfExists(EditConnectionDialog.name)
+
+    find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findText(duplicateConnectionNameError.format(dConnection))
+
+    addConnectionDialog.cancelButton.click()
+    closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
+    settingsDialog.cancelButton.click()
+
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+
+
   }
 
   /**
    * Tests to create connection with valid parameters.
    */
+  
   @Test
-  @Order(3)
-  fun testAddValidConnection(remoteRobot: RemoteRobot) {
-    responseDispatcher.injectEndpoint(
-      "testAddValidConnection_info",
-      { it?.requestLine?.contains("zosmf/info") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
-    responseDispatcher.injectEndpoint(
-      "testAddValidConnection_resttopology",
-      { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
+  fun testAddValidConnection(remoteRobot: RemoteRobot, testInfo: TestInfo) {
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
     createConnection(
-      fixtureStack,
-      closableFixtureCollector,
-      "valid connection1",
-      true,
-      remoteRobot,
+      fixtureStack, closableFixtureCollector, validConnectionName, true, remoteRobot,
       "https://${mockServer.hostName}:${mockServer.port}"
     )
   }
@@ -177,152 +177,84 @@ class ConnectionManager {
   /**
    * Tests to create connection with spaces before and after connection url.
    */
+
   @Test
-  @Order(4)
-  fun testAddConnectionWithSpaces(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    responseDispatcher.injectEndpoint(
-      "testAddConnectionWithSpaces_info",
-      { it?.requestLine?.contains("zosmf/info") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
-    responseDispatcher.injectEndpoint(
-      "testAddConnectionWithSpaces_resttopology",
-      { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          conTab.click()
-          add(closableFixtureCollector, fixtureStack)
-        }
-        addConnectionDialog(fixtureStack) {
-          addConnection(
-            "valid connection2",
-            "   https://${mockServer.hostName}:${mockServer.port}   ",
-            " testuser ",
-            ZOS_PWD,
-            true
-          )
-          clickButton("OK")
-          Thread.sleep(1000)
-        }
-        closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
-        clickButton("OK")
-      }
-      closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-    }
+  fun testAddConnectionWithSpaces(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.callAddConnection(fixtureStack,remoteRobot)
+    addConnectionDialog.addConnection(
+      bConnection, "   https://${mockServer.hostName}:${mockServer.port}    ",
+      spaceWithLogin, ZOS_PWD, true)
+    addConnectionDialog.okButton.click()
+    proceedButton.click()
+    closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
+    settingsDialog.okButton.click()
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
   }
 
   /**
    * Tests to create connection with invalid credentials, checks that correct message returned.
    */
+  @Disabled("https://jira.ibagroup.eu/browse/IJMP-1821")
   @Test
-  @Order(5)
-  fun testAddConnectionWithInvalidCredentials(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    responseDispatcher.injectEndpoint(
-      "testAddConnectionWithInvalidCredentials_info",
-      { it?.requestLine?.contains("zosmf/info") ?: false },
-      { MockResponse().setResponseCode(401) }
-    )
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          conTab.click()
-          add(closableFixtureCollector, fixtureStack)
-        }
-        addConnectionDialog(fixtureStack) {
-          addConnection(
-            "invalid connection1",
-            "https://${mockServer.hostName}:${mockServer.port}",
-            "a",
-            "a",
-            true
-          )
-          clickButton("OK")
-        }
-        closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
-        errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
-          findText("Credentials are not valid")
-          clickButton("Yes")
-        }
-        closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
-        clickButton("OK")
-      }
-      closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-    }
+  fun testAddConnectionWithInvalidCredentials(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
+    injectInvalidCreeds(testInfo)
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.callAddConnection(fixtureStack,remoteRobot)
+    addConnectionDialog.addConnection(invalidCredConnection, "https://${mockServer.hostName}:${mockServer.port}", cLogin, cPassword, true)
+    addConnectionDialog.okButton.click()
+    find<HeavyWeightWindowFixture>(errorConnectionNotification,Duration.ofSeconds(30))
+    find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findText(INVALID_CREEDS_ERROR)
+
+    addConnectionDialog.cancelButton.click()
+    closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
+    settingsDialog.cancelButton.click()
+
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
   }
 
   /**
    * Tests to create connection with unchecked checkBox for SSL certification, checks that correct message returned.
    */
   @Test
-  @Order(6)
-  fun testAddConnectionWithUncheckedSSL(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    responseDispatcher.injectEndpoint(
-      "testAddConnectionWithUncheckedSSL_info",
-      { it?.requestLine?.contains("zosmf/info") ?: false },
-      { MockResponse().setBody("Unable to find valid certification path to requested target") }
-    )
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          conTab.click()
-          add(closableFixtureCollector, fixtureStack)
-        }
-        addConnectionDialog(fixtureStack) {
-          addConnection(
-            "invalid connection2",
-            "https://${mockServer.hostName}:${mockServer.port}",
-            ZOS_USERID,
-            ZOS_PWD,
-            false
-          )
-          clickButton("OK")
-        }
-        closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
-        errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
-          (findAllText()[2].text + findAllText()[3].text).shouldContain("Unable to find valid certification path to requested target")
-          clickButton("Yes")
-        }
-        closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
-        clickButton("OK")
-      }
-      closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-    }
+  fun testAddConnectionWithUncheckedSSL(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
+    injectInvalidCertificate(testInfo)
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.callAddConnection(fixtureStack,remoteRobot)
+    addConnectionDialog.addConnection(invalidCredConnection, "https://${mockServer.hostName}:${mockServer.port}", cLogin, cPassword, false)
+    addConnectionDialog.okButton.click()
+
+
+    find<HeavyWeightWindowFixture>(errorConnectionNotification,Duration.ofSeconds(30))
+    find<HeavyWeightWindowFixture>(errorContainsWordYou,Duration.ofSeconds(30)).findText(CERTIFICATE_ERROR)
+    noButton.click()
+    closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
+
+
+    addConnectionDialog.cancelButton.click()
+    closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
+    settingsDialog.cancelButton.click()
+
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
   }
 
   /**
    * Tests to create connection with very long name.
    */
   @Test
-  @Order(7)
-  fun testAddConnectionWithVeryLongName(remoteRobot: RemoteRobot) {
-    responseDispatcher.injectEndpoint(
-      "testAddConnectionWithVeryLongName_info",
-      { it?.requestLine?.contains("zosmf/info") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
-    responseDispatcher.injectEndpoint(
-      "testAddConnectionWithVeryLongName_resttopology",
-      { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
+  fun testAddConnectionWithVeryLongName(remoteRobot: RemoteRobot, testInfo: TestInfo) {
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
     createConnection(
-      fixtureStack,
-      closableFixtureCollector,
-      "A".repeat(200),
-      true,
-      remoteRobot,
+      fixtureStack, closableFixtureCollector, B_200, true, remoteRobot,
       "https://${mockServer.hostName}:${mockServer.port}"
     )
   }
@@ -331,123 +263,82 @@ class ConnectionManager {
    * Tests to create connection with invalid connection url, checks that correct message returned.
    */
   @Test
-  @Order(8)
-  fun testAddInvalidConnectionWithUrlByMask(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    responseDispatcher.injectEndpoint(
-      "testAddInvalidConnectionWithUrlByMask_info",
-      { it?.requestLine?.contains("zosmf/info") ?: false },
-      { MockResponse().setBody("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443") }
-    )
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          conTab.click()
-          add(closableFixtureCollector, fixtureStack)
-        }
-        addConnectionDialog(fixtureStack) {
-          addConnection("invalid connection3", "zzz", "a", "a", true)
-          clickButton("OK")
-          Thread.sleep(1000)
-          val messages = find<HeavyWeightWindowFixture>(
-            byXpath("//div[@class='HeavyWeightWindow']"),
-            Duration.ofSeconds(30)
-          ).findAllText()
-          (messages[0].text + messages[1].text).shouldContain("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443")
-          assertFalse(button("OK").isEnabled())
-          clickButton("Cancel")
-        }
-        closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
-        clickButton("Cancel")
-      }
-      closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-    }
+  fun testAddInvalidConnectionWithUrlByMask(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
+    injectInvalidInfo(testInfo, INVALID_URL_ERROR)
+
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.callAddConnection(fixtureStack,remoteRobot)
+
+    addConnectionDialog.addConnection(invalidCredConnection, invalidUrl, cLogin, cPassword, true)
+    addConnectionDialog.okButton.click()
+
+    val combinedText  = find<HeavyWeightWindowFixture>(messageLoc,Duration.ofSeconds(30)).findAllText().map { it.text }
+      .reduce { first, lasts -> "$first$lasts" }//.findText(CERTIFICATE_ERROR)
+    assertTrue(combinedText == INVALID_URL_ERROR)
+
+    addConnectionDialog.cancelButton.click()
+    closableFixtureCollector.closeOnceIfExists(AddConnectionDialog.name)
+
+    settingsDialog.cancelButton.click()
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
   }
 
-  //TODO: tests should be independent
   /**
    * Tests to edit valid connection to invalid, checks that correct message returned.
    */
   @Test
-  @Order(9)
-  fun testEditConnectionFromValidToInvalid(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    val testPort = "104431"
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          conTab.click()
-          editConnection("valid connection1", closableFixtureCollector, fixtureStack)
-        }
-        editConnectionDialog(fixtureStack) {
-          addConnection(
-            "invalid connection3",
-            "https://${mockServer.hostName}:$testPort",
-            ZOS_USERID,
-            ZOS_PWD,
-            true
-          )
-          Thread.sleep(1000)
-          clickButton("OK")
-        }
-        closableFixtureCollector.closeOnceIfExists(EditConnectionDialog.name)
-        errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
-          findText("Invalid URL port: \"$testPort\"")
-          clickButton("Yes")
-        }
-        closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
-        clickButton("OK")
-      }
-      closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-    }
+  fun testEditConnectionFromValidToInvalid(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
+
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
+    createConnection(
+      fixtureStack, closableFixtureCollector, validConnectionName2, false, remoteRobot,
+      "https://${mockServer.hostName}:${mockServer.port}"
+    )
+
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.selectWs(validConnectionName2, fixtureStack, remoteRobot)
+    settingsDialog.editWsButton.click()
+    editConnectionDialog.setConnectionUrl("https://${mockServer.hostName}:$PORT_104431",fixtureStack,remoteRobot)
+    editConnectionDialog.okButton.click()
+    closableFixtureCollector.add(EditConnectionDialog.xPath(), fixtureStack)
+
+    find<HeavyWeightWindowFixture>(errorConnectionNotification,Duration.ofSeconds(30))
+    assertTrue(
+      find<HeavyWeightWindowFixture>(
+        errorContainsWordYou,Duration.ofSeconds(30)).findAllText()[0].text == invalidPort104431)
+    closableFixtureCollector.add(ErrorCreatingConnectionDialog.xPath(), fixtureStack)
+    closableFixtureCollector.closeWantedClosables(wantToClose, remoteRobot)
+
+
   }
 
-  //TODO: tests should be independent
   /**
    * Tests to edit invalid connection to valid.
    */
   @Test
-  @Order(10)
-  fun testEditConnectionFromInvalidToValid(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    responseDispatcher.injectEndpoint(
-      "testEditConnectionFromInvalidToValid_info",
-      { it?.requestLine?.contains("zosmf/info") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
+  fun testEditConnectionFromInvalidToValid(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
+    createConnection(
+      fixtureStack, closableFixtureCollector, invalidConnectionName2, false, remoteRobot,
+      "https://${mockServer.hostName}:${PORT_104431}"
     )
-    responseDispatcher.injectEndpoint(
-      "testEditConnectionFromInvalidToValid_resttopology",
-      { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          conTab.click()
-          editConnection("invalid connection3", closableFixtureCollector, fixtureStack)
-        }
-        editConnectionDialog(fixtureStack) {
-          addConnection(
-            "valid connection1",
-            "https://${mockServer.hostName}:${mockServer.port}",
-            ZOS_USERID,
-            ZOS_PWD,
-            true
-          )
-          clickButton("OK")
-          Thread.sleep(1000)
-        }
-        closableFixtureCollector.closeOnceIfExists(EditConnectionDialog.name)
-        clickButton("OK")
-      }
-      closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-    }
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.selectWs(invalidConnectionName2, fixtureStack, remoteRobot)
+    settingsDialog.editWsButton.click()
+    editConnectionDialog.setConnectionUrl("https://${mockServer.hostName}:${mockServer.port}",fixtureStack,remoteRobot)
+    editConnectionDialog.okButton.click()
+
+    settingsDialog.okButton.click()
+
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
   }
 
   /**
@@ -455,228 +346,145 @@ class ConnectionManager {
    * check that correct message returned.
    */
   @Test
-  @Order(11)
-  fun testEditConnectionUncheckSSLandReturnBack(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    var isFirstRequest = true
-    responseDispatcher.injectEndpoint(
-      "testEditConnectionUncheckSSLandReturnBack_info_first",
-      { it?.requestLine?.contains("zosmf/info") ?: false && isFirstRequest },
-      { MockResponse().setBody("Unable to find valid certification path to requested target") }
-    )
-    responseDispatcher.injectEndpoint(
-      "testEditConnectionUncheckSSLandReturnBack_info_second",
-      { it?.requestLine?.contains("zosmf/info") ?: false && !isFirstRequest },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
-    responseDispatcher.injectEndpoint(
-      "testEditConnectionUncheckSSLandReturnBack_resttopology",
-      { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          conTab.click()
-          editConnection("valid connection1", closableFixtureCollector, fixtureStack)
-        }
-        editConnectionDialog(fixtureStack) {
-          uncheckSSLBox()
-          clickButton("OK")
-        }
-        Thread.sleep(1000)
-        closableFixtureCollector.closeOnceIfExists(EditConnectionDialog.name)
-        errorCreatingConnectionDialog(closableFixtureCollector, fixtureStack) {
-          (findAllText()[2].text + findAllText()[3].text).shouldContain("Unable to find valid certification path to requested target")
-          clickButton("No")
-        }
-        isFirstRequest = false
-        Thread.sleep(1000)
-        closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
-        editConnectionDialog(fixtureStack) {
-          addConnection(
-            "valid connection1",
-            "https://${mockServer.hostName}:${mockServer.port}",
-            ZOS_USERID,
-            ZOS_PWD,
-            true
-          )
-          clickButton("OK")
-        }
-        Thread.sleep(1000)
-        closableFixtureCollector.closeOnceIfExists(EditConnectionDialog.name)
-        clickButton("OK")
-      }
-      closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-    }
+  fun testEditConnectionUncheckSSLandReturnBack(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
+    val saveInjectionName = injectInvalidInfo(testInfo, UNABLE_FIND_VALID_CERTIFICATE)
+    injectTestInfoRestTopology(testInfo)
+
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.callAddConnection(fixtureStack,remoteRobot)
+    addConnectionDialog.addConnection(cConnection, "https://${mockServer.hostName}:${mockServer.port}", cLogin, cPassword, false)
+    addConnectionDialog.okButton.click()
+
+
+    val combinedText  = find<HeavyWeightWindowFixture>(errorContainsWordYou,Duration.ofSeconds(30)).findAllText()
+    val msgInUi = combinedText[0].text+combinedText[1].text
+    assertTrue(msgInUi == UNABLE_FIND_VALID_CERTIFICATE)
+    noButton.click()
+    closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
+
+    responseDispatcher.removeEndpoint(saveInjectionName)
+    injectTestInfo(testInfo)
+    editConnectionDialog.setSsl(true, fixtureStack, remoteRobot)
+
+    editConnectionDialog.okButton.click()
+    closableFixtureCollector.closeOnceIfExists(EditConnectionDialog.name)
+    settingsDialog.okButton.click()
+
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
+
+
   }
 
   /**
    * Tests to delete connection with unique connection url and without any working sets.
    */
   @Test
-  @Order(12)
-  fun testDeleteConnectionWithUniqueUrlWithoutWSandJWS(remoteRobot: RemoteRobot) {
-    deleteConnection("invalid connection1", "", "", remoteRobot)
+  fun testDeleteConnectionWithUniqueUrlWithoutWSandJWS(remoteRobot: RemoteRobot,testInfo: TestInfo) {
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
+    createConnection(
+      fixtureStack, closableFixtureCollector, independentConnectionName, false, remoteRobot,
+      "https://${mockServer.hostName}:${PORT_104431}"
+    )
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.selectWs(independentConnectionName, fixtureStack, remoteRobot)
+    settingsDialog.removeButton.click()
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
   }
 
-  //TODO: tests should be independent
   /**
    * Tests to delete connection with working set, check that correct message returned.
    */
   @Test
-  @Order(13)
-  fun testDeleteConnectionWithWorkingSet(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    createWorkingSet("WS1", "valid connection1", remoteRobot)
-    deleteConnection("valid connection1", "WS1", "", remoteRobot)
+  fun testDeleteConnectionWithWorkingSet(remoteRobot: RemoteRobot,testInfo: TestInfo) = with(remoteRobot) {
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
+    createConnection(
+      fixtureStack, closableFixtureCollector, wsDependentConnectionName, true, remoteRobot,
+      "https://${mockServer.hostName}:${mockServer.port}"
+    )
+
+    createWsWithConnectionFromAction(WS_NAME_1, wsDependentConnectionName, singleMask, fixtureStack, remoteRobot)
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.selectWs(wsDependentConnectionName, fixtureStack, remoteRobot)
+    settingsDialog.removeButton.click()
+
+    val combinedText  = find<HeavyWeightWindowFixture>(errorContainsWordYou,Duration.ofSeconds(30)).findAllText()
+    val msgInUi = combinedText[0].text+combinedText[2].text
+    assertTrue(msgInUi == EXIST_DEPENDED_WS_ERROR.format(WS_NAME_1))
+
+    yesButton.click()
+    closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
+    settingsDialog.okButton.click()
+
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
   }
 
-  //TODO: tests should be independent
   /**
    * Tests to delete connection with JES working set, check that correct message returned.
    */
   @Test
-  @Order(14)
-  fun testDeleteConnectionWithJesWorkingSet(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    createJesWorkingSet("JWS1", "valid connection2", "testuser", remoteRobot)
-    deleteConnection("valid connection2", "", "JWS1", remoteRobot)
+  fun testDeleteConnectionWithJesWorkingSet(remoteRobot: RemoteRobot,testInfo: TestInfo) = with(remoteRobot) {
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
+    createConnection(
+      fixtureStack, closableFixtureCollector, jesDependentConnectionName, true, remoteRobot,
+      "https://${mockServer.hostName}:${mockServer.port}"
+    )
+
+    createJWS(WS_NAME_2, jesDependentConnectionName, filterAllAndZos, fixtureStack, closableFixtureCollector, remoteRobot)
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
+
+    settingsDialog.selectWs(jesDependentConnectionName, fixtureStack, remoteRobot)
+    settingsDialog.removeButton.click()
+
+    val combinedText  = find<HeavyWeightWindowFixture>(errorContainsWordYou,Duration.ofSeconds(30)).findAllText()
+    val msgInUi = combinedText[0].text+combinedText[2].text
+    assertTrue(msgInUi == EXIST_DEPENDED_JWS_ERROR.format(WS_NAME_2))
+
+    yesButton.click()
+    closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
+    settingsDialog.okButton.click()
+
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
   }
 
   /**
    * Tests to delete connection with working set and JES working set, check that correct message returned.
    */
   @Test
-  @Order(15)
-  fun testDeleteConnectionWithWSandJWS(remoteRobot: RemoteRobot) = with(remoteRobot) {
-    val testUsername = "testuser"
-    val connectionName = "new connection"
-    responseDispatcher.injectEndpoint(
-      "testAddValidConnection_info",
-      { it?.requestLine?.contains("zosmf/info") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
-    responseDispatcher.injectEndpoint(
-      "testAddValidConnection_resttopology",
-      { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false },
-      { MockResponse().setBody(responseDispatcher.readMockJson("infoResponse") ?: "") }
-    )
+  fun testDeleteConnectionWithWSandJWS(remoteRobot: RemoteRobot, testInfo: TestInfo) = with(remoteRobot) {
+    injectTestInfo(testInfo)
+    injectTestInfoRestTopology(testInfo)
     createConnection(
-      fixtureStack,
-      closableFixtureCollector,
-      connectionName,
-      true,
-      remoteRobot,
-      "https://${mockServer.hostName}:${mockServer.port}",
-      testUsername
+      fixtureStack, closableFixtureCollector, wsAndJesDependentConnectionName, true, remoteRobot,
+      "https://${mockServer.hostName}:${mockServer.port}"
     )
-    createWorkingSet("WS2", connectionName, remoteRobot)
-    createJesWorkingSet("JWS2", connectionName, testUsername, remoteRobot)
-    deleteConnection(connectionName, "WS2", "JWS2", remoteRobot)
-  }
 
-  /**
-   * Deletes connection and check message if connection has any working sets.
-   */
-  private fun deleteConnection(connectionName: String, wsName: String, jwsName: String, remoteRobot: RemoteRobot) =
-    with(remoteRobot) {
-      ideFrameImpl(PROJECT_NAME, fixtureStack) {
-        explorer {
-          settings(closableFixtureCollector, fixtureStack)
-        }
-        settingsDialog(fixtureStack) {
-          configurableEditor {
-            conTab.click()
-            deleteItem(connectionName)
-          }
-          if (wsName.isNotEmpty() && jwsName.isNotEmpty()) {
-            dialog("Warning") {
-              (findAllText()[2].text + findAllText()[4].text).shouldContain("The following Files working sets use selected connections:$wsName.")
-              (findAllText()[6].text + findAllText()[8].text).shouldContain("The following JES working sets use selected connections:$jwsName.")
-              clickButton("Yes")
-            }
-          } else if (wsName.isNotEmpty() && jwsName.isEmpty()) {
-            dialog("Warning") {
-              (findAllText()[2].text + findAllText()[4].text).shouldContain("The following Files working sets use selected connections:$wsName.")
-              clickButton("Yes")
-            }
+    createJWS(WS_NAME_3, wsAndJesDependentConnectionName, filterAllAndZos, fixtureStack, closableFixtureCollector, remoteRobot)
+    createWsWithConnectionFromAction(WS_NAME_3, wsAndJesDependentConnectionName, singleMask, fixtureStack, remoteRobot)
+    callSettingsByAction(fixtureStack,remoteRobot)
+    closableFixtureCollector.add(SettingsDialog.xPath(), fixtureStack)
 
-          } else if (wsName.isEmpty() && jwsName.isNotEmpty()) {
-            dialog("Warning") {
-              (findAllText()[2].text + findAllText()[4].text).shouldContain("The following JES working sets use selected connections:$jwsName.")
-              clickButton("Yes")
-            }
-          }
-          clickButton("OK")
-        }
-        closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-      }
-    }
+    settingsDialog.selectWs(wsAndJesDependentConnectionName, fixtureStack, remoteRobot)
+    settingsDialog.removeButton.click()
 
-  /**
-   * Creates JES working set.
-   */
-  private fun createJesWorkingSet(
-    jwsName: String,
-    connectionName: String,
-    connectionUsername: String,
-    remoteRobot: RemoteRobot
-  ) =
-    with(remoteRobot) {
-      responseDispatcher.injectEndpoint(
-        "createJesWorkingSet_restjobs",
-        { it?.requestLine?.contains("/zosmf/restjobs/jobs") ?: false },
-        { MockResponse().setBody("[]") }
-      )
-      ideFrameImpl(PROJECT_NAME, fixtureStack) {
-        explorer {
-          settings(closableFixtureCollector, fixtureStack)
-        }
-        settingsDialog(fixtureStack) {
-          configurableEditor {
-            jesWorkingSetsTab.click()
-            addJWS(closableFixtureCollector, fixtureStack)
-          }
-          addJesWorkingSetDialog(fixtureStack) {
-            addJesWorkingSet(jwsName, connectionName, connectionUsername, Triple("*", ZOS_USERID, ""))
-            clickButton("OK")
-            Thread.sleep(1000)
-          }
-          closableFixtureCollector.closeOnceIfExists(AddJesWorkingSetDialog.name)
-          clickButton("OK")
-        }
-        closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-      }
-    }
+    val combinedText  = find<HeavyWeightWindowFixture>(errorContainsWordYou,Duration.ofSeconds(30)).findAllText()
+    val msgInUiWs = combinedText[0].text+combinedText[2].text
+    val msgInUiJws = combinedText[4].text+combinedText[6].text
+    assertTrue(msgInUiWs == EXIST_DEPENDED_WS_ERROR.format(WS_NAME_3))
+    assertTrue(msgInUiJws == EXIST_DEPENDED_JWS_ERROR.format(WS_NAME_3))
 
-  /**
-   * Creates working set.
-   */
-  private fun createWorkingSet(wsName: String, connectionName: String, remoteRobot: RemoteRobot) = with(remoteRobot) {
-    responseDispatcher.injectEndpoint(
-      "createWorkingSet_restfiles",
-      { it?.requestLine?.contains("zosmf/restfiles/ds?dslevel=") ?: false },
-      { MockResponse().setBody("{}") }
-    )
-    ideFrameImpl(PROJECT_NAME, fixtureStack) {
-      explorer {
-        settings(closableFixtureCollector, fixtureStack)
-      }
-      settingsDialog(fixtureStack) {
-        configurableEditor {
-          workingSetsTab.click()
-          addWS(closableFixtureCollector, fixtureStack)
-        }
-        addWorkingSetDialog(fixtureStack) {
-          addWorkingSet(wsName, connectionName, Pair("$ZOS_USERID.*", "z/OS"))
-          clickButton("OK")
-          Thread.sleep(1000)
-        }
-        closableFixtureCollector.closeOnceIfExists(AddWorkingSetDialog.name)
-        clickButton("OK")
-      }
-      closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
-    }
+    yesButton.click()
+    closableFixtureCollector.closeOnceIfExists(ErrorCreatingConnectionDialog.name)
+    settingsDialog.okButton.click()
+    closableFixtureCollector.closeOnceIfExists(SettingsDialog.name)
   }
 }

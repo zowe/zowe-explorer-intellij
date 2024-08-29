@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.isComponentUnderMouse
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
 import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListener
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
@@ -69,7 +70,7 @@ class FileEditorFocusListener: FocusChangeListener {
             val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
             val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
             val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-            if (!(currentContent contentEquals previousContent) && needToUpload) {
+            if (!(currentContent contentEquals previousContent) && needToUpload && !isFileSyncingNow(file)) {
               runBackgroundableTask(
                 title = "Synchronizing ${file.name}...",
                 project = project,

@@ -9,32 +9,19 @@
  */
 package workingset.auxiliary.components.dialogs
 
-import auxiliary.containers.dialog
-import auxiliary.containers.editWorkingSetDialog
-import auxiliary.containers.ideFrameImpl
 import com.intellij.remoterobot.RemoteRobot
-import com.intellij.remoterobot.fixtures.HeavyWeightWindowFixture
-import com.intellij.remoterobot.fixtures.JTextFieldFixture
 import com.intellij.remoterobot.search.locators.Locator
-import com.intellij.remoterobot.search.locators.byXpath
-import io.kotest.matchers.string.shouldContain
-import org.junit.jupiter.api.Assertions
-import workingset.*
-import java.time.Duration
+import workingset.Constants.remoteRobotUrl
+import workingset.RENAME_DATASET_MASK_DIALOG
 
 class RenameDatasetMaskDialog(fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) :AbstractDialog(fixtureStack, remoteRobot) {
 
     override val dialogTitle: String = RENAME_DATASET_MASK_DIALOG
 
-    constructor() : this(mutableListOf<Locator>(), RemoteRobot(REMOTE_ROBOT_URL))
+    constructor() : this(mutableListOf<Locator>(), RemoteRobot(remoteRobotUrl))
     
-    fun renameMaskFromContextMenu(
-        fieldText: String,
-        remoteRobot: RemoteRobot
-    ) =
-        with(remoteRobot) {
-            fillFirstFilld(fieldText)
-
+    fun renameMaskFromContextMenu(fieldText: String){
+            fillFirstField(fieldText)
         }
 }
 

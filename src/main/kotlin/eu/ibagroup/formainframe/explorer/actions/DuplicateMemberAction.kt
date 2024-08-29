@@ -22,6 +22,7 @@ import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.FetchNode
@@ -49,6 +50,8 @@ class DuplicateMemberAction : AnAction() {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selectedNode = view.mySelectedNodesData[0]
     val attributes = selectedNode.attributes ?: return
+    val file = selectedNode.file ?: return
+    if (checkFileForSync(e.project, file)) return
     val initialState = ""
     val dialog = RenameDialog(project, "Member", selectedNode, this, initialState)
     if (dialog.showAndGet()) {
