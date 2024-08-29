@@ -21,7 +21,7 @@ import eu.ibagroup.formainframe.ui.build.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.ui.build.tso.ui.TSOSessionParams
 import org.zowe.kotlinsdk.TsoData
 
-const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 7
+const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 8
 
 /**
  * Sends TSO request "oshell whoami", with which it receives the name of the real user (owner) of the system.
