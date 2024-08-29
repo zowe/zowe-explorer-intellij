@@ -41,9 +41,16 @@ class FileEditorEventsListener : FileEditorManagerListener {
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
     if (file is MFVirtualFile) {
       val editor = source.selectedTextEditor as? EditorEx
-      editor?.addFocusListener(focusListener)
+      if (editor != null) {
+        editor.addFocusListener(focusListener)
+        val isDumbMode = ActionUtil.isDumbMode(editor.project)
+        if (isDumbMode) {
+          editor.document.setReadOnly(true)
+          editor.isViewer = true
+        }
+        super.fileOpened(source, file)
+      }
     }
-    super.fileOpened(source, file)
   }
 }
 
