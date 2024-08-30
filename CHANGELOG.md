@@ -13,6 +13,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Feature: GitHub issue #150: Connection test request is not being sent after connection name change ([093e2912](https://github.com/zowe/zowe-explorer-intellij/commit/093e2912))
 * Feature: GitHub issue #151: Profiles merging functionality added ([4e51e18b](https://github.com/zowe/zowe-explorer-intellij/commit/4e51e18b))
 * Feature: GitHub issue #190: Warning dialog for "Allow self-signed..." and HTTP usage ([62fc8de4](https://github.com/zowe/zowe-explorer-intellij/commit/62fc8de4))
+* Feature: GitHub issue #191: TSO Session feature ([f67b9615](https://github.com/zowe/zowe-explorer-intellij/commit/f67b9615))
 * Feature: GitHub issue #192: Jobs sorting feature introduced ([e5e37437](https://github.com/zowe/zowe-explorer-intellij/commit/e5e37437))
 * Feature: GitHub issue #193: Error notification is made compact and readable ([83375d25](https://github.com/zowe/zowe-explorer-intellij/commit/83375d25))
 * Feature: GitHub issue #194: TSO Session reopen button introduced ([e3e32dd3](https://github.com/zowe/zowe-explorer-intellij/commit/e3e32dd3))
