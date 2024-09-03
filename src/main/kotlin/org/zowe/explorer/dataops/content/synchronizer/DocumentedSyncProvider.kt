@@ -92,6 +92,16 @@ class DocumentedSyncProvider(
 
     /** Default sync success handler. Won't do anything after the sync action is completed until redefined */
     val defaultOnSyncSuccessHandler: () -> Unit = {}
+
+    /**
+     * Static function is used to determine if Document exists for the Virtual File provided
+     * @param file - virtual file to check
+     * @return Document instance or null is no document exists for the given file
+     */
+    fun findDocumentForFile(file: VirtualFile): Document? {
+      return FileDocumentManager.getInstance().getDocument(file)
+    }
+
   }
 
   /**

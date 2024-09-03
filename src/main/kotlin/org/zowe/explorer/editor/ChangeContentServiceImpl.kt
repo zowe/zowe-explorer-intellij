@@ -48,15 +48,19 @@ class ChangeContentServiceImpl : ChangeContentService {
           override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
             if (action is EditorPasteAction || (action is PasteAction && event.place == "EditorPopup")) {
               val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-
-              processMfContent(editor)
+              val isFileWritable = requestDocumentWriting(editor)
+              if (isFileWritable) {
+                processMfContent(editor)
+              }
             }
           }
 
           override fun afterEditorTyping(c: Char, dataContext: DataContext) {
             val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
-
-            processMfContent(editor)
+            val isFileWritable = requestDocumentWriting(editor)
+            if (isFileWritable) {
+              processMfContent(editor)
+            }
           }
         }
       )

@@ -195,7 +195,9 @@ class ConnectionDialog(
                 }
               }
             connectionDialog = ConnectionDialog(crudable, state, project)
-            addAnyway
+            // In case of any error during connection, we should clean the owner field, because actually it cannot be retrieved at this moment
+            // Clear owner field only in case the user pressed "add anyway", leave old owner as it is otherwise
+            addAnyway.also { runIfTrue(it) { state.owner = ""} }
           } else {
             runTask(title = "Retrieving user information", project = project) {
               // Could be empty if TSO request fails
