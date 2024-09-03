@@ -13,6 +13,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
@@ -98,7 +99,7 @@ class SyncAction : DumbAwareAction() {
       makeDisabled(e)
       return
     }
-    getEditor(e) ?: return
+    val editor = getEditor(e) ?: return
 
     val isDumbMode = ActionUtil.isDumbMode(e.project)
     if (!isDumbMode && file.isWritable) {
