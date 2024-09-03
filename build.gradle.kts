@@ -155,6 +155,15 @@ changelog {
   }
 }
 
+kover {
+  filters {
+    path
+    classes {
+      excludes += listOf("org.zowe.explorer.vfs.MFVFilePropertyChangeEvent")
+    }
+  }
+}
+
 tasks {
   wrapper {
     gradleVersion = properties("gradleVersion").get()
