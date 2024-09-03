@@ -114,6 +114,7 @@ jobs:
           path: ${{ github.workspace }}/build/reports/kover/html
 
       - name: SonarCloud scans
+        if: ${{ matrix.product == 'IC-233' }}
         continue-on-error: true
         uses: ./.github/actions/sonar
         env:

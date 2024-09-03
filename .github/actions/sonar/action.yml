@@ -20,3 +20,4 @@ runs:
         -Dresults="build/reports/tests/test,build/test-results/test,build/reports/kover/html"
         -Psonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN
         -Dsonar.coverage.jacoco.xmlReportPaths="build/reports/kover/xml/report.xml"
+        -Dsonar.coverage.exclusions="**src/IC-*/**"
