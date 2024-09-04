@@ -199,7 +199,6 @@ some of the communication chanels:
 * [For Mainframe GitHub (create or review issues)](https://github.com/for-mainframe/For-Mainframe/issues)
 * [Zowe Explorer IntelliJ GitHub (create or review issues)](https://github.com/zowe/zowe-explorer-intellij/issues)
 * Email to: <a href="mailto:ukalesnikau@ibagroup.eu">Uladzislau Kalesnikau (Team Lead of the IJMP)</a>
-* Email to: <a href="mailto:vkrus@ibagroup.eu">Valiantsin Krus (Tech Lead of the IJMP)</a>
 
 **Note: GitHub issue is the preferred way of communicating in case of creating some bug/feature/request for enhancement.
 If you need direct consulting or you have any related questions, please, reach us out using Slack channels or E-mail**
