@@ -60,6 +60,6 @@ Consider some new feature for the plugin. The first that you need is to create a
    - In case of bug - make a reproduction scheme or short description on how to achieve this;
    - In case of new feature or improvement - describe, what you are trying to implement, how it should work, and (if applicable) why it should be introduced in the plugin;
 6. After the changes are made, create a pull request on any of the main branches in the project repo. ***It is not a problem if you specified an incorrect target branch, we will help you with it before the changes are pushed***
-7. Assign Uladzislau Kalesnikau and Valiantsin Krus as reviewers to the pull request
+7. Assign Uladzislau Kalesnikau as a reviewer to the pull request
 8. Attach the issue to the pull request
 9. Wait on the approval (thanks in advance)
