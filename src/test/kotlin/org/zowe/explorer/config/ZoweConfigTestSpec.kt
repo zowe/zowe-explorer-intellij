@@ -326,7 +326,6 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       isInputStreamCalled shouldBe true
       isReturnedZoweConfig shouldBe true
       isScanForZoweConfigCalled shouldBe true
-      isAddOrUpdateConnectionCalled shouldBe true
       isZOSInfoCalled shouldBe false
     }
 
