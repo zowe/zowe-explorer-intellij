@@ -16,11 +16,15 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.attributes.AttributesService
+import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.explorer.*
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
@@ -33,6 +37,7 @@ class ExplorerTreeViewTestSpec: WithApplicationShouldSpec({
   context("Explorer module: ui/ExplorerTreeView") {
 
     lateinit var fileExplorerView: ExplorerTreeView<*, *, *>
+    lateinit var attributesServiceMock: AttributesService<RemoteUssAttributes, MFVirtualFile>
 
     val explorerMock = mockk<Explorer<ConnectionConfig, FilesWorkingSet>>()
     every { explorerMock.componentManager } returns ApplicationManager.getApplication()
@@ -80,7 +85,24 @@ class ExplorerTreeViewTestSpec: WithApplicationShouldSpec({
         override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
           return contentSynchronizerMock
         }
+
+        override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+          return mockk()
+        }
       }
+      mockkObject(dataOpsManagerService.testInstance)
+
+      attributesServiceMock = mockk()
+      every {
+        attributesServiceMock.updateAttributes(any<RemoteUssAttributes>(), any<RemoteUssAttributes>())
+      } returns Unit
+
+      every {
+        dataOpsManagerService.testInstance.getAttributesService(
+          RemoteUssAttributes::class.java,
+          MFVirtualFile::class.java
+        )
+      } returns attributesServiceMock
     }
 
     afterEach {
@@ -99,6 +121,62 @@ class ExplorerTreeViewTestSpec: WithApplicationShouldSpec({
       fileExplorerView.closeChildrenInEditor(mockk())
 
       assertSoftly { closedFileSize shouldBe 0 }
+    }
+    // updateAttributesForChildrenInEditor
+    should("update attributes for files in editor if renamed file is their ancestor") {
+      var numOfCalls = 0
+      every { dataOpsManagerService.testInstance.tryToGetAttributes(any()) } answers {
+        numOfCalls++
+        if (numOfCalls == 1) {
+          mockk<RemoteUssAttributes> {
+            every { path } returns "/u/USER/dir/"
+            every { parentDirPath } returns "/u/USER"
+          }
+        } else {
+          RemoteUssAttributes(
+            "/u/USER/dir/file.txt",
+            false,
+            mockk(),
+            "https://hostname:port",
+            mutableListOf()
+          )
+        }
+      }
+
+      fileExplorerView.updateAttributesForChildrenInEditor(mockk<MFVirtualFile>(), "newDir")
+
+      verify { attributesServiceMock.updateAttributes(any<RemoteUssAttributes>(), any<RemoteUssAttributes>()) }
+    }
+    should("don't update attributes for files in editor if renamed file is not their ancestor") {
+      every { VfsUtilCore.isAncestor(any<VirtualFile>(), any<VirtualFile>(), any<Boolean>()) } returns false
+
+      fileExplorerView.updateAttributesForChildrenInEditor(mockk<MFVirtualFile>(), "newDir")
+
+      verify(exactly = 0) {
+        attributesServiceMock.updateAttributes(any<RemoteUssAttributes>(), any<RemoteUssAttributes>())
+      }
+    }
+    should("don't update attributes for files in editor if attributes are not USS attributes") {
+
+      fileExplorerView.updateAttributesForChildrenInEditor(mockk<MFVirtualFile>(), "newDir")
+
+      verify(exactly = 0) {
+        attributesServiceMock.updateAttributes(any<RemoteUssAttributes>(), any<RemoteUssAttributes>())
+      }
+    }
+    should("don't update attributes for files in editor if old attributes are not USS attributes") {
+      var numOfCalls = 0
+      every { dataOpsManagerService.testInstance.tryToGetAttributes(any()) } answers {
+        numOfCalls++
+        if (numOfCalls == 1) mockk<RemoteUssAttributes>()
+        else mockk<FileAttributes>()
+      }
+
+      fileExplorerView.updateAttributesForChildrenInEditor(mockk<MFVirtualFile>(), "newDir")
+
+      verify(exactly = 0) {
+        attributesServiceMock.updateAttributes(any<RemoteUssAttributes>(), any<RemoteUssAttributes>())
+      }
     }
   }
 })
