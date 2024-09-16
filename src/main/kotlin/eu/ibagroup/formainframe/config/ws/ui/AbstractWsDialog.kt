@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
@@ -102,7 +103,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
   private val panel by lazy {
     panel {
       row {
-        label(wsNameLabel)
+        label("$wsNameLabel: ")
         textField()
           .bindText(state::workingSetName)
           .validationOnApply {
@@ -114,9 +115,9 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
             )
           }
           .focused()
-      }
+      }.layout(RowLayout.LABEL_ALIGNED)
       row {
-        label("Specify connection")
+        label("z/OSMF Connection: ")
         comboBox(connectionComboBoxModel, SimpleListCellRenderer.create("") { it?.name })
           .bindItem(
             {
@@ -142,7 +143,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
               null
             }
           }
-      }
+      }.layout(RowLayout.LABEL_ALIGNED)
       group(tableTitle, false) {
         row {
           tableWithToolbar(masksTable, addDefaultActions = true) {
