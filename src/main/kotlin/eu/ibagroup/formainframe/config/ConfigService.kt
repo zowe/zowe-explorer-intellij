@@ -1,22 +1,26 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.service
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.tso.config.TSOSessionConfig
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
+import eu.ibagroup.formainframe.tso.config.TSOSessionConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.EventHandler
 import eu.ibagroup.formainframe.utils.crudable.annotations.Contains
@@ -33,8 +37,7 @@ interface ConfigService : PersistentStateComponent<ConfigStateV2> {
 
   companion object {
     @JvmStatic
-    val instance: ConfigService
-      get() = ApplicationManager.getApplication().getService(ConfigService::class.java)
+    fun getService(): ConfigService = service()
   }
 
   @get:Contains(
@@ -56,6 +59,9 @@ interface ConfigService : PersistentStateComponent<ConfigStateV2> {
 
   /** Identifies size of the files batch to fetch in a single request. */
   var batchSize: Int
+  
+  /** A delay for the "Rate us" notification to display */
+  var rateUsNotificationDelay: Long
 
   /**
    * Finds [ConfigDeclaration] for specified class through registered extension points.
@@ -89,6 +95,3 @@ interface ConfigService : PersistentStateComponent<ConfigStateV2> {
   fun getRegisteredConfigDeclarations(): List<ConfigDeclaration<*>>
 
 }
-
-val configCrudable: Crudable
-  get() = ConfigService.instance.crudable

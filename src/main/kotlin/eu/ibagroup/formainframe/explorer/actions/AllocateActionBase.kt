@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -17,7 +21,6 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.FileAction
@@ -25,7 +28,7 @@ import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.analytics.events.FileType
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.common.ui.showUntilDone
-import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
@@ -40,6 +43,7 @@ import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.explorer.ui.FileFetchNode
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
@@ -135,8 +139,8 @@ abstract class AllocateActionBase : AnAction() {
             cancellable = true
           ) { progressIndicator ->
             runCatching {
-              service<AnalyticsService>().trackAnalyticsEvent(FileEvent(FileType.DATASET, FileAction.CREATE))
-              val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+              AnalyticsService.getService().trackAnalyticsEvent(FileEvent(FileType.DATASET, FileAction.CREATE))
+              val dataOpsManager = DataOpsManager.getService()
               dataOpsManager.performOperation(
                 operation = DatasetAllocationOperation(request = state, connectionConfig = config),
                 progressIndicator
@@ -156,7 +160,7 @@ abstract class AllocateActionBase : AnAction() {
                 showNotification(state, workingSet)
               }
               .onFailure { t ->
-                explorer.reportThrowable(t, project)
+                NotificationsService.getService().notifyError(t, project)
                 initialState.errorMessage = t.message ?: t.toString()
               }
           }
@@ -186,9 +190,11 @@ abstract class AllocateActionBase : AnAction() {
     if (lastIndexOfDot > 0) {
       maskedDataset = state.datasetName.substring(0, lastIndexOfDot)
     }
-    maskedDataset +=".*"
+    maskedDataset += ".*"
     val filesWorkingSetConfig =
-      configCrudable.getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)?.clone()
+      ConfigService.getService().crudable
+        .getByUniqueKey<FilesWorkingSetConfig>(workingSet.uuid)
+        ?.clone()
     if (filesWorkingSetConfig?.dsMasks?.any { it.mask == maskedDataset } == false) {
       val notification = Notification(
         ALLOCATE_ACTION_NOTIFICATION_GROUP_ID,
@@ -200,7 +206,7 @@ abstract class AllocateActionBase : AnAction() {
         setOf(
           NotificationAction.createSimpleExpiring("Add mask") {
             filesWorkingSetConfig.dsMasks.add(DSMask().apply { mask = maskedDataset })
-            configCrudable.update(filesWorkingSetConfig)
+            ConfigService.getService().crudable.update(filesWorkingSetConfig)
           },
           NotificationAction.createSimpleExpiring("Skip") { }
         )

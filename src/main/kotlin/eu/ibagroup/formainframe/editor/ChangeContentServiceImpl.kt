@@ -1,19 +1,27 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
+
 package eu.ibagroup.formainframe.editor
 
 import com.intellij.ide.actions.PasteAction
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionResult
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ReadOnlyModificationException
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -32,7 +40,7 @@ typealias EditorPasteAction = com.intellij.openapi.editor.actions.PasteAction
  * @author Valiantsin Krus
  */
 class ChangeContentServiceImpl : ChangeContentService {
-  private val dataOpsManager = service<DataOpsManager>()
+  private val dataOpsManager = DataOpsManager.getService()
   private var adaptContentFunc: (() -> Unit)? = null
   private var subscribed = false
 

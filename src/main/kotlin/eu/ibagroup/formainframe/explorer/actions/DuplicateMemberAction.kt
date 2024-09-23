@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -24,7 +28,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.FetchNode
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
@@ -32,6 +35,7 @@ import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.RenameDialog
 import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 
 /**
  * Class which represents a duplicate member action
@@ -55,15 +59,14 @@ class DuplicateMemberAction : AnAction() {
     val initialState = ""
     val dialog = RenameDialog(project, "Member", selectedNode, this, initialState)
     if (dialog.showAndGet()) {
-      runDuplicateOperation(project, view, selectedNode, dialog.state)
-      service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.COPY))
+      runDuplicateOperation(project, selectedNode, dialog.state)
+      AnalyticsService.getService().trackAnalyticsEvent(FileEvent(attributes, FileAction.COPY))
     }
   }
 
   /**
    * Method to run duplicate operation. It passes the control to rename operation runner
    * @param project - current project
-   * @param view - an explorer tree view object
    * @param selectedNode - a current selected node
    * @param newName - a new name of the virtual file in VFS
    * @throws any throwable during the processing of the request
@@ -71,11 +74,10 @@ class DuplicateMemberAction : AnAction() {
    */
   private fun runDuplicateOperation(
     project: Project,
-    view: ExplorerTreeView<ConnectionConfig, *, *>,
     selectedNode: NodeData<ConnectionConfig>,
     newName: String
   ) {
-    val dataOpsManager = view.explorer.componentManager.getService(DataOpsManager::class.java)
+    val dataOpsManager = DataOpsManager.getService()
     val attributes = selectedNode.attributes ?: return
     val file = selectedNode.file ?: return
     val parent = selectedNode.node.parent
@@ -99,7 +101,7 @@ class DuplicateMemberAction : AnAction() {
           parent.cleanCacheIfPossible(cleanBatchedQuery = true)
         }
       }.onFailure {
-        selectedNode.node.explorer.reportThrowable(it, project)
+        NotificationsService.getService().notifyError(it, project)
       }
     }
   }

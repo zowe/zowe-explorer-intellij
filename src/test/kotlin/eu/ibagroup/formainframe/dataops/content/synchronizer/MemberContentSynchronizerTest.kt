@@ -1,16 +1,19 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.ZosmfApi
@@ -25,7 +28,6 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
@@ -45,7 +47,7 @@ class MemberContentSynchronizerTest : WithApplicationShouldSpec({
   }
 
   context("MemberContentSynchronizer:") {
-    val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
     val mockedRemoteDatasetAttributes = mockk<RemoteDatasetAttributes>()
     val mockedMaskedRequester = mockk<MaskedRequester>()
     val connConf = ConnectionConfig("000", "connName", "url", true, ZVersion.ZOS_2_1, "owner")
@@ -127,7 +129,7 @@ class MemberContentSynchronizerTest : WithApplicationShouldSpec({
         any()
       )
     } returns mockedCall1
-    val testZosmfApi = ApplicationManager.getApplication().getService(ZosmfApi::class.java) as TestZosmfApiImpl
+    val testZosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
     testZosmfApi.testInstance = object : TestZosmfApiImpl() {
       override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
         @Suppress("UNCHECKED_CAST")

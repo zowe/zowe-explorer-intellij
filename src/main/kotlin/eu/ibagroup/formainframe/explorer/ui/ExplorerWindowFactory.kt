@@ -1,16 +1,19 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -34,7 +37,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val contentFactory = ContentFactory.getInstance()
-    service<UIComponentManager>().getExplorerContentProviders()
+    UIComponentManager.getService().getExplorerContentProviders()
       .forEach {
         val content = contentFactory
           .createContent(it.buildExplorerContent(toolWindow.disposable, project), it.displayName, it.isLockable)
@@ -48,7 +51,7 @@ class ExplorerWindowFactory : ToolWindowFactory, DumbAware {
       topic = AutoSyncFileListener.AUTO_SYNC_FILE,
       handler = object : AutoSyncFileListener {
         override fun sync(file: VirtualFile) {
-          val dataOpsManager = service<DataOpsManager>()
+          val dataOpsManager = DataOpsManager.getService()
           if (dataOpsManager.isSyncSupported(file)) {
             val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
             runBackgroundableTask("Synchronizing file ${file.name} with mainframe") { indicator ->

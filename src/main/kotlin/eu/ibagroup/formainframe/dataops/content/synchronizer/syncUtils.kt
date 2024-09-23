@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
@@ -13,8 +17,7 @@ package eu.ibagroup.formainframe.dataops.content.synchronizer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
-import eu.ibagroup.formainframe.dataops.content.service.areDependentFilesSyncingNow
-import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
+import eu.ibagroup.formainframe.dataops.content.service.SyncProcessService
 import java.nio.charset.Charset
 
 private const val NEW_LINE = "\n"
@@ -65,10 +68,11 @@ fun checkFileForSync(
   val title = "Synchronization Is In Progress"
   val result = if (checkDependentFiles) {
     message = "$commonMessage because this file or dependent files are currently being synchronized"
-    isFileSyncingNow(file) || areDependentFilesSyncingNow(file)
+    SyncProcessService.getService().isFileSyncingNow(file)
+      || SyncProcessService.getService().areDependentFilesSyncingNow(file)
   } else {
     message = "$commonMessage because this file is currently being synchronized"
-    isFileSyncingNow(file)
+    SyncProcessService.getService().isFileSyncingNow(file)
   }
   return if (result) {
     Messages.showWarningDialog(project, message, title)

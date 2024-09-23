@@ -1,16 +1,19 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.operations
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.analytics.AnalyticsService
@@ -58,7 +61,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   ) {
     when (val attr = operation.attributes) {
       is RemoteDatasetAttributes -> {
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
+        AnalyticsService.getService().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
         if (operation.file.children != null) {
           operation.file.children.forEach { it.isWritable = false }
@@ -88,7 +91,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
       }
 
       is RemoteMemberAttributes -> {
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
+        AnalyticsService.getService().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
         operation.file.isWritable = false
         val libraryAttributes = attr.getLibraryAttributes(dataOpsManager)
@@ -118,7 +121,7 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
       }
 
       is RemoteUssAttributes -> {
-        service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
+        AnalyticsService.getService().trackAnalyticsEvent(FileEvent(attr, FileAction.DELETE))
 
         if (operation.file.isDirectory) {
           operation.file.children.forEach { it.isWritable = false }

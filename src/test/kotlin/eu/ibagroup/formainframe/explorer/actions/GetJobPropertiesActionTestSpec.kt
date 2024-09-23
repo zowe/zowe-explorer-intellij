@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
+ */
+
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,7 +41,6 @@ import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.gson
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -75,7 +88,7 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
         val jobsFilter = spyk(JobsFilter("owner", "prefix", "id"))
         val jobAttr = spyk(RemoteJobAttributes(job, "test", mutableListOf(JobsRequester(connectionConfig, jobsFilter))))
 
-        val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return jobAttr
@@ -127,7 +140,7 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
         val parentFile = mockk<MFVirtualFile>()
         val spoolFileAttr = spyk(RemoteSpoolFileAttributes(spoolFile, parentFile))
 
-        val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return spoolFileAttr

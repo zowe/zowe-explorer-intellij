@@ -1,16 +1,19 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.TabbedConfigurable
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -34,8 +37,8 @@ class MainframeConfigurable : TabbedConfigurable() {
    * @return List of configurable items
    */
   override fun createConfigurables(): MutableList<Configurable> {
-    val configService = service<ConfigService>()
-    return configService
+    return ConfigService
+      .getService()
       .getRegisteredConfigDeclarations()
       .sortedBy { it.configPriority }
       .mapNotNull { it.getConfigurable() as Configurable? }
@@ -49,7 +52,7 @@ class MainframeConfigurable : TabbedConfigurable() {
    */
   override fun apply() {
     super.apply()
-    ConfigSandbox.instance.updateState()
+    ConfigSandbox.getService().updateState()
   }
 
   /**
@@ -57,7 +60,7 @@ class MainframeConfigurable : TabbedConfigurable() {
    */
   override fun reset() {
     runBackgroundableTask(title = "Reset changes", cancellable = false) {
-      ConfigSandbox.instance.fetch()
+      ConfigSandbox.getService().fetch()
       super.reset()
     }
   }

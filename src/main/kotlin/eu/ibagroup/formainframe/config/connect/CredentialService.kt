@@ -1,16 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.connect
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnection
 import eu.ibagroup.formainframe.utils.runTask
@@ -35,6 +39,11 @@ val CREDENTIALS_CHANGED = Topic.create("credentialChanges", CredentialsListener:
  * stored in connection config
  */
 interface CredentialService {
+
+  companion object {
+    @JvmStatic
+    fun getService(): CredentialService = service()
+  }
 
   /**
    * Returns username of particular connection
@@ -64,19 +73,7 @@ interface CredentialService {
    */
   fun clearCredentials(connectionConfigUuid: String)
 
-  companion object {
-    @JvmStatic
-    val instance: CredentialService
-      get() = ApplicationManager.getApplication().getService(CredentialService::class.java)
-  }
-
 }
-
-/**
- * Returns instance of credentials service
- * which perform actions on credentials stored in connection config
- */
-fun getInstance(): CredentialService = ApplicationManager.getApplication().getService(CredentialService::class.java)
 
 /**
  * Returns username of particular connection config.
@@ -84,9 +81,10 @@ fun getInstance(): CredentialService = ApplicationManager.getApplication().getSe
  * @return username of connection config.
  */
 fun <Connection : ConnectionConfigBase> getUsername(connectionConfig: Connection): String {
-  return CredentialService.instance.getUsernameByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
-    connectionConfig
-  )
+  return CredentialService.getService().getUsernameByKey(connectionConfig.uuid)
+    ?: throw CredentialsNotFoundForConnection(
+      connectionConfig
+    )
 }
 
 /**
@@ -95,9 +93,10 @@ fun <Connection : ConnectionConfigBase> getUsername(connectionConfig: Connection
  * @return password of particular connection config.
  */
 fun <Connection : ConnectionConfigBase> getPassword(connectionConfig: Connection): String {
-  return CredentialService.instance.getPasswordByKey(connectionConfig.uuid) ?: throw CredentialsNotFoundForConnection(
-    connectionConfig
-  )
+  return CredentialService.getService().getPasswordByKey(connectionConfig.uuid)
+    ?: throw CredentialsNotFoundForConnection(
+      connectionConfig
+    )
 }
 
 val ConnectionConfig.authToken: String

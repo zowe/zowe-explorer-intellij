@@ -1,18 +1,21 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -35,6 +38,7 @@ import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
@@ -101,14 +105,14 @@ class RecallAction : DumbAwareAction() {
         runCatching {
           operations.forEach { operation ->
 
-            service<AnalyticsService>().trackAnalyticsEvent(MigrateEvent(MigrateActionType.RECALL))
+            AnalyticsService.getService().trackAnalyticsEvent(MigrateEvent(MigrateActionType.RECALL))
 
-            service<DataOpsManager>().performOperation(
+            DataOpsManager.getService().performOperation(
               operation, progressIndicator
             )
           }
         }.onFailure {
-          view.explorer.reportThrowable(it, project)
+          NotificationsService.getService().notifyError(it, project)
         }
       }
       makeUniqueCacheClean(filteredNodesData.map { it.node })
@@ -163,14 +167,14 @@ class MigrateAction : DumbAwareAction() {
         runCatching {
           operations.forEach { operation ->
 
-            service<AnalyticsService>().trackAnalyticsEvent(MigrateEvent(MigrateActionType.MIGRATE))
+            AnalyticsService.getService().trackAnalyticsEvent(MigrateEvent(MigrateActionType.MIGRATE))
 
-            service<DataOpsManager>().performOperation(
+            DataOpsManager.getService().performOperation(
               operation, progressIndicator
             )
           }
         }.onFailure {
-          view.explorer.reportThrowable(it, project)
+          NotificationsService.getService().notifyError(it, project)
         }
       }
       makeUniqueCacheClean(filteredNodesData.map { it.node })

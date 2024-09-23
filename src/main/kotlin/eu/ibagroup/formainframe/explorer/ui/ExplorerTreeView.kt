@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
+ */
+
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.dnd.aware.DnDAwareTree
@@ -9,7 +23,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater
@@ -49,8 +62,13 @@ import eu.ibagroup.formainframe.explorer.ExplorerListener
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.UNITS_CHANGED
 import eu.ibagroup.formainframe.explorer.WorkingSet
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.telemetry.NotificationsService
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
+import eu.ibagroup.formainframe.utils.getAncestorNodes
+import eu.ibagroup.formainframe.utils.runInEdtAndWait
+import eu.ibagroup.formainframe.utils.rwLocked
+import eu.ibagroup.formainframe.utils.subscribe
 import eu.ibagroup.formainframe.vfs.MFBulkFileListener
 import eu.ibagroup.formainframe.vfs.MFVFilePropertyChangeEvent
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
@@ -99,7 +117,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
   internal val ignoreVFileDeleteEvents = AtomicBoolean(false)
   internal val ignoreVFSChangeEvents = AtomicBoolean(false)
 
-  protected val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+  protected val dataOpsManager = DataOpsManager.getService()
 
   private var treeModel: AsyncTreeModel
 
@@ -349,7 +367,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
           //This was done to avoid duplication of exception messages, since both explorers have a common EventBus and,
           // accordingly, both receive a message about an exception that occurred in one of them.
           if (this@ExplorerTreeView is FileExplorerView) {
-            explorer.reportThrowable(throwable, project)
+            NotificationsService.getService().notifyError(throwable, project)
           }
         }
       },
@@ -426,7 +444,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
     val openFiles = fileEditorManager.openFiles
     openFiles.forEach { openFile ->
       if (VfsUtilCore.isAncestor(selectedFile, openFile, false)) {
-        val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(openFile)
+        val contentSynchronizer = DataOpsManager.getService().getContentSynchronizer(openFile)
         val syncProvider = DocumentedSyncProvider(openFile)
         contentSynchronizer?.markAsNotNeededForSync(syncProvider)
         runInEdtAndWait {

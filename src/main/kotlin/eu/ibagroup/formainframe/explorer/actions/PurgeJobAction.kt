@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -15,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
 import eu.ibagroup.formainframe.api.api
@@ -66,7 +69,7 @@ class PurgeJobAction : AnAction() {
     } else if (view is JobBuildTreeView) {
       val jobStatus = view.getJobLogger().logFetcher.getCachedJobStatus()
       val connectionConfig: ConnectionConfig = view.getConnectionConfig()
-      val dataOpsManager = service<DataOpsManager>()
+      val dataOpsManager = DataOpsManager.getService()
       if (jobStatus != null) {
         runBackgroundableTask(
           title = "Purging ${jobStatus.jobName}: ${jobStatus.jobId}",
@@ -257,7 +260,7 @@ class PurgeJobAction : AnAction() {
     e: AnActionEvent,
     view: JesExplorerView
   ) {
-    val dataOpsManager = service<DataOpsManager>()
+    val dataOpsManager = DataOpsManager.getService()
     nodes.forEach { nodeData ->
       val jobAttributes = nodeData.attributes as RemoteJobAttributes
       val jobStatus = jobAttributes.jobInfo

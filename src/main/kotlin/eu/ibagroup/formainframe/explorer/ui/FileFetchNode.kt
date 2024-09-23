@@ -1,18 +1,21 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -58,7 +61,7 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
   private var cachedChildren: List<AbstractTreeNode<*>>? by locked(null, lock)
 
   private val fileFetchProvider
-    get() = explorer.componentManager.service<DataOpsManager>()
+    get() = DataOpsManager.getService()
       .getFileFetchProvider(requestClass, queryClass, vFileClass)
 
   private val loadingNode by lazy { LoadingNode(notNullProject, this, explorer, treeStructure) }
@@ -153,7 +156,7 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
                 // got new mainframe attributes that changed it state but not the presentation
                 if (q.request is LibraryQuery && this@FileFetchNode is LibraryNode) {
                   val dsNode = this@FileFetchNode as LibraryNode
-                  val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+                  val dataOpsManager = DataOpsManager.getService()
                   val attributes = dataOpsManager.tryToGetAttributes(dsNode.virtualFile)
                   if (attributes is RemoteDatasetAttributes && !attributes.hasDsOrg) {
                     isMembersFetchOnInvalidDS = true

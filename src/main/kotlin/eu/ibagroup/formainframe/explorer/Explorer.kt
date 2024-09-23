@@ -1,18 +1,21 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
@@ -20,24 +23,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.Topic
-import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.config.CONFIGS_CHANGED
-import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.CREDENTIALS_CHANGED
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.CredentialsListener
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.exceptions.NotificationCompatibleException
 import eu.ibagroup.formainframe.editor.ChangeContentService
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
@@ -119,13 +116,6 @@ interface Explorer<Connection : ConnectionConfigBase, U : WorkingSet<Connection,
     get() = componentManager.castOrNull()
 
   /**
-   * Shows error notification.
-   * @param t throwable from which to get title and text of notification message.
-   * @param project project for which to show notification.
-   */
-  fun reportThrowable(t: Throwable, project: Project?)
-
-  /**
    * Shows any type of notification.
    * @param title title of the notification message.
    * @param content text of notification content.
@@ -139,13 +129,6 @@ interface Explorer<Connection : ConnectionConfigBase, U : WorkingSet<Connection,
     project: Project?
   )
 
-  /**
-   * Does exactly the same, as report throwable but can use additional info of the unit.
-   * @param t throwable from which to get title and text of notification message.
-   * @param unit unit which can be used for showing additional information in notification.
-   * @param project project for which to show notification.
-   */
-  fun reportThrowable(t: Throwable, unit: ExplorerUnit<Connection>, project: Project?)
 }
 
 /**
@@ -173,9 +156,12 @@ abstract class AbstractExplorerBase<Connection : ConnectionConfigBase, U : Worki
    * @param unit unit to remove.
    */
   override fun disposeUnit(unit: U) {
-    configCrudable.getByUniqueKey(unitConfigClass, unit.uuid).nullable?.let {
-      configCrudable.delete(it)
-    }
+    ConfigService.getService().crudable
+      .getByUniqueKey(unitConfigClass, unit.uuid)
+      .nullable
+      ?.let {
+        ConfigService.getService().crudable.delete(it)
+      }
   }
 
   /**
@@ -186,7 +172,6 @@ abstract class AbstractExplorerBase<Connection : ConnectionConfigBase, U : Worki
   override fun isUnitPresented(unit: ExplorerUnit<Connection>): Boolean {
     return unit.`is`(unitClass) && units.contains(unit)
   }
-
 
   /** @see Explorer.showNotification */
   override fun showNotification(title: String, content: String, type: NotificationType, project: Project?) {
@@ -200,69 +185,11 @@ abstract class AbstractExplorerBase<Connection : ConnectionConfigBase, U : Worki
     }
   }
 
-  /** @see Explorer.reportThrowable */
-  override fun reportThrowable(t: Throwable, project: Project?) {
-    lateinit var title: String
-    lateinit var details: String
-
-    if (t is RuntimeException) {
-      if (t is ProcessCanceledException || t.cause is ProcessCanceledException) {
-        title = "Error in plugin For Mainframe"
-        details = message("explorer.cancel.by.user.error")
-      }
-    } else if (t is CallException) {
-      title = (t.errorParams?.getOrDefault("message", t.headMessage) as String).replaceFirstChar { it.uppercase() }
-      if (title.contains(".")) {
-        title = title.split(".")[0]
-      }
-      details = t.errorParams["details"]?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
-      if (details.contains(":")) {
-        details = details.split(":").last()
-      }
-    } else if (t is NotificationCompatibleException) {
-      title = t.title
-      details = t.details
-    } else {
-      title = t.message ?: t.toString()
-      details = "Unknown error"
-    }
-
-    Notification(
-      EXPLORER_NOTIFICATION_GROUP_ID,
-      title,
-      details,
-      NotificationType.ERROR
-    ).addAction(object : NotificationAction("More") {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        if (t is ProcessCanceledException || t.cause is ProcessCanceledException) {
-          Messages.showErrorDialog(
-            project,
-            details + "\n\n" + (t.message ?: t.toString()),
-            title
-          )
-        } else {
-          Messages.showErrorDialog(
-            project,
-            t.message ?: t.toString(),
-            title
-          )
-        }
-      }
-    }).let {
-      Notifications.Bus.notify(it)
-    }
-  }
-
   /** Function to open a slack channel of plugin support. */
   private val reportInSlackAction = object : DumbAwareAction("Report In Slack") {
     override fun actionPerformed(e: AnActionEvent) {
       BrowserUtil.browse("https://join.slack.com/t/iba-mainframe-tools/shared_invite/zt-pejbtt4j-l7KuizvDedJSCxwGtxmMBg")
     }
-  }
-
-  /** @see Explorer.reportThrowable */
-  override fun reportThrowable(t: Throwable, unit: ExplorerUnit<Connection>, project: Project?) {
-    reportThrowable(t, project)
   }
 
   /** Disposes the explorer. */
@@ -276,8 +203,8 @@ abstract class AbstractExplorerBase<Connection : ConnectionConfigBase, U : Worki
    * for reactive processing of data updates on UI.
    */
   fun doInit() {
-    service<ChangeContentService>().initialize()
-    Disposer.register(service<DataOpsManager>(), disposable)
+    ChangeContentService.getService().initialize()
+    Disposer.register(DataOpsManager.getService(), disposable)
     subscribe(topic = CONFIGS_CHANGED, disposable = disposable, handler = eventAdapter(unitConfigClass) {
       onDelete { unit ->
         lock.write {

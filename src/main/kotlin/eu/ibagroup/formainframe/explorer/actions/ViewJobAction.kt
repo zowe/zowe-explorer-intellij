@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -21,7 +25,6 @@ import eu.ibagroup.formainframe.explorer.ui.JobNode
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.sendTopic
-import eu.ibagroup.formainframe.utils.service
 
 /** An action to view a process of running job in the Jobs Tool Window */
 class ViewJobAction : AnAction() {
@@ -37,7 +40,7 @@ class ViewJobAction : AnAction() {
     if (node is ExplorerTreeNode<*, *>) {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
-        val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
+        val dataOpsManager = DataOpsManager.getService()
         val attributes: RemoteJobAttributes =
           dataOpsManager.tryToGetAttributes(virtualFile)?.clone() as RemoteJobAttributes
 

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -80,7 +84,7 @@ class LibraryNode(
   override fun update(presentation: PresentationData) {
     presentation.setIcon(if (value.isDirectory) ForMainframeIcons.DatasetMask else AllIcons.FileTypes.Any_type)
     updateNodeTitleUsingCutBuffer(value.presentableName, presentation)
-    val dataOpsManager = service<DataOpsManager>()
+    val dataOpsManager = DataOpsManager.getService()
     getVolserIfPresent(dataOpsManager, value)
       ?.let { presentation.addText(it, SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES) }
   }
@@ -140,7 +144,8 @@ class LibraryNode(
   private fun selector(key: SortQueryKeys): (AbstractTreeNode<*>) -> String? {
     return {
       val memberInfo =
-        (service<DataOpsManager>().tryToGetAttributes((it as FileLikeDatasetNode).virtualFile) as RemoteMemberAttributes).info
+        (DataOpsManager.getService()
+          .tryToGetAttributes((it as FileLikeDatasetNode).virtualFile) as RemoteMemberAttributes).info
       when (key) {
         SortQueryKeys.MEMBER_NAME -> memberInfo.name
         SortQueryKeys.MEMBER_MODIFICATION_DATE -> memberInfo.modificationDate

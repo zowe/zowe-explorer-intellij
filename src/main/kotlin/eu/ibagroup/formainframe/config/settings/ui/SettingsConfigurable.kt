@@ -1,16 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.settings.ui
 
-import com.intellij.openapi.components.service
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
@@ -21,6 +25,7 @@ import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.PolicyProvider
 import eu.ibagroup.formainframe.analytics.ui.AnalyticsPolicyDialog
 import eu.ibagroup.formainframe.config.ConfigService
+import eu.ibagroup.formainframe.rateus.RateUsNotification
 import eu.ibagroup.formainframe.utils.validateBatchSize
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -28,9 +33,9 @@ import javax.swing.JLabel
 
 /** Class that represents Settings tab in preferences */
 class SettingsConfigurable : BoundSearchableConfigurable("Settings", "mainframe") {
-  private val analyticsService = service<AnalyticsService>()
-  private val policyProvider = service<PolicyProvider>()
-  private val configService = service<ConfigService>()
+  private val analyticsService = AnalyticsService.getService()
+  private val policyProvider = PolicyProvider.getService()
+  private val configService = ConfigService.getService()
   private val agreed = "you have agreed to the collection and processing of data"
   private val notAgreed = "you haven't agreed to the collection and processing of data"
   private var agreementLabelComponent: JLabel? = null
@@ -81,6 +86,16 @@ class SettingsConfigurable : BoundSearchableConfigurable("Settings", "mainframe"
             .also { res ->
               res.component.addItemListener { isAutoSyncEnabled.set(res.component.isSelected) }
             }
+        }
+      }
+      group("Rate Us") {
+        row {
+          label("If you want to leave a review:")
+          @Suppress("DialogTitleCapitalization")
+          link("click here") {
+            configService.rateUsNotificationDelay = -1
+            BrowserUtil.browse(RateUsNotification.PLUGIN_REVIEW_LINK)
+          }
         }
       }
     }

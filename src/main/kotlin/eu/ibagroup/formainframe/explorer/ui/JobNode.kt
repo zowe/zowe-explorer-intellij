@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -63,32 +67,38 @@ class JobNode(
   override val requestClass = JobQuery::class.java
 
   override fun update(presentation: PresentationData) {
-    val attributes = service<DataOpsManager>().tryToGetAttributes(value) as? RemoteJobAttributes
+    val attributes = DataOpsManager.getService().tryToGetAttributes(value) as? RemoteJobAttributes
     val job = attributes?.jobInfo
     val jobIdText = if (job == null) "" else "(${job.jobId})"
     presentation.addText("${job?.jobName ?: ""} $jobIdText ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
-    if ((job?.execEnded == null || job.execEnded?.trim().equals("")) && job?.returnedCode == null && job?.execStarted != null) {
+    if ((job?.execEnded == null || job.execEnded?.trim()
+        .equals("")) && job?.returnedCode == null && job?.execStarted != null
+    ) {
       if (job.status != Job.Status.INPUT) {
         if (job.execStarted?.trim().equals("")) {
           presentation.addText(
-            "JOB IN PROGRESS", SimpleTextAttributes(STYLE_BOLD, JBColor.BLUE))
+            "JOB IN PROGRESS", SimpleTextAttributes(STYLE_BOLD, JBColor.BLUE)
+          )
         } else {
           presentation.addText(
             "STARTED AT: " +
-                if (job.execStarted == null) {
-                  parseJobTimestampValueToDisplay(job.execSubmitted)
-                } else {
-                  parseJobTimestampValueToDisplay(job.execStarted)
-                },
+              if (job.execStarted == null) {
+                parseJobTimestampValueToDisplay(job.execSubmitted)
+              } else {
+                parseJobTimestampValueToDisplay(job.execStarted)
+              },
             SimpleTextAttributes(STYLE_BOLD, JBColor.BLUE)
           )
         }
       } else {
         presentation.addText(
           "PENDING INPUT: " +
-              if(job.execStarted == null) { parseJobTimestampValueToDisplay(job.execSubmitted) }
-              else { parseJobTimestampValueToDisplay(job.execStarted) },
+            if (job.execStarted == null) {
+              parseJobTimestampValueToDisplay(job.execSubmitted)
+            } else {
+              parseJobTimestampValueToDisplay(job.execStarted)
+            },
           SimpleTextAttributes(STYLE_BOLD, JBColor.YELLOW)
         )
       }
@@ -97,11 +107,15 @@ class JobNode(
         presentation.addText(
           jobJclNotAvailable, SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
         )
-      } else if ((job.execEnded == null || job.execEnded?.trim().equals("")) && (job.execStarted == null || job.execStarted?.trim().equals(""))) {
+      } else if ((job.execEnded == null || job.execEnded?.trim()
+          .equals("")) && (job.execStarted == null || job.execStarted?.trim().equals(""))
+      ) {
         presentation.addText(
           if (job.execSubmitted == null) {
             "JOB ENDED. RC = ${job.returnedCode}"
-          } else { "ENDED AT: " + parseJobTimestampValueToDisplay(job.execSubmitted) + ". RC = ${job.returnedCode}" },
+          } else {
+            "ENDED AT: " + parseJobTimestampValueToDisplay(job.execSubmitted) + ". RC = ${job.returnedCode}"
+          },
           if (isErrorReturnCode(job.returnedCode)) {
             SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
           } else {
@@ -111,11 +125,11 @@ class JobNode(
       } else {
         presentation.addText(
           "ENDED AT: " +
-              if (job.execEnded == null || job.execEnded?.trim().equals("")) {
-                parseJobTimestampValueToDisplay(job.execSubmitted) ?: parseJobTimestampValueToDisplay(job.execStarted)
-              } else {
-                parseJobTimestampValueToDisplay(job.execEnded)
-              } + ". RC = ${job.returnedCode}",
+            if (job.execEnded == null || job.execEnded?.trim().equals("")) {
+              parseJobTimestampValueToDisplay(job.execSubmitted) ?: parseJobTimestampValueToDisplay(job.execStarted)
+            } else {
+              parseJobTimestampValueToDisplay(job.execEnded)
+            } + ". RC = ${job.returnedCode}",
           if (isErrorReturnCode(job.returnedCode)) {
             SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
           } else {
@@ -136,9 +150,9 @@ class JobNode(
    * @param timestamp - timestamp to be formatted
    * @return Formatted timestamp value to be displayed
    */
-  private fun parseJobTimestampValueToDisplay(timestamp: String?) : String? {
+  private fun parseJobTimestampValueToDisplay(timestamp: String?): String? {
     // Means we got timestamps from FetchHelper. We do not need to parse it
-    if(query!!.connectionConfig.zVersion < ZVersion.ZOS_2_4) {
+    if (query!!.connectionConfig.zVersion < ZVersion.ZOS_2_4) {
       return timestamp
     } else {
       // Means we got timestamps from fetch query already. Need to parse it before return to caller
@@ -164,7 +178,7 @@ class JobNode(
    * @param returnCode - return code to parse
    * @return true if return code is kind of Error. False otherwise
    */
-  private fun isErrorReturnCode(returnCode : String?) : Boolean {
+  private fun isErrorReturnCode(returnCode: String?): Boolean {
     if (returnCode != null) {
       return if (!returnCode.contains(Regex("ERR|ABEND|CANCEL|FAIL"))) {
         val numberedRC = returnCode.split(" ").getOrNull(1)?.toIntOrNull()

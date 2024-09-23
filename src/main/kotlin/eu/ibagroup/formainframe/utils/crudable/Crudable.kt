@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.utils.crudable
@@ -43,11 +47,11 @@ inline fun <reified E : Any, reified V : Any> Crudable.nextUniqueValue(): V {
 }
 
 interface AddFilter {
-  operator fun <T: Any> invoke(clazz: Class<out T>, addingRow: T): Boolean = true
+  operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean = true
 }
 
 interface UpdateFilter {
-  operator fun <T: Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean = true
+  operator fun <T : Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean = true
 }
 
 /**
@@ -96,7 +100,7 @@ interface Crudable {
    */
   fun <E : Any> replaceGracefully(rowClass: Class<out E?>, rows: Stream<out E?>) {
     val current = this.getAll(rowClass).collect(Collectors.toList())
-    val newRows = rows.collect(Collectors.toList()).filterNotNull()
+    val newRows = rows.toList().filterNotNull()
     applyMergedCollections(rowClass, mergeCollections(current, newRows))
   }
 
@@ -115,7 +119,7 @@ interface Crudable {
     mergedCollections.toAdd.forEach { e: E ->
       add(rowClass, e)
       if (e is ConnectionConfig) {
-        AnalyticsService.instance.trackAnalyticsEvent(ConnectionEvent(ActionType.CREATE))
+        AnalyticsService.getService().trackAnalyticsEvent(ConnectionEvent(ActionType.CREATE))
       }
     }
   }

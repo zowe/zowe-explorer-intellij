@@ -1,17 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 package eu.ibagroup.formainframe.editor
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -76,7 +79,7 @@ class MFPastePreprocessor : CopyPastePostProcessor<TextBlockTransferableData>() 
   ) {
     val vFile = FileDocumentManager.getInstance().getFile(editor.document)
     if (vFile != null && vFile.`is`<MFVirtualFile>()) {
-      service<ChangeContentService>().processMfContent(editor)
+      ChangeContentService.getService().processMfContent(editor)
     }
     super.processTransferableData(project, editor, bounds, caretOffset, indented, values)
   }

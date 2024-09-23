@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -16,7 +20,6 @@ import com.intellij.ide.projectView.SettingsProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -59,7 +62,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
     init()
   }
 
-  private val contentProvider = service<UIComponentManager>().getExplorerContentProvider(explorer::class.java)
+  private val contentProvider = UIComponentManager.getService().getExplorerContentProvider(explorer::class.java)
 
   private val descriptor: OpenFileDescriptor?
     get() {
@@ -104,7 +107,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
     val file = virtualFile ?: return
     descriptor?.let { fileDescriptor ->
       if (!file.isDirectory) {
-        val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+        val dataOpsManager = DataOpsManager.getService()
         val contentSynchronizer = dataOpsManager.getContentSynchronizer(file) ?: return
         val doSync = file.isReadable || showYesNoDialog(
           title = "File ${file.name} is not readable",
@@ -133,7 +136,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
             }
             val onSyncSuccessHandler: () -> Unit = {
               dataOpsManager.tryToGetAttributes(file)?.let { attributes ->
-                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
+                AnalyticsService.getService().trackAnalyticsEvent(FileEvent(attributes, FileAction.OPEN))
               }
               runInEdtAndWait {
                 fileDescriptor.navigate(requestFocus)

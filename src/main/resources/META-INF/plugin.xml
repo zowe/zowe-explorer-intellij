@@ -298,6 +298,8 @@ Example of how to see the output:<br/>
 
         <postStartupActivity implementation="eu.ibagroup.formainframe.editor.ProjectStartupActivity"/>
 
+        <postStartupActivity implementation="eu.ibagroup.formainframe.rateus.RateUsStartupActivity"/>
+
         <applicationConfigurable id="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"
                                  displayName="For Mainframe"
                                  provider="eu.ibagroup.formainframe.config.MainframeConfigurableProvider"/>
@@ -340,7 +342,8 @@ Example of how to see the output:<br/>
                   implementationClass="eu.ibagroup.formainframe.filetypes.UnknownDataSetFileType"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigService"
-                            serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.config.ConfigServiceImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestConfigServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.analytics.AnalyticsService"
                             serviceImplementation="eu.ibagroup.formainframe.analytics.AnalyticsServiceImpl"
@@ -350,9 +353,9 @@ Example of how to see the output:<br/>
                             serviceImplementation="eu.ibagroup.formainframe.config.connect.CredentialServiceImpl"
                             testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestCredentialsServiceImpl"/>
 
-
         <applicationService serviceInterface="eu.ibagroup.formainframe.config.ConfigSandbox"
-                            serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.config.ConfigSandboxImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestConfigSandboxImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.DataOpsManager"
                             serviceImplementation="eu.ibagroup.formainframe.dataops.DataOpsManagerImpl"
@@ -376,7 +379,12 @@ Example of how to see the output:<br/>
                             serviceImplementation="eu.ibagroup.formainframe.editor.ChangeContentServiceImpl"/>
 
         <applicationService serviceInterface="eu.ibagroup.formainframe.dataops.content.service.SyncProcessService"
-                            serviceImplementation="eu.ibagroup.formainframe.dataops.content.service.SyncProcessServiceImpl"/>
+                            serviceImplementation="eu.ibagroup.formainframe.dataops.content.service.SyncProcessServiceImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestSyncProcessServiceImpl"/>
+
+        <applicationService serviceInterface="eu.ibagroup.formainframe.telemetry.NotificationsService"
+                            serviceImplementation="eu.ibagroup.formainframe.telemetry.NotificationsServiceImpl"
+                            testServiceImplementation="eu.ibagroup.formainframe.testutils.testServiceImpl.TestNotificationsServiceImpl"/>
 
         <statusBarWidgetFactory id="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="eu.ibagroup.formainframe.editor.status.MfLineSeparatorWidgetFactory"

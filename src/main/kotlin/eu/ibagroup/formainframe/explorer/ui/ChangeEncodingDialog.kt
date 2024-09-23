@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -108,11 +112,11 @@ class ChangeEncodingDialog(
           doCancelAction()
           return
         }
-        val contentSynchronizer = DataOpsManager.instance.getContentSynchronizer(virtualFile)
+        val contentSynchronizer = DataOpsManager.getService().getContentSynchronizer(virtualFile)
         val syncProvider = DocumentedSyncProvider(virtualFile)
         if (
           contentSynchronizer?.isFileUploadNeeded(syncProvider) == true &&
-          (ConfigService.instance.isAutoSyncEnabled || showSyncOnReloadDialog(virtualFile.name, project))
+          (ConfigService.getService().isAutoSyncEnabled || showSyncOnReloadDialog(virtualFile.name, project))
         ) {
           runModalTask("Syncing ${virtualFile.name}", project, cancellable = true) { progressIndicator ->
             attributes.charset = virtualFile.charset
@@ -217,7 +221,7 @@ class ChangeEncodingDialog(
     val result = Messages.showDialog(
       XmlStringUtil.wrapInHtml(
         IdeBundle.message("encoding.do.not.convert.message", charset.displayName()) + "<br><br>" +
-        IdeBundle.message("encoding.unsupported.characters.message", charset.displayName())
+          IdeBundle.message("encoding.unsupported.characters.message", charset.displayName())
       ),
       IdeBundle.message("incompatible.encoding.dialog.title", charset.displayName()),
       arrayOf(IdeBundle.message("button.convert.anyway"), CommonBundle.getCancelButtonText()),
