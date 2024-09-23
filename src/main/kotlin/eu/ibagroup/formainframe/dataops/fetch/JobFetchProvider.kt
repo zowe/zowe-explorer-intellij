@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.fetch
@@ -70,6 +74,10 @@ class JobFetchProvider(dataOpsManager: DataOpsManager) :
     val response = if (query.request.jobId.isNotEmpty()) {
       api<JESApi>(query.connectionConfig).getFilteredJobs(
         basicCredentials = query.connectionConfig.authToken,
+        // "owner=*" and "prefix=*" are needed to get the job by job ID.
+        // If we do not provide the values, the default ones will be used (the current user as owner)
+        owner = "*",
+        prefix = "*",
         jobId = query.request.jobId,
         execData = ExecData.YES
       ).cancelByIndicator(progressIndicator).execute()

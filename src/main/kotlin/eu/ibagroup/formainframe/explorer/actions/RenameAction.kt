@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -13,7 +17,6 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,6 +39,7 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
@@ -74,8 +78,7 @@ class RenameAction : AnAction() {
       cancellable = true
     ) {
       runCatching {
-        node.explorer.componentManager
-          .service<DataOpsManager>()
+        DataOpsManager.getService()
           .performOperation(
             operation = RenameOperation(
               file = file,
@@ -89,7 +92,7 @@ class RenameAction : AnAction() {
           node.parent?.cleanCacheIfPossible(cleanBatchedQuery = true)
         }
         .onFailure {
-          node.explorer.reportThrowable(it, project)
+          NotificationsService.getService().notifyError(it, project)
         }
     }
   }
@@ -140,7 +143,7 @@ class RenameAction : AnAction() {
         val dialog = RenameDialog(e.project, type, selectedNodeData, this, state)
         if (dialog.showAndGet()) {
           runRenameOperation(e.project, file, type, attributes, dialog.state, node)
-          service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
+          AnalyticsService.getService().trackAnalyticsEvent(FileEvent(attributes, FileAction.RENAME))
         }
       }
     }
@@ -176,7 +179,7 @@ class RenameAction : AnAction() {
     }
     val file = selectedNodesData[0].file
     if (file != null) {
-      val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
+      val attributes = DataOpsManager.getService().tryToGetAttributes(file) as? RemoteDatasetAttributes
       if (attributes?.hasDsOrg == false) {
         e.presentation.isEnabledAndVisible = false
         return

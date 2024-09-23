@@ -1,16 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -25,7 +29,6 @@ import eu.ibagroup.formainframe.dataops.attributes.Requester
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.log
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
@@ -53,7 +56,7 @@ class DependentFileContentSynchronizerTest : WithApplicationShouldSpec({
       isResponsed = false
     }
 
-    val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
     var responseStringFun: () -> Response<String>
     var responseVoidFun: () -> Response<Void>?
     var responseStr: Response<String> = Response.success(200, "Successful request")

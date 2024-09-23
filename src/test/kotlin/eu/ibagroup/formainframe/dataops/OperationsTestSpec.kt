@@ -1,16 +1,19 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -39,7 +42,10 @@ import eu.ibagroup.formainframe.dataops.operations.mover.RemoteToLocalFileMover
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.cancelByIndicator
+import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.changeEncodingTo
+import eu.ibagroup.formainframe.utils.setUssFileTag
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
@@ -102,7 +108,7 @@ class OperationsTestSpec : WithApplicationShouldSpec({
   context("dataops module: operations/ZOSIntoOperationRunner") {
     val zosInfoOperationRunner = ZOSInfoOperationRunner()
 
-    val zosmfApi = ApplicationManager.getApplication().service<ZosmfApi>() as TestZosmfApiImpl
+    val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
     zosmfApi.testInstance = mockk()
 
     val progressIndicatorMockk = mockk<ProgressIndicator>()
@@ -175,8 +181,8 @@ class OperationsTestSpec : WithApplicationShouldSpec({
     should("perform dataset member rename") {}
   }
   context("dataops module: operations/mover") {
-    val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
-    val zosmfApi = ApplicationManager.getApplication().service<ZosmfApi>() as TestZosmfApiImpl
+    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+    val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
     beforeEach {
       dataOpsManager.testInstance = mockk()
       zosmfApi.testInstance = mockk()

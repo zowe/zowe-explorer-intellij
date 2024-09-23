@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -15,7 +19,6 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -24,7 +27,7 @@ import eu.ibagroup.formainframe.analytics.events.AnalyticsEvent
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.common.ui.showUntilDone
-import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
@@ -33,10 +36,21 @@ import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.DSMaskNode
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
+import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
+import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
+import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
+import eu.ibagroup.formainframe.explorer.ui.FilesWorkingSetNode
+import eu.ibagroup.formainframe.explorer.ui.JobNode
+import eu.ibagroup.formainframe.explorer.ui.LibraryNode
+import eu.ibagroup.formainframe.explorer.ui.NodeData
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestAnalyticsServiceImpl
-import eu.ibagroup.formainframe.utils.service
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestNotificationsServiceImpl
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
@@ -44,7 +58,6 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.zowe.kotlinsdk.DatasetOrganization
@@ -67,13 +80,13 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
       var isAnalitycsTracked = false
       var isThrowableReported = false
       val filesWorkingSetConfigMock = mockk<FilesWorkingSetConfig>()
-      val dataOpsManagerMock = mockk<DataOpsManager>()
       val componentManagerMock = mockk<ComponentManager>()
       val explorerMock = mockk<Explorer<ConnectionConfig, *>>()
+      val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+
       lateinit var addMaskActionInst: AnAction
 
-      val analyticsService =
-        ApplicationManager.getApplication().service<AnalyticsService>() as TestAnalyticsServiceImpl
+      val analyticsService = AnalyticsService.getService() as TestAnalyticsServiceImpl
       analyticsService.testInstance = object : TestAnalyticsServiceImpl() {
         override fun trackAnalyticsEvent(event: AnalyticsEvent) {
           isAnalitycsTracked = true
@@ -91,15 +104,17 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
 
         every { explorerMock.componentManager } returns componentManagerMock
 
-        every {
-          explorerMock.reportThrowable(any<Throwable>(), any<Project>())
-        } answers {
-          isThrowableReported = true
+        notificationsService.testInstance = object : TestNotificationsServiceImpl() {
+          override fun notifyError(
+            t: Throwable,
+            project: Project?,
+            custTitle: String?,
+            custDetailsShort: String?,
+            custDetailsLong: String?
+          ) {
+            isThrowableReported = true
+          }
         }
-
-        every {
-          componentManagerMock.hint(DataOpsManager::class).getService(DataOpsManager::class.java)
-        } returns dataOpsManagerMock
 
         val cleanInvalidateOnExpandMock: (
           node: ExplorerTreeNode<*, *>,
@@ -158,10 +173,15 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        mockkObject(configCrudable)
         every {
-          configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
+          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.of(filesWorkingSetConfigMock)
+        every {
+          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
+        } answers {
+          isUpdateOnConfigCrudableCalled = true
+          Optional.of(mockk())
+        }
 
         every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
         every { nodeMock.parent } returns dsMaskNodeMock
@@ -170,17 +190,14 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
         every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
-        every {
-          dataOpsManagerMock.hint(Boolean::class).performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-        } answers {
-          isOperationPerformed = true
-          true
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            isOperationPerformed = true
+            return true as R
+          }
         }
         every { workingSetMock.explorer } returns explorerMock
-        every { configCrudable.update(any(), any()) } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
         addMaskActionInst.actionPerformed(anActionEventMock)
@@ -234,10 +251,15 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        mockkObject(configCrudable)
         every {
-          configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
+          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.of(filesWorkingSetConfigMock)
+        every {
+          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
+        } answers {
+          isUpdateOnConfigCrudableCalled = true
+          Optional.of(mockk())
+        }
 
         every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
         every { nodeMock.parent } returns dsMaskNodeMock
@@ -246,17 +268,14 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
         every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
-        every {
-          dataOpsManagerMock.hint(Boolean::class).performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-        } answers {
-          isOperationPerformed = true
-          true
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            isOperationPerformed = true
+            return true as R
+          }
         }
         every { workingSetMock.explorer } returns explorerMock
-        every { configCrudable.update(any(), any()) } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
         addMaskActionInst.actionPerformed(anActionEventMock)
@@ -307,10 +326,15 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        mockkObject(configCrudable)
         every {
-          configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
+          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.of(filesWorkingSetConfigMock)
+        every {
+          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
+        } answers {
+          isUpdateOnConfigCrudableCalled = true
+          Optional.of(mockk())
+        }
 
         every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
         every { nodeMock.parent } returns dsMaskNodeMock
@@ -319,17 +343,14 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
         every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
-        every {
-          dataOpsManagerMock.hint(Boolean::class).performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-        } answers {
-          isOperationPerformed = true
-          true
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            isOperationPerformed = true
+            return true as R
+          }
         }
         every { workingSetMock.explorer } returns explorerMock
-        every { configCrudable.update(any(), any()) } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
         addMaskActionInst.actionPerformed(anActionEventMock)
@@ -377,10 +398,15 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        mockkObject(configCrudable)
         every {
-          configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
+          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.of(filesWorkingSetConfigMock)
+        every {
+          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
+        } answers {
+          isUpdateOnConfigCrudableCalled = true
+          Optional.of(mockk())
+        }
 
         every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
         every { nodeMock.parent } returns dsMaskNodeMock
@@ -389,17 +415,14 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
         every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
-        every {
-          dataOpsManagerMock.hint(Boolean::class).performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-        } answers {
-          isOperationPerformed = true
-          true
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            isOperationPerformed = true
+            return true as R
+          }
         }
         every { workingSetMock.explorer } returns explorerMock
-        every { configCrudable.update(any(), any()) } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
@@ -446,13 +469,18 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
 
         val dsMaskMock = mockk<DSMask>()
-        every {dsMaskMock.mask} returns "test.test.*"
-        every {filesWorkingSetConfigMock.dsMasks} returns mutableListOf(dsMaskMock)
+        every { dsMaskMock.mask } returns "test.test.*"
+        every { filesWorkingSetConfigMock.dsMasks } returns mutableListOf(dsMaskMock)
 
-        mockkObject(configCrudable)
         every {
-          configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
+          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.of(filesWorkingSetConfigMock)
+        every {
+          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
+        } answers {
+          isUpdateOnConfigCrudableCalled = true
+          Optional.of(mockk())
+        }
 
         every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
         every { nodeMock.parent } returns dsMaskNodeMock
@@ -461,17 +489,14 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
         every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
-        every {
-          dataOpsManagerMock.hint(Boolean::class).performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-        } answers {
-          isOperationPerformed = true
-          true
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            isOperationPerformed = true
+            return true as R
+          }
         }
         every { workingSetMock.explorer } returns explorerMock
-        every { configCrudable.update(any(), any()) } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
@@ -515,10 +540,15 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        mockkObject(configCrudable)
         every {
-          configCrudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
+          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
         } returns Optional.ofNullable(null)
+        every {
+          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
+        } answers {
+          isUpdateOnConfigCrudableCalled = true
+          Optional.of(mockk())
+        }
 
         every { nodeMock.parent } returns null
         every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
@@ -526,17 +556,14 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
         every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
-        every {
-          dataOpsManagerMock.hint(Boolean::class).performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-        } answers {
-          isOperationPerformed = true
-          true
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            isOperationPerformed = true
+            return true as R
+          }
         }
         every { workingSetMock.explorer } returns explorerMock
-        every { configCrudable.update(any(), any()) } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
@@ -582,10 +609,11 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
-        every {
-          dataOpsManagerMock.hint(Boolean::class).performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
-        } answers {
-          throw Exception(exceptionMsg)
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            throw Exception(exceptionMsg)
+          }
         }
         every { workingSetMock.explorer } returns explorerMock
 

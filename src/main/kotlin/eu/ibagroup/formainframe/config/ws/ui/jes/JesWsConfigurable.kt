@@ -1,18 +1,22 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.ws.ui.jes
 
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.config.sandboxCrudable
+import eu.ibagroup.formainframe.config.ConfigSandbox
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JobFilterState
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsConfigurable
@@ -25,8 +29,9 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  */
 class JesWsConfigurable
   : AbstractWsConfigurable<JesWorkingSetConfig, JesWsTableModel, JesWorkingSetDialogState>("JES Working Sets") {
+
   override val wsConfigClass = JesWorkingSetConfig::class.java
-  override val wsTableModel = JesWsTableModel(sandboxCrudable)
+  override val wsTableModel = JesWsTableModel(ConfigSandbox.getService().crudable)
 
   override fun emptyConfig() = JesWorkingSetConfig()
 
@@ -41,7 +46,7 @@ class JesWsConfigurable
    * @param state state of dialog.
    */
   override fun createAddDialog(crudable: Crudable, state: JesWorkingSetDialogState) {
-    JesWsDialog(sandboxCrudable, state)
+    JesWsDialog(ConfigSandbox.getService().crudable, state)
       .apply {
         if (showAndGet()) {
           wsTableModel.addRow(state.workingSetConfig)
@@ -56,7 +61,7 @@ class JesWsConfigurable
    */
   override fun createEditDialog(selected: JesWorkingSetDialogState) {
     JesWsDialog(
-      sandboxCrudable,
+      ConfigSandbox.getService().crudable,
       selected.apply { mode = DialogMode.UPDATE }).apply {
       if (showAndGet()) {
         val idx = wsTable.selectedRow
@@ -66,7 +71,6 @@ class JesWsConfigurable
       }
     }
   }
-
 
 }
 

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.common.ui
@@ -24,7 +28,6 @@ import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
 import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeView
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.utils.castOrNull
-import eu.ibagroup.formainframe.utils.service
 import org.jetbrains.concurrency.Promise
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
@@ -51,12 +54,15 @@ fun <S : AbstractTreeStructure> StructureTreeModel<S>.promisePath(
  * @param treePath path to a node in the tree.
  * @return node data [NodeData].
  */
-fun  <Con: ConnectionConfigBase> makeNodeDataFromTreePath(explorer: Explorer<Con, *>, treePath: TreePath?): NodeData<Con>? {
+fun <Con : ConnectionConfigBase> makeNodeDataFromTreePath(
+  explorer: Explorer<Con, *>,
+  treePath: TreePath?
+): NodeData<Con>? {
   val descriptor = (treePath?.lastPathComponent as DefaultMutableTreeNode).userObject
     .castOrNull<ExplorerTreeNode<Con, *>>() ?: return null
   val file = descriptor.virtualFile
   val attributes = if (file != null) {
-    explorer.componentManager.service<DataOpsManager>().tryToGetAttributes(file)
+    DataOpsManager.getService().tryToGetAttributes(file)
   } else null
   return NodeData(descriptor, file, attributes)
 }
@@ -74,7 +80,7 @@ fun TreePath.getVirtualFile(): VirtualFile? {
  * @param node node to remove.
  * @param view explorer view from which to return node.
  */
-fun <Connection: ConnectionConfigBase> cleanInvalidateOnExpand(
+fun <Connection : ConnectionConfigBase> cleanInvalidateOnExpand(
   node: ExplorerTreeNode<*, *>,
   view: ExplorerTreeView<Connection, *, *>
 ) {

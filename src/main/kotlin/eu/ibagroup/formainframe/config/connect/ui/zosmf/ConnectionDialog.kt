@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.connect.ui.zosmf
@@ -15,7 +19,6 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
@@ -27,28 +30,48 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.common.ui.showUntilDone
-import eu.ibagroup.formainframe.config.configCrudable
-import eu.ibagroup.formainframe.config.connect.*
+import eu.ibagroup.formainframe.config.ConfigService
+import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.CredentialService
+import eu.ibagroup.formainframe.config.connect.getPassword
+import eu.ibagroup.formainframe.config.connect.getUsername
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialog
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialogState
+import eu.ibagroup.formainframe.config.connect.whoAmI
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.operations.*
+import eu.ibagroup.formainframe.dataops.operations.ChangePasswordOperation
+import eu.ibagroup.formainframe.dataops.operations.InfoOperation
+import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
 import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
-import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import eu.ibagroup.formainframe.utils.crudable.getAll
+import eu.ibagroup.formainframe.utils.removeTrailingSlashes
+import eu.ibagroup.formainframe.utils.runIfTrue
+import eu.ibagroup.formainframe.utils.runTask
+import eu.ibagroup.formainframe.utils.validateConnectionName
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateZosmfUrl
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
 import java.awt.Point
 import java.util.*
-import javax.swing.*
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPasswordField
+import javax.swing.JTextField
 
 /** Dialog to add a new connection */
 class ConnectionDialog(
@@ -62,21 +85,25 @@ class ConnectionDialog(
    * In case of DialogMode.UPDATE takes the last successful state from crudable, takes default state otherwise
    */
   private val lastSuccessfulState: ConnectionDialogState =
-    if(state.mode == DialogMode.UPDATE) crudable.find<ConnectionConfig> { it.uuid == state.connectionUuid }
+    if (state.mode == DialogMode.UPDATE) crudable.find<ConnectionConfig> { it.uuid == state.connectionUuid }
       .findAny()
       .orElseGet { state.connectionConfig }
       .toDialogState(crudable) else ConnectionDialogState()
+
   companion object {
 
     /**
      * Check if only the connection name has changed in the connection dialog
      */
-    private fun isOnlyConnectionNameChanged(initialState: ConnectionDialogState, state: ConnectionDialogState): Boolean {
+    private fun isOnlyConnectionNameChanged(
+      initialState: ConnectionDialogState,
+      state: ConnectionDialogState
+    ): Boolean {
       return initialState.connectionName != state.connectionName &&
-              initialState.connectionUrl == state.connectionUrl &&
-              initialState.username == state.username &&
-              initialState.password == state.password &&
-              initialState.isAllowSsl == state.isAllowSsl
+        initialState.connectionUrl == state.connectionUrl &&
+        initialState.username == state.username &&
+        initialState.password == state.password &&
+        initialState.isAllowSsl == state.isAllowSsl
     }
 
     /**
@@ -84,7 +111,7 @@ class ConnectionDialog(
      * @param dialog
      * @return returns true if there are violations found, if no violations were found then returns false as a result of validation
      */
-    private fun validateSecureConnectionUsage(dialog : ConnectionDialog) : Boolean {
+    private fun validateSecureConnectionUsage(dialog: ConnectionDialog): Boolean {
       val urlToCheck = dialog.urlTextField.text.trim().startsWith("http://", true)
       val sslEnabledCheck = dialog.sslCheckbox.isSelected
       if (urlToCheck || sslEnabledCheck) {
@@ -119,15 +146,21 @@ class ConnectionDialog(
             return@showUntilDone false
           }
 
-          val newTestedConnConfig : ConnectionConfig
+          val newTestedConnConfig: ConnectionConfig
           if (initialState.mode == DialogMode.UPDATE) {
             if (isOnlyConnectionNameChanged(initState, state)) {
               return@showUntilDone true
             }
             val newState = state.clone()
             newState.initEmptyUuids(crudable)
-            newTestedConnConfig = ConnectionConfig(newState.connectionUuid, newState.connectionName, newState.connectionUrl, newState.isAllowSsl, newState.zVersion)
-            CredentialService.instance.setCredentials(
+            newTestedConnConfig = ConnectionConfig(
+              newState.connectionUuid,
+              newState.connectionName,
+              newState.connectionUrl,
+              newState.isAllowSsl,
+              newState.zVersion
+            )
+            CredentialService.getService().setCredentials(
               connectionConfigUuid = newState.connectionUuid,
               username = newState.username,
               password = newState.password
@@ -135,17 +168,18 @@ class ConnectionDialog(
           } else {
             state.initEmptyUuids(crudable)
             newTestedConnConfig = state.connectionConfig
-            CredentialService.instance.setCredentials(
+            CredentialService.getService().setCredentials(
               connectionConfigUuid = state.connectionUuid,
               username = state.username,
-              password = state.password)
+              password = state.password
+            )
           }
           val throwable = runTask(title = "Testing Connection to ${newTestedConnConfig.url}", project = project) {
             return@runTask try {
               runCatching {
-                service<DataOpsManager>().performOperation(InfoOperation(newTestedConnConfig), it)
+                DataOpsManager.getService().performOperation(InfoOperation(newTestedConnConfig), it)
               }.onSuccess {
-                val systemInfo = service<DataOpsManager>().performOperation(ZOSInfoOperation(newTestedConnConfig))
+                val systemInfo = DataOpsManager.getService().performOperation(ZOSInfoOperation(newTestedConnConfig))
                 state.zVersion = when (systemInfo.zosVersion) {
                   "04.25.00" -> ZVersion.ZOS_2_2
                   "04.26.00" -> ZVersion.ZOS_2_3
@@ -197,7 +231,7 @@ class ConnectionDialog(
             connectionDialog = ConnectionDialog(crudable, state, project)
             // In case of any error during connection, we should clean the owner field, because actually it cannot be retrieved at this moment
             // Clear owner field only in case the user pressed "add anyway", leave old owner as it is otherwise
-            addAnyway.also { runIfTrue(it) { state.owner = ""} }
+            addAnyway.also { runIfTrue(it) { state.owner = "" } }
           } else {
             runTask(title = "Retrieving user information", project = project) {
               // Could be empty if TSO request fails
@@ -218,7 +252,7 @@ class ConnectionDialog(
         EXPLORER_NOTIFICATION_GROUP_ID,
         "Unable to retrieve USS username",
         "Cannot retrieve USS username. An error happened while executing TSO request.\n" +
-            "When working with USS files the same username will be used that was specified by the user when connecting.",
+          "When working with USS files the same username will be used that was specified by the user when connecting.",
         NotificationType.WARNING
       ).let {
         Notifications.Bus.notify(it, project)
@@ -335,7 +369,7 @@ class ConnectionDialog(
           row {
             button("Change user password") {
               val changePasswordInitState = ChangePasswordDialogState(state.username, state.password, "")
-              val dataOpsManager = service<DataOpsManager>()
+              val dataOpsManager = DataOpsManager.getService()
               showUntilDone(
                 initialState = changePasswordInitState,
                 factory = { ChangePasswordDialog(changePasswordInitState, project) },
@@ -394,10 +428,12 @@ class ConnectionDialog(
                         balloon.show(relativePoint, Balloon.Position.below)
                       }
 
-                      configCrudable.getAll<ConnectionConfig>().filter { it.url == state.connectionUrl }
-                        .filter { CredentialService.instance.getUsernameByKey(it.uuid) == state.username }
+                      ConfigService.getService().crudable
+                        .getAll<ConnectionConfig>()
+                        .filter { it.url == state.connectionUrl }
+                        .filter { CredentialService.getService().getUsernameByKey(it.uuid) == state.username }
                         .forEach {
-                          CredentialService.instance.setCredentials(
+                          CredentialService.getService().setCredentials(
                             connectionConfigUuid = it.uuid,
                             username = state.username,
                             password = state.password
@@ -441,7 +477,7 @@ class ConnectionDialog(
       state.isAllowSsl = lastSuccessfulState.isAllowSsl
       state.zVersion = lastSuccessfulState.zVersion
       runBackgroundableTask("Setting credentials", project, false) {
-        CredentialService.instance.setCredentials(
+        CredentialService.getService().setCredentials(
           connectionConfigUuid = lastSuccessfulState.connectionUuid,
           username = getUsername(lastSuccessfulState.connectionConfig),
           password = getPassword(lastSuccessfulState.connectionConfig)
@@ -455,15 +491,15 @@ class ConnectionDialog(
    * @param components - dialog components which have to be resolved to valid values
    * @return result of the pressed button
    */
-  private fun showSelfSignedUsageWarningDialog(vararg components : Component) : Boolean {
+  private fun showSelfSignedUsageWarningDialog(vararg components: Component): Boolean {
     // default return backToSafety
     val backToSafety = true
     val choice = Messages.showDialog(
       project,
       "Creating an unsecure connection (HTTP instead of HTTP(s) and/or using self-signed certificates) is not recommended.\n" +
-          "You do this at your own peril and risk, and we do not bear any responsibility for the possible consequences of using this type of connection.\n" +
-          "Please contact your system administrator to configure your system to be able to create a secure connection.\n\n" +
-          "Do you want to proceed anyway?",
+        "You do this at your own peril and risk, and we do not bear any responsibility for the possible consequences of using this type of connection.\n" +
+        "Please contact your system administrator to configure your system to be able to create a secure connection.\n\n" +
+        "Do you want to proceed anyway?",
       "Attempt to create an unsecured connection",
       arrayOf(
         "Back to safety",
@@ -481,6 +517,7 @@ class ConnectionDialog(
         }
         backToSafety
       }
+
       1 -> !backToSafety
       else -> backToSafety
     }

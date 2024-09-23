@@ -1,17 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.utils.clone
@@ -50,38 +53,6 @@ data class SandboxState(
 @Suppress("UNCHECKED_CAST")
 internal fun <T> classToList(clazz: Class<out T>, state: SandboxState): MutableList<T>? {
   return if (clazz == Credentials::class.java) state.credentials as MutableList<T> else state.configState.get(clazz)
-}
-
-/**
- * Check is the sandbox modified for the specified config class
- * @param clazz the class to check are the configs of this class modified
- */
-fun <T> isSandboxModified(clazz: Class<out T>): Boolean {
-  return ConfigSandbox.instance.isModified(clazz)
-}
-
-/**
- * Check is the sandbox modified for the specified config class
- * @param T the class to check are the configs of this class modified
- */
-inline fun <reified T> isSandboxModified(): Boolean {
-  return isSandboxModified(T::class.java)
-}
-
-/**
- * Rollback the config sandbox instance to have the values from the config service
- * @param clazz the class of configs to rollback in the config sandbox
- */
-fun <T> rollbackSandbox(clazz: Class<out T>) {
-  ConfigSandbox.instance.rollback(clazz)
-}
-
-/**
- * Rollback the config sandbox instance to have the values from the config service
- * @param T the class of configs to rollback in the config sandbox
- */
-inline fun <reified T> rollbackSandbox() {
-  rollbackSandbox(T::class.java)
 }
 
 /**
@@ -169,14 +140,14 @@ class ConfigSandboxImpl : ConfigSandbox {
           ?.let { list ->
             if (clazz.isThe<Credentials>()) {
               with(Crudable.mergeCollections(initialState.credentials, state.credentials)) {
-                val credentialService = CredentialService.instance
+                val credentialService = CredentialService.getService()
                 listOf(toAdd, toUpdate)
                   .flatten()
                   .forEach { credentialService.setCredentials(it.configUuid, it.username, it.password) }
                 toDelete.forEach { credentialService.clearCredentials(it.configUuid) }
               }
             } else {
-              configCrudable.replaceGracefully(clazz, list.stream())
+              ConfigService.getService().crudable.replaceGracefully(clazz, list.stream())
             }
           }
       }
@@ -190,9 +161,11 @@ class ConfigSandboxImpl : ConfigSandbox {
 //      rollbackSandbox<FilesWorkingSetConfig>()
 //      rollbackSandbox<JesWorkingSetConfig>()
 //      rollbackSandbox<Credentials>()
-      ConfigService.instance.getRegisteredConfigClasses().forEach {
-        rollbackSandbox(it)
-      }
+      ConfigService.getService()
+        .getRegisteredConfigClasses()
+        .forEach {
+          ConfigSandbox.getService().rollback(it)
+        }
     }
   }
 
@@ -207,18 +180,18 @@ class ConfigSandboxImpl : ConfigSandbox {
   override fun <T> rollback(clazz: Class<out T>) {
     synchronized(stateLock) {
       val current = if (clazz.isThe<Credentials>()) {
-        service<ConfigService>()
+        ConfigService.getService()
           .getRegisteredConfigDeclarations()
           .filter { it.useCredentials }
-          .flatMap { configCrudable.getAll(it.clazz).toList() }
+          .flatMap { ConfigService.getService().crudable.getAll(it.clazz).toList() }
           .filterIsInstance<EntityWithUuid>()
           .map {
-            with(CredentialService.instance) {
+            with(CredentialService.getService()) {
               Credentials(it.uuid, getUsernameByKey(it.uuid) ?: "", getPasswordByKey(it.uuid) ?: "")
             }
           }
       } else {
-        configCrudable.getAll(clazz).toList()
+        ConfigService.getService().crudable.getAll(clazz).toList()
       }
       listOfNotNull(classToList(clazz, state), classToList(clazz, initialState))
         .forEach { list ->

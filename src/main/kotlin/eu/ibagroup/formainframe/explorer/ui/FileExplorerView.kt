@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -27,7 +31,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
@@ -49,6 +52,7 @@ import eu.ibagroup.formainframe.dataops.operations.DeleteOperation
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.getParentsChain
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -62,7 +66,6 @@ import java.util.concurrent.locks.ReentrantLock
 import javax.swing.tree.TreePath
 import kotlin.concurrent.withLock
 
-
 /**
  * Data key for extracting current instance of FileExplorerView.
  * @see FileExplorerView
@@ -71,7 +74,6 @@ import kotlin.concurrent.withLock
 const val FILE_EXPLORER_CONTEXT_MENU = "File Explorer"
 
 // TODO: move providers somewhere?
-// TODO: Yes. Try to do it. You will get a lot of fun :)
 /**
  * File Explorer tree view implementation.
  * @param explorer instance of units explorer (logical representation of explorer view data).
@@ -188,8 +190,8 @@ class FileExplorerView(
           }
           forEach {
             it.file?.let { file ->
-              service<DataOpsManager>().tryToGetAttributes(file)?.let { attrs ->
-                service<AnalyticsService>().trackAnalyticsEvent(FileEvent(attrs, FileAction.COPY))
+              DataOpsManager.getService().tryToGetAttributes(file)?.let { attrs ->
+                AnalyticsService.getService().trackAnalyticsEvent(FileEvent(attrs, FileAction.COPY))
               }
             }
           }
@@ -438,7 +440,8 @@ class FileExplorerView(
     /** Deletes files corresponding to the selected nodes data. */
     override fun deleteElement(dataContext: DataContext) {
       val selected = mySelectedNodesData
-      selected.map { it.node }.filterIsInstance<FilesWorkingSetNode>()
+      selected.map { it.node }
+        .filterIsInstance<FilesWorkingSetNode>()
         .forEach {
           if (
             showYesNoDialog(
@@ -451,7 +454,8 @@ class FileExplorerView(
             explorer.disposeUnit(it.unit as FilesWorkingSet)
           }
         }
-      selected.map { it.node }.filterIsInstance<DSMaskNode>()
+      selected.map { it.node }
+        .filterIsInstance<DSMaskNode>()
         .filter { explorer.isUnitPresented(it.unit) }
         .forEach {
           if (
@@ -471,11 +475,13 @@ class FileExplorerView(
             it.unit.removeMask(it.value)
           }
         }
-      selected.map { it.node }.filter { it is UssDirNode && it.isUssMask }
-        .filter { explorer.isUnitPresented((it as UssDirNode).unit) }
+      selected.map { it.node }
+        .filterIsInstance<UssDirNode>()
+        .filter { it.isUssMask && explorer.isUnitPresented(it.unit) }
         .forEach {
-          val node = it as UssDirNode
-          if (showYesNoDialog(
+          val node = it
+          if (
+            showYesNoDialog(
               title = "Deletion of Uss Path Root ${node.value.path}",
               message = "Do you want to delete this USS path root from configs? Note: all files under it will be untouched",
               project = project,
@@ -494,7 +500,8 @@ class FileExplorerView(
       val nodeAndFilePairs = optimizeDeletion(selected)
       if (nodeAndFilePairs.isNotEmpty()) {
         val files = nodeAndFilePairs.map { it.second }.toSet().toList()
-        if (showYesNoDialog(
+        if (
+          showYesNoDialog(
             title = "Confirm Files Deletion",
             message = "Are you sure want to delete ${files.size} file(s)?",
             project = project,
@@ -517,10 +524,15 @@ class FileExplorerView(
                 indicator.text = "Deleting file ${op.file.name}"
                 runCatching {
                   dataOpsManager.performOperation(op, indicator)
-                }.onFailure { explorer.reportThrowable(it, project) }
-                indicator.fraction = indicator.fraction + 1.0 / filteredFiles.size
+                }
+                  .onFailure {
+                    NotificationsService.getService().notifyError(it, project)
+                  }
+                indicator.fraction += 1.0 / filteredFiles.size
               }
-            filteredNodeAndFilePairs.map { it.first }.mapNotNull { it.node.parent }.distinctBy { it.path }
+            filteredNodeAndFilePairs.map { it.first }
+              .mapNotNull { it.node.parent }
+              .distinctBy { it.path }
               .filterIsInstance<FileFetchNode<*, *, *, *, *, *>>()
               .forEach {
                 it.cleanCache(
@@ -558,9 +570,8 @@ class FileExplorerView(
       }
       return nodeDataAndPathFiltered.map { it.first }.filter {
         val file = it.file ?: return@filter false
-        explorer.componentManager.service<DataOpsManager>().isOperationSupported(
-          DeleteOperation(file, dataOpsManager)
-        )
+        DataOpsManager.getService()
+          .isOperationSupported(DeleteOperation(file, dataOpsManager))
       }.mapNotNull { Pair(it, it.file ?: return@mapNotNull null) }
     }
 
@@ -584,8 +595,8 @@ class FileExplorerView(
       if (nodesTypes.map { it::class.simpleName }.distinct().size == 1 &&
         (filesNodes.isEmpty()) &&
         ((nodesTypes[0] is FilesWorkingSetNode) ||
-            (nodesTypes[0] is DSMaskNode) ||
-            (nodesTypes[0] is UssDirNode && (nodesTypes[0] as UssDirNode).isUssMask))
+          (nodesTypes[0] is DSMaskNode) ||
+          (nodesTypes[0] is UssDirNode && (nodesTypes[0] as UssDirNode).isUssMask))
       )
         return true
       val nodeAndFilePairs = optimizeDeletion(selected)
@@ -616,15 +627,18 @@ class FileExplorerView(
    */
   override fun getData(dataId: String): Any? {
     return when {
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> mySelectedNodesData.filter {
-        val file = it.file
-        if (file != null) {
-          val attributes = service<DataOpsManager>().tryToGetAttributes(file) as? RemoteDatasetAttributes
-          val isMigrated = attributes?.isMigrated ?: false
-          !isMigrated
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) ->
+        mySelectedNodesData.filter {
+          val file = it.file
+          if (file != null) {
+            val attributes = DataOpsManager.getService().tryToGetAttributes(file) as? RemoteDatasetAttributes
+            val isMigrated = attributes?.isMigrated ?: false
+            !isMigrated
+          }
+          true
         }
-        true
-      }.map { it.node }.toTypedArray()
+          .map { it.node }
+          .toTypedArray()
 
       PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> copyPasteSupport.copyProvider
       PlatformDataKeys.CUT_PROVIDER.`is`(dataId) -> copyPasteSupport.cutProvider

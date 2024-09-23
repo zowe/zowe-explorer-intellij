@@ -1,18 +1,21 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config
 
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.rd.util.UUID
 import eu.ibagroup.formainframe.config.connect.Credentials
@@ -89,6 +92,11 @@ class ConfigServiceImpl : ConfigService {
       state.settings.batchSize = value
     }
 
+  override var rateUsNotificationDelay: Long
+    get() = state.settings.rateUsNotificationDelay
+    set(value) {
+      state.settings.rateUsNotificationDelay = value
+    }
 
   /**
    * Finds [ConfigDeclaration] for specified class through registered extension points (see [configDeclarations]).
@@ -108,7 +116,7 @@ class ConfigServiceImpl : ConfigService {
     if (!state.collections.containsKey(clazz.name)) {
       state.collections[clazz.name] = mutableListOf<T>()
     }
-    service<ConfigSandbox>().registerConfigClass(clazz)
+    ConfigSandbox.getService().registerConfigClass(clazz)
   }
 
   /**
@@ -147,12 +155,12 @@ internal fun makeCrudableWithoutListeners(
   val crudableLists = CrudableLists(
     addFilter = object : AddFilter {
       override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
-        return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
+        return ConfigService.getService().getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
       }
     },
     updateFilter = object : UpdateFilter {
       override operator fun <T : Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
-        return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
+        return ConfigService.getService().getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
       }
     },
     nextUuidProvider = { UUID.randomUUID().toString() },

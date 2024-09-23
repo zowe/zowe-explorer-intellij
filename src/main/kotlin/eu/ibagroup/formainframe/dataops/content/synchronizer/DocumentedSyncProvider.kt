@@ -1,32 +1,29 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
 
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.changeEncodingTo
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -52,42 +49,11 @@ class DocumentedSyncProvider(
   companion object {
     /**
      * Default throwable handler to show error notification that the file cannot be synchronized due to some error appeared
-     * param file - the file to get the name to display
-     * param th - the throwable to show the error message
+     * @param file the file to get the name to display
+     * @param th the throwable to show the error message
      */
     val defaultOnThrowableHandler: (VirtualFile, Throwable) -> Unit = { _, th ->
-      lateinit var title: String
-      lateinit var details: String
-
-      if (th is CallException) {
-        title = ((th.errorParams?.getOrDefault("message", th.headMessage) ?: "") as String).replaceFirstChar { it.uppercase() }
-        if (title.contains(".")) {
-          title = title.split(".")[0]
-        }
-        details = th.errorParams?.get("details")?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
-        if (details.contains(":")) {
-          details = details.split(":").last()
-        }
-      } else {
-        title = th.message ?: th.toString()
-        details = "Unknown error"
-      }
-      Notification(
-        SYNC_NOTIFICATION_GROUP_ID,
-        title,
-        details,
-        NotificationType.ERROR
-      ).addAction(object : NotificationAction("More") {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          Messages.showErrorDialog(
-            e.project,
-            th.message ?: th.toString(),
-            title
-          )
-        }
-      }).let {
-        Notifications.Bus.notify(it)
-      }
+      NotificationsService.getService().notifyError(th)
     }
 
     /** Default sync success handler. Won't do anything after the sync action is completed until redefined */
@@ -228,7 +194,7 @@ class DocumentedSyncProvider(
    */
   private fun getCurrentCharset(): Charset {
     val ussAttributes =
-      service<DataOpsManager>().tryToGetAttributes(file).castOrNull<RemoteUssAttributes>()
+      DataOpsManager.getService().tryToGetAttributes(file).castOrNull<RemoteUssAttributes>()
     return ussAttributes?.charset ?: DEFAULT_TEXT_CHARSET
   }
 }

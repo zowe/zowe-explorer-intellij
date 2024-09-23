@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -13,7 +17,6 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
@@ -38,7 +41,10 @@ class JesFilterNode(
   parent: ExplorerTreeNode<ConnectionConfig, *>,
   workingSet: JesWorkingSet,
   treeStructure: ExplorerTreeStructureBase,
-  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(SortQueryKeys.JOB_CREATION_DATE, SortQueryKeys.ASCENDING),
+  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(
+    SortQueryKeys.JOB_CREATION_DATE,
+    SortQueryKeys.ASCENDING
+  ),
   override val sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 ) : RemoteMFFileFetchNode<ConnectionConfig, JobsFilter, JobsFilter, JesWorkingSet>(
   jobsFilter, project, parent, workingSet, treeStructure
@@ -72,8 +78,11 @@ class JesFilterNode(
     return "Fetching jobs for ${query.request}"
   }
 
-  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(childrenNodes: List<Node>, sortKeys: List<SortQueryKeys>): List<Node> {
-    val listToReturn : List<Node> = mutableListOf()
+  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(
+    childrenNodes: List<Node>,
+    sortKeys: List<SortQueryKeys>
+  ): List<Node> {
+    val listToReturn: List<Node> = mutableListOf()
     val foundSortKey = sortKeys.firstOrNull { typedSortKeys.contains(it) }
     if (foundSortKey != null) {
       listToReturn.clearAndMergeWith(performJobsSorting(childrenNodes, this@JesFilterNode, foundSortKey))
@@ -90,16 +99,21 @@ class JesFilterNode(
    * @param sortKey
    * @return sorted nodes by specified key
    */
-  private fun performJobsSorting(nodes: List<AbstractTreeNode<*>>, jesFilter: JesFilterNode, sortKey: SortQueryKeys) : List<AbstractTreeNode<*>> {
-    val sortedNodesInternal: List<AbstractTreeNode<*>> = if (jesFilter.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)) {
-      nodes.sortedBy {
-        selector(sortKey).invoke(it)
+  private fun performJobsSorting(
+    nodes: List<AbstractTreeNode<*>>,
+    jesFilter: JesFilterNode,
+    sortKey: SortQueryKeys
+  ): List<AbstractTreeNode<*>> {
+    val sortedNodesInternal: List<AbstractTreeNode<*>> =
+      if (jesFilter.currentSortQueryKeysList.contains(SortQueryKeys.ASCENDING)) {
+        nodes.sortedBy {
+          selector(sortKey).invoke(it)
+        }
+      } else {
+        nodes.sortedByDescending {
+          selector(sortKey).invoke(it)
+        }
       }
-    } else {
-      nodes.sortedByDescending {
-        selector(sortKey).invoke(it)
-      }
-    }
     return sortedNodesInternal.also { sortedNodes.clearAndMergeWith(it) }
   }
 
@@ -108,10 +122,11 @@ class JesFilterNode(
    * @param key - sort key
    * @return String representation of the extracted job info attribute of the virtual file
    */
-  private fun selector(key: SortQueryKeys) : (AbstractTreeNode<*>) -> String? {
+  private fun selector(key: SortQueryKeys): (AbstractTreeNode<*>) -> String? {
     return {
-      val jobInfo = (service<DataOpsManager>().tryToGetAttributes((it as JobNode).value) as RemoteJobAttributes).jobInfo
-      when(key) {
+      val jobInfo =
+        (DataOpsManager.getService().tryToGetAttributes((it as JobNode).value) as RemoteJobAttributes).jobInfo
+      when (key) {
         SortQueryKeys.JOB_NAME -> jobInfo.jobName
         SortQueryKeys.JOB_OWNER -> jobInfo.owner
         SortQueryKeys.JOB_STATUS -> jobInfo.status?.value

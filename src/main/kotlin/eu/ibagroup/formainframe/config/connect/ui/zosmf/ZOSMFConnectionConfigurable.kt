@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.connect.ui.zosmf
@@ -21,7 +25,8 @@ import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.common.ui.tableWithToolbar
-import eu.ibagroup.formainframe.config.*
+import eu.ibagroup.formainframe.config.ConfigSandbox
+import eu.ibagroup.formainframe.config.SandboxListener
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
@@ -45,7 +50,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
    */
   private fun showAndTestConnection(initialState: ConnectionDialogState = ConnectionDialogState()): ConnectionDialogState? {
     return ConnectionDialog.showAndTestConnection(
-      crudable = sandboxCrudable,
+      crudable = ConfigSandbox.getService().crudable,
       parentComponent = panel?.components?.getOrNull(0),
       initialState = initialState
     )
@@ -79,7 +84,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
 
   /** Generates a connection removal warning message that is used for working sets */
   private fun generateRemoveWarningMessage(wsUsages: List<WorkingSetConfig>, wsType: String): StringBuilder {
-    val warningMessageBuilder = StringBuilder("<nobr>The following $wsType working sets use selected connections:</nobr><br>")
+    val warningMessageBuilder =
+      StringBuilder("<nobr>The following $wsType working sets use selected connections:</nobr><br>")
     wsUsages.forEach { wsConfig ->
       warningMessageBuilder.append(wsConfig.name).append(", ")
     }
@@ -92,12 +98,16 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   private fun removeConnectionsWithWarning(selectedConfigs: List<ConnectionDialogState>) {
 
     // TODO: Find working sets for connection using templated way without specific implementation.
-    val filesWorkingSets = sandboxCrudable.getAll<FilesWorkingSetConfig>().toMutableList()
+    val filesWorkingSets = ConfigSandbox.getService().crudable
+      .getAll<FilesWorkingSetConfig>()
+      .toMutableList()
     val filesWsUsages = filesWorkingSets.filter { filesWsConfig ->
       selectedConfigs.any { state -> filesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
     }
 
-    val jesWorkingSet = sandboxCrudable.getAll<JesWorkingSetConfig>().toMutableList()
+    val jesWorkingSet = ConfigSandbox.getService().crudable
+      .getAll<JesWorkingSetConfig>()
+      .toMutableList()
     val jesWsUsages = jesWorkingSet.filter { jesWsConfig ->
       selectedConfigs.any { state -> jesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
     }
@@ -138,19 +148,20 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
    * @param connectionsTable - connections table view object
    * @return An instance of MouseAdapter
    */
-  private fun registerMouseListeners(connectionsTable : ValidatingTableView<ConnectionDialogState>): MouseAdapter = object : MouseAdapter() {
-    override fun mouseClicked(e: MouseEvent) {
-      if (e.clickCount == 2) {
-        connectionsTable.selectedObject?.let {
-          editConnection()
+  private fun registerMouseListeners(connectionsTable: ValidatingTableView<ConnectionDialogState>): MouseAdapter =
+    object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        if (e.clickCount == 2) {
+          connectionsTable.selectedObject?.let {
+            editConnection()
+          }
         }
       }
     }
-  }
 
   /** Create Connections panel in settings */
   override fun createPanel(): DialogPanel {
-    val tableModel = ConnectionsTableModel(sandboxCrudable)
+    val tableModel = ConnectionsTableModel(ConfigSandbox.getService().crudable)
 
     connectionsTableModel = tableModel
     val table = ValidatingTableView(tableModel, disposable!!)
@@ -217,8 +228,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   /** Apply the Connections table changes. Updates UI when the changes were introduced */
   override fun apply() {
     val wasModified = isModified
-    applySandbox<Credentials>()
-    applySandbox<ConnectionConfig>()
+    ConfigSandbox.getService().apply(Credentials::class.java)
+    ConfigSandbox.getService().apply(ConnectionConfig::class.java)
     if (wasModified) {
       panel?.updateUI()
     }
@@ -228,8 +239,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   override fun reset() {
     runBackgroundableTask(title = "Reset changes", cancellable = false) {
       val wasModified = isModified
-      rollbackSandbox<Credentials>()
-      rollbackSandbox<ConnectionConfig>()
+      ConfigSandbox.getService().rollback(Credentials::class.java)
+      ConfigSandbox.getService().rollback(ConnectionConfig::class.java)
       if (wasModified) {
         panel?.updateUI()
       }
@@ -238,8 +249,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
 
   /** Check are the Credentials and Connections sandboxes modified */
   override fun isModified(): Boolean {
-    return isSandboxModified<Credentials>()
-            || isSandboxModified<ConnectionConfig>()
+    return ConfigSandbox.getService().isModified(Credentials::class.java)
+      || ConfigSandbox.getService().isModified(ConnectionConfig::class.java)
   }
 
   override fun cancel() {

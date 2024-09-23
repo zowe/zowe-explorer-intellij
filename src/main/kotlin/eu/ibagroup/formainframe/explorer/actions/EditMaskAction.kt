@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -13,7 +17,7 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.MaskState
@@ -96,7 +100,9 @@ class EditMaskAction : AnAction() {
 
     if (node is DSMaskNode || (node is UssDirNode && node.isUssMask)) {
       val parentWS = node.parent?.value as FilesWorkingSet
-      var wsConfToUpdate = configCrudable.getByUniqueKey<FilesWorkingSetConfig>(parentWS.uuid)?.clone()
+      var wsConfToUpdate = ConfigService.getService().crudable
+        .getByUniqueKey<FilesWorkingSetConfig>(parentWS.uuid)
+        ?.clone()
       if (wsConfToUpdate != null) {
         val initialState =
           if (node is DSMaskNode) MaskState(mask = node.value.mask, type = MaskType.ZOS)
@@ -109,7 +115,7 @@ class EditMaskAction : AnAction() {
             if (node is DSMaskNode) editChangedDSMask(initialState.mask, wsConfToUpdate, changedMaskState)
             else editChangedUssPath(initialState.mask, wsConfToUpdate, changedMaskState)
 
-          configCrudable.update(wsConfToUpdate)
+          ConfigService.getService().crudable.update(wsConfToUpdate)
         }
       }
     }

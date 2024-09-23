@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
+ */
+
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.dnd.aware.DnDAwareTree
@@ -9,7 +23,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater
@@ -38,6 +51,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.attributes.attributesListener
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
@@ -49,10 +63,16 @@ import eu.ibagroup.formainframe.explorer.ExplorerListener
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.UNITS_CHANGED
 import eu.ibagroup.formainframe.explorer.WorkingSet
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.telemetry.NotificationsService
+import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
+import eu.ibagroup.formainframe.utils.getAncestorNodes
+import eu.ibagroup.formainframe.utils.runInEdtAndWait
+import eu.ibagroup.formainframe.utils.rwLocked
+import eu.ibagroup.formainframe.utils.subscribe
 import eu.ibagroup.formainframe.vfs.MFBulkFileListener
 import eu.ibagroup.formainframe.vfs.MFVFilePropertyChangeEvent
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.collectResults
@@ -64,7 +84,9 @@ import javax.swing.tree.TreeSelectionModel
 
 val EXPLORER_VIEW = DataKey.create<ExplorerTreeView<*, *, *>>("explorerView")
 
-fun <ExplorerView : ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
+private val log = log<ExplorerTreeView<*, *, *>>()
+
+fun <ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
   return getData(EXPLORER_VIEW).castOrNull(clazz)
 }
 
@@ -99,7 +121,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
   internal val ignoreVFileDeleteEvents = AtomicBoolean(false)
   internal val ignoreVFSChangeEvents = AtomicBoolean(false)
 
-  protected val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+  protected val dataOpsManager = DataOpsManager.getService()
 
   private var treeModel: AsyncTreeModel
 
@@ -246,6 +268,18 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
               }
             }
           }
+
+          // TODO: rework it so that listener registers once
+          // This listener should only be registered in FileExplorerView
+          if (this@ExplorerTreeView is FileExplorerView) {
+            events.filterIsInstance<VFilePropertyChangeEvent>().filter {
+              it.propertyName == VirtualFile.PROP_NAME && it.file is MFVirtualFile
+            }.forEach {
+              (it.newValue as? String)?.let { newName ->
+                updateAttributesForChildrenInEditor(it.file, newName)
+              }
+            }
+          }
         }
       },
       disposable = this
@@ -349,7 +383,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
           //This was done to avoid duplication of exception messages, since both explorers have a common EventBus and,
           // accordingly, both receive a message about an exception that occurred in one of them.
           if (this@ExplorerTreeView is FileExplorerView) {
-            explorer.reportThrowable(throwable, project)
+            NotificationsService.getService().notifyError(throwable, project)
           }
         }
       },
@@ -426,11 +460,52 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
     val openFiles = fileEditorManager.openFiles
     openFiles.forEach { openFile ->
       if (VfsUtilCore.isAncestor(selectedFile, openFile, false)) {
-        val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(openFile)
+        val contentSynchronizer = DataOpsManager.getService().getContentSynchronizer(openFile)
         val syncProvider = DocumentedSyncProvider(openFile)
         contentSynchronizer?.markAsNotNeededForSync(syncProvider)
         runInEdtAndWait {
           fileEditorManager.closeFile(openFile)
+        }
+      }
+    }
+  }
+
+  /**
+   * Update attributes for files opened in editor if renamed file is an ancestor of these files.
+   * For USS files only
+   */
+  fun updateAttributesForChildrenInEditor(renamedFile: VirtualFile, newName: String) {
+    val dataOpsManager = DataOpsManager.instance
+    val parentAttributes = dataOpsManager.tryToGetAttributes(renamedFile)
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    val openFiles = fileEditorManager.openFiles
+    openFiles.forEach { openFile ->
+      if (VfsUtilCore.isAncestor(renamedFile, openFile, false)) {
+        val oldAttributes = dataOpsManager.tryToGetAttributes(openFile)
+        if (parentAttributes is RemoteUssAttributes && oldAttributes is RemoteUssAttributes) {
+          val relativePathToFile = oldAttributes.path.removePrefix(parentAttributes.path)
+          val newPath = "/${parentAttributes.parentDirPath}/$newName$relativePathToFile"
+          val newAttributes = RemoteUssAttributes(
+            newPath,
+            oldAttributes.isDirectory,
+            oldAttributes.fileMode,
+            oldAttributes.url,
+            oldAttributes.requesters,
+            oldAttributes.length,
+            oldAttributes.uid,
+            oldAttributes.owner,
+            oldAttributes.gid,
+            oldAttributes.groupId,
+            oldAttributes.modificationTime,
+            oldAttributes.symlinkTarget
+          )
+          log.info(
+            "Update attributes for file in editor.\nVirtual file - $openFile.\n" +
+                "Old attributes - $oldAttributes.\nNew attributes - $newAttributes."
+          )
+          val attributesService =
+            dataOpsManager.getAttributesService(oldAttributes::class.java, renamedFile::class.java)
+          attributesService.updateAttributes(oldAttributes, newAttributes)
         }
       }
     }

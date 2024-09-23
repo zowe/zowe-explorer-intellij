@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -67,13 +71,13 @@ abstract class ComputeConflicts(
     val conflictsThatCannotBeOverwritten = conflicts.filter {
       val conflictChild = it.first.findChild(it.second.name)
       (conflictChild?.isDirectory == true && !it.second.isDirectory)
-          || (conflictChild?.isDirectory == false && it.second.isDirectory)
-          || it.first == it.second.parent
+        || (conflictChild?.isDirectory == false && it.second.isDirectory)
+        || it.first == it.second.parent
     }
     conflicts.removeAll(conflictsThatCannotBeOverwritten)
 
     if (conflicts.isNotEmpty() || conflictsThatCannotBeOverwritten.isNotEmpty()) {
-      result =  showMessageAndResolve(conflicts, conflictsThatCannotBeOverwritten)
+      result = showMessageAndResolve(conflicts, conflictsThatCannotBeOverwritten)
     }
 
     return result
@@ -98,7 +102,8 @@ abstract class ComputeConflicts(
 
     allConflicts.forEach { conflict ->
 
-      val newName = dataOpsManager.getNameResolver(conflict.second, conflict.first).resolve(conflict.second, sourceFiles, conflict.first)
+      val newName = dataOpsManager.getNameResolver(conflict.second, conflict.first)
+        .resolve(conflict.second, sourceFiles, conflict.first)
 
       val newNameMessage = "If you select option \"Use new name\", the following name will be selected: <b>$newName</b>"
 

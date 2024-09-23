@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.ws.ui
@@ -15,8 +19,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel
-import eu.ibagroup.formainframe.common.ui.*
-import eu.ibagroup.formainframe.config.*
+import eu.ibagroup.formainframe.common.ui.CrudableTableModel
+import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
+import eu.ibagroup.formainframe.common.ui.ValidatingTableView
+import eu.ibagroup.formainframe.common.ui.tableWithToolbar
+import eu.ibagroup.formainframe.config.ConfigSandbox
+import eu.ibagroup.formainframe.config.SandboxListener
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.isThe
@@ -70,7 +78,7 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
    * @param wsTable - working set table view instance
    * @return An instance of MouseAdapter
    */
-  private fun registerMouseListeners(wsTable : ValidatingTableView<WSConfig>): MouseAdapter = object : MouseAdapter() {
+  private fun registerMouseListeners(wsTable: ValidatingTableView<WSConfig>): MouseAdapter = object : MouseAdapter() {
     override fun mouseClicked(e: MouseEvent) {
       if (e.clickCount == 2) {
         wsTable.selectedObject?.let { selected ->
@@ -111,9 +119,12 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
             configureDecorator {
               disableUpDownActions()
               setAddAction {
-                emptyConfig().toDialogStateAbstract().initEmptyUuids(sandboxCrudable).let { s ->
-                  createAddDialog(sandboxCrudable, s)
-                }
+                emptyConfig()
+                  .toDialogStateAbstract()
+                  .initEmptyUuids(ConfigSandbox.getService().crudable)
+                  .let { s ->
+                    createAddDialog(ConfigSandbox.getService().crudable, s)
+                  }
               }
               setEditAction {
                 wsTable.selectedObject?.let { selected ->
@@ -137,7 +148,7 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
    */
   override fun apply() {
     val wasModified = isModified
-    applySandbox(wsConfigClass)
+    ConfigSandbox.getService().apply(wsConfigClass)
     if (wasModified) {
       panel?.updateUI()
     }
@@ -148,7 +159,7 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
    * @return true if states are equal and false otherwise.
    */
   override fun isModified(): Boolean {
-    return isSandboxModified(wsConfigClass)
+    return ConfigSandbox.getService().isModified(wsConfigClass)
   }
 
   /**
@@ -156,7 +167,7 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
    */
   override fun reset() {
     val wasModified = isModified
-    rollbackSandbox(wsConfigClass)
+    ConfigSandbox.getService().rollback(wsConfigClass)
     if (wasModified) {
       panel?.updateUI()
     }

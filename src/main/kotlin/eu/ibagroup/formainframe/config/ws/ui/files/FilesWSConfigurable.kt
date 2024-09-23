@@ -1,18 +1,22 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.ws.ui.files
 
 import com.intellij.util.containers.toMutableSmartList
 import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.config.sandboxCrudable
+import eu.ibagroup.formainframe.config.ConfigSandbox
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.MaskState
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsConfigurable
@@ -26,7 +30,7 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
 class FilesWSConfigurable :
   AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel, FilesWorkingSetDialogState>("Working Sets") {
   override val wsConfigClass = FilesWorkingSetConfig::class.java
-  override val wsTableModel = WSTableModel(sandboxCrudable)
+  override val wsTableModel = WSTableModel(ConfigSandbox.getService().crudable)
 
   override fun emptyConfig() = FilesWorkingSetConfig()
 
@@ -41,7 +45,7 @@ class FilesWSConfigurable :
    * @param state state of dialog.
    */
   override fun createAddDialog(crudable: Crudable, state: FilesWorkingSetDialogState) {
-    FilesWorkingSetDialog(sandboxCrudable, state)
+    FilesWorkingSetDialog(ConfigSandbox.getService().crudable, state)
       .apply {
         if (showAndGet()) {
           wsTableModel.addRow(state.workingSetConfig)
@@ -56,7 +60,7 @@ class FilesWSConfigurable :
    */
   override fun createEditDialog(selected: FilesWorkingSetDialogState) {
     FilesWorkingSetDialog(
-      sandboxCrudable,
+      ConfigSandbox.getService().crudable,
       selected.apply { mode = DialogMode.UPDATE })
       .apply {
         if (showAndGet()) {

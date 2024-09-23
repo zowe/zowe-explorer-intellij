@@ -1,16 +1,25 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.editor.inspection
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.ide.DataManager
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.properties.charset.Native2AsciiCharset
@@ -73,7 +82,7 @@ class MFLossyEncodingInspection : LocalInspectionTool() {
     val textLength = text.length
     val back = CharBuffer.allocate(textLength) // must be enough, error otherwise
     val outRef = Ref.create<ByteBuffer>()
-    val attributes = DataOpsManager.instance.tryToGetAttributes(file.virtualFile)
+    val attributes = DataOpsManager.getService().tryToGetAttributes(file.virtualFile)
 
     // do not report too many errors
     var pos = 0

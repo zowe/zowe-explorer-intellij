@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -41,7 +45,6 @@ import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FilesWorkingSetImpl
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import groovy.lang.Tuple4
 import io.kotest.assertions.assertSoftly
@@ -225,17 +228,28 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
       }
 
       should("perform paste from mainframe z/OS datasets to the USS files within one remote system") {
-        val dataOpsManagerService =
-          ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
         every { mockedFileExplorer.componentManager } returns ApplicationManager.getApplication()
         val mockedAttributeService = mockk<AttributesService<FileAttributes, VirtualFile>>()
         val mockedParentDatasetAttributes = mockk<RemoteDatasetAttributes>()
+        val mockedVirtualFileTarget = mockk<MFVirtualFile>()
+        val mockedVirtualFileSource = mockk<MFVirtualFile>()
+        val targetAttributes = mockk<RemoteUssAttributes>()
+        val sourceAttributes = mockk<RemoteMemberAttributes>()
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
             attributesClass: Class<out A>,
             vFileClass: Class<out F>
           ): AttributesService<A, F> {
             return mockedAttributeService as AttributesService<A, F>
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              mockedVirtualFileTarget -> targetAttributes
+              mockedVirtualFileSource -> sourceAttributes
+              else -> super.tryToGetAttributes(file)
+            }
           }
         }
         every { mockedAttributeService.getAttributes(any() as VirtualFile) } returns mockedParentDatasetAttributes
@@ -255,9 +269,6 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         isCutPerformed = false
         isPastePerformed = false
 
-        val mockedVirtualFileTarget = mockk<MFVirtualFile>()
-        val mockedVirtualFileSource = mockk<MFVirtualFile>()
-
         val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
         val mockedStructureTreeModelNodeSource = mockk<DefaultMutableTreeNode>()
         val mockedNodeTarget = mockk<UssFileNode>()
@@ -270,9 +281,6 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
 
         every { mockedFileExplorer.componentManager } returns mockk()
-        every { mockedFileExplorer.componentManager.getService(DataOpsManager::class.java) } returns mockk()
-        val targetAttributes = mockk<RemoteUssAttributes>()
-        val sourceAttributes = mockk<RemoteMemberAttributes>()
         every { sourceAttributes.parentFile } returns mockk()
         val conn1 = mockk<ConnectionConfig>()
         val conn2 = mockk<ConnectionConfig>()
@@ -286,14 +294,6 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { requester2.connectionConfig } returns conn2
         every { targetAttributes.requesters } returns mutableListOf(requester1)
         every { mockedParentDatasetAttributes.requesters } returns mutableListOf(requester2)
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileTarget)
-        } returns targetAttributes
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileSource)
-        } returns sourceAttributes
 
         every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns true
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
@@ -334,9 +334,21 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
 
         every { mockedFileExplorer.componentManager } returns mockk()
-        every { mockedFileExplorer.componentManager.getService(DataOpsManager::class.java) } returns mockk()
+
         val targetAttributes = mockk<RemoteDatasetAttributes>()
         val sourceAttributes = mockk<RemoteUssAttributes>()
+
+        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              mockedVirtualFileTarget -> targetAttributes
+              mockedVirtualFileSource -> sourceAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+        }
+
         val conn1 = mockk<ConnectionConfig>()
         val conn2 = mockk<ConnectionConfig>()
         every { conn1.url } returns "https://test1:10443"
@@ -349,14 +361,6 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { requester2.connectionConfig } returns conn2
         every { targetAttributes.requesters } returns mutableListOf(requester1)
         every { sourceAttributes.requesters } returns mutableListOf(requester2)
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileTarget)
-        } returns targetAttributes
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileSource)
-        } returns sourceAttributes
 
         every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns true
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
@@ -397,9 +401,20 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
 
         every { mockedFileExplorer.componentManager } returns mockk()
-        every { mockedFileExplorer.componentManager.getService(DataOpsManager::class.java) } returns mockk()
         val targetAttributes = mockk<RemoteDatasetAttributes>()
         val sourceAttributes = mockk<RemoteUssAttributes>()
+
+        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              mockedVirtualFileTarget -> targetAttributes
+              mockedVirtualFileSource -> sourceAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+        }
+
         val conn1 = mockk<ConnectionConfig>()
         val conn2 = mockk<ConnectionConfig>()
         every { conn1.url } returns "https://test1:10443"
@@ -412,14 +427,6 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { requester2.connectionConfig } returns conn2
         every { targetAttributes.requesters } returns mutableListOf(requester1)
         every { sourceAttributes.requesters } returns mutableListOf(requester2)
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileTarget)
-        } returns targetAttributes
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileSource)
-        } returns sourceAttributes
 
         every { mockedCopyPasterProvider.cutProvider.isCutEnabled(any() as DataContext) } returns false
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
@@ -460,9 +467,20 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
 
         every { mockedFileExplorer.componentManager } returns mockk()
-        every { mockedFileExplorer.componentManager.getService(DataOpsManager::class.java) } returns mockk()
         val targetAttributes = mockk<RemoteUssAttributes>()
         val sourceAttributes = mockk<RemoteUssAttributes>()
+
+        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              mockedVirtualFileTarget -> targetAttributes
+              mockedVirtualFileSource -> sourceAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+        }
+
         val conn1 = mockk<ConnectionConfig>()
         val conn2 = mockk<ConnectionConfig>()
         every { conn1.url } returns "https://test1:10443"
@@ -475,14 +493,6 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { requester2.connectionConfig } returns conn2
         every { targetAttributes.requesters } returns mutableListOf(requester1)
         every { sourceAttributes.requesters } returns mutableListOf(requester2)
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileTarget)
-        } returns targetAttributes
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileSource)
-        } returns sourceAttributes
 
         every { mockedCopyPasterProvider.copyProvider.isCopyEnabled(any() as DataContext) } returns true
         fileExplorerViewDropTarget.drop(mockedDnDEvent)
@@ -588,12 +598,17 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
 
         every { mockedFileExplorer.componentManager } returns mockk()
-        every { mockedFileExplorer.componentManager.getService(DataOpsManager::class.java) } returns mockk()
         val sourceAttributes = mockk<RemoteUssAttributes>()
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileSource)
-        } returns sourceAttributes
+        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return if (file == mockedVirtualFileSource) {
+              sourceAttributes
+            } else {
+              super.tryToGetAttributes(file)
+            }
+          }
+        }
 
         every {
           mockedCopyPasterProvider.isPastePossible(
@@ -657,10 +672,16 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         val mockedVirtualFileTarget = mockk<MFVirtualFile>()
         every { mockedNodeTarget.virtualFile } returns mockedVirtualFileTarget
         val targetAttributes = mockk<RemoteUssAttributes>()
-        every {
-          mockedFileExplorer.componentManager.getService(DataOpsManager::class.java)
-            .tryToGetAttributes(mockedVirtualFileTarget)
-        } returns targetAttributes
+        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return if (file == mockedVirtualFileTarget) {
+              targetAttributes
+            } else {
+              super.tryToGetAttributes(file)
+            }
+          }
+        }
         every {
           mockedCopyPasterProvider.isPastePossibleForFiles(
             any() as List<VirtualFile>,
@@ -710,16 +731,21 @@ class FileExplorerViewDropTargetTestSpec : WithApplicationShouldSpec({
         every { defaultSourceTest.lastPathComponent } returns mockedStructureTreeModelNodeSource
         every { mockedStructureTreeModelNodeSource.userObject } returns mockedNodeSource
         every { mockedNodeSource.virtualFile } returns mockedVirtualFileSource
-        every {
-          mockedFileExplorer.componentManager.service<DataOpsManager>().tryToGetAttributes(mockedVirtualFileSource)
-        } returns mockedSourceAttributes
 
         every { target.lastPathComponent } returns mockedStructureTreeModelNodeTarget
         every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
         every { mockedNodeTarget.virtualFile } returns mockedVirtualFileTarget
-        every {
-          mockedFileExplorer.componentManager.service<DataOpsManager>().tryToGetAttributes(mockedVirtualFileTarget)
-        } returns mockedTargetAttributes
+
+        val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              mockedVirtualFileTarget -> mockedTargetAttributes
+              mockedVirtualFileSource -> mockedSourceAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+        }
 
         every {
           fileExplorerViewDropTarget["isCrossSystemCopy"](

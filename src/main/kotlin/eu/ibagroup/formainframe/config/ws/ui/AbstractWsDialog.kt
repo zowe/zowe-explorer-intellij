@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.ws.ui
@@ -14,6 +18,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
@@ -93,11 +98,11 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
    * @return applied state.
    */
   open fun onWSApplied(state: WSDState): WSDState = state
-  
+
   private val panel by lazy {
     panel {
       row {
-        label(wsNameLabel)
+        label("$wsNameLabel: ")
         textField()
           .bindText(state::workingSetName)
           .validationOnApply {
@@ -109,9 +114,9 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
             )
           }
           .focused()
-      }
+      }.layout(RowLayout.LABEL_ALIGNED)
       row {
-        label("Specify connection")
+        label("z/OSMF Connection: ")
         comboBox(connectionComboBoxModel, SimpleListCellRenderer.create("") { it?.name })
           .apply {
             if (isSingleConnectionOnlyAllowed) {
@@ -141,7 +146,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
                 .validationOnApply { validateConnectionSelection(it) }
             }
           }
-      }
+      }.layout(RowLayout.LABEL_ALIGNED)
       group(tableTitle, false) {
         row {
           tableWithToolbar(masksTable, addDefaultActions = true) {

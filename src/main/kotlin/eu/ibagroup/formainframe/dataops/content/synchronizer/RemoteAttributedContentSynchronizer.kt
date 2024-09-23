@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.content.synchronizer
@@ -22,7 +26,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.service.SyncProcessService
-import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
 import eu.ibagroup.formainframe.editor.FileContentChangeListener
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.vfs.MFBulkFileListener
@@ -144,13 +147,13 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   ) {
     runCatching {
       log.info("Starting synchronization for file ${syncProvider.file.name}.")
-      if (isFileSyncingNow(syncProvider.file)) {
+      if (SyncProcessService.getService().isFileSyncingNow(syncProvider.file)) {
         log.info("Synchronization is interrupted because it is already running for file ${syncProvider.file.name}.")
         return
       }
       progressIndicator?.text = "Synchronizing file ${syncProvider.file.name} with mainframe"
       progressIndicator?.let {
-        SyncProcessService.instance.startFileSync(syncProvider.file, it)
+        SyncProcessService.getService().startFileSync(syncProvider.file, it)
       }
 
       val recordId = handlerToStorageIdMap.getOrPut(syncProvider) { successfulStatesStorage.createNewRecord() }
@@ -199,7 +202,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
         syncProvider.onThrowable(it)
       }
       .also {
-        SyncProcessService.instance.stopFileSync(syncProvider.file)
+        SyncProcessService.getService().stopFileSync(syncProvider.file)
       }
   }
 

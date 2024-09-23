@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -37,7 +41,7 @@ class AddJobsFilterAction : AnAction() {
     val view = e.getExplorerView<JesExplorerView>() ?: return
     val workingSets = getSelectedNodesWorkingSets<JesWorkingSet>(view as ExplorerTreeView<*, *, *>)
     val ws = workingSets.firstOrNull() ?: return
-    val owner = ws.connectionConfig?.let { CredentialService.instance.getUsernameByKey(it.uuid) } ?: ""
+    val owner = ws.connectionConfig?.let { CredentialService.getService().getUsernameByKey(it.uuid) } ?: ""
     val initialState = JobFilterStateWithMultipleWS(wsList = mutableListOf(ws), owner = owner)
     val dialog = AddJobsFilterDialog(e.project, initialState)
     if (dialog.showAndGet()) {

@@ -1,17 +1,21 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.editor
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -19,9 +23,14 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
-import eu.ibagroup.formainframe.dataops.content.synchronizer.*
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.dataops.content.service.SyncProcessService
+import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListener
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
+import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
+import eu.ibagroup.formainframe.utils.runInEdtAndWait
+import eu.ibagroup.formainframe.utils.sendTopic
+import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
 /**
@@ -59,7 +68,7 @@ class FileEditorEventsListener : FileEditorManagerListener {
  */
 class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
 
-  private val dataOpsManager = service<DataOpsManager>()
+  private val dataOpsManager = DataOpsManager.getService()
 
   /**
    * Handle synchronize before close if the file is not synchronized
@@ -68,15 +77,19 @@ class FileEditorBeforeEventsListener : FileEditorManagerListener.Before {
    */
   override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
     val project = source.project
-    val configService = service<ConfigService>()
+    val configService = ConfigService.getService()
     val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(project))
     val attributes = dataOpsManager.tryToGetAttributes(file)
     if (file is MFVirtualFile && file.isWritable && attributes != null) {
-      val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
+      val contentSynchronizer = DataOpsManager.getService().getContentSynchronizer(file)
       val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
       val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
       val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-      if (!(currentContent contentEquals previousContent) && needToUpload && !isFileSyncingNow(file)) {
+      if (
+        !(currentContent contentEquals previousContent)
+        && needToUpload
+        && !SyncProcessService.getService().isFileSyncingNow(file)
+      ) {
         val incompatibleEncoding = !checkEncodingCompatibility(file, project)
         if (!configService.isAutoSyncEnabled) {
           if (showSyncOnCloseDialog(file.name, project)) {

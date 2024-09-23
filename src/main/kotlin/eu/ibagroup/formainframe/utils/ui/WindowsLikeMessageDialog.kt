@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.utils.ui
@@ -46,7 +50,7 @@ class WindowsLikeMessageDialog(
   doNotAskOption,
   canBeParent,
   helpId) {
-  
+
   companion object {
     /**
      * Static function is used to show Windows based message dialog
@@ -67,11 +71,11 @@ class WindowsLikeMessageDialog(
       return windowsLikeMessageDialog.exitCode
     }
   }
-  
+
   override fun createActions(): Array<Action> {
     return mutableListOf<Action>().toTypedArray()
   }
-  
+
   override fun createLeftSideActions(): Array<Action> {
     val actions = mutableListOf<Action>()
     for (i in myOptions.indices) {
@@ -99,11 +103,11 @@ class WindowsLikeMessageDialog(
     }
     return actions.toTypedArray();
   }
-  
+
   override fun createButtonsPanel(buttons: MutableList<out JButton>): JPanel {
     return createLayoutButtonsPanel(buttons)
   }
-  
+
   /**
    * Function is used to create the bottom JComponent of the message dialog containing N buttons followed one by one
    * using vertical direction
@@ -112,16 +116,16 @@ class WindowsLikeMessageDialog(
     val buttonsPanel: JPanel = NonOpaquePanel()
     val jPanels = mutableListOf<JPanel>()
     buttonsPanel.layout = BoxLayout(buttonsPanel, BoxLayout.Y_AXIS)
-    
+
     for (i in buttons.indices) {
       val button: JButton = buttons[i]
       val jPanel: JPanel = NonOpaquePanel()
       jPanel.add(button)
       jPanels.add(jPanel)
     }
-    
+
     jPanels.forEach { buttonsPanel.add(it) }
     return buttonsPanel
   }
-  
+
 }

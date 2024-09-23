@@ -1,16 +1,19 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.config.ws.JobsFilter
@@ -23,7 +26,6 @@ import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.utils.clearOldKeysAndAddNew
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContainExactly
@@ -150,8 +152,7 @@ class JesFilterNodeTestSpec : WithApplicationShouldSpec({
 
       val listToSort = listOf(jobNode1, jobNode2, jobNode3)
 
-      val dataOpsManagerService =
-        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
       dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
           return nodeToAttributesMap[file]

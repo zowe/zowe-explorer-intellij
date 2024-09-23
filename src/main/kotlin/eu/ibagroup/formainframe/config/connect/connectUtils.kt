@@ -1,28 +1,35 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.connect
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import eu.ibagroup.formainframe.api.api
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialog
-import eu.ibagroup.formainframe.tso.config.ui.TSOSessionDialogState
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.operations.*
 import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
+import eu.ibagroup.formainframe.dataops.operations.TsoOperation
+import eu.ibagroup.formainframe.dataops.operations.TsoOperationMode
 import eu.ibagroup.formainframe.tso.TSOWindowFactory
 import eu.ibagroup.formainframe.tso.config.TSOConfigWrapper
+import eu.ibagroup.formainframe.tso.config.ui.TSOSessionDialogState
+import org.zowe.kotlinsdk.TsoApi
+import org.zowe.kotlinsdk.TsoCmdRequestBody
+import org.zowe.kotlinsdk.TsoCmdResult
+import org.zowe.kotlinsdk.TsoCmdState
 import org.zowe.kotlinsdk.TsoData
-import org.zowe.kotlinsdk.*
 import org.zowe.kotlinsdk.annotations.ZVersion
 
 const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 8
@@ -42,7 +49,7 @@ fun whoAmI(connectionConfig: ConnectionConfig): String? {
     val emptyOwner = ""
     val queuedMessages: MutableList<TsoData> = mutableListOf()
     runCatching {
-      val tsoStartResponse = service<DataOpsManager>().performOperation(
+      val tsoStartResponse = DataOpsManager.getService().performOperation(
         TsoOperation(
           TSOConfigWrapper(state.tsoSessionConfig, connectionConfig),
           TsoOperationMode.START
@@ -54,7 +61,7 @@ fun whoAmI(connectionConfig: ConnectionConfig): String? {
           val response = TSOWindowFactory.getTsoMessageQueue(tsoSession)
           tsoSession.setTSOResponseMessageQueue(response.tsoData)
         }
-        var sendCommandResponse = service<DataOpsManager>().performOperation(
+        var sendCommandResponse = DataOpsManager.getService().performOperation(
           TsoOperation(
             state = tsoSession,
             mode = TsoOperationMode.SEND_MESSAGE,
@@ -69,7 +76,7 @@ fun whoAmI(connectionConfig: ConnectionConfig): String? {
           sendCommandResponse = TSOWindowFactory.getTsoMessageQueue(tsoSession)
           queuedMessages.addAll(sendCommandResponse.tsoData)
         }
-        service<DataOpsManager>().performOperation(
+        DataOpsManager.getService().performOperation(
           TsoOperation(
             state = tsoSession,
             mode = TsoOperationMode.STOP
@@ -126,12 +133,13 @@ fun executeWhoAmIEnhanced(connectionConfig: ConnectionConfig): String? {
  * @param tsoData
  * @return USS Owner string value if tsoData contains the userID or an empty string otherwise
  */
-fun tryToExtractRealOwner(tsoData: List<TsoData>) : String {
+fun tryToExtractRealOwner(tsoData: List<TsoData>): String {
   val emptyOwner = ""
   val filteredData = tsoData.filter {
     val tsoMessage = it.tsoMessage ?: return@filter false
     val messageData = tsoMessage.data?.trim() ?: return@filter false
-    messageData.isNotEmpty() && !messageData.contains("READY") && messageData.chars().count() <= USER_OR_OWNER_SYMBOLS_MAX_SIZE
+    messageData.isNotEmpty() && !messageData.contains("READY") && messageData.chars()
+      .count() <= USER_OR_OWNER_SYMBOLS_MAX_SIZE
   }.mapNotNull { it.tsoMessage?.data?.trim() }
 
   return if (filteredData.isNotEmpty()) filteredData[0] else emptyOwner
@@ -142,11 +150,12 @@ fun tryToExtractRealOwner(tsoData: List<TsoData>) : String {
  * @param tsoData
  * @return USS Owner string value if tsoData contains the userID or an empty string otherwise
  */
-fun tryToExtractRealOwnerEnhanced(tsoData: List<TsoCmdResult>) : String {
+fun tryToExtractRealOwnerEnhanced(tsoData: List<TsoCmdResult>): String {
   val emptyOwner = ""
   val filteredData = tsoData.filter {
     val tsoMessage = it.message?.trim() ?: return@filter false
-    tsoMessage.isNotEmpty() && !tsoMessage.contains("READY") && tsoMessage.chars().count() <= USER_OR_OWNER_SYMBOLS_MAX_SIZE
+    tsoMessage.isNotEmpty() && !tsoMessage.contains("READY") && tsoMessage.chars()
+      .count() <= USER_OR_OWNER_SYMBOLS_MAX_SIZE
   }.mapNotNull { it.message?.trim() }
 
   return if (filteredData.isNotEmpty()) filteredData[0] else emptyOwner
