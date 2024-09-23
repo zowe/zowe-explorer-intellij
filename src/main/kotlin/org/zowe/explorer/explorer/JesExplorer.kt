@@ -26,6 +26,7 @@ class JesExplorerFactory : ExplorerFactory<ConnectionConfig, JesWorkingSetImpl, 
 
 /** JES Explorer implementation */
 class JesExplorer : AbstractExplorerBase<ConnectionConfig, JesWorkingSetImpl, JesWorkingSetConfig>() {
+
   override val unitClass = JesWorkingSetImpl::class.java
   override val unitConfigClass = JesWorkingSetConfig::class.java
 
