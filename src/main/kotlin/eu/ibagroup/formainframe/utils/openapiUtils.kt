@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.utils
@@ -120,14 +124,6 @@ fun <L : Any> subscribe(topic: Topic<L>, handler: L, project: Project) = project
 
 /** Asserts whether write access is allowed */
 fun assertWriteAllowed() = ApplicationManager.getApplication().assertWriteAccessAllowed()
-
-inline fun <reified S : Any> ComponentManager.service(): S {
-  return getService(S::class.java)
-}
-
-inline fun <reified S : Any> ComponentManager.component(): S {
-  return getComponent(S::class.java)
-}
 
 fun <T> Promise<T>.get(): T? {
   return if (this is AsyncPromise<T>) {

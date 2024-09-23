@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -13,7 +17,7 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JobFilterStateWithMultipleWS
 import eu.ibagroup.formainframe.config.ws.JobsFilter
@@ -45,13 +49,16 @@ class EditJobsFilterAction : AnAction() {
       val prefix = node.value.prefix
       val owner = node.value.owner
       val jobId = node.value.jobId
-      val state = JobFilterStateWithMultipleWS(wsList = mutableListOf(ws), prefix = prefix, owner = owner, jobId = jobId)
+      val state =
+        JobFilterStateWithMultipleWS(wsList = mutableListOf(ws), prefix = prefix, owner = owner, jobId = jobId)
       val dialog = EditJobsFilterDialog(e.project, state)
       if (dialog.showAndGet()) {
         val newJobsFilter = dialog.state.toJobsFilter()
         // Is the job filter really changed
         if (prefix != newJobsFilter.prefix || owner != newJobsFilter.owner || jobId != newJobsFilter.jobId) {
-          val wsToUpdate = configCrudable.getByUniqueKey<JesWorkingSetConfig>(ws.uuid)?.clone()
+          val wsToUpdate = ConfigService.getService().crudable
+            .getByUniqueKey<JesWorkingSetConfig>(ws.uuid)
+            ?.clone()
           if (wsToUpdate != null) {
             val changedJobFilter: JobsFilter? =
               wsToUpdate.jobsFilters
@@ -60,7 +67,7 @@ class EditJobsFilterAction : AnAction() {
             changedJobFilter?.prefix = newJobsFilter.prefix
             changedJobFilter?.owner = newJobsFilter.owner
             changedJobFilter?.jobId = newJobsFilter.jobId
-            configCrudable.update(wsToUpdate)
+            ConfigService.getService().crudable.update(wsToUpdate)
           }
         }
       }

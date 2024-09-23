@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2024 IBA Group.
+  ~
+  ~ This program and the accompanying materials are made available under the terms of the
+  ~ Eclipse Public License v2.0 which accompanies this distribution, and is available at
+  ~ https://www.eclipse.org/legal/epl-v20.html
+  ~
+  ~ SPDX-License-Identifier: EPL-2.0
+  ~
+  ~ Contributors:
+  ~   IBA Group
+  ~   Zowe Community
+  -->
+
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd
+                                  https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd">
+
+    <suppress>
+        <notes>Not exploitable, the functionality is used in the apfloat library in a proper way only</notes>
+        <gav>org.apfloat:apfloat:1.10.1</gav>
+        <cve>CVE-2024-23084</cve>
+    </suppress>
+
+    <suppress>
+        <notes>Not exploitable, the functionality is used in the apfloat library in a proper way only</notes>
+        <gav>org.apfloat:apfloat:1.10.1</gav>
+        <cve>CVE-2024-23085</cve>
+    </suppress>
+
+    <suppress>
+        <notes>IntelliJ IDEA issue, not related to the plug-in directly</notes>
+        <gav>com.jetbrains:ideaIC:2023.1</gav>
+        <cve>CVE-2023-51655</cve>
+    </suppress>
+
+    <suppress>
+        <notes>IntelliJ IDEA issue, not related to the plug-in directly</notes>
+        <gav>com.jetbrains:ideaIC:2023.1</gav>
+        <cve>CVE-2023-39261</cve>
+    </suppress>
+
+    <suppress>
+        <notes>IntelliJ IDEA issue, not related to the plug-in directly</notes>
+        <gav>com.jetbrains:ideaIC:2023.1</gav>
+        <cve>CVE-2024-24941</cve>
+    </suppress>
+
+    <suppress>
+        <notes>IntelliJ IDEA issue, not related to the plug-in directly</notes>
+        <gav>com.jetbrains:ideaIC:2023.1</gav>
+        <cve>CVE-2024-24940</cve>
+    </suppress>
+
+    <suppress>
+        <notes>IntelliJ IDEA issue, not related to the plug-in directly. Is fixed in 2023.1.7 patch</notes>
+        <gav>com.jetbrains:ideaIC:2023.1</gav>
+        <cve>CVE-2024-37051</cve>
+    </suppress>
+
+    <suppress>
+        <notes>IntelliJ IDEA issue, not related to the plug-in directly. Is fixed in 2023.1.4 patch</notes>
+        <gav>com.jetbrains:ideaIC:2023.1</gav>
+        <cve>CVE-2023-38069</cve>
+    </suppress>
+
+</suppressions>

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -13,7 +17,6 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.analytics.events.JobAction
@@ -21,13 +24,16 @@ import eu.ibagroup.formainframe.analytics.events.JobEvent
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
-import eu.ibagroup.formainframe.dataops.content.synchronizer.*
+import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
+import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
+import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitFilePathOperationParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
 import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
 import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.formMfPath
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -59,21 +65,21 @@ class SubmitJobAction : AnAction() {
       val file = requestData.first
       if (checkFileForSync(e.project, file)) return
       runBackgroundableTask("Preparing for job submission") {
-        val dataOpsManager = service<DataOpsManager>()
-        if (service<ConfigService>().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
+        val dataOpsManager = DataOpsManager.getService()
+        if (ConfigService.getService().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
           contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)
         }
         it.text = "Submitting job from file ${file.name}"
 
         runCatching {
-          service<AnalyticsService>().trackAnalyticsEvent(JobEvent(JobAction.SUBMIT))
+          AnalyticsService.getService().trackAnalyticsEvent(JobEvent(JobAction.SUBMIT))
 
-          val attributes = service<DataOpsManager>().tryToGetAttributes(requestData.first)
+          val attributes = DataOpsManager.getService().tryToGetAttributes(requestData.first)
             ?: throw IllegalArgumentException("Cannot find attributes for specified file.")
 
           val submitFilePath = attributes.formMfPath()
-          service<DataOpsManager>().performOperation(
+          DataOpsManager.getService().performOperation(
             operation = SubmitJobOperation(
               request = SubmitFilePathOperationParams(submitFilePath),
               connectionConfig = requestData.second
@@ -86,7 +92,7 @@ class SubmitJobAction : AnAction() {
         }.onSuccess {
           view.explorer.showNotification("Job ${it.jobname} has been submitted", "$it", project = project)
         }.onFailure {
-          view.explorer.reportThrowable(it, project)
+          NotificationsService.getService().notifyError(it, project)
         }
       }
     }

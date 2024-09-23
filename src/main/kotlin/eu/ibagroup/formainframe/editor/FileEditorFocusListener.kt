@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.editor
@@ -20,11 +24,15 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.isComponentUnderMouse
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.content.service.isFileSyncingNow
+import eu.ibagroup.formainframe.dataops.content.service.SyncProcessService
 import eu.ibagroup.formainframe.dataops.content.synchronizer.AutoSyncFileListener
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.checkEncodingCompatibility
+import eu.ibagroup.formainframe.utils.log
+import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
+import eu.ibagroup.formainframe.utils.sendTopic
+import eu.ibagroup.formainframe.utils.showSaveAnywayDialog
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import java.awt.IllegalComponentStateException
 import java.awt.event.FocusEvent
@@ -34,7 +42,7 @@ import javax.swing.SwingUtilities
  * File editor focus listener.
  * Need to handle focus lost event.
  */
-class FileEditorFocusListener: FocusChangeListener {
+class FileEditorFocusListener : FocusChangeListener {
 
   /**
    * Handle the focus lost event on which the file should be synchronized with the MF.
@@ -51,26 +59,31 @@ class FileEditorFocusListener: FocusChangeListener {
           if (editor.component.contains(point)) {
             return
           }
-        } catch (e : IllegalComponentStateException) {
-          val diagnosticMessage = "Error happened while dispatching focusLost event. Content will be synchronized anyway.\n" +
+        } catch (e: IllegalComponentStateException) {
+          val diagnosticMessage =
+            "Error happened while dispatching focusLost event. Content will be synchronized anyway.\n" +
               "Diagnostic info:\n" + "Editor component name: ${editor.component.name}\n" + "Focused component name: ${focusedComponent.name}\n" +
-                  "Focused component location on screen: x coordinate is ${focusedComponent.location.x}, y coordinate is ${focusedComponent.location.y}.\n" +
-                  "isShowing: ${focusedComponent.isShowing}\n"
+              "Focused component location on screen: x coordinate is ${focusedComponent.location.x}, y coordinate is ${focusedComponent.location.y}.\n" +
+              "isShowing: ${focusedComponent.isShowing}\n"
           log<FileEditorFocusListener>().error(diagnosticMessage, e)
           return@let
         }
       }
-      if (ConfigService.instance.isAutoSyncEnabled) {
+      if (ConfigService.getService().isAutoSyncEnabled) {
         val project = editor.project
         project?.let {
           val file = (editor as? EditorEx)?.virtualFile
           if (file is MFVirtualFile && file.isWritable) {
             val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(project))
-            val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(file)
+            val contentSynchronizer = DataOpsManager.getService().getContentSynchronizer(file)
             val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
             val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
             val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
-            if (!(currentContent contentEquals previousContent) && needToUpload && !isFileSyncingNow(file)) {
+            if (
+              !(currentContent contentEquals previousContent)
+              && needToUpload
+              && !SyncProcessService.getService().isFileSyncingNow(file)
+            ) {
               runBackgroundableTask(
                 title = "Synchronizing ${file.name}...",
                 project = project,

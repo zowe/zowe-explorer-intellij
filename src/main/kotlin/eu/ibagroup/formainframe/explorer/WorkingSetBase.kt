@@ -1,17 +1,21 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer
 
 import com.intellij.util.containers.orNull
-import eu.ibagroup.formainframe.config.configCrudable
+import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
 import eu.ibagroup.formainframe.utils.clone
@@ -25,7 +29,7 @@ import kotlin.concurrent.withLock
  * @param uuid the UUID of the working set for config
  * @param definedExplorer the explorer object defined by an implementation
  */
-abstract class WorkingSetBase<Connection: ConnectionConfigBase, MaskType, WSConfig : WorkingSetConfig>(
+abstract class WorkingSetBase<Connection : ConnectionConfigBase, MaskType, WSConfig : WorkingSetConfig>(
   override val uuid: String,
   definedExplorer: AbstractExplorerBase<Connection, out WorkingSet<Connection, *>, WSConfig>,
   private val workingSetConfigProvider: (String) -> WSConfig?,
@@ -57,7 +61,9 @@ abstract class WorkingSetBase<Connection: ConnectionConfigBase, MaskType, WSConf
     get() = lock.withLock {
       workingSetConfig
         ?.let {
-          return@withLock configCrudable.getByForeignKey(it, connectionConfigClass)?.orNull()
+          return@withLock ConfigService.getService().crudable
+            .getByForeignKey(it, connectionConfigClass)
+            ?.orNull()
         }
     }
 
@@ -68,7 +74,7 @@ abstract class WorkingSetBase<Connection: ConnectionConfigBase, MaskType, WSConf
   override fun addMask(mask: MaskType) {
     val newWsConfig = workingSetConfig?.clone(wsConfigClass) ?: return
     if (newWsConfig.masks().add(mask)) {
-      configCrudable.update(newWsConfig)
+      ConfigService.getService().crudable.update(newWsConfig)
     }
   }
 
@@ -79,7 +85,7 @@ abstract class WorkingSetBase<Connection: ConnectionConfigBase, MaskType, WSConf
   override fun removeMask(mask: MaskType) {
     val newWsConfig = workingSetConfig?.clone(wsConfigClass) ?: return
     if (newWsConfig.masks().remove(mask)) {
-      configCrudable.update(newWsConfig)
+      ConfigService.getService().crudable.update(newWsConfig)
     }
   }
 

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.operations
@@ -16,12 +20,23 @@ import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import io.mockk.verify
 import org.junit.jupiter.api.assertThrows
-import org.zowe.kotlinsdk.*
+import org.zowe.kotlinsdk.DataAPI
+import org.zowe.kotlinsdk.Member
+import org.zowe.kotlinsdk.MembersList
 import retrofit2.Call
 import retrofit2.Response
 
@@ -54,11 +69,43 @@ class MemberAllocatorTestSpec : WithApplicationShouldSpec({
       val listResponse = mockk<Response<MembersList>>()
       val writeCall = mockk<Call<Void>>()
       val writeResponse = mockk<Response<Void>>()
-      mockkObject(ZosmfApi)
-      every { ZosmfApi.instance.hint(DataAPI::class).getApi<DataAPI>(any(), any()) } returns dataApi
-      every { ZosmfApi.instance.hint(DataAPI::class).getApiWithBytesConverter<DataAPI>(any(), any()) } returns dataApi
+      val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
+      zosmfApi.testInstance = object : TestZosmfApiImpl() {
+        override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
+          return if (apiClass == DataAPI::class.java) {
+            dataApi as Api
+          } else {
+            super.getApi(apiClass, connectionConfig)
+          }
+        }
+
+        override fun <Api : Any> getApiWithBytesConverter(
+          apiClass: Class<out Api>,
+          connectionConfig: ConnectionConfig
+        ): Api {
+          return if (apiClass == DataAPI::class.java) {
+            dataApi as Api
+          } else {
+            super.getApiWithBytesConverter(apiClass, connectionConfig)
+          }
+        }
+      }
       every { dataApi.listDatasetMembers(any(), any(), any(), any(), any(), any(), any()) } returns listCall
-      every { dataApi.writeToDatasetMember(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns writeCall
+      every {
+        dataApi.writeToDatasetMember(
+          any(),
+          any(),
+          any(),
+          any(),
+          any(),
+          any(),
+          any(),
+          any(),
+          any(),
+          any(),
+          any()
+        )
+      } returns writeCall
 
       val membersList = mockk<MembersList>()
       val member1 = mockk<Member>()
@@ -77,7 +124,21 @@ class MemberAllocatorTestSpec : WithApplicationShouldSpec({
         classUnderTest.run(memberAllocationOperation, progressIndicator)
 
         //then
-        verify(exactly = 1) { dataApi.writeToDatasetMember(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+        verify(exactly = 1) {
+          dataApi.writeToDatasetMember(
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any()
+          )
+        }
         clearMocks(dataApi, answers = false, childMocks = false)
       }
 
@@ -96,7 +157,21 @@ class MemberAllocatorTestSpec : WithApplicationShouldSpec({
         classUnderTest.run(memberAllocationOperation, progressIndicator)
 
         //then
-        verify(exactly = 1) { dataApi.writeToDatasetMember(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+        verify(exactly = 1) {
+          dataApi.writeToDatasetMember(
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            any()
+          )
+        }
         clearMocks(dataApi, answers = false, childMocks = false)
       }
 

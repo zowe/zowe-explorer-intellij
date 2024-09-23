@@ -1,16 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
@@ -29,7 +33,6 @@ import eu.ibagroup.formainframe.dataops.fetch.DatasetFileFetchProvider
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
 import eu.ibagroup.formainframe.utils.cancelByIndicator
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
@@ -107,7 +110,7 @@ class DatasetFileFetchProviderTestSpec : ShouldSpec({
       every { mockedCall.execute() } returns mockedResponse
       every { mockedResponse.body() } returns dataSetsList
 
-      val zosmfApi = ApplicationManager.getApplication().service<ZosmfApi>() as TestZosmfApiImpl
+      val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
       zosmfApi.testInstance = mockk()
       val mockedApi = mockk<DataAPI>()
       every { zosmfApi.testInstance.getApi(DataAPI::class.java, mockedConnectionConfig) } returns mockedApi
@@ -132,8 +135,7 @@ class DatasetFileFetchProviderTestSpec : ShouldSpec({
         ).cancelByIndicator(progressMockk)
       } returns mockedCall
 
-      val dataOpsManagerService =
-        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
 
       // needed for cleanupUnusedFile test
       val mockedVirtualFile = mockk<MFVirtualFile>()

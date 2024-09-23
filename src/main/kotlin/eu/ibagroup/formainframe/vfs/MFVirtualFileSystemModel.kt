@@ -1,16 +1,19 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.vfs
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
@@ -129,7 +132,7 @@ class MFVirtualFileSystemModel {
   ): MFVirtualFile {
     return vDir.findChild(remoteAttributes.name)?.let { vFile ->
       remoteAttributes.castOrNull<RemoteSpoolFileAttributes>()?.let {
-        val existingAttributes = service<DataOpsManager>().tryToGetAttributes(vFile) as RemoteSpoolFileAttributes
+        val existingAttributes = DataOpsManager.getService().tryToGetAttributes(vFile) as RemoteSpoolFileAttributes
         if (existingAttributes.info.id != it.info.id) {
           createChildWithAttributes(requestor, vDir, remoteAttributes.name, attributes, true)
         } else {

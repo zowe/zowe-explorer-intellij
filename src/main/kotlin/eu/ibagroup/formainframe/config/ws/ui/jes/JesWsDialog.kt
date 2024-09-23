@@ -1,22 +1,31 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.config.ws.ui.jes
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
-import eu.ibagroup.formainframe.common.ui.*
+import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
+import eu.ibagroup.formainframe.common.ui.DialogMode
+import eu.ibagroup.formainframe.common.ui.ValidatingColumnInfo
+import eu.ibagroup.formainframe.common.ui.ValidatingListTableModel
+import eu.ibagroup.formainframe.common.ui.ValidatingTableView
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.config.ws.JobFilterState
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
+import eu.ibagroup.formainframe.config.ws.JobFilterState
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.JesWorkingSetDialogState
 import eu.ibagroup.formainframe.utils.crudable.Crudable
@@ -95,7 +104,7 @@ class JesWsDialog(
 
   override fun emptyTableRow(): JobFilterState = JobFilterState(
     prefix = "*",
-    owner = CredentialService.instance.getUsernameByKey(state.connectionUuid) ?: ""
+    owner = CredentialService.getService().getUsernameByKey(state.connectionUuid) ?: ""
   )
 
   /**

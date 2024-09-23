@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -26,7 +30,6 @@ import eu.ibagroup.formainframe.explorer.ui.SpoolFileNode
 import eu.ibagroup.formainframe.explorer.ui.SpoolFilePropertiesDialog
 import eu.ibagroup.formainframe.explorer.ui.SpoolFileState
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
-import eu.ibagroup.formainframe.utils.service
 
 /** Action to get job or spool file properties*/
 class GetJobPropertiesAction : AnAction() {
@@ -42,7 +45,7 @@ class GetJobPropertiesAction : AnAction() {
     if (node is ExplorerTreeNode<ConnectionConfig, *>) {
       val virtualFile = node.virtualFile
       if (virtualFile != null) {
-        val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
+        val dataOpsManager = DataOpsManager.getService()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)?.clone()) {
           is RemoteJobAttributes -> {
             val dialog = JobPropertiesDialog.create(e.project, JobState(attributes))
@@ -72,7 +75,7 @@ class GetJobPropertiesAction : AnAction() {
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node
     e.presentation.isVisible = selected.size == 1
-        && (node is JobNode
-        || node is SpoolFileNode)
+      && (node is JobNode
+      || node is SpoolFileNode)
   }
 }

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -13,7 +17,6 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.vfs.VirtualFile
@@ -39,6 +42,7 @@ import eu.ibagroup.formainframe.explorer.ui.UssDirNode
 import eu.ibagroup.formainframe.explorer.ui.UssFileNode
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.explorer.ui.toAllocationParams
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.ChangeMode
@@ -74,71 +78,68 @@ abstract class CreateUssEntityAction : AnAction() {
     val selectedNode = selected.node
     val project = e.project
     val node = if (selectedNode is UssFileNode) {
-      selectedNode.parent?.takeIf { it is UssDirNode }
+      selectedNode.parent as? UssDirNode
     } else {
-      selectedNode.takeIf { it is UssDirNode }
+      selectedNode as? UssDirNode
     } ?: return
     val file = node.virtualFile
-    // TODO: Why is it highlighted ???
-    if (node is ExplorerUnitTreeNodeBase<*, *, *>) {
-      val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
-      val dataOpsManager = node.unit.explorer.componentManager.service<DataOpsManager>()
-      val filePath = if (file != null) {
-        dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
-          .getAttributes(file)?.path
-      } else {
-        (node as UssDirNode).value.path
-      }
-      if (filePath != null) {
-        showUntilDone(
-          initialState = fileType.apply { path = filePath },
-          { initState -> CreateFileDialog(project, state = initState, filePath = filePath) }
-        ) {
-          var res = false
-          val allocationParams = it.toAllocationParams()
-          val fileType = if (allocationParams.parameters.type == FileType.FILE) {
-            "File"
-          } else {
-            "Directory"
-          }
-          runModalTask(
-            title = "Creating $fileType ${allocationParams.fileName}",
-            project = project,
-            cancellable = true
-          ) { indicator ->
-            val ussDirNode = node.castOrNull<UssDirNode>()
-            runCatching {
-              dataOpsManager.performOperation(
-                operation = UssAllocationOperation(
-                  request = allocationParams,
-                  connectionConfig = connectionConfig
-                ),
-                progressIndicator = indicator
-              )
-
-              val fileFetchProvider = dataOpsManager
-                .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
-                  UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
-                )
-              ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }
-
-              changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
-
-              service<AnalyticsService>().trackAnalyticsEvent(
-                FileEvent(
-                  allocationParams.parameters.type,
-                  FileAction.CREATE
-                )
-              )
-            }.onSuccess {
-              ussDirNode?.cleanCache(false)
-              res = true
-            }.onFailure { t ->
-              view.explorer.reportThrowable(t, project)
-            }
-          }
-          res
+    val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
+    val dataOpsManager = DataOpsManager.getService()
+    val filePath = if (file != null) {
+      dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
+        .getAttributes(file)?.path
+    } else {
+      node.value.path
+    }
+    if (filePath != null) {
+      showUntilDone(
+        initialState = fileType.apply { path = filePath },
+        { initState -> CreateFileDialog(project, state = initState, filePath = filePath) }
+      ) {
+        var res = false
+        val allocationParams = it.toAllocationParams()
+        val fileType = if (allocationParams.parameters.type == FileType.FILE) {
+          "File"
+        } else {
+          "Directory"
         }
+        runModalTask(
+          title = "Creating $fileType ${allocationParams.fileName}",
+          project = project,
+          cancellable = true
+        ) { indicator ->
+          val ussDirNode = node.castOrNull<UssDirNode>()
+          runCatching {
+            dataOpsManager.performOperation(
+              operation = UssAllocationOperation(
+                request = allocationParams,
+                connectionConfig = connectionConfig
+              ),
+              progressIndicator = indicator
+            )
+
+            val fileFetchProvider = dataOpsManager
+              .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
+                UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
+              )
+            ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }
+
+            changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
+
+            AnalyticsService.getService().trackAnalyticsEvent(
+              FileEvent(
+                allocationParams.parameters.type,
+                FileAction.CREATE
+              )
+            )
+          }.onSuccess {
+            ussDirNode?.cleanCache(false)
+            res = true
+          }.onFailure { t ->
+            NotificationsService.getService().notifyError(t, project)
+          }
+        }
+        res
       }
     }
   }
@@ -152,7 +153,7 @@ abstract class CreateUssEntityAction : AnAction() {
     connectionConfig: ConnectionConfig,
     progressIndicator: ProgressIndicator
   ) {
-    val dataOpsManager = service<DataOpsManager>()
+    val dataOpsManager = DataOpsManager.getService()
     val fileName = params.fileName
     val createdFile = parentFile?.findChild(fileName)
     val attributes = createdFile?.let { vFile ->

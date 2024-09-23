@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
+ */
+
 package eu.ibagroup.formainframe.tso.config
 
 import com.intellij.openapi.ui.DialogPanel
@@ -12,17 +26,32 @@ import eu.ibagroup.formainframe.config.SandboxListener
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.makeCrudableWithoutListeners
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestConfigSandboxImpl
 import eu.ibagroup.formainframe.tso.config.ui.TSOSessionConfigurable
 import eu.ibagroup.formainframe.tso.config.ui.TSOSessionDialog
 import eu.ibagroup.formainframe.tso.config.ui.TSOSessionDialogState
 import eu.ibagroup.formainframe.tso.config.ui.table.TSOSessionTableModel
-import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.MergedCollections
+import eu.ibagroup.formainframe.utils.initialize
+import eu.ibagroup.formainframe.utils.sendTopic
+import eu.ibagroup.formainframe.utils.validateConnectionSelection
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateForPositiveInteger
+import eu.ibagroup.formainframe.utils.validateForPositiveLong
+import eu.ibagroup.formainframe.utils.validateTsoSessionName
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkStatic
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import io.mockk.verify
 import org.zowe.kotlinsdk.TsoCodePage
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -48,10 +77,6 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
       var rowAdded = false
       var rowEdited = false
       var tableModelReinitialized = false
-
-      val crudableMock = mockk<Crudable>()
-      every { crudableMock.nextUniqueValue<TSOSessionConfig, String>(TSOSessionConfig::class.java) } returns "uuid"
-      every { crudableMock.getByUniqueKey(ConnectionConfig::class.java, any<String>()) } returns Optional.empty()
 
       val panelField = TSOSessionConfigurable::class.java.getDeclaredField("panel")
       panelField.isAccessible = true
@@ -88,6 +113,8 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
 
       val mouseEvent = mockk<MouseEvent>()
 
+      val configSandbox = ConfigSandbox.getService() as TestConfigSandboxImpl
+
       beforeEach {
         panelMock = mockk<DialogPanel>()
         every { panelMock.updateUI() } returns Unit
@@ -98,22 +125,33 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
         rowEdited = false
         tableModelReinitialized = false
 
-        every { crudableMock.getAll(TSOSessionConfig::class.java) } answers {
+        every { configSandbox.crudable.nextUniqueValue<TSOSessionConfig, String>(TSOSessionConfig::class.java) } returns "uuid"
+        every {
+          configSandbox.crudable.getByUniqueKey(
+            ConnectionConfig::class.java,
+            any<String>()
+          )
+        } returns Optional.empty()
+        every { configSandbox.crudable.getAll(TSOSessionConfig::class.java) } answers {
           Stream.of()
         }
-        every { crudableMock.getAll(ConnectionConfig::class.java) } answers {
+        every { configSandbox.crudable.getAll(ConnectionConfig::class.java) } answers {
           Stream.of()
         }
 
-        mockkObject(ConfigSandbox)
-        every { ConfigSandbox.instance.crudable } returns crudableMock
-        every { ConfigSandbox.instance.apply<Any>(any()) } answers {
-          applyCalled = true
+        configSandbox.testInstance = object : TestConfigSandboxImpl() {
+          override fun <T : Any> apply(clazz: Class<out T>) {
+            applyCalled = true
+          }
+
+          override fun <T> rollback(clazz: Class<out T>) {
+            rollbackCalled = true
+          }
+
+          override fun <T> isModified(clazz: Class<out T>): Boolean {
+            return true
+          }
         }
-        every { ConfigSandbox.instance.rollback<Any>(any()) } answers {
-          rollbackCalled = true
-        }
-        every { ConfigSandbox.instance.isModified<Any>(any()) } returns true
 
         configurable.createComponent()
 
@@ -144,7 +182,19 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
         }
       }
       should("apply changes when sandbox is not modified") {
-        every { ConfigSandbox.instance.isModified<Any>(any()) } returns false
+        configSandbox.testInstance = object : TestConfigSandboxImpl() {
+          override fun <T : Any> apply(clazz: Class<out T>) {
+            applyCalled = true
+          }
+
+          override fun <T> rollback(clazz: Class<out T>) {
+            rollbackCalled = true
+          }
+
+          override fun <T> isModified(clazz: Class<out T>): Boolean {
+            return false
+          }
+        }
 
         configurable.apply()
 
@@ -163,7 +213,19 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
         }
       }
       should("reset changes when sandbox is not modified") {
-        every { ConfigSandbox.instance.isModified<Any>(any()) } returns false
+        configSandbox.testInstance = object : TestConfigSandboxImpl() {
+          override fun <T : Any> apply(clazz: Class<out T>) {
+            applyCalled = true
+          }
+
+          override fun <T> rollback(clazz: Class<out T>) {
+            rollbackCalled = true
+          }
+
+          override fun <T> isModified(clazz: Class<out T>): Boolean {
+            return false
+          }
+        }
 
         configurable.reset()
 

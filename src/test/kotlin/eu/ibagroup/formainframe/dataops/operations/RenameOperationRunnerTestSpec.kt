@@ -1,16 +1,19 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.operations
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import eu.ibagroup.formainframe.api.ZosmfApi
@@ -60,9 +63,9 @@ class RenameOperationRunnerTestSpec : WithApplicationShouldSpec({
 
   context("RenameOperationRunner common spec") {
 
-    val dataOpsManager = service<DataOpsManager>() as TestDataOpsManagerImpl
+    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
     val dataApi = mockk<DataAPI>()
-    val zosmfApi = service<ZosmfApi>() as TestZosmfApiImpl
+    val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
     zosmfApi.testInstance = object : TestZosmfApiImpl() {
       override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
         @Suppress("UNCHECKED_CAST")

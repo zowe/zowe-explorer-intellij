@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -16,6 +20,7 @@ import com.intellij.util.SmartList
 import eu.ibagroup.formainframe.dataops.exceptions.NotificationCompatibleException
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -79,7 +84,7 @@ class CommonExplorerTreeStructure<Expl : Explorer<*, *>>(
           "Virtual file is not found",
           "It is impossible to register new node. Virtual file is not found"
         )
-        explorer.reportThrowable(exception, project)
+        NotificationsService.getService().notifyError(exception, project)
         return
       }
       val nodesToRefresh = valueToNodeMap
@@ -93,7 +98,7 @@ class CommonExplorerTreeStructure<Expl : Explorer<*, *>>(
               "Virtual file is not found",
               "It is impossible to register new node. Virtual file is not found"
             )
-            explorer.reportThrowable(exception, project)
+            NotificationsService.getService().notifyError(exception, project)
             return
           }
           if (it.parent is DSMaskNode) {

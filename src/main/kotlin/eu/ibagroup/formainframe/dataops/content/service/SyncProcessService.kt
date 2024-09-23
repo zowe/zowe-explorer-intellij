@@ -1,16 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.dataops.content.service
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -21,8 +25,7 @@ interface SyncProcessService {
 
   companion object {
     @JvmStatic
-    val instance : SyncProcessService
-      get() = ApplicationManager.getApplication().getService(SyncProcessService::class.java)
+    fun getService(): SyncProcessService = service()
   }
 
   /**
@@ -53,9 +56,3 @@ interface SyncProcessService {
   fun areDependentFilesSyncingNow(file: VirtualFile): Boolean
 
 }
-
-fun isFileSyncingNow(file: VirtualFile): Boolean =
-  SyncProcessService.instance.isFileSyncingNow(file)
-
-fun areDependentFilesSyncingNow(file: VirtualFile): Boolean =
-  SyncProcessService.instance.areDependentFilesSyncingNow(file)

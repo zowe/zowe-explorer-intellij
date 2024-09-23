@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.ui
@@ -31,15 +35,17 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.mover.MoveCopyOperation
+import eu.ibagroup.formainframe.dataops.operations.mover.names.CopyPasteNameResolver
 import eu.ibagroup.formainframe.dataops.operations.mover.names.DatasetOrDirResolver
 import eu.ibagroup.formainframe.dataops.operations.mover.names.DefaultNameResolver
 import eu.ibagroup.formainframe.dataops.operations.mover.names.SeqToPDSResolver
 import eu.ibagroup.formainframe.explorer.AbstractExplorerBase
-import eu.ibagroup.formainframe.explorer.FileExplorer
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
+import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestNotificationsServiceImpl
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.getAncestorNodes
 import eu.ibagroup.formainframe.utils.ui.WindowsLikeMessageDialog
@@ -48,7 +54,15 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystemModel
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.spyk
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
 import java.util.*
@@ -67,7 +81,6 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
   context("explorer module: ui/ExplorerPasteProvider") {
     context("perform paste via paste provider") {
       val mockedDataContext = mockk<DataContext>()
-      val mockedFileExplorer = mockk<FileExplorer>()
       val mockedFileExplorerView = mockk<FileExplorerView>()
       val mockedCopyPasterProvider = mockk<FileExplorerView.ExplorerCopyPasteSupport>()
       val mockedProject = mockk<Project>()
@@ -77,18 +90,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         ExplorerPasteProvider(), recordPrivateCalls = true
       )
 
-      var dataOpsManagerService = service<DataOpsManager>() as TestDataOpsManagerImpl
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-          return mockk()
-        }
-
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          @Suppress("UNCHECKED_CAST")
-          return Unit as R
-        }
-      }
-      mockkObject(dataOpsManagerService.testInstance)
+      val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
 
       // Clipboard buffer
       val mockedClipboardBuffer = emptyList<MFVirtualFile>()
@@ -99,7 +101,6 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
       every { mockedFileExplorerView.copyPasteSupport } returns mockedCopyPasterProvider
 
       mockkObject(FileExplorerContentProvider)
-      //mockkObject(FileExplorerContentProvider::getInstance)
       every {
         FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
       } returns mockedFileExplorerView
@@ -121,18 +122,24 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
       val mockedExplorerBase = mockk<AbstractExplorerBase<ConnectionConfig, FilesWorkingSet, FilesWorkingSetConfig>>()
       every { mockedFileExplorerView.explorer } returns mockedExplorerBase
 
-      every { mockedFileExplorerView.explorer.reportThrowable(any<Throwable>(), mockedProject) } answers {
-        exceptionIsThrown = true
-        isPastePerformed = false
+      val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+
+      notificationsService.testInstance = object : TestNotificationsServiceImpl() {
+        override fun notifyError(
+          t: Throwable,
+          project: Project?,
+          custTitle: String?,
+          custDetailsShort: String?,
+          custDetailsLong: String?
+        ) {
+          exceptionIsThrown = true
+          isPastePerformed = false
+        }
       }
 
       val nodeToRefreshSource = mockk<UssDirNode>()
       val nodeToRefreshTarget = mockk<UssDirNode>()
       beforeEach {
-        every {
-          dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
-        } returns DefaultNameResolver()
-
         // we do not need to refresh the nodes in below tests, so lets return default list for each node to refresh (USS for example)
         val mockedSourceVFile = mockk<MFVirtualFile>()
         val mockedDestinationVFile = mockk<MFVirtualFile>()
@@ -158,6 +165,21 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           nodeToRefreshSource,
           nodeToRefreshTarget
         )
+
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return mockk()
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
 
         // refresh nodes
         every { nodeToRefreshSource.query } returns mockk()
@@ -227,9 +249,25 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           firstArg<((NodeData<*>) -> Boolean)>().invoke(copyPasteNodeData)
         }
 
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestFileAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributes
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestFileAttributes
+              mockedSourceFile -> mockedSourceAttributes
+              mockedTargetFile -> targetAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
@@ -256,6 +294,92 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
       should("perform paste without conflicts USS file -> USS folder, but refresh returns if parent node query is null") {
         isPastePerformed = false
+
+        every { mockedFileExplorerView.isCut } returns AtomicBoolean(false)
+
+        // source to paste
+        val mockedSourceNodeData = mockk<NodeData<ConnectionConfig>>()
+        val mockedSourceNode = mockk<UssFileNode>()
+        val mockedSourceFile = mockk<MFVirtualFile>()
+        val mockedSourceAttributes = mockk<RemoteUssAttributes>()
+        every { mockedSourceFile.name } returns "test5"
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceFile.parent } returns null
+        every { mockedSourceAttributes.isPastePossible } returns false
+        every { mockedSourceAttributes.isDirectory } returns false
+        every { mockedSourceNodeData.node } returns mockedSourceNode
+        every { mockedSourceNodeData.file } returns mockedSourceFile
+        every { mockedSourceNodeData.attributes } returns mockedSourceAttributes
+
+        // children of target
+        val childDestinationVirtualFile = mockk<MFVirtualFile>()
+        val childDestFileAttributes = mockk<RemoteUssAttributes>()
+        every { childDestinationVirtualFile.name } returns "test_file"
+        every { childDestFileAttributes.isDirectory } returns false
+
+        // target to paste
+        val mockedTargetFile = mockk<MFVirtualFile>()
+        val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
+        val mockedNodeTarget = mockk<UssDirNode>()
+        val targetAttributes = mockk<RemoteUssAttributes>()
+        every { mockedTargetFile.name } returns "test_folder"
+        every { targetAttributes.isDirectory } returns true
+        every { mockedTargetFile.children } returns arrayOf(childDestinationVirtualFile)
+        every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
+        every { mockedNodeTarget.virtualFile } returns mockedTargetFile
+
+        // CopyPaste node buffer
+        val copyPasteNodeData = mockk<NodeData<*>>()
+        val copyPasteNodeDataList = listOf(copyPasteNodeData)
+        val mockedCopyPasteBuffer = LinkedList(copyPasteNodeDataList)
+        every { copyPasteNodeData.node } returns mockedSourceNode
+        every { copyPasteNodeData.file } returns mockedSourceFile
+        every { copyPasteNodeData.attributes } returns mockedSourceAttributes
+        every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
+
+        // removeFromBuffer callback
+        every { mockedCopyPasterProvider.removeFromBuffer(any() as ((NodeData<*>) -> Boolean)) } answers {
+          isCallbackCalled = true
+          firstArg<((NodeData<*>) -> Boolean)>().invoke(copyPasteNodeData)
+        }
+
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestFileAttributes
+              mockedSourceFile -> mockedSourceAttributes
+              mockedTargetFile -> targetAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
+
+        every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
+        every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
+        every { mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) } returns arrayOf(mockedTargetFile)
+        every { mockedDataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) } returns emptyList()
+
+        // selected node data ( always remote files )
+        every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData)
+
+        every {
+          mockedCopyPasterProvider.getDestinationSourceFilePairs(
+            any() as List<VirtualFile>,
+            any() as List<VirtualFile>,
+            any() as Boolean
+          )
+        } returns
+          mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
+
         every { nodeToRefreshSource.query } answers {
           isPastePerformed = true
           null
@@ -264,6 +388,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           isPastePerformed = true
           null
         }
+
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
           isPastePerformed shouldBe true
@@ -272,6 +397,92 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
       should("perform paste without conflicts USS file -> USS folder, but refresh returns if parent node is not FileFetchNode") {
         isPastePerformed = false
+
+        every { mockedFileExplorerView.isCut } returns AtomicBoolean(false)
+
+        // source to paste
+        val mockedSourceNodeData = mockk<NodeData<ConnectionConfig>>()
+        val mockedSourceNode = mockk<UssFileNode>()
+        val mockedSourceFile = mockk<MFVirtualFile>()
+        val mockedSourceAttributes = mockk<RemoteUssAttributes>()
+        every { mockedSourceFile.name } returns "test5"
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceFile.parent } returns null
+        every { mockedSourceAttributes.isPastePossible } returns false
+        every { mockedSourceAttributes.isDirectory } returns false
+        every { mockedSourceNodeData.node } returns mockedSourceNode
+        every { mockedSourceNodeData.file } returns mockedSourceFile
+        every { mockedSourceNodeData.attributes } returns mockedSourceAttributes
+
+        // children of target
+        val childDestinationVirtualFile = mockk<MFVirtualFile>()
+        val childDestFileAttributes = mockk<RemoteUssAttributes>()
+        every { childDestinationVirtualFile.name } returns "test_file"
+        every { childDestFileAttributes.isDirectory } returns false
+
+        // target to paste
+        val mockedTargetFile = mockk<MFVirtualFile>()
+        val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
+        val mockedNodeTarget = mockk<UssDirNode>()
+        val targetAttributes = mockk<RemoteUssAttributes>()
+        every { mockedTargetFile.name } returns "test_folder"
+        every { targetAttributes.isDirectory } returns true
+        every { mockedTargetFile.children } returns arrayOf(childDestinationVirtualFile)
+        every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
+        every { mockedNodeTarget.virtualFile } returns mockedTargetFile
+
+        // CopyPaste node buffer
+        val copyPasteNodeData = mockk<NodeData<*>>()
+        val copyPasteNodeDataList = listOf(copyPasteNodeData)
+        val mockedCopyPasteBuffer = LinkedList(copyPasteNodeDataList)
+        every { copyPasteNodeData.node } returns mockedSourceNode
+        every { copyPasteNodeData.file } returns mockedSourceFile
+        every { copyPasteNodeData.attributes } returns mockedSourceAttributes
+        every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
+
+        // removeFromBuffer callback
+        every { mockedCopyPasterProvider.removeFromBuffer(any() as ((NodeData<*>) -> Boolean)) } answers {
+          isCallbackCalled = true
+          firstArg<((NodeData<*>) -> Boolean)>().invoke(copyPasteNodeData)
+        }
+
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestFileAttributes
+              mockedSourceFile -> mockedSourceAttributes
+              mockedTargetFile -> targetAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
+
+        every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
+        every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
+        every { mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) } returns arrayOf(mockedTargetFile)
+        every { mockedDataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) } returns emptyList()
+
+        // selected node data ( always remote files )
+        every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData)
+
+        every {
+          mockedCopyPasterProvider.getDestinationSourceFilePairs(
+            any() as List<VirtualFile>,
+            any() as List<VirtualFile>,
+            any() as Boolean
+          )
+        } returns
+          mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
+
         every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(any() as VirtualFile) } answers {
           isPastePerformed = true
           listOf(
@@ -359,9 +570,25 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { copyPasteNodeData.attributes } returns mockedSourceAttributes
         every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
 
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestFileAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributes
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestFileAttributes
+              mockedSourceFile -> mockedSourceAttributes
+              mockedTargetFile -> targetAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
@@ -372,8 +599,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData)
 
         // overwrite default behavior to check if nodes are actually refreshed
-        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile) } returns listOf(mockedSourceNode)
-        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile) } returns listOf(mockedNodeTarget)
+        every {
+          mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile)
+        } returns listOf(mockedSourceNode)
+        every {
+          mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile)
+        } returns listOf(mockedNodeTarget)
         every { mockedFileExplorerView.myStructure.invalidate(mockedSourceNodeParent, true) } returns mockk()
         every { mockedFileExplorerView.myStructure.invalidate(mockedNodeTarget, true) } returns mockk()
         every { mockedSourceNodeParent.cleanCache(cleanBatchedQuery = true) } answers {
@@ -413,6 +644,105 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         }
 
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(false)
+
+        // source to paste
+        val mockedSourceNodeData = mockk<NodeData<ConnectionConfig>>()
+        val mockedSourceNode = mockk<UssFileNode>()
+        val mockedSourceNodeParent = mockk<UssDirNode>()
+        val mockedSourceFileParent = mockk<MFVirtualFile>()
+        val mockedSourceFile = mockk<MFVirtualFile>()
+        val mockedSourceAttributes = mockk<RemoteUssAttributes>()
+        every { mockedSourceFile.name } returns "test_file_source"
+        every { mockedSourceNode.virtualFile } returns mockedSourceFile
+        every { mockedSourceNode.parent } returns mockedSourceNodeParent
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceFile.fileSystem.model } returns mockk<MFVirtualFileSystemModel>()
+        every { mockedSourceFile.fileSystem.model.deleteFile(any(), any()) } just Runs
+        every { mockedSourceFile.parent } returns mockedSourceFileParent
+        every { mockedSourceFileParent.parent } returns null
+        every { mockedSourceAttributes.isPastePossible } returns false
+        every { mockedSourceAttributes.isDirectory } returns false
+        every { mockedSourceNodeData.node } returns mockedSourceNode
+        every { mockedSourceNodeData.file } returns mockedSourceFile
+        every { mockedSourceFile.isInLocalFileSystem } returns false
+        every { mockedSourceNodeData.attributes } returns mockedSourceAttributes
+
+        // children of target
+        val childDestinationVirtualFile = mockk<MFVirtualFile>()
+        val childDestFileAttributes = mockk<RemoteMemberAttributes>()
+        val datasetInfo = Dataset(datasetOrganization = DatasetOrganization.POE)
+        every { childDestinationVirtualFile.name } returns "EMPTY"
+
+        // target to paste
+        val mockedTargetFile = mockk<MFVirtualFile>()
+        val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
+        val mockedNodeTarget = mockk<LibraryNode>()
+        val targetAttributes = mockk<RemoteDatasetAttributes>()
+        every { mockedTargetFile.name } returns "test_library"
+        every { targetAttributes.isDirectory } returns true
+        every { targetAttributes.datasetInfo } returns datasetInfo
+        every { mockedTargetFile.children } returns arrayOf(childDestinationVirtualFile)
+        every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
+        every { mockedNodeTarget.virtualFile } returns mockedTargetFile
+
+        // CopyPaste node buffer
+        val copyPasteNodeData = mockk<NodeData<*>>()
+        val copyPasteNodeDataList = listOf(copyPasteNodeData)
+        val mockedCopyPasteBuffer = LinkedList(copyPasteNodeDataList)
+        every { copyPasteNodeData.node } returns mockedSourceNode
+        every { copyPasteNodeData.file } returns mockedSourceFile
+        every { copyPasteNodeData.attributes } returns mockedSourceAttributes
+        every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
+
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestFileAttributes
+              mockedSourceFile -> mockedSourceAttributes
+              mockedTargetFile -> targetAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
+
+        every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
+        every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
+        every { mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) } returns arrayOf(mockedTargetFile)
+        every { mockedDataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) } returns emptyList()
+
+        // selected node data ( always remote files )
+        every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData)
+
+        // overwrite default behavior to check if nodes are actually refreshed
+        every {
+          mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile)
+        } returns listOf(mockedSourceNode)
+        every {
+          mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile)
+        } returns listOf(mockedNodeTarget)
+        every { mockedFileExplorerView.myStructure.invalidate(mockedSourceNodeParent, true) } returns mockk()
+        every { mockedFileExplorerView.myStructure.invalidate(mockedNodeTarget, true) } returns mockk()
+        every { mockedSourceNodeParent.cleanCache(cleanBatchedQuery = true) } answers {
+          isPastePerformed = true
+        }
+        every { mockedNodeTarget.cleanCache(cleanBatchedQuery = true) } answers {
+          isPastePerformed = true
+        }
+
+        every {
+          mockedCopyPasterProvider.getDestinationSourceFilePairs(
+            any<List<VirtualFile>>(), any<List<VirtualFile>>(), any<Boolean>()
+          )
+        } returns mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
 
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
@@ -484,9 +814,25 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { copyPasteNodeData.attributes } returns mockedSourceAttributes
         every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
 
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestFileAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributes
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestFileAttributes
+              mockedSourceFile -> mockedSourceAttributes
+              mockedTargetFile -> targetAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
@@ -497,8 +843,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData)
 
         // special config for PS/PDS files
-        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile) } returns listOf(mockedSourceNode)
-        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile) } returns listOf(mockedNodeTarget)
+        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile) } returns listOf(
+          mockedSourceNode
+        )
+        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile) } returns listOf(
+          mockedNodeTarget
+        )
         every { mockedFileExplorerView.myStructure.invalidate(mockedSourceNodeParent, true) } returns mockk()
         every { mockedFileExplorerView.myStructure.invalidate(mockedNodeTarget, true) } returns mockk()
         every { mockedSourceNodeParent.cleanCache(cleanBatchedQuery = true) } answers {
@@ -593,8 +943,24 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { copyPasteNodeData.attributes } returns mockedSourceAttributes
         every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
 
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestFileAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestFileAttributes
+              mockedSourceFile -> mockedSourceAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
@@ -683,6 +1049,75 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           1
         }
 
+        // source to paste
+        val mockedSourceNodeData = mockk<NodeData<ConnectionConfig>>()
+        val mockedSourceNode = mockk<UssFileNode>()
+        val mockedSourceFile = mockk<MFVirtualFile>()
+        val mockedSourceAttributes = mockk<RemoteUssAttributes>()
+        every { mockedSourceAttributes.isDirectory } returns true
+        every { mockedSourceAttributes.isPastePossible } returns true
+        every { mockedSourceFile.name } returns "test_folder_source"
+        every { mockedSourceFile.parent } returns null
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+        every { mockedSourceNodeData.node } returns mockedSourceNode
+        every { mockedSourceNodeData.file } returns mockedSourceFile
+        every { mockedSourceNodeData.attributes } returns mockedSourceAttributes
+        // needed for cleaning buffer function after paste is performed (because conflict)
+        mockkStatic("eu.ibagroup.formainframe.utils.OpenapiUtilsKt")
+        every { mockedSourceFile.getAncestorNodes() } returns mutableListOf()
+
+        // children of target
+        val childDestinationVirtualFile = mockk<MFVirtualFile>()
+        val childDestFileAttributes = mockk<RemoteUssAttributes>()
+        every { childDestinationVirtualFile.name } returns "test_folder_source"
+        every { childDestinationVirtualFile.isDirectory } returns false
+        every { childDestinationVirtualFile.delete(any()) } just Runs
+        every { childDestFileAttributes.isDirectory } returns false
+        every { mockedSourceFile.children } returns arrayOf(childDestinationVirtualFile)
+
+        // CopyPaste node buffer
+        val copyPasteNodeData = mockk<NodeData<*>>()
+        val copyPasteNodeDataList = listOf(copyPasteNodeData)
+        val mockedCopyPasteBuffer = LinkedList(copyPasteNodeDataList)
+        every { copyPasteNodeData.node } returns mockedSourceNode
+        every { copyPasteNodeData.file } returns mockedSourceFile
+        every { copyPasteNodeData.attributes } returns mockedSourceAttributes
+        every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
+
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestFileAttributes
+              mockedSourceFile -> mockedSourceAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
+
+        every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
+        every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
+        every { mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) } returns null
+        every { mockedDataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) } returns null
+
+        // selected node data ( always remote files )
+        every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData)
+
+        every {
+          mockedCopyPasterProvider.getDestinationSourceFilePairs(
+            any<List<VirtualFile>>(), any<List<VirtualFile>>(), any<Boolean>()
+          )
+        } returns mutableListOf(Pair(mockedSourceFile, mockedSourceFile))
+        every { mockedSourceFile.findChild(any<String>()) } returns null
+
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
           isShowYesNoDialogCalled shouldBe true
@@ -768,9 +1203,25 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         } returns
           mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
 
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns null
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns null
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> null
+              mockedTargetFile -> null
+              mockedSourceFile -> mockedSourceAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
@@ -1013,18 +1464,34 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedTargetFile1.findChild(any<String>()) } returns childDestinationVirtualFile1
         every { mockedTargetFile3.findChild(any<String>()) } returns childDestinationVirtualFile3
 
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile1) } returns null
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile2) } returns childDestMFFile2Attr
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile3) } returns null
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile1) } returns mockedSourceAttributes1
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile2) } returns mockedSourceAttributes2
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile3) } returns mockedSourceAttributes3
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile4) } returns mockedSourceAttributes4
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile5) } returns mockedSourceAttributes5
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile6) } returns mockedSourceAttributes6
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile1) } returns null
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile2) } returns mockedTargetFile2Attributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile3) } returns null
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile1 -> null
+              childDestinationVirtualFile2 -> childDestMFFile2Attr
+              childDestinationVirtualFile3 -> null
+              mockedSourceFile1 -> mockedSourceAttributes1
+              mockedSourceFile2 -> mockedSourceAttributes2
+              mockedSourceFile3 -> mockedSourceAttributes3
+              mockedSourceFile4 -> mockedSourceAttributes4
+              mockedSourceFile5 -> mockedSourceAttributes5
+              mockedSourceFile6 -> mockedSourceAttributes6
+              mockedTargetFile1 -> null
+              mockedTargetFile2 -> mockedTargetFile2Attributes
+              mockedTargetFile3 -> null
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
@@ -1096,9 +1563,25 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           )
         } returns mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
 
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestMFFileAttr
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns mockedTargetFileAttributes
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestMFFileAttr
+              mockedSourceFile -> mockedSourceAttributes
+              mockedTargetFile -> mockedTargetFileAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
@@ -1124,14 +1607,6 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           isShowYesNoDialogCalled = true
           true
         }
-
-        dataOpsManagerService = service<DataOpsManager>() as TestDataOpsManagerImpl
-        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            throw IllegalStateException("Test Error")
-          }
-        }
-        mockkObject(dataOpsManagerService.testInstance)
 
         // source to paste
         val mockedSourceNodeData = mockk<NodeData<ConnectionConfig>>()
@@ -1171,12 +1646,24 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { copyPasteNodeData.attributes } returns mockedSourceAttributes
         every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
 
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestFileAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributes
-        every {
-          dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
-        } returns DefaultNameResolver()
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestFileAttributes
+              mockedSourceFile -> mockedSourceAttributes
+              mockedTargetFile -> targetAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            throw IllegalStateException("Test Error")
+          }
+        }
 
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
@@ -1200,16 +1687,93 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
       }
 
       should("perform operation throws error and not D&D") {
+        var isShowYesNoDialogCalled = false
         exceptionIsThrown = false
+
+        val showYesNoDialogMock: (String, String, Project?, String, String, Icon?) -> Boolean = ::showYesNoDialog
+        mockkStatic(showYesNoDialogMock as KFunction<*>)
+        every {
+          showYesNoDialogMock(any<String>(), any<String>(), any(), any<String>(), any<String>(), any())
+        } answers {
+          isShowYesNoDialogCalled = true
+          true
+        }
+
+        // source to paste
+        val mockedSourceFile = mockk<VirtualFile>()
+        val mockedSourceAttributes = null
+        every { mockedSourceFile.name } returns "test_local_file"
+        every { mockedSourceFile.parent } returns null
+        every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+
+        // Clipboard buffer
+        val mockedClipboardBufferLocal = listOf(mockedSourceFile)
+        every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
+
+        // children of target
+        val childDestinationVirtualFile = mockk<MFVirtualFile>()
+        every { childDestinationVirtualFile.name } returns "test_mf_file"
+        val childDestMFFileAttr = mockk<RemoteUssAttributes>()
+
+        // target to paste
+        val mockedTargetFile = mockk<MFVirtualFile>()
+        val mockedTargetFileAttributes = mockk<RemoteUssAttributes>()
+        val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
+        val mockedNodeTarget = mockk<UssDirNode>()
+        every { mockedTargetFile.name } returns "test_mf_folder"
+        every { mockedTargetFile.children } returns arrayOf(childDestinationVirtualFile)
+        every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
+        every { mockedNodeTarget.virtualFile } returns mockedTargetFile
+
+        // CopyPaste node buffer
+        val copyPasteNodeData = mockk<NodeData<*>>()
+        val copyPasteNodeDataList = listOf(copyPasteNodeData)
+        val mockedCopyPasteBuffer = LinkedList(copyPasteNodeDataList)
+        every { mockedCopyPasterProvider.copyPasteBuffer } returns mockedCopyPasteBuffer
+
+        // selected node data ( always remote files )
+        every { mockedFileExplorerView.mySelectedNodesData } returns emptyList()
+
+        every {
+          mockedCopyPasterProvider.getDestinationSourceFilePairs(
+            any<List<VirtualFile>>(), any<List<VirtualFile>>(), any<Boolean>()
+          )
+        } returns mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
+
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+            return when (file) {
+              childDestinationVirtualFile -> childDestMFFileAttr
+              mockedSourceFile -> mockedSourceAttributes
+              mockedTargetFile -> mockedTargetFileAttributes
+              else -> super.tryToGetAttributes(file)
+            }
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            throw IllegalStateException("Test Error")
+          }
+        }
+
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns null
+        every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
+        every { mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) } returns arrayOf(mockedTargetFile)
+        every { mockedDataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) } returns emptyList()
+
         mockedExplorerPasteProvider.performPaste(mockedDataContext)
         assertSoftly {
+          isShowYesNoDialogCalled shouldBe true
           exceptionIsThrown shouldBe true
         }
       }
 
       should("return if project is null") {
         isPastePerformed = true
+        every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns null
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } answers {
           isPastePerformed = false
           null
@@ -1222,6 +1786,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
       should("return if copy paste provider is null") {
         isPastePerformed = true
+        every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns null
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
         every { FileExplorerContentProvider.getInstance().getExplorerView(any() as Project) } answers {
           isPastePerformed = false
@@ -1244,16 +1809,18 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedFileExplorerView.copyPasteSupport } returns mockedCopyPasterProvider
         every { checkFileForSync(any(), any(), any()) } returns true
 
-        every { mockedExplorerPasteProvider["runMoveOrCopyTask"](
-          any<String>(),
-          any<Int>(),
-          any<List<VirtualFile>>(),
-          any<Boolean>(),
-          any<List<MoveCopyOperation>>(),
-          any<FileExplorerView.ExplorerCopyPasteSupport>(),
-          any<FileExplorerView>(),
-          any<Project>()
-        ) } answers {
+        every {
+          mockedExplorerPasteProvider["runMoveOrCopyTask"](
+            any<String>(),
+            any<Int>(),
+            any<List<VirtualFile>>(),
+            any<Boolean>(),
+            any<List<MoveCopyOperation>>(),
+            any<FileExplorerView.ExplorerCopyPasteSupport>(),
+            any<FileExplorerView>(),
+            any<Project>()
+          )
+        } answers {
           filesToMoveTotal = secondArg<Int>()
           this
         }
@@ -1385,27 +1952,37 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val copyPasteNodeDataList = mutableListOf<NodeData<*>>()
         val destinationChildFiles = mutableListOf<MFVirtualFile>()
 
-        val mockedTargetFile = mockk<MFVirtualFile>()
-        val targetAttributes = mockk<RemoteUssAttributes>()
-
         afterEach {
           copyPasteNodeDataList.clear()
           destinationChildFiles.clear()
-//          clearMocks(dataOpsManagerService.testInstance)
-          every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributes
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return DefaultNameResolver()
+            }
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+              return mockk()
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              @Suppress("UNCHECKED_CAST")
+              return Unit as R
+            }
+          }
         }
 
         // prepare base mocks
-//        val mockedDataOpsManager = mockk<DataOpsManager>()
-//        every { dataOpsManagerService.testInstance } returns mockedDataOpsManager
         every {
-          FileExplorerContentProvider.getInstance().getExplorerView(any() as Project)
+          FileExplorerContentProvider.getInstance().getExplorerView(any<Project>())
         } returns mockedFileExplorerView
         every { mockedFileExplorerView.copyPasteSupport } returns mockedCopyPasterProvider
         every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns emptyList()
 
         // children of target
-        fun addMockedTargetChildFile(fileName: String, isDirectory: Boolean = false) {
+        fun addMockedTargetChildFile(
+          fileName: String,
+          isDirectory: Boolean = false
+        ): Pair<MFVirtualFile, FileAttributes> {
           val childDestinationVirtualFile = mockk<MFVirtualFile>()
           val childDestFileAttributes = mockk<RemoteUssAttributes>()
 
@@ -1413,24 +1990,40 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           every { childDestinationVirtualFile.name } returns fileName
           every { childDestinationVirtualFile.delete(any()) } just Runs
           every { childDestFileAttributes.isDirectory } returns isDirectory
-          every { dataOpsManagerService.testInstance.tryToGetAttributes(childDestinationVirtualFile) } returns childDestFileAttributes
           destinationChildFiles.add(childDestinationVirtualFile)
+
+          return childDestinationVirtualFile to childDestFileAttributes
         }
 
         // target to paste
 
+        val mockedTargetFolder = mockk<MFVirtualFile>()
+        val mockedTargetFolderAttributes = mockk<RemoteUssAttributes>()
         val mockedStructureTreeModelNodeTarget = mockk<DefaultMutableTreeNode>()
         val mockedNodeTarget = mockk<UssDirNode>()
-        every { mockedTargetFile.name } returns "test_folder"
-        every { targetAttributes.isDirectory } returns true
-        every { mockedTargetFile.children } answers { destinationChildFiles.toTypedArray() }
+        every { mockedTargetFolder.name } returns "test_folder"
+        every { mockedTargetFolderAttributes.isDirectory } returns true
+        every { mockedTargetFolder.children } answers { destinationChildFiles.toTypedArray() }
         every {
-          mockedTargetFile.findChild(any() as String)
-        } answers { mockedTargetFile.children?.find { it.name == firstArg() } }
+          mockedTargetFolder.findChild(any() as String)
+        } answers { mockedTargetFolder.children?.find { it.name == firstArg() } }
+        every { mockedTargetFolder.parent } returns null
         every { mockedStructureTreeModelNodeTarget.userObject } returns mockedNodeTarget
-        every { mockedNodeTarget.virtualFile } returns mockedTargetFile
-        every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributes
+        every { mockedNodeTarget.virtualFile } returns mockedTargetFolder
+        dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+            return DefaultNameResolver()
+          }
 
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return mockk()
+          }
+
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            @Suppress("UNCHECKED_CAST")
+            return Unit as R
+          }
+        }
 
         // CopyPaste node buffer
 
@@ -1440,12 +2033,15 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           isDirectory: Boolean = false,
           parent: MFVirtualFile? = null,
           sourceAttributes: FileAttributes? = null
-        ): MFVirtualFile {
+        ): Pair<MFVirtualFile, FileAttributes> {
           val mockedSourceFile = mockk<MFVirtualFile>()
           every { mockedSourceFile.name } returns fileName
           every { mockedSourceFile.isDirectory } returns isDirectory
           every { mockedSourceFile.parent } returns parent
           every { mockedSourceFile.isInLocalFileSystem } returns false
+          every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
+          every { mockedSourceFile.fileSystem.model } returns mockk<MFVirtualFileSystemModel>()
+          every { mockedSourceFile.fileSystem.model.deleteFile(any(), any()) } just Runs
 
           val mockedSourceAttributes = if (sourceAttributes != null) {
             sourceAttributes
@@ -1466,10 +2062,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           every { copyPasteNodeData.node } returns mockedSourceNode
           every { copyPasteNodeData.file } returns mockedSourceFile
           every { copyPasteNodeData.attributes } returns mockedSourceAttributes
-          every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedSourceFile) } returns mockedSourceAttributes
 
           copyPasteNodeDataList.add(copyPasteNodeData)
-          return mockedSourceFile
+          return mockedSourceFile to mockedSourceAttributes
         }
 
         val mockedCopyPasteBuffer = LinkedList(copyPasteNodeDataList)
@@ -1483,10 +2078,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           }
         }
 
-
         every { mockedDataContext.getData(IS_DRAG_AND_DROP_KEY) } returns true
         every { mockedDataContext.getData(CommonDataKeys.PROJECT) } returns mockedProject
-        every { mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) } returns arrayOf(mockedTargetFile)
+        every { mockedDataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) } returns arrayOf(mockedTargetFolder)
         every { mockedDataContext.getData(DRAGGED_FROM_PROJECT_FILES_ARRAY) } returns emptyList()
 
         // selected node data ( always remote files )
@@ -1496,21 +2090,27 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
         every {
           mockedCopyPasterProvider.getDestinationSourceFilePairs(
-            any() as List<VirtualFile>,
-            any() as List<VirtualFile>,
-            any() as Boolean
+            any<List<VirtualFile>>(),
+            any<List<VirtualFile>>(),
+            any<Boolean>()
           )
-        } answers { copyPasteNodeDataList.mapNotNull { nodeData -> nodeData.file?.let { Pair(mockedTargetFile, it) } } }
+        } answers {
+          copyPasteNodeDataList.mapNotNull { nodeData ->
+            nodeData.file?.let {
+              Pair(
+                mockedTargetFolder,
+                it
+              )
+            }
+          }
+        }
 
         should("Skip 2 files one by one") {
 
-          addMockedSourceFile("file.txt")
-          addMockedSourceFile("file1.txt")
-          addMockedTargetChildFile("file.txt")
-          addMockedTargetChildFile("file1.txt")
-          every {
-            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
-          } returns DefaultNameResolver()
+          val (mockedSourceFile1, mockedSourceAttributes1) = addMockedSourceFile("file.txt")
+          val (mockedSourceFile2, mockedSourceAttributes2) = addMockedSourceFile("file1.txt")
+          val (mockedTargetFile1, mockedTargetAttributes1) = addMockedTargetChildFile("file.txt")
+          val (mockedTargetFile2, mockedTargetAttributes2) = addMockedTargetChildFile("file1.txt")
           mockkStatic(Messages::class)
           var skipNumber = 0
 
@@ -1541,9 +2141,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           every {
             Messages.showDialog(
               any() as Project?,
-              any() as String,
-              any() as String,
-              any() as Array<String>,
+              any<String>(),
+              any<String>(),
+              any<Array<String>>(),
               0,
               any() as Icon?,
               null
@@ -1552,6 +2152,32 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
             ++skipNumber
             0
           }
+
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return DefaultNameResolver()
+            }
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedSourceFile2 -> mockedSourceAttributes2
+                mockedTargetFile1 -> mockedTargetAttributes1
+                mockedTargetFile2 -> mockedTargetAttributes2
+                mockedTargetFolder -> mockedTargetFolderAttributes
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              @Suppress("UNCHECKED_CAST")
+              return Unit as R
+            }
+          }
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1, mockedSourceFile2)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
+
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
           assertSoftly {
             skipNumber shouldBe 2
@@ -1559,13 +2185,10 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         }
         should("Skip 1 file and 1 overwrite") {
           isPastePerformed = false
-          addMockedSourceFile("file.txt")
-          addMockedSourceFile("file1.txt")
-          addMockedTargetChildFile("file.txt")
-          addMockedTargetChildFile("file1.txt")
-          every {
-            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
-          } returns DefaultNameResolver()
+          val (mockedSourceFile1, mockedSourceAttributes1) = addMockedSourceFile("file.txt")
+          val (mockedSourceFile2, mockedSourceAttributes2) = addMockedSourceFile("file1.txt")
+          val (mockedTargetFile1, mockedTargetAttributes1) = addMockedTargetChildFile("file.txt")
+          val (mockedTargetFile2, mockedTargetAttributes2) = addMockedTargetChildFile("file1.txt")
 
           mockkStatic(Messages::class)
           var overwriteSelected = false
@@ -1617,17 +2240,41 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
           var fileOverwritten = false
           var file1Skipped = true
-          every {
-            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
-          } answers {
-            val op = firstArg<MoveCopyOperation>()
-            if (op.source.name == "file.txt") {
-              fileOverwritten = true
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return DefaultNameResolver()
             }
-            if (op.source.name == "file1.txt") {
-              file1Skipped = false
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedSourceFile2 -> mockedSourceAttributes2
+                mockedTargetFile1 -> mockedTargetAttributes1
+                mockedTargetFile2 -> mockedTargetAttributes2
+                mockedTargetFolder -> mockedTargetFolderAttributes
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                if (operation.source.name == "file.txt") {
+                  fileOverwritten = true
+                }
+                if (operation.source.name == "file1.txt") {
+                  file1Skipped = false
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
             }
           }
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1, mockedSourceFile2)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
 
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
 
@@ -1639,17 +2286,13 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         }
         should("Use new name for 1 file and 1 overwrite") {
           isPastePerformed = false
-          addMockedSourceFile("file.txt")
-          addMockedSourceFile("file1.txt")
-          addMockedTargetChildFile("file.txt")
-          addMockedTargetChildFile("file_(1).txt")
-          addMockedTargetChildFile("file1.txt")
-          every {
-            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
-          } returns DefaultNameResolver()
+          val (mockedSourceFile1, mockedSourceAttributes1) = addMockedSourceFile("file.txt")
+          val (mockedSourceFile2, mockedSourceAttributes2) = addMockedSourceFile("file1.txt")
+          val (mockedTargetFile1, mockedTargetAttributes1) = addMockedTargetChildFile("file.txt")
+          val (mockedTargetFile2, mockedTargetAttributes2) = addMockedTargetChildFile("file_(1).txt")
+          val (mockedTargetFile3, mockedTargetAttributes3) = addMockedTargetChildFile("file1.txt")
 
           mockkStatic(Messages::class)
-          var decideOptionSelected = false
           var overwriteSelected = false
           var useNewNameSelected = false
 
@@ -1699,17 +2342,42 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
           var fileNewName: String? = null
           var file1Overwritten = false
-          every {
-            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
-          } answers {
-            val op = firstArg<MoveCopyOperation>()
-            if (op.source.name == "file.txt") {
-              fileNewName = op.newName
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return DefaultNameResolver()
             }
-            if (op.source.name == "file1.txt") {
-              file1Overwritten = true
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedSourceFile2 -> mockedSourceAttributes2
+                mockedTargetFile1 -> mockedTargetAttributes1
+                mockedTargetFile2 -> mockedTargetAttributes2
+                mockedTargetFile3 -> mockedTargetAttributes3
+                mockedTargetFolder -> mockedTargetFolderAttributes
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                if (operation.source.name == "file.txt") {
+                  fileNewName = operation.newName
+                }
+                if (operation.source.name == "file1.txt") {
+                  file1Overwritten = true
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
             }
           }
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1, mockedSourceFile2)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
 
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
 
@@ -1725,15 +2393,33 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           every { datasetAttributes.isPastePossible } returns false
           every { datasetAttributes.isDirectory } returns false
 
-          addMockedSourceFile("directory.test", isDirectory = true)
-          addMockedSourceFile("DATASET.TEST", sourceAttributes = datasetAttributes)
-          addMockedTargetChildFile("directory.test", true)
-          addMockedTargetChildFile("DATASET.TEST")
-          every {
-            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
-          } returns DatasetOrDirResolver(dataOpsManagerService)
+          val (mockedSourceFile1, mockedSourceAttributes1) = addMockedSourceFile("directory.test", isDirectory = true)
+          val (mockedSourceFile2, mockedSourceAttributes2) =
+            addMockedSourceFile("DATASET.TEST", sourceAttributes = datasetAttributes)
+          val (mockedTargetFile1, mockedTargetAttributes1) =
+            addMockedTargetChildFile("directory.test", true)
+          val (mockedTargetFile2, mockedTargetAttributes2) = addMockedTargetChildFile("DATASET.TEST")
           mockkStatic(Messages::class)
           var decideOptionSelected = false
+
+          mockkObject(WindowsLikeMessageDialog.Companion)
+          every {
+            WindowsLikeMessageDialog.showWindowsLikeMessageDialog(
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any()
+            )
+          } answers {
+            2
+          }
 
           every {
             Messages.showYesNoDialog(
@@ -1761,17 +2447,41 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
           var dirNewName: String? = null
           var datasetNewName: String? = null
-          every {
-            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
-          } answers {
-            val op = firstArg<MoveCopyOperation>()
-            if (op.source.name == "directory.test") {
-              dirNewName = op.newName
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return DatasetOrDirResolver(dataOpsManagerService)
             }
-            if (op.source.name == "DATASET.TEST") {
-              datasetNewName = op.newName
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedSourceFile2 -> mockedSourceAttributes2
+                mockedTargetFile1 -> mockedTargetAttributes1
+                mockedTargetFile2 -> mockedTargetAttributes2
+                mockedTargetFolder -> mockedTargetFolderAttributes
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                if (operation.source.name == "directory.test") {
+                  dirNewName = operation.newName
+                }
+                if (operation.source.name == "DATASET.TEST") {
+                  datasetNewName = operation.newName
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
             }
           }
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1, mockedSourceFile2)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
 
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
 
@@ -1787,17 +2497,32 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           every { datasetAttributes.name } returns "DATASET.TEST"
           every { datasetAttributes.isDirectory } returns false
           every { datasetAttributes.isPastePossible } returns false
-          val targetAttributesPDS = mockk<RemoteDatasetAttributes>()
 
-          addMockedSourceFile("DATASET.TEST", sourceAttributes = datasetAttributes)
-          addMockedTargetChildFile("TEST")
-          every {
-            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
-          } returns SeqToPDSResolver(dataOpsManagerService)
-          every { dataOpsManagerService.testInstance.tryToGetAttributes(mockedTargetFile) } returns targetAttributesPDS
+          val (mockedSourceFile1, mockedSourceAttributes1) =
+            addMockedSourceFile("DATASET.TEST", sourceAttributes = datasetAttributes)
+          val (mockedTargetFile1, mockedTargetAttributes1) = addMockedTargetChildFile("TEST")
 
           mockkStatic(Messages::class)
           var decideOptionSelected = false
+
+          mockkObject(WindowsLikeMessageDialog.Companion)
+          every {
+            WindowsLikeMessageDialog.showWindowsLikeMessageDialog(
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any(),
+              any()
+            )
+          } answers {
+            2
+          }
 
           every {
             Messages.showYesNoDialog(
@@ -1822,12 +2547,35 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           }
 
           var memberNewName: String? = null
-          every {
-            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
-          } answers {
-            val op = firstArg<MoveCopyOperation>()
-            memberNewName = op.newName
+
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return SeqToPDSResolver(dataOpsManagerService)
+            }
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedTargetFile1 -> mockedTargetAttributes1
+                mockedTargetFolder -> mockk<RemoteDatasetAttributes>()
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                memberNewName = operation.newName
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
+            }
           }
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
 
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
 
@@ -1837,13 +2585,11 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         }
         should("Resolve conflicts between directory and file") {
           isPastePerformed = false
-          addMockedSourceFile("dir1")
-          addMockedSourceFile("dir2", isPastePossible = true, isDirectory = true)
-          addMockedTargetChildFile("dir1", true)
-          addMockedTargetChildFile("dir2")
-          every {
-            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
-          } returns DefaultNameResolver()
+          val (mockedSourceFile1, mockedSourceAttributes1) = addMockedSourceFile("dir1")
+          val (mockedSourceFile2, mockedSourceAttributes2) =
+            addMockedSourceFile("dir2", isPastePossible = true, isDirectory = true)
+          val (mockedTargetFile1, mockedTargetAttributes1) = addMockedTargetChildFile("dir1", true)
+          val (mockedTargetFile2, mockedTargetAttributes2) = addMockedTargetChildFile("dir2")
 
           mockkStatic(Messages::class)
 
@@ -1887,17 +2633,41 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
           var dir1NewName: String? = null
           var dir2NewName: String? = null
-          every {
-            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
-          } answers {
-            val op = firstArg<MoveCopyOperation>()
-            if (op.source.name == "dir1") {
-              dir1NewName = op.newName
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return DefaultNameResolver()
             }
-            if (op.source.name == "dir2") {
-              dir2NewName = op.newName
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedSourceFile2 -> mockedSourceAttributes2
+                mockedTargetFile1 -> mockedTargetAttributes1
+                mockedTargetFile2 -> mockedTargetAttributes2
+                mockedTargetFolder -> mockedTargetFolderAttributes
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                if (operation.source.name == "dir1") {
+                  dir1NewName = operation.newName
+                }
+                if (operation.source.name == "dir2") {
+                  dir2NewName = operation.newName
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
             }
           }
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1, mockedSourceFile2)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
 
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
 
@@ -1909,8 +2679,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
         should("Resolve conflicts for copying to same directory (Skip all)") {
           isPastePerformed = false
-          val sourceFile = addMockedSourceFile("file.txt", parent = mockedTargetFile)
-          destinationChildFiles.add(sourceFile)
+          val (mockedSourceFile, mockedSourceAttributes) =
+            addMockedSourceFile("file.txt", parent = mockedTargetFolder)
+          destinationChildFiles.add(mockedSourceFile)
 
           mockkStatic(Messages::class)
           var skipSelected = false
@@ -1938,11 +2709,33 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           }
 
           var operationPerformed = false
-          every {
-            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
-          } answers {
-            operationPerformed = true
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return DefaultNameResolver()
+            }
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile -> mockedSourceAttributes
+                mockedTargetFolder -> mockedTargetFolderAttributes
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                operationPerformed = true
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
+            }
           }
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
 
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
 
@@ -1954,8 +2747,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
         should("Resolve conflicts for copying to same directory (Overwrite all)") {
           isPastePerformed = false
-          val sourceFile = addMockedSourceFile("file.txt", parent = mockedTargetFile)
-          destinationChildFiles.add(sourceFile)
+          val (mockedSourceFile, mockedSourceAttributes) =
+            addMockedSourceFile("file.txt", parent = mockedTargetFolder)
+          destinationChildFiles.add(mockedSourceFile)
           mockkStatic(Messages::class)
           var overwriteSelected = false
           var notPossibleMessageShown = false
@@ -2004,11 +2798,33 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           }
 
           var operationPerformed = false
-          every {
-            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
-          } answers {
-            operationPerformed = true
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return DefaultNameResolver()
+            }
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile -> mockedSourceAttributes
+                mockedTargetFolder -> mockedTargetFolderAttributes
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                operationPerformed = true
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
+            }
           }
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
 
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
 
@@ -2021,13 +2837,12 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
         should("Resolve conflicts for copying to same directory (Decide for each)") {
           isPastePerformed = false
-          val sourceFile1 = addMockedSourceFile("file1.txt", parent = mockedTargetFile)
-          destinationChildFiles.add(sourceFile1)
-          val sourceFile2 = addMockedSourceFile("file2.txt", parent = mockedTargetFile)
-          destinationChildFiles.add(sourceFile2)
-          every {
-            dataOpsManagerService.testInstance.getNameResolver(any() as VirtualFile, any() as VirtualFile)
-          } returns DefaultNameResolver()
+          val (mockedSourceFile1, mockedSourceAttributes1) =
+            addMockedSourceFile("file1.txt", parent = mockedTargetFolder)
+          destinationChildFiles.add(mockedSourceFile1)
+          val (mockedSourceFile2, mockedSourceAttributes2) =
+            addMockedSourceFile("file2.txt", parent = mockedTargetFolder)
+          destinationChildFiles.add(mockedSourceFile2)
           mockkStatic(Messages::class)
 
           mockkObject(WindowsLikeMessageDialog.Companion)
@@ -2065,9 +2880,9 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
               null
             )
           } answers {
-            if (secondArg<String>().contains(sourceFile1.name)) {
+            if (secondArg<String>().contains(mockedSourceFile1.name)) {
               1
-            } else if (secondArg<String>().contains(sourceFile2.name)) {
+            } else if (secondArg<String>().contains(mockedSourceFile2.name)) {
               0
             } else {
               throw IllegalArgumentException("Unknown dialog called, that should not be shown.")
@@ -2076,17 +2891,40 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
           var file1CopiedWithNewName = false
           var file2Copied = false
-          every {
-            dataOpsManagerService.testInstance.performOperation(any() as MoveCopyOperation, any() as ProgressIndicator)
-          } answers {
-            val op = firstArg<MoveCopyOperation>()
-            if (op.source.name == sourceFile1.name && op.newName == "file1_(1).txt") {
-              file1CopiedWithNewName = true
+
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return DefaultNameResolver()
             }
-            if (op.source.name == sourceFile2.name) {
-              file2Copied = true
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedSourceFile2 -> mockedSourceAttributes2
+                mockedTargetFolder -> mockedTargetFolderAttributes
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                if (operation.source.name == mockedSourceFile1.name && operation.newName == "file1_(1).txt") {
+                  file1CopiedWithNewName = true
+                }
+                if (operation.source.name == mockedSourceFile2.name) {
+                  file2Copied = true
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
             }
           }
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1, mockedSourceFile2)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
 
           mockedExplorerPasteProvider.performPaste(mockedDataContext)
 

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer.actions
@@ -41,10 +45,10 @@ import eu.ibagroup.formainframe.explorer.ui.JobNode
 import eu.ibagroup.formainframe.explorer.ui.NodeData
 import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestCredentialsServiceImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
 import eu.ibagroup.formainframe.ui.build.jobs.JobBuildTreeView
-import eu.ibagroup.formainframe.utils.service
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
@@ -91,9 +95,16 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
       mockkObject(gson)
       every { gson.hint(Job::class).fromJson(any<String>(), Job::class.java) } returns job
 
-      mockkObject(CredentialService)
-      every { CredentialService.instance.getUsernameByKey(any()) } returns "user"
-      every { CredentialService.instance.getPasswordByKey(any()) } returns "pas"
+      val credentialService = CredentialService.getService() as TestCredentialsServiceImpl
+      credentialService.testInstance = object : TestCredentialsServiceImpl() {
+        override fun getUsernameByKey(connectionConfigUuid: String): String {
+          return "user"
+        }
+
+        override fun getPasswordByKey(connectionConfigUuid: String): String {
+          return "pas"
+        }
+      }
 
       every { mockActionEventForJesEx.getExplorerView<JesExplorerView>() } returns jesExplorerView
 
@@ -121,8 +132,16 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
 
       val jesApi = mockk<JESApi>()
       val call = mockk<Call<List<Job>>>()
-      mockkObject(ZosmfApi)
-      every { ZosmfApi.instance.hint(JESApi::class).getApi<JESApi>(any(), any()) } returns jesApi
+      val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
+      zosmfApi.testInstance = object : TestZosmfApiImpl() {
+        override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
+          return if (apiClass == JESApi::class.java) {
+            jesApi as Api
+          } else {
+            super.getApi(apiClass, connectionConfig)
+          }
+        }
+      }
       every { jesApi.getFilteredJobs(any(), any(), any(), any(), any(), any(), any(), any()) } returns call
 
       val response = mockk<Response<List<Job>>>()
@@ -188,7 +207,7 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
 
       should("perform purge on job successfully") {
 
-        dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return jobAttr
@@ -223,7 +242,7 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
       }
       should("perform purge on job with error") {
 
-        dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return jobAttr
@@ -260,13 +279,14 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
         assertSoftly {
           isOperationFailedForJobsLog shouldBe true
           isEnabledInJobsLog shouldBe false
+          isOperationFailedForNoContextAction shouldBe true
         }
       }
       unmockkAll()
     }
     context("api spec") {
 
-      val zosmfApi = ApplicationManager.getApplication().service<ZosmfApi>() as TestZosmfApiImpl
+      val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
       zosmfApi.testInstance = mockk()
 
       val responseMockk = mockk<Response<List<Job>>>()
@@ -476,7 +496,7 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
           }
           should("purge actionPerformed when jobs have been purged successfully") {
             var isJobsPurged = false
-            val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+            val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
             dataOpsManager.testInstance = mockk()
             every {
               dataOpsManager.testInstance.performOperation(

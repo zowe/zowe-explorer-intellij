@@ -1,38 +1,33 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.utils
 
 import com.ibm.mq.headers.CCSID
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
-import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
-import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperation
 import eu.ibagroup.formainframe.dataops.operations.uss.ChangeFileTagOperationParams
+import eu.ibagroup.formainframe.telemetry.NotificationsService
+import okhttp3.ResponseBody
+import okhttp3.internal.indexOfNonWhitespace
 import org.zowe.kotlinsdk.FileTagList
 import org.zowe.kotlinsdk.TagAction
 import org.zowe.kotlinsdk.UssFileDataType
-import okhttp3.ResponseBody
-import okhttp3.internal.indexOfNonWhitespace
 import java.nio.charset.Charset
-
-const val FILE_TAG_NOTIFICATION_GROUP_ID = "eu.ibagroup.formainframe.utils.FileTagNotificationGroupId"
 
 /**
  * Checks if the uss file tag is set.
@@ -90,7 +85,7 @@ fun listUssFileTag(attributes: RemoteUssAttributes): ResponseBody? {
 
   runCatching {
     val connectionConfig = attributes.requesters[0].connectionConfig
-    response = service<DataOpsManager>().performOperation(
+    response = DataOpsManager.getService().performOperation(
       operation = ChangeFileTagOperation(
         request = ChangeFileTagOperationParams(
           filePath = attributes.path,
@@ -100,7 +95,7 @@ fun listUssFileTag(attributes: RemoteUssAttributes): ResponseBody? {
       ),
     )
   }.onFailure {
-    notifyError(it,"Cannot list uss file tag for ${attributes.path}")
+    NotificationsService.getService().notifyError(it, custTitle = "Cannot list a USS file tag for ${attributes.path}")
   }
   return response
 }
@@ -138,7 +133,7 @@ private fun setUssFileTagCommon(charsetName: String, filePath: String, connectio
   val codeSet = ccsid.toString()
 
   runCatching {
-    service<DataOpsManager>().performOperation(
+    DataOpsManager.getService().performOperation(
       operation = ChangeFileTagOperation(
         request = ChangeFileTagOperationParams(
           filePath = filePath,
@@ -150,7 +145,7 @@ private fun setUssFileTagCommon(charsetName: String, filePath: String, connectio
       )
     )
   }.onFailure {
-    notifyError(it, "Cannot set uss file tag for $filePath")
+    NotificationsService.getService().notifyError(it, custTitle = "Cannot set a USS file tag for $filePath")
   }
 }
 
@@ -161,7 +156,7 @@ private fun setUssFileTagCommon(charsetName: String, filePath: String, connectio
 fun removeUssFileTag(attributes: RemoteUssAttributes) {
   runCatching {
     val connectionConfig = attributes.requesters[0].connectionConfig
-    service<DataOpsManager>().performOperation(
+    DataOpsManager.getService().performOperation(
       operation = ChangeFileTagOperation(
         request = ChangeFileTagOperationParams(
           filePath = attributes.path,
@@ -171,41 +166,7 @@ fun removeUssFileTag(attributes: RemoteUssAttributes) {
       )
     )
   }.onFailure {
-    notifyError(it, "Cannot remove uss file tag for ${attributes.path}")
-  }
-}
-
-/**
- * Displays an error notification if an error was received.
- * @param th thrown error.
- * @param title error text.
- */
-private fun notifyError(th: Throwable, title: String) {
-
-  var details: String = if (th is CallException) {
-    th.errorParams?.get("details")?.castOrNull<List<String>>()?.joinToString("\n") ?: "Unknown error"
-  } else {
-    "Unknown error"
-  }
-  if (details.contains(":")) {
-    details = details.split(":").last()
-  }
-
-  Notification(
-    FILE_TAG_NOTIFICATION_GROUP_ID,
-    title,
-    details,
-    NotificationType.ERROR
-  ).addAction(object : NotificationAction("More") {
-    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      Messages.showErrorDialog(
-        e.project,
-        th.message ?: th.toString(),
-        title
-      )
-    }
-  }).let {
-    Notifications.Bus.notify(it)
+    NotificationsService.getService().notifyError(it, custTitle = "Cannot remove a USS file tag for ${attributes.path}")
   }
 }
 

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package eu.ibagroup.formainframe.explorer
@@ -13,7 +17,6 @@ package eu.ibagroup.formainframe.explorer
 import com.intellij.openapi.Disposable
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.ConfigStateV2
-import eu.ibagroup.formainframe.config.configCrudable
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.makeCrudableWithoutListeners
 import eu.ibagroup.formainframe.config.ws.DSMask
@@ -43,9 +46,6 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
     context("addUssPath") {
       val mockedCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
       val uuid1 = "uuid1"
-      mockkObject(ConfigService)
-      every { ConfigService.instance.crudable } returns mockk()
-      every { configCrudable } returns mockk()
       mockkObject(gson)
 
       val mockedFilesWSConfig = mockk<FilesWorkingSetConfig>()
@@ -96,7 +96,7 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
       val expectedValues = mockedCrud.getAll(FilesWorkingSetConfig::class.java).toMutableList()
 
       var actual1: Optional<FilesWorkingSetConfig>? = null
-      every { configCrudable.update(any() as FilesWorkingSetConfig) } answers {
+      every { ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>()) } answers {
         actual1 =
           FilesWorkingSetConfig(
             uuid1,
@@ -176,9 +176,6 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
     context("removeUssPath") {
       val mockedCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
       val uuid1 = "uuid1"
-      mockkObject(ConfigService)
-      every { ConfigService.instance.crudable } returns mockk()
-      every { configCrudable } returns mockk()
       mockkObject(gson)
 
       val mockedFilesWSConfig = mockk<FilesWorkingSetConfig>()
@@ -227,7 +224,7 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
       val expectedValues = mockedCrud.getAll(FilesWorkingSetConfig::class.java).toMutableList()
 
       var actual4: Optional<FilesWorkingSetConfig>? = null
-      every { configCrudable.update(any() as FilesWorkingSetConfig) } answers {
+      every { ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>()) } answers {
         actual4 =
           FilesWorkingSetConfig(
             uuid1,
