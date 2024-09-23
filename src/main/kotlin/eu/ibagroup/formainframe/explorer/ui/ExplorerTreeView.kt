@@ -33,6 +33,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Query
 import eu.ibagroup.formainframe.dataops.attributes.AttributesService
 import eu.ibagroup.formainframe.dataops.attributes.FileAttributes
+import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.attributes.attributesListener
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
@@ -42,6 +43,7 @@ import eu.ibagroup.formainframe.explorer.*
 import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
 import eu.ibagroup.formainframe.vfs.MFBulkFileListener
+import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import org.jetbrains.concurrency.AsyncPromise
 import java.awt.Component
@@ -52,6 +54,8 @@ import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
 val EXPLORER_VIEW = DataKey.create<ExplorerTreeView<*, *, *>>("explorerView")
+
+private val log = log<ExplorerTreeView<*, *, *>>()
 
 fun <ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
   return getData(EXPLORER_VIEW).castOrNull(clazz)
@@ -218,6 +222,18 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
                 val editorHighlighterUpdater =
                   EditorHighlighterUpdater(project, parentDisposable, editor, it.file)
                 editorHighlighterUpdater.updateHighlighters()
+              }
+            }
+          }
+
+          // TODO: rework it so that listener registers once
+          // This listener should only be registered in FileExplorerView
+          if (this@ExplorerTreeView is FileExplorerView) {
+            events.filterIsInstance<VFilePropertyChangeEvent>().filter {
+              it.propertyName == VirtualFile.PROP_NAME && it.file is MFVirtualFile
+            }.forEach {
+              (it.newValue as? String)?.let { newName ->
+                updateAttributesForChildrenInEditor(it.file, newName)
               }
             }
           }
@@ -401,6 +417,47 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
         contentSynchronizer?.markAsNotNeededForSync(syncProvider)
         runInEdtAndWait {
           fileEditorManager.closeFile(openFile)
+        }
+      }
+    }
+  }
+
+  /**
+   * Update attributes for files opened in editor if renamed file is an ancestor of these files.
+   * For USS files only
+   */
+  fun updateAttributesForChildrenInEditor(renamedFile: VirtualFile, newName: String) {
+    val dataOpsManager = DataOpsManager.instance
+    val parentAttributes = dataOpsManager.tryToGetAttributes(renamedFile)
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    val openFiles = fileEditorManager.openFiles
+    openFiles.forEach { openFile ->
+      if (VfsUtilCore.isAncestor(renamedFile, openFile, false)) {
+        val oldAttributes = dataOpsManager.tryToGetAttributes(openFile)
+        if (parentAttributes is RemoteUssAttributes && oldAttributes is RemoteUssAttributes) {
+          val relativePathToFile = oldAttributes.path.removePrefix(parentAttributes.path)
+          val newPath = "/${parentAttributes.parentDirPath}/$newName$relativePathToFile"
+          val newAttributes = RemoteUssAttributes(
+            newPath,
+            oldAttributes.isDirectory,
+            oldAttributes.fileMode,
+            oldAttributes.url,
+            oldAttributes.requesters,
+            oldAttributes.length,
+            oldAttributes.uid,
+            oldAttributes.owner,
+            oldAttributes.gid,
+            oldAttributes.groupId,
+            oldAttributes.modificationTime,
+            oldAttributes.symlinkTarget
+          )
+          log.info(
+            "Update attributes for file in editor.\nVirtual file - $openFile.\n" +
+                "Old attributes - $oldAttributes.\nNew attributes - $newAttributes."
+          )
+          val attributesService =
+            dataOpsManager.getAttributesService(oldAttributes::class.java, renamedFile::class.java)
+          attributesService.updateAttributes(oldAttributes, newAttributes)
         }
       }
     }
