@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
@@ -58,6 +59,14 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
         override fun after(events: List<VFileEvent>) {
           events.filterIsInstance<VFileDeleteEvent>().forEach { event ->
             fetchedAtLeastOnce.removeIf { it.file == event.file }
+          }
+
+          events.filterIsInstance<VFilePropertyChangeEvent>().forEach { event ->
+            if (event.propertyName == VirtualFile.PROP_WRITABLE && !event.file.isDirectory) {
+              event.newValue.castOrNull<Boolean>()?.let {
+                DocumentedSyncProvider.findDocumentForFile(event.file)?.setReadOnly(!it)
+              }
+            }
           }
         }
       }
