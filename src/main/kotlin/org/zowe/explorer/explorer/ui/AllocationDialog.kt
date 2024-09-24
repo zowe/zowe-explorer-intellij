@@ -50,12 +50,12 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
   private lateinit var advancedParametersField: JTextField
   private lateinit var presetsBox: JComboBox<Presets>
   private val HLQ = getUsername(config)
+  private val nonNegativeIntRange = IntRange(0, Int.MAX_VALUE - 1)
+  private val positiveIntRange = IntRange(1, Int.MAX_VALUE - 1)
 
   private val mainPanel by lazy {
     val sameWidthLabelsGroup = "ALLOCATION_DIALOG_LABELS_WIDTH_GROUP"
     val sameWidthComboBoxGroup = "ALLOCATION_DIALOG_COMBO_BOX_WIDTH_GROUP"
-    val nonNegativeIntRange = IntRange(0, Int.MAX_VALUE - 1)
-    val positiveIntRange = IntRange(1, Int.MAX_VALUE - 1)
 
     panel {
       row {
@@ -195,7 +195,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
       row {
         label("Record Length: ")
           .widthGroup(sameWidthLabelsGroup)
-        intTextField(positiveIntRange)
+        intTextField(nonNegativeIntRange)
           .bindText(
             { state.allocationParameters.recordLength?.toString() ?: "0" },
             { state.allocationParameters.recordLength = it.toIntOrNull() }
@@ -330,12 +330,33 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
     return validateDatasetNameOnInput(datasetNameField)
       ?: validateForBlank(memberNameField)
       ?: validateMemberName(memberNameField)
+      ?: validateLrecl(recordFormatBox, recordLengthField)
       ?: defaultValidationInfos.firstOrNull()
       ?: validateVolser(advancedParametersField)
   }
 
   override fun getPreferredFocusedComponent(): JComponent? {
     return mainPanel.preferredFocusedComponent ?: super.getPreferredFocusedComponent()
+  }
+
+  /**
+   * Function for validating LRECL value
+   * @param recordFormatBox RecordFormat combo box
+   * @param recordLengthField  record length text field
+   * @return ValidationInfo in case of error or null otherwise
+   */
+  private fun validateLrecl(recordFormatBox: JComboBox<RecordFormat>, recordLengthField: JTextField): ValidationInfo? {
+    val range = if (recordFormatBox.selectedItem == RecordFormat.U)
+      nonNegativeIntRange
+    else
+      positiveIntRange
+    return if (recordLengthField.text.toIntOrNull() !in range)
+      ValidationInfo(
+        "Please enter a number from ${range.first} to ${range.last}",
+        recordLengthField
+      )
+    else
+      null
   }
 
   init {
