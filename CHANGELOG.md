@@ -25,6 +25,8 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Feature: TSO CLI gets focus when it is just opened ([9bc02a0b](https://github.com/zowe/zowe-explorer-intellij/commit/9bc02a0b))
 * Feature: Notification after a dataset is created is improved ([8d62771c](https://github.com/zowe/zowe-explorer-intellij/commit/8d62771c))
 * Feature: Some enhancements to the connection creation dialog ([5a7a56de](https://github.com/zowe/zowe-explorer-intellij/commit/5a7a56de))
+* Feature: "Rate us" notification added ([577b81c2](https://github.com/zowe/zowe-explorer-intellij/commit/577b81c2))
+* Feature: "reportThrowable" replaced with "notifyError" ([577b81c2](https://github.com/zowe/zowe-explorer-intellij/commit/577b81c2))
 
 ### Bugfixes
 * Bugfix: Slow operations in EDT ([8e9266d5](https://github.com/zowe/zowe-explorer-intellij/commit/8e9266d5))
