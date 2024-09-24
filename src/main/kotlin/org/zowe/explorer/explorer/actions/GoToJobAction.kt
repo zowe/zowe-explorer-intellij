@@ -166,7 +166,7 @@ class GoToJobAction : AnAction() {
    * @param project
    */
   private fun navigateToJesExplorer(view: ExplorerTreeView<*, *, *>, project: Project) {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("For Mainframe")
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Zowe Explorer")
     val content = toolWindow?.contentManager?.getContent(view) as ContentImpl
     toolWindow.contentManager.setSelectedContent(content, true)
   }
