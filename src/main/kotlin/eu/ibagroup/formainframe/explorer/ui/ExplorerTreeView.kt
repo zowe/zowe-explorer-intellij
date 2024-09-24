@@ -16,12 +16,7 @@ package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -57,19 +52,10 @@ import eu.ibagroup.formainframe.dataops.content.synchronizer.DocumentedSyncProvi
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SaveStrategy
 import eu.ibagroup.formainframe.dataops.fetch.FileCacheListener
 import eu.ibagroup.formainframe.dataops.fetch.FileFetchProvider
-import eu.ibagroup.formainframe.explorer.CutBufferListener
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.ExplorerListener
-import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.explorer.UNITS_CHANGED
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.*
 import eu.ibagroup.formainframe.telemetry.NotificationsService
-import eu.ibagroup.formainframe.utils.castOrNull
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.EntityWithUuid
-import eu.ibagroup.formainframe.utils.getAncestorNodes
-import eu.ibagroup.formainframe.utils.runInEdtAndWait
-import eu.ibagroup.formainframe.utils.rwLocked
-import eu.ibagroup.formainframe.utils.subscribe
 import eu.ibagroup.formainframe.vfs.MFBulkFileListener
 import eu.ibagroup.formainframe.vfs.MFVFilePropertyChangeEvent
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -86,7 +72,7 @@ val EXPLORER_VIEW = DataKey.create<ExplorerTreeView<*, *, *>>("explorerView")
 
 private val log = log<ExplorerTreeView<*, *, *>>()
 
-fun <ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
+fun <ExplorerView : ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
   return getData(EXPLORER_VIEW).castOrNull(clazz)
 }
 
@@ -475,7 +461,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
    * For USS files only
    */
   fun updateAttributesForChildrenInEditor(renamedFile: VirtualFile, newName: String) {
-    val dataOpsManager = DataOpsManager.instance
+    val dataOpsManager = DataOpsManager.getService()
     val parentAttributes = dataOpsManager.tryToGetAttributes(renamedFile)
     val fileEditorManager = FileEditorManager.getInstance(project)
     val openFiles = fileEditorManager.openFiles
