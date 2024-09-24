@@ -30,6 +30,8 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Feature: If local zowe.config.json is deleted, the native connection in plug-in is deleted if the user chooses it to delete ([6ee65922](https://github.com/zowe/zowe-explorer-intellij/commit/6ee65922))
 * Feature: Notification after a dataset is created is improved ([8d62771c](https://github.com/zowe/zowe-explorer-intellij/commit/8d62771c))
 * Feature: Some enhancements to the connection creation dialog ([5a7a56de](https://github.com/zowe/zowe-explorer-intellij/commit/5a7a56de))
+* Feature: "Rate us" notification added ([577b81c2](https://github.com/zowe/zowe-explorer-intellij/commit/577b81c2))
+* Feature: "reportThrowable" replaced with "notifyError" ([577b81c2](https://github.com/zowe/zowe-explorer-intellij/commit/577b81c2))
 
 ### Bugfixes
 * Bugfix: Slow operations in EDT ([8e9266d5](https://github.com/zowe/zowe-explorer-intellij/commit/8e9266d5))
