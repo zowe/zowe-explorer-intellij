@@ -94,6 +94,7 @@ dependencies {
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
   testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
   testImplementation("com.squareup.okhttp3:okhttp-tls:$okHttp3Version")
+  testImplementation("com.squareup.okhttp3:logging-interceptor:$okHttp3Version")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
   testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junitVersion")
   testImplementation("com.intellij.remoterobot:ide-launcher:$remoteRobotVersion")
@@ -234,6 +235,9 @@ tasks {
   test {
     useJUnitPlatform()
 
+    // To run unit tests only and do not trigger "uiTest" task related things (like "compileUiTestKotlin")
+    onlyIf { !gradle.startParameter.taskNames.contains("uiTest") }
+
     jvmArgs("--add-opens", "java.desktop/java.awt=ALL-UNNAMED")
     jvmArgs("--add-opens", "java.desktop/sun.awt=ALL-UNNAMED")
     jvmArgs("--add-opens", "java.desktop/java.awt.event=ALL-UNNAMED")
@@ -258,7 +262,7 @@ tasks {
         if (desc.parent == null) { // will match the outermost suite
           val output =
             "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
-              "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+                "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
           val fileName = "./build/reports/tests/${result.resultType}.txt"
           File(fileName).writeText(output)
         }

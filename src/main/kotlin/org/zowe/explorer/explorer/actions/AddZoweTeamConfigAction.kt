@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
@@ -14,9 +18,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFileManager
-import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.ui.zosmf.ZoweTeamConfigDialog
@@ -60,6 +63,7 @@ class AddZoweTeamConfigAction : AnAction() {
    * @see com.intellij.openapi.actionSystem.AnAction.actionPerformed
    */
   override fun actionPerformed(e: AnActionEvent) {
+    val configCrudable = ConfigService.getService().crudable
     val state = ZoweTeamConfigDialog.showAndTestConnection(
       crudable = configCrudable,
       project = e.project,
@@ -72,10 +76,10 @@ class AddZoweTeamConfigAction : AnAction() {
         e.presentation.description = "$ZOWE_CONFIG_NAME already exists in the project"
         return
       }
-      val zoweConfigService = project.service<ZoweConfigService>()
+      val zoweConfigService = ZoweConfigService.getInstance(project)
       zoweConfigService.addZoweConfigFile(state)
 
-      CredentialService.instance.setCredentials(connectionConfig.uuid, state.username, state.password)
+      CredentialService.getService().setCredentials(connectionConfig.uuid, state.username, state.password)
       configCrudable.add(connectionConfig)
     } else {
       return

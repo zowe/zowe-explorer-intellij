@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.config
@@ -41,7 +45,6 @@ import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.utils.crudable.*
 import org.zowe.explorer.utils.runIfTrue
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.utils.validateForBlank
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
@@ -112,7 +115,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     every { crudableMockk.getAll<FilesWorkingSetConfig>() } returns Stream.of()
     every { crudableMockk.getAll<JesWorkingSetConfig>() } returns Stream.of()
     mockkObject(ConfigService)
-    every { ConfigService.instance.crudable } returns crudableMockk
+    every { ConfigService.getService().crudable } returns crudableMockk
     every { crudableMockk.find<ConnectionConfig>(any(), any()) } answers {
       listOf(connection).stream()
     }
@@ -243,7 +246,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     val explorerMock = mockk<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, *>>>()
     every { explorerMock.componentManager } returns ApplicationManager.getApplication()
     var infoRes = InfoResponse(zosVersion = "04.27.00")
-    val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+    val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
     dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
       override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
         if (operation is InfoOperation) {
@@ -390,7 +393,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     every { crudableMockk.getAll<FilesWorkingSetConfig>() } returns Stream.of()
     every { crudableMockk.getAll<JesWorkingSetConfig>() } returns Stream.of()
     mockkObject(ConfigService)
-    every { ConfigService.instance.crudable } returns crudableMockk
+    every { ConfigService.getService().crudable } returns crudableMockk
     every { crudableMockk.find<ConnectionConfig>(any(), any()) } answers {
       listOf(connection).stream()
     }
@@ -626,11 +629,11 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     ): Crudable {
       val crudableLists = CrudableLists(addFilter = object : AddFilter {
         override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
-          return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
+          return ConfigService.getService().getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
         }
       }, updateFilter = object : UpdateFilter {
         override operator fun <T : Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
-          return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
+          return ConfigService.getService().getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
         }
       }, nextUuidProvider = { UUID.randomUUID().toString() }, getListByClass = {
         if (it == Credentials::class.java) {

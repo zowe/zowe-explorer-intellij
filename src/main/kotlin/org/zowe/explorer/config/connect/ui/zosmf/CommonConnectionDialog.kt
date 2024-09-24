@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.config.connect.ui.zosmf
@@ -161,7 +165,7 @@ abstract class CommonConnectionDialog(
             newState.isAllowSsl,
             newState.zVersion
           )
-          CredentialService.instance.setCredentials(
+          CredentialService.getService().setCredentials(
             connectionConfigUuid = newState.connectionUuid,
             username = newState.username,
             password = newState.password
@@ -169,7 +173,7 @@ abstract class CommonConnectionDialog(
         } else {
           state.initEmptyUuids(crudable)
           newTestedConnConfig = state.connectionConfig
-          CredentialService.instance.setCredentials(
+          CredentialService.getService().setCredentials(
             connectionConfigUuid = state.connectionUuid,
             username = state.username,
             password = state.password

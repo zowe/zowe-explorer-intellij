@@ -20,6 +20,8 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkCancelDialog
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.dsl.builder.panel
 import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
 import org.zowe.explorer.common.ui.DialogMode
@@ -34,9 +36,14 @@ import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.utils.toMutableList
+import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
+import org.zowe.kotlinsdk.zowe.config.ZoweConfig
+import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.net.URI
 
 /** Create and manage Connections tab in settings */
 @Suppress("DialogTitleCapitalization")
@@ -72,7 +79,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
       throw IllegalStateException("Unable to save invalid URL: ${state.connectionUrl}")
     setProfile(ZoweConfigServiceImpl.getProfileNameFromConnName(state.connectionName))
     host = uri.host
-    port = if (uri.port==-1) 10443 else uri.port.toLong()
+    port = if (uri.port == -1) 10443 else uri.port.toLong()
     protocol = state.connectionUrl.split("://")[0]
     user = state.username
     password = state.password
@@ -149,16 +156,51 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     }
   }
 
-  /** Generates a connection removal warning message that is used for working sets */
-  private fun generateRemoveWarningMessage(wsUsages: List<WorkingSetConfig>, wsType: String): StringBuilder {
-    val warningMessageBuilder =
-      StringBuilder("<nobr>The following $wsType working sets use selected connections:</nobr><br>")
-    wsUsages.forEach { wsConfig ->
-      warningMessageBuilder.append(wsConfig.name).append(", ")
+  companion object {
+    /**
+     * Generates a connection removal warning message that is used for Files/JES working set
+     * @param wsUsages list of working sets for the current connection
+     * @param wsType working set type
+     * @return StringBuilder with result string.
+     */
+    private fun generateRemoveWarningMessage(wsUsages: List<WorkingSetConfig>, wsType: String): StringBuilder {
+      val warningMessageBuilder =
+        StringBuilder("<nobr>The following $wsType working sets use selected connections:</nobr><br>")
+      wsUsages.forEach { wsConfig ->
+        warningMessageBuilder.append(wsConfig.name).append(", ")
+      }
+      warningMessageBuilder.setLength(warningMessageBuilder.length - 2)
+      warningMessageBuilder.append(".<br>")
+      return warningMessageBuilder
     }
-    warningMessageBuilder.setLength(warningMessageBuilder.length - 2)
-    warningMessageBuilder.append(".<br>")
-    return warningMessageBuilder
+
+    /**
+     * Creates a message dialog when a connection is deleted if it is used in any working set
+     * @param filesWsUsages list of files working sets
+     * @param jesWsUsages list of JES working sets
+     * @return number of button pressed
+     */
+    fun warningMessageForDeleteConfig(
+      filesWsUsages: List<FilesWorkingSetConfig>,
+      jesWsUsages: List<JesWorkingSetConfig>
+    ): Int {
+      val warningMessageBuilder = StringBuilder()
+      if (filesWsUsages.isNotEmpty()) {
+        warningMessageBuilder.append(generateRemoveWarningMessage(filesWsUsages, "Files"))
+      }
+      if (jesWsUsages.isNotEmpty()) {
+        warningMessageBuilder.append(generateRemoveWarningMessage(jesWsUsages, "JES"))
+      }
+      warningMessageBuilder.append("<br>Do you really want to remove it?")
+
+      return Messages.showOkCancelDialog(
+        warningMessageBuilder.toString(),
+        "Warning",
+        "Yes",
+        "Cancel",
+        Messages.getWarningIcon()
+      )
+    }
   }
 
   /** Remove connections with the warning before they are deleted */
@@ -184,22 +226,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
       return
     }
 
-    val warningMessageBuilder = StringBuilder()
-    if (filesWsUsages.isNotEmpty()) {
-      warningMessageBuilder.append(generateRemoveWarningMessage(filesWsUsages, "Files"))
-    }
-    if (jesWsUsages.isNotEmpty()) {
-      warningMessageBuilder.append(generateRemoveWarningMessage(jesWsUsages, "JES"))
-    }
-    warningMessageBuilder.append("<br>Do you really want to remove it?")
-
-    val ret = Messages.showOkCancelDialog(
-      warningMessageBuilder.toString(),
-      "Warning",
-      "Yes",
-      "Cancel",
-      Messages.getWarningIcon()
-    )
+    val ret = warningMessageForDeleteConfig(filesWsUsages, jesWsUsages)
 
     if (ret == Messages.OK)
       removeSelectedConnections()

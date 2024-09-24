@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.zowe
@@ -14,7 +18,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
@@ -36,7 +39,7 @@ const val ZOWE_CONFIG_NAME = "zowe.config.json"
  * @return Nothing.
  */
 fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project, type: ZoweConfigType) {
-  val zoweConfigService = project.service<ZoweConfigService>()
+  val zoweConfigService = ZoweConfigService.getInstance(project)
   val zoweConfigState = zoweConfigService.getZoweConfigState(type = type)
 
   if (zoweConfigState == ZoweConfigState.NEED_TO_ADD) {
@@ -57,7 +60,8 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project, type: ZoweC
         })
         addAction(object : DumbAwareAction("Add $type Zowe Connection") {
           override fun actionPerformed(e: AnActionEvent) {
-            project.service<ZoweConfigService>().addOrUpdateZoweConfig(false, true, type)
+            ZoweConfigService.getInstance(project)
+              .addOrUpdateZoweConfig(false, true, type)
             hideBalloon()
           }
         }).notify(project)
@@ -71,7 +75,7 @@ fun showNotificationForAddUpdateZoweConfigIfNeeded(project: Project, type: ZoweC
  * @return Nothing.
  */
 fun showDialogForDeleteZoweConfigIfNeeded(project: Project, type: ZoweConfigType) {
-  val zoweConfigService = project.service<ZoweConfigService>()
+  val zoweConfigService = ZoweConfigService.getInstance(project)
   val zoweConfigState = zoweConfigService.getZoweConfigState(type = type)
   if (zoweConfigState != ZoweConfigState.NEED_TO_ADD && zoweConfigState != ZoweConfigState.NOT_EXISTS) {
     val choice = Messages.showDialog(

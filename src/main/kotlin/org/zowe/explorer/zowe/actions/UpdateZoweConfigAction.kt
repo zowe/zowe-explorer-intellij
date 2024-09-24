@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.zowe.actions
@@ -13,7 +17,6 @@ package org.zowe.explorer.zowe.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import org.zowe.explorer.utils.write
@@ -50,7 +53,7 @@ class UpdateZoweConfigAction : DumbAwareAction() {
 
     FileDocumentManager.getInstance().saveDocument(editor.document)
 
-    val zoweConfigService = project.service<ZoweConfigService>()
+    val zoweConfigService = ZoweConfigService.getInstance(project)
 
     zoweConfigService.addOrUpdateZoweConfig(true, type = type)
   }
@@ -75,7 +78,7 @@ class UpdateZoweConfigAction : DumbAwareAction() {
     if (vFile.path == zoweLocalConfigLocation)
       type = ZoweConfigType.LOCAL
 
-    val zoweConfigService = project.service<ZoweConfigService>()
+    val zoweConfigService = ZoweConfigService.getInstance(project)
     lock.write {
       val prevZoweConfig = if (type == ZoweConfigType.LOCAL)
         zoweConfigService.localZoweConfig

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.zowe.service
@@ -32,12 +36,12 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
-import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.utils.toMutableList
+import org.zowe.explorer.utils.write
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.explorer.zowe.service.ZoweConfigService.Companion.lock
 import org.zowe.kotlinsdk.annotations.ZVersion
@@ -84,7 +88,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
      * Returns Zowe connection name
      */
     fun getZoweConnectionName(myProject: Project?, type: ZoweConfigType, profileName: String = "zosmf"): String {
-      return  if (type == ZoweConfigType.LOCAL)
+      return if (type == ZoweConfigType.LOCAL)
         "${ZOWE_PROJECT_PREFIX}${type}-${profileName}/${myProject?.name}"
       else
         "${ZOWE_PROJECT_PREFIX}${type}-${profileName}"
@@ -111,7 +115,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
 
   }
 
-  private val configCrudable = ConfigService.instance.crudable
+  private val configCrudable = ConfigService.getService().crudable
 
   override var localZoweConfig: ZoweConfig? = null
 
@@ -170,7 +174,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         if (type == ZoweConfigType.LOCAL) {
           Regex("^(" + ZOWE_PROJECT_PREFIX + type + "-).*(/" + myProject.name + ")$")
         } else {
-          Regex("^(" + ZOWE_PROJECT_PREFIX + type+ "-).*")
+          Regex("^(" + ZOWE_PROJECT_PREFIX + type + "-).*")
         }
       it.name.matches(pattern) && it.zoweConfigPath == getZoweConfigLocation(myProject, type)
     }.collect(Collectors.toList())
@@ -212,7 +216,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       .apply {
         addAction(object : DumbAwareAction("Add Anyway") {
           override fun actionPerformed(e: AnActionEvent) {
-            addOrUpdateZoweConfig(checkConnection = false,type = type)
+            addOrUpdateZoweConfig(checkConnection = false, type = type)
             hideBalloon()
           }
         })
@@ -316,7 +320,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val zoweConnection = findExistingConnection(type, zosmfConnection.profileName)?.let {
       zosmfConnection.toConnectionConfig(it.uuid, it.zVersion, type = type)
     } ?: zosmfConnection.toConnectionConfig(UUID.randomUUID().toString(), type = type)
-    CredentialService.instance.setCredentials(zoweConnection.uuid, username, password)
+    CredentialService.getService().setCredentials(zoweConnection.uuid, username, password)
     return zoweConnection
   }
 
@@ -326,7 +330,11 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @param type of zowe config
    * @return list of URLs which did not pass the test
    */
-  private fun testAndPrepareAllZosmfConnections(zoweConfig: ZoweConfig, type: ZoweConfigType, failedURLs: MutableList<String>): MutableList<ConnectionConfig> {
+  private fun testAndPrepareAllZosmfConnections(
+    zoweConfig: ZoweConfig,
+    type: ZoweConfigType,
+    failedURLs: MutableList<String>
+  ): MutableList<ConnectionConfig> {
     var allPreparedConn = mutableListOf<ConnectionConfig>()
     for (zosmfConnection in zoweConfig.getListOfZosmfConections()) {
       val zoweConnection = prepareConnection(zosmfConnection, type)
@@ -361,13 +369,13 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         }
 
         if (filesWsUsages.isEmpty() && jesWsUsages.isEmpty()) {
-          CredentialService.instance.clearCredentials(zoweConnection.uuid)
+          CredentialService.getService().clearCredentials(zoweConnection.uuid)
           configCrudable.delete(zoweConnection)
         } else {
           val ret = warningMessageForDeleteConfig(filesWsUsages, jesWsUsages)
 
           if (ret == Messages.OK) {
-            CredentialService.instance.clearCredentials(zoweConnection.uuid)
+            CredentialService.getService().clearCredentials(zoweConnection.uuid)
             configCrudable.delete(zoweConnection)
           }
         }
@@ -424,7 +432,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val allConnections = configCrudable.getAll<ConnectionConfig>().toList()
     val allConnectionsNames: MutableList<String> = allConnections.map { it.name }.toMutableList()
 
-    allConnections.filter {it.zoweConfigPath == getZoweConfigLocation(myProject, type)}.forEach {
+    allConnections.filter { it.zoweConfigPath == getZoweConfigLocation(myProject, type) }.forEach {
       var index = 1
       var newName = it.name
       while (allConnectionsNames.contains(newName)) {
