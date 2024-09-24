@@ -270,7 +270,7 @@ class PurgeJobAction : AnAction() {
         cancellable = true
       ) {
         runCatching {
-          service<DataOpsManager>().performOperation(
+          DataOpsManager.getService().performOperation(
             operation = PurgeJobOperation(
               request = BasicPurgeJobParams(jobStatus.jobName, jobStatus.jobId),
               connectionConfig = connectionConfig

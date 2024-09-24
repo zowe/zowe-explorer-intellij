@@ -31,13 +31,7 @@ import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkConstructor
-import io.mockk.mockkStatic
-import io.mockk.spyk
-import io.mockk.unmockkAll
+import io.mockk.*
 import kotlin.reflect.KFunction
 
 class ExplorerTreeViewTestSpec : WithApplicationShouldSpec({
