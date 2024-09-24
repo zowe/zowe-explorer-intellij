@@ -1,17 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ConnectionConfigBase
@@ -33,10 +36,10 @@ import org.zowe.explorer.explorer.ui.NodeData
 import org.zowe.explorer.explorer.ui.UssDirNode
 import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager
 import org.zowe.explorer.utils.MaskType
-import org.zowe.explorer.utils.crudable.Crudable
-import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
@@ -60,18 +63,17 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
     val anActionEventMock = mockk<AnActionEvent>()
     val explorerTreeNodeMock = mockk<ExplorerTreeNode<ConnectionConfig, *>>()
     val filesWorkingSetMock = mockk<FilesWorkingSet>()
-    val configServiceMock = mockk<ConfigService>()
-    val credentialServiceMock = mockk<CredentialService>()
-    val crudableMock = mockk<Crudable>()
     val filesWorkingSetConfigMock = mockk<FilesWorkingSetConfig>()
+
+    val uiComponentManagerService: TestUIComponentManager = UIComponentManager.getService() as TestUIComponentManager
+    val configService = ConfigService.getService() as TestConfigServiceImpl
+    val credentialService = CredentialService.getService() as TestCredentialsServiceImpl
 
     val explorerTreeStructBaseMock = object : TestExplorerTreeStructureBase(mockk(), mockk()) {
       override fun registerNode(node: ExplorerTreeNode<*, *>) {}
     }
 
     beforeEach {
-      val uiComponentManagerService: TestUIComponentManager =
-        ApplicationManager.getApplication().service<UIComponentManager>() as TestUIComponentManager
       uiComponentManagerService.testInstance = object : TestUIComponentManager() {
         override fun <E : Explorer<*, *>> getExplorerContentProvider(
           clazz: Class<out E>
@@ -94,17 +96,14 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
       every { explorerTreeNodeMock.value } returns filesWorkingSetMock
 
       every {
-        crudableMock.getByUniqueKey(filesWorkingSetConfigMock::class.java, uuid)
+        configService.crudable.getByUniqueKey(FilesWorkingSetConfig::class.java, uuid)
       } returns Optional.of(filesWorkingSetConfigMock)
 
-      mockkObject(ConfigService)
-      every { ConfigService.instance } returns configServiceMock
-      every { configServiceMock.crudable } returns crudableMock
-
-      mockkObject(CredentialService)
-      every { CredentialService.instance } returns credentialServiceMock
-      every { credentialServiceMock.getUsernameByKey(any<String>()) } returns "test"
-
+      credentialService.testInstance = object : TestCredentialsServiceImpl() {
+        override fun getUsernameByKey(connectionConfigUuid: String): String {
+          return "test"
+        }
+      }
       every { anActionEventMock.project } returns mockk()
 
       mockkObject(AddOrEditMaskDialog)
@@ -128,7 +127,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         changed = false
 
         every {
-          crudableMock.update(any())
+          configService.crudable.update(any())
         } answers {
           updated = true
           mockk()
@@ -183,7 +182,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         }
         should("perform edit on USS mask") {
           every {
-            crudableMock.update(any())
+            configService.crudable.update(any())
           } answers {
             updated = true
             val wsConfToUpdate = firstArg<FilesWorkingSetConfig>()
@@ -207,7 +206,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         }
         should("perform edit on USS mask changing mask type") {
           every {
-            crudableMock.update(any())
+            configService.crudable.update(any())
           } answers {
             updated = true
             val wsConfToUpdate = firstArg<FilesWorkingSetConfig>()
@@ -238,7 +237,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         }
         should("not perform edit on USS mask if working set is not found") {
           every {
-            crudableMock.getByUniqueKey(filesWorkingSetConfigMock::class.java, uuid)
+            configService.crudable.getByUniqueKey(filesWorkingSetConfigMock::class.java, uuid)
           } returns Optional.ofNullable(null)
 
           editMaskAction.actionPerformed(anActionEventMock)
@@ -302,7 +301,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         }
         should("perform edit on DS mask") {
           every {
-            crudableMock.update(any())
+            configService.crudable.update(any())
           } answers {
             updated = true
             val wsConfToUpdate = firstArg<FilesWorkingSetConfig>()
@@ -326,7 +325,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         }
         should("perform edit on DS mask changing mask type") {
           every {
-            crudableMock.update(any())
+            configService.crudable.update(any())
           } answers {
             updated = true
             val wsConfToUpdate = firstArg<FilesWorkingSetConfig>()

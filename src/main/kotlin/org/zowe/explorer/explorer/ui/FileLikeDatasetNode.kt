@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.ui
@@ -16,7 +20,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.JBColor
@@ -35,6 +38,7 @@ import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.exceptions.NotificationCompatibleException
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.explorer.ExplorerUnit
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
@@ -118,8 +122,9 @@ class FileLikeDatasetNode(
           } catch (throwable: Throwable) {
             possibleThrowable = if (throwable !is NotificationCompatibleException) {
               val title = "Error during single element attributes fetch"
-              val details = "Message: ${throwable.message}\nCause: ${throwable.cause}"
-              NotificationCompatibleException(title, details)
+              val detailsShort = "Message: ${throwable.message}"
+              val detailsLong = "Message: ${throwable.message}\nCause: ${throwable.cause}"
+              NotificationCompatibleException(title, detailsShort, detailsLong)
             } else {
               throwable
             }
@@ -129,7 +134,7 @@ class FileLikeDatasetNode(
           possibleThrowable
         }
         if (throwable != null) {
-          explorer.reportThrowable(throwable, project)
+          NotificationsService.getService().notifyError(throwable, project)
           return
         }
         if (value.isDirectory) {
@@ -159,7 +164,7 @@ class FileLikeDatasetNode(
    * In the result it may produce [LibraryNode] regarding the attributes from a mainframe
    */
   override fun navigate(requestFocus: Boolean) {
-    val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+    val dataOpsManager = DataOpsManager.getService()
     val attributes = dataOpsManager.tryToGetAttributes(value) ?: return
     if (attributes is RemoteDatasetAttributes) {
       fetchAttributesForNodeIfMissing(
@@ -173,7 +178,7 @@ class FileLikeDatasetNode(
   }
 
   override fun update(presentation: PresentationData) {
-    when (val attributes = service<DataOpsManager>().tryToGetAttributes(value)) {
+    when (val attributes = DataOpsManager.getService().tryToGetAttributes(value)) {
       is RemoteDatasetAttributes -> {
         if (this.navigating) {
           presentation.setIcon(AnimatedIcon.Default())
@@ -208,7 +213,7 @@ class FileLikeDatasetNode(
       }
     }
     updateNodeTitleUsingCutBuffer(value.presentableName, presentation)
-    val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+    val dataOpsManager = DataOpsManager.getService()
     getVolserIfPresent(dataOpsManager, value)
       ?.let { presentation.addText(it, SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES) }
   }

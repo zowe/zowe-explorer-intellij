@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
@@ -13,11 +17,10 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.impl.ContentImpl
-import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JobFilterState
 import org.zowe.explorer.config.ws.JobFilterStateWithMultipleWS
@@ -65,7 +68,7 @@ class GoToJobAction : AnAction() {
     val jobsLogsView = e.getData(JOBS_LOG_VIEW) ?: return
     val jobId = jobsLogsView.jobLogInfo.jobId ?: return
     val jesContentProvider =
-      service<UIComponentManager>().getExplorerContentProvider(JesExplorer::class.java) as JesExplorerContentProvider
+      UIComponentManager.getService().getExplorerContentProvider(JesExplorer::class.java) as JesExplorerContentProvider
     val view = e.project?.let { jesContentProvider.getExplorerView(it) } ?: return
     val connectionConfig = jobsLogsView.getConnectionConfig()
 
@@ -76,14 +79,14 @@ class GoToJobAction : AnAction() {
     if (jesWSOnSameConnection.isEmpty()) {
       val maskRow = mutableListOf(JobFilterState(jobId = jobId))
       val dialog = JesWsDialog(
-        configCrudable,
-        JesWorkingSetDialogState(maskRow = maskRow).initEmptyUuids(configCrudable),
+        ConfigService.getService().crudable,
+        JesWorkingSetDialogState(maskRow = maskRow).initEmptyUuids(ConfigService.getService().crudable),
         true,
         connectionConfig
       )
       if (dialog.showAndGet()) {
         val wsConfigToSave = dialog.state.workingSetConfig
-        configCrudable.add(wsConfigToSave)
+        ConfigService.getService().crudable.add(wsConfigToSave)
         jobFilterCreated = true
         message = createNotificationSuccessMessage(
           jobFilters = wsConfigToSave.jobsFilters.toMutableList(),

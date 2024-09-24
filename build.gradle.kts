@@ -1,14 +1,17 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
-import kotlinx.kover.api.KoverTaskExtension
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.intellij.tasks.ClasspathIndexCleanupTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -23,12 +26,12 @@ fun dateValue(pattern: String): String =
 
 plugins {
   id("org.sonarqube") version "5.0.0.4638"
-  id("org.jetbrains.intellij") version "1.17.2"
-  id("org.jetbrains.changelog") version "2.2.0"
+  id("org.jetbrains.intellij") version "1.17.4"
+  id("org.jetbrains.changelog") version "2.2.1"
   kotlin("jvm") version "1.9.22"
   java
-  id("org.jetbrains.kotlinx.kover") version "0.6.1"
-  id("org.owasp.dependencycheck") version "9.1.0"
+  id("org.jetbrains.kotlinx.kover") version "0.8.3"
+  id("org.owasp.dependencycheck") version "10.0.4"
 }
 
 val sonarLinksCi: String by project
@@ -39,15 +42,15 @@ apply(from = "gradle/sonar.gradle")
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
-val remoteRobotVersion = "0.11.22"
+val remoteRobotVersion = "0.11.23"
 val okHttp3Version = "4.12.0"
-val kotestVersion = "5.8.1"
+val kotestVersion = "5.9.1"
 val retrofit2Vertion = "2.11.0"
-val junitVersion = "5.10.2"
-val mockkVersion = "1.13.10"
-val ibmMqVersion = "9.3.5.0"
+val junitVersion = "5.10.3"
+val mockkVersion = "1.13.12"
+val ibmMqVersion = "9.4.0.0"
 val jGraphTVersion = "1.5.2"
-val zoweKotlinSdkVersion = "0.5.0-rc.11"
+val zoweKotlinSdkVersion = "0.5.0"
 val javaKeytarVersion = "1.0.0"
 
 repositories {
@@ -94,7 +97,6 @@ dependencies {
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
   testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junitVersion")
   testImplementation("com.intellij.remoterobot:ide-launcher:$remoteRobotVersion")
-
 }
 
 data class PluginDescriptor(
@@ -156,12 +158,23 @@ changelog {
 }
 
 kover {
-  filters {
-    path
-    classes {
-      excludes += listOf("org.zowe.explorer.vfs.MFVFilePropertyChangeEvent")
+  currentProject {
+    instrumentation {
+      /* exclude Gradle test tasks */
+      disabledForTestTasks.addAll("uiTest", "firstTimeUiTest", "smokeUiTest")
     }
   }
+  reports {
+    filters {
+      excludes {
+        classes(providers.provider { "org.zowe.explorer.vfs.MFVFilePropertyChangeEvent" })
+      }
+    }
+  }
+}
+
+dependencyCheck {
+  suppressionFiles = listOf("$projectDir/owasp-dependency-check-suppression.xml")
 }
 
 tasks {
@@ -203,11 +216,20 @@ tasks {
     )
   }
 
-  withType<Test> {
-    withType<ClasspathIndexCleanupTask> {
-      dependsOn(compileTestKotlin)
+  withType<ClasspathIndexCleanupTask> {
+    onlyIf {
+      gradle.startParameter.taskNames.contains("test")
     }
+    dependsOn(compileTestKotlin)
   }
+
+//
+//  withType<ClasspathIndexCleanupTask> {
+//    onlyIf {
+//      gradle.startParameter.taskNames.contains("uiTest")
+//    }
+//    dependsOn("compileUiTestKotlin")
+//  }
 
   test {
     useJUnitPlatform()
@@ -223,7 +245,7 @@ tasks {
       events("passed", "skipped", "failed")
     }
 
-//    ignoreFailures = true
+    //  ignoreFailures = true
 
     finalizedBy("koverHtmlReport")
     finalizedBy("koverXmlReport")
@@ -345,17 +367,12 @@ val uiTest = task<Test>("uiTest") {
   systemProperty("robotServerForTest", System.getProperty("robotServerForTest"))
   testClassesDirs = sourceSets["uiTest"].output.classesDirs
   classpath = sourceSets["uiTest"].runtimeClasspath
-  useJUnitPlatform() {
+  useJUnitPlatform {
     excludeTags("FirstTime")
     excludeTags("SmokeTest")
   }
   testLogging {
     events("passed", "skipped", "failed")
-  }
-  extensions.configure(KoverTaskExtension::class) {
-    // Set to true to disable instrumentation of this task,
-    // Kover reports will not depend on the results of its execution
-    isDisabled.set(true)
   }
 }
 
@@ -367,36 +384,26 @@ val firstTimeUiTest = task<Test>("firstTimeUiTest") {
   group = "verification"
   testClassesDirs = sourceSets["uiTest"].output.classesDirs
   classpath = sourceSets["uiTest"].runtimeClasspath
-  useJUnitPlatform() {
+  useJUnitPlatform {
     includeTags("FirstTime")
   }
   testLogging {
     events("passed", "skipped", "failed")
-  }
-  extensions.configure(KoverTaskExtension::class) {
-    // set to true to disable instrumentation of this task,
-    // Kover reports will not depend on the results of its execution
-    isDisabled.set(true)
   }
 }
 
 /**
  * Runs the smoke ui test
  */
-val SmokeUiTest = task<Test>("smokeUiTest") {
+val smokeUiTest = task<Test>("smokeUiTest") {
   description = "Gets rid of license agreement, etc."
   group = "verification"
   testClassesDirs = sourceSets["uiTest"].output.classesDirs
   classpath = sourceSets["uiTest"].runtimeClasspath
-  useJUnitPlatform() {
+  useJUnitPlatform {
     includeTags("SmokeTest")
   }
   testLogging {
     events("passed", "skipped", "failed")
-  }
-  extensions.configure(KoverTaskExtension::class) {
-    // set to true to disable instrumentation of this task,
-    // Kover reports will not depend on the results of its execution
-    isDisabled.set(true)
   }
 }

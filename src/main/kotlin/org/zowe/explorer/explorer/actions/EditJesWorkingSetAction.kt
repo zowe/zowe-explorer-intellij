@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
@@ -17,7 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.IdeFocusManager
 import org.zowe.explorer.common.ui.DialogMode
-import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.ui.jes.JesWsDialog
 import org.zowe.explorer.config.ws.ui.jes.toDialogState
@@ -45,14 +49,19 @@ class EditJesWorkingSetAction : AnAction() {
     val node = view.mySelectedNodesData[0].node
     if (node is JesWsNode) {
       val workingSetConfig =
-        configCrudable.getByUniqueKey<JesWorkingSetConfig>(node.value.uuid)?.clone() as JesWorkingSetConfig
+        ConfigService.getService().crudable
+          .getByUniqueKey<JesWorkingSetConfig>(node.value.uuid)
+          ?.clone() as JesWorkingSetConfig
       service<IdeFocusManager>().runOnOwnContext(
         DataContext.EMPTY_CONTEXT
       ) {
-        val dialog = JesWsDialog(configCrudable, workingSetConfig.toDialogState().apply { mode = DialogMode.UPDATE })
+        val dialog = JesWsDialog(
+          ConfigService.getService().crudable,
+          workingSetConfig.toDialogState().apply { mode = DialogMode.UPDATE }
+        )
         if (dialog.showAndGet()) {
           val state = dialog.state
-          configCrudable.update(state.workingSetConfig)
+          ConfigService.getService().crudable.update(state.workingSetConfig)
         }
       }
     }

@@ -1,15 +1,23 @@
+/*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
+ */
+
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.EditorHighlighterUpdater
@@ -44,12 +52,8 @@ import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.fetch.FileCacheListener
 import org.zowe.explorer.dataops.fetch.FileFetchProvider
-import org.zowe.explorer.explorer.CutBufferListener
-import org.zowe.explorer.explorer.Explorer
-import org.zowe.explorer.explorer.ExplorerListener
-import org.zowe.explorer.explorer.ExplorerUnit
-import org.zowe.explorer.explorer.UNITS_CHANGED
-import org.zowe.explorer.explorer.WorkingSet
+import org.zowe.explorer.explorer.*
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.EntityWithUuid
 import org.zowe.explorer.vfs.MFBulkFileListener
@@ -68,7 +72,7 @@ val EXPLORER_VIEW = DataKey.create<ExplorerTreeView<*, *, *>>("explorerView")
 
 private val log = log<ExplorerTreeView<*, *, *>>()
 
-fun <ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
+fun <ExplorerView : ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
   return getData(EXPLORER_VIEW).castOrNull(clazz)
 }
 
@@ -103,7 +107,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
   internal val ignoreVFileDeleteEvents = AtomicBoolean(false)
   internal val ignoreVFSChangeEvents = AtomicBoolean(false)
 
-  protected val dataOpsManager = explorer.componentManager.service<DataOpsManager>()
+  protected val dataOpsManager = DataOpsManager.getService()
 
   private var treeModel: AsyncTreeModel
 
@@ -365,7 +369,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
           //This was done to avoid duplication of exception messages, since both explorers have a common EventBus and,
           // accordingly, both receive a message about an exception that occurred in one of them.
           if (this@ExplorerTreeView is FileExplorerView) {
-            explorer.reportThrowable(throwable, project)
+            NotificationsService.getService().notifyError(throwable, project)
           }
         }
       },
@@ -442,7 +446,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
     val openFiles = fileEditorManager.openFiles
     openFiles.forEach { openFile ->
       if (VfsUtilCore.isAncestor(selectedFile, openFile, false)) {
-        val contentSynchronizer = service<DataOpsManager>().getContentSynchronizer(openFile)
+        val contentSynchronizer = DataOpsManager.getService().getContentSynchronizer(openFile)
         val syncProvider = DocumentedSyncProvider(openFile)
         contentSynchronizer?.markAsNotNeededForSync(syncProvider)
         runInEdtAndWait {
@@ -457,7 +461,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
    * For USS files only
    */
   fun updateAttributesForChildrenInEditor(renamedFile: VirtualFile, newName: String) {
-    val dataOpsManager = DataOpsManager.instance
+    val dataOpsManager = DataOpsManager.getService()
     val parentAttributes = dataOpsManager.tryToGetAttributes(renamedFile)
     val fileEditorManager = FileEditorManager.getInstance(project)
     val openFiles = fileEditorManager.openFiles

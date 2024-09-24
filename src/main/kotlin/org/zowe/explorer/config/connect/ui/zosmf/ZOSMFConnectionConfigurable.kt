@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.config.connect.ui.zosmf
@@ -16,14 +20,13 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.showOkCancelDialog
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.dsl.builder.panel
 import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.ValidatingTableView
 import org.zowe.explorer.common.ui.tableWithToolbar
-import org.zowe.explorer.config.*
+import org.zowe.explorer.config.ConfigSandbox
+import org.zowe.explorer.config.SandboxListener
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
@@ -31,15 +34,9 @@ import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
-import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.utils.toMutableList
-import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
-import org.zowe.kotlinsdk.zowe.config.ZoweConfig
-import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.net.URI
-import kotlin.collections.set
 
 /** Create and manage Connections tab in settings */
 @Suppress("DialogTitleCapitalization")
@@ -53,7 +50,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
    */
   private fun showAndTestConnection(initialState: ConnectionDialogState = ConnectionDialogState()): ConnectionDialogState? {
     return ConnectionDialog.showAndTestConnection(
-      crudable = sandboxCrudable,
+      crudable = ConfigSandbox.getService().crudable,
       parentComponent = panel?.components?.getOrNull(0),
       initialState = initialState
     )
@@ -131,9 +128,9 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   private fun editConnection() {
     val idx = connectionsTable?.selectedRow
     if (idx != null && connectionsTableModel != null) {
-      val state = showAndTestConnection(connectionsTableModel!![idx].apply {
-        mode = DialogMode.UPDATE
-      })
+      val state = showAndTestConnection(
+        connectionsTableModel!![idx].apply { mode = DialogMode.UPDATE }
+      )
       state?.let {
         if (it.zoweConfigPath != null)
           zoweConfigStates[it.connectionName] = state
@@ -152,63 +149,32 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     }
   }
 
-  companion object {
-    /**
-     * Generates a connection removal warning message that is used for Files/JES working set
-     * @param wsUsages - list of working sets for the current connection
-     * @param wsType - working set type
-     * @return StringBuilder with result string.
-     */
-    fun generateRemoveWarningMessage(wsUsages: List<WorkingSetConfig>, wsType: String): StringBuilder {
-      val warningMessageBuilder =
-        StringBuilder("<nobr>The following $wsType working sets use selected connections:</nobr><br>")
-      wsUsages.forEach { wsConfig ->
-        warningMessageBuilder.append(wsConfig.name).append(", ")
-      }
-      warningMessageBuilder.setLength(warningMessageBuilder.length - 2)
-      warningMessageBuilder.append(".<br>")
-      return warningMessageBuilder
+  /** Generates a connection removal warning message that is used for working sets */
+  private fun generateRemoveWarningMessage(wsUsages: List<WorkingSetConfig>, wsType: String): StringBuilder {
+    val warningMessageBuilder =
+      StringBuilder("<nobr>The following $wsType working sets use selected connections:</nobr><br>")
+    wsUsages.forEach { wsConfig ->
+      warningMessageBuilder.append(wsConfig.name).append(", ")
     }
-
-    /**
-     * Creates a message dialog when a connection is deleted if it is used in any working set
-     * @param filesWsUsages - list of files working sets
-     * @param jesWsUsages - list of JES working sets
-     * @return number of button pressed
-     */
-    fun warningMessageForDeleteConfig(
-      filesWsUsages: List<FilesWorkingSetConfig>,
-      jesWsUsages: List<JesWorkingSetConfig>
-    ): Int {
-      val warningMessageBuilder = StringBuilder()
-      if (filesWsUsages.isNotEmpty()) {
-        warningMessageBuilder.append(generateRemoveWarningMessage(filesWsUsages, "Files"))
-      }
-      if (jesWsUsages.isNotEmpty()) {
-        warningMessageBuilder.append(generateRemoveWarningMessage(jesWsUsages, "JES"))
-      }
-      warningMessageBuilder.append("<br>Do you really want to remove it?")
-
-      return Messages.showOkCancelDialog(
-        warningMessageBuilder.toString(),
-        "Warning",
-        "Yes",
-        "Cancel",
-        Messages.getWarningIcon()
-      )
-    }
+    warningMessageBuilder.setLength(warningMessageBuilder.length - 2)
+    warningMessageBuilder.append(".<br>")
+    return warningMessageBuilder
   }
 
   /** Remove connections with the warning before they are deleted */
   private fun removeConnectionsWithWarning(selectedConfigs: List<ConnectionDialogState>) {
 
     // TODO: Find working sets for connection using templated way without specific implementation.
-    val filesWorkingSets = sandboxCrudable.getAll<FilesWorkingSetConfig>().toMutableList()
+    val filesWorkingSets = ConfigSandbox.getService().crudable
+      .getAll<FilesWorkingSetConfig>()
+      .toMutableList()
     val filesWsUsages = filesWorkingSets.filter { filesWsConfig ->
       selectedConfigs.any { state -> filesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
     }
 
-    val jesWorkingSet = sandboxCrudable.getAll<JesWorkingSetConfig>().toMutableList()
+    val jesWorkingSet = ConfigSandbox.getService().crudable
+      .getAll<JesWorkingSetConfig>()
+      .toMutableList()
     val jesWsUsages = jesWorkingSet.filter { jesWsConfig ->
       selectedConfigs.any { state -> jesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
     }
@@ -218,7 +184,22 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
       return
     }
 
-    val ret = warningMessageForDeleteConfig(filesWsUsages, jesWsUsages)
+    val warningMessageBuilder = StringBuilder()
+    if (filesWsUsages.isNotEmpty()) {
+      warningMessageBuilder.append(generateRemoveWarningMessage(filesWsUsages, "Files"))
+    }
+    if (jesWsUsages.isNotEmpty()) {
+      warningMessageBuilder.append(generateRemoveWarningMessage(jesWsUsages, "JES"))
+    }
+    warningMessageBuilder.append("<br>Do you really want to remove it?")
+
+    val ret = Messages.showOkCancelDialog(
+      warningMessageBuilder.toString(),
+      "Warning",
+      "Yes",
+      "Cancel",
+      Messages.getWarningIcon()
+    )
 
     if (ret == Messages.OK)
       removeSelectedConnections()
@@ -247,7 +228,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
 
   /** Create Connections panel in settings */
   override fun createPanel(): DialogPanel {
-    val tableModel = ConnectionsTableModel(sandboxCrudable)
+    val tableModel = ConnectionsTableModel(ConfigSandbox.getService().crudable)
 
     connectionsTableModel = tableModel
     val table = ValidatingTableView(tableModel, disposable!!)
@@ -314,8 +295,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   /** Apply the Connections table changes. Updates UI when the changes were introduced */
   override fun apply() {
     val wasModified = isModified
-    applySandbox<Credentials>()
-    applySandbox<ConnectionConfig>()
+    ConfigSandbox.getService().apply(Credentials::class.java)
+    ConfigSandbox.getService().apply(ConnectionConfig::class.java)
     zoweConfigStates.values.forEach {
       if (isModified) {
         updateZoweConfigIfNeeded(it)
@@ -331,8 +312,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   override fun reset() {
     runBackgroundableTask(title = "Reset changes", cancellable = false) {
       val wasModified = isModified
-      rollbackSandbox<Credentials>()
-      rollbackSandbox<ConnectionConfig>()
+      ConfigSandbox.getService().rollback(Credentials::class.java)
+      ConfigSandbox.getService().rollback(ConnectionConfig::class.java)
       if (wasModified) {
         panel?.updateUI()
       }
@@ -341,8 +322,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
 
   /** Check are the Credentials and Connections sandboxes modified */
   override fun isModified(): Boolean {
-    return isSandboxModified<Credentials>()
-        || isSandboxModified<ConnectionConfig>()
+    return ConfigSandbox.getService().isModified(Credentials::class.java)
+      || ConfigSandbox.getService().isModified(ConnectionConfig::class.java)
   }
 
   override fun cancel() {

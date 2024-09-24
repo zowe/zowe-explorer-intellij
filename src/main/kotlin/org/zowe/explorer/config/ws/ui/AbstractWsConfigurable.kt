@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.config.ws.ui
@@ -19,7 +23,8 @@ import org.zowe.explorer.common.ui.CrudableTableModel
 import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
 import org.zowe.explorer.common.ui.ValidatingTableView
 import org.zowe.explorer.common.ui.tableWithToolbar
-import org.zowe.explorer.config.*
+import org.zowe.explorer.config.ConfigSandbox
+import org.zowe.explorer.config.SandboxListener
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.isThe
@@ -73,7 +78,7 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
    * @param wsTable - working set table view instance
    * @return An instance of MouseAdapter
    */
-  private fun registerMouseListeners(wsTable : ValidatingTableView<WSConfig>): MouseAdapter = object : MouseAdapter() {
+  private fun registerMouseListeners(wsTable: ValidatingTableView<WSConfig>): MouseAdapter = object : MouseAdapter() {
     override fun mouseClicked(e: MouseEvent) {
       if (e.clickCount == 2) {
         wsTable.selectedObject?.let { selected ->
@@ -114,9 +119,12 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
             configureDecorator {
               disableUpDownActions()
               setAddAction {
-                emptyConfig().toDialogStateAbstract().initEmptyUuids(sandboxCrudable).let { s ->
-                  createAddDialog(sandboxCrudable, s)
-                }
+                emptyConfig()
+                  .toDialogStateAbstract()
+                  .initEmptyUuids(ConfigSandbox.getService().crudable)
+                  .let { s ->
+                    createAddDialog(ConfigSandbox.getService().crudable, s)
+                  }
               }
               setEditAction {
                 wsTable.selectedObject?.let { selected ->
@@ -140,7 +148,7 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
    */
   override fun apply() {
     val wasModified = isModified
-    applySandbox(wsConfigClass)
+    ConfigSandbox.getService().apply(wsConfigClass)
     if (wasModified) {
       panel?.updateUI()
     }
@@ -151,7 +159,7 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
    * @return true if states are equal and false otherwise.
    */
   override fun isModified(): Boolean {
-    return isSandboxModified(wsConfigClass)
+    return ConfigSandbox.getService().isModified(wsConfigClass)
   }
 
   /**
@@ -159,7 +167,7 @@ abstract class AbstractWsConfigurable<WSConfig : WorkingSetConfig, WSModel : Cru
    */
   override fun reset() {
     val wasModified = isModified
-    rollbackSandbox(wsConfigClass)
+    ConfigSandbox.getService().rollback(wsConfigClass)
     if (wasModified) {
       panel?.updateUI()
     }

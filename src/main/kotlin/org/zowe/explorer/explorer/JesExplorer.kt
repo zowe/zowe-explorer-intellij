@@ -1,17 +1,21 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer
 
 import com.intellij.openapi.Disposable
-import org.zowe.explorer.config.configCrudable
+import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.utils.crudable.getByUniqueKey
@@ -31,7 +35,11 @@ class JesExplorer : AbstractExplorerBase<ConnectionConfig, JesWorkingSetImpl, Je
   override val unitConfigClass = JesWorkingSetConfig::class.java
 
   override val units by rwLocked(
-    configCrudable.getAll(unitConfigClass).map { it.toUnit(disposable) }.collect(Collectors.toSet()).toMutableSet(),
+    ConfigService.getService().crudable
+      .getAll(unitConfigClass)
+      .map { it.toUnit(disposable) }
+      .collect(Collectors.toSet())
+      .toMutableSet(),
     lock
   )
 
@@ -44,7 +52,7 @@ class JesExplorer : AbstractExplorerBase<ConnectionConfig, JesWorkingSetImpl, Je
     return JesWorkingSetImpl(
       uuid = uuid,
       jesExplorer = this@JesExplorer,
-      workingSetConfigProvider = { configCrudable.getByUniqueKey(it) },
+      workingSetConfigProvider = { ConfigService.getService().crudable.getByUniqueKey(it) },
       parentDisposable = parentDisposable
     )
   }

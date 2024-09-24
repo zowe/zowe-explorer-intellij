@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
@@ -13,18 +17,20 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.content.synchronizer.*
+import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
+import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.jobs.SubmitFilePathOperationParams
 import org.zowe.explorer.dataops.operations.jobs.SubmitJobOperation
 import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
 import org.zowe.explorer.explorer.ui.UssFileNode
 import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.ui.build.jobs.JOB_ADDED_TOPIC
 import org.zowe.explorer.utils.formMfPath
 import org.zowe.explorer.utils.sendTopic
@@ -56,20 +62,19 @@ class SubmitJobAction : AnAction() {
       val file = requestData.first
       if (checkFileForSync(e.project, file)) return
       runBackgroundableTask("Preparing for job submission") {
-        val dataOpsManager = service<DataOpsManager>()
-        if (service<ConfigService>().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
+        val dataOpsManager = DataOpsManager.getService()
+        if (ConfigService.getService().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
           val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
           contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)
         }
         it.text = "Submitting job from file ${file.name}"
 
         runCatching {
-
-          val attributes = service<DataOpsManager>().tryToGetAttributes(requestData.first)
+          val attributes = DataOpsManager.getService().tryToGetAttributes(requestData.first)
             ?: throw IllegalArgumentException("Cannot find attributes for specified file.")
 
           val submitFilePath = attributes.formMfPath()
-          service<DataOpsManager>().performOperation(
+          DataOpsManager.getService().performOperation(
             operation = SubmitJobOperation(
               request = SubmitFilePathOperationParams(submitFilePath),
               connectionConfig = requestData.second
@@ -82,7 +87,7 @@ class SubmitJobAction : AnAction() {
         }.onSuccess {
           view.explorer.showNotification("Job ${it.jobname} has been submitted", "$it", project = project)
         }.onFailure {
-          view.explorer.reportThrowable(it, project)
+          NotificationsService.getService().notifyError(it, project)
         }
       }
     }

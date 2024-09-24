@@ -297,6 +297,8 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <postStartupActivity implementation="org.zowe.explorer.editor.ProjectStartupActivity"/>
 
+        <postStartupActivity implementation="org.zowe.explorer.rateus.RateUsStartupActivity"/>
+
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
@@ -337,14 +339,16 @@ Thank you for considering IBA Group for your mainframe needs.
                   implementationClass="org.zowe.explorer.filetypes.UnknownDataSetFileType"/>
 
         <applicationService serviceInterface="org.zowe.explorer.config.ConfigService"
-                            serviceImplementation="org.zowe.explorer.config.ConfigServiceImpl"/>
+                            serviceImplementation="org.zowe.explorer.config.ConfigServiceImpl"
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.config.connect.CredentialService"
                             serviceImplementation="org.zowe.explorer.config.connect.CredentialServiceImpl"
                             testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.config.ConfigSandbox"
-                            serviceImplementation="org.zowe.explorer.config.ConfigSandboxImpl"/>
+                            serviceImplementation="org.zowe.explorer.config.ConfigSandboxImpl"
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestConfigSandboxImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.dataops.DataOpsManager"
                             serviceImplementation="org.zowe.explorer.dataops.DataOpsManagerImpl"
@@ -368,7 +372,12 @@ Thank you for considering IBA Group for your mainframe needs.
                         serviceImplementation="org.zowe.explorer.zowe.service.ZoweConfigServiceImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.dataops.content.service.SyncProcessService"
-                            serviceImplementation="org.zowe.explorer.dataops.content.service.SyncProcessServiceImpl"/>
+                            serviceImplementation="org.zowe.explorer.dataops.content.service.SyncProcessServiceImpl"
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestSyncProcessServiceImpl"/>
+
+        <applicationService serviceInterface="org.zowe.explorer.telemetry.NotificationsService"
+                            serviceImplementation="org.zowe.explorer.telemetry.NotificationsServiceImpl"
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl"/>
 
         <statusBarWidgetFactory id="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"
                                 implementation="org.zowe.explorer.editor.status.MfLineSeparatorWidgetFactory"

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
@@ -25,6 +29,7 @@ import org.zowe.explorer.dataops.operations.jobs.GetJclRecordsOperation
 import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.explorer.ui.JobNode
 import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 
@@ -55,7 +60,7 @@ class EditJclAction : AnAction() {
       val connectionConfig = node.unit.connectionConfig
       if (connectionConfig != null) {
         val attributes = selected.attributes as RemoteJobAttributes
-        val dataOpsManager = service<DataOpsManager>()
+        val dataOpsManager = DataOpsManager.getService()
         runBackgroundableTask(
           title = "Get JCL records for job ${attributes.jobInfo.jobName}",
           project = project,
@@ -99,7 +104,7 @@ class EditJclAction : AnAction() {
               }
             }
           }.onFailure {
-            node.explorer.reportThrowable(it, project)
+            NotificationsService.getService().notifyError(it, project)
           }
         }
       }

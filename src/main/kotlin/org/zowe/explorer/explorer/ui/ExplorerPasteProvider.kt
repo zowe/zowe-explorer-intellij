@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.ui
@@ -16,7 +20,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showYesNoDialog
@@ -29,7 +32,11 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.explorer.FileExplorerContentProvider
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.telemetry.NotificationsService
+import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.getAncestorNodes
+import org.zowe.explorer.utils.getMinimalCommonParents
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import org.zowe.kotlinsdk.DatasetOrganization
@@ -112,7 +119,7 @@ const val DESTINATIONS = "destinationsToRefresh"
  * @author Viktar Mushtsin
  */
 class ExplorerPasteProvider : PasteProvider {
-  private val dataOpsManager = service<DataOpsManager>()
+  private val dataOpsManager = DataOpsManager.getService()
   private val pastePredicate: (NodeData<*>) -> Boolean = {
     it.attributes?.isPastePossible ?: true
   }
@@ -149,9 +156,11 @@ class ExplorerPasteProvider : PasteProvider {
       emptyList()
     }
     val destinationNodesToRefresh = destinationFilesToRefresh
+      .asSequence()
       .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed() }
       .flatten()
       .distinct()
+      .toList()
     return if (explorerView.isCut.get()) {
       val sourceNodesToRefresh = sourceFilesToRefresh
         .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed().map { it } }
@@ -168,7 +177,10 @@ class ExplorerPasteProvider : PasteProvider {
    * @param nodesToRefresh the nodes to refresh
    * @param explorerView the explorer view to clean "invalidate on expand" for nodes
    */
-  private fun refreshNodes(nodesToRefresh: MutableMap<String, List<ExplorerTreeNode<*, *>>>, explorerView: FileExplorerView) {
+  private fun refreshNodes(
+    nodesToRefresh: MutableMap<String, List<ExplorerTreeNode<*, *>>>,
+    explorerView: FileExplorerView
+  ) {
     val sourcesToRefresh = nodesToRefresh[SOURCES]
     val destinationsToRefresh = nodesToRefresh[DESTINATIONS]
 
@@ -203,7 +215,7 @@ class ExplorerPasteProvider : PasteProvider {
     destinationsToRefresh?.let { runParentNodesRefresh(it, explorerView) }
   }
 
-  private fun runParentNodesRefresh(parentNodes: List<ExplorerTreeNode<*,*>>, explorerView: FileExplorerView) {
+  private fun runParentNodesRefresh(parentNodes: List<ExplorerTreeNode<*, *>>, explorerView: FileExplorerView) {
     parentNodes.forEach { node ->
       val parentNode = node.castOrNull<FileFetchNode<*, *, *, *, *, *>>() ?: return@forEach
       cleanInvalidateOnExpand(parentNode, explorerView)
@@ -269,17 +281,16 @@ class ExplorerPasteProvider : PasteProvider {
             }
           }
           .onFailure { throwable ->
-            explorerView.explorer.reportThrowable(throwable, project)
+            NotificationsService.getService().notifyError(throwable, project)
             if (isDragAndDrop) {
               copyPasteSupport.removeFromBuffer { node ->
                 node.file == op.source && operations.minus(op).none { operation -> operation.source == op.source }
               }
-            }
-            else if(explorerView.isCut.get()) {
+            } else if (explorerView.isCut.get()) {
               copyPasteSupport.removeFromBuffer { node -> node.file == op.source }
             }
           }
-        it.fraction = it.fraction + 1.0 / filesToMoveTotal
+        it.fraction += 1.0 / filesToMoveTotal
       }
 
       val nodesToRefresh = getNodesToRefresh(operations, explorerView)
@@ -306,8 +317,7 @@ class ExplorerPasteProvider : PasteProvider {
     val explorerView = FileExplorerContentProvider.getInstance().getExplorerView(project).castOrNull<FileExplorerView>()
     val copyPasteSupport = explorerView?.copyPasteSupport ?: return
     val selectedNodesData = explorerView.mySelectedNodesData
-    val pasteDestinationsNodesData = selectedNodesData
-      .filter(pastePredicate)
+    val pasteDestinationsNodesData = selectedNodesData.filter(pastePredicate)
     val pasteDestinationFiles = dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
       ?: pasteDestinationsNodesData.mapNotNull { it.file }
 
@@ -364,10 +374,20 @@ class ExplorerPasteProvider : PasteProvider {
       // conflicts start
       val conflictsResolutions = runCatching {
         if (dataOpsManager.tryToGetAttributes(pasteDestinations[0]) is RemoteDatasetAttributes)
-          RemoteDatasetComputeConflicts(dataOpsManager, sourceFiles, pasteDestinations, project).computeConflictAndAskForResolution().toMutableList()
+          RemoteDatasetComputeConflicts(
+            dataOpsManager,
+            sourceFiles,
+            pasteDestinations,
+            project
+          ).computeConflictAndAskForResolution().toMutableList()
         else
-          CommonComputeConflicts(dataOpsManager, sourceFiles, pasteDestinations, project).computeConflictAndAskForResolution().toMutableList()
-    }.getOrNull() ?: return
+          CommonComputeConflicts(
+            dataOpsManager,
+            sourceFiles,
+            pasteDestinations,
+            project
+          ).computeConflictAndAskForResolution().toMutableList()
+      }.getOrNull() ?: return
 
       // conflicts end
       // specific configs resolution
@@ -386,16 +406,25 @@ class ExplorerPasteProvider : PasteProvider {
         }
         .flatten()
 
-      if (ussOrLocalFileToPdsWarnings.isNotEmpty() && !isAllConflictsResolvedBySkip(conflictsResolutions, ussOrLocalFileToPdsWarnings.size )) {
+      if (
+        ussOrLocalFileToPdsWarnings.isNotEmpty()
+        && !isAllConflictsResolvedBySkip(conflictsResolutions, ussOrLocalFileToPdsWarnings.size)
+      ) {
         val foundDestAttributes = ussOrLocalFileToPdsWarnings
           .mapNotNull { it.first.let { file -> dataOpsManager.tryToGetAttributes(file) } }
           .map { it as RemoteDatasetAttributes }
           .mapNotNull { it.datasetInfo.datasetOrganization }
           .distinct()
-        val destFilesPattern = foundDestAttributes.let { if (it.contains(DatasetOrganization.PO) && it.contains(DatasetOrganization.POE)) "PDS and PDS/E" else if (it.contains(DatasetOrganization.PO)) "PDS" else "PDS/E" }
+        val destFilesPattern = foundDestAttributes.let {
+          if (it.contains(DatasetOrganization.PO) && it.contains(DatasetOrganization.POE)) "PDS and PDS/E" else if (it.contains(
+              DatasetOrganization.PO
+            )
+          ) "PDS" else "PDS/E"
+        }
         val isLocalFilesPresentInSources = ussOrLocalFileToPdsWarnings.find { it.second.isInLocalFileSystem } != null
         val sourceFileTypesPattern = if (isLocalFilesPresentInSources) "Local Files" else "USS Files"
-        if (!showYesNoDialog(
+        if (
+          !showYesNoDialog(
             "$sourceFileTypesPattern to $destFilesPattern Placing",
             "You are about to place $sourceFileTypesPattern to $destFilesPattern. All lines exceeding the record length will be truncated.",
             null,
@@ -406,7 +435,14 @@ class ExplorerPasteProvider : PasteProvider {
         ) {
           conflictsResolutions.apply {
             clear()
-            addAll(ussOrLocalFileToPdsWarnings.map { ConflictResolution(it.second, it.first).apply { resolveBySkip() } })
+            addAll(
+              ussOrLocalFileToPdsWarnings.map {
+                ConflictResolution(
+                  it.second,
+                  it.first
+                ).apply { resolveBySkip() }
+              }
+            )
           }
         }
       }
@@ -422,7 +458,7 @@ class ExplorerPasteProvider : PasteProvider {
               val destAttr = dataOpsManager.tryToGetAttributes(destFile)
               if (isDragAndDrop &&
                 (((srcAttr is RemoteMemberAttributes) && (destAttr is RemoteDatasetAttributes))
-                    || (srcAttr?.javaClass == destAttr?.javaClass))
+                  || (srcAttr?.javaClass == destAttr?.javaClass))
               ) {
                 copyPasteSupport.removeFromBuffer { it.file == sourceFile }
               }
@@ -479,8 +515,8 @@ class ExplorerPasteProvider : PasteProvider {
       }
 
       val (filteredOperations, excludedOperations) = operations.partition { operation ->
-        !checkFileForSync(project, operation.source, checkDependentFiles = true) &&
-            !checkFileForSync(project, operation.destination, checkDependentFiles = true)
+        !checkFileForSync(project, operation.source, checkDependentFiles = true)
+          && !checkFileForSync(project, operation.destination, checkDependentFiles = true)
       }
       excludedOperations.forEach { operation ->
         copyPasteSupport.removeFromBuffer { nodeData -> nodeData.file == operation.source }
@@ -550,8 +586,10 @@ class ExplorerPasteProvider : PasteProvider {
     }
   }
 
-  private fun isAllConflictsResolvedBySkip(conflicts: List<ConflictResolution>, filesToProcessSize: Int) : Boolean {
-    return conflicts.isNotEmpty() && conflicts.map { it.shouldSkip() }.filter { it }.size == conflicts.size && filesToProcessSize == conflicts.size
+  private fun isAllConflictsResolvedBySkip(conflicts: List<ConflictResolution>, filesToProcessSize: Int): Boolean {
+    return conflicts.isNotEmpty()
+      && conflicts.all { it.shouldSkip() }
+      && filesToProcessSize == conflicts.size
   }
 
   /**

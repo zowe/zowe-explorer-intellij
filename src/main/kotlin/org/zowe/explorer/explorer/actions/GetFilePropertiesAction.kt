@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
@@ -36,10 +40,10 @@ import org.zowe.explorer.explorer.ui.UssFilePropertiesDialog
 import org.zowe.explorer.explorer.ui.UssFileState
 import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
 import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.changeFileEncodingAction
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.isBeingEditingNow
-import org.zowe.explorer.utils.service
 import org.zowe.kotlinsdk.ChangeMode
 
 /**
@@ -61,7 +65,7 @@ class GetFilePropertiesAction : AnAction() {
       val virtualFile = node.virtualFile
       val connectionConfig = node.unit.connectionConfig ?: return
       if (virtualFile != null) {
-        val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
+        val dataOpsManager = DataOpsManager.getService()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)) {
           is RemoteDatasetAttributes -> {
             if (node is FileLikeDatasetNode) {
@@ -111,10 +115,10 @@ class GetFilePropertiesAction : AnAction() {
                         progressIndicator = it
                       )
                     }.onFailure { t ->
-                      initFileMode?.owner?.let{attributes.fileMode.owner = it}
-                      initFileMode?.group?.let{attributes.fileMode.group = it}
-                      initFileMode?.all?.let{attributes.fileMode.all = it}
-                      view.explorer.reportThrowable(t, e.project)
+                      initFileMode?.owner?.let { attributes.fileMode.owner = it }
+                      initFileMode?.group?.let { attributes.fileMode.group = it }
+                      initFileMode?.all?.let { attributes.fileMode.all = it }
+                      NotificationsService.getService().notifyError(t, e.project)
                     }
                     node.parent?.cleanCacheIfPossible(cleanBatchedQuery = false)
                   }
@@ -160,7 +164,7 @@ class GetFilePropertiesAction : AnAction() {
 
     // Mark the migrated dataset properties unavailable for clicking
     if (node != null && (node is FileLikeDatasetNode || node is LibraryNode)) {
-      val dataOpsManager = node.explorer.componentManager.service<DataOpsManager>()
+      val dataOpsManager = DataOpsManager.getService()
       val datasetAttributes = node.virtualFile?.let { dataOpsManager.tryToGetAttributes(it) }
       if (datasetAttributes is RemoteDatasetAttributes && datasetAttributes.isMigrated) {
         e.presentation.isEnabled = false

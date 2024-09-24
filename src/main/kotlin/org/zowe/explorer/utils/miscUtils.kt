@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.utils
@@ -330,8 +334,11 @@ fun String.removeTrailingSlashes(): String {
  * @return String representation of LocalDateTime in human-readable format
  */
 fun LocalDateTime.toHumanReadableFormat(): String {
-  return "$dayOfMonth ${month.name} ${toLocalTime().truncatedTo(ChronoUnit.SECONDS).format(
-    DateTimeFormatter.ISO_LOCAL_TIME)}"
+  return "$dayOfMonth ${month.name} ${
+    toLocalTime().truncatedTo(ChronoUnit.SECONDS).format(
+      DateTimeFormatter.ISO_LOCAL_TIME
+    )
+  }"
 }
 
 const val UNKNOWN_PARAM_VALUE = "<Unknown>"
@@ -339,7 +346,7 @@ const val UNKNOWN_PARAM_VALUE = "<Unknown>"
 /**
  * Replace empty or null parameter value with <Unknown>
  */
-fun getParamTextValueOrUnknown(param: Any?):String{
+fun getParamTextValueOrUnknown(param: Any?): String {
   return param?.toString()?.trim().orEmpty().ifEmpty { UNKNOWN_PARAM_VALUE }
 }
 

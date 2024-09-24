@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.dataops.operations
@@ -54,7 +58,6 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
   ) {
     when (val attr = operation.attributes) {
       is RemoteDatasetAttributes -> {
-
         if (operation.file.children != null) {
           operation.file.children.forEach { it.isWritable = false }
         } else {
@@ -83,7 +86,6 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
       }
 
       is RemoteMemberAttributes -> {
-
         operation.file.isWritable = false
         val libraryAttributes = attr.getLibraryAttributes(dataOpsManager)
         if (libraryAttributes != null) {
@@ -112,7 +114,6 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
       }
 
       is RemoteUssAttributes -> {
-
         if (operation.file.isDirectory) {
           operation.file.children.forEach { it.isWritable = false }
         } else {

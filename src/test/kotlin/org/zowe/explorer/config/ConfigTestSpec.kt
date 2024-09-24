@@ -1,30 +1,22 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.config
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
-import io.kotest.assertions.assertSoftly
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkConstructor
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import io.mockk.verify
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.Credentials
@@ -47,10 +39,22 @@ import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import org.zowe.explorer.tso.TSOWindowFactory
 import org.zowe.explorer.utils.crudable.Crudable
-import org.zowe.explorer.utils.service
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import io.mockk.verify
 import org.zowe.kotlinsdk.MessageType
 import org.zowe.kotlinsdk.TsoApi
 import org.zowe.kotlinsdk.TsoCmdResponse
@@ -75,19 +79,6 @@ class ConfigTestSpec : WithApplicationShouldSpec({
       lateinit var crudable: Crudable
       lateinit var connTab: ConnectionsTableModel
 
-      fun mockConfigService() {
-        val mockConfigServiceInstance = mockk<ConfigService>()
-        every {
-          mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java)
-        } returns ZOSMFConnectionConfigDeclaration(crudable)
-        every {
-          mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java)
-        } returns CredentialsConfigDeclaration(crudable)
-
-        mockkObject(ConfigService)
-        every { ConfigService.instance } returns mockConfigServiceInstance
-      }
-
       val connectionDialogState = ConnectionDialogState(
         connectionName = "a", connectionUrl = "https://a.com", username = "a", password = "a"
       )
@@ -104,7 +95,17 @@ class ConfigTestSpec : WithApplicationShouldSpec({
           makeCrudableWithoutListeners(true, { sandboxState.credentials }) { sandboxState.configState }
         connectionDialogState.initEmptyUuids(crudable)
         connTab = ConnectionsTableModel(crudable)
-        mockConfigService()
+
+        val configServiceImpl = ConfigService.getService() as TestConfigServiceImpl
+        configServiceImpl.testInstance = object : TestConfigServiceImpl() {
+          override fun <T : Any> getConfigDeclaration(rowClass: Class<out T>): ConfigDeclaration<T> {
+            return when (rowClass) {
+              ConnectionConfig::class.java -> ZOSMFConnectionConfigDeclaration(crudable) as ConfigDeclaration<T>
+              Credentials::class.java -> CredentialsConfigDeclaration(crudable) as ConfigDeclaration<T>
+              else -> super.getConfigDeclaration(rowClass)
+            }
+          }
+        }
       }
 
       context("fetch") {
@@ -211,8 +212,18 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         val tsoApi = mockk<TsoApi>()
         val call = mockk<Call<TsoCmdResponse>>()
         val response = mockk<Response<TsoCmdResponse>>()
-        mockkObject(ZosmfApi)
-        every { ZosmfApi.instance.hint(TsoApi::class).getApi<TsoApi>(any(), any()) } returns tsoApi
+
+        val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
+        zosmfApi.testInstance = object : TestZosmfApiImpl() {
+          override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
+            return if (apiClass == TsoApi::class.java) {
+              tsoApi as Api
+            } else {
+              super.getApi(apiClass, connectionConfig)
+            }
+          }
+        }
+
         every { tsoApi.executeTsoCommand(any(), any(), any()) } returns call
         every { call.execute() } answers {
           if (shouldThrowException) throw IllegalStateException("Test call failed") else response
@@ -226,8 +237,7 @@ class ConfigTestSpec : WithApplicationShouldSpec({
       val connectionConfigZOS24 = ConnectionConfig()
       connectionConfigZOS24.zVersion = ZVersion.ZOS_2_4
 
-      val dataOpsManagerService =
-        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
 
       beforeEach {
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {

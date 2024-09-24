@@ -1,22 +1,29 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.*
+import org.zowe.explorer.dataops.attributes.AttributesService
+import org.zowe.explorer.dataops.attributes.FileAttributes
+import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributesService
 import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.utils.sendTopic
@@ -32,7 +39,7 @@ class ChangeContentModeAction : ToggleAction() {
     val view = e.getExplorerView<FileExplorerView>() ?: return false
     return getMappedNodes(view)
       .mapNotNull {
-        view.explorer.componentManager.service<DataOpsManager>()
+        DataOpsManager.getService()
           .getAttributesService(it.first::class.java, it.second::class.java)
           .getAttributes(it.second)
       }
@@ -51,7 +58,7 @@ class ChangeContentModeAction : ToggleAction() {
       .mapNotNull {
         val vFile = it.file
         if (vFile != null) {
-          when (val attributes = service<DataOpsManager>().tryToGetAttributes(vFile)) {
+          when (val attributes = DataOpsManager.getService().tryToGetAttributes(vFile)) {
             is RemoteDatasetAttributes -> {
               val isMigrated = attributes.isMigrated
               if (isMigrated) {
@@ -78,7 +85,7 @@ class ChangeContentModeAction : ToggleAction() {
     } else {
       getMappedNodes(view)
         .forEach {
-          val service = view.explorer.componentManager.service<DataOpsManager>()
+          val service = DataOpsManager.getService()
             .getAttributesService(it.first::class.java, it.second::class.java)
           val vFile = it.second as MFVirtualFile
           when (val oldAttributes = service.getAttributes(vFile)) {
@@ -92,7 +99,7 @@ class ChangeContentModeAction : ToggleAction() {
                 }
               }
               ussService.updateWritableFlagAfterContentChanged(vFile, newAttributes)
-              sendTopic(AttributesService.FILE_CONTENT_CHANGED, DataOpsManager.instance.componentManager)
+              sendTopic(AttributesService.FILE_CONTENT_CHANGED, DataOpsManager.getService().componentManager)
                 .onUpdate(oldAttributes, newAttributes, vFile)
             }
 
@@ -108,7 +115,7 @@ class ChangeContentModeAction : ToggleAction() {
               }
               if (newAttributes != null && oldAttributes != null) {
                 service.updateAttributes(vFile, newAttributes)
-                sendTopic(AttributesService.FILE_CONTENT_CHANGED, DataOpsManager.instance.componentManager)
+                sendTopic(AttributesService.FILE_CONTENT_CHANGED, DataOpsManager.getService().componentManager)
                   .onUpdate(oldAttributes, newAttributes, vFile)
               }
             }
@@ -130,8 +137,8 @@ class ChangeContentModeAction : ToggleAction() {
     val mode = if (state) "binary" else "plain text"
     val confirmTemplate =
       "You are going to switch the file content to $mode. \n" +
-          "The file content will be loaded from mainframe in $mode format. \n" +
-          "Would you like to proceed?"
+        "The file content will be loaded from mainframe in $mode format. \n" +
+        "Would you like to proceed?"
     return Messages.showOkCancelDialog(
       confirmTemplate,
       "Warning",

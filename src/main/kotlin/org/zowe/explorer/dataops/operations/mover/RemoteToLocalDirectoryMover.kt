@@ -1,15 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.dataops.operations.mover
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl
@@ -24,6 +29,7 @@ import org.zowe.explorer.dataops.fetch.LibraryQuery
 import org.zowe.explorer.dataops.fetch.UssQuery
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -54,9 +60,9 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
     return operation.source.isDirectory &&
-            operation.source is MFVirtualFile &&
-            operation.destination is VirtualDirectoryImpl &&
-            operation.destination.isDirectory
+      operation.source is MFVirtualFile &&
+      operation.destination is VirtualDirectoryImpl &&
+      operation.destination.isDirectory
   }
 
   /**
@@ -121,7 +127,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
           createdDir = destFile.createChildDirectory(this, newName)
         }
         val createdDirNotNull =
-          createdDir ?: return IllegalArgumentException("Cannot create directory ${newName}")
+          createdDir ?: return IllegalArgumentException("Cannot create directory $newName")
         sourceFile.children?.forEach {
           runCatching {
             dataOpsManager.performOperation(
@@ -137,7 +143,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
               progressIndicator
             )
           }.onFailure {
-            operation.explorer?.reportThrowable(it, operation.explorer.nullableProject)
+            NotificationsService.getService().notifyError(it, operation.explorer?.nullableProject)
           }
         }
       }

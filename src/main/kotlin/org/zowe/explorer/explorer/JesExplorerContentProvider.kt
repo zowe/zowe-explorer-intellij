@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer
@@ -13,7 +17,6 @@ package org.zowe.explorer.explorer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.explorer.ui.ExplorerTreeView
@@ -35,7 +38,7 @@ class JesExplorerContentProvider : ExplorerContentProviderBase<ConnectionConfig,
     .getAction("org.zowe.explorer.actions.JESContextMenuGroup") as ActionGroup
 ) {
 
-  override val explorer: JesExplorer = service<UIComponentManager>().getExplorer(JesExplorer::class.java)
+  override val explorer: JesExplorer = UIComponentManager.getService().getExplorer(JesExplorer::class.java)
   override val displayName: String = "JES Explorer"
   override val isLockable: Boolean = false
   override val actionGroup: ActionGroup = ActionManager.getInstance().getAction("org.zowe.explorer.actions.JESActionBarGroup") as ActionGroup

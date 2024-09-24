@@ -1,17 +1,20 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
@@ -22,7 +25,6 @@ import org.zowe.explorer.explorer.FileExplorer
 import org.zowe.explorer.explorer.FilesWorkingSetImpl
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
@@ -80,8 +82,7 @@ class LibraryNodeTestSpec : WithApplicationShouldSpec({
         Pair(mockedVFileChild3, mockedAttributes3)
       )
 
-      val dataOpsManagerService =
-        ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+      val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
       dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
         override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
           return nodeToAttributesMap[file]

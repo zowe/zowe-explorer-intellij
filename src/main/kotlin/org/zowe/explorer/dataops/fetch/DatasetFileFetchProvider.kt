@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.dataops.fetch
@@ -13,7 +17,6 @@ package org.zowe.explorer.dataops.fetch
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
 import org.zowe.explorer.config.ConfigService
@@ -67,7 +70,7 @@ class DatasetFileFetchProvider(dataOpsManager: DataOpsManager) :
 
   override val responseClass = RemoteDatasetAttributes::class.java
 
-  private var configService = service<ConfigService>()
+  private var configService = ConfigService.getService()
 
   override fun fetchResponse(
     query: RemoteQuery<ConnectionConfig, DSMask, Unit>,

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
@@ -14,7 +18,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ToolWindow
@@ -23,6 +26,7 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
+import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.ws.JobsFilter
@@ -44,10 +48,10 @@ import org.zowe.explorer.explorer.ui.JesExplorerView
 import org.zowe.explorer.explorer.ui.JesFilterNode
 import org.zowe.explorer.explorer.ui.JesWsNode
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager
 import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
-import org.zowe.explorer.utils.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
@@ -62,6 +66,8 @@ import io.mockk.spyk
 import io.mockk.unmockkAll
 import io.mockk.verify
 import org.zowe.kotlinsdk.Job
+import java.util.*
+import java.util.stream.Stream
 import javax.swing.JComponent
 
 class GoToJobActionTestSpec : WithApplicationShouldSpec({
@@ -89,8 +95,7 @@ class GoToJobActionTestSpec : WithApplicationShouldSpec({
     val myStructureMock =
       mockk<StructureTreeModel<CommonExplorerTreeStructure<Explorer<ConnectionConfig, JesWorkingSetImpl>>>>()
     val myTreeMock = mockk<Tree>()
-    val uiComponentManagerService: TestUIComponentManager =
-      ApplicationManager.getApplication().service<UIComponentManager>() as TestUIComponentManager
+    val uiComponentManagerService: TestUIComponentManager = UIComponentManager.getService() as TestUIComponentManager
     uiComponentManagerService.testInstance = object : TestUIComponentManager() {
       override fun <E : Explorer<*, *>> getExplorerContentProvider(
         clazz: Class<out E>
@@ -136,6 +141,16 @@ class GoToJobActionTestSpec : WithApplicationShouldSpec({
     val classUnderTest = spyk(GoToJobAction(), "Go To Job", recordPrivateCalls = true)
 
     should("createJesWorkingSetWithDefinedFilter_whenActionPerformed_givenJobIdAndNoJesWSNodesFound") {
+      var isNewConnectionAdded = false
+      val configCrudable = (ConfigService.getService() as TestConfigServiceImpl).crudable
+      val nextUniqueValueMock: (Class<*>) -> Any = configCrudable::nextUniqueValue
+      val getAllMock: (Class<*>) -> Any = configCrudable::getAll
+      every { nextUniqueValueMock(any()) } returns "test"
+      every { getAllMock(any()) } returns Stream.empty<ConnectionConfig>()
+      every { configCrudable.add(any()) } answers {
+        isNewConnectionAdded = true
+        Optional.empty()
+      }
       val expectedNotificationMessage =
         "Job Filter(s): JobID=JOB_ID, successfully created on connection: $connectionConfigMock"
       val jesWsNodesTest = mutableListOf<JesWsNode>()
@@ -155,7 +170,9 @@ class GoToJobActionTestSpec : WithApplicationShouldSpec({
         )
       }
       verify { contentManagerMock.setSelectedContent(contentMock, true) }
-
+      assertSoftly {
+        isNewConnectionAdded shouldBe true
+      }
     }
 
     should("createJobFilterInExistingJesWorkingSet_whenActionPerformed_givenJobIdAndJesWsDoesNotContainFilter") {
@@ -262,7 +279,7 @@ class GoToJobActionTestSpec : WithApplicationShouldSpec({
       every { jobLogFetcherMock.getCachedJobStatus() } returns jobMock
       every { actionEventMock.presentation } returns Presentation()
       every { consoleViewMock.getJobLogger() } returns jobLoggerMock
-      val actual = classUnderTest.update(actionEventMock)
+      classUnderTest.update(actionEventMock)
       assertSoftly {
         actionEventMock.presentation.isEnabled shouldBe true
         actionEventMock.presentation.isVisible shouldBe true

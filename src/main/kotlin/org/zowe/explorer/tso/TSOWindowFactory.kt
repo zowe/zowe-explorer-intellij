@@ -1,22 +1,22 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.tso
 
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
-import com.intellij.openapi.application.*
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
@@ -25,15 +25,15 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.Topic
-import org.zowe.explorer.tso.config.TSOSessionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
-import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.tso.config.TSOConfigWrapper
+import org.zowe.explorer.tso.config.TSOSessionConfig
 import org.zowe.explorer.tso.ui.TSOConsoleView
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.utils.subscribe
@@ -109,7 +109,7 @@ interface TSOSessionCloseHandler {
    * @throws CallException if any z/OSMF error occurred
    */
   @Throws(CallException::class, ConnectException::class)
-  fun close (project: Project, session: TSOConfigWrapper)
+  fun close(project: Project, session: TSOConfigWrapper)
 }
 
 /**
@@ -140,6 +140,7 @@ val SESSION_CLOSED_TOPIC = Topic.create("tsoSessionClosed", TSOSessionCloseHandl
 val SESSION_REOPEN_TOPIC = Topic.create("tsoSessionReopen", TSOSessionReopenHandler::class.java)
 
 const val SESSION_RECONNECT_ERROR_MESSAGE = "Unable to reconnect to the TSO session. Session is closed."
+
 /**
  * Factory class for building an instance of TSO tool window when TSO session is created
  */
@@ -178,28 +179,17 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
      */
     fun getTsoMessageQueue(session: TSOConfigWrapper): TsoResponse {
       runCatching {
-        service<DataOpsManager>().performOperation(
+        DataOpsManager.getService().performOperation(
           TsoOperation(
             state = session,
             mode = TsoOperationMode.GET_MESSAGES
           )
         )
-      }.onSuccess { return it }.onFailure { showSessionFailureNotification("Error getting TSO response messages", it.message, project = null) }
+      }.onSuccess { return it }
+        .onFailure {
+          NotificationsService.getService().notifyError(it, custTitle = "Error getting TSO response messages")
+        }
       return TsoResponse()
-    }
-
-    /** Method reports an error notification if any error happens during any operation
-     *  @param project
-     *  */
-    fun showSessionFailureNotification(title: String, message: String?, project: Project?) {
-      Notification(
-        EXPLORER_NOTIFICATION_GROUP_ID,
-        title,
-        message ?: "",
-        NotificationType.ERROR
-      ).let {
-        Notifications.Bus.notify(it, project)
-      }
     }
   }
 
@@ -280,11 +270,16 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
             tsoSessionToConfigMap[it] = newSession.getTSOSessionConfig()
             it
           }
-          if(servletKey.isNullOrBlank()) showSessionFailureNotification(
-            "Error getting TSO session servletKey",
-            "Cannot create a new session, because new session ID was not recognized",
-            project
-          )
+          if (servletKey.isNullOrBlank()) {
+            NotificationsService
+              .getService()
+              .notifyError(
+                Exception(),
+                project = project,
+                custTitle = "Error getting TSO session servletKey",
+                custDetailsShort = "Cannot create a new session, because new session ID was not recognized"
+              )
+          }
         }
       }
     )
@@ -308,7 +303,14 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               tsoSessionToConfigMap[newServletKey] = it.getTSOSessionConfig()
             }
           } else {
-            showSessionFailureNotification("Error getting TSO session info", "Could not find old TSO session ID", project)
+            NotificationsService
+              .getService()
+              .notifyError(
+                Exception(),
+                project = project,
+                custTitle = "Error getting TSO session info",
+                custDetailsShort = "Could not find old TSO session ID"
+              )
           }
         }
       }
@@ -328,7 +330,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
           processHandler: ProcessHandler
         ) {
           runCatching {
-            service<DataOpsManager>().performOperation(
+            DataOpsManager.getService().performOperation(
               TsoOperation(
                 state = session,
                 mode = TsoOperationMode.SEND_MESSAGE,
@@ -374,7 +376,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
           val closeThread = Thread(object : Runnable {
             override fun run() {
               runCatching {
-                service<DataOpsManager>().performOperation(
+                DataOpsManager.getService().performOperation(
                   TsoOperation(
                     state = session,
                     mode = TsoOperationMode.STOP
@@ -408,7 +410,11 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
             tryToStartNewSessionFromOldConfig(oldConfig)?.let {
               wrapInlineCall { sendTopic(SESSION_ADDED_TOPIC).create(project, it) }
             }
-          }.onFailure { showSessionFailureNotification("Error starting a new TSO session", it.message, project) }
+          }.onFailure {
+            NotificationsService
+              .getService()
+              .notifyError(it, project = project, custTitle = "Error starting a new TSO session")
+          }
         }
       }
     )
@@ -426,11 +432,11 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
    * @param oldConfig
    * @return a new instance of TSOConfigWrapper if a new session was successfully created, null otherwise
    */
-  private fun tryToStartNewSessionFromOldConfig(oldConfig: TSOConfigWrapper) : TSOConfigWrapper? {
+  private fun tryToStartNewSessionFromOldConfig(oldConfig: TSOConfigWrapper): TSOConfigWrapper? {
     var newConfig: TSOConfigWrapper? = null
     val tsoSessionConfig = oldConfig.getTSOSessionConfig()
     runCatching {
-      service<DataOpsManager>().performOperation(
+      DataOpsManager.getService().performOperation(
         TsoOperation(
           TSOConfigWrapper(tsoSessionConfig, oldConfig.getConnectionConfig()),
           TsoOperationMode.START
@@ -474,10 +480,13 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
     timeout: Long,
     maxAttempts: Int,
     tsoConsole: TSOConsoleView,
-    block: () -> Unit)
-  {
+    block: () -> Unit
+  ) {
     val processHandler = tsoConsole.getProcessHandler()
-    processHandler.notifyTextAvailable("Attempting to reconnect $maxAttempts times with timeout $timeout(s) each respectively...\n", ProcessOutputType.STDOUT)
+    processHandler.notifyTextAvailable(
+      "Attempting to reconnect $maxAttempts times with timeout $timeout(s) each respectively...\n",
+      ProcessOutputType.STDOUT
+    )
     var isTaskComplete = false
     val scheduledService = Executors.newSingleThreadScheduledExecutor()
     val tsoReconnectTask = createExecutableTask(scheduledService, tsoConsole, block, maxAttempts)
@@ -499,15 +508,19 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
     service: ScheduledExecutorService,
     tsoConsole: TSOConsoleView,
     block: () -> Unit,
-    maxAttempts: Int)
-  : TimerTask {
+    maxAttempts: Int
+  )
+    : TimerTask {
     return object : TsoReconnectTask(service) {
       override fun run() {
         val tsoSession = tsoConsole.getTsoSession()
         val processHandler = tsoConsole.getProcessHandler()
         runCatching {
           tsoSession.incrementReconnectAttempt()
-          processHandler.notifyTextAvailable("Trying to connect (attempt ${tsoSession.reconnectAttempts} of $maxAttempts)...\n", ProcessOutputType.STDOUT)
+          processHandler.notifyTextAvailable(
+            "Trying to connect (attempt ${tsoSession.reconnectAttempts} of $maxAttempts)...\n",
+            ProcessOutputType.STDOUT
+          )
           block()
         }.onSuccess {
           processHandler.notifyTextAvailable(

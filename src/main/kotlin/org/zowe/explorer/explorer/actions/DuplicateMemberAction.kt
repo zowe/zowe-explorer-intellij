@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.actions
@@ -21,7 +25,6 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.RenameOperation
-import org.zowe.explorer.explorer.ui.ExplorerTreeView
 import org.zowe.explorer.explorer.ui.FetchNode
 import org.zowe.explorer.explorer.ui.FileExplorerView
 import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
@@ -29,6 +32,7 @@ import org.zowe.explorer.explorer.ui.NodeData
 import org.zowe.explorer.explorer.ui.RenameDialog
 import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
 import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.telemetry.NotificationsService
 
 /**
  * Class which represents a duplicate member action
@@ -52,14 +56,13 @@ class DuplicateMemberAction : AnAction() {
     val initialState = ""
     val dialog = RenameDialog(project, "Member", selectedNode, this, initialState)
     if (dialog.showAndGet()) {
-      runDuplicateOperation(project, view, selectedNode, dialog.state)
+      runDuplicateOperation(project, selectedNode, dialog.state)
     }
   }
 
   /**
    * Method to run duplicate operation. It passes the control to rename operation runner
    * @param project - current project
-   * @param view - an explorer tree view object
    * @param selectedNode - a current selected node
    * @param newName - a new name of the virtual file in VFS
    * @throws any throwable during the processing of the request
@@ -67,11 +70,10 @@ class DuplicateMemberAction : AnAction() {
    */
   private fun runDuplicateOperation(
     project: Project,
-    view: ExplorerTreeView<ConnectionConfig, *, *>,
     selectedNode: NodeData<ConnectionConfig>,
     newName: String
   ) {
-    val dataOpsManager = view.explorer.componentManager.getService(DataOpsManager::class.java)
+    val dataOpsManager = DataOpsManager.getService()
     val attributes = selectedNode.attributes ?: return
     val file = selectedNode.file ?: return
     val parent = selectedNode.node.parent
@@ -95,7 +97,7 @@ class DuplicateMemberAction : AnAction() {
           parent.cleanCacheIfPossible(cleanBatchedQuery = true)
         }
       }.onFailure {
-        selectedNode.node.explorer.reportThrowable(it, project)
+        NotificationsService.getService().notifyError(it, project)
       }
     }
   }

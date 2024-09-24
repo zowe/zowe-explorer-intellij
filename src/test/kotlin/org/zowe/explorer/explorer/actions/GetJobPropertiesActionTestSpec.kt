@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
+ */
+
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,7 +41,6 @@ import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.utils.gson
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -75,7 +88,7 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
         val jobsFilter = spyk(JobsFilter("owner", "prefix", "id"))
         val jobAttr = spyk(RemoteJobAttributes(job, "test", mutableListOf(JobsRequester(connectionConfig, jobsFilter))))
 
-        val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return jobAttr
@@ -127,7 +140,7 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
         val parentFile = mockk<MFVirtualFile>()
         val spoolFileAttr = spyk(RemoteSpoolFileAttributes(spoolFile, parentFile))
 
-        val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
             return spoolFileAttr

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 IBA Group.
+ * Copyright (c) 2020-2024 IBA Group.
  *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -17,8 +17,23 @@ package org.zowe.explorer.testutils
 import com.intellij.openapi.application.Application
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import org.zowe.explorer.api.ZosmfApi
+import org.zowe.explorer.config.ConfigSandbox
+import org.zowe.explorer.config.ConfigService
+import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.content.service.SyncProcessService
+import org.zowe.explorer.telemetry.NotificationsService
+import org.zowe.explorer.testutils.testServiceImpl.TestConfigSandboxImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestSyncProcessServiceImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.ShouldSpec
+import io.mockk.clearMocks
 
 /**
  * [ShouldSpec] wrapper that provides implemented beforeSpec, initializing an [Application]
@@ -36,6 +51,20 @@ abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : Sho
     val lightFixture = factory.createLightFixtureBuilder("zowe-explorer").fixture
     appFixture = factory.createCodeInsightFixture(lightFixture)
     appFixture.setUp()
+
+    (ConfigSandbox.getService() as TestConfigSandboxImpl).testInstance = TestConfigSandboxImpl()
+    clearMocks(ConfigSandbox.getService().crudable)
+
+    val configService = ConfigService.getService() as TestConfigServiceImpl
+    configService.testInstance = TestConfigServiceImpl()
+    clearMocks(configService.crudable)
+    configService.resetTestService()
+
+    (CredentialService.getService() as TestCredentialsServiceImpl).testInstance = TestCredentialsServiceImpl()
+    (DataOpsManager.getService() as TestDataOpsManagerImpl).testInstance = TestDataOpsManagerImpl()
+    (NotificationsService.getService() as TestNotificationsServiceImpl).testInstance = TestNotificationsServiceImpl()
+    (SyncProcessService.getService() as TestSyncProcessServiceImpl).testInstance = TestSyncProcessServiceImpl()
+    (ZosmfApi.getService() as TestZosmfApiImpl).testInstance = TestZosmfApiImpl()
   }
 
   override suspend fun afterSpec(spec: Spec) {

@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.editor
@@ -16,7 +20,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.properties.charset.Native2AsciiCharset
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.Project
@@ -36,16 +39,17 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.dataops.content.service.isFileSyncingNow
+import org.zowe.explorer.dataops.content.service.SyncProcessService
 import org.zowe.explorer.dataops.content.synchronizer.AutoSyncFileListener
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.editor.inspection.MFLossyEncodingInspection
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestSyncProcessServiceImpl
 import org.zowe.explorer.utils.checkEncodingCompatibility
 import org.zowe.explorer.utils.sendTopic
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.utils.showSaveAnywayDialog
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
@@ -54,7 +58,6 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.unmockkAll
@@ -101,13 +104,11 @@ class EditorTestSpec : WithApplicationShouldSpec({
     mockkStatic(SwingUtilities::convertPointFromScreen)
     every { SwingUtilities.convertPointFromScreen(point, editorComponentMock) } returns Unit
 
-    mockkObject(ConfigService)
-
     val projectMock = mockk<Project>()
     val virtualFileMock = mockk<MFVirtualFile>()
 
     val contentSynchronizerMock = mockk<ContentSynchronizer>()
-    val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+    val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
     val bytes = byteArrayOf(116, 101, 120, 116)
     every { contentSynchronizerMock.successfulContentStorage(any()) } returns bytes
 
@@ -135,13 +136,16 @@ class EditorTestSpec : WithApplicationShouldSpec({
       autoSyncFileListenerMock
     }
 
-    mockkStatic(::isFileSyncingNow)
+    val syncProcessService = SyncProcessService.getService() as TestSyncProcessServiceImpl
+    val configService = ConfigService.getService() as TestConfigServiceImpl
 
     beforeEach {
       every { editorComponentMock.isComponentUnderMouse() } returns false
       every { editorComponentMock.contains(any()) } returns false
 
-      every { ConfigService.instance.isAutoSyncEnabled } returns true
+      configService.testInstance = object : TestConfigServiceImpl() {
+        override var isAutoSyncEnabled = true
+      }
 
       every { editorMock.project } returns projectMock
       every { editorMock.virtualFile } returns virtualFileMock
@@ -153,6 +157,8 @@ class EditorTestSpec : WithApplicationShouldSpec({
           return contentSynchronizerMock
         }
       }
+
+      syncProcessService.testInstance = TestSyncProcessServiceImpl()
       every { contentSynchronizerMock.isFileUploadNeeded(any()) } returns true
 
       currentBytes = byteArrayOf(116, 101, 120, 116)
@@ -212,7 +218,9 @@ class EditorTestSpec : WithApplicationShouldSpec({
       assertSoftly { isSynced shouldBe false }
     }
     should("not perform auto file sync when auto sync is disabled") {
-      every { ConfigService.instance.isAutoSyncEnabled } returns false
+      configService.testInstance = object : TestConfigServiceImpl() {
+        override var isAutoSyncEnabled = true
+      }
 
       fileEditorFocusListener.focusLost(editorMock, focusEventMock)
 
@@ -257,15 +265,19 @@ class EditorTestSpec : WithApplicationShouldSpec({
 
       assertSoftly { isSynced shouldBe false }
     }
-     should("not perform auto file sync when file is syncing now") {
-       currentBytes = byteArrayOf(116, 101, 120, 116, 33)
+    should("not perform auto file sync when file is syncing now") {
+      currentBytes = byteArrayOf(116, 101, 120, 116, 33)
 
-       every { isFileSyncingNow(any()) } returns true
+      syncProcessService.testInstance = object : TestSyncProcessServiceImpl() {
+        override fun isFileSyncingNow(file: VirtualFile): Boolean {
+          return true
+        }
+      }
 
-       fileEditorFocusListener.focusLost(editorMock, focusEventMock)
+      fileEditorFocusListener.focusLost(editorMock, focusEventMock)
 
-       assertSoftly { isSynced shouldBe false }
-     }
+      assertSoftly { isSynced shouldBe false }
+    }
 
     unmockkAll()
   }
@@ -287,7 +299,7 @@ class EditorTestSpec : WithApplicationShouldSpec({
     every { viewProviderMock.baseLanguage } returns languageMock
 
     var attributesMock: FileAttributes
-    val dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+    val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
 
     val encoderMock = mockk<CharsetEncoder>()
     every { charsetMock.newEncoder().onUnmappableCharacter(any()).onMalformedInput(any()) } returns encoderMock

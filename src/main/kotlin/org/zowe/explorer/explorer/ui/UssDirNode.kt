@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.ui
@@ -18,13 +22,15 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.UssPath
-import org.zowe.explorer.dataops.*
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.RemoteQuery
+import org.zowe.explorer.dataops.UnitRemoteQueryImpl
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.fetch.UssQuery
+import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.utils.clearAndMergeWith
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
@@ -48,7 +54,10 @@ class UssDirNode(
   treeStructure: ExplorerTreeStructureBase,
   private var vFile: MFVirtualFile? = null,
   private val isRootNode: Boolean = false,
-  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(SortQueryKeys.FILE_MODIFICATION_DATE, SortQueryKeys.ASCENDING),
+  override val currentSortQueryKeysList: List<SortQueryKeys> = mutableListOf(
+    SortQueryKeys.FILE_MODIFICATION_DATE,
+    SortQueryKeys.ASCENDING
+  ),
   override val sortedNodes: List<AbstractTreeNode<*>> = mutableListOf()
 ) : RemoteMFFileFetchNode<ConnectionConfig, UssPath, UssQuery, FilesWorkingSet>(
   ussPath, project, parent, workingSet, treeStructure
@@ -71,8 +80,7 @@ class UssDirNode(
     }
 
   private val attributesService
-    get() = explorer.componentManager.service<DataOpsManager>()
-      .getAttributesService<RemoteUssAttributes, MFVirtualFile>()
+    get() = DataOpsManager.getService().getAttributesService<RemoteUssAttributes, MFVirtualFile>()
 
   /** Transform the collection of mainframe virtual files to the list of USS children nodes */
   override fun Collection<MFVirtualFile>.toChildrenNodes(): List<AbstractTreeNode<*>> {
@@ -147,7 +155,10 @@ class UssDirNode(
     return vFile
   }
 
-  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(childrenNodes: List<Node>, sortKeys: List<SortQueryKeys>): List<Node> {
+  override fun <Node : AbstractTreeNode<*>> sortChildrenNodes(
+    childrenNodes: List<Node>,
+    sortKeys: List<SortQueryKeys>
+  ): List<Node> {
     if (sortKeys.contains(SortQueryKeys.FILE_NAME)) {
       if (sortKeys.contains(SortQueryKeys.ASCENDING)) {
         return childrenNodes.sortedBy {
@@ -224,13 +235,15 @@ class UssDirNode(
    */
   private fun modificationTimeSelector(): (AbstractTreeNode<*>) -> String? {
     return {
-      when(it) {
+      when (it) {
         is UssDirNode -> {
           it.virtualFile?.let { vFile -> attributesService.getAttributes(vFile) }?.modificationTime
         }
+
         is UssFileNode -> {
           attributesService.getAttributes(it.virtualFile)?.modificationTime
         }
+
         else -> null
       }
     }

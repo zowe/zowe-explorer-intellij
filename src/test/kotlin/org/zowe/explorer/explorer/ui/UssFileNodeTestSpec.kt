@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.explorer.ui
@@ -28,7 +32,6 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
-import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.explorer.Explorer
@@ -38,11 +41,12 @@ import org.zowe.explorer.explorer.FileExplorer
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.explorer.UIComponentManager
 import org.zowe.explorer.explorer.WorkingSet
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager
 import org.zowe.explorer.utils.isBeingEditingNow
-import org.zowe.explorer.utils.service
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import io.kotest.assertions.assertSoftly
@@ -97,26 +101,16 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         mockkStatic(TreeAnchorizer::class)
         every { TreeAnchorizer.getService().createAnchor(any()) } returns mockk()
 
-        uiComponentManagerService =
-          ApplicationManager.getApplication().service<UIComponentManager>() as TestUIComponentManager
+        uiComponentManagerService = UIComponentManager.getService() as TestUIComponentManager
         uiComponentManagerService.testInstance = object : TestUIComponentManager() {
           override fun <E : Explorer<*, *>> getExplorerContentProvider(
             clazz: Class<out E>
-          ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>>? {
+          ): ExplorerContentProvider<out ConnectionConfigBase, out Explorer<*, *>> {
             return mockk()
           }
         }
-//        mockkObject(TestUIComponentManager)
-//        every {
-//          UIComponentManager
-//            .INSTANCE
-//            .getExplorerContentProvider<Explorer<ConnectionConfig, WorkingSet<ConnectionConfig, UssFileNode>>>(any())
-//        } returns mockk()
 
         explorerTreeNodeMock = mockk()
-
-        mockkObject(DataOpsManager)
-        every { DataOpsManager.instance } returns mockk()
 
         explorer = mockk()
         every { explorer.componentManager } returns ApplicationManager.getApplication()
@@ -124,7 +118,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         explorerUnitMock = mockk()
         every { explorerUnitMock.explorer } returns explorer
 
-        dataOpsManagerService = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
 
         ussFileNode = spyk(
           UssFileNode(
@@ -196,11 +190,19 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         }
 
         var isDefaultOnThrowableHandlerTriggered = false
-        mockkObject(DocumentedSyncProvider)
-        every { DocumentedSyncProvider.defaultOnThrowableHandler(any(), any()) } answers {
-          val throwed = secondArg() as Throwable
-          assertSoftly { throwed.message shouldContain "Permission denied." }
-          isDefaultOnThrowableHandlerTriggered = true
+        val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+
+        notificationsService.testInstance = object : TestNotificationsServiceImpl() {
+          override fun notifyError(
+            t: Throwable,
+            project: Project?,
+            custTitle: String?,
+            custDetailsShort: String?,
+            custDetailsLong: String?
+          ) {
+            assertSoftly { t.message shouldContain "Permission denied." }
+            isDefaultOnThrowableHandlerTriggered = true
+          }
         }
 
         ussFileNode.navigate(requestFocus)
@@ -410,8 +412,7 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       every { treeStructure.registerNode(any()) } just Runs
 
       val explorerContentProviderMock = mockk<FileExplorerContentProvider>()
-      val uiComponentManagerService: TestUIComponentManager =
-        ApplicationManager.getApplication().service<UIComponentManager>() as TestUIComponentManager
+      val uiComponentManagerService: TestUIComponentManager = UIComponentManager.getService() as TestUIComponentManager
       uiComponentManagerService.testInstance = object : TestUIComponentManager() {
         override fun <E : Explorer<*, *>> getExplorer(clazz: Class<out E>): E {
           return explorer as E

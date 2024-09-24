@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2020-2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2020
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 package org.zowe.explorer.tso.config.ui
@@ -17,7 +21,8 @@ import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.ValidatingTableView
 import org.zowe.explorer.common.ui.tableWithToolbar
-import org.zowe.explorer.config.*
+import org.zowe.explorer.config.ConfigSandbox
+import org.zowe.explorer.config.SandboxListener
 import org.zowe.explorer.tso.config.TSOSessionConfig
 import org.zowe.explorer.tso.config.ui.table.TSOSessionTableModel
 import org.zowe.explorer.utils.clone
@@ -29,7 +34,7 @@ import java.awt.event.MouseEvent
 /**
  * Create and manage TSO Sessions tab in settings
  */
-class TSOSessionConfigurable: BoundSearchableConfigurable("TSO Sessions", "mainframe") {
+class TSOSessionConfigurable : BoundSearchableConfigurable("TSO Sessions", "mainframe") {
 
   private lateinit var tableModel: TSOSessionTableModel
   private lateinit var table: ValidatingTableView<TSOSessionDialogState>
@@ -39,7 +44,7 @@ class TSOSessionConfigurable: BoundSearchableConfigurable("TSO Sessions", "mainf
    * Create TSO Sessions panel in settings
    */
   override fun createPanel(): DialogPanel {
-    tableModel = TSOSessionTableModel(sandboxCrudable)
+    tableModel = TSOSessionTableModel(ConfigSandbox.getService().crudable)
     table = ValidatingTableView(tableModel, disposable!!)
       .apply {
         rowHeight = DEFAULT_ROW_HEIGHT
@@ -75,7 +80,7 @@ class TSOSessionConfigurable: BoundSearchableConfigurable("TSO Sessions", "mainf
    */
   override fun apply() {
     val wasModified = isModified
-    applySandbox<TSOSessionConfig>()
+    ConfigSandbox.getService().apply(TSOSessionConfig::class.java)
     if (wasModified) {
       panel.updateUI()
     }
@@ -86,7 +91,7 @@ class TSOSessionConfigurable: BoundSearchableConfigurable("TSO Sessions", "mainf
    */
   override fun reset() {
     val wasModified = isModified
-    rollbackSandbox<TSOSessionConfig>()
+    ConfigSandbox.getService().rollback(TSOSessionConfig::class.java)
     if (wasModified) {
       panel.updateUI()
     }
@@ -103,7 +108,7 @@ class TSOSessionConfigurable: BoundSearchableConfigurable("TSO Sessions", "mainf
    * Check is the TSO Sessions sandbox modified
    */
   override fun isModified(): Boolean {
-    return isSandboxModified<TSOSessionConfig>()
+    return ConfigSandbox.getService().isModified(TSOSessionConfig::class.java)
   }
 
   /**
@@ -143,8 +148,8 @@ class TSOSessionConfigurable: BoundSearchableConfigurable("TSO Sessions", "mainf
    * Create and show dialog to add TSO session. Also add the new row to the TSO Sessions table model
    */
   private fun addSession() {
-    val state = TSOSessionDialogState().initEmptyUuids(sandboxCrudable)
-    val dialog = TSOSessionDialog(sandboxCrudable, state)
+    val state = TSOSessionDialogState().initEmptyUuids(ConfigSandbox.getService().crudable)
+    val dialog = TSOSessionDialog(ConfigSandbox.getService().crudable, state)
     if (dialog.showAndGet()) {
       tableModel.addRow(state)
     }
@@ -156,7 +161,7 @@ class TSOSessionConfigurable: BoundSearchableConfigurable("TSO Sessions", "mainf
   private fun editSession() {
     table.selectedObject?.clone()?.let { state ->
       state.mode = DialogMode.UPDATE
-      val dialog = TSOSessionDialog(sandboxCrudable, state)
+      val dialog = TSOSessionDialog(ConfigSandbox.getService().crudable, state)
       if (dialog.showAndGet()) {
         val idx = table.selectedRow
         tableModel[idx] = state
