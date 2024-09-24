@@ -20,10 +20,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.showYesNoDialog
 import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
-import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
-import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
-import eu.ibagroup.formainframe.explorer.ui.JesWsNode
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.utils.performUnitsDeletionBasedOnSelection
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 
 /**
  * Action class for delete JES node action (working set or filter)
@@ -40,39 +39,18 @@ class DeleteJesNodeAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getExplorerView<JesExplorerView>() ?: return
     val selected = view.mySelectedNodesData
-    // Delete selected JES working sets
-    selected
-      .map { it.node }
-      .filterIsInstance<JesWsNode>()
-      .forEach {
-        if (
-          showYesNoDialog(
-            title = "Deletion of JES Working Set ${it.unit.name}",
-            message = "Do you want to delete this JES Working Set from configs? Note: all data under it will be untouched",
-            project = e.project,
-            icon = AllIcons.General.QuestionDialog
-          )
-        ) {
-          view.explorer.disposeUnit(it.unit as JesWorkingSetImpl)
-        }
-      }
-    // Delete selected job filters
-    selected
-      .map { it.node }
-      .filterIsInstance<JesFilterNode>()
-      .filter { view.explorer.isUnitPresented(it.unit) }
-      .forEach {
-        if (
-          showYesNoDialog(
-            title = "Deletion Of Jobs Filter",
-            message = "Do you want to delete this jobs filter with ${it.value} from configs? Note: all data under the filter will be untouched",
-            project = e.project,
-            icon = AllIcons.General.QuestionDialog
-          )
-        ) {
-          it.unit.removeFilter(it.value)
-        }
-      }
+
+    // Find items to delete (working set node or filter node)
+    val suitableToDelete = selected.map { it.node }
+      .filter { node -> node is JesWsNode || node is JesFilterNode }
+
+    val (workingSetsToDelete, selectedFilters) = suitableToDelete.partition { node -> node is JesWsNode }
+    val jesFiltersToDelete = selectedFilters.filter { jesFilter -> !workingSetsToDelete.contains(jesFilter.parent) }
+
+    // Delete working sets and filters that do not belong to them
+    (workingSetsToDelete + jesFiltersToDelete).ifNotEmpty {
+      performUnitsDeletionBasedOnSelection(e.project, null, view)
+    }
   }
 
   /**
