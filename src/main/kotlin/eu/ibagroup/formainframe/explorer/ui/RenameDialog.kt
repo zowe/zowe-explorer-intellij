@@ -61,7 +61,8 @@ class RenameDialog(
         textField()
           .bindText(this@RenameDialog::state)
           .validationOnApply { validateForBlank(it) ?: validateOnInput(it) }
-          .apply { focused() }
+          .onApply { state = state.uppercaseIfNeeded() }
+          .focused()
       }
     }
   }
@@ -78,6 +79,8 @@ class RenameDialog(
    * Validate a new name for the selected node component
    */
   private fun validateOnInput(component: JTextField): ValidationInfo? {
+    component.text = component.text.uppercaseIfNeeded()
+
     val attributes = selectedNodeData.attributes
 
     validateForTheSameValue(attributes?.name, component)?.let { return it }
@@ -100,6 +103,17 @@ class RenameDialog(
       }
     }
     return null
+  }
+
+  /**
+   * Convert the string to upper case if partitioned dataset, sequential dataset or dataset member is selected
+   */
+  private fun String.uppercaseIfNeeded(): String {
+    return if (node is LibraryNode || node is FileLikeDatasetNode) {
+      this.uppercase()
+    } else {
+      this
+    }
   }
 
 }
