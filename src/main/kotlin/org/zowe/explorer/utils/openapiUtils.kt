@@ -186,10 +186,12 @@ fun runWriteActionInEdt(block: () -> Unit) {
   }
 }
 
-fun runWriteActionInEdtAndWait(block: () -> Unit) {
+fun <T> runWriteActionInEdtAndWait(block: () -> T): T {
+  var result: T? = null
   runInEdtAndWait {
-    runWriteAction(block)
+    result = runWriteAction(block)
   }
+  return result ?: throw Exception("runWriteAction did not return any result")
 }
 
 /** Return the specified logger instance */
