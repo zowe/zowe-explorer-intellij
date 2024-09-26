@@ -167,8 +167,11 @@ kover {
   }
   reports {
     filters {
+      includes {
+        classes(providers.provider { "eu.ibagroup.formainframe.*" })
+      }
       excludes {
-        classes(providers.provider { "org.zowe.explorer.vfs.MFVFilePropertyChangeEvent" })
+        classes(providers.provider { "eu.ibagroup.formainframe.vfs.MFVFilePropertyChangeEvent" })
       }
     }
   }
