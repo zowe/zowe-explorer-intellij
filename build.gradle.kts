@@ -162,8 +162,11 @@ kover {
   }
   reports {
     filters {
+      includes {
+        classes(providers.provider { "eu.ibagroup.formainframe.*" })
+      }
       excludes {
-        classes(providers.provider { "org.zowe.explorer.vfs.MFVFilePropertyChangeEvent" })
+        classes(providers.provider { "eu.ibagroup.formainframe.vfs.MFVFilePropertyChangeEvent" })
       }
     }
   }
@@ -245,7 +248,7 @@ tasks {
         if (desc.parent == null) { // will match the outermost suite
           val output =
             "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
-              "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+                "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
           val fileName = "./build/reports/tests/${result.resultType}.txt"
           File(fileName).writeText(output)
         }
