@@ -27,6 +27,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnection
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.dataops.operations.TsoOperation
@@ -347,16 +348,25 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               processHandler.notifyTextAvailable(parseTSODataResponse(response), ProcessOutputType.STDOUT)
             }
           }.onFailure {
-            processHandler.notifyTextAvailable(
-              "Unsuccessful execution of the TSO request. Connection was broken.\n",
-              ProcessOutputType.STDOUT
-            )
-            executeTsoReconnectWithTimeout(
-              timeout = session.getTSOSessionConfig().timeout,
-              maxAttempts = session.getTSOSessionConfig().maxAttempts,
-              tsoConsole = console
-            ) {
-              wrapInlineCall { sendTopic(SESSION_RECONNECT_TOPIC, project).reconnect(project, console, session) }
+            if (it is CredentialsNotFoundForConnection) {
+              processHandler.notifyTextAvailable(
+                "Unable to obtain the connection information for connection=${session.getConnectionConfig()}.\n Session will be closed.",
+                ProcessOutputType.STDOUT
+              )
+              session.markSessionUnresponsive()
+              processHandler.destroyProcess()
+            } else {
+              processHandler.notifyTextAvailable(
+                "Unsuccessful execution of the TSO request. Connection was broken.\n",
+                ProcessOutputType.STDOUT
+              )
+              executeTsoReconnectWithTimeout(
+                timeout = session.getTSOSessionConfig().timeout,
+                maxAttempts = session.getTSOSessionConfig().maxAttempts,
+                tsoConsole = console
+              ) {
+                wrapInlineCall { sendTopic(SESSION_RECONNECT_TOPIC, project).reconnect(project, console, session) }
+              }
             }
           }
         }

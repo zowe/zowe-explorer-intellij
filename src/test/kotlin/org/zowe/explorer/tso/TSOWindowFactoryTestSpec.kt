@@ -16,6 +16,8 @@ package org.zowe.explorer.tso
 
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -25,6 +27,7 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl.MockToolWindow
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnection
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.telemetry.NotificationsService
@@ -105,6 +108,53 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
     context("process tso command") {
 
       val processHandler = spyk(NopProcessHandler())
+
+      should("should stop processing and shutdown processHandler in case of CredentialsNotFoundForConnection is thrown") {
+        // given
+        clearMocks(processHandler, verificationMarks = true, recordedCalls = true)
+        val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
+        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
+          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+            throw CredentialsNotFoundForConnection(ConnectionConfig())
+          }
+
+        }
+
+        val oldSessionResponse = TsoResponse(servletKey = "test-servletKey-1")
+        val session = TSOConfigWrapper(tsoSessionConfig, connectionConfig, oldSessionResponse)
+        val command = "TIME"
+        val messageType = mockk<MessageType>()
+        val messageData = mockk<MessageData>()
+
+        every { console.getProcessHandler() } returns processHandler
+        every { console.getTsoSession() } returns session
+        every { processHandler.notifyTextAvailable(any(), any()) } just Runs
+
+        // when
+        sendTopic(SESSION_COMMAND_ENTERED).processCommand(
+          project,
+          console,
+          session,
+          command,
+          messageType,
+          messageData,
+          processHandler
+        )
+
+        // then
+        verify(exactly = 1) {
+          processHandler.notifyTextAvailable(
+            "Unable to obtain the connection information for connection=${session.getConnectionConfig()}.\n Session will be closed.",
+            ProcessOutputType.STDOUT
+          )
+        }
+        verify(exactly = 1) {
+          processHandler.destroyProcess()
+        }
+        assertSoftly {
+          session.unresponsive shouldBe true
+        }
+      }
 
       should("should reconnect to the tso session after unsuccessful execution of the command") {
         // given

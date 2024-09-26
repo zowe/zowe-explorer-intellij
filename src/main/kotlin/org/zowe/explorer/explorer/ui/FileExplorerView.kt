@@ -52,7 +52,9 @@ import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.getMinimalCommonParents
 import org.zowe.explorer.utils.getParentsChain
+import org.zowe.explorer.utils.performUnitsDeletionBasedOnSelection
 import org.zowe.explorer.vfs.MFVirtualFile
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
@@ -435,63 +437,20 @@ class FileExplorerView(
     /** Deletes files corresponding to the selected nodes data. */
     override fun deleteElement(dataContext: DataContext) {
       val selected = mySelectedNodesData
-      selected.map { it.node }
-        .filterIsInstance<FilesWorkingSetNode>()
-        .forEach {
-          if (
-            showYesNoDialog(
-              title = "Deletion of Working Set ${it.unit.name}",
-              message = "Do you want to delete this Working Set from configs? Note: all data under it will be untouched",
-              project = project,
-              icon = AllIcons.General.QuestionDialog
-            )
-          ) {
-            explorer.disposeUnit(it.unit as FilesWorkingSet)
-          }
-        }
-      selected.map { it.node }
-        .filterIsInstance<DSMaskNode>()
-        .filter { explorer.isUnitPresented(it.unit) }
-        .forEach {
-          if (
-            showYesNoDialog(
-              title = "Deletion of DS Mask ${it.value.mask}",
-              message = "Do you want to delete this mask from configs? Note: all data sets under it will be untouched",
-              project = project,
-              icon = AllIcons.General.QuestionDialog
-            )
-          ) {
-            it.cleanCache(
-              recursively = true,
-              cleanFetchProviderCache = true,
-              cleanBatchedQuery = true,
-              sendTopic = false
-            )
-            it.unit.removeMask(it.value)
-          }
-        }
-      selected.map { it.node }
-        .filterIsInstance<UssDirNode>()
-        .filter { it.isUssMask && explorer.isUnitPresented(it.unit) }
-        .forEach {
-          val node = it
-          if (
-            showYesNoDialog(
-              title = "Deletion of Uss Path Root ${node.value.path}",
-              message = "Do you want to delete this USS path root from configs? Note: all files under it will be untouched",
-              project = project,
-              icon = AllIcons.General.QuestionDialog
-            )
-          ) {
-            node.cleanCache(
-              recursively = true,
-              cleanFetchProviderCache = true,
-              cleanBatchedQuery = true,
-              sendTopic = false
-            )
-            node.unit.removeUssPath(node.value)
-          }
-        }
+
+      // Find items to delete (working set node or dataset mask node or USS mask node)
+      val suitableToDelete = selected.map { it.node }
+        .filter { node -> node is FilesWorkingSetNode || node is DSMaskNode || (node is UssDirNode && node.isUssMask) }
+
+      val (workingSetsToDelete, selectedMasks) = suitableToDelete.partition { node -> node is FilesWorkingSetNode }
+      val masksToDelete = selectedMasks.filter { mask -> !workingSetsToDelete.contains(mask.parent) }
+
+      // Delete working sets and masks that do not belong to them
+      (workingSetsToDelete + masksToDelete).ifNotEmpty {
+        performUnitsDeletionBasedOnSelection(project, this@FileExplorerView, null)
+      }
+
+      // perform files deletion
       val nodeAndFilePairs = optimizeDeletion(selected)
       if (nodeAndFilePairs.isNotEmpty()) {
         val files = nodeAndFilePairs.map { it.second }.toSet().toList()

@@ -116,10 +116,10 @@ class JobNode(
           } else {
             "ENDED AT: " + parseJobTimestampValueToDisplay(job.execSubmitted) + ". RC = ${job.returnedCode}"
           },
-          if (isErrorReturnCode(job.returnedCode)) {
-            SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
-          } else {
-            SimpleTextAttributes(STYLE_BOLD, JBColor.GREEN)
+          when (getReturnCode(job.returnedCode)) {
+            ReturnCode.SUCCESS -> SimpleTextAttributes(STYLE_BOLD, JBColor.GREEN)
+            ReturnCode.WARNING -> SimpleTextAttributes(STYLE_BOLD, JBColor.ORANGE)
+            else -> SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
           }
         )
       } else {
@@ -130,10 +130,10 @@ class JobNode(
             } else {
               parseJobTimestampValueToDisplay(job.execEnded)
             } + ". RC = ${job.returnedCode}",
-          if (isErrorReturnCode(job.returnedCode)) {
-            SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
-          } else {
-            SimpleTextAttributes(STYLE_BOLD, JBColor.GREEN)
+          when (getReturnCode(job.returnedCode)) {
+            ReturnCode.SUCCESS -> SimpleTextAttributes(STYLE_BOLD, JBColor.GREEN)
+            ReturnCode.WARNING -> SimpleTextAttributes(STYLE_BOLD, JBColor.ORANGE)
+            else -> SimpleTextAttributes(STYLE_BOLD, JBColor.RED)
           }
         )
       }
@@ -176,19 +176,29 @@ class JobNode(
   /**
    * Function to parse return code after job completion
    * @param returnCode - return code to parse
-   * @return true if return code is kind of Error. False otherwise
+   * @return ReturnCode.ERR if return code is kind of Error.
+   * ReturnCode.WARN if return code in [1..8] range.
+   * ReturnCode.SUCCESS otherwise
    */
-  private fun isErrorReturnCode(returnCode: String?): Boolean {
+  private fun getReturnCode(returnCode: String?): ReturnCode {
     if (returnCode != null) {
       return if (!returnCode.contains(Regex("ERR|ABEND|CANCEL|FAIL"))) {
         val numberedRC = returnCode.split(" ").getOrNull(1)?.toIntOrNull()
         if (numberedRC != null) {
-          numberedRC > 0
+          when (numberedRC) {
+            0 -> ReturnCode.SUCCESS
+            in 1..7 -> ReturnCode.WARNING
+            else -> ReturnCode.ERROR
+          }
         } else {
-          true
+          ReturnCode.ERROR
         }
-      } else true
+      } else ReturnCode.ERROR
     }
-    return false
+    return ReturnCode.SUCCESS
+  }
+
+  enum class ReturnCode {
+    SUCCESS, WARNING, ERROR
   }
 }
