@@ -60,7 +60,7 @@ class DatasetFileFetchProviderTestSpec : ShouldSpec({
     // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
     val factory = IdeaTestFixtureFactory.getFixtureFactory()
     val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
+    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "zowe-explorer")
     val fixture = fixtureBuilder.fixture
     val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
       fixture,
