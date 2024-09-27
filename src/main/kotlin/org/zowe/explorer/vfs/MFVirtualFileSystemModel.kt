@@ -396,8 +396,7 @@ class MFVirtualFileSystemModel {
     if (attributes.isSymLink) {
       throw IOException("Cannot create symlink without destination")
     }
-    @Suppress("UnstableApiUsage")
-    val event = listOf(VFileCreateEvent(requestor, vDir, name, attributes.isDirectory, attributes, null, false, null))
+    val event = listOf(MFVFileCreateEvent(requestor, vDir, name, attributes.isDirectory, MFVFileCreateEventDelegate()))
     sendMFVfsChangesTopic().before(event)
     val file = vDir.validWriteLock {
       if (!vDir.isDirectory) {

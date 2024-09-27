@@ -14,7 +14,6 @@
 
 package org.zowe.explorer.tso.config.ui
 
-
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.CollectionComboBoxModel
