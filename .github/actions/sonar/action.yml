@@ -18,6 +18,9 @@ runs:
         ./gradlew --info sonar
         -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=512m"
         -Dresults="build/reports/tests/test,build/test-results/test,build/reports/kover/html"
-        -Psonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN
+        -Psonar.host.url=$SONAR_HOST_URL
+        -Dsonar.token=$SONAR_TOKEN
+        -Dsonar.organization=zowe
         -Dsonar.coverage.jacoco.xmlReportPaths="build/reports/kover/xml/report.xml"
         -Dsonar.coverage.exclusions="**src/IC-*/**"
+        -Dsonar.projectKey=zowe_zowe-explorer-intellij

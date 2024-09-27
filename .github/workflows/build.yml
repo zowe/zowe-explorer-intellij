@@ -71,7 +71,7 @@ jobs:
           echo "pluginVerifierHomeDir=~/.pluginVerifier" >> $GITHUB_OUTPUT
 
           # prepare list of IDEs to use by plugin verifier:
-          ./gradlew listProductsReleases
+          ./gradlew --quiet printProductsReleases > build/productReleases.txt
 
       - name: Build plugin
         shell: bash
@@ -149,7 +149,7 @@ jobs:
           path: ${{ github.workspace }}/build/reports/kover/html
 
       - name: SonarCloud scans
-        if: ${{ matrix.product == 'IC-233' }}
+        if: ${{ matrix.product == 'IC-243' }}
         continue-on-error: true
         uses: ./.github/actions/sonar
         env:
@@ -203,12 +203,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
-          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
+          key: plugin-verifier-${{ hashFiles('build/productReleases.txt') }}
 
       - name: Verify plugin against IntelliJ IDEA IDE's
         continue-on-error: true
         shell: bash
-        run: ./gradlew runPluginVerifier -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
         env:
           PRODUCT_NAME: ${{ matrix.product }}
 

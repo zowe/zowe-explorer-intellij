@@ -27,7 +27,7 @@ fun dateValue(pattern: String): String =
 data class PluginDescriptor(
   val jvmTargetVersion: JavaVersion, // the Java version to use during the plugin build
   val since: String, // earliest version string this is compatible with
-  val until: String, // latest version string this is compatible with, can be wildcard like 202.*
+  val getUntil: () -> Provider<String>, // latest version string this is compatible with, can be wildcard like 202.*
   // https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
   val sdkVersion: String, // the version string passed to the intellij sdk gradle plugin
   val sourceFolder: String // used as the source root for specifics of this build
@@ -37,21 +37,21 @@ val plugins = listOf(
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_17,
     since = properties("pluginSinceBuild").get(),
-    until = "232.*",
+    getUntil = { provider { "232.*" } },
     sdkVersion = "2023.1.7",
     sourceFolder = "IC-231"
   ),
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_17,
     since = "233.11799",
-    until = "242.*",
+    getUntil = { provider { "242.*" } },
     sdkVersion = "2023.3",
     sourceFolder = "IC-233"
   ),
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_21,
     since = "243.12818",
-    until = properties("pluginUntilBuild").get(),
+    getUntil = { provider { null } },
     sdkVersion = "243-EAP-SNAPSHOT",
     sourceFolder = "IC-243"
   )
@@ -73,7 +73,7 @@ val zoweKotlinSdkVersion = "0.5.0"
 val javaKeytarVersion = "1.0.0"
 
 plugins {
-  id("org.sonarqube") version "5.0.0.4638"
+  id("org.sonarqube") version "5.1.0.4882"
   id("org.jetbrains.intellij.platform") version "2.1.0"
   id("org.jetbrains.changelog") version "2.2.1"
   kotlin("jvm") version "1.9.22"
@@ -117,6 +117,7 @@ dependencies {
     intellijIdeaCommunity(descriptor.sdkVersion, useInstaller = false)
     jetbrainsRuntime()
     instrumentationTools()
+    pluginVerifier()
     testFramework(TestFrameworkType.Plugin.Java)
   }
   implementation(group = "com.squareup.retrofit2", name = "retrofit", version = retrofit2Vertion)
@@ -145,6 +146,15 @@ dependencies {
 intellijPlatform {
   pluginConfiguration {
     version = "${properties("pluginVersion").get()}-${descriptor.since.substringBefore(".")}"
+    ideaVersion {
+      sinceBuild = descriptor.since
+      untilBuild = descriptor.getUntil()
+    }
+  }
+  pluginVerification {
+    ides {
+      recommended()
+    }
   }
 }
 
@@ -203,9 +213,6 @@ tasks {
   }
 
   patchPluginXml {
-    sinceBuild.set(descriptor.since)
-    untilBuild.set(descriptor.until)
-
     val changelog = project.changelog // local variable for configuration cache compatibility
     // Get the latest available change notes from the changelog file
     changeNotes.set(
