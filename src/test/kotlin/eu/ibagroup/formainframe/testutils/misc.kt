@@ -23,7 +23,7 @@ import java.lang.reflect.Modifier
  * @param fieldName the field name to mock
  * @param mockValue the mock value to set for the field
  */
-fun setPrivateFieldValue(sourceObj: Any, classWithTheField: Class<*>, fieldName: String, mockValue: Any) {
+fun setPrivateFieldValue(sourceObj: Any, classWithTheField: Class<*>, fieldName: String, mockValue: Any?) {
   return classWithTheField
     .declaredFields
     .filter { it.modifiers.and(Modifier.PRIVATE) > 0 || it.modifiers.and(Modifier.PROTECTED) > 0 }

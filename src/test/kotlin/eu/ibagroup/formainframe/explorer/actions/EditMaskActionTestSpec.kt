@@ -15,26 +15,17 @@
 package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.config.ws.DSMask
-import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
-import eu.ibagroup.formainframe.config.ws.MaskState
-import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
-import eu.ibagroup.formainframe.config.ws.UssPath
+import eu.ibagroup.formainframe.config.ws.*
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.ExplorerContentProvider
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
 import eu.ibagroup.formainframe.explorer.UIComponentManager
-import eu.ibagroup.formainframe.explorer.ui.AddOrEditMaskDialog
-import eu.ibagroup.formainframe.explorer.ui.DSMaskNode
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
-import eu.ibagroup.formainframe.explorer.ui.NodeData
-import eu.ibagroup.formainframe.explorer.ui.UssDirNode
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestConfigServiceImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestCredentialsServiceImpl
@@ -42,12 +33,10 @@ import eu.ibagroup.formainframe.testutils.testServiceImpl.TestUIComponentManager
 import eu.ibagroup.formainframe.utils.MaskType
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkConstructor
-import io.mockk.mockkObject
-import io.mockk.unmockkAll
+import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.util.*
 
 class EditMaskActionTestSpec : WithApplicationShouldSpec({
@@ -137,14 +126,22 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         should("not perform edit action if explorer view is null") {
           every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
 
-          editMaskAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              editMaskAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { updated shouldBe false }
         }
         should("not perform edit action if selected node is not a DS or USS mask") {
           every { selectedNodeMock.node } returns mockk<ExplorerTreeNode<ConnectionConfig, *>>()
 
-          editMaskAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              editMaskAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { updated shouldBe false }
         }
@@ -161,7 +158,11 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
 
           every { selectedNodeMock.node } returns ussDirNode
 
-          editMaskAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              editMaskAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { updated shouldBe false }
         }
@@ -199,7 +200,11 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             anyConstructed<AddOrEditMaskDialog>().state
           } returns MaskStateWithWS(MaskState("test_passed", MaskType.USS), filesWorkingSetMock)
 
-          editMaskAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              editMaskAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { updated shouldBe true }
           assertSoftly { changed shouldBe true }
@@ -223,7 +228,11 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             anyConstructed<AddOrEditMaskDialog>().state
           } returns MaskStateWithWS(MaskState("test_passed", MaskType.ZOS), filesWorkingSetMock)
 
-          editMaskAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              editMaskAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { updated shouldBe true }
           assertSoftly { changed shouldBe true }
@@ -231,7 +240,11 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         should("not perform edit on USS mask if dialog is closed") {
           every { anyConstructed<AddOrEditMaskDialog>().showAndGet() } returns false
 
-          editMaskAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              editMaskAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { updated shouldBe false }
         }
@@ -240,7 +253,11 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             configService.crudable.getByUniqueKey(filesWorkingSetConfigMock::class.java, uuid)
           } returns Optional.ofNullable(null)
 
-          editMaskAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              editMaskAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { updated shouldBe false }
         }
@@ -249,7 +266,11 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
 
           var throwable: Throwable? = null
           runCatching {
-            editMaskAction.actionPerformed(anActionEventMock)
+            runBlocking {
+              withContext(Dispatchers.EDT) {
+                editMaskAction.actionPerformed(anActionEventMock)
+              }
+            }
           }.onFailure {
             throwable = it
           }
@@ -266,7 +287,11 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
 
           var throwable: Throwable? = null
           runCatching {
-            editMaskAction.actionPerformed(anActionEventMock)
+            runBlocking {
+              withContext(Dispatchers.EDT) {
+                editMaskAction.actionPerformed(anActionEventMock)
+              }
+            }
           }.onFailure {
             throwable = it
           }
@@ -318,7 +343,11 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             anyConstructed<AddOrEditMaskDialog>().state
           } returns MaskStateWithWS(MaskState("test_passed", MaskType.ZOS), filesWorkingSetMock)
 
-          editMaskAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              editMaskAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { updated shouldBe true }
           assertSoftly { changed shouldBe true }
@@ -342,7 +371,11 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
             anyConstructed<AddOrEditMaskDialog>().state
           } returns MaskStateWithWS(MaskState("test_passed", MaskType.USS), filesWorkingSetMock)
 
-          editMaskAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              editMaskAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { updated shouldBe true }
           assertSoftly { changed shouldBe true }
