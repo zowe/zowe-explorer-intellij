@@ -16,6 +16,7 @@ package eu.ibagroup.formainframe.explorer.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,6 +38,9 @@ import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.util.*
 
 class RenameActionTestSpec : WithApplicationShouldSpec({
@@ -148,28 +152,44 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         should("perform rename on dataset") {
           every { anActionEventMock.getExplorerView<FileExplorerView>() } returns fileExplorerViewMock
 
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe true }
         }
         should("not perform rename on dataset if dialog is closed") {
           every { anyConstructed<RenameDialog>().showAndGet() } returns false
 
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe false }
         }
         should("not perform rename on dataset if virtual file is null") {
           every { (libraryNodeMock as ExplorerTreeNode<ConnectionConfig, *>).virtualFile } returns null
 
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe false }
         }
         should("not perform rename on dataset if virtual file is syncing now") {
           every { checkFileForSync(any(), any(), any()) } returns true
 
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe false }
         }
@@ -190,14 +210,22 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("perform rename on dataset member") {
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe true }
         }
         should("not perform rename on dataset member if attributes is null") {
           every { selectedNodeDataMock.attributes } returns null
 
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe false }
         }
@@ -218,28 +246,44 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("perform rename on USS file") {
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe true }
         }
         should("perform rename on USS file but don't clean cache if parent node is null") {
           every { ussFileNodeMock.parent } returns null
 
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe true }
         }
         should("not perform rename on USS file if dialog is closed") {
           every { anyConstructed<RenameDialog>().showAndGet() } returns false
 
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe false }
         }
         should("not perform rename on USS file if virtual file is null") {
           every { selectedNodeDataMock.file } returns null
 
-          renameAction.actionPerformed(anActionEventMock)
+          runBlocking {
+            withContext(Dispatchers.EDT) {
+              renameAction.actionPerformed(anActionEventMock)
+            }
+          }
 
           assertSoftly { renamed shouldBe false }
         }
@@ -247,12 +291,20 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
       should("not perform rename action if explorer view is null") {
         every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
 
-        renameAction.actionPerformed(anActionEventMock)
+        runBlocking {
+          withContext(Dispatchers.EDT) {
+            renameAction.actionPerformed(anActionEventMock)
+          }
+        }
 
         assertSoftly { updated shouldBe false }
       }
       should("not perform rename action if selected node is not a DS mask, dataset, dataset member, USS mask, USS directory or USS file") {
-        renameAction.actionPerformed(anActionEventMock)
+        runBlocking {
+          withContext(Dispatchers.EDT) {
+            renameAction.actionPerformed(anActionEventMock)
+          }
+        }
 
         assertSoftly { updated shouldBe false }
       }

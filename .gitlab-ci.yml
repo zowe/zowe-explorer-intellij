@@ -5,6 +5,7 @@ build-job:
     matrix:
       - PRODUCT_NAME: "IC-231"
       - PRODUCT_NAME: "IC-233"
+      - PRODUCT_NAME: "IC-243"
   script:
     - |
       echo "Build is going to proceed with the next Java:"
@@ -31,6 +32,7 @@ test-job:
     matrix:
       - PRODUCT_NAME: "IC-231"
       - PRODUCT_NAME: "IC-233"
+      - PRODUCT_NAME: "IC-243"
   script:
     - |
       echo "Test is going to proceed with the next Java:"

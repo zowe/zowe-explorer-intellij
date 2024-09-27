@@ -13,8 +13,7 @@
  */
 
 import org.jetbrains.changelog.Changelog
-import org.jetbrains.intellij.tasks.ClasspathIndexCleanupTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -24,17 +23,41 @@ fun environment(key: String) = providers.environmentVariable(key)
 fun dateValue(pattern: String): String =
   LocalDate.now(ZoneId.of("Europe/Warsaw")).format(DateTimeFormatter.ofPattern(pattern))
 
-plugins {
-  id("org.jetbrains.intellij") version "1.17.4"
-  id("org.jetbrains.changelog") version "2.2.1"
-  kotlin("jvm") version "1.9.22"
-  java
-  id("org.jetbrains.kotlinx.kover") version "0.8.3"
-  id("org.owasp.dependencycheck") version "10.0.4"
-}
+// https://github.com/kotest/kotest-intellij-plugin/blob/master/build.gradle.kts
+data class PluginDescriptor(
+  val jvmTargetVersion: JavaVersion, // the Java version to use during the plugin build
+  val since: String, // earliest version string this is compatible with
+  val getUntil: () -> Provider<String>, // latest version string this is compatible with, can be wildcard like 202.*
+  // https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
+  val sdkVersion: String, // the version string passed to the intellij sdk gradle plugin
+  val sourceFolder: String // used as the source root for specifics of this build
+)
 
-apply(plugin = "kotlin")
-apply(plugin = "org.jetbrains.intellij")
+val plugins = listOf(
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_17,
+    since = properties("pluginSinceBuild").get(),
+    getUntil = { provider { "232.*" } },
+    sdkVersion = "2023.1.7",
+    sourceFolder = "IC-231"
+  ),
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_17,
+    since = "233.11799",
+    getUntil = { provider { "242.*" } },
+    sdkVersion = "2023.3",
+    sourceFolder = "IC-233"
+  ),
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_21,
+    since = "243.12818",
+    getUntil = { provider { null } },
+    sdkVersion = "243-EAP-SNAPSHOT",
+    sourceFolder = "IC-243"
+  )
+)
+val productName = System.getenv("PRODUCT_NAME") ?: "IC-231"
+val descriptor = plugins.first { it.sourceFolder == productName }
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
@@ -42,37 +65,59 @@ val remoteRobotVersion = "0.11.23"
 val okHttp3Version = "4.12.0"
 val kotestVersion = "5.9.1"
 val retrofit2Vertion = "2.11.0"
-val junitVersion = "5.10.3"
+val junitVersion = "5.11.1"
 val mockkVersion = "1.13.12"
 val ibmMqVersion = "9.4.0.0"
 val jGraphTVersion = "1.5.2"
 val zoweKotlinSdkVersion = "0.5.0"
 val javaAnalyticsVersion = "3.5.1"
 
+plugins {
+  id("org.jetbrains.intellij.platform") version "2.1.0"
+  id("org.jetbrains.changelog") version "2.2.1"
+  kotlin("jvm") version "1.9.22"
+  java
+  id("org.jetbrains.kotlinx.kover") version "0.8.3"
+  id("org.owasp.dependencycheck") version "10.0.4"
+}
+
 repositories {
   mavenCentral()
-  maven {
-    url = uri("https://zowe.jfrog.io/zowe/libs-release")
+  flatDir {
+    dirs("libs")
   }
   maven {
-    url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    url = uri("https://zowe.jfrog.io/zowe/libs-release")
     flatDir {
       dir("libs")
     }
-    metadataSources {
-      mavenPom()
-      artifact()
-      ignoreGradleMetadataRedirection()
-    }
+  }
+  intellijPlatform {
+    defaultRepositories()
+    jetbrainsRuntime()
   }
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_17
-  targetCompatibility = JavaVersion.VERSION_17
+  sourceCompatibility = descriptor.jvmTargetVersion
+  targetCompatibility = descriptor.jvmTargetVersion
+}
+
+kotlin {
+  compilerOptions {
+    jvmToolchain(JavaLanguageVersion.of(descriptor.jvmTargetVersion.toString()).asInt())
+  }
 }
 
 dependencies {
+  intellijPlatform {
+//    intellijIdeaCommunity(descriptor.sdkVersion)
+//    TO TEST EAP:
+    intellijIdeaCommunity(descriptor.sdkVersion, useInstaller = false)
+    jetbrainsRuntime()
+    instrumentationTools()
+    testFramework(TestFrameworkType.Plugin.Java)
+  }
   implementation(group = "com.squareup.retrofit2", name = "retrofit", version = retrofit2Vertion)
   implementation("com.squareup.retrofit2:converter-gson:$retrofit2Vertion")
   implementation("com.squareup.retrofit2:converter-scalars:$retrofit2Vertion")
@@ -90,46 +135,20 @@ dependencies {
   testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
   testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
   testImplementation("com.squareup.okhttp3:okhttp-tls:$okHttp3Version")
+  testImplementation("com.squareup.okhttp3:logging-interceptor:$okHttp3Version")
+  testImplementation("com.intellij.remoterobot:ide-launcher:$remoteRobotVersion")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
   testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junitVersion")
-  testImplementation("com.intellij.remoterobot:ide-launcher:$remoteRobotVersion")
 }
 
-data class PluginDescriptor(
-  val since: String, // earliest version string this is compatible with
-  val until: String, // latest version string this is compatible with, can be wildcard like 202.*
-  // https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
-  val sdkVersion: String, // the version string passed to the intellij sdk gradle plugin
-  val sourceFolder: String, // used as the source root for specifics of this build
-  val deps: List<String> // dependent plugins of this plugin
-)
-
-val plugins = listOf(
-  PluginDescriptor(
-    since = properties("pluginSinceBuild").get(),
-    until = "232.*",
-    sdkVersion = "IC-2023.1.7",
-    sourceFolder = "IC-231",
-    deps = listOf("java", "org.jetbrains.plugins.gradle", "org.jetbrains.kotlin")
-  ),
-  PluginDescriptor(
-    since = "233.11799",
-    until = properties("pluginUntilBuild").get(),
-    sdkVersion = "IC-2023.3",
-    sourceFolder = "IC-233",
-    deps = listOf("java", "org.jetbrains.plugins.gradle", "org.jetbrains.kotlin")
-  )
-)
-val productName = System.getenv("PRODUCT_NAME") ?: "IC-231"
-val descriptor = plugins.first { it.sourceFolder == productName }
-
-intellij {
-  version.set(descriptor.sdkVersion)
-  plugins.addAll(*descriptor.deps.toTypedArray())
-  // !Development only!
-  // downloadSources.set(true)
-  // In Settings | Advanced Settings enable option Download sources in section Build Tools. Gradle.
-  // Then invoke Reload All Gradle Projects action from the Gradle tool window.
+intellijPlatform {
+  pluginConfiguration {
+    version = "${properties("pluginVersion").get()}-${descriptor.since.substringBefore(".")}"
+    ideaVersion {
+      sinceBuild = descriptor.since
+      untilBuild = descriptor.getUntil()
+    }
+  }
 }
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -166,6 +185,7 @@ kover {
         classes(providers.provider { "eu.ibagroup.formainframe.*" })
       }
       excludes {
+        classes(providers.provider { "eu.ibagroup.formainframe.vfs.MFVFileCreateEvent" })
         classes(providers.provider { "eu.ibagroup.formainframe.vfs.MFVFilePropertyChangeEvent" })
       }
     }
@@ -181,22 +201,11 @@ tasks {
     gradleVersion = properties("gradleVersion").get()
   }
 
-  withType<KotlinCompile> {
-    kotlinOptions {
-      jvmTarget = JavaVersion.VERSION_17.toString()
-      languageVersion = org.jetbrains.kotlin.config.LanguageVersion.LATEST_STABLE.versionString
-    }
-  }
-
   withType<Copy> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   }
 
   patchPluginXml {
-    version.set("${properties("pluginVersion").get()}-${descriptor.since.substringBefore(".")}")
-    sinceBuild.set(descriptor.since)
-    untilBuild.set(descriptor.until)
-
     val changelog = project.changelog // local variable for configuration cache compatibility
     // Get the latest available change notes from the changelog file
     changeNotes.set(
@@ -215,12 +224,12 @@ tasks {
     )
   }
 
-  withType<ClasspathIndexCleanupTask> {
-    onlyIf {
-      gradle.startParameter.taskNames.contains("test")
-    }
-    dependsOn(compileTestKotlin)
-  }
+//  withType<ClasspathIndexCleanupTask> {
+//    onlyIf {
+//      gradle.startParameter.taskNames.contains("test")
+//    }
+//    dependsOn(compileTestKotlin)
+//  }
 
 //
 //  withType<ClasspathIndexCleanupTask> {
@@ -232,6 +241,10 @@ tasks {
 
   test {
     useJUnitPlatform()
+
+    // To run unit tests only and do not trigger "uiTest" task related things (like "compileUiTestKotlin")
+    onlyIf { !gradle.startParameter.taskNames.contains("uiTest") }
+
     testLogging {
       events("passed", "skipped", "failed")
     }
@@ -239,6 +252,7 @@ tasks {
     //  ignoreFailures = true
 
     finalizedBy("koverHtmlReport")
+    finalizedBy("koverXmlReport")
     systemProperty("idea.force.use.core.classloader", "true")
     systemProperty("idea.use.core.classloader.for.plugin.path", "true")
     systemProperty("java.awt.headless", "true")
@@ -248,12 +262,16 @@ tasks {
         if (desc.parent == null) { // will match the outermost suite
           val output =
             "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, " +
-                "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+              "${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
           val fileName = "./build/reports/tests/${result.resultType}.txt"
           File(fileName).writeText(output)
         }
       })
     )
+  }
+
+  koverHtmlReport {
+    finalizedBy("koverXmlReport")
   }
 
   val createOpenApiSourceJar by registering(Jar::class) {
@@ -282,7 +300,6 @@ tasks {
   }
 
   publishPlugin {
-    dependsOn("patchChangelog")
     token.set(environment("INTELLIJ_SIGNING_PUBLISH_TOKEN").map { it })
     // The pluginVersion is based on the SemVer (https://semver.org)
     // Read more: https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
@@ -298,14 +315,16 @@ tasks {
     )
   }
 
-  downloadRobotServerPlugin {
-    version.set(remoteRobotVersion)
-  }
+// TODO: fix
+//  downloadRobotServerPlugin {
+//    version.set(remoteRobotVersion)
+//  }
 
-  runIdeForUiTests {
-    systemProperty("idea.trust.all.projects", "true")
-    systemProperty("ide.show.tips.on.startup.default.value", "false")
-  }
+// TODO: fix
+//  runIdeForUiTests {
+//    systemProperty("idea.trust.all.projects", "true")
+//    systemProperty("ide.show.tips.on.startup.default.value", "false")
+//  }
 }
 
 /**
