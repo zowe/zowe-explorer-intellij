@@ -111,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: ["IC-231","IC-233"]
+        product: ["IC-231","IC-233","IC-243"]
         include:
           - product: "IC-231"
             distribution: "zulu"
@@ -119,6 +119,9 @@ jobs:
           - product: "IC-233"
             distribution: "zulu"
             java: "17"
+          - product: "IC-243"
+            distribution: "zulu"
+            java: "21"
       max-parallel: 10
       fail-fast: false
     steps:

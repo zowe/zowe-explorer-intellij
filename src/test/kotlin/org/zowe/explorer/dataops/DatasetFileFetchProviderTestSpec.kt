@@ -14,60 +14,28 @@
 
 package org.zowe.explorer.dataops
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.config.ws.DSMask
-import org.zowe.explorer.dataops.attributes.AttributesService
-import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.dataops.attributes.MaskedRequester
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributesService
+import org.zowe.explorer.dataops.attributes.*
 import org.zowe.explorer.dataops.fetch.DatasetFileFetchProvider
+import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.spyk
-import io.mockk.unmockkAll
-import org.zowe.kotlinsdk.DataAPI
-import org.zowe.kotlinsdk.DataSetsList
-import org.zowe.kotlinsdk.Dataset
-import org.zowe.kotlinsdk.DatasetOrganization
-import org.zowe.kotlinsdk.HasMigrated
-import org.zowe.kotlinsdk.XIBMAttr
+import io.mockk.*
+import org.zowe.kotlinsdk.*
 import retrofit2.Call
 import retrofit2.Response
 
-class DatasetFileFetchProviderTestSpec : ShouldSpec({
-
-  beforeSpec {
-    // FIXTURE SETUP TO HAVE ACCESS TO APPLICATION INSTANCE
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR
-    val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor, "for-mainframe")
-    val fixture = fixtureBuilder.fixture
-    val myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(
-      fixture,
-      LightTempDirTestFixtureImpl(true)
-    )
-    myFixture.setUp()
-  }
+class DatasetFileFetchProviderTestSpec : WithApplicationShouldSpec({
 
   afterSpec {
     clearAllMocks()

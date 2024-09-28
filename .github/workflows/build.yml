@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: ["IC-231","IC-233"]
+        product: ["IC-231","IC-233","IC-243"]
         include:
           - product: "IC-231"
             distribution: "zulu"
@@ -29,6 +29,9 @@ jobs:
           - product: "IC-233"
             distribution: "zulu"
             java: "17"
+          - product: "IC-243"
+            distribution: "zulu"
+            java: "21"
       max-parallel: 10
       fail-fast: false
     outputs:
@@ -68,7 +71,7 @@ jobs:
           echo "pluginVerifierHomeDir=~/.pluginVerifier" >> $GITHUB_OUTPUT
 
           # prepare list of IDEs to use by plugin verifier:
-          ./gradlew listProductsReleases
+          ./gradlew --quiet printProductsReleases > build/productReleases.txt
 
       - name: Build plugin
         shell: bash
@@ -98,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: ["IC-231","IC-233"]
+        product: ["IC-231","IC-233","IC-243"]
         include:
           - product: "IC-231"
             distribution: "zulu"
@@ -106,6 +109,9 @@ jobs:
           - product: "IC-233"
             distribution: "zulu"
             java: "17"
+          - product: "IC-243"
+            distribution: "zulu"
+            java: "21"
       max-parallel: 10
       fail-fast: false
     steps:
@@ -143,7 +149,7 @@ jobs:
           path: ${{ github.workspace }}/build/reports/kover/html
 
       - name: SonarCloud scans
-        if: ${{ matrix.product == 'IC-233' }}
+        if: ${{ matrix.product == 'IC-243' }}
         continue-on-error: true
         uses: ./.github/actions/sonar
         env:
@@ -158,7 +164,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: ["IC-231","IC-233"]
+        product: ["IC-231","IC-233","IC-243"]
         include:
           - product: "IC-231"
             distribution: "zulu"
@@ -166,6 +172,9 @@ jobs:
           - product: "IC-233"
             distribution: "zulu"
             java: "17"
+          - product: "IC-243"
+            distribution: "zulu"
+            java: "21"
       max-parallel: 10
       fail-fast: false
     steps:
@@ -194,12 +203,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
-          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
+          key: plugin-verifier-${{ hashFiles('build/productReleases.txt') }}
 
       - name: Verify plugin against IntelliJ IDEA IDE's
         continue-on-error: true
         shell: bash
-        run: ./gradlew runPluginVerifier -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
+        run: ./gradlew verifyPlugin -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
         env:
           PRODUCT_NAME: ${{ matrix.product }}
 

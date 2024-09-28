@@ -15,8 +15,9 @@
 package org.zowe.explorer.testutils
 
 import com.intellij.openapi.application.Application
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.ConfigSandbox
 import org.zowe.explorer.config.ConfigService
@@ -24,33 +25,31 @@ import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.content.service.SyncProcessService
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.testServiceImpl.TestConfigSandboxImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestSyncProcessServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
+import org.zowe.explorer.testutils.testServiceImpl.*
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.clearMocks
+
+private var appFixture: CodeInsightTestFixture? = null
 
 /**
  * [ShouldSpec] wrapper that provides implemented beforeSpec, initializing an [Application]
  * instance to be able to use and mock services for tests
  */
 abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : ShouldSpec() {
-  private lateinit var appFixture: IdeaProjectTestFixture
 
   /**
    * Fixture setup to have access to the [Application] instance
    */
   override suspend fun beforeSpec(spec: Spec) {
     super.beforeSpec(spec)
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val lightFixture = factory.createLightFixtureBuilder("zowe-explorer").fixture
-    appFixture = factory.createCodeInsightFixture(lightFixture)
-    appFixture.setUp()
+    if (appFixture == null) {
+      val factory = IdeaTestFixtureFactory.getFixtureFactory()
+      val lightFixture = factory.createLightFixtureBuilder("zowe-explorer").fixture
+      appFixture = factory
+        .createCodeInsightFixture(lightFixture, LightTempDirTestFixtureImpl(true))
+      appFixture?.setUp() ?: throw Exception("Fixture setup is failed")
+    }
 
     (ConfigSandbox.getService() as TestConfigSandboxImpl).testInstance = TestConfigSandboxImpl()
     clearMocks(ConfigSandbox.getService().crudable)

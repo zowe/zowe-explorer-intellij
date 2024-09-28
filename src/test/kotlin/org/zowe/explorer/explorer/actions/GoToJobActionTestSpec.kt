@@ -18,6 +18,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ToolWindow
@@ -35,18 +36,10 @@ import org.zowe.explorer.config.ws.ui.jes.JesWsDialog
 import org.zowe.explorer.dataops.log.AbstractMFLoggerBase
 import org.zowe.explorer.dataops.log.JobLogFetcher
 import org.zowe.explorer.dataops.log.JobProcessInfo
-import org.zowe.explorer.explorer.Explorer
-import org.zowe.explorer.explorer.ExplorerContentProvider
-import org.zowe.explorer.explorer.JesExplorerContentProvider
-import org.zowe.explorer.explorer.JesWorkingSetImpl
-import org.zowe.explorer.explorer.UIComponentManager
+import org.zowe.explorer.explorer.*
 import org.zowe.explorer.explorer.actions.GoToJobAction.Companion.JOB_FILTER_CREATED_TITLE
 import org.zowe.explorer.explorer.actions.GoToJobAction.Companion.JOB_FILTER_NOT_CREATED_TITLE
-import org.zowe.explorer.explorer.ui.AddJobsFilterDialog
-import org.zowe.explorer.explorer.ui.CommonExplorerTreeStructure
-import org.zowe.explorer.explorer.ui.JesExplorerView
-import org.zowe.explorer.explorer.ui.JesFilterNode
-import org.zowe.explorer.explorer.ui.JesWsNode
+import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager
@@ -54,17 +47,10 @@ import org.zowe.explorer.ui.build.jobs.JOBS_LOG_VIEW
 import org.zowe.explorer.ui.build.jobs.JobBuildTreeView
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.clearMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkConstructor
-import io.mockk.mockkObject
-import io.mockk.spyk
-import io.mockk.unmockkAll
-import io.mockk.verify
+import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.zowe.kotlinsdk.Job
 import java.util.*
 import java.util.stream.Stream
@@ -160,7 +146,11 @@ class GoToJobActionTestSpec : WithApplicationShouldSpec({
       every { anyConstructed<JesWsDialog>().showAndGet() } returns true
       every { myFsTreeStructureMock.findByPredicate(any()) } returns jesWsNodesTest
 
-      classUnderTest.actionPerformed(actionEventMock)
+      runBlocking {
+        withContext(Dispatchers.EDT) {
+          classUnderTest.actionPerformed(actionEventMock)
+        }
+      }
 
       verify {
         jesExplorerMock.showNotification(
@@ -205,7 +195,11 @@ class GoToJobActionTestSpec : WithApplicationShouldSpec({
       mockkConstructor(AddJobsFilterDialog::class)
       every { anyConstructed<AddJobsFilterDialog>().showAndGet() } returns true
 
-      classUnderTest.actionPerformed(actionEventMock)
+      runBlocking {
+        withContext(Dispatchers.EDT) {
+          classUnderTest.actionPerformed(actionEventMock)
+        }
+      }
 
       verify { jesWorkingSet.addMask(jobFilterToSaveExpected) }
       verify {
@@ -242,7 +236,11 @@ class GoToJobActionTestSpec : WithApplicationShouldSpec({
 
       every { myFsTreeStructureMock.findByPredicate(any()) } returns jesWsNodesTest
 
-      classUnderTest.actionPerformed(actionEventMock)
+      runBlocking {
+        withContext(Dispatchers.EDT) {
+          classUnderTest.actionPerformed(actionEventMock)
+        }
+      }
 
       verify {
         jesExplorerMock.showNotification(
