@@ -54,6 +54,8 @@ class ExplorerTreeViewTestSpec : WithApplicationShouldSpec({
     val contentSynchronizerMock = mockk<ContentSynchronizer>()
     every { contentSynchronizerMock.markAsNotNeededForSync(any()) } returns Unit
 
+    val fileEditorManager = mockk<FileEditorManager>()
+
     beforeEach {
       mockkConstructor(CommonExplorerTreeStructure::class)
       every { anyConstructed<CommonExplorerTreeStructure<*>>().rootElement } returns Unit
@@ -69,16 +71,13 @@ class ExplorerTreeViewTestSpec : WithApplicationShouldSpec({
       )
 
       closedFileSize = 0
-      mockkStatic(FileEditorManager::getInstance)
-      every { FileEditorManager.getInstance(any()) } returns object : TestFileEditorManager() {
-        override fun getOpenFiles(): Array<VirtualFile> {
-          return openFilesMock
-        }
-
-        override fun closeFile(file: VirtualFile) {
-          closedFileSize++
-        }
+      every { fileEditorManager.openFiles } returns openFilesMock
+      every { fileEditorManager.closeFile(any<VirtualFile>()) } answers {
+        closedFileSize++
       }
+
+      mockkStatic(FileEditorManager::getInstance)
+      every { FileEditorManager.getInstance(any()) } returns fileEditorManager
 
       val isAncestorRef: (VirtualFile, VirtualFile, Boolean) -> Boolean = VfsUtilCore::isAncestor
       mockkStatic(isAncestorRef as KFunction<*>)

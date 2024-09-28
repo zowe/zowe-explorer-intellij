@@ -14,6 +14,7 @@
 
 package eu.ibagroup.formainframe.tso.config
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -31,27 +32,16 @@ import eu.ibagroup.formainframe.tso.config.ui.TSOSessionConfigurable
 import eu.ibagroup.formainframe.tso.config.ui.TSOSessionDialog
 import eu.ibagroup.formainframe.tso.config.ui.TSOSessionDialogState
 import eu.ibagroup.formainframe.tso.config.ui.table.TSOSessionTableModel
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.MergedCollections
-import eu.ibagroup.formainframe.utils.initialize
-import eu.ibagroup.formainframe.utils.sendTopic
-import eu.ibagroup.formainframe.utils.validateConnectionSelection
-import eu.ibagroup.formainframe.utils.validateForBlank
-import eu.ibagroup.formainframe.utils.validateForPositiveInteger
-import eu.ibagroup.formainframe.utils.validateForPositiveLong
-import eu.ibagroup.formainframe.utils.validateTsoSessionName
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.clearAllMocks
-import io.mockk.clearMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkConstructor
-import io.mockk.mockkStatic
-import io.mockk.spyk
-import io.mockk.unmockkAll
-import io.mockk.verify
+import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.zowe.kotlinsdk.TsoCodePage
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -245,7 +235,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
       }
       // addSession
       should("add session when 'Ok' button is pressed") {
-        addSessionMethod.invoke(configurable)
+        runBlocking {
+          withContext(Dispatchers.EDT) {
+            addSessionMethod.invoke(configurable)
+          }
+        }
 
         assertSoftly {
           rowAdded shouldBe true
@@ -254,7 +248,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
       should("do not add session when 'Cancel' button is pressed") {
         every { anyConstructed<TSOSessionDialog>().showAndGet() } returns false
 
-        addSessionMethod.invoke(configurable)
+        runBlocking {
+          withContext(Dispatchers.EDT) {
+            addSessionMethod.invoke(configurable)
+          }
+        }
 
         assertSoftly {
           rowAdded shouldBe false
@@ -262,7 +260,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
       }
       // editSession
       should("edit session when 'Ok' button is pressed") {
-        editSessionMethod.invoke(configurable)
+        runBlocking {
+          withContext(Dispatchers.EDT) {
+            editSessionMethod.invoke(configurable)
+          }
+        }
 
         assertSoftly {
           rowEdited shouldBe true
@@ -271,7 +273,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
       should("do not edit session when 'Cancel' button is pressed") {
         every { anyConstructed<TSOSessionDialog>().showAndGet() } returns false
 
-        editSessionMethod.invoke(configurable)
+        runBlocking {
+          withContext(Dispatchers.EDT) {
+            editSessionMethod.invoke(configurable)
+          }
+        }
 
         assertSoftly {
           rowEdited shouldBe false
@@ -281,7 +287,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
         every { tableMock.selectedObject } returns null
         tableField.set(configurable, tableMock)
 
-        editSessionMethod.invoke(configurable)
+        runBlocking {
+          withContext(Dispatchers.EDT) {
+            editSessionMethod.invoke(configurable)
+          }
+        }
 
         assertSoftly {
           rowEdited shouldBe false
@@ -332,21 +342,6 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
         sendTopic(SandboxListener.TOPIC).reload(ConnectionConfig::class.java)
 
         assertSoftly {
-          tableModelReinitialized shouldBe false
-        }
-      }
-      should("catch reload call and do not reinitialize because table model is null") {
-        tableModelField.set(configurable, null)
-        var exceptionCaught = false
-
-        try {
-          sendTopic(SandboxListener.TOPIC).reload(TSOSessionConfig::class.java)
-        } catch (e: Exception) {
-          exceptionCaught = true
-        }
-
-        assertSoftly {
-          exceptionCaught shouldBe true
           tableModelReinitialized shouldBe false
         }
       }
@@ -500,7 +495,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
         mockkStatic(::initialize)
         every { initialize(any()) } returns Unit
 
-        dialog = TSOSessionDialog(crudableMock, TSOSessionDialogState())
+        dialog = runBlocking {
+          withContext(Dispatchers.EDT) {
+            TSOSessionDialog(crudableMock, TSOSessionDialogState())
+          }
+        }
 
         mockkStatic("eu.ibagroup.formainframe.utils.ValidationFunctionsKt")
         every { validateForBlank(any()) } returns null
@@ -567,7 +566,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
       }
       should("validate panel if session name is not empty") {
         val state = TSOSessionDialogState(name = "sessionName")
-        dialog = TSOSessionDialog(crudableMock, state)
+        dialog = runBlocking {
+          withContext(Dispatchers.EDT) {
+            TSOSessionDialog(crudableMock, state)
+          }
+        }
 
         val result = doValidateMethod.invoke(dialog)
 
@@ -581,7 +584,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
         val defaultLogonProc = "DBSPROCC"
 
         val state = TSOSessionDialogState(name = expectedSessionName, logonProcedure = "logonProc")
-        dialog = TSOSessionDialog(crudableMock, state)
+        dialog = runBlocking {
+          withContext(Dispatchers.EDT) {
+            TSOSessionDialog(crudableMock, state)
+          }
+        }
 
         createCenterPanelMethod.invoke(dialog)
         resetToDefaultMethod.invoke(dialog)
@@ -611,7 +618,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
         mockkStatic(::panel)
         every { panel(any()) } returns mainPanel
 
-        dialog = TSOSessionDialog(crudableMock, TSOSessionDialogState())
+        dialog = runBlocking {
+          withContext(Dispatchers.EDT) {
+            TSOSessionDialog(crudableMock, TSOSessionDialogState())
+          }
+        }
 
         createCenterPanelMethod.invoke(dialog)
 

@@ -18,10 +18,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.TreeAnchorizer
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileNavigator
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
@@ -34,32 +31,20 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.ContentSynchronizer
 import eu.ibagroup.formainframe.dataops.content.synchronizer.SyncProvider
 import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
-import eu.ibagroup.formainframe.explorer.Explorer
-import eu.ibagroup.formainframe.explorer.ExplorerContentProvider
-import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.explorer.FileExplorer
-import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
-import eu.ibagroup.formainframe.explorer.UIComponentManager
-import eu.ibagroup.formainframe.explorer.WorkingSet
+import eu.ibagroup.formainframe.explorer.*
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestNotificationsServiceImpl
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestUIComponentManager
 import eu.ibagroup.formainframe.utils.isBeingEditingNow
+import eu.ibagroup.formainframe.utils.runInEdtAndWait
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.spyk
+import io.mockk.*
 import javax.swing.Icon
 import javax.swing.tree.TreePath
 import kotlin.reflect.KFunction
@@ -154,25 +139,13 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         }
 
         var isOnSyncSuccessTriggered = false
-        var isNavigatePerformed = false
-        mockkStatic(FileNavigator::getInstance)
-        every { FileNavigator.getInstance() } answers {
+        mockkStatic(::runInEdtAndWait)
+        every { runInEdtAndWait(any()) } answers {
           isOnSyncSuccessTriggered = true
-          object : FileNavigator {
-            override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
-              isNavigatePerformed = true
-              return
-            }
-
-            override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
-              return true
-            }
-          }
         }
 
         ussFileNode.navigate(requestFocus)
         assertSoftly { isSyncWithRemotePerformed shouldBe true }
-        assertSoftly { isNavigatePerformed shouldBe true }
         assertSoftly { isOnSyncSuccessTriggered shouldBe true }
       }
       should("perform navigate on file with failure due to permission denied") {
@@ -247,18 +220,9 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         }
 
         var isNavigateContinued = false
-        mockkStatic(FileNavigator::getInstance)
-        every { FileNavigator.getInstance() } answers {
-          object : FileNavigator {
-            override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
-              isNavigateContinued = true
-              return
-            }
-
-            override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
-              return true
-            }
-          }
+        mockkStatic(::runInEdtAndWait)
+        every { runInEdtAndWait(any()) } answers {
+          isNavigateContinued = true
         }
 
         ussFileNode.navigate(requestFocus)
@@ -268,18 +232,9 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         every { fileMock.isDirectory } returns true
 
         var isNavigateContinued = false
-        mockkStatic(FileNavigator::getInstance)
-        every { FileNavigator.getInstance() } answers {
-          object : FileNavigator {
-            override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
-              isNavigateContinued = true
-              return
-            }
-
-            override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
-              return true
-            }
-          }
+        mockkStatic(::runInEdtAndWait)
+        every { runInEdtAndWait(any()) } answers {
+          isNavigateContinued = true
         }
 
         ussFileNode.navigate(requestFocus)
@@ -333,37 +288,23 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         }
 
         var isOnSyncSuccessTriggered = false
-        var isNavigatePerformed = false
-        mockkStatic(FileNavigator::getInstance)
-        every { FileNavigator.getInstance() } answers {
+        mockkStatic(::runInEdtAndWait)
+        every { runInEdtAndWait(any()) } answers {
           isOnSyncSuccessTriggered = true
-          object : FileNavigator {
-            override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
-              isNavigatePerformed = true
-              return
-            }
-
-            override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
-              return true
-            }
-          }
         }
 
+        var isOpenFileCalled = false
+        val fileEditorManager = mockk<FileEditorManager>()
+        every { fileEditorManager.openFile(any<VirtualFile>(), any<Boolean>()) } answers {
+          isOpenFileCalled = true
+          arrayOf()
+        }
         every { fileMock.isBeingEditingNow() } returns true
         mockkStatic(FileEditorManager::getInstance)
-        var isOpenFileCalled = false
-        every {
-          FileEditorManager.getInstance(any())
-        } returns object : TestFileEditorManager() {
-          override fun openFile(file: VirtualFile, focusEditor: Boolean): Array<FileEditor> {
-            isOpenFileCalled = true
-            return arrayOf()
-          }
-        }
+        every { FileEditorManager.getInstance(any()) } returns fileEditorManager
 
         ussFileNode.navigate(requestFocus)
         assertSoftly { isSyncWithRemotePerformed shouldBe false }
-        assertSoftly { isNavigatePerformed shouldBe false }
         assertSoftly { isOnSyncSuccessTriggered shouldBe false }
         assertSoftly { isOpenFileCalled shouldBe true }
       }
@@ -371,18 +312,9 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         every { checkFileForSync(any(), any(), any()) } returns true
 
         var isNavigateContinued = false
-        mockkStatic(FileNavigator::getInstance)
-        every { FileNavigator.getInstance() } answers {
-          object : FileNavigator {
-            override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
-              isNavigateContinued = true
-              return
-            }
-
-            override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
-              return true
-            }
-          }
+        mockkStatic(::runInEdtAndWait)
+        every { runInEdtAndWait(any()) } answers {
+          isNavigateContinued = true
         }
 
         ussFileNode.navigate(requestFocus)

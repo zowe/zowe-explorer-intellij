@@ -15,8 +15,9 @@
 package eu.ibagroup.formainframe.testutils
 
 import com.intellij.openapi.application.Application
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import eu.ibagroup.formainframe.analytics.AnalyticsService
 import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.ConfigSandbox
@@ -25,34 +26,31 @@ import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.content.service.SyncProcessService
 import eu.ibagroup.formainframe.telemetry.NotificationsService
-import eu.ibagroup.formainframe.testutils.testServiceImpl.TestAnalyticsServiceImpl
-import eu.ibagroup.formainframe.testutils.testServiceImpl.TestConfigSandboxImpl
-import eu.ibagroup.formainframe.testutils.testServiceImpl.TestConfigServiceImpl
-import eu.ibagroup.formainframe.testutils.testServiceImpl.TestCredentialsServiceImpl
-import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
-import eu.ibagroup.formainframe.testutils.testServiceImpl.TestNotificationsServiceImpl
-import eu.ibagroup.formainframe.testutils.testServiceImpl.TestSyncProcessServiceImpl
-import eu.ibagroup.formainframe.testutils.testServiceImpl.TestZosmfApiImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.*
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.clearMocks
+
+private var appFixture: CodeInsightTestFixture? = null
 
 /**
  * [ShouldSpec] wrapper that provides implemented beforeSpec, initializing an [Application]
  * instance to be able to use and mock services for tests
  */
 abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : ShouldSpec() {
-  private lateinit var appFixture: IdeaProjectTestFixture
 
   /**
    * Fixture setup to have access to the [Application] instance
    */
   override suspend fun beforeSpec(spec: Spec) {
     super.beforeSpec(spec)
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val lightFixture = factory.createLightFixtureBuilder("for-mainframe").fixture
-    appFixture = factory.createCodeInsightFixture(lightFixture)
-    appFixture.setUp()
+    if (appFixture == null) {
+      val factory = IdeaTestFixtureFactory.getFixtureFactory()
+      val lightFixture = factory.createLightFixtureBuilder("for-mainframe").fixture
+      appFixture = factory
+        .createCodeInsightFixture(lightFixture, LightTempDirTestFixtureImpl(true))
+      appFixture?.setUp() ?: throw Exception("Fixture setup is failed")
+    }
 
     (AnalyticsService.getService() as TestAnalyticsServiceImpl).testInstance = TestAnalyticsServiceImpl()
     (ConfigSandbox.getService() as TestConfigSandboxImpl).testInstance = TestConfigSandboxImpl()

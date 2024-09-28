@@ -20,6 +20,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolWrapper
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -39,12 +40,10 @@ import eu.ibagroup.formainframe.testutils.WithApplicationShouldSpec
 import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkConstructor
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
+import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.Charset
@@ -289,7 +288,11 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns ChangeEncodingDialog.RELOAD_EXIT_CODE
 
-      val actual = changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
+      val actual = runBlocking {
+        withContext(Dispatchers.EDT) {
+          changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
+        }
+      }
 
       assertSoftly { actual shouldBe true }
     }
@@ -299,7 +302,11 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns ChangeEncodingDialog.CONVERT_EXIT_CODE
 
-      val actual = changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
+      val actual = runBlocking {
+        withContext(Dispatchers.EDT) {
+          changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
+        }
+      }
 
       assertSoftly { actual shouldBe true }
     }
@@ -309,7 +316,11 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns 1
 
-      val actual = changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
+      val actual = runBlocking {
+        withContext(Dispatchers.EDT) {
+          changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
+        }
+      }
 
       assertSoftly { actual shouldBe false }
     }

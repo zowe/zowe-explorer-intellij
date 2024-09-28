@@ -14,21 +14,15 @@
 
 package eu.ibagroup.formainframe.config
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import eu.ibagroup.formainframe.api.ZosmfApi
-import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.Credentials
-import eu.ibagroup.formainframe.config.connect.CredentialsConfigDeclaration
-import eu.ibagroup.formainframe.config.connect.ZOSMFConnectionConfigDeclaration
-import eu.ibagroup.formainframe.config.connect.getOwner
-import eu.ibagroup.formainframe.config.connect.getUsername
-import eu.ibagroup.formainframe.config.connect.tryToExtractOwnerFromConfig
+import eu.ibagroup.formainframe.config.connect.*
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionDialogState
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.ConnectionsTableModel
 import eu.ibagroup.formainframe.config.connect.ui.zosmf.initEmptyUuids
-import eu.ibagroup.formainframe.config.connect.whoAmI
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.JesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
@@ -47,20 +41,11 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkConstructor
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import io.mockk.verify
-import org.zowe.kotlinsdk.MessageType
-import org.zowe.kotlinsdk.TsoApi
-import org.zowe.kotlinsdk.TsoCmdResponse
-import org.zowe.kotlinsdk.TsoCmdResult
-import org.zowe.kotlinsdk.TsoData
-import org.zowe.kotlinsdk.TsoResponse
+import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.zowe.kotlinsdk.*
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import retrofit2.Response
@@ -530,7 +515,11 @@ class ConfigTestSpec : WithApplicationShouldSpec({
     // ui/AbstractWsDialog.init
     should("check that OK action is enabled if validation map is empty") {
 
-      val dialog = FilesWorkingSetDialog(crudableMockk, FilesWorkingSetDialogState())
+      val dialog = runBlocking {
+        withContext(Dispatchers.EDT) {
+          FilesWorkingSetDialog(crudableMockk, FilesWorkingSetDialogState())
+        }
+      }
 
       verify { anyConstructed<DialogPanel>().registerValidators(any(), any()) }
       assertSoftly { dialog.isOKActionEnabled shouldBe true }
