@@ -15,22 +15,14 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.CopyPasteSupport
-import com.intellij.ide.CopyProvider
-import com.intellij.ide.CutProvider
-import com.intellij.ide.DeleteProvider
-import com.intellij.ide.PasteProvider
+import com.intellij.ide.*
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDSource
 import com.intellij.ide.dnd.DnDTarget
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
@@ -57,7 +49,6 @@ import eu.ibagroup.formainframe.utils.getMinimalCommonParents
 import eu.ibagroup.formainframe.utils.getParentsChain
 import eu.ibagroup.formainframe.utils.performUnitsDeletionBasedOnSelection
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
-import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
@@ -451,8 +442,10 @@ class FileExplorerView(
       val masksToDelete = selectedMasks.filter { mask -> !workingSetsToDelete.contains(mask.parent) }
 
       // Delete working sets and masks that do not belong to them
-      (workingSetsToDelete + masksToDelete).ifNotEmpty {
-        performUnitsDeletionBasedOnSelection(project, this@FileExplorerView, null)
+      (workingSetsToDelete + masksToDelete).apply {
+        if (isNotEmpty()) {
+          performUnitsDeletionBasedOnSelection(project, this@FileExplorerView, null)
+        }
       }
 
       // perform files deletion

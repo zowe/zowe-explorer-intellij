@@ -14,15 +14,14 @@
 
 package eu.ibagroup.formainframe.explorer.actions
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.ui.showYesNoDialog
-import eu.ibagroup.formainframe.explorer.JesWorkingSetImpl
-import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.explorer.ui.JesExplorerView
+import eu.ibagroup.formainframe.explorer.ui.JesFilterNode
+import eu.ibagroup.formainframe.explorer.ui.JesWsNode
+import eu.ibagroup.formainframe.explorer.ui.getExplorerView
 import eu.ibagroup.formainframe.utils.performUnitsDeletionBasedOnSelection
-import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 
 /**
  * Action class for delete JES node action (working set or filter)
@@ -48,8 +47,10 @@ class DeleteJesNodeAction : AnAction() {
     val jesFiltersToDelete = selectedFilters.filter { jesFilter -> !workingSetsToDelete.contains(jesFilter.parent) }
 
     // Delete working sets and filters that do not belong to them
-    (workingSetsToDelete + jesFiltersToDelete).ifNotEmpty {
-      performUnitsDeletionBasedOnSelection(e.project, null, view)
+    (workingSetsToDelete + jesFiltersToDelete).apply {
+      if (isNotEmpty()) {
+        performUnitsDeletionBasedOnSelection(e.project, null, view)
+      }
     }
   }
 
@@ -70,6 +71,6 @@ class DeleteJesNodeAction : AnAction() {
     }
     val selected = view.mySelectedNodesData
     e.presentation.isEnabledAndVisible = selected.isNotEmpty()
-        && (selected[0].node is JesWsNode || selected[0].node is JesFilterNode)
+      && (selected[0].node is JesWsNode || selected[0].node is JesFilterNode)
   }
 }
