@@ -21,6 +21,7 @@ runs:
         -Psonar.host.url=$SONAR_HOST_URL
         -Dsonar.token=$SONAR_TOKEN
         -Dsonar.organization=zowe
-        -Dsonar.coverage.jacoco.xmlReportPaths="build/reports/kover/xml/report.xml"
+        -Dsonar.coverage.jacoco.xmlReportPaths="build/reports/kover/report.xml"
         -Dsonar.coverage.exclusions="**src/IC-*/**"
+        -Dsonar.inclusions="**src/main/kotlin/org/zowe/explorer/**"
         -Dsonar.projectKey=zowe_zowe-explorer-intellij
