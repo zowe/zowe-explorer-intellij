@@ -17,9 +17,9 @@ package eu.ibagroup.formainframe.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
-import eu.ibagroup.formainframe.dataops.exceptions.NotificationCompatibleException
 import eu.ibagroup.formainframe.explorer.Explorer
 import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
+import eu.ibagroup.formainframe.telemetry.NotificationCompatibleException
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock

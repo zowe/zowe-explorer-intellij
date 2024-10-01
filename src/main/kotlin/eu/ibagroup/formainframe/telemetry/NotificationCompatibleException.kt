@@ -12,7 +12,7 @@
  *   Zowe Community
  */
 
-package eu.ibagroup.formainframe.dataops.exceptions
+package eu.ibagroup.formainframe.telemetry
 
 /**
  * Represents exception that is compatible to the plugin's notifications
@@ -21,7 +21,7 @@ package eu.ibagroup.formainframe.dataops.exceptions
  * @property detailsLong an extended detailed information about the exception occurred
  */
 class NotificationCompatibleException(
-  val title: String = "Unknown error",
+  val title: String = UNKNOWN_ERROR,
   val detailsShort: String = "No details",
-  val detailsLong: String = "No details"
+  val detailsLong: String = UNKNOWN_ERROR
 ) : Exception(detailsShort + '\n' + detailsLong)

@@ -26,20 +26,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
-import eu.ibagroup.formainframe.explorer.ui.DatasetPropertiesDialog
-import eu.ibagroup.formainframe.explorer.ui.DatasetState
-import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
-import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
-import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
-import eu.ibagroup.formainframe.explorer.ui.LibraryNode
-import eu.ibagroup.formainframe.explorer.ui.MemberPropertiesDialog
-import eu.ibagroup.formainframe.explorer.ui.MemberState
-import eu.ibagroup.formainframe.explorer.ui.UssDirNode
-import eu.ibagroup.formainframe.explorer.ui.UssFileNode
-import eu.ibagroup.formainframe.explorer.ui.UssFilePropertiesDialog
-import eu.ibagroup.formainframe.explorer.ui.UssFileState
-import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.utils.changeFileEncodingAction
 import eu.ibagroup.formainframe.utils.clone
@@ -52,9 +39,7 @@ import org.zowe.kotlinsdk.ChangeMode
  */
 class GetFilePropertiesAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /** Shows dialog with properties depending on type of the file selected by user. */
   override fun actionPerformed(e: AnActionEvent) {
@@ -68,7 +53,8 @@ class GetFilePropertiesAction : AnAction() {
         val dataOpsManager = DataOpsManager.getService()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)) {
           is RemoteDatasetAttributes -> {
-            if (node is FileLikeDatasetNode) {
+            val contentSynchronizer = dataOpsManager.getContentSynchronizer(virtualFile)
+            if (node is FileLikeDatasetNode && contentSynchronizer != null) {
               node.fetchAttributesForNodeIfMissing(
                 attributes,
                 dataOpsManager,
