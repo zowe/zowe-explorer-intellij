@@ -79,3 +79,20 @@ fun CallException(response: Response<*>, headMessage: String): CallException {
     )
   }
 }
+// vad
+fun CallException(response: okhttp3.Response, headMessage: String): CallException {
+  return try {
+    val errorBody = response.body?.string() ?: "No error body"
+    CallException(
+      code = response.code,
+      headMessage = headMessage,
+      errorParams = gson.fromJson(errorBody, Map::class.java) // Adjust based on actual error format
+    )
+  } catch (t: Throwable) {
+    CallException(
+      code = response.code,
+      headMessage = headMessage,
+      cause = t
+    )
+  }
+}

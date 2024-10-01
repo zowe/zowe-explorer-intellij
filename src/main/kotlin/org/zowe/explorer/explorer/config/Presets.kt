@@ -30,7 +30,8 @@ enum class Presets(private val type: String) {
   PDS_WITH_SAMPLE_JCL_MEMBER("PDS with sample JCL member Dataset"),
   PDSE_DATASET("PDSE Dataset"),
   PDSE_WITH_EMPTY_MEMBER("PDSE with empty member Dataset"),
-  PDSE_WITH_SAMPLE_JCL_MEMBER("PDSE with sample JCL member Dataset");
+  PDSE_WITH_SAMPLE_JCL_MEMBER("PDSE with sample JCL member Dataset"),
+  VSAM_KSDS_DATASET("VSAM KSDS Dataset");
 
   override fun toString(): String {
     return type
@@ -45,6 +46,7 @@ enum class Presets(private val type: String) {
         CUSTOM_DATASET -> PresetCustomDataset()
         SEQUENTIAL_DATASET -> PresetSeqDataset()
         PDS_DATASET, PDS_WITH_EMPTY_MEMBER, PDS_WITH_SAMPLE_JCL_MEMBER -> PresetPdsDataset()
+        VSAM_KSDS_DATASET -> PresetVsamKSDSDataset()
         else -> PresetPdseDataset()
       }
     }
@@ -115,6 +117,21 @@ data class PresetPdsDataset(
  * Data class which represents a PDSE dataset
  */
 data class PresetPdseDataset(
+  override val datasetOrganization: DatasetOrganization = DatasetOrganization.POE,
+  override val spaceUnit: AllocationUnit = AllocationUnit.TRK,
+  override val primaryAllocation: Int = 100,
+  override val secondaryAllocation: Int = 40,
+  override val directoryBlocks: Int = 10,
+  override val recordFormat: RecordFormat = RecordFormat.FB,
+  override val recordLength: Int = 80,
+  override val blockSize: Int = 32000,
+  override val averageBlockLength: Int = 0,
+) : PresetType
+
+/**
+ * Data class which represents a VSAM dataset
+ */
+data class PresetVsamKSDSDataset(
   override val datasetOrganization: DatasetOrganization = DatasetOrganization.POE,
   override val spaceUnit: AllocationUnit = AllocationUnit.TRK,
   override val primaryAllocation: Int = 100,

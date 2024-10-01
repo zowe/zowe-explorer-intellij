@@ -36,6 +36,15 @@ import java.nio.charset.Charset
 class UssFilePropertiesDialog(project: Project?, override var state: UssFileState) : DialogWrapper(project),
   StatefulComponent<UssFileState> {
 
+  companion object {
+
+    // TODO: Remove when it becomes possible to mock class constructor with init section.
+    /** Wrapper for init() method. It is necessary only for test purposes for now. */
+    private fun initialize(init: () -> Unit) {
+      init()
+    }
+  }
+
   private val sameWidthGroup = "USS_FILE_PROPERTIES_DIALOG_LABELS_WIDTH_GROUP"
 
   private val generalTab by lazy{

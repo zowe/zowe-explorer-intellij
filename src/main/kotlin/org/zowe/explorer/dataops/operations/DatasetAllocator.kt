@@ -62,12 +62,69 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
     progressIndicator: ProgressIndicator
   ) {
     progressIndicator.checkCanceled()
-    val datasetResponse = api<DataAPI>(operation.connectionConfig).createDataset(
-      authorizationToken = operation.connectionConfig.authToken,
-      datasetName = operation.request.datasetName,
-      body = operation.request.allocationParameters
-    ).cancelByIndicator(progressIndicator).execute()
-    if (!datasetResponse.isSuccessful) {
+
+
+//    val datasetResponse: Response<Void> =
+//    if (operation.request.presets == Presets.VSAM_KSDS_DATASET) {
+//      sendVSAMCreationRequest(operation.request.datasetName, operation.connectionConfig.authToken)
+//    } else {
+      val datasetResponse = api<DataAPI>(operation.connectionConfig).createDataset(
+        authorizationToken = operation.connectionConfig.authToken,
+        datasetName = operation.request.datasetName,
+        body = operation.request.allocationParameters
+      ).cancelByIndicator(progressIndicator).execute()
+//    }
+//    val tsoResponse = api<TsoApi>(operation.connectionConfig).startTso(
+//    val datasetResponse = api<TsoApi>(operation.connectionConfig).startTso(
+//      authorizationToken = operation.connectionConfig.authToken,
+//      proc = "DBSPROCC",   // TSO procedure
+//      chset = "697",           // Charset
+//      cpage = "1047",           // Codepage
+//      rows = 24,                 // Number of rows in session
+//      cols = 80,                 // Number of columns in session
+//      acct = "DEFAULT",     // Optional account number
+//      system = "SYS2"     // Optional system name
+//    ).execute()
+
+//    println(datasetResponse)
+
+//    val servletKey = tsoResponse.body()?.servletKey
+//    val servletKey = datasetResponse.body()?.servletKey
+
+//    val tsoIdcams = TsoData(tsoMessage = MessageType("tso idcams"))
+//
+//    api<TsoApi>(operation.connectionConfig).sendMessageToTso(
+//      authorizationToken = operation.connectionConfig.authToken,
+//      body = tsoIdcams,
+//      servletKey = servletKey!!,
+//      readReply = true
+//    ).execute()
+//
+//    val tsoData = TsoData(tsoMessage = MessageType(
+//      "DEFINE CLUSTER (NAME(YANK.TEST.VSAM.KSDS1) INDEXED KEYS(8 0) RECORDSIZE(80 80) TRACKS(10 5) VOLUMES(D5USR1)) " +
+//          "DATA(NAME(YANK.TEST.VSAM.KSDS1.DATA)) " +
+//          "INDEX(NAME(YANK.TEST.VSAM.KSDS1.INDEX))")
+//    )
+//
+//    api<TsoApi>(operation.connectionConfig).sendMessageToTso(
+//      authorizationToken = operation.connectionConfig.authToken,
+//      body = tsoData,
+//      servletKey = servletKey,
+//      readReply = true  // This will wait for a response after sending
+//    ).execute()
+//
+//    val datasetResponse = api<TsoApi>(operation.connectionConfig).receiveMessagesFromTso(
+//      authorizationToken = operation.connectionConfig.authToken,
+//      servletKey = servletKey
+//    ).execute()
+//
+//    api<TsoApi>(operation.connectionConfig).endTso(
+//      authorizationToken = operation.connectionConfig.authToken,
+//      servletKey = servletKey,
+//      tsoForceCancel = false   // Use LOGOFF (or true to CANCEL)
+//    ).execute()
+
+      if (!datasetResponse.isSuccessful) {
       throw CallException(
         datasetResponse,
         "Cannot allocate dataset ${operation.request.datasetName} on ${operation.connectionConfig.name}"
@@ -77,6 +134,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
         && operation.request.presets != Presets.SEQUENTIAL_DATASET
         && operation.request.presets != Presets.PDS_DATASET
         && operation.request.presets != Presets.PDSE_DATASET
+        && operation.request.presets != Presets.VSAM_KSDS_DATASET
       ) {
         // Allocate member
         var throwable: Throwable? = null
@@ -120,6 +178,35 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
   override val log = log<DatasetAllocator>()
 
 }
+
+//private fun sendVSAMCreationRequest(datasetName: String, authorizationToken: String): Response {
+//  // Construct the JSON body with datasetName
+//  val requestBodyJson = JSONObject()
+//  requestBodyJson.put("input", listOf(
+//    "DEFINE CLUSTER (NAME($datasetName) INDEXED KEYS(8 0) RECORDSIZE(80 80) TRACKS(10 5) VOLUMES(D5USR1)) -",
+//    "DATA(NAME($datasetName.DATA)) -",
+//    "INDEX(NAME($datasetName.INDEX))"
+//  ))
+//  requestBodyJson.put("JSONversion", 1)
+//
+//  // Create request body from the JSON string
+//  val mediaType = "application/json".toMediaType()
+//  val requestBody = requestBodyJson.toString().toRequestBody(mediaType)
+//
+//  // Build the HTTP PUT request
+//  val request = Request.Builder()
+//    .url("https://10.25.2.69:10443/zosmf/restfiles/ams")
+//    .put(requestBody)  // This is a PUT request
+//    .addHeader("Content-Type", "application/json")
+//    .addHeader("Authorization", authorizationToken)  // Add the Authorization token
+//    .build()
+//
+//  // OkHttp client to send the request
+//  val client = OkHttpClient()
+//
+//  // Send the request and get the response
+//  return client.newCall(request).execute()  // This sends the request synchronously
+//}
 
 /**
  * Data class which represents input parameters for dataset allocation operation

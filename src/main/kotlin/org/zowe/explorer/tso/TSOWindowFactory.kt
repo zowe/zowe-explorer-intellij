@@ -314,6 +314,8 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
           }.onSuccess {
             processHandler.notifyTextAvailable(parseTSODataResponse(it), ProcessOutputType.STDOUT)
             var response = it
+            //vad
+            println("response.tsoData.last().tsoPrompt: ${response.tsoData.last().tsoPrompt}")
             while (response.tsoData.last().tsoPrompt == null) {
               response = getTsoMessageQueue(session)
               processHandler.notifyTextAvailable(parseTSODataResponse(response), ProcessOutputType.STDOUT)

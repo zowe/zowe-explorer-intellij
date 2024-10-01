@@ -43,6 +43,7 @@ import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.DsnameType
+import eu.ibagroup.formainframe.utils.gson
 
 const val ALLOCATE_ACTION_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.AllocateActionNotificationGroup"
 
@@ -145,10 +146,76 @@ abstract class AllocateActionBase : AnAction() {
           ) { progressIndicator ->
             runCatching {
               val dataOpsManager = DataOpsManager.getService()
-              dataOpsManager.performOperation(
-                operation = DatasetAllocationOperation(request = state, connectionConfig = config),
-                progressIndicator
-              )
+              // vad
+//              dataOpsManager.performOperation(
+//                operation = DatasetAllocationOperation(request = state, connectionConfig = config),
+//                progressIndicator
+//              )
+
+              val tsoSessionConfig = ConfigService.getService().crudable.getAll<TSOSessionConfig>().findFirst().nullable
+              println(tsoSessionConfig)
+              if (tsoSessionConfig != null) {
+                val tsoConfW = TSOConfigWrapper(tsoSessionConfig, config)
+                var tsoResponse = DataOpsManager.getService().performOperation(
+                  TsoOperation(
+                    tsoConfW,
+                    TsoOperationMode.START
+                  ),
+                  progressIndicator
+                )
+                println("From AllocateActionBase 1: $tsoResponse.servletKey")
+
+                if (tsoResponse.servletKey?.isNotEmpty() == true && project != null) {
+                  val configWrapper = TSOConfigWrapper(tsoSessionConfig, config, tsoResponse)
+                  while (tsoResponse.tsoData.last().tsoPrompt == null) {
+                    println("From while (tsoResponse.tsoData.last().tsoPrompt == null) : $tsoResponse")
+                    tsoResponse = getTsoMessageQueue(configWrapper)
+                  }
+
+                  println("state.datasetName: ${state.datasetName}")
+                  println(
+                    "DEFINE CLUSTER: " + gson.toJson("DEFINE CLUSTER (NAME(${state.datasetName}\".CLUSTER) INDEXED KEYS(8 0) RECORDSIZE(80 80) TRACKS(10 5) VOLUMES(D5USR1)) DATA(NAME(${state.datasetName}\".DATA)) INDEX(NAME(${state.datasetName}\".INDEX))")
+                  )
+                  tsoResponse = DataOpsManager.getService().performOperation(
+                    TsoOperation(
+                      state = configWrapper,
+                      mode = TsoOperationMode.SEND_MESSAGE,
+                      messageType = MessageType.TSO_RESPONSE,
+                      messageData = MessageData.DATA_DATA,
+                      message = "PROFILE NOPREFIX"
+                    ),
+                    progressIndicator
+                  )
+                  while (tsoResponse.tsoData.last().tsoPrompt == null) {
+                    println("From while (tsoResponse.tsoData.last().tsoPrompt == null) : $tsoResponse")
+                    tsoResponse = getTsoMessageQueue(configWrapper)
+                  }
+
+                  tsoResponse = DataOpsManager.getService().performOperation(
+                    TsoOperation(
+                      state = configWrapper,
+                      mode = TsoOperationMode.SEND_MESSAGE,
+                      messageType = MessageType.TSO_RESPONSE,
+                      messageData = MessageData.DATA_DATA,
+                      message = "DEFINE CLUSTER (NAME(${state.datasetName}.CLUSTER) INDEXED KEYS(8 0) RECORDSIZE(80 80) TRACKS(10 5) VOLUMES(D5USR1)) DATA(NAME(${state.datasetName}.DATA)) INDEX(NAME(${state.datasetName}.INDEX))"
+                    ),
+                    progressIndicator
+                  )
+                  while (tsoResponse.tsoData.last().tsoPrompt == null) {
+                    println("From while (tsoResponse.tsoData.last().tsoPrompt == null) : $tsoResponse")
+                    tsoResponse = getTsoMessageQueue(configWrapper)
+                  }
+
+                  DataOpsManager.getService().performOperation(
+                    TsoOperation(
+                      state = configWrapper,
+                      mode = TsoOperationMode.STOP
+                    )
+                  )
+
+                }
+              }
+             // /vad
             }
               .onSuccess {
                 res = true

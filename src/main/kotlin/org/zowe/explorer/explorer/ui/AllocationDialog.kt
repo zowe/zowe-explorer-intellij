@@ -97,7 +97,8 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
             Presets.PDS_WITH_SAMPLE_JCL_MEMBER,
             Presets.PDSE_DATASET,
             Presets.PDSE_WITH_EMPTY_MEMBER,
-            Presets.PDSE_WITH_SAMPLE_JCL_MEMBER
+            Presets.PDSE_WITH_SAMPLE_JCL_MEMBER,
+            Presets.VSAM_KSDS_DATASET
           )
         )
           .bindItem(state::presets.toNullableProperty())

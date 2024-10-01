@@ -32,9 +32,18 @@ import javax.swing.JComponent
 
 class DatasetPropertiesDialog(val project: Project?, override var state: DatasetState) : DialogWrapper(project),
   StatefulComponent<DatasetState> {
+
   init {
     title = "Dataset Properties"
-    init()
+    initialize { init() }
+  }
+
+  companion object {
+    // TODO: Remove when it becomes possible to mock class constructor with init section.
+    /** Wrapper for init() method. It is necessary only for test purposes for now.  */
+    private fun initialize(init: () -> Unit) {
+      init()
+    }
   }
 
   override fun createCenterPanel(): JComponent {
