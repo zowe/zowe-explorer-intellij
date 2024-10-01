@@ -24,10 +24,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.exceptions.NotificationCompatibleException
 import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 
-private const val UNKNOWN_ERROR = "Unknown error"
+const val UNKNOWN_ERROR = "Unknown error"
 
 /** @see NotificationsService */
 class NotificationsServiceImpl : NotificationsService {
@@ -121,7 +120,10 @@ class NotificationsServiceImpl : NotificationsService {
         custDetailsLong ?: t.message ?: UNKNOWN_ERROR
       )
 
-      else -> formNotificationCompatibleTripleFromException(t, custTitle, custDetailsShort, custDetailsLong)
+      t !is NotificationCompatibleException ->
+        formNotificationCompatibleTripleFromException(t, custTitle, custDetailsShort, custDetailsLong)
+
+      else -> Triple(t.title, t.detailsShort, t.detailsLong)
 
     }
     return NotificationCompatibleException(title, detailsShort, detailsLong)
