@@ -27,7 +27,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
-import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnection
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.dataops.operations.TsoOperation
@@ -346,7 +346,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               processHandler.notifyTextAvailable(parseTSODataResponse(response), ProcessOutputType.STDOUT)
             }
           }.onFailure {
-            if (it is CredentialsNotFoundForConnection) {
+            if (it is CredentialsNotFoundForConnectionException) {
               processHandler.notifyTextAvailable(
                 "Unable to obtain the connection information for connection=${session.getConnectionConfig()}.\n Session will be closed.",
                 ProcessOutputType.STDOUT

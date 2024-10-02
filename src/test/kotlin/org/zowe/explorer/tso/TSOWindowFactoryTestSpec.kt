@@ -27,7 +27,7 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl.MockToolWindow
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
-import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnection
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.telemetry.NotificationsService
@@ -40,15 +40,7 @@ import org.zowe.explorer.tso.ui.TSOConsoleView
 import org.zowe.explorer.utils.sendTopic
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.clearMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.spyk
-import io.mockk.verify
+import io.mockk.*
 import org.zowe.kotlinsdk.TsoResponse
 
 class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
@@ -115,7 +107,7 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
         val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            throw CredentialsNotFoundForConnection(ConnectionConfig())
+            throw CredentialsNotFoundForConnectionException(ConnectionConfig())
           }
 
         }
