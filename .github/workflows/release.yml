@@ -109,6 +109,8 @@ jobs:
   release:
     needs: [changelog-and-preparations]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     strategy:
       matrix:
         product: ["IC-231","IC-233","IC-243"]
@@ -161,7 +163,7 @@ jobs:
           INTELLIJ_SIGNING_PRIVATE_KEY: ${{ secrets.INTELLIJ_SIGNING_PRIVATE_KEY }}
           INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.INTELLIJ_SIGNING_PRIVATE_KEY_PASSWORD }}
           PRODUCT_NAME: ${{ matrix.product }}
-        run: ./gradlew publishPlugin
+        run: ./gradlew signPlugin
 
       - name: Upload Release Built Artifact
         continue-on-error: true
