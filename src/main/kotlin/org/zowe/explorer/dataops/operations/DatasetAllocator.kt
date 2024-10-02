@@ -18,8 +18,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.api
 import org.zowe.explorer.api.apiWithBytesConverter
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.connect.authToken
-import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.explorer.config.Presets
@@ -27,7 +27,6 @@ import org.zowe.explorer.explorer.config.getSampleJclMemberContent
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log
 import org.zowe.kotlinsdk.*
-import java.lang.Exception
 
 /**
  * Class which represents factory for dataset allocator operation runner. Defined in plugin.xml
@@ -85,8 +84,12 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
             authorizationToken = operation.connectionConfig.authToken,
             datasetName = operation.request.datasetName,
             memberName = operation.request.memberName,
-            content = if (operation.request.presets == Presets.PDS_WITH_EMPTY_MEMBER) byteArrayOf()
-              else getSampleJclMemberContent(getUsername(operation.connectionConfig)).encodeToByteArray()
+            content = if (operation.request.presets == Presets.PDS_WITH_EMPTY_MEMBER) {
+              byteArrayOf()
+            } else {
+              getSampleJclMemberContent(CredentialService.getUsername(operation.connectionConfig))
+                .encodeToByteArray()
+            }
           ).cancelByIndicator(progressIndicator).execute()
           if (!memberResponse.isSuccessful) {
             throwable = CallException(
@@ -95,7 +98,7 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
                   "on ${operation.connectionConfig.name}"
             )
           }
-        }.onFailure { if(throwable != null) throw Throwable(cause = throwable) else throw Exception("Error allocating a new sample member ${operation.request.memberName}") }
+        }.onFailure { if (throwable != null) throw Throwable(cause = throwable) else throw Exception("Error allocating a new sample member ${operation.request.memberName}") }
       }
     }
   }

@@ -53,7 +53,7 @@ class DocumentedSyncProvider(
      * @param th the throwable to show the error message
      */
     val defaultOnThrowableHandler: (VirtualFile, Throwable) -> Unit = { _, th ->
-      NotificationsService.getService().notifyError(th)
+      NotificationsService.errorNotification(th)
     }
 
     /** Default sync success handler. Won't do anything after the sync action is completed until redefined */

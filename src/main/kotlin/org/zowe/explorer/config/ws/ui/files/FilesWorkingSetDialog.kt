@@ -18,18 +18,14 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ComboBoxCellEditor
-import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
-import org.zowe.explorer.common.ui.DialogMode
-import org.zowe.explorer.common.ui.ValidatingCellRenderer
-import org.zowe.explorer.common.ui.ValidatingColumnInfo
-import org.zowe.explorer.common.ui.ValidatingListTableModel
-import org.zowe.explorer.common.ui.ValidatingTableView
+import org.zowe.explorer.common.ui.*
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.getUsername
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.MaskState
 import org.zowe.explorer.config.ws.ui.AbstractWsDialog
 import org.zowe.explorer.config.ws.ui.FilesWorkingSetDialogState
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.utils.MaskType
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getByUniqueKey
@@ -247,7 +243,15 @@ class FilesWorkingSetDialog(
    */
   override fun emptyTableRow(): MaskState {
     val config = crudable.getByUniqueKey<ConnectionConfig>(state.connectionUuid)
-    return MaskState(if (config != null) "${getUsername(config)}.*" else "")
+    var initialMask = ""
+    try {
+      if (config != null) {
+        val username = CredentialService.getUsername(config)
+        initialMask = "$username.*"
+      }
+    } catch (_: CredentialsNotFoundForConnectionException) {
+    }
+    return MaskState(initialMask)
   }
 
 }

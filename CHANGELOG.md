@@ -34,6 +34,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Feature: "Rate us" notification added ([577b81c2](https://github.com/zowe/zowe-explorer-intellij/commit/577b81c2))
 * Feature: "reportThrowable" replaced with "notifyError" ([577b81c2](https://github.com/zowe/zowe-explorer-intellij/commit/577b81c2))
 * Feature: Correct alignment for fields in working set dialog ([745143cc](https://github.com/zowe/zowe-explorer-intellij/commit/745143cc))
+* Feature: Credentials are nullable now ([b643d2ff](https://github.com/zowe/zowe-explorer-intellij/commit/b643d2ff))
 
 ### Bugfixes
 

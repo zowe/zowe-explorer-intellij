@@ -23,6 +23,15 @@ interface NotificationsService {
   companion object {
     @JvmStatic
     fun getService(): NotificationsService = service()
+
+    @JvmStatic
+    fun errorNotification(
+      t: Throwable,
+      project: Project? = null,
+      custTitle: String? = null,
+      custDetailsShort: String? = null,
+      custDetailsLong: String? = null
+    ) = getService().notifyError(t, project, custTitle, custDetailsShort, custDetailsLong)
   }
 
   /**

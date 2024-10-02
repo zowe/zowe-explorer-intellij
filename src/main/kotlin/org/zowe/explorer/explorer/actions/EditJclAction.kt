@@ -17,7 +17,6 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.dataops.DataOpsManager
@@ -104,7 +103,7 @@ class EditJclAction : AnAction() {
               }
             }
           }.onFailure {
-            NotificationsService.getService().notifyError(it, project)
+            NotificationsService.errorNotification(it, project)
           }
         }
       }

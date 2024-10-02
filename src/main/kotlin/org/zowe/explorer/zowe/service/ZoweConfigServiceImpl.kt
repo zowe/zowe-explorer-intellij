@@ -27,9 +27,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.zowe.explorer.config.ConfigService
-import org.zowe.explorer.config.connect.*
+import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.ui.zosmf.ZOSMFConnectionConfigurable.Companion.warningMessageForDeleteConfig
+import org.zowe.explorer.config.connect.whoAmI
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
@@ -521,9 +523,10 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         val zoweUsername = zosConnection.user
         val zowePassword = zosConnection.password
 
-        ret = if (existingConnection == newConnection &&
-          getUsername(newConnection) == zoweUsername &&
-          getPassword(newConnection) == zowePassword
+        ret = if (
+          existingConnection == newConnection
+          && CredentialService.getUsername(newConnection) == zoweUsername
+          && CredentialService.getPassword(newConnection) == zowePassword
         ) {
           setZoweConfigState(ret, ZoweConfigState.SYNCHRONIZED)
         } else {

@@ -92,9 +92,7 @@ class TsoConsoleCreateAction : AnAction() {
           throwable = Exception("TSO session config is not specified")
         }
         if (throwable != null) {
-          NotificationsService
-            .getService()
-            .notifyError(throwable, project = project, custTitle = "Error creating TSO Console")
+          NotificationsService.errorNotification(throwable, project = project, custTitle = "Error creating TSO Console")
         }
         true
       }

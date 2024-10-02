@@ -30,13 +30,7 @@ import org.zowe.explorer.dataops.operations.MemberAllocationOperation
 import org.zowe.explorer.dataops.operations.MemberAllocationParams
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.ui.AddMemberDialog
-import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
-import org.zowe.explorer.explorer.ui.FetchNode
-import org.zowe.explorer.explorer.ui.FileExplorerView
-import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
-import org.zowe.explorer.explorer.ui.LibraryNode
-import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.vfs.MFVirtualFile
 
@@ -103,7 +97,7 @@ class AddMemberAction : AnAction() {
                     currentNode.cleanCache(cleanBatchedQuery = true)
                   }
                 }
-                NotificationsService.getService().notifyError(throwable, e.project)
+                NotificationsService.errorNotification(throwable, e.project)
               }
             }
           }
@@ -126,9 +120,8 @@ class AddMemberAction : AnAction() {
       return
     }
     val selected = view.mySelectedNodesData.getOrNull(0)
-    e.presentation.isEnabledAndVisible = selected?.node is LibraryNode || (
-      selected?.node is FileLikeDatasetNode && selected.attributes is RemoteMemberAttributes
-      )
+    e.presentation.isEnabledAndVisible = selected?.node is LibraryNode
+      || (selected?.node is FileLikeDatasetNode && selected.attributes is RemoteMemberAttributes)
   }
 
 }

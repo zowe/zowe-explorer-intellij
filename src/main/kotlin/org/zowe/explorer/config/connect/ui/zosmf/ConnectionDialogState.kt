@@ -16,10 +16,11 @@ package org.zowe.explorer.config.connect.ui.zosmf
 
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.connect.ui.ConnectionDialogStateBase
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.utils.crudable.Crudable
-import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.crudable.nextUniqueValue
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.util.*
@@ -95,18 +96,29 @@ fun ConnectionDialogState.initEmptyUuids(crudable: Crudable): ConnectionDialogSt
 }
 
 fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
-  val credentials = crudable.getByUniqueKey<Credentials>(this.uuid) ?: Credentials().apply {
-    this.configUuid = this@toDialogState.uuid
+  var username = ""
+  var password = ""
+  var owner = ""
+  try {
+    username = CredentialService.getUsername(this)
+    password = CredentialService.getPassword(this)
+    owner = CredentialService.getOwner(this)
+  } catch (_: CredentialsNotFoundForConnectionException) {
   }
+
+// TODO: investigate the change
+//  val credentials = crudable.getByUniqueKey<Credentials>(this.uuid) ?: Credentials().apply {
+//    this.configUuid = this@toDialogState.uuid
+//  }
   return ConnectionDialogState(
     connectionUuid = this.uuid,
     connectionName = this.name,
     connectionUrl = this.url,
-    username = credentials.username,
-    password = credentials.password,
+    username = username,
+    password = password,
     isAllowSsl = this.isAllowSelfSigned,
     zVersion = this.zVersion,
     zoweConfigPath = this.zoweConfigPath,
-    owner = this.owner
+    owner = owner
   )
 }

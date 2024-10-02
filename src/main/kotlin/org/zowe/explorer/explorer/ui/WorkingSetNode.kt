@@ -23,7 +23,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import org.zowe.explorer.config.connect.ConnectionConfigBase
-import org.zowe.explorer.config.connect.getUsername
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.explorer.WorkingSet
 
 private val regularIcon = AllIcons.Actions.ShowAsTree
@@ -88,9 +88,24 @@ abstract class WorkingSetNode<Connection : ConnectionConfigBase, MaskType>(
     runBackgroundableTask("Getting connection information", project, false) {
       val connectionConfig = value.connectionConfig ?: return@runBackgroundableTask
       val url = value.connectionConfig?.url ?: return@runBackgroundableTask
-      val username = getUsername(connectionConfig)
-      val formedUsername = if (connectionConfig.zoweConfigPath == null) username else "*".repeat(username.length)
-      presentation.addText(" $formedUsername on ${connectionConfig.name} [${url}]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      var username = ""
+      runCatching { CredentialService.getUsername(connectionConfig) }
+        .onSuccess { username = it }
+        .onFailure { username = "" }
+      if (username.isNotEmpty()) {
+        val formedUsername = if (connectionConfig.zoweConfigPath == null) username else "*".repeat(8)
+        presentation
+          .addText(
+            " $formedUsername on ${connectionConfig.name} [${url}]",
+            SimpleTextAttributes.GRAYED_ATTRIBUTES
+          )
+      } else {
+        presentation
+          .addText(
+            " Username not found on ${connectionConfig.name} [${url}]",
+            SimpleTextAttributes.ERROR_ATTRIBUTES
+          )
+      }
       apply(presentation)
     }
   }

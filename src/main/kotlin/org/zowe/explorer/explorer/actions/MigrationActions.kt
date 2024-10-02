@@ -29,12 +29,7 @@ import org.zowe.explorer.dataops.operations.migration.MigrateOperationParams
 import org.zowe.explorer.dataops.operations.migration.RecallOperation
 import org.zowe.explorer.dataops.operations.migration.RecallOperationParams
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.ui.ExplorerTreeNode
-import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
-import org.zowe.explorer.explorer.ui.FileExplorerView
-import org.zowe.explorer.explorer.ui.NodeData
-import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
-import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.vfs.MFVirtualFile
 
@@ -107,7 +102,7 @@ class RecallAction : DumbAwareAction() {
             )
           }
         }.onFailure {
-          NotificationsService.getService().notifyError(it, project)
+          NotificationsService.errorNotification(it, project)
         }
       }
       makeUniqueCacheClean(filteredNodesData.map { it.node })
@@ -164,7 +159,7 @@ class MigrateAction : DumbAwareAction() {
             DataOpsManager.getService().performOperation(operation, progressIndicator)
           }
         }.onFailure {
-          NotificationsService.getService().notifyError(it, project)
+          NotificationsService.errorNotification(it, project)
         }
       }
       makeUniqueCacheClean(filteredNodesData.map { it.node })

@@ -84,7 +84,7 @@ class CommonExplorerTreeStructure<Expl : Explorer<*, *>>(
           "Virtual file is not found",
           "It is impossible to register new node. Virtual file is not found"
         )
-        NotificationsService.getService().notifyError(exception, project)
+        NotificationsService.errorNotification(exception, project)
         return
       }
       val nodesToRefresh = valueToNodeMap
@@ -98,7 +98,7 @@ class CommonExplorerTreeStructure<Expl : Explorer<*, *>>(
               "Virtual file is not found",
               "It is impossible to register new node. Virtual file is not found"
             )
-            NotificationsService.getService().notifyError(exception, project)
+            NotificationsService.errorNotification(exception, project)
             return
           }
           if (it.parent is DSMaskNode) {

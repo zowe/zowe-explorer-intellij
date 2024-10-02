@@ -134,7 +134,7 @@ class FileLikeDatasetNode(
           possibleThrowable
         }
         if (throwable != null) {
-          NotificationsService.getService().notifyError(throwable, project)
+          NotificationsService.errorNotification(throwable, project)
           return
         }
         if (value.isDirectory) {

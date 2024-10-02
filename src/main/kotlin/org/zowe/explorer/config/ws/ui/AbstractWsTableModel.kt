@@ -18,8 +18,9 @@ import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.CrudableTableModel
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ConnectionConfigBase
-import org.zowe.explorer.config.connect.Credentials
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.WorkingSetConfig
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.MergedCollections
 import org.zowe.explorer.utils.crudable.getByUniqueKey
@@ -45,12 +46,20 @@ abstract class AbstractWsTableModel<Connection : ConnectionConfigBase, WSConfig 
       WSNameColumn { this.items },
       WSConnectionNameColumn<Connection, WSConfig>(crudable, connectionClass),
       WSUsernameColumn(
-        { crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username },
         {
-          val username = crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username
-          val connectionConfig = crudable.getByUniqueKey<ConnectionConfig>(it.connectionConfigUuid)
-          if (connectionConfig?.zoweConfigPath == null) username else "*".repeat(username?.length ?: 0)
-        }
+          var username = ""
+          try {
+            val connectionConfig = crudable.getByUniqueKey(connectionClass, it.connectionConfigUuid).nullable
+            username = if (connectionConfig != null) {
+              CredentialService.getUsername(connectionConfig)
+            } else {
+              message("configurable.ws.tables.ws.username.error.empty")
+            }
+          } catch (_: CredentialsNotFoundForConnectionException) {
+          }
+          username
+        },
+        { crudable.getByUniqueKey<ConnectionConfig>(it.connectionConfigUuid)?.zoweConfigPath != null }
       ),
       UrlColumn(connectionColumnName) {
         crudable.getByUniqueKey(

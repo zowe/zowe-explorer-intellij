@@ -23,7 +23,6 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.operations.jobs.SubmitJobJclOperationParams
 import org.zowe.explorer.dataops.operations.jobs.SubmitJobOperation
-import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.ui.build.jobs.JOB_ADDED_TOPIC
 import org.zowe.explorer.utils.sendTopic
@@ -68,7 +67,7 @@ class SubmitJobToolbarAction : AnAction() {
             }
           }
         }.onFailure {
-          NotificationsService.getService().notifyError(it, project)
+          NotificationsService.errorNotification(it, project)
         }
       }
     }
