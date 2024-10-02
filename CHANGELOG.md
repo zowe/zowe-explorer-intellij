@@ -5,6 +5,7 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 ## [Unreleased]
 
 ### Features
+
 * Feature: GitHub issue #119: Space units are clarified with a hint ([451f3528](https://github.com/zowe/zowe-explorer-intellij/commit/451f3528))
 * Feature: GitHub issue #129: Workaround for custom migration volumes ([e125325a](https://github.com/zowe/zowe-explorer-intellij/commit/e125325a))
 * Feature: GitHub issue #131: Tests adding policy added ([9c77deef](https://github.com/zowe/zowe-explorer-intellij/commit/9c77deef))
@@ -27,14 +28,25 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 * Feature: Some enhancements to the connection creation dialog ([5a7a56de](https://github.com/zowe/zowe-explorer-intellij/commit/5a7a56de))
 * Feature: "Rate us" notification added ([577b81c2](https://github.com/zowe/zowe-explorer-intellij/commit/577b81c2))
 * Feature: "reportThrowable" replaced with "notifyError" ([577b81c2](https://github.com/zowe/zowe-explorer-intellij/commit/577b81c2))
+* Feature: Correct alignment for fields in working set dialog ([745143cc](https://github.com/zowe/zowe-explorer-intellij/commit/745143cc))
 
 ### Bugfixes
+
 * Bugfix: Slow operations in EDT ([8e9266d5](https://github.com/zowe/zowe-explorer-intellij/commit/8e9266d5))
 * Bugfix: Dialog for PDS/E instead of PDS now appears if there is an entity being placed under a PDS/E ([005aadd3](https://github.com/zowe/zowe-explorer-intellij/commit/005aadd3))
 * Bugfix: Owner is now recognized correctly ([08355c8c](https://github.com/zowe/zowe-explorer-intellij/commit/08355c8c))
 * Bugfix: USS files are no more displayed after they are deleted ([c130ea52](https://github.com/zowe/zowe-explorer-intellij/commit/c130ea52))
 * Bugfix: Files with long name placing as a z/OS dataset is fixed ([1afd501e](https://github.com/zowe/zowe-explorer-intellij/commit/1afd501e))
 * Bugfix: Fixed source file removal when cut is performed ([c1b88348](https://github.com/zowe/zowe-explorer-intellij/commit/c1b88348))
+* Bugfix: Fixed unexpected freezes of IDE during work with USS part ([38f1f5b3](https://github.com/zowe/zowe-explorer-intellij/commit/38f1f5b3))
+* Bugfix: Fixed error that was caused by members renaming ([238ebc08](https://github.com/zowe/zowe-explorer-intellij/commit/238ebc08))
+* Bugfix: Fixed missed automatic translation to uppercase ([1b48de61](https://github.com/zowe/zowe-explorer-intellij/commit/1b48de61))
+* Bugfix: Fixed synchronization errors ([f96d9302](https://github.com/zowe/zowe-explorer-intellij/commit/f96d9302))
+* Bugfix: Fixed permissions change in opened file ([b04ed99e](https://github.com/zowe/zowe-explorer-intellij/commit/b04ed99e))
+* Bugfix: Fixed copy-paste folder to another folder with name conflicts ([13d7d773](https://github.com/zowe/zowe-explorer-intellij/commit/13d7d773))
+* Bugfix: Validation changes for LRECL field ([14e384a4](https://github.com/zowe/zowe-explorer-intellij/commit/14e384a4))
+* Bugfix: Fixed issue when job was not visible in JesExplorerView when Job Filter is created by JOBID ([5bb17263](https://github.com/zowe/zowe-explorer-intellij/commit/5bb17263))
+* Bugfix: Fixed sync during indexing ([436c34a2](https://github.com/zowe/zowe-explorer-intellij/commit/436c34a2))
 
 ## [1.2.2-231] (2024-08-21)
 
