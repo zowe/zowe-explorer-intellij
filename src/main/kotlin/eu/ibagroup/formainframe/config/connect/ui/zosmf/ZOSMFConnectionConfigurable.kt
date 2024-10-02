@@ -82,6 +82,23 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     }
   }
 
+  /**
+   * Find working sets that have the same connection config UUID as the provided selected configs
+   * @param selectedConfigs the selected configs to search for the same UUIDs
+   * @return list of working sets with the same connection config UUIDs as the selected configs
+   */
+  private inline fun <reified WSConfig : WorkingSetConfig> findWorkingSetsForConnection(
+    selectedConfigs: List<ConnectionDialogState>
+  ): List<WSConfig> {
+    return ConfigSandbox.getService()
+      .crudable
+      .getAll<WSConfig>()
+      .toMutableList()
+      .filter { wsConfig ->
+        selectedConfigs.any { state -> wsConfig.connectionConfigUuid == state.connectionConfig.uuid }
+      }
+  }
+
   /** Generates a connection removal warning message that is used for working sets */
   private fun generateRemoveWarningMessage(wsUsages: List<WorkingSetConfig>, wsType: String): StringBuilder {
     val warningMessageBuilder =
@@ -97,20 +114,8 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   /** Remove connections with the warning before they are deleted */
   private fun removeConnectionsWithWarning(selectedConfigs: List<ConnectionDialogState>) {
 
-    // TODO: Find working sets for connection using templated way without specific implementation.
-    val filesWorkingSets = ConfigSandbox.getService().crudable
-      .getAll<FilesWorkingSetConfig>()
-      .toMutableList()
-    val filesWsUsages = filesWorkingSets.filter { filesWsConfig ->
-      selectedConfigs.any { state -> filesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
-    }
-
-    val jesWorkingSet = ConfigSandbox.getService().crudable
-      .getAll<JesWorkingSetConfig>()
-      .toMutableList()
-    val jesWsUsages = jesWorkingSet.filter { jesWsConfig ->
-      selectedConfigs.any { state -> jesWsConfig.connectionConfigUuid == state.connectionConfig.uuid }
-    }
+    val filesWsUsages = findWorkingSetsForConnection<FilesWorkingSetConfig>(selectedConfigs)
+    val jesWsUsages = findWorkingSetsForConnection<JesWorkingSetConfig>(selectedConfigs)
 
     if (filesWsUsages.isEmpty() && jesWsUsages.isEmpty()) {
       removeSelectedConnections()

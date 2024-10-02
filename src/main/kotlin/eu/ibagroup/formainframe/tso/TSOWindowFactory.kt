@@ -187,7 +187,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
         )
       }.onSuccess { return it }
         .onFailure {
-          NotificationsService.getService().notifyError(it, custTitle = "Error getting TSO response messages")
+          NotificationsService.errorNotification(it, custTitle = "Error getting TSO response messages")
         }
       return TsoResponse()
     }
@@ -272,8 +272,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
           }
           if (servletKey.isNullOrBlank()) {
             NotificationsService
-              .getService()
-              .notifyError(
+              .errorNotification(
                 Exception(),
                 project = project,
                 custTitle = "Error getting TSO session servletKey",
@@ -304,8 +303,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
             }
           } else {
             NotificationsService
-              .getService()
-              .notifyError(
+              .errorNotification(
                 Exception(),
                 project = project,
                 custTitle = "Error getting TSO session info",
@@ -411,9 +409,11 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               wrapInlineCall { sendTopic(SESSION_ADDED_TOPIC).create(project, it) }
             }
           }.onFailure {
-            NotificationsService
-              .getService()
-              .notifyError(it, project = project, custTitle = "Error starting a new TSO session")
+            NotificationsService.errorNotification(
+              it,
+              project = project,
+              custTitle = "Error starting a new TSO session"
+            )
           }
         }
       }
@@ -509,8 +509,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
     tsoConsole: TSOConsoleView,
     block: () -> Unit,
     maxAttempts: Int
-  )
-    : TimerTask {
+  ): TimerTask {
     return object : TsoReconnectTask(service) {
       override fun run() {
         val tsoSession = tsoConsole.getTsoSession()

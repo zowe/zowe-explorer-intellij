@@ -32,12 +32,7 @@ import eu.ibagroup.formainframe.dataops.operations.migration.MigrateOperationPar
 import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperation
 import eu.ibagroup.formainframe.dataops.operations.migration.RecallOperationParams
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
-import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
-import eu.ibagroup.formainframe.explorer.ui.NodeData
-import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -112,7 +107,7 @@ class RecallAction : DumbAwareAction() {
             )
           }
         }.onFailure {
-          NotificationsService.getService().notifyError(it, project)
+          NotificationsService.errorNotification(it, project)
         }
       }
       makeUniqueCacheClean(filteredNodesData.map { it.node })
@@ -174,7 +169,7 @@ class MigrateAction : DumbAwareAction() {
             )
           }
         }.onFailure {
-          NotificationsService.getService().notifyError(it, project)
+          NotificationsService.errorNotification(it, project)
         }
       }
       makeUniqueCacheClean(filteredNodesData.map { it.node })

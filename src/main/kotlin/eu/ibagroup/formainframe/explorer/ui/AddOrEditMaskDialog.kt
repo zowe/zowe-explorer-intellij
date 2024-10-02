@@ -20,13 +20,10 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.*
 import eu.ibagroup.formainframe.common.ui.StatefulComponent
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.getUsername
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.MaskStateWithWS
-import eu.ibagroup.formainframe.utils.MaskType
-import eu.ibagroup.formainframe.utils.validateDatasetMask
-import eu.ibagroup.formainframe.utils.validateForBlank
-import eu.ibagroup.formainframe.utils.validateUssMask
-import eu.ibagroup.formainframe.utils.validateWorkingSetMaskName
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
+import eu.ibagroup.formainframe.utils.*
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -39,11 +36,18 @@ class AddOrEditMaskDialog(
   dialogTitle: String,
   config: ConnectionConfig?,
   override var state: MaskStateWithWS
-) :
-  DialogWrapper(project), StatefulComponent<MaskStateWithWS> {
+) : DialogWrapper(project), StatefulComponent<MaskStateWithWS> {
 
   private lateinit var maskField: JTextField
-  private val HLQ = if (config != null) getUsername(config) else null
+  private val HLQ = if (config != null) {
+    try {
+      CredentialService.getUsername(config)
+    } catch (_: CredentialsNotFoundForConnectionException) {
+      null
+    }
+  } else {
+    null
+  }
 
   companion object {
 

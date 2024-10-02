@@ -104,7 +104,7 @@ class GetFilePropertiesAction : AnAction() {
                       initFileMode?.owner?.let { attributes.fileMode.owner = it }
                       initFileMode?.group?.let { attributes.fileMode.group = it }
                       initFileMode?.all?.let { attributes.fileMode.all = it }
-                      NotificationsService.getService().notifyError(t, e.project)
+                      NotificationsService.errorNotification(t, e.project)
                     }
                     node.parent?.cleanCacheIfPossible(cleanBatchedQuery = false)
                   }

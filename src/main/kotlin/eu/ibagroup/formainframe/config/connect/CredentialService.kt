@@ -16,9 +16,11 @@ package eu.ibagroup.formainframe.config.connect
 
 import com.intellij.openapi.components.service
 import com.intellij.util.messages.Topic
-import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnection
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
 import eu.ibagroup.formainframe.utils.runTask
 import okhttp3.Credentials
+
+const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 8
 
 /**
  * Interface which represents objects that track changes in credentials
@@ -41,8 +43,48 @@ val CREDENTIALS_CHANGED = Topic.create("credentialChanges", CredentialsListener:
 interface CredentialService {
 
   companion object {
+
     @JvmStatic
     fun getService(): CredentialService = service()
+
+    /**
+     * Returns a username of a particular connection config or throws the [CredentialsNotFoundForConnectionException]
+     * @param connectionConfig connection config instance to search username for
+     * @return the username of the connection config
+     */
+    @JvmStatic
+    fun <ConnectionConfig : ConnectionConfigBase> getUsername(connectionConfig: ConnectionConfig) =
+      getService().getUsernameByKey(connectionConfig.uuid)
+        ?: throw CredentialsNotFoundForConnectionException(connectionConfig)
+
+    /**
+     * Returns a password of a particular connection config or throws the [CredentialsNotFoundForConnectionException]
+     * @param connectionConfig connection config instance to search password for
+     * @return the password of the connection config
+     */
+    @JvmStatic
+    fun <ConnectionConfig : ConnectionConfigBase> getPassword(connectionConfig: ConnectionConfig) =
+      getService().getPasswordByKey(connectionConfig.uuid)
+        ?: throw CredentialsNotFoundForConnectionException(connectionConfig)
+
+    /**
+     * Returns owner of particular connection config if the owner field is not empty or conforms
+     * the [USER_OR_OWNER_SYMBOLS_MAX_SIZE] in length, or the username otherwise.
+     * If whoAmI function failed for some reason it could contain empty "" or error string inside owner variable.
+     * If it is such case, then it returns username of the connection config.
+     * @param connectionConfig connection config instance to get owner from
+     * @return owner or username of the connection config if the owner is incorrect or missing
+     */
+    @JvmStatic
+    fun getOwner(connectionConfig: ConnectionConfig): String {
+      val possibleOwner = connectionConfig.owner
+      return if (possibleOwner.isNotEmpty() && possibleOwner.chars().count() <= USER_OR_OWNER_SYMBOLS_MAX_SIZE) {
+        possibleOwner
+      } else {
+        getUsername(connectionConfig)
+      }
+    }
+
   }
 
   /**
@@ -75,31 +117,9 @@ interface CredentialService {
 
 }
 
-/**
- * Returns username of particular connection config.
- * @param connectionConfig connection config instance.
- * @return username of connection config.
- */
-fun <Connection : ConnectionConfigBase> getUsername(connectionConfig: Connection): String {
-  return CredentialService.getService().getUsernameByKey(connectionConfig.uuid)
-    ?: throw CredentialsNotFoundForConnection(
-      connectionConfig
-    )
-}
-
-/**
- * Returns password of particular connection config.
- * @param connectionConfig connection config instance.
- * @return password of particular connection config.
- */
-fun <Connection : ConnectionConfigBase> getPassword(connectionConfig: Connection): String {
-  return CredentialService.getService().getPasswordByKey(connectionConfig.uuid)
-    ?: throw CredentialsNotFoundForConnection(
-      connectionConfig
-    )
-}
-
 val ConnectionConfig.authToken: String
   get() = runTask("Retrieving information for auth token") {
-    Credentials.basic(getUsername(this), getPassword(this))
+    val username = CredentialService.getUsername(this)
+    val password = CredentialService.getPassword(this)
+    Credentials.basic(username, password)
   }

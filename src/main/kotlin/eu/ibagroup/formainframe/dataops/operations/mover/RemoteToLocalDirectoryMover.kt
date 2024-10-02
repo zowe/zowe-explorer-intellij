@@ -14,7 +14,6 @@
 
 package eu.ibagroup.formainframe.dataops.operations.mover
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl
@@ -143,7 +142,7 @@ class RemoteToLocalDirectoryMover<VFile : VirtualFile>(
               progressIndicator
             )
           }.onFailure {
-            NotificationsService.getService().notifyError(it, operation.explorer?.nullableProject)
+            NotificationsService.errorNotification(it, operation.explorer?.nullableProject)
           }
         }
       }
