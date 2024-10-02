@@ -25,20 +25,17 @@ import com.intellij.openapi.progress.runModalTask
 import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.ConfigService
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.dataops.operations.DatasetAllocationOperation
 import org.zowe.explorer.dataops.operations.DatasetAllocationParams
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.explorer.FilesWorkingSet
-import org.zowe.explorer.explorer.ui.AllocationDialog
-import org.zowe.explorer.explorer.ui.DSMaskNode
-import org.zowe.explorer.explorer.ui.ExplorerTreeNode
-import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
-import org.zowe.explorer.explorer.ui.FileExplorerView
-import org.zowe.explorer.explorer.ui.FileFetchNode
-import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.clone
@@ -119,9 +116,21 @@ abstract class AllocateActionBase : AnAction() {
     val project = e.project
     if (parentNode is ExplorerUnitTreeNodeBase<*, *, *> && parentNode.unit is FilesWorkingSet) {
       val workingSet = parentNode.unit
-      val explorer = workingSet.explorer
       val config = workingSet.connectionConfig
       if (config != null) {
+        try {
+          CredentialService.getUsername(config)
+        } catch (e: CredentialsNotFoundForConnectionException) {
+          NotificationsService
+            .errorNotification(
+              NotificationCompatibleException(
+                "Operation is not available",
+                "Allocation operation is not available: username is not found. Try fixing the connection first"
+              ),
+              project
+            )
+          return
+        }
         val initialState = preProcessState(datasetInfo)
         showUntilDone(
           initialState,
@@ -155,7 +164,7 @@ abstract class AllocateActionBase : AnAction() {
                 showNotification(state, workingSet)
               }
               .onFailure { t ->
-                NotificationsService.getService().notifyError(t, project)
+                NotificationsService.errorNotification(t, project)
                 initialState.errorMessage = t.message ?: t.toString()
               }
           }

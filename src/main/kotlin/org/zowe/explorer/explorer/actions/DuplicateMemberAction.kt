@@ -17,7 +17,6 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import org.zowe.explorer.config.connect.ConnectionConfig
@@ -25,13 +24,7 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.RenameOperation
-import org.zowe.explorer.explorer.ui.FetchNode
-import org.zowe.explorer.explorer.ui.FileExplorerView
-import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
-import org.zowe.explorer.explorer.ui.NodeData
-import org.zowe.explorer.explorer.ui.RenameDialog
-import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
-import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
 
 /**
@@ -97,7 +90,7 @@ class DuplicateMemberAction : AnAction() {
           parent.cleanCacheIfPossible(cleanBatchedQuery = true)
         }
       }.onFailure {
-        NotificationsService.getService().notifyError(it, project)
+        NotificationsService.errorNotification(it, project)
       }
     }
   }

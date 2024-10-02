@@ -15,9 +15,7 @@
 package org.zowe.explorer.dataops.attributes
 
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.getOwner
-import org.zowe.explorer.config.connect.getUsername
-import org.zowe.explorer.config.connect.tryToExtractOwnerFromConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import org.zowe.explorer.utils.Copyable
 import org.zowe.explorer.utils.castOrNull
@@ -42,9 +40,11 @@ private fun constructPath(rootPath: String, ussFile: UssFile): String {
     ussFile.name.isEmpty() || ussFile.name == CURRENT_DIR_NAME -> {
       rootPath
     }
+
     rootPath == USS_DELIMITER -> {
       rootPath + ussFile.name
     }
+
     else -> {
       rootPath + USS_DELIMITER + ussFile.name
     }
@@ -124,7 +124,10 @@ data class RemoteUssAttributes(
   val isWritable: Boolean
     get() {
       val hasFileOwnerInRequesters = requesters.any {
-        runCatching { tryToExtractOwnerFromConfig(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
+        runCatching { CredentialService.getOwner(it.connectionConfig) }
+          .getOrNull()
+          ?.equals(owner, ignoreCase = true)
+          ?: false
       }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
@@ -132,15 +135,18 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.WRITE.mode
-              || mode == FileModeValue.WRITE_EXECUTE.mode
-              || mode == FileModeValue.READ_WRITE.mode
-              || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+          || mode == FileModeValue.WRITE_EXECUTE.mode
+          || mode == FileModeValue.READ_WRITE.mode
+          || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
   val isReadable: Boolean
     get() {
       val hasFileOwnerInRequesters = requesters.any {
-        runCatching { getOwner(it.connectionConfig) }.getOrNull()?.equals(owner, ignoreCase = true) ?: false
+        runCatching { CredentialService.getOwner(it.connectionConfig) }
+          .getOrNull()
+          ?.equals(owner, ignoreCase = true)
+          ?: false
       }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
@@ -148,23 +154,26 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.READ.mode
-              || mode == FileModeValue.READ_WRITE.mode
-              || mode == FileModeValue.READ_EXECUTE.mode
-              || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+        || mode == FileModeValue.READ_WRITE.mode
+        || mode == FileModeValue.READ_EXECUTE.mode
+        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
   val isExecutable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any { getOwner(it.connectionConfig).equals(owner, ignoreCase = true) }
+      val hasFileOwnerInRequesters = requesters.any {
+        CredentialService.getOwner(it.connectionConfig)
+          .equals(owner, ignoreCase = true)
+      }
       val mode = if (hasFileOwnerInRequesters) {
         fileMode?.owner
       } else {
         fileMode?.all
       }
       return mode == FileModeValue.EXECUTE.mode
-              || mode == FileModeValue.READ_EXECUTE.mode
-              || mode == FileModeValue.WRITE_EXECUTE.mode
-              || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+        || mode == FileModeValue.READ_EXECUTE.mode
+        || mode == FileModeValue.WRITE_EXECUTE.mode
+        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
   var charset: Charset = DEFAULT_BINARY_CHARSET

@@ -30,13 +30,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toNullableProperty
+import com.intellij.ui.dsl.builder.*
 import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.StatefulDialog
@@ -44,25 +38,19 @@ import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
-import org.zowe.explorer.config.connect.getPassword
-import org.zowe.explorer.config.connect.getUsername
 import org.zowe.explorer.config.connect.ui.ChangePasswordDialog
 import org.zowe.explorer.config.connect.ui.ChangePasswordDialogState
 import org.zowe.explorer.config.connect.whoAmI
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.dataops.operations.ChangePasswordOperation
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getAll
-import org.zowe.explorer.utils.removeTrailingSlashes
-import org.zowe.explorer.utils.runIfTrue
-import org.zowe.explorer.utils.runTask
-import org.zowe.explorer.utils.validateConnectionName
-import org.zowe.explorer.utils.validateForBlank
-import org.zowe.explorer.utils.validateZosmfUrl
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
@@ -484,17 +472,24 @@ class ConnectionDialog(
   override fun doCancelAction() {
     super.doCancelAction()
     if (state.mode == DialogMode.UPDATE) {
+      var username = lastSuccessfulState.username
+      var password = lastSuccessfulState.password
+      try {
+        username = CredentialService.getUsername(lastSuccessfulState.connectionConfig)
+        password = CredentialService.getPassword(lastSuccessfulState.connectionConfig)
+      } catch (_: CredentialsNotFoundForConnectionException) {
+      }
       state.connectionName = lastSuccessfulState.connectionName
       state.connectionUrl = lastSuccessfulState.connectionUrl
-      state.username = getUsername(lastSuccessfulState.connectionConfig)
-      state.password = getPassword(lastSuccessfulState.connectionConfig)
+      state.username = username
+      state.password = password
       state.isAllowSsl = lastSuccessfulState.isAllowSsl
       state.zVersion = lastSuccessfulState.zVersion
       runBackgroundableTask("Setting credentials", project, false) {
         CredentialService.getService().setCredentials(
           connectionConfigUuid = lastSuccessfulState.connectionUuid,
-          username = getUsername(lastSuccessfulState.connectionConfig),
-          password = getPassword(lastSuccessfulState.connectionConfig)
+          username = username,
+          password = password
         )
       }
     }

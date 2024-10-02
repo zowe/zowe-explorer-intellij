@@ -369,7 +369,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
           //This was done to avoid duplication of exception messages, since both explorers have a common EventBus and,
           // accordingly, both receive a message about an exception that occurred in one of them.
           if (this@ExplorerTreeView is FileExplorerView) {
-            NotificationsService.getService().notifyError(throwable, project)
+            NotificationsService.errorNotification(throwable, project)
           }
         }
       },

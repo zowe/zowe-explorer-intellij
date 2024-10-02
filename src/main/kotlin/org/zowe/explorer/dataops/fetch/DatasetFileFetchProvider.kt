@@ -29,9 +29,9 @@ import org.zowe.explorer.dataops.UnitRemoteQueryImpl
 import org.zowe.explorer.dataops.attributes.MaskedRequester
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
-import org.zowe.explorer.dataops.exceptions.NotificationCompatibleException
 import org.zowe.explorer.dataops.exceptions.responseMessageMap
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
+import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.utils.asMutableList
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.log

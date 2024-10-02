@@ -22,23 +22,19 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.dataops.fetch.UssQuery
 import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.dataops.operations.UssAllocationOperation
 import org.zowe.explorer.dataops.operations.UssAllocationParams
 import org.zowe.explorer.dataops.operations.UssChangeModeOperation
 import org.zowe.explorer.dataops.operations.UssChangeModeParams
-import org.zowe.explorer.explorer.ui.CreateFileDialog
-import org.zowe.explorer.explorer.ui.CreateFileDialogState
-import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
-import org.zowe.explorer.explorer.ui.FileExplorerView
-import org.zowe.explorer.explorer.ui.UssDirNode
-import org.zowe.explorer.explorer.ui.UssFileNode
-import org.zowe.explorer.explorer.ui.getExplorerView
-import org.zowe.explorer.explorer.ui.toAllocationParams
+import org.zowe.explorer.explorer.ui.*
+import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -50,9 +46,7 @@ import org.zowe.kotlinsdk.FileType
  */
 abstract class CreateUssEntityAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Uss file state which contains parameters for creating.
@@ -81,10 +75,23 @@ abstract class CreateUssEntityAction : AnAction() {
     } ?: return
     val file = node.virtualFile
     val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
+    try {
+      CredentialService.getUsername(connectionConfig)
+    } catch (_: CredentialsNotFoundForConnectionException) {
+      NotificationsService.errorNotification(
+        NotificationCompatibleException(
+          "Operation is not available",
+          "USS create entity operation is not available: username is not found. Try fixing the connection first"
+        ),
+        project
+      )
+      return
+    }
     val dataOpsManager = DataOpsManager.getService()
     val filePath = if (file != null) {
       dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
-        .getAttributes(file)?.path
+        .getAttributes(file)
+        ?.path
     } else {
       node.value.path
     }
@@ -126,7 +133,7 @@ abstract class CreateUssEntityAction : AnAction() {
             ussDirNode?.cleanCache(false)
             res = true
           }.onFailure { t ->
-            NotificationsService.getService().notifyError(t, project)
+            NotificationsService.errorNotification(t, project)
           }
         }
         res

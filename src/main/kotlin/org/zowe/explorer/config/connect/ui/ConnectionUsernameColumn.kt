@@ -14,8 +14,8 @@
 
 package org.zowe.explorer.config.connect.ui
 
-import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.ColumnInfo
+import org.zowe.explorer.config.connect.ui.renderer.UsernameColumnRenderer
 import javax.swing.table.TableCellRenderer
 
 /**
@@ -48,9 +48,7 @@ class ConnectionUsernameColumn<ConnectionState : ConnectionDialogStateBase<*>>
    * @return the username in case the config is not a Zowe Team Config v2, otherwise - 8 asterisks
    */
   override fun getRenderer(item: ConnectionState): TableCellRenderer {
-    return TableCellRenderer { _, _, _, _, _, _ ->
-      JBLabel(if (item.connectionConfig.zoweConfigPath == null) item.username else "*".repeat(8))
-    }
+    return UsernameColumnRenderer(item.connectionConfig.zoweConfigPath != null)
   }
 
 }

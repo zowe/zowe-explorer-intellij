@@ -169,7 +169,9 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
+        val connectionConfig = mockk<ConnectionConfig>()
+        every { connectionConfig.uuid } returns "fake_uuid"
+        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
         val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
@@ -242,7 +244,9 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
+        val connectionConfig = mockk<ConnectionConfig>()
+        every { connectionConfig.uuid } returns "fake_uuid"
+        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
         val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
@@ -313,7 +317,9 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
+        val connectionConfig = mockk<ConnectionConfig>()
+        every { connectionConfig.uuid } returns "fake_uuid"
+        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
         val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
@@ -389,7 +395,9 @@ class AllocateLikeActionTestSpec : WithApplicationShouldSpec({
         every { viewMock.mySelectedNodesData } returns selectedNodesData
         every { workingSetMock.name } returns "test"
         every { workingSetMock.uuid } returns "test"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns mockk<ConnectionConfig>()
+        val connectionConfig = mockk<ConnectionConfig>()
+        every { connectionConfig.uuid } returns "fake_uuid"
+        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
         val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
