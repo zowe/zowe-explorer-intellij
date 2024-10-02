@@ -25,23 +25,19 @@ import eu.ibagroup.formainframe.analytics.events.FileAction
 import eu.ibagroup.formainframe.analytics.events.FileEvent
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
 import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationParams
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeOperation
 import eu.ibagroup.formainframe.dataops.operations.UssChangeModeParams
-import eu.ibagroup.formainframe.explorer.ui.CreateFileDialog
-import eu.ibagroup.formainframe.explorer.ui.CreateFileDialogState
-import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
-import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
-import eu.ibagroup.formainframe.explorer.ui.UssDirNode
-import eu.ibagroup.formainframe.explorer.ui.UssFileNode
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
-import eu.ibagroup.formainframe.explorer.ui.toAllocationParams
+import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.telemetry.NotificationCompatibleException
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -53,9 +49,7 @@ import org.zowe.kotlinsdk.FileType
  */
 abstract class CreateUssEntityAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Uss file state which contains parameters for creating.
@@ -84,10 +78,23 @@ abstract class CreateUssEntityAction : AnAction() {
     } ?: return
     val file = node.virtualFile
     val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
+    try {
+      CredentialService.getUsername(connectionConfig)
+    } catch (_: CredentialsNotFoundForConnectionException) {
+      NotificationsService.errorNotification(
+        NotificationCompatibleException(
+          "Operation is not available",
+          "USS create entity operation is not available: username is not found. Try fixing the connection first"
+        ),
+        project
+      )
+      return
+    }
     val dataOpsManager = DataOpsManager.getService()
     val filePath = if (file != null) {
       dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
-        .getAttributes(file)?.path
+        .getAttributes(file)
+        ?.path
     } else {
       node.value.path
     }
@@ -136,7 +143,7 @@ abstract class CreateUssEntityAction : AnAction() {
             ussDirNode?.cleanCache(false)
             res = true
           }.onFailure { t ->
-            NotificationsService.getService().notifyError(t, project)
+            NotificationsService.errorNotification(t, project)
           }
         }
         res

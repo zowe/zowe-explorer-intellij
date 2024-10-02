@@ -52,7 +52,6 @@ import retrofit2.Response
 import java.util.*
 import java.util.stream.Stream
 import javax.swing.JComponent
-import kotlin.reflect.KFunction
 
 class ConfigTestSpec : WithApplicationShouldSpec({
   afterSpec {
@@ -64,11 +63,21 @@ class ConfigTestSpec : WithApplicationShouldSpec({
       lateinit var crudable: Crudable
       lateinit var connTab: ConnectionsTableModel
 
+      val connectionConfig = mockk<ConnectionConfig>()
+      every { connectionConfig.uuid } returns "fake_uuid"
+      every { connectionConfig.owner } returns ""
+
       val connectionDialogState = ConnectionDialogState(
-        connectionName = "a", connectionUrl = "https://a.com", username = "a", password = "a"
+        connectionName = "a",
+        connectionUrl = "https://a.com",
+        username = CredentialService.getUsername(connectionConfig),
+        password = CredentialService.getPassword(connectionConfig),
+        owner = CredentialService.getOwner(connectionConfig)
       )
 
       beforeEach {
+        every { connectionConfig.uuid } returns "fake_uuid"
+
         val configCollections: MutableMap<String, MutableList<*>> = mutableMapOf(
           Pair(ConnectionConfig::class.java.name, mutableListOf<ConnectionConfig>()),
           Pair(FilesWorkingSetConfig::class.java.name, mutableListOf<ConnectionConfig>()),
@@ -110,7 +119,11 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         should("add connection to crudable") {
 
           val connectionDialogStateB = ConnectionDialogState(
-            connectionName = "b", connectionUrl = "https://b.com", username = "b", password = "b"
+            connectionName = "b",
+            connectionUrl = "https://b.com",
+            username = CredentialService.getUsername(connectionConfig),
+            password = CredentialService.getPassword(connectionConfig),
+            owner = CredentialService.getOwner(connectionConfig)
           )
           connectionDialogStateB.initEmptyUuids(crudable)
 
@@ -141,7 +154,12 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         }
         should("add connection with existing url") {
 
-          val connectionDialogStateB = ConnectionDialogState(connectionUrl = connectionDialogState.connectionUrl)
+          val connectionDialogStateB = ConnectionDialogState(
+            connectionUrl = connectionDialogState.connectionUrl,
+            username = CredentialService.getUsername(connectionConfig),
+            password = CredentialService.getPassword(connectionConfig),
+            owner = CredentialService.getOwner(connectionConfig),
+          )
           connectionDialogStateB.initEmptyUuids(crudable)
 
           connTab.onAdd(crudable, connectionDialogState)
@@ -250,9 +268,8 @@ class ConfigTestSpec : WithApplicationShouldSpec({
           )
         }
 
-        val getUsernameRef: (ConnectionConfig) -> String = ::getUsername
-        mockkStatic(getUsernameRef as KFunction<*>)
-        every { getUsername(any<ConnectionConfig>()) } returns "ZOSMF"
+        mockkObject(CredentialService.Companion)
+        every { CredentialService.getUsername(any<ConnectionConfig>()) } returns "ZOSMF"
       }
       afterEach {
         unmockkAll()
@@ -412,14 +429,14 @@ class ConfigTestSpec : WithApplicationShouldSpec({
 
       // getOwner
       should("get owner by connection config when owner is not empty") {
-        val owner = getOwner(
+        val owner = CredentialService.getOwner(
           ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "ZOSMFAD")
         )
 
         assertSoftly { owner shouldBe "ZOSMFAD" }
       }
       should("get owner by connection config when owner is empty") {
-        val owner = getOwner(
+        val owner = CredentialService.getOwner(
           ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "")
         )
 
@@ -428,19 +445,19 @@ class ConfigTestSpec : WithApplicationShouldSpec({
 
       // tryToExtractOwnerFromConfig
       should("get username if config owner is empty string") {
-        val possibleOwner = tryToExtractOwnerFromConfig(
+        val possibleOwner = CredentialService.getOwner(
           ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "")
         )
         assertSoftly { possibleOwner shouldBe "ZOSMF" }
       }
       should("get username if config owner is error string") {
-        val possibleOwner = tryToExtractOwnerFromConfig(
+        val possibleOwner = CredentialService.getOwner(
           ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "COMMAND RESTARTED DUE TO ERROR")
         )
         assertSoftly { possibleOwner shouldBe "ZOSMF" }
       }
       should("get owner if config contains valid owner string ") {
-        val possibleOwner = tryToExtractOwnerFromConfig(
+        val possibleOwner = CredentialService.getOwner(
           ConnectionConfig("", "", "", true, ZVersion.ZOS_2_3, "ZOSMFAD")
         )
         assertSoftly { possibleOwner shouldBe "ZOSMFAD" }

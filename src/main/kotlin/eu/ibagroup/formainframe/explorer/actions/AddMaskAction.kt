@@ -42,7 +42,8 @@ class AddMaskAction : AnAction() {
     val workingSets = getSelectedNodesWorkingSets<FilesWorkingSet>(view as ExplorerTreeView<*, *, *>)
     val ws = workingSets.firstOrNull() ?: return
     val initialState = MaskStateWithWS(ws = ws)
-    val dialog = AddOrEditMaskDialog(e.project, "Create Mask", ws.connectionConfig, initialState)
+    val connectionConfig = ws.connectionConfig
+    val dialog = AddOrEditMaskDialog(e.project, "Create Mask", connectionConfig, initialState)
     if (dialog.showAndGet()) {
       val state = dialog.state
       when (state.type) {

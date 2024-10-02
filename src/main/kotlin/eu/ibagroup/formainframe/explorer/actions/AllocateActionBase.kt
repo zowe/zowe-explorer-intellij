@@ -29,20 +29,17 @@ import eu.ibagroup.formainframe.analytics.events.FileType
 import eu.ibagroup.formainframe.common.ui.cleanInvalidateOnExpand
 import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.ConfigService
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.DSMask
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
 import eu.ibagroup.formainframe.explorer.FilesWorkingSet
-import eu.ibagroup.formainframe.explorer.ui.AllocationDialog
-import eu.ibagroup.formainframe.explorer.ui.DSMaskNode
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.ExplorerUnitTreeNodeBase
-import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
-import eu.ibagroup.formainframe.explorer.ui.FileFetchNode
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.*
+import eu.ibagroup.formainframe.telemetry.NotificationCompatibleException
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.utils.castOrNull
 import eu.ibagroup.formainframe.utils.clone
@@ -123,9 +120,21 @@ abstract class AllocateActionBase : AnAction() {
     val project = e.project
     if (parentNode is ExplorerUnitTreeNodeBase<*, *, *> && parentNode.unit is FilesWorkingSet) {
       val workingSet = parentNode.unit
-      val explorer = workingSet.explorer
       val config = workingSet.connectionConfig
       if (config != null) {
+        try {
+          CredentialService.getUsername(config)
+        } catch (e: CredentialsNotFoundForConnectionException) {
+          NotificationsService
+            .errorNotification(
+              NotificationCompatibleException(
+                "Operation is not available",
+                "Allocation operation is not available: username is not found. Try fixing the connection first"
+              ),
+              project
+            )
+          return
+        }
         val initialState = preProcessState(datasetInfo)
         showUntilDone(
           initialState,
@@ -160,7 +169,7 @@ abstract class AllocateActionBase : AnAction() {
                 showNotification(state, workingSet)
               }
               .onFailure { t ->
-                NotificationsService.getService().notifyError(t, project)
+                NotificationsService.errorNotification(t, project)
                 initialState.errorMessage = t.message ?: t.toString()
               }
           }

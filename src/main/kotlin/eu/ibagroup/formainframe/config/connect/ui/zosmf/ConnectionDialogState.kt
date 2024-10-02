@@ -16,10 +16,11 @@ package eu.ibagroup.formainframe.config.connect.ui.zosmf
 
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.Credentials
 import eu.ibagroup.formainframe.config.connect.ui.ConnectionDialogStateBase
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
 import eu.ibagroup.formainframe.utils.crudable.Crudable
-import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.crudable.nextUniqueValue
 import org.zowe.kotlinsdk.annotations.ZVersion
 
@@ -77,18 +78,28 @@ fun ConnectionDialogState.initEmptyUuids(crudable: Crudable): ConnectionDialogSt
 }
 
 fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
-
-  val credentials = crudable.getByUniqueKey<Credentials>(this.uuid) ?: Credentials().apply {
-    this.configUuid = this@toDialogState.uuid
+  var username = ""
+  var password = ""
+  var owner = ""
+  try {
+    username = CredentialService.getUsername(this)
+    password = CredentialService.getPassword(this)
+    owner = CredentialService.getOwner(this)
+  } catch (_: CredentialsNotFoundForConnectionException) {
   }
+
+// TODO: investigate the change
+//  val credentials = crudable.getByUniqueKey<Credentials>(this.uuid) ?: Credentials().apply {
+//    this.configUuid = this@toDialogState.uuid
+//  }
   return ConnectionDialogState(
     connectionUuid = this.uuid,
     connectionName = this.name,
     connectionUrl = this.url,
-    username = credentials.username,
-    password = credentials.password,
+    username = username,
+    password = password,
     isAllowSsl = this.isAllowSelfSigned,
     zVersion = this.zVersion,
-    owner = this.owner
+    owner = owner
   )
 }

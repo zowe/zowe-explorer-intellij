@@ -293,7 +293,7 @@ class ExplorerPasteProvider : PasteProvider {
             }
           }
           .onFailure { throwable ->
-            NotificationsService.getService().notifyError(throwable, project)
+            NotificationsService.errorNotification(throwable, project)
             if (isDragAndDrop) {
               copyPasteSupport.removeFromBuffer { node ->
                 node.file == op.source && operations.minus(op).none { operation -> operation.source == op.source }

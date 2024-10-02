@@ -18,18 +18,14 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ComboBoxCellEditor
-import eu.ibagroup.formainframe.common.ui.DEFAULT_ROW_HEIGHT
-import eu.ibagroup.formainframe.common.ui.DialogMode
-import eu.ibagroup.formainframe.common.ui.ValidatingCellRenderer
-import eu.ibagroup.formainframe.common.ui.ValidatingColumnInfo
-import eu.ibagroup.formainframe.common.ui.ValidatingListTableModel
-import eu.ibagroup.formainframe.common.ui.ValidatingTableView
+import eu.ibagroup.formainframe.common.ui.*
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.getUsername
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.FilesWorkingSetConfig
 import eu.ibagroup.formainframe.config.ws.MaskState
 import eu.ibagroup.formainframe.config.ws.ui.AbstractWsDialog
 import eu.ibagroup.formainframe.config.ws.ui.FilesWorkingSetDialogState
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
 import eu.ibagroup.formainframe.utils.MaskType
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
@@ -247,7 +243,15 @@ class FilesWorkingSetDialog(
    */
   override fun emptyTableRow(): MaskState {
     val config = crudable.getByUniqueKey<ConnectionConfig>(state.connectionUuid)
-    return MaskState(if (config != null) "${getUsername(config)}.*" else "")
+    var initialMask = ""
+    try {
+      if (config != null) {
+        val username = CredentialService.getUsername(config)
+        initialMask = "$username.*"
+      }
+    } catch (_: CredentialsNotFoundForConnectionException) {
+    }
+    return MaskState(initialMask)
   }
 
 }

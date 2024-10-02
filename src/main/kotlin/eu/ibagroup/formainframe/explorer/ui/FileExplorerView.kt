@@ -15,22 +15,14 @@
 package eu.ibagroup.formainframe.explorer.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.CopyPasteSupport
-import com.intellij.ide.CopyProvider
-import com.intellij.ide.CutProvider
-import com.intellij.ide.DeleteProvider
-import com.intellij.ide.PasteProvider
+import com.intellij.ide.*
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDSource
 import com.intellij.ide.dnd.DnDTarget
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
@@ -526,7 +518,7 @@ class FileExplorerView(
                   dataOpsManager.performOperation(op, indicator)
                 }
                   .onFailure {
-                    NotificationsService.getService().notifyError(it, project)
+                    NotificationsService.errorNotification(it, project)
                   }
                 indicator.fraction += 1.0 / filteredFiles.size
               }

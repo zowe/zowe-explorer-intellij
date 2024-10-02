@@ -17,11 +17,11 @@ package eu.ibagroup.formainframe.config.ws.ui
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.CrudableTableModel
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
-import eu.ibagroup.formainframe.config.connect.Credentials
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.ws.WorkingSetConfig
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.MergedCollections
-import eu.ibagroup.formainframe.utils.crudable.getByUniqueKey
 import eu.ibagroup.formainframe.utils.nullable
 import eu.ibagroup.formainframe.utils.toMutableList
 
@@ -43,7 +43,19 @@ abstract class AbstractWsTableModel<Connection : ConnectionConfigBase, WSConfig 
     columnInfos = arrayOf(
       WSNameColumn { this.items },
       WSConnectionNameColumn<Connection, WSConfig>(crudable, connectionClass),
-      WSUsernameColumn { crudable.getByUniqueKey<Credentials>(it.connectionConfigUuid)?.username },
+      WSUsernameColumn {
+        var username = ""
+        try {
+          val connectionConfig = crudable.getByUniqueKey(connectionClass, it.connectionConfigUuid).nullable
+          username = if (connectionConfig != null) {
+            CredentialService.getUsername(connectionConfig)
+          } else {
+            message("configurable.ws.tables.ws.username.error.empty")
+          }
+        } catch (_: CredentialsNotFoundForConnectionException) {
+        }
+        username
+      },
       UrlColumn(connectionColumnName) {
         crudable.getByUniqueKey(
           connectionClass,

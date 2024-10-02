@@ -30,15 +30,7 @@ import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
-import eu.ibagroup.formainframe.explorer.ui.ExplorerTreeNode
-import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
-import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
-import eu.ibagroup.formainframe.explorer.ui.LibraryNode
-import eu.ibagroup.formainframe.explorer.ui.RenameDialog
-import eu.ibagroup.formainframe.explorer.ui.UssDirNode
-import eu.ibagroup.formainframe.explorer.ui.UssFileNode
-import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 
@@ -92,7 +84,7 @@ class RenameAction : AnAction() {
           node.parent?.cleanCacheIfPossible(cleanBatchedQuery = true)
         }
         .onFailure {
-          NotificationsService.getService().notifyError(it, project)
+          NotificationsService.errorNotification(it, project)
         }
     }
   }
