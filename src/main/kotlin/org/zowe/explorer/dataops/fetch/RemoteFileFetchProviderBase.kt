@@ -109,8 +109,10 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
     progressIndicator: ProgressIndicator
   ): List<File> {
     val fetched = fetchResponse(query, progressIndicator)
-    return fetched.mapNotNull {
-      convertResponseToFile(it)
+    return runWriteActionInEdtAndWait {
+      fetched.mapNotNull {
+        convertResponseToFile(it)
+      }
     }
   }
 
