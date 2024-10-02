@@ -13,7 +13,6 @@ package eu.ibagroup.formainframe.dataops.attributes
 import com.intellij.openapi.util.io.FileAttributes
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.utils.runWriteActionInEdtAndWait
 import eu.ibagroup.formainframe.utils.sendTopic
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
 import eu.ibagroup.formainframe.vfs.MFVirtualFileSystem
@@ -35,7 +34,7 @@ private fun String.trimUrl(): String {
  * Base abstract service class to handle attributes on virtual file
  * @param dataOpsManager data ops manager to get component manager
  */
-abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, Attributes : MFRemoteFileAttributes<Connection, *>>(
+abstract class MFRemoteAttributesServiceBase<Connection : ConnectionConfigBase, Attributes : MFRemoteFileAttributes<Connection, *>>(
   val dataOpsManager: DataOpsManager
 ) : AttributesService<Attributes, MFVirtualFile> {
 
@@ -98,9 +97,7 @@ abstract class MFRemoteAttributesServiceBase<Connection: ConnectionConfigBase, A
    */
   private fun reassignAttributesToFile(file: MFVirtualFile, oldAttributes: Attributes, newAttributes: Attributes) {
     obtainAndRenameUrlDirIfNeeded(newAttributes)
-    runWriteActionInEdtAndWait {
-      reassignAttributesAfterUrlFolderRenaming(file, oldAttributes, newAttributes)
-    }
+    reassignAttributesAfterUrlFolderRenaming(file, oldAttributes, newAttributes)
   }
 
   protected abstract fun buildUniqueAttributes(attributes: Attributes): Attributes
