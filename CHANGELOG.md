@@ -18,6 +18,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Bugfix: Fixed copy-paste folder to another folder with name conflicts ([13d7d773](https://github.com/zowe/zowe-explorer-intellij/commit/13d7d773))
 * Bugfix: Validation changes for LRECL field ([14e384a4](https://github.com/zowe/zowe-explorer-intellij/commit/14e384a4))
 * Bugfix: Fixed issue when job was not visible in JesExplorerView when Job Filter is created by JOBID ([5bb17263](https://github.com/zowe/zowe-explorer-intellij/commit/5bb17263))
+* Bugfix: Fixed sync during indexing ([436c34a2](https://github.com/zowe/zowe-explorer-intellij/commit/436c34a2))
 
 ## [1.2.2-223] (2024-08-21)
 
