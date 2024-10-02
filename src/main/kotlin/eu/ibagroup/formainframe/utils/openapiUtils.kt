@@ -11,7 +11,10 @@
 package eu.ibagroup.formainframe.utils
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -187,10 +190,12 @@ inline fun runWriteActionInEdt(crossinline block: () -> Unit) {
   }
 }
 
-inline fun runWriteActionInEdtAndWait(crossinline block: () -> Unit) {
+inline fun <T> runWriteActionInEdtAndWait(crossinline block: () -> T): T {
+  var result: T? = null
   runInEdtAndWait {
-    runWriteAction(block)
+    result = runWriteAction(block)
   }
+  return result ?: throw Exception("runWriteAction did not return any result")
 }
 
 /** Return the specified logger instance */
