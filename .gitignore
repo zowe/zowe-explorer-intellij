@@ -1,7 +1,7 @@
 .gradle
 .idea
 .intellijPlatform
-build
+/build
 /ide_for_launch
 
 libs
