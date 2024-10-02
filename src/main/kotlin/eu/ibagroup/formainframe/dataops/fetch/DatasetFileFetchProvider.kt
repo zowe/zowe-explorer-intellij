@@ -29,9 +29,9 @@ import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.MaskedRequester
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.exceptions.NotificationCompatibleException
 import eu.ibagroup.formainframe.dataops.exceptions.responseMessageMap
 import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
+import eu.ibagroup.formainframe.telemetry.NotificationCompatibleException
 import eu.ibagroup.formainframe.utils.asMutableList
 import eu.ibagroup.formainframe.utils.cancelByIndicator
 import eu.ibagroup.formainframe.utils.log

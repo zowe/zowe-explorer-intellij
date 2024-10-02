@@ -35,9 +35,9 @@ import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.UnitRemoteQueryImpl
 import eu.ibagroup.formainframe.dataops.attributes.RemoteDatasetAttributes
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
-import eu.ibagroup.formainframe.dataops.exceptions.NotificationCompatibleException
 import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import eu.ibagroup.formainframe.explorer.ExplorerUnit
+import eu.ibagroup.formainframe.telemetry.NotificationCompatibleException
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.utils.runTask
 import eu.ibagroup.formainframe.vfs.MFVirtualFile
@@ -166,7 +166,8 @@ class FileLikeDatasetNode(
   override fun navigate(requestFocus: Boolean) {
     val dataOpsManager = DataOpsManager.getService()
     val attributes = dataOpsManager.tryToGetAttributes(value) ?: return
-    if (attributes is RemoteDatasetAttributes) {
+    val contentSynchronizer = dataOpsManager.getContentSynchronizer(virtualFile)
+    if (attributes is RemoteDatasetAttributes && contentSynchronizer != null) {
       fetchAttributesForNodeIfMissing(
         attributes,
         dataOpsManager,
