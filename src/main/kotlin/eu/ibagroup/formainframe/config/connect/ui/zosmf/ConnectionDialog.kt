@@ -30,13 +30,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toNullableProperty
+import com.intellij.ui.dsl.builder.*
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.DialogMode
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
@@ -44,25 +38,19 @@ import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.ConfigService
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
-import eu.ibagroup.formainframe.config.connect.getPassword
-import eu.ibagroup.formainframe.config.connect.getUsername
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialog
 import eu.ibagroup.formainframe.config.connect.ui.ChangePasswordDialogState
 import eu.ibagroup.formainframe.config.connect.whoAmI
 import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
 import eu.ibagroup.formainframe.dataops.operations.ChangePasswordOperation
 import eu.ibagroup.formainframe.dataops.operations.InfoOperation
 import eu.ibagroup.formainframe.dataops.operations.ZOSInfoOperation
 import eu.ibagroup.formainframe.explorer.EXPLORER_NOTIFICATION_GROUP_ID
+import eu.ibagroup.formainframe.utils.*
 import eu.ibagroup.formainframe.utils.crudable.Crudable
 import eu.ibagroup.formainframe.utils.crudable.find
 import eu.ibagroup.formainframe.utils.crudable.getAll
-import eu.ibagroup.formainframe.utils.removeTrailingSlashes
-import eu.ibagroup.formainframe.utils.runIfTrue
-import eu.ibagroup.formainframe.utils.runTask
-import eu.ibagroup.formainframe.utils.validateConnectionName
-import eu.ibagroup.formainframe.utils.validateForBlank
-import eu.ibagroup.formainframe.utils.validateZosmfUrl
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
@@ -470,17 +458,24 @@ class ConnectionDialog(
   override fun doCancelAction() {
     super.doCancelAction()
     if (state.mode == DialogMode.UPDATE) {
+      var username = lastSuccessfulState.username
+      var password = lastSuccessfulState.password
+      try {
+        username = CredentialService.getUsername(lastSuccessfulState.connectionConfig)
+        password = CredentialService.getPassword(lastSuccessfulState.connectionConfig)
+      } catch (_: CredentialsNotFoundForConnectionException) {
+      }
       state.connectionName = lastSuccessfulState.connectionName
       state.connectionUrl = lastSuccessfulState.connectionUrl
-      state.username = getUsername(lastSuccessfulState.connectionConfig)
-      state.password = getPassword(lastSuccessfulState.connectionConfig)
+      state.username = username
+      state.password = password
       state.isAllowSsl = lastSuccessfulState.isAllowSsl
       state.zVersion = lastSuccessfulState.zVersion
       runBackgroundableTask("Setting credentials", project, false) {
         CredentialService.getService().setCredentials(
           connectionConfigUuid = lastSuccessfulState.connectionUuid,
-          username = getUsername(lastSuccessfulState.connectionConfig),
-          password = getPassword(lastSuccessfulState.connectionConfig)
+          username = username,
+          password = password
         )
       }
     }

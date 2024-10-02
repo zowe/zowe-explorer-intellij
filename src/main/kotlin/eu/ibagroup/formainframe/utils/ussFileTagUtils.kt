@@ -95,7 +95,7 @@ fun listUssFileTag(attributes: RemoteUssAttributes): ResponseBody? {
       ),
     )
   }.onFailure {
-    NotificationsService.getService().notifyError(it, custTitle = "Cannot list a USS file tag for ${attributes.path}")
+    NotificationsService.errorNotification(it, custTitle = "Cannot list a USS file tag for ${attributes.path}")
   }
   return response
 }
@@ -145,7 +145,7 @@ private fun setUssFileTagCommon(charsetName: String, filePath: String, connectio
       )
     )
   }.onFailure {
-    NotificationsService.getService().notifyError(it, custTitle = "Cannot set a USS file tag for $filePath")
+    NotificationsService.errorNotification(it, custTitle = "Cannot set a USS file tag for $filePath")
   }
 }
 
@@ -166,7 +166,7 @@ fun removeUssFileTag(attributes: RemoteUssAttributes) {
       )
     )
   }.onFailure {
-    NotificationsService.getService().notifyError(it, custTitle = "Cannot remove a USS file tag for ${attributes.path}")
+    NotificationsService.errorNotification(it, custTitle = "Cannot remove a USS file tag for ${attributes.path}")
   }
 }
 

@@ -25,10 +25,13 @@ import com.intellij.ui.layout.selectedValueMatches
 import eu.ibagroup.formainframe.common.message
 import eu.ibagroup.formainframe.common.ui.StatefulDialog
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
-import eu.ibagroup.formainframe.config.connect.getUsername
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.dataops.operations.DatasetAllocationParams
 import eu.ibagroup.formainframe.explorer.config.Presets
-import eu.ibagroup.formainframe.utils.*
+import eu.ibagroup.formainframe.utils.validateDatasetNameOnInput
+import eu.ibagroup.formainframe.utils.validateForBlank
+import eu.ibagroup.formainframe.utils.validateMemberName
+import eu.ibagroup.formainframe.utils.validateVolser
 import org.zowe.kotlinsdk.AllocationUnit
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.RecordFormat
@@ -53,7 +56,7 @@ class AllocationDialog(project: Project?, config: ConnectionConfig, override var
   private lateinit var averageBlockLengthField: JTextField
   private lateinit var advancedParametersField: JTextField
   private lateinit var presetsBox: JComboBox<Presets>
-  private val HLQ = getUsername(config)
+  private val HLQ = CredentialService.getUsername(config)
   private val nonNegativeIntRange = IntRange(0, Int.MAX_VALUE - 1)
   private val positiveIntRange = IntRange(1, Int.MAX_VALUE - 1)
 

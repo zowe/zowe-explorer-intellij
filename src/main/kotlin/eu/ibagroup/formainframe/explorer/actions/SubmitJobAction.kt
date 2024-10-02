@@ -92,7 +92,7 @@ class SubmitJobAction : AnAction() {
         }.onSuccess {
           view.explorer.showNotification("Job ${it.jobname} has been submitted", "$it", project = project)
         }.onFailure {
-          NotificationsService.getService().notifyError(it, project)
+          NotificationsService.errorNotification(it, project)
         }
       }
     }

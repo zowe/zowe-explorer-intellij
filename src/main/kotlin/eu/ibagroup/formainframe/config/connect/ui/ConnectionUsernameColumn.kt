@@ -15,6 +15,8 @@
 package eu.ibagroup.formainframe.config.connect.ui
 
 import com.intellij.util.ui.ColumnInfo
+import eu.ibagroup.formainframe.config.connect.ui.renderer.UsernameColumnRenderer
+import javax.swing.table.TableCellRenderer
 
 /**
  * Class which represents column of username in GUI
@@ -38,6 +40,10 @@ class ConnectionUsernameColumn<ConnectionState : ConnectionDialogStateBase<*>>
    */
   override fun setValue(item: ConnectionState, value: String) {
     item.username = value
+  }
+
+  override fun getRenderer(o: ConnectionState): TableCellRenderer {
+    return UsernameColumnRenderer()
   }
 
 }

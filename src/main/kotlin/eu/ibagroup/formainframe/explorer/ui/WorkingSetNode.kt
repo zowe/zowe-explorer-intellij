@@ -23,7 +23,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
 import eu.ibagroup.formainframe.config.connect.ConnectionConfigBase
-import eu.ibagroup.formainframe.config.connect.getUsername
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.explorer.WorkingSet
 
 private val regularIcon = AllIcons.Actions.ShowAsTree
@@ -88,8 +88,23 @@ abstract class WorkingSetNode<Connection : ConnectionConfigBase, MaskType>(
     runBackgroundableTask("Getting connection information", project, false) {
       val connectionConfig = value.connectionConfig ?: return@runBackgroundableTask
       val url = value.connectionConfig?.url ?: return@runBackgroundableTask
-      val username = getUsername(connectionConfig)
-      presentation.addText(" $username on ${connectionConfig.name} [${url}]", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      var username = ""
+      runCatching { CredentialService.getUsername(connectionConfig) }
+        .onSuccess { username = it }
+        .onFailure { username = "" }
+      if (username.isNotEmpty()) {
+        presentation
+          .addText(
+            " $username on ${connectionConfig.name} [${url}]",
+            SimpleTextAttributes.GRAYED_ATTRIBUTES
+          )
+      } else {
+        presentation
+          .addText(
+            " Username not found on ${connectionConfig.name} [${url}]",
+            SimpleTextAttributes.ERROR_ATTRIBUTES
+          )
+      }
       apply(presentation)
     }
   }
