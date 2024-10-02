@@ -87,25 +87,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ steps.properties.outputs.pluginVersionFull }} ./build/distributions/*
 
-      - name: Create Pull Request
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ steps.properties.outputs.pluginVersionFull }}"
-          BRANCH="release-changelog-update-$VERSION"
+      # - name: Create Pull Request
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     VERSION="${{ steps.properties.outputs.pluginVersionFull }}"
+      #     BRANCH="release-changelog-update-$VERSION"
 
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
+      #     git config user.email "action@github.com"
+      #     git config user.name "GitHub Action"
 
-          git checkout -b $BRANCH
-          git commit -am ":moyai: ${VERSION}" -m "[skip ci]"
-          git push --set-upstream origin $BRANCH
+      #     git checkout -b $BRANCH
+      #     git commit -am ":moyai: ${VERSION}" -m "[skip ci]"
+      #     git push --set-upstream origin $BRANCH
 
-          gh pr create \
-            --title ":moyai: \`$VERSION\`" \
-            --body "Current pull request contains patched \`CHANGELOG.md\` file for the \`$VERSION\` version." \
-            --base "release/v$VERSION" \
-            --head $BRANCH
+      #     gh pr create \
+      #       --title ":moyai: \`$VERSION\`" \
+      #       --body "Current pull request contains patched \`CHANGELOG.md\` file for the \`$VERSION\` version." \
+      #       --base "release/v$VERSION" \
+      #       --head $BRANCH
 
       - name: Close Milestone
         continue-on-error: true
