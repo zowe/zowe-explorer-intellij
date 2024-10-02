@@ -27,7 +27,7 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl.MockToolWindow
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.Operation
-import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnection
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
 import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
 import eu.ibagroup.formainframe.telemetry.NotificationsService
@@ -40,15 +40,7 @@ import eu.ibagroup.formainframe.tso.ui.TSOConsoleView
 import eu.ibagroup.formainframe.utils.sendTopic
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.clearMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.spyk
-import io.mockk.verify
+import io.mockk.*
 import org.zowe.kotlinsdk.TsoResponse
 
 class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
@@ -115,7 +107,7 @@ class TSOWindowFactoryTestSpec : WithApplicationShouldSpec({
         val dataOpsManager = ApplicationManager.getApplication().service<DataOpsManager>() as TestDataOpsManagerImpl
         dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
           override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            throw CredentialsNotFoundForConnection(ConnectionConfig())
+            throw CredentialsNotFoundForConnectionException(ConnectionConfig())
           }
 
         }

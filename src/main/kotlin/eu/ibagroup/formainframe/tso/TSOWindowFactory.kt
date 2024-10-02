@@ -27,7 +27,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.Topic
 import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
-import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnection
+import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
 import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
 import eu.ibagroup.formainframe.dataops.operations.TsoOperation
@@ -346,7 +346,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               processHandler.notifyTextAvailable(parseTSODataResponse(response), ProcessOutputType.STDOUT)
             }
           }.onFailure {
-            if (it is CredentialsNotFoundForConnection) {
+            if (it is CredentialsNotFoundForConnectionException) {
               processHandler.notifyTextAvailable(
                 "Unable to obtain the connection information for connection=${session.getConnectionConfig()}.\n Session will be closed.",
                 ProcessOutputType.STDOUT
