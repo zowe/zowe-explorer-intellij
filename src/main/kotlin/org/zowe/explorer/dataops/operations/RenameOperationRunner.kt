@@ -68,7 +68,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
   ) {
     when (val attributes = operation.attributes) {
       is RemoteDatasetAttributes -> {
-        attributes.requesters.map {
+        attributes.requesters.forEach {
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).renameDataset(
@@ -84,6 +84,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               runWriteActionInEdtAndWait {
                 operation.file.rename(this, operation.newName)
               }
+              return
             } else {
               throw CallException(response, "Unable to rename the selected dataset")
             }
@@ -99,7 +100,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
 
       is RemoteMemberAttributes -> {
         val parentAttributes = dataOpsManager.tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
-        parentAttributes.requesters.map {
+        parentAttributes.requesters.forEach {
           try {
             progressIndicator.checkCanceled()
             log.info("Checking for duplicate names in dataset ${parentAttributes.datasetInfo.name}")
@@ -118,7 +119,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               ).cancelByIndicator(progressIndicator).execute()
               if (!response.isSuccessful) {
                 throw CallException(response, "Unable to duplicate the selected member")
-              }
+              } else return
             } else {
               val response = api<DataAPI>(it.connectionConfig).renameDatasetMember(
                 authorizationToken = it.connectionConfig.authToken,
@@ -135,6 +136,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
                 runWriteActionInEdtAndWait {
                   operation.file.rename(this, operation.newName)
                 }
+                return
               } else {
                 throw CallException(response, "Unable to rename the selected member")
               }
@@ -151,7 +153,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
 
       is RemoteUssAttributes -> {
         val parentDirPath = attributes.parentDirPath
-        attributes.requesters.map {
+        attributes.requesters.forEach {
           try {
             progressIndicator.checkCanceled()
             val response = api<DataAPI>(it.connectionConfig).moveUssFile(
@@ -165,6 +167,7 @@ class RenameOperationRunner(private val dataOpsManager: DataOpsManager) : Operat
               runWriteActionInEdtAndWait {
                 operation.file.rename(this, operation.newName)
               }
+              return
             } else {
               throw CallException(response, "Unable to rename the selected file or directory")
             }

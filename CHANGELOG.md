@@ -4,6 +4,21 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+* Feature: Correct alignment for fields in working set dialog ([745143cc](https://github.com/zowe/zowe-explorer-intellij/commit/745143cc))
+
+### Bufixes
+
+* Bugfix: Fixed unexpected freezes of IDE during work with USS part ([38f1f5b3](https://github.com/zowe/zowe-explorer-intellij/commit/38f1f5b3))
+* Bugfix: Fixed error that was caused by members renaming ([238ebc08](https://github.com/zowe/zowe-explorer-intellij/commit/238ebc08))
+* Bugfix: Fixed missed automatic translation to uppercase ([1b48de61](https://github.com/zowe/zowe-explorer-intellij/commit/1b48de61))
+* Bugfix: Fixed synchronization errors ([f96d9302](https://github.com/zowe/zowe-explorer-intellij/commit/f96d9302))
+* Bugfix: Fixed permissions change in opened file ([b04ed99e](https://github.com/zowe/zowe-explorer-intellij/commit/b04ed99e))
+* Bugfix: Fixed copy-paste folder to another folder with name conflicts ([13d7d773](https://github.com/zowe/zowe-explorer-intellij/commit/13d7d773))
+* Bugfix: Validation changes for LRECL field ([14e384a4](https://github.com/zowe/zowe-explorer-intellij/commit/14e384a4))
+* Bugfix: Fixed issue when job was not visible in JesExplorerView when Job Filter is created by JOBID ([5bb17263](https://github.com/zowe/zowe-explorer-intellij/commit/5bb17263))
+
 ## [1.2.2-221] (2024-08-21)
 
 ### Features
