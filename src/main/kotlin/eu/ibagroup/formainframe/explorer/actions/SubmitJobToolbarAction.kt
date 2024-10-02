@@ -23,7 +23,6 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteJobAttributes
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobJclOperationParams
 import eu.ibagroup.formainframe.dataops.operations.jobs.SubmitJobOperation
-import eu.ibagroup.formainframe.explorer.FileExplorerContentProvider
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.ui.build.jobs.JOB_ADDED_TOPIC
 import eu.ibagroup.formainframe.utils.sendTopic
@@ -68,7 +67,7 @@ class SubmitJobToolbarAction : AnAction() {
             }
           }
         }.onFailure {
-          NotificationsService.getService().notifyError(it, project)
+          NotificationsService.errorNotification(it, project)
         }
       }
     }

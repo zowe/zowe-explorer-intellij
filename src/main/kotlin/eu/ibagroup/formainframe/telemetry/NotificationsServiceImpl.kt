@@ -52,11 +52,11 @@ class NotificationsServiceImpl : NotificationsService {
    * Form three error notification parameters from the provided exception.
    * The title will be either the [custTitle] or the "throwable.message" cut to the 30 characters long one + "...".
    * If none provided, the "Handleable exception occurred" title is used.
-   * The short details will be either the [custDetailsShort] or the "throwable.message" if it is not used in the title,
-   * or the "throwable.cause.message" cut to the 100 characters long one + "...". If none of the options are available,
-   * the [UNKNOWN_ERROR] is used.
+   * The short details will be either the [custDetailsShort] or the "throwable.message" / "throwable.cause.message" cut
+   * to the 100 characters long one + "...". If none of the options are available, the [UNKNOWN_ERROR] is used.
    * The long details will be either the [custDetailsLong] or the "throwable.message" + "throwable.cause.message"
-   * divided by two new lines. If none of the options are provided, the [UNKNOWN_ERROR] is used
+   * divided by two new lines or any of the options available. If none of the options are provided,
+   * the [UNKNOWN_ERROR] is used
    * @param throwable the throwable to form the parameters from
    * @param custTitle the custom title to use if provided
    * @param custDetailsShort the custom details short to use if provided
@@ -75,18 +75,22 @@ class NotificationsServiceImpl : NotificationsService {
       ?: titleFromMessage
       ?: "Handleable exception occurred"
 
-    val throwableMessageToUseInDetailsShort = if (custTitle != null) throwable.message else null
     val causeMessage = throwable.cause?.message
-    val causeMessageShort =
-      if ((causeMessage?.length ?: 0) > 100) causeMessage?.substring(0, 100) + "..." else causeMessage
-    val detailsShort = custDetailsShort
-      ?: throwableMessageToUseInDetailsShort
-      ?: causeMessageShort
-      ?: UNKNOWN_ERROR
+    val detailsShortRawIfNoCust = throwable.message ?: causeMessage ?: UNKNOWN_ERROR
+    val detailsShortIfNoCust = if (detailsShortRawIfNoCust.length > 100) {
+      detailsShortRawIfNoCust.substring(0, 100) + "..."
+    } else {
+      detailsShortRawIfNoCust
+    }
+    val detailsShort = custDetailsShort ?: detailsShortIfNoCust
 
-    val composedExceptionMessage =
-      if (throwable.message != null) "${throwable.message}\n\n$causeMessage" else causeMessage
-    val detailsLong = custDetailsLong ?: composedExceptionMessage ?: UNKNOWN_ERROR
+    val detailsLong = when {
+      custDetailsLong != null -> custDetailsLong
+      throwable.message != null && causeMessage != null -> "${throwable.message}\n\n$causeMessage"
+      throwable.message != null -> throwable.message ?: UNKNOWN_ERROR
+      causeMessage != null -> causeMessage
+      else -> UNKNOWN_ERROR
+    }
 
     return Triple(title, detailsShort, detailsLong)
   }

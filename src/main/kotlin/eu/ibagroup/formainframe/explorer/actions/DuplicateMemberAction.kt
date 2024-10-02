@@ -17,7 +17,6 @@ package eu.ibagroup.formainframe.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import eu.ibagroup.formainframe.analytics.AnalyticsService
@@ -28,13 +27,7 @@ import eu.ibagroup.formainframe.dataops.DataOpsManager
 import eu.ibagroup.formainframe.dataops.attributes.RemoteMemberAttributes
 import eu.ibagroup.formainframe.dataops.content.synchronizer.checkFileForSync
 import eu.ibagroup.formainframe.dataops.operations.RenameOperation
-import eu.ibagroup.formainframe.explorer.ui.FetchNode
-import eu.ibagroup.formainframe.explorer.ui.FileExplorerView
-import eu.ibagroup.formainframe.explorer.ui.FileLikeDatasetNode
-import eu.ibagroup.formainframe.explorer.ui.NodeData
-import eu.ibagroup.formainframe.explorer.ui.RenameDialog
-import eu.ibagroup.formainframe.explorer.ui.cleanCacheIfPossible
-import eu.ibagroup.formainframe.explorer.ui.getExplorerView
+import eu.ibagroup.formainframe.explorer.ui.*
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 
 /**
@@ -101,7 +94,7 @@ class DuplicateMemberAction : AnAction() {
           parent.cleanCacheIfPossible(cleanBatchedQuery = true)
         }
       }.onFailure {
-        NotificationsService.getService().notifyError(it, project)
+        NotificationsService.errorNotification(it, project)
       }
     }
   }

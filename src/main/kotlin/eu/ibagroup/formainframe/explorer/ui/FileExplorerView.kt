@@ -478,7 +478,7 @@ class FileExplorerView(
                   dataOpsManager.performOperation(op, indicator)
                 }
                   .onFailure {
-                    NotificationsService.getService().notifyError(it, project)
+                    NotificationsService.errorNotification(it, project)
                   }
                 indicator.fraction += 1.0 / filteredFiles.size
               }
