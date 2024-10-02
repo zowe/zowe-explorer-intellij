@@ -35,9 +35,9 @@ import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.UnitRemoteQueryImpl
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
-import org.zowe.explorer.dataops.exceptions.NotificationCompatibleException
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
 import org.zowe.explorer.explorer.ExplorerUnit
+import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.runTask
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -166,7 +166,8 @@ class FileLikeDatasetNode(
   override fun navigate(requestFocus: Boolean) {
     val dataOpsManager = DataOpsManager.getService()
     val attributes = dataOpsManager.tryToGetAttributes(value) ?: return
-    if (attributes is RemoteDatasetAttributes) {
+    val contentSynchronizer = dataOpsManager.getContentSynchronizer(virtualFile)
+    if (attributes is RemoteDatasetAttributes && contentSynchronizer != null) {
       fetchAttributesForNodeIfMissing(
         attributes,
         dataOpsManager,

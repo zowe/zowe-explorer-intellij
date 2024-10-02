@@ -36,6 +36,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 * Feature: Correct alignment for fields in working set dialog ([745143cc](https://github.com/zowe/zowe-explorer-intellij/commit/745143cc))
 
 ### Bugfixes
+
 * Bugfix: Slow operations in EDT ([8e9266d5](https://github.com/zowe/zowe-explorer-intellij/commit/8e9266d5))
 * Bugfix: Dialog for PDS/E instead of PDS now appears if there is an entity being placed under a PDS/E ([005aadd3](https://github.com/zowe/zowe-explorer-intellij/commit/005aadd3))
 * Bugfix: Owner is now recognized correctly ([08355c8c](https://github.com/zowe/zowe-explorer-intellij/commit/08355c8c))

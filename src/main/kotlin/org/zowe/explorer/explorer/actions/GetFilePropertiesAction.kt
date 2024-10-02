@@ -26,20 +26,7 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.operations.UssChangeModeOperation
 import org.zowe.explorer.dataops.operations.UssChangeModeParams
 import org.zowe.explorer.explorer.ExplorerUnit
-import org.zowe.explorer.explorer.ui.DatasetPropertiesDialog
-import org.zowe.explorer.explorer.ui.DatasetState
-import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
-import org.zowe.explorer.explorer.ui.FileExplorerView
-import org.zowe.explorer.explorer.ui.FileLikeDatasetNode
-import org.zowe.explorer.explorer.ui.LibraryNode
-import org.zowe.explorer.explorer.ui.MemberPropertiesDialog
-import org.zowe.explorer.explorer.ui.MemberState
-import org.zowe.explorer.explorer.ui.UssDirNode
-import org.zowe.explorer.explorer.ui.UssFileNode
-import org.zowe.explorer.explorer.ui.UssFilePropertiesDialog
-import org.zowe.explorer.explorer.ui.UssFileState
-import org.zowe.explorer.explorer.ui.cleanCacheIfPossible
-import org.zowe.explorer.explorer.ui.getExplorerView
+import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.changeFileEncodingAction
 import org.zowe.explorer.utils.clone
@@ -52,9 +39,7 @@ import org.zowe.kotlinsdk.ChangeMode
  */
 class GetFilePropertiesAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /** Shows dialog with properties depending on type of the file selected by user. */
   override fun actionPerformed(e: AnActionEvent) {
@@ -68,7 +53,8 @@ class GetFilePropertiesAction : AnAction() {
         val dataOpsManager = DataOpsManager.getService()
         when (val attributes = dataOpsManager.tryToGetAttributes(virtualFile)) {
           is RemoteDatasetAttributes -> {
-            if (node is FileLikeDatasetNode) {
+            val contentSynchronizer = dataOpsManager.getContentSynchronizer(virtualFile)
+            if (node is FileLikeDatasetNode && contentSynchronizer != null) {
               node.fetchAttributesForNodeIfMissing(
                 attributes,
                 dataOpsManager,

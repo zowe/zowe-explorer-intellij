@@ -17,9 +17,9 @@ package org.zowe.explorer.explorer.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
-import org.zowe.explorer.dataops.exceptions.NotificationCompatibleException
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FileExplorerContentProvider
+import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.telemetry.NotificationsService
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
