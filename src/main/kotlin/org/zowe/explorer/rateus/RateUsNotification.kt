@@ -35,7 +35,7 @@ class RateUsNotification {
      @Suppress("DialogTitleCapitalization")
      Notification(
        EXPLORER_NOTIFICATION_GROUP_ID,
-       "For Mainframe: Rate us",
+       "Zowe Explorer: Rate us",
        "Like our plug-in so far? Leave a review!",
        NotificationType.INFORMATION
      )
