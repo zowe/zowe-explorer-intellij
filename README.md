@@ -24,7 +24,7 @@ Using our plugin you will be able to:
 
 To start using the plugin:
 
-* Install the plugin in your IntelliJ IDEA™ platform based IDE.
+* Install the plugin in your IntelliJ IDEA platform based IDE.
 * Contact your RACF administrator so that your user is in
   the [IZUUSER RACF group](https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf)
 * You are ready to go! Start working with z/OS from the IDE.
@@ -33,15 +33,15 @@ To start using the plugin:
 
 ## Where to find the docs
 
-[Zowe™ Explorer plug-in for IntelliJ IDEA™ FAQ](https://docs.zowe.org/stable/getting-started/zowe_faq#zowe-intellij-plug-in-incubator-faq)
+[Zowe Explorer plug-in for IntelliJ IDEA FAQ](https://docs.zowe.org/stable/getting-started/zowe_faq#zowe-intellij-plug-in-incubator-faq)
 
-[Installing Zowe™ Explorer plug-in for IntelliJ IDEA™](https://docs.zowe.org/stable/user-guide/intellij-install)
+[Installing Zowe Explorer plug-in for IntelliJ IDEA](https://docs.zowe.org/stable/user-guide/intellij-install)
 
-[Configuring Zowe™ Explorer plug-in for IntelliJ IDEA™](https://docs.zowe.org/stable/user-guide/intellij-configure)
+[Configuring Zowe Explorer plug-in for IntelliJ IDEA](https://docs.zowe.org/stable/user-guide/intellij-configure)
 
-[Using Zowe™ Explorer plug-in for IntelliJ IDEA™](https://docs.zowe.org/stable/user-guide/intellij-using)
+[Using Zowe Explorer plug-in for IntelliJ IDEA](https://docs.zowe.org/stable/user-guide/intellij-using)
 
-[Troubleshooting Zowe™ Explorer plug-in for IntelliJ IDEA™](https://docs.zowe.org/stable/troubleshoot/troubleshoot-intellij)
+[Troubleshooting Zowe Explorer plug-in for IntelliJ IDEA](https://docs.zowe.org/stable/troubleshoot/troubleshoot-intellij)
 
 [Contribution Guidelines](https://github.com/zowe/zowe-explorer-intellij/blob/main/CONTRIBUTING.md)
 
@@ -49,8 +49,8 @@ To start using the plugin:
 
 ## Developer guide
 
-- IntelliJ IDEA™ platform IDE version 2022.3 and later (Community will be enough)
-- Java SDK 17 (IntelliJ IDEA™ platform IDE's built-in)
+- IntelliJ IDEA platform IDE version 2022.3 and later (Community will be enough)
+- Java SDK 17 (IntelliJ IDEA platform IDE's built-in)
 
 ### Setup steps
 - Clone the project repo:
@@ -59,7 +59,7 @@ To start using the plugin:
 
 - Three options of working with the plugin are available:
     - **Run plugin** - run the plugin in development mode
-    - **Package plugin** - make a zip portable package to install it in IntelliJ IDEA™ platform IDE or publish somewhere
+    - **Package plugin** - make a zip portable package to install it in IntelliJ IDEA platform IDE or publish somewhere
     - **Run tests** - run plugin tests to check the codebase with automated tests
 - Proceed to [Contribution Guidelines](#how-to-contribute) to develop some new functionality for the project.
 
