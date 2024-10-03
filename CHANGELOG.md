@@ -1,4 +1,4 @@
-# Zowe™ Explorer plug-in for IntelliJ IDEA™ Changelog
+# Zowe® Explorer plug-in for IntelliJ IDEA™ Changelog
 
 All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be documented in this file.
 
