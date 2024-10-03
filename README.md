@@ -5,7 +5,7 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=zowe_zowe-explorer-intellij&metric=coverage)](https://sonarcloud.io/dashboard?id=zowe_zowe-explorer-intellij)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=zowe_zowe-explorer-intellij&metric=alert_status)](https://sonarcloud.io/dashboard?id=zowe_zowe-explorer-intellij)
 
-"Zowe Explorer" brings support for browsing, editing and creating data on z/OS
+"Zowe Explorer plug-in for IntelliJ IDEA" brings support for browsing, editing and creating data on z/OS
 via [z/OSMF REST API](https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-using-zosmf-rest-services).
 
 Plugin in Marketplace: [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/18688-zowe-explorer)
