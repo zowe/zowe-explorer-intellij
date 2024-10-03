@@ -15,6 +15,7 @@
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
 Zowe® Explorer for IntelliJ IDEA™ is an open-source plugin by the <a href="https://github.com/zowe/community">Zowe Community</a>, which gives access to mainframes from a modern IDE.
+The plugin is a core component of the Zowe project.
 With the help of the plugin, developers can work with mainframes through a modern interface, using a single toolbar, structured trees, and drag-and-drop operations.
 The solution suits those who need to work with z/OS datasets, USS files, and Jobs from the IntelliJ IDEA.
 <br/>
