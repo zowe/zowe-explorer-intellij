@@ -1,6 +1,6 @@
-# Zowe™ Explorer plug-in for IntelliJ IDEA™ Changelog
+# Zowe® Explorer plug-in for IntelliJ IDEA™ Changelog
 
-All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be documented in this file.
+All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be documented in this file.
 
 ## [Unreleased]
 
@@ -315,7 +315,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 
 ### Features
 
-* Feature: Support for IntelliJ IDEA™ IDE v2023.1
+* Feature: Support for IntelliJ IDEA IDE v2023.1
 
 ### Bugfixes
 
@@ -352,7 +352,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 
 ### Breaking changes
 
-* Breaking: Java 17 usage introduced. Plugin requires to use it with IntelliJ IDEA™ IDE version >= 2022.3
+* Breaking: Java 17 usage introduced. Plugin requires to use it with IntelliJ IDEA IDE version >= 2022.3
 
 ### Features
 
@@ -491,7 +491,7 @@ All notable changes to the Zowe™ Explorer plug-in for IntelliJ IDEA™ will be
 
 ### Breaking changes
 
-* Breaking: Kotlin DSL v2 usage introduced. Plugin requires to use it with IntelliJ IDEA™ IDE version >= 2022.1
+* Breaking: Kotlin DSL v2 usage introduced. Plugin requires to use it with IntelliJ IDEA IDE version >= 2022.1
 
 ### Features
 

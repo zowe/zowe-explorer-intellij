@@ -10,7 +10,7 @@
 <idea-plugin>
     <id>org.zowe.explorer</id>
     <resource-bundle>messages.FMBundle</resource-bundle>
-    <name>Zowe™ Explorer</name>
+    <name>Zowe® Explorer</name>
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
     <depends>com.intellij.modules.platform</depends>
     <description><![CDATA[
@@ -41,7 +41,7 @@ Advantages:<br/>
 <br/>
 To start using the plugin:<br/>
 <ul>
-  <li>Install the plugin in your IntelliJ IDEA™ platform based IDE.</li>
+  <li>Install the plugin in your IntelliJ IDEA platform based IDE.</li>
   <li>Contact your RACF administrator so that your user is in the <a href="https://www.ibm.com/docs/en/zos/2.4.0?topic=guide-security-structures-zosmf">IZUUSER  RACF group</a></li>
   <li>You are ready to go! Start working with z/OS from the IDE.</li>
 </ul>
@@ -57,7 +57,7 @@ Under the Open Mainframe Project umbrella, Zowe is an integrated and extensible 
 
 About the IBA Group:
 With over 30 years of experience in the mainframe domain, IBA Group is committed to maximizing your mainframe investment and enhancing your IT flexibility.
-One of the services we offer is Mainframe DevOps. Our approach is highly flexible, as we work with customers to choose the essential toolset for establishing a pipeline based on their preferences, existing tools, and the latest open-source opportunities (such as Zowe™ and plugins).
+One of the services we offer is Mainframe DevOps. Our approach is highly flexible, as we work with customers to choose the essential toolset for establishing a pipeline based on their preferences, existing tools, and the latest open-source opportunities (such as Zowe and plugins).
 <br/>
 We are also familiar with <a href="https://mainframe.ibagroupit.com/?utm_campaign=IBA_W-Mainframe&utm_source=JetBrains&utm_medium=referral&utm_content=description_zowe_explorer">Mainframe DevOps Solutions</a> of 2023 that can help modernize your mainframe and keep you competitive.
 We value your feedback and welcome any suggestions, proposals, or even complaints. Please feel free to contact us or schedule a call with our Mainframe DevOps expert.

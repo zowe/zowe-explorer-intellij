@@ -2,7 +2,7 @@
 
 #### If you have something to introduce, but there is no related issue in the project repo, then you are free to either create the issue by yourself, or contact us to help you with it.
 
-This document is a living summary of conventions and best practices for development within Zowe™ Explorer plug-in for IntelliJ IDEA™.
+This document is a living summary of conventions and best practices for development within Zowe® Explorer plug-in for IntelliJ IDEA™.
 
   - [General](#general)
   - [Coding standards](#coding-standards)
@@ -11,7 +11,7 @@ This document is a living summary of conventions and best practices for developm
   - [Steps To Contribute](#steps-to-contribute)
 
 ## General
-The following list describes general conventions for contributing to Zowe™ Explorer plug-in for IntelliJ IDEA™:
+The following list describes general conventions for contributing to Zowe Explorer plug-in for IntelliJ IDEA:
 * Feel free to ask any questions related to the project or its components.
 * Before introducing some new functionality, please, discuss it with any of the project team members.
 * Reuse logging and error handling patterns already in place.
