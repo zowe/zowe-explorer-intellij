@@ -26,7 +26,11 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.zowe.explorer.api.api
+import org.zowe.explorer.apiml.config.ApiMLConnectionConfig
+import org.zowe.explorer.apiml.config.ui.DEFAULT_GATEWAY_PATH
 import org.zowe.explorer.config.ConfigService
+import org.zowe.explorer.config.connect.BEARER_TOKEN_HEADER
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
@@ -46,6 +50,7 @@ import org.zowe.explorer.utils.toMutableList
 import org.zowe.explorer.utils.write
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.explorer.zowe.service.ZoweConfigService.Companion.lock
+import org.zowe.kotlinsdk.ApiMLGetawayApi
 import org.zowe.kotlinsdk.annotations.ZVersion
 import org.zowe.kotlinsdk.zowe.client.sdk.core.ZOSConnection
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
@@ -188,13 +193,16 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @return ConnectionConfig instance related to zowe config if it exists or null otherwise.
    */
   private fun findExistingConnection(type: ZoweConfigType, profileName: String): ConnectionConfig? {
-    val zoweConnectionList = configCrudable.find<ConnectionConfig> {
-      it.name == getZoweConnectionName(myProject, type, profileName) && it.zoweConfigPath == getZoweConfigLocation(
-        myProject,
-        type
-      )
-    }.collect(Collectors.toList())
-    return if (zoweConnectionList.isEmpty()) null else zoweConnectionList[0]
+    val predicate: (ConnectionConfig) -> Boolean = {
+      it.name == getZoweConnectionName(myProject, type, profileName)
+          && it.zoweConfigPath == getZoweConfigLocation(myProject,type)
+    }
+    val zoweConnectionList = configCrudable.find<ConnectionConfig> { predicate(it) }
+      .collect(Collectors.toList())
+    val zoweApiMLConnectionList = configCrudable.find<ApiMLConnectionConfig> { predicate(it) }
+      .collect(Collectors.toList())
+    val finalConnectionList = zoweConnectionList.plus(zoweApiMLConnectionList)
+    return if (finalConnectionList.isEmpty()) null else finalConnectionList[0]
   }
 
   /**
@@ -317,12 +325,21 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @return prepared ConnectionConfig
    */
   private fun prepareConnection(zosmfConnection: ZOSConnection, type: ZoweConfigType): ConnectionConfig {
-    val username = zosmfConnection.user
+    var username = zosmfConnection.user
     val password = zosmfConnection.password
+    val tokenValue = zosmfConnection.tokenValue
     val zoweConnection = findExistingConnection(type, zosmfConnection.profileName)?.let {
       zosmfConnection.toConnectionConfig(it.uuid, it.zVersion, type = type)
     } ?: zosmfConnection.toConnectionConfig(UUID.randomUUID().toString(), type = type)
-    CredentialService.getService().setCredentials(zoweConnection.uuid, username, password)
+    if (/*username.isEmpty() &&*/ tokenValue.isNotEmpty()) {
+      val apiMLGatewayApiUrl = "${zosmfConnection.protocol}://${zosmfConnection.host}:${zosmfConnection.zosmfPort}$DEFAULT_GATEWAY_PATH/"
+      val authorizationToken = "$BEARER_TOKEN_HEADER $tokenValue"
+      val response = api<ApiMLGetawayApi>(url = apiMLGatewayApiUrl, true)
+        .validate(authorizationToken = authorizationToken)
+        .execute()
+      username = response.body()?.userId ?: ""
+    }
+    CredentialService.getService().setCredentials(zoweConnection.uuid, username, password, tokenValue)
     return zoweConnection
   }
 
@@ -469,20 +486,33 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     owner: String = "",
     type: ZoweConfigType
   ): ConnectionConfig {
-    val basePath = if (basePath.last() == '/') basePath.dropLast(1) else basePath
+    val basePath = if (basePath.last() != '/') "$basePath/" else basePath
     val domain = "${host}:${zosmfPort}"
     val zoweUrl = "${protocol}://${domain}${basePath}"
     val isAllowSelfSigned = !(rejectUnauthorized ?: false)
 
-    return ConnectionConfig(
-      uuid,
-      getZoweConnectionName(myProject, type, profileName),
-      zoweUrl,
-      isAllowSelfSigned,
-      zVersion,
-      getZoweConfigLocation(myProject, type),
-      owner
-    )
+    return if (tokenValue.isNotEmpty()) {
+      ApiMLConnectionConfig(
+        uuid,
+        getZoweConnectionName(myProject, type, profileName),
+        zoweUrl,
+        isAllowSelfSigned,
+        zVersion,
+        getZoweConfigLocation(myProject, type),
+        owner,
+        DEFAULT_GATEWAY_PATH
+      )
+    } else {
+      ConnectionConfig(
+        uuid,
+        getZoweConnectionName(myProject, type, profileName),
+        zoweUrl,
+        isAllowSelfSigned,
+        zVersion,
+        getZoweConfigLocation(myProject, type),
+        owner
+      )
+    }
   }
 
   /**
@@ -514,7 +544,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
           .filter { it.profileName == getProfileNameFromConnName(existingConnection.name) }
         val newConnection = if (newConnectionList.isNotEmpty()) {
           newConnectionList[0].toConnectionConfig(
-            existingConnection.uuid.toString(), existingConnection.zVersion, existingConnection.owner, type = type
+            existingConnection.uuid, existingConnection.zVersion, existingConnection.owner, type = type
           )
         } else {
           ret = setZoweConfigState(ret, ZoweConfigState.NEED_TO_ADD)

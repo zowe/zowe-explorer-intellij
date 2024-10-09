@@ -22,13 +22,17 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBackgroundableTask
 import org.zowe.explorer.utils.sendTopic
 
+private const val USER_PASSWORD_SUB = "MySystem"
+
+private const val USER_TOKEN_SUB = "User&Token"
+
 /**
  * Function to create credential attributes with own key.
  * @param key string key identifying credential attributes.
  * @return generated credential attributes [CredentialAttributes].
  */
-private fun createCredentialAttributes(key: String): CredentialAttributes {
-  return CredentialAttributes(generateServiceName("MySystem", key))
+private fun createCredentialAttributes(subsystem: String, key: String): CredentialAttributes {
+  return CredentialAttributes(generateServiceName(subsystem, key))
 }
 
 /**
@@ -49,17 +53,17 @@ class CredentialServiceImpl : CredentialService {
    * @param connectionConfigUuid connection configuration universally unique identifier.
    * @return user credentials [Credentials] if they are.
    */
-  private fun getCredentials(connectionConfigUuid: String): Credentials? {
-    val credentialAttributes = createCredentialAttributes(connectionConfigUuid)
+  private fun getCredentials(subsystem: String, connectionConfigUuid: String): Credentials? {
+    val credentialAttributes = createCredentialAttributes(subsystem, connectionConfigUuid)
     var ret = service<PasswordSafe>().get(credentialAttributes)
-    //Another attempt to read the password was added, since the saving of credentials occurs in a separate thread
-    //and depends on the operating system. If we saved the credentials and try to read them in another thread,
-    //but they have not yet actually been saved in storage.
-      if (ret==null){
-        Thread.sleep(10)
-        ret = getPasswordSafeService().get(credentialAttributes)
-      }
-      return ret
+    // Another attempt to read the password was added, since the saving of credentials occurs in a separate thread
+    // and depends on the operating system. If we saved the credentials and try to read them in another thread,
+    // but they have not yet actually been saved in storage.
+    if (ret == null) {
+      Thread.sleep(10)
+      ret = getPasswordSafeService().get(credentialAttributes)
+    }
+    return ret
   }
 
   /**
@@ -67,8 +71,9 @@ class CredentialServiceImpl : CredentialService {
    * @see CredentialService.getUsernameByKey
    */
   override fun getUsernameByKey(connectionConfigUuid: String): String? {
-    val credentials = getCredentials(connectionConfigUuid)
-    return credentials?.userName
+    val credentials = getCredentials(USER_PASSWORD_SUB, connectionConfigUuid)
+    val tokenCredentials = getCredentials(USER_TOKEN_SUB, connectionConfigUuid)
+    return credentials?.userName ?: tokenCredentials?.userName
   }
 
   /**
@@ -76,19 +81,27 @@ class CredentialServiceImpl : CredentialService {
    * @see CredentialService.getPasswordByKey
    */
   override fun getPasswordByKey(connectionConfigUuid: String): String? {
-    val credentials = getCredentials(connectionConfigUuid)
+    val credentials = getCredentials(USER_PASSWORD_SUB, connectionConfigUuid)
     return credentials?.getPasswordAsString()
+  }
+
+  override fun getTokenByKey(connectionConfigUuid: String): String? {
+    val tokenCredentials = getCredentials(USER_TOKEN_SUB, connectionConfigUuid)
+    return tokenCredentials?.getPasswordAsString()
   }
 
   /**
    * Set user credentials.
    * @see CredentialService.setCredentials
    */
-  override fun setCredentials(connectionConfigUuid: String, username: String, password: String) {
-    val credentialAttributes = createCredentialAttributes(connectionConfigUuid)
+  override fun setCredentials(connectionConfigUuid: String, username: String, password: String, token: String?) {
+    val credentialAttributes = createCredentialAttributes(USER_PASSWORD_SUB, connectionConfigUuid)
     val credentials = Credentials(username, password)
+    val tokenCredentialAttributes = createCredentialAttributes(USER_TOKEN_SUB, connectionConfigUuid)
+    val tokenCredentials = Credentials(username, token)
     runBackgroundableTask("Setting user credentials") {
       getPasswordSafeService().set(credentialAttributes, credentials)
+      getPasswordSafeService().set(tokenCredentialAttributes, tokenCredentials)
       sendTopic(CREDENTIALS_CHANGED).onChanged(connectionConfigUuid)
     }
   }
@@ -98,8 +111,10 @@ class CredentialServiceImpl : CredentialService {
    * @see CredentialService.clearCredentials
    */
   override fun clearCredentials(connectionConfigUuid: String) {
-    val credentialAttributes = createCredentialAttributes(connectionConfigUuid)
+    val credentialAttributes = createCredentialAttributes(USER_PASSWORD_SUB, connectionConfigUuid)
+    val tokenCredentialAttributes = createCredentialAttributes(USER_TOKEN_SUB, connectionConfigUuid)
     getPasswordSafeService().set(credentialAttributes, null)
+    getPasswordSafeService().set(tokenCredentialAttributes, null)
   }
 
 }

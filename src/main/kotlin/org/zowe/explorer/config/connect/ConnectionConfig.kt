@@ -21,7 +21,7 @@ import org.zowe.kotlinsdk.annotations.ZVersion
  * Class which represents connection config.
  * Instances of this class are saved and can be reloaded after Intellij closed.
  */
-class ConnectionConfig : ConnectionConfigBase {
+open class ConnectionConfig : ConnectionConfigBase {
 
   @Column
   override var name = ""

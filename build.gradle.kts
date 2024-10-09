@@ -69,7 +69,7 @@ val junitVersion = "5.11.1"
 val mockkVersion = "1.13.12"
 val ibmMqVersion = "9.4.0.0"
 val jGraphTVersion = "1.5.2"
-val zoweKotlinSdkVersion = "0.5.0"
+val zoweKotlinSdkVersion = "0.5.0-rc.13"
 val javaKeytarVersion = "1.0.0"
 
 plugins {

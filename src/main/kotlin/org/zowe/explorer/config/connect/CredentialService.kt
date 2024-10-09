@@ -22,6 +22,8 @@ import okhttp3.Credentials
 
 const val USER_OR_OWNER_SYMBOLS_MAX_SIZE: Int = 8
 
+const val BEARER_TOKEN_HEADER = "Bearer"
+
 /**
  * Interface which represents objects that track changes in credentials
  */
@@ -85,6 +87,11 @@ interface CredentialService {
       }
     }
 
+    @JvmStatic
+    fun <Connection : ConnectionConfigBase> getToken(connectionConfig: Connection): String? {
+      return getService().getTokenByKey(connectionConfig.uuid)
+    }
+
   }
 
   /**
@@ -101,13 +108,15 @@ interface CredentialService {
    */
   fun getPasswordByKey(connectionConfigUuid: String): String?
 
+  fun getTokenByKey(connectionConfigUuid: String): String?
+
   /**
    * Sets user and password for particular connection config
    * @param connectionConfigUuid id of connection config
    * @param username username to set in config
    * @param password password to set in config
    */
-  fun setCredentials(connectionConfigUuid: String, username: String, password: String)
+  fun setCredentials(connectionConfigUuid: String, username: String, password: String, token: String? = null)
 
   /**
    * Resets user and password in particular connection config
@@ -119,7 +128,12 @@ interface CredentialService {
 
 val ConnectionConfig.authToken: String
   get() = runTask("Retrieving information for auth token") {
-    val username = CredentialService.getUsername(this)
-    val password = CredentialService.getPassword(this)
-    Credentials.basic(username, password)
+    val apimlAuthenticationToken = CredentialService.getToken(this)
+    if (apimlAuthenticationToken != null) {
+      "$BEARER_TOKEN_HEADER $apimlAuthenticationToken"
+    } else {
+      val username = CredentialService.getUsername(this)
+      val password = CredentialService.getPassword(this)
+      Credentials.basic(username, password)
+    }
   }

@@ -231,7 +231,8 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       "testPassword",
       rejectUnauthorized = true,
       basePath = "/base/config/path/",
-      profileName = "zosmf"
+      profileName = "zosmf",
+      tokenValue = ""
     )
     val zosConnList1 = mutableListOf<ZOSConnection>(zossConn1)
     every { zoweConfigMock.getListOfZosmfConections() } returns zosConnList1
@@ -542,7 +543,8 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
           "testPassword",
           rejectUnauthorized = true,
           basePath = "/base/config/path/",
-          profileName = "zosmf"
+          profileName = "zosmf",
+          tokenValue = ""
         )
         zosConnList.clear()
         zosConnList.add(conn)
@@ -569,7 +571,8 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
             "wrongPass",
             rejectUnauthorized = true,
             basePath = "/base/config/path/",
-            profileName = "zosmf"
+            profileName = "zosmf",
+            tokenValue = ""
           )
         )
         mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.NEED_TO_UPDATE
@@ -584,7 +587,8 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
             "testPassword",
             rejectUnauthorized = true,
             basePath = "/base/config/path/",
-            profileName = "zosmf"
+            profileName = "zosmf",
+            tokenValue = ""
           )
         )
         mockedZoweConfigService.getZoweConfigState(false, type) shouldBe ZoweConfigState.NEED_TO_UPDATE
@@ -709,7 +713,8 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
         "testPassword",
         rejectUnauthorized = true,
         basePath = "/base/config/path/",
-        profileName = "zosmf1"
+        profileName = "zosmf1",
+        tokenValue = ""
       )
       zosConnList1.clear()
       zosConnList1.add(zossConn2)

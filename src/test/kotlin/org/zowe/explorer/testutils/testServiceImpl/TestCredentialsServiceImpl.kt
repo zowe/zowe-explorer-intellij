@@ -26,7 +26,11 @@ open class TestCredentialsServiceImpl : CredentialService {
       return "testPassword"
     }
 
-    override fun setCredentials(connectionConfigUuid: String, username: String, password: String) {
+    override fun getTokenByKey(connectionConfigUuid: String): String? {
+      return "testToken"
+    }
+
+    override fun setCredentials(connectionConfigUuid: String, username: String, password: String, token: String?) {
     }
 
     override fun clearCredentials(connectionConfigUuid: String) {
@@ -42,8 +46,12 @@ open class TestCredentialsServiceImpl : CredentialService {
     return this.testInstance.getPasswordByKey(connectionConfigUuid)
   }
 
-  override fun setCredentials(connectionConfigUuid: String, username: String, password: String) {
-    this.testInstance.setCredentials(connectionConfigUuid, username, password)
+  override fun getTokenByKey(connectionConfigUuid: String): String? {
+    return this.testInstance.getTokenByKey(connectionConfigUuid)
+  }
+
+  override fun setCredentials(connectionConfigUuid: String, username: String, password: String, token: String?) {
+    this.testInstance.setCredentials(connectionConfigUuid, username, password, token)
   }
 
   override fun clearCredentials(connectionConfigUuid: String) {

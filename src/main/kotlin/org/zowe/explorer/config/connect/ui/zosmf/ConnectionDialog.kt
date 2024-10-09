@@ -294,7 +294,7 @@ class ConnectionDialog(
           .bindText(state::connectionUrl)
           .validationOnApply {
             it.text = it.text.trim().removeTrailingSlashes()
-            validateForBlank(it) ?: validateZosmfUrl(it)
+            validateForBlank(it) /*?: validateZosmfUrl(it)*/
           }
           .also { urlTextField = it.component }
           .align(AlignX.FILL)

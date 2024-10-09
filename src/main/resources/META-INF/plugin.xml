@@ -113,6 +113,8 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <configDeclaration implementation="org.zowe.explorer.config.connect.ConnectionConfigDeclarationFactory"/>
 
+        <configDeclaration implementation="org.zowe.explorer.apiml.config.ApiMLConnectionInfoConfigDeclarationFactory"/>
+
         <configDeclaration implementation="org.zowe.explorer.tso.config.TSOSessionConfigDeclarationFactory"/>
 
         <configDeclaration implementation="org.zowe.explorer.config.ws.FilesWorkingSetConfigDeclarationFactory"/>
