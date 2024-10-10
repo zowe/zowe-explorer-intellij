@@ -101,6 +101,10 @@ Thank you for considering IBA Group for your mainframe needs.
         <extensionPoint name="operationRunnerV3"
                         interface="org.zowe.explorer.v3.operations.OperationRunner"
                         dynamic="true"/>
+
+        <extensionPoint name="configDeclarator"
+                        interface="org.zowe.explorer.v3.state.config.ConfigDeclarator"
+                        dynamic="true"/>
     </extensionPoints>
 
     <applicationListeners>
@@ -115,6 +119,12 @@ Thank you for considering IBA Group for your mainframe needs.
     </applicationListeners>
 
     <extensions defaultExtensionNs="org.zowe.explorer">
+
+        <configDeclarator implementation="org.zowe.explorer.v3.state.config.files.FilesWorkingSetConfigDeclarator"/>
+        <configDeclarator implementation="org.zowe.explorer.v3.state.config.connection.HttpConnectionConfigDeclarator"/>
+        <configDeclarator implementation="org.zowe.explorer.v3.state.config.connection.ApiMlConnectionConfigDeclarator"/>
+        <configDeclarator implementation="org.zowe.explorer.v3.state.config.jes.JesWorkingSetConfigDeclarator"/>
+        <configDeclarator implementation="org.zowe.explorer.v3.state.config.tso.TsoSessionConfigDeclarator"/>
 
         <configDeclaration implementation="org.zowe.explorer.config.connect.ConnectionConfigDeclarationFactory"/>
 
