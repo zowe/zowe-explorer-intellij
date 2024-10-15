@@ -28,7 +28,9 @@ import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.testutils.testServiceImpl.*
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.ShouldSpec
-import io.mockk.clearMocks
+import io.mockk.*
+import org.zowe.explorer.zowe.ZoweStartupActivity
+import org.zowe.kotlinsdk.zowe.config.DefaultKeytarWrapper
 
 private var appFixture: CodeInsightTestFixture? = null
 
@@ -74,5 +76,8 @@ abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : Sho
 
   init {
     body()
+    // TODO: rework
+    mockkConstructor(ZoweStartupActivity::class)
+    every { anyConstructed<ZoweStartupActivity>().runActivity(any()) } just Runs
   }
 }

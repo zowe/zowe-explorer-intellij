@@ -151,6 +151,12 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
   /** Delete selected connections from Connections table */
   private fun removeSelectedConnections() {
     val indices = connectionsTable?.selectedRows
+    val connToRemove =
+      indices?.map { connectionsTableModel?.get(it) }?.toSet()
+    connToRemove?.forEach {
+      if (it?.zoweConfigPath != null && zoweConfigStates.contains(it.connectionName))
+          zoweConfigStates.remove(it.connectionName)
+    }
     indices?.forEachIndexed { i, idx ->
       connectionsTableModel?.removeRow(idx - i)
     }
