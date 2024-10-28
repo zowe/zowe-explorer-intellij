@@ -32,6 +32,7 @@ import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.service // TODO: remove in v1.*.*-223 and greater
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.ChangeMode
+import org.zowe.kotlinsdk.FileModeValue
 import org.zowe.kotlinsdk.FileType
 
 /**
@@ -58,67 +59,73 @@ abstract class CreateUssEntityAction : AnAction() {
     val view = e.getExplorerView<FileExplorerView>() ?: return
     val selected = view.mySelectedNodesData[0]
     val selectedNode = selected.node
-    val node = if (selectedNode is UssFileNode) {
-      selectedNode.parent?.takeIf { it is UssDirNode }
+
+    val node: UssDirNode = if (selectedNode is UssFileNode) {
+      selectedNode.parent as? UssDirNode
     } else {
-      selectedNode.takeIf { it is UssDirNode }
+      selectedNode as UssDirNode
     } ?: return
+
+    val connectionConfig = node.unit.connectionConfig ?: return
+    val dataOpsManager = DataOpsManager.instance
+
     val file = node.virtualFile
-    // TODO: Why is it highlighted ???
-    if (node is ExplorerUnitTreeNodeBase<*, *, *>) {
-      val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
-      val dataOpsManager = node.unit.explorer.componentManager.service<DataOpsManager>()
-      val filePath = if (file != null) {
-        dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
-          .getAttributes(file)?.path
+    val attributes = file?.let {
+      dataOpsManager.getAttributesService<RemoteUssAttributes, MFVirtualFile>()
+        .getAttributes(it)
+    }
+
+    val filePath = attributes?.path ?: node.value.path
+
+    showUntilDone(
+      initialState = fileType.apply { path = filePath },
+      { initState -> CreateFileDialog(e.project, state = initState, filePath = filePath) }
+    ) {
+      var res = false
+      val allocationParams = it.toAllocationParams()
+      val fileType = if (allocationParams.parameters.type == FileType.FILE) {
+        "File"
       } else {
-        (node as UssDirNode).value.path
+        "Directory"
       }
-      if (filePath != null) {
-        showUntilDone(
-          initialState = fileType.apply { path = filePath },
-          { initState -> CreateFileDialog(e.project, state = initState, filePath = filePath) }
-        ) {
-          var res = false
-          val allocationParams = it.toAllocationParams()
-          val fileType = if (allocationParams.parameters.type == FileType.FILE) {
-            "File"
-          } else {
-            "Directory"
-          }
-          runModalTask(
-            title = "Creating $fileType ${allocationParams.fileName}",
-            project = e.project,
-            cancellable = true
-          ) { indicator ->
-            val ussDirNode = node.castOrNull<UssDirNode>()
-            runCatching {
-              dataOpsManager.performOperation(
-                operation = UssAllocationOperation(
-                  request = allocationParams,
-                  connectionConfig = connectionConfig
-                ),
-                progressIndicator = indicator
-              )
+      runModalTask(
+        title = "Creating $fileType ${allocationParams.fileName}",
+        project = e.project,
+        cancellable = true
+      ) { indicator ->
+        runCatching {
+          dataOpsManager.performOperation(
+            operation = UssAllocationOperation(
+              request = allocationParams,
+              connectionConfig = connectionConfig
+            ),
+            progressIndicator = indicator
+          )
 
-              val fileFetchProvider = dataOpsManager
-                .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
-                  UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
-                )
-              ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }
+          val fileFetchProvider = dataOpsManager
+            .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
+              UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
+            )
 
-              changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
-
-            }.onSuccess {
-              ussDirNode?.cleanCache(false)
-              res = true
-            }.onFailure { t ->
-              view.explorer.reportThrowable(t, e.project)
+          attributes?.fileMode?.let { fm ->
+            if (checkReadPermissionsBeforeReload(fm.owner)) {
+              node.query?.let { query -> fileFetchProvider.reload(query) }
             }
           }
-          res
+
+          changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
+        }.onSuccess {
+          attributes?.fileMode?.let { fm ->
+            if (checkReadPermissionsBeforeReload(fm.owner)) {
+              node.cleanCache(false)
+            }
+          }
+          res = true
+        }.onFailure { t ->
+          view.explorer.reportThrowable(t, e.project)
         }
       }
+      res
     }
   }
 
@@ -174,5 +181,12 @@ abstract class CreateUssEntityAction : AnAction() {
     if (node.castOrNull<ExplorerUnitTreeNodeBase<*, *, *>>()?.unit?.connectionConfig == null) {
       e.presentation.isEnabled = false
     }
+  }
+
+  private fun checkReadPermissionsBeforeReload(permission: Int): Boolean {
+    return permission == FileModeValue.READ.mode ||
+      permission == FileModeValue.READ_EXECUTE.mode ||
+      permission == FileModeValue.READ_WRITE.mode ||
+      permission == FileModeValue.READ_WRITE_EXECUTE.mode
   }
 }
