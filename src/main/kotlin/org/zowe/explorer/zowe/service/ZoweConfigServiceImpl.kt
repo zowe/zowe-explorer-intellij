@@ -14,10 +14,8 @@
 
 package org.zowe.explorer.zowe.service
 
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -38,6 +36,7 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.runTask
@@ -63,9 +62,6 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 import kotlin.collections.set
-
-
-const val ZOWE_CONFIG_NOTIFICATION_GROUP_ID = "org.zowe.explorerzowe.service.ZoweConfigNotificationGroupId"
 
 const val ZOWE_PROJECT_PREFIX = "zowe-"
 
@@ -124,22 +120,6 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   override var globalZoweConfig: ZoweConfig? = null
 
   /**
-   * Displays an error notification if an error was received.
-   * @param t thrown error.
-   * @param title error text.
-   */
-  private fun notifyError(t: Throwable, title: String? = null) {
-    Notifications.Bus.notify(
-      Notification(
-        ZOWE_CONFIG_NOTIFICATION_GROUP_ID,
-        title ?: "Error with Zowe config file",
-        t.message ?: t.toString(),
-        NotificationType.ERROR
-      )
-    )
-  }
-
-  /**
    * Checks project contains zowe.config.json. If zowe config presented
    * it will parse it and save to object model inside zoweConfig field.
    * @return ZoweConfig instance if zowe.config.json is presented or null otherwise.
@@ -162,7 +142,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         }
       }
     } catch (e: Exception) {
-      throw Exception("Cannot parse $type Zowe config file")
+      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
+      return null
     }
   }
 
@@ -306,7 +287,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       }
 
     } catch (e: Exception) {
-      notifyError(e)
+      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
     }
   }
 
@@ -384,7 +365,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       }
 
     } catch (e: Exception) {
-      notifyError(e)
+      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
     }
   }
 
@@ -490,11 +471,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   override fun getZoweConfigState(scanProject: Boolean, type: ZoweConfigType): ZoweConfigState {
     if (scanProject) {
-      try {
         scanForZoweConfig(type)
-      } catch (e: Exception) {
-        notifyError(e)
-      }
     }
     val zoweConfig = if (type == ZoweConfigType.LOCAL)
       localZoweConfig ?: return ZoweConfigState.NOT_EXISTS

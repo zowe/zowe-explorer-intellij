@@ -41,8 +41,10 @@ import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.WorkingSet
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
 import org.zowe.explorer.utils.crudable.*
 import org.zowe.explorer.utils.runIfTrue
 import org.zowe.explorer.utils.validateForBlank
@@ -126,6 +128,21 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     every { crudableMockk.addOrUpdate(any<ConnectionConfig>()) } answers {
       isAddOrUpdateConnectionCalled = true
       Optional.of(ConnectionConfig())
+    }
+
+    val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+    notificationsService.testInstance = object : TestNotificationsServiceImpl() {
+      override fun notifyError(
+        t: Throwable,
+        project: Project?,
+        custTitle: String?,
+        custDetailsShort: String?,
+        custDetailsLong: String?
+      ) {
+        if (custTitle == "Error with Zowe config file") {
+          notified = true
+        }
+      }
     }
 
     afterEach {

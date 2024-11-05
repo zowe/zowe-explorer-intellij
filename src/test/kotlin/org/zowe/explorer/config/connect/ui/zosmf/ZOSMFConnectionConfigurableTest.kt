@@ -14,6 +14,9 @@
 
 package org.zowe.explorer.config.connect.ui.zosmf
 
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -29,7 +32,9 @@ import org.zowe.explorer.common.ui.ValidatingTableView
 import org.zowe.explorer.config.ConfigStateV2
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.makeCrudableWithoutListeners
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
 import org.zowe.kotlinsdk.annotations.ZVersion
 import org.zowe.kotlinsdk.zowe.config.DefaultKeytarWrapper
 import org.zowe.kotlinsdk.zowe.config.KeytarWrapper
@@ -49,6 +54,7 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
   var isShowOkCancelDialogCalled = false
   var isFindFileByNioPathCalled = false
   var isInputStreamCalled = false
+  var notified = false
 
   afterSpec {
     clearAllMocks()
@@ -59,9 +65,25 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
     isShowOkCancelDialogCalled = false
     isFindFileByNioPathCalled = false
     isInputStreamCalled = false
+    notified = false
   }
 
   context("ZOSMFConnectionConfigurable:") {
+
+    val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+    notificationsService.testInstance = object : TestNotificationsServiceImpl() {
+      override fun notifyError(
+        t: Throwable,
+        project: Project?,
+        custTitle: String?,
+        custDetailsShort: String?,
+        custDetailsLong: String?
+      ) {
+        if (custTitle == "Error with Zowe config file") {
+          notified = true
+        }
+      }
+    }
 
     val state = ConnectionDialogState(
       connectionUuid = "0000",
@@ -162,6 +184,42 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
           "    \"\$schema\": \"./zowe.schema.json\",\n" +
           "    \"profiles\": {\n" +
           "        \"zosmf\": {\n" +
+          "}"
+      fileCont.toByteArray().inputStream()
+    }
+    every { vfMock.path } returns "/zowe/file/path/zowe.config.json"
+    every { vfMock.charset } returns Charsets.UTF_8
+    every { vfMock.setBinaryContent(any()) } just Runs
+
+    mockkObject(ZoweConfig)
+    val confMap = mutableMapOf<String, MutableMap<String, String>>()
+    val configCredentialsMap = mutableMapOf<String, String>()
+    configCredentialsMap["profiles.base.properties.user"] = "testUser"
+    configCredentialsMap["profiles.base.properties.password"] = "testPass"
+    confMap.clear()
+    confMap["/zowe/file/path/zowe.config.json"] = configCredentialsMap
+    every { ZoweConfig.Companion["readZoweCredentialsFromStorage"](any<KeytarWrapper>()) } returns confMap
+
+    should("updateZoweConfigIfNeeded throw JsonSyntaxException") {
+      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
+        ?.let {
+          it.isAccessible = true
+          try {
+            it.call(zOSMFConnectionConfigurableMock, state)
+          } catch (t: Throwable) {
+            println("ghjkk")
+            t.cause.toString().shouldContain("Zowe config file not found")
+          }
+        }
+      notified  shouldBe true
+    }
+
+    every { vfMock.inputStream } answers {
+      isInputStreamCalled = true
+      val fileCont = "{\n" +
+          "    \"\$schema\": \"./zowe.schema.json\",\n" +
+          "    \"profiles\": {\n" +
+          "        \"zosmf\": {\n" +
           "            \"type\": \"zosmf\",\n" +
           "            \"properties\": {\n" +
           "                \"port\": 443\n" +
@@ -205,18 +263,6 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
           "}"
       fileCont.toByteArray().inputStream()
     }
-    every { vfMock.path } returns "/zowe/file/path/zowe.config.json"
-    every { vfMock.charset } returns Charsets.UTF_8
-    every { vfMock.setBinaryContent(any()) } just Runs
-
-    mockkObject(ZoweConfig)
-    val confMap = mutableMapOf<String, MutableMap<String, String>>()
-    val configCredentialsMap = mutableMapOf<String, String>()
-    configCredentialsMap["profiles.base.properties.user"] = "testUser"
-    configCredentialsMap["profiles.base.properties.password"] = "testPass"
-    confMap.clear()
-    confMap["/zowe/file/path/zowe.config.json"] = configCredentialsMap
-    every { ZoweConfig.Companion["readZoweCredentialsFromStorage"](any<KeytarWrapper>()) } returns confMap
 
     should("updateZoweConfigIfNeeded  success") {
       zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
