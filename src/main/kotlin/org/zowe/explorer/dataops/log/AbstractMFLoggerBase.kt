@@ -127,6 +127,13 @@ abstract class AbstractMFLoggerBase<PInfo: MFProcessInfo, LFetcher: LogFetcher<P
   }
 
   /**
+   * Fetch log files
+   */
+  override fun fetchLog() {
+    logFetcher.fetchLog(mfProcessInfo)
+  }
+
+  /**
    * Sets onNextLog handler.
    */
   override fun onNextLog(nextLogHandler: (Array<String>) -> Unit) {

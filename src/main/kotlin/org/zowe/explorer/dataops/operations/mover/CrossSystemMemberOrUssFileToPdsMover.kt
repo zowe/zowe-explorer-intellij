@@ -47,6 +47,8 @@ class CrossSystemMemberOrUssFileToPdsMoverFactory : OperationRunnerFactory {
  */
 class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
+  private val sourceContentType = "text/plain; charset=UTF-8"
+
   /**
    * Checks that source is member or uss file, dest is partitioned data set, and they are located inside different systems.
    * @see OperationRunner.canRun
@@ -94,17 +96,22 @@ class CrossSystemMemberOrUssFileToPdsMover(val dataOpsManager: DataOpsManager) :
     else XIBMDataType(XIBMDataType.Type.TEXT)
 
     val sourceContent = sourceFile.contentsToByteArray()
-    val contentToUpload =
-      if (sourceFile.fileType.isBinary) sourceContent
-      else sourceContent.toString(sourceFile.charset).replace("\r\n", "\n")
-        .toByteArray(DEFAULT_TEXT_CHARSET).addNewLine()
+
+    // do not convert bytes to default ISO. z/OSMF does this conversion by calling iconv and produce the desired result
+    val contentToUpload = if (sourceFile.fileType.isBinary) sourceContent else
+      sourceContent
+        .toString(sourceFile.charset)
+        .replace("\r\n", "\n")
+        .toByteArray()
+        .addNewLine()
 
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToDatasetMember(
       authorizationToken = destConnectionConfig.authToken,
       datasetName = destAttributes.name,
       memberName = memberName,
       content = contentToUpload,
-      xIBMDataType = xIBMDataType
+      xIBMDataType = xIBMDataType,
+      contentType = sourceContentType
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
     }.execute()

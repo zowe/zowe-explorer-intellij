@@ -80,7 +80,8 @@ data class RemoteUssAttributes(
   val gid: Long? = null,
   val groupId: String? = null,
   val modificationTime: String? = null,
-  val symlinkTarget: String? = null
+  val symlinkTarget: String? = null,
+  var charset: Charset = DEFAULT_BINARY_CHARSET
 ) : MFRemoteFileAttributes<ConnectionConfig, UssRequester>, Copyable {
 
   /**
@@ -102,7 +103,8 @@ data class RemoteUssAttributes(
     gid = ussFile.gid,
     groupId = ussFile.groupId,
     modificationTime = ussFile.modificationTime,
-    symlinkTarget = ussFile.target
+    symlinkTarget = ussFile.target,
+    charset = DEFAULT_BINARY_CHARSET
   )
 
   /**
@@ -175,8 +177,6 @@ data class RemoteUssAttributes(
         || mode == FileModeValue.WRITE_EXECUTE.mode
         || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
-
-  var charset: Charset = DEFAULT_BINARY_CHARSET
 
   override var contentMode: XIBMDataType = XIBMDataType(XIBMDataType.Type.BINARY)
 

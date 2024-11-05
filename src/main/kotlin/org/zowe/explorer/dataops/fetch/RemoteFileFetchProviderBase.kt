@@ -15,7 +15,6 @@
 package org.zowe.explorer.dataops.fetch
 
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,6 +23,7 @@ import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Query
 import org.zowe.explorer.dataops.RemoteQuery
+import org.zowe.explorer.dataops.UnitRemoteQueryImpl
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.services.ErrorSeparatorService
 import org.zowe.explorer.utils.castOrNull
@@ -223,7 +223,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
           }
         }
 
-      refreshCacheOfCollidingQuery(query, files)
+      //TODO: the only known evidence to use refresh of colliding query is related to BatchedQuery
+      query.castOrNull(UnitRemoteQueryImpl::class.java) ?: refreshCacheOfCollidingQuery(query, files)
 
       cache[query] = files
       cacheState[query] = CacheState.FETCHED

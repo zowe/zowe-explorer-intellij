@@ -321,6 +321,7 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
         every { jobParent1.query?.request } returns mockk()
         every { jobParent1.query?.request?.prefix } returns "prefix_1"
         every { jobParent1.query?.request?.owner } returns "owner"
+        every { jobParent1.query?.request?.jobId } returns ""
         every { jobParent1.query?.request?.userCorrelatorFilter } returns "filter_1"
 
         every { jobParentParent1.unit } returns mockk()
@@ -334,6 +335,7 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
         every { jobParent2.query?.request } returns mockk()
         every { jobParent2.query?.request?.prefix } returns "prefix_2"
         every { jobParent2.query?.request?.owner } returns "owner"
+        every { jobParent2.query?.request?.jobId } returns ""
         every { jobParent2.query?.request?.userCorrelatorFilter } returns "filter_2"
         every { jobParentParent2.unit } returns mockk()
         every { jobParentParent2.unit.name } returns "secondWS"
@@ -519,10 +521,8 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
           should("purge actionPerformed when jobs have been purged successfully, but refresh by filter fails") {
             every { responseMockk.isSuccessful } returns false
             every { responseMockk.body() } returns listOf()
-            every { jobParent1.unit } returns mockk()
-            every { jobParent1.unit.name } returns "firstFilter"
-            every { jobParent2.unit } returns mockk()
-            every { jobParent2.unit.name } returns "secondFilter"
+            every { jobParent1.name } returns "firstFilter"
+            every { jobParent2.name } returns "secondFilter"
 
             assertThrows(RuntimeException::class.java) {
               purgeAction.actionPerformed(mockActionEventForJesEx)

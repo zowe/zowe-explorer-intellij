@@ -125,14 +125,14 @@ class JesFilterNode(
   private fun selector(key: SortQueryKeys): (AbstractTreeNode<*>) -> String? {
     return {
       val jobInfo =
-        (DataOpsManager.getService().tryToGetAttributes((it as JobNode).value) as RemoteJobAttributes).jobInfo
+        (DataOpsManager.getService().tryToGetAttributes((it as JobNode).value) as? RemoteJobAttributes)?.jobInfo
       when (key) {
-        SortQueryKeys.JOB_NAME -> jobInfo.jobName
-        SortQueryKeys.JOB_OWNER -> jobInfo.owner
-        SortQueryKeys.JOB_STATUS -> jobInfo.status?.value
-        SortQueryKeys.JOB_ID -> jobInfo.jobId
-        SortQueryKeys.JOB_CREATION_DATE -> jobInfo.execStarted
-        SortQueryKeys.JOB_COMPLETION_DATE -> jobInfo.execEnded
+        SortQueryKeys.JOB_NAME -> jobInfo?.jobName
+        SortQueryKeys.JOB_OWNER -> jobInfo?.owner
+        SortQueryKeys.JOB_STATUS -> jobInfo?.status?.value
+        SortQueryKeys.JOB_ID -> jobInfo?.jobId
+        SortQueryKeys.JOB_CREATION_DATE -> jobInfo?.execStarted
+        SortQueryKeys.JOB_COMPLETION_DATE -> jobInfo?.execEnded
         else -> null
       }
     }
