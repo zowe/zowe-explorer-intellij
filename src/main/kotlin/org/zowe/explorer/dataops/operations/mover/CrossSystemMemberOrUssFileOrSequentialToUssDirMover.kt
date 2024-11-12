@@ -26,7 +26,10 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.DeleteOperation
 import org.zowe.explorer.dataops.operations.OperationRunner
 import org.zowe.explorer.dataops.operations.OperationRunnerFactory
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.utils.applyIfNotNull
+import org.zowe.explorer.utils.cancelByIndicator
+import org.zowe.explorer.utils.log
+import org.zowe.explorer.utils.setUssFileTag
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
@@ -54,15 +57,16 @@ class CrossSystemMemberOrUssFileOrSequentialToUssDirMover(val dataOpsManager: Da
    * @see OperationRunner.canRun
    */
   override fun canRun(operation: MoveCopyOperation): Boolean {
-    return !operation.source.isDirectory &&
-      operation.destination.isDirectory &&
+    return !operation.source.isDirectory
+      && operation.destination.isDirectory
+      &&
       (operation.sourceAttributes is RemoteMemberAttributes
-          || operation.sourceAttributes is RemoteUssAttributes
-          || operation.sourceAttributes is RemoteDatasetAttributes) &&
-      operation.destinationAttributes is RemoteUssAttributes &&
-      operation.source is MFVirtualFile &&
-      operation.destination is MFVirtualFile &&
-      operation.commonUrls(dataOpsManager).isEmpty()
+        || operation.sourceAttributes is RemoteUssAttributes
+        || operation.sourceAttributes is RemoteDatasetAttributes)
+      && operation.destinationAttributes is RemoteUssAttributes
+      && operation.source is MFVirtualFile
+      && operation.destination is MFVirtualFile
+      && operation.commonUrls(dataOpsManager).isEmpty()
   }
 
   override val log = log<CrossSystemMemberOrUssFileOrSequentialToUssDirMover>()

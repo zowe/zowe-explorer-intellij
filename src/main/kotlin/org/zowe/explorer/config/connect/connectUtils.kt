@@ -22,10 +22,14 @@ import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
-import org.zowe.explorer.tso.TSOWindowFactory
 import org.zowe.explorer.tso.config.TSOConfigWrapper
 import org.zowe.explorer.tso.config.ui.TSOSessionDialogState
-import org.zowe.kotlinsdk.*
+import org.zowe.explorer.tso.getTsoMessageQueue
+import org.zowe.kotlinsdk.TsoApi
+import org.zowe.kotlinsdk.TsoCmdRequestBody
+import org.zowe.kotlinsdk.TsoCmdResult
+import org.zowe.kotlinsdk.TsoCmdState
+import org.zowe.kotlinsdk.TsoData
 import org.zowe.kotlinsdk.annotations.ZVersion
 
 const val WHO_AM_I_CMD: String = "oshell whoami"
@@ -53,7 +57,7 @@ fun whoAmI(connectionConfig: ConnectionConfig): String? {
       if (tsoStartResponse.servletKey?.isNotEmpty() == true) {
         val tsoSession = TSOConfigWrapper(state.tsoSessionConfig, connectionConfig, tsoStartResponse)
         while (tsoSession.getTSOResponseMessageQueue().last().tsoPrompt == null) {
-          val response = TSOWindowFactory.getTsoMessageQueue(tsoSession)
+          val response = getTsoMessageQueue(tsoSession)
           tsoSession.setTSOResponseMessageQueue(response.tsoData)
         }
         var sendCommandResponse = DataOpsManager.getService().performOperation(
@@ -68,7 +72,7 @@ fun whoAmI(connectionConfig: ConnectionConfig): String? {
         queuedMessages.addAll(sendCommandResponse.tsoData)
         // consume all the TSO messages while tsoPrompt become not null
         while (sendCommandResponse.tsoData.last().tsoPrompt == null) {
-          sendCommandResponse = TSOWindowFactory.getTsoMessageQueue(tsoSession)
+          sendCommandResponse = getTsoMessageQueue(tsoSession)
           queuedMessages.addAll(sendCommandResponse.tsoData)
         }
         DataOpsManager.getService().performOperation(

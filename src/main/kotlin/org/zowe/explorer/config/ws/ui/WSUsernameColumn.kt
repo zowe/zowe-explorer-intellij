@@ -20,6 +20,7 @@ import org.zowe.explorer.config.connect.ui.renderer.UsernameColumnRenderer
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import javax.swing.table.TableCellRenderer
 
+private val NO_USERNAME_MESSAGE = message("configurable.ws.table.username.error.empty")
 
 /**
  * Class which represents working set username column in working set table model
@@ -27,7 +28,7 @@ import javax.swing.table.TableCellRenderer
 class WSUsernameColumn<WSConfig : WorkingSetConfig>(
   private val getUsername: (WSConfig) -> String,
   private val checkIsZoweConfig: (WSConfig) -> Boolean
-) : ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.username.name")) {
+) : ColumnInfo<WSConfig, String>(message("configurable.ws.table.username.name")) {
 
   /**
    * Overloaded getter method. Gets the username from crudable by connection config uuid
@@ -48,6 +49,13 @@ class WSUsernameColumn<WSConfig : WorkingSetConfig>(
    */
   override fun isCellEditable(item: WSConfig?): Boolean {
     return false
+  }
+
+  /**
+   * Gets the UI tooltip of the username column when mouse is hovered
+   */
+  override fun getTooltipText(): String {
+    return message("configurable.ws.table.username.tooltip")
   }
 
 }

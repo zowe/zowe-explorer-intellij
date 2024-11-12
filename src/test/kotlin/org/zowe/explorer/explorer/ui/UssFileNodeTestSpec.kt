@@ -26,8 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.AttributesService
 import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributesService
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.SyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
@@ -45,6 +47,8 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.*
+import org.zowe.kotlinsdk.FileMode
+import java.time.LocalDateTime
 import javax.swing.Icon
 import javax.swing.tree.TreePath
 import kotlin.reflect.KFunction
@@ -328,6 +332,16 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
     context("UssFileNode update") {
       var textAdded = false
       var updatePerformed = false
+      val mockedUssAttributesService = mockk<RemoteUssAttributesService>()
+      val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+        @Suppress("UNCHECKED_CAST")
+        override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
+          attributesClass: Class<out A>, vFileClass: Class<out F>
+        ): AttributesService<A, F> {
+          return mockedUssAttributesService as AttributesService<A, F>
+        }
+      }
 
       beforeEach {
         textAdded = false
@@ -335,6 +349,11 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       }
 
       val virtualFileMock = mockk<MFVirtualFile>()
+      val mockedAttributes = mockk<RemoteUssAttributes>()
+      every { mockedAttributes.modificationTime } returns LocalDateTime.of(2002, 2, 17, 0, 0).toString()
+      every { mockedAttributes.fileMode } returns FileMode(6, 6, 6)
+      every { mockedAttributes.owner } returns "Test"
+
       val mockedProject = mockk<Project>()
       val parentNode = mockk<UssDirNode>()
       val explorerUnit = mockk<ExplorerUnit<ConnectionConfig>>()
@@ -373,10 +392,12 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       context("ExplorerTreeNode.updateNodeTitleUsingCutBuffer") {
         every { virtualFileMock.presentableName } returns "test"
         every { virtualFileMock.isValid } returns false
+        every { mockedUssAttributesService.getAttributes(virtualFileMock) } returns mockedAttributes
 
         should("perform an update of the node if virtual file in the cut buffer and navigate is true") {
           every { explorerContentProviderMock.isFileInCutBuffer(virtualFileMock) } returns true
           every { ussFileMockToSpy.navigating } returns true
+
           ussFileMockToSpy.update()
 
           assertSoftly {

@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
+import org.zowe.explorer.common.message
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.UssPath
 import org.zowe.explorer.dataops.DataOpsManager
@@ -30,6 +31,7 @@ import org.zowe.explorer.dataops.fetch.UssQuery
 import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.explorer.FilesWorkingSet
+import org.zowe.explorer.utils.append
 import org.zowe.explorer.utils.clearAndMergeWith
 import org.zowe.explorer.vfs.MFVirtualFile
 
@@ -143,8 +145,31 @@ class UssDirNode(
     presentation.setIcon(icon)
     if (vFile != null) {
       updateNodeTitleUsingCutBuffer(text, presentation)
+      vFile?.let {
+        val attributes = attributesService.getAttributes(it)
+        presentation.tooltip = message(
+          "explorer.tree.uss.node.tooltip",
+          attributes?.owner ?: "NULL", attributes?.fileMode ?: "NULL"
+        )
+      }
+      fileFetchProvider.getRealQueryInstance(query)?.let {
+        fileFetchProvider.findCacheRefreshDateIfPresent(it)?.let { _ ->
+          fileFetchProvider.getCached(it)?.let { cached ->
+            if (cached.isNotEmpty()) {
+              presentation
+                .append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+                .append(
+                  message("explorer.tree.uss.node.label.files", cached.count {
+                      file -> attributesService.getAttributes(file)?.path != value.path
+                  }),
+                  SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
+                )
+            }
+          }
+        }
+      }
     } else {
-      presentation.addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      presentation.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     }
     if (isRootNode) {
       updateRefreshDateAndTime(presentation)

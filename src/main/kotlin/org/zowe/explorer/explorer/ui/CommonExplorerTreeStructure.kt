@@ -55,14 +55,18 @@ class CommonExplorerTreeStructure<Expl : Explorer<*, *>>(
     lock.withLock {
       val alreadyRegisteredNodes = valueToNodeMap
         .getOrPut(node.value) { LinkedList() }
-        .filter { it.parent != null && it.parent == node.parent }
+        .filter { it.path == node.path }
       if (alreadyRegisteredNodes.isNotEmpty()) {
         alreadyRegisteredNodes.forEach { alreadyRegisteredNode ->
           valueToNodeMap.getOrPut(node.value) { LinkedList() }
-            .removeIf { nodeInMap -> nodeInMap.parent == alreadyRegisteredNode.parent }
+            .removeIf { nodeInMap ->
+              nodeInMap.path == alreadyRegisteredNode.path
+            }
           node.virtualFile?.let {
             fileToNodeMap.getOrPut(it) { LinkedList() }
-              .removeIf { nodeInMap -> nodeInMap.parent == alreadyRegisteredNode.parent }
+              .removeIf { nodeInMap ->
+                nodeInMap.path == alreadyRegisteredNode.path
+              }
           }
         }
       }
@@ -72,6 +76,7 @@ class CommonExplorerTreeStructure<Expl : Explorer<*, *>>(
     }
   }
 
+  // TODO: rework to something more stable
   /**
    * Refresh the nodes that belong to the same virtual file as the node provided with the new presentation.
    * Will invalidate the parent of these nodes if the parent is a [DSMaskNode]
@@ -88,8 +93,8 @@ class CommonExplorerTreeStructure<Expl : Explorer<*, *>>(
         return
       }
       val nodesToRefresh = valueToNodeMap
-        .getOrPut(node.virtualFile) { LinkedList() }
-        .filter { it.parent != null && node.parent != it.parent }
+        .getOrPut(node.value) { LinkedList() }
+        .filter { it.parent != null && node.parent != null && node.parent.path != it.parent.path }
       if (nodesToRefresh.isNotEmpty()) {
         nodesToRefresh.forEach {
           val virtualFile = it.virtualFile

@@ -15,6 +15,7 @@
 package org.zowe.explorer.config.ws.ui.files
 
 import com.intellij.util.containers.toMutableSmartList
+import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.config.ConfigSandbox
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
@@ -27,8 +28,9 @@ import org.zowe.explorer.utils.crudable.Crudable
 /**
  * Implementation of [AbstractWsConfigurable] class for modifying Files Working Set configurations.
  */
-class FilesWSConfigurable :
-  AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel, FilesWorkingSetDialogState>("Working Sets") {
+class FilesWSConfigurable : AbstractWsConfigurable<FilesWorkingSetConfig, WSTableModel, FilesWorkingSetDialogState>(
+  message("configurable.ws.title")
+) {
   override val wsConfigClass = FilesWorkingSetConfig::class.java
   override val wsTableModel = WSTableModel(ConfigSandbox.getService().crudable)
 

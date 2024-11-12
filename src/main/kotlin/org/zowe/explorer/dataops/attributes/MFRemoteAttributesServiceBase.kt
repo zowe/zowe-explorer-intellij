@@ -184,7 +184,8 @@ abstract class MFRemoteAttributesServiceBase<Connection : ConnectionConfigBase, 
   }
 
   /**
-   * Get or create virtual file by the provided attributes. Also sends ATTRIBUTES_CHANGED topic message for the created file, triggering "onCreate" event
+   * Get or create virtual file by the provided attributes.
+   * Also sends ATTRIBUTES_CHANGED topic message for the created file, triggering "onCreate" event
    * @param attributes the attributes to get or create the virtual file by
    */
   override fun getOrCreateVirtualFile(attributes: Attributes): MFVirtualFile {

@@ -25,12 +25,12 @@ import javax.swing.JComponent
  * Class which represents working set name column in working set table model.
  */
 class WSNameColumn<WSConfig : WorkingSetConfig>(private val wsProvider: () -> List<WSConfig>) :
-  ValidatingColumnInfo<WSConfig>(message("configurable.ws.tables.ws.name")) {
+  ValidatingColumnInfo<WSConfig>(message("configurable.ws.table.name")) {
 
   companion object {
     @JvmStatic
     private fun getDefaultError(component: JComponent) =
-      ValidationInfo(message("configurable.ws.tables.ws.name.tooltip.error"), component)
+      ValidationInfo(message("configurable.ws.table.name.tooltip.error"), component)
   }
 
   /**
@@ -77,7 +77,7 @@ class WSNameColumn<WSConfig : WorkingSetConfig>(private val wsProvider: () -> Li
    * Gets the UI tooltip of the working set name column when mouse is hovered.
    */
   override fun getTooltipText(): String {
-    return message("configurable.ws.tables.ws.name.tooltip")
+    return message("configurable.ws.table.name.tooltip")
   }
 
   /**

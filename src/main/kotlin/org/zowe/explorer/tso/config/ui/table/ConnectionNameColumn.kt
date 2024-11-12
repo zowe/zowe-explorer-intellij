@@ -15,6 +15,7 @@
 package org.zowe.explorer.tso.config.ui.table
 
 import com.intellij.util.ui.ColumnInfo
+import org.zowe.explorer.common.message
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.tso.config.ui.TSOSessionDialogState
 import org.zowe.explorer.utils.crudable.Crudable
@@ -27,7 +28,9 @@ import org.zowe.explorer.utils.crudable.getByUniqueKey
  */
 class ConnectionNameColumn(
   private val crudable: Crudable
-) : ColumnInfo<TSOSessionDialogState, String>("Connection Name") {
+) : ColumnInfo<TSOSessionDialogState, String>(
+  message("configurable.tso.table.connection")
+) {
 
   /**
    * Overloaded getter method of ColumnInfo abstract class
@@ -45,4 +48,7 @@ class ConnectionNameColumn(
     }
   }
 
+  override fun getTooltipText(): String {
+    return message("configurable.tso.table.connection.tooltip")
+  }
 }

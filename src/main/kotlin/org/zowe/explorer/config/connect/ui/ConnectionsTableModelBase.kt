@@ -24,16 +24,14 @@ import org.zowe.explorer.utils.toMutableList
 /**
  * Base implementation of table model to display connections (z/OSMF, CICS and etc.).
  * @param crudable crudable from which to get connections.
- * @param connectionUrlColumnName name of the column to display connection url.
  * @author Valiantsin Krus
  */
 abstract class ConnectionsTableModelBase<ConnectionConfig : ConnectionConfigBase, ConnectionDialogState : ConnectionDialogStateBase<ConnectionConfig>>(
-  crudable: Crudable,
-  connectionUrlColumnName: String = "z/OSMF URL"
+  crudable: Crudable
 ) : CrudableTableModel<ConnectionDialogState>(
   crudable,
   ConnectionNameColumn(),
-  ConnectionUrlColumn(connectionUrlColumnName),
+  ConnectionUrlColumn(),
   ConnectionUsernameColumn(),
   ConnectionUssOwnerColumn()
 ) {

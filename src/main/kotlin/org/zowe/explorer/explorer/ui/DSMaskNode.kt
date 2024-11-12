@@ -179,6 +179,9 @@ class DSMaskNode(
 
     other as DSMaskNode
 
+    // For some reason, it does not correctly check for null value
+    @Suppress("SENSELESS_COMPARISON")
+    if (other.toString() == null) return false
     if (query != other.query) return false
     if (requestClass != other.requestClass) return false
 

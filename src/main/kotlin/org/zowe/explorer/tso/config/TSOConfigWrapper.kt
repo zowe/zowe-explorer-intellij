@@ -32,6 +32,12 @@ class TSOConfigWrapper(
 
   var reconnectAttempts: Int = 0
   var unresponsive: Boolean = false
+  var unresponsiveReason: Throwable? = null
+
+  val onSessionFailure: (Throwable) -> Unit = {
+    markSessionUnresponsive()
+    unresponsiveReason = it
+  }
 
   /**
    * Getter for TSO session config

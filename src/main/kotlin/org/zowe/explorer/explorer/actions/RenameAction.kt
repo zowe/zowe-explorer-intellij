@@ -17,19 +17,21 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.attributes.*
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.RenameOperation
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
+import org.zowe.explorer.v3.operations.OperationsService
+import org.zowe.explorer.v3.operations.RenameOperationData
 import org.zowe.explorer.vfs.MFVirtualFile
+
+typealias ConnectionConfigNew = org.zowe.explorer.v3.ConnectionConfig
+typealias UssRequesterNew = org.zowe.explorer.v3.UssRequester<ConnectionConfigNew>
 
 /**
  * Class which represents a "Rename" action.
@@ -38,13 +40,12 @@ import org.zowe.explorer.vfs.MFVirtualFile
  */
 class RenameAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Method to run rename operation. It passes the control to rename operation runner
    * @param project the current project
+   * @param view the file explorer view to refresh same nodes elsewhere for
    * @param file the virtual file to be renamed
    * @param type the type of the virtual file to be renamed
    * @param attributes remote attributes of the given virtual file
@@ -55,30 +56,64 @@ class RenameAction : AnAction() {
    */
   private fun runRenameOperation(
     project: Project?,
+    view: FileExplorerView,
     file: VirtualFile,
     type: String,
     attributes: FileAttributes,
     newName: String,
     node: ExplorerTreeNode<*, *>
   ) {
-    runBackgroundableTask(
+    runModalTask(
       title = "Renaming $type ${file.name} to $newName",
       project = project,
       cancellable = true
     ) {
       runCatching {
-        DataOpsManager.getService()
-          .performOperation(
-            operation = RenameOperation(
-              file = file,
-              attributes = attributes,
-              newName = newName
-            ),
-            progressIndicator = it
+        // TODO: rework
+        val originConnectionConfig = if (node is ExplorerUnitTreeNodeBase<*, *, *>) {
+          node.unit.connectionConfig
+        } else null
+        val oldRequester = if (attributes is MFRemoteFileAttributes<*, *>) {
+          attributes.requesters.find { it.connectionConfig == originConnectionConfig }
+        } else null
+        if (oldRequester == null || oldRequester !is UssRequester) {
+          DataOpsManager.getService()
+            .performOperation(
+              operation = RenameOperation(
+                file = file,
+                attributes = attributes,
+                newName = newName
+              ),
+              progressIndicator = it
+            )
+        } else {
+          val oldConnectionConfig = oldRequester.connectionConfig
+          val newConnectionConfig = ConnectionConfigNew(
+            oldConnectionConfig.uuid,
+            oldConnectionConfig.name,
+            oldConnectionConfig.url,
+            oldConnectionConfig.isAllowSelfSigned,
+            oldConnectionConfig.zVersion,
+            oldConnectionConfig.owner
           )
+          val newRequester = UssRequesterNew(newConnectionConfig)
+          OperationsService.getService()
+            .performOperation(
+              operationData = RenameOperationData(
+                file = file,
+                attributes = attributes,
+                newName = newName,
+                origin = newRequester
+              ),
+              progressIndicator = it
+            )
+        }
       }
         .onSuccess {
-          node.parent?.cleanCacheIfPossible(cleanBatchedQuery = true)
+          val nodesToRefresh = view.myFsTreeStructure.findByValue(node.value)
+          nodesToRefresh.forEach {
+            it.parent?.cleanCacheIfPossible(cleanBatchedQuery = true)
+          }
         }
         .onFailure {
           NotificationsService.errorNotification(it, project)
@@ -131,7 +166,7 @@ class RenameAction : AnAction() {
         if (checkFileForSync(e.project, file, checkDependentFiles = true)) return
         val dialog = RenameDialog(e.project, type, selectedNodeData, this, state)
         if (dialog.showAndGet()) {
-          runRenameOperation(e.project, file, type, attributes, dialog.state, node)
+          runRenameOperation(e.project, view, file, type, attributes, dialog.state, node)
         }
       }
     }

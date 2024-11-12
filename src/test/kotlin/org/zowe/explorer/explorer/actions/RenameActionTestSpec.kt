@@ -22,18 +22,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.attributes.*
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.explorer.Explorer
+import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
 import org.zowe.explorer.utils.*
+import org.zowe.explorer.v3.operations.OperationsService
+import org.zowe.explorer.v3.operations.RenameOperationData
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
@@ -41,6 +45,7 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.zowe.kotlinsdk.annotations.ZVersion
 import java.util.*
 
 class RenameActionTestSpec : WithApplicationShouldSpec({
@@ -91,6 +96,9 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
       isEnabledAndVisible = false
 
       every { fileExplorerViewMock.mySelectedNodesData } returns listOf(selectedNodeDataMock)
+      every {
+        fileExplorerViewMock.myFsTreeStructure
+      } returns mockk<CommonExplorerTreeStructure<Explorer<ConnectionConfig, FilesWorkingSet>>>()
 
       mockkStatic("org.zowe.explorer.explorer.ui.ExplorerTreeViewKt")
       every { anActionEventMock.getExplorerView<FileExplorerView>() } returns fileExplorerViewMock
@@ -111,6 +119,20 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
           return Unit as R
         }
       }
+
+      val operationsServiceMock = mockk<OperationsService> {
+        every {
+          performOperation(
+            any<RenameOperationData<org.zowe.explorer.v3.ConnectionConfig>>(),
+            any()
+          )
+        } answers {
+          renamed = true
+          Unit
+        }
+      }
+      mockkObject(OperationsService.Companion)
+      every { OperationsService.getService() } returns operationsServiceMock
 
       mockkObject(RenameDialog)
       every { RenameDialog["initialize"](any<() -> Unit>()) } returns Unit
@@ -135,11 +157,29 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
 
     context("actionPerformed") {
       context("rename dataset") {
-        val libraryNodeMock = mockk<LibraryNode>()
-        every { libraryNodeMock.explorer } returns explorerMock
+        val connectionConfigMockk = mockk<ConnectionConfig> {
+          every { uuid } returns "testUuid"
+          every { name } returns "testName"
+          every { url } returns "testUrl"
+          every { isAllowSelfSigned } returns true
+          every { zVersion } returns ZVersion.ZOS_2_3
+          every { owner } returns "testOwner"
+        }
 
-        val attributes = mockk<RemoteDatasetAttributes>()
-        every { attributes.datasetInfo.name } returns "dataset"
+        val filesWorkingSetUnitMock = mockk<FilesWorkingSet> {
+          every { connectionConfig } returns connectionConfigMockk
+        }
+
+        val libraryNodeMock = mockk<LibraryNode> {
+          every { explorer } returns explorerMock
+          every { unit } returns filesWorkingSetUnitMock
+          every { value } returns mockk()
+        }
+
+        val attributes = mockk<RemoteDatasetAttributes> {
+          every { datasetInfo.name } returns "dataset"
+          every { requesters } returns mutableListOf(MaskedRequester(connectionConfigMockk, DSMask()))
+        }
 
         beforeEach {
           every { selectedNodeDataMock.node } returns libraryNodeMock
@@ -147,6 +187,12 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
 
           every { libraryNodeMock.virtualFile } returns virtualFileMock
           every { libraryNodeMock.parent?.cleanCacheIfPossible(any()) } returns Unit
+
+          every {
+            fileExplorerViewMock.myFsTreeStructure
+          } returns mockk<CommonExplorerTreeStructure<Explorer<ConnectionConfig, FilesWorkingSet>>> {
+            every { findByValue(any()) } returns listOf(libraryNodeMock as ExplorerTreeNode<*, Any>)
+          }
         }
 
         should("perform rename on dataset") {
@@ -195,18 +241,41 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
       }
       context("rename dataset member") {
-        val fileLikeDSNodeMock = mockk<FileLikeDatasetNode>()
-        every { fileLikeDSNodeMock.explorer } returns explorerMock
-        every { fileLikeDSNodeMock.virtualFile } returns virtualFileMock
+        val connectionConfigMockk = mockk<ConnectionConfig> {
+          every { uuid } returns "testUuid"
+          every { name } returns "testName"
+          every { url } returns "testUrl"
+          every { isAllowSelfSigned } returns true
+          every { zVersion } returns ZVersion.ZOS_2_3
+          every { owner } returns "testOwner"
+        }
 
-        val attributes = mockk<RemoteMemberAttributes>()
-        every { attributes.info.name } returns "member"
+        val filesWorkingSetUnitMock = mockk<FilesWorkingSet> {
+          every { connectionConfig } returns connectionConfigMockk
+        }
+
+        val fileLikeDSNodeMock = mockk<FileLikeDatasetNode> {
+          every { explorer } returns explorerMock
+          every { unit } returns filesWorkingSetUnitMock
+          every { virtualFile } returns virtualFileMock
+          every { value } returns mockk()
+        }
+
+        val attributes = mockk<RemoteMemberAttributes> {
+          every { info.name } returns "member"
+        }
 
         beforeEach {
           every { selectedNodeDataMock.node } returns fileLikeDSNodeMock
           every { selectedNodeDataMock.attributes } returns attributes
 
           every { fileLikeDSNodeMock.parent?.cleanCacheIfPossible(any()) } returns Unit
+
+          every {
+            fileExplorerViewMock.myFsTreeStructure
+          } returns mockk<CommonExplorerTreeStructure<Explorer<ConnectionConfig, FilesWorkingSet>>> {
+            every { findByValue(any()) } returns listOf(fileLikeDSNodeMock as ExplorerTreeNode<*, Any>)
+          }
         }
 
         should("perform rename on dataset member") {
@@ -231,18 +300,42 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
         }
       }
       context("rename USS file") {
-        val ussFileNodeMock = mockk<UssFileNode>()
-        every { ussFileNodeMock.explorer } returns explorerMock
+        val connectionConfigMockk = mockk<ConnectionConfig> {
+          every { uuid } returns "testUuid"
+          every { name } returns "testName"
+          every { url } returns "testUrl"
+          every { isAllowSelfSigned } returns true
+          every { zVersion } returns ZVersion.ZOS_2_3
+          every { owner } returns "testOwner"
+        }
 
-        val attributes = mockk<RemoteUssAttributes>()
-        every { attributes.name } returns "ussFile"
-        every { attributes.isDirectory } returns false
+        val filesWorkingSetUnitMock = mockk<FilesWorkingSet> {
+          every { connectionConfig } returns connectionConfigMockk
+        }
+
+        val ussFileNodeMock = mockk<UssFileNode> {
+          every { explorer } returns explorerMock
+          every { unit } returns filesWorkingSetUnitMock
+          every { value } returns mockk()
+        }
+
+        val attributes = mockk<RemoteUssAttributes> {
+          every { name } returns "ussFile"
+          every { isDirectory } returns false
+          every { requesters } returns mutableListOf(UssRequester(connectionConfigMockk))
+        }
 
         beforeEach {
           every { selectedNodeDataMock.node } returns ussFileNodeMock
           every { selectedNodeDataMock.attributes } returns attributes
 
           every { ussFileNodeMock.parent?.cleanCacheIfPossible(any()) } returns Unit
+
+          every {
+            fileExplorerViewMock.myFsTreeStructure
+          } returns mockk<CommonExplorerTreeStructure<Explorer<ConnectionConfig, FilesWorkingSet>>> {
+            every { findByValue(any()) } returns listOf(ussFileNodeMock as ExplorerTreeNode<*, Any>)
+          }
         }
 
         should("perform rename on USS file") {

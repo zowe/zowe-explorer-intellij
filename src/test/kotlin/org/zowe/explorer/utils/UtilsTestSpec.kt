@@ -14,12 +14,14 @@
 
 package org.zowe.explorer.utils
 
+import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBTextField
 import org.zowe.explorer.config.ConfigStateV2
 import org.zowe.explorer.config.connect.ConnectionConfig
@@ -914,6 +916,156 @@ class UtilsTestSpec : ShouldSpec({
         }
       }
     }
+    context("validateTsoSessionName") {
+      val jTextField = JTextField()
+      val crudableMock = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
+
+      should("validate TSO session name when there are no other sessions") {
+        jTextField.text = "name"
+        val initialName = "initialName"
+
+        every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of()
+
+        val actual = validateTsoSessionName(jTextField, initialName, crudableMock)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate TSO session name when there are other sessions and the name is unique") {
+        jTextField.text = "name"
+        val initialName = "initialName"
+
+        val tsoSessionConfig = TSOSessionConfig()
+        tsoSessionConfig.name = "tsoSessionName"
+        every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of(tsoSessionConfig)
+
+        val actual = validateTsoSessionName(jTextField, initialName, crudableMock)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate TSO session name when there are other sessions and the name is not unique") {
+        jTextField.text = "name"
+        val initialName = "initialName"
+
+        val tsoSessionConfig = TSOSessionConfig()
+        tsoSessionConfig.name = "name"
+        every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of(tsoSessionConfig)
+
+        val actual = validateTsoSessionName(jTextField, initialName, crudableMock)
+        val expected = ValidationInfo(
+          "You must provide unique TSO session name. TSO session \"${jTextField.text}\" already exists.",
+          jTextField
+        )
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate TSO session name when there are other sessions and the name is not unique but this name is ignored") {
+        jTextField.text = "name"
+        val initialName = "name"
+
+        val tsoSessionConfig = TSOSessionConfig()
+        tsoSessionConfig.name = "name"
+        every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of(tsoSessionConfig)
+
+        val actual = validateTsoSessionName(jTextField, initialName, crudableMock)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate TSO session name when there are no other sessions and there is no ignore value") {
+        jTextField.text = "name"
+
+        every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of()
+
+        val actual = validateTsoSessionName(component = jTextField, crudable = crudableMock)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
+    context("validateConnectionSelection") {
+      val comboBox = ComboBox<ConnectionConfig>()
+      val connectionConfig = ConnectionConfig()
+      comboBox.model = CollectionComboBoxModel(listOf(connectionConfig))
+
+      should("validate connection selection if selected") {
+        comboBox.selectedItem = connectionConfig
+
+        val actual = validateConnectionSelection(comboBox)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate connection selection if not selected") {
+        comboBox.selectedItem = null
+
+        val actual = validateConnectionSelection(comboBox)
+        val expected = ValidationInfo("You must provide a connection", comboBox)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
+    context("validateTsoSessionSelection") {
+      val comboBox = ComboBox<TSOSessionConfig>()
+      val tsoSessionConfig = TSOSessionConfig()
+      comboBox.model = CollectionComboBoxModel(listOf(tsoSessionConfig))
+
+      val crudableMock = mockk<Crudable>()
+
+      should("validate TSO session selection if selected and connection config exists") {
+        comboBox.selectedItem = tsoSessionConfig
+
+        every {
+          crudableMock.getByUniqueKey(ConnectionConfig::class.java, any<String>())
+        } returns Optional.of(ConnectionConfig())
+
+        val actual = validateTsoSessionSelection(comboBox, crudableMock)
+        val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate TSO session selection if selected and connection config does not exist") {
+        comboBox.selectedItem = tsoSessionConfig
+
+        every {
+          crudableMock.getByUniqueKey(ConnectionConfig::class.java, any<String>())
+        } returns Optional.empty()
+
+        val actual = validateTsoSessionSelection(comboBox, crudableMock)
+        val expected = ValidationInfo("TSO session must contain a connection", comboBox)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+      should("validate TSO session selection if not selected") {
+        comboBox.selectedItem = null
+
+        val actual = validateTsoSessionSelection(comboBox, crudableMock)
+        val expected = ValidationInfo("You must provide a TSO session", comboBox)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+      }
+    }
   }
   context("utils module: retrofitUtils") {
     context("cancelByIndicator") {
@@ -980,7 +1132,7 @@ class UtilsTestSpec : ShouldSpec({
     should("return a human readable date format given valid LocalDateTime instance") {
       //given
       val actualLocalDate = LocalDateTime.of(2023, 12, 30, 10, 0, 0)
-      val expectedString = "30 DECEMBER 10:00:00"
+      val expectedString = "30 DEC 10:00:00"
       //when
       val actualString = actualLocalDate.toHumanReadableFormat()
       //then
@@ -1040,154 +1192,14 @@ class UtilsTestSpec : ShouldSpec({
         receiver shouldContainExactly expectedList
       }
     }
-  }
-  context("validateTsoSessionName") {
-    val jTextField = JTextField()
-    val crudableMock = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
 
-    should("validate TSO session name when there are no other sessions") {
-      jTextField.text = "name"
-      val initialName = "initialName"
+    should("return updated PresentationData") {
+      val presentationData = PresentationData()
 
-      every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of()
-
-      val actual = validateTsoSessionName(jTextField, initialName, crudableMock)
-      val expected = null
+      presentationData.append("text", SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
       assertSoftly {
-        actual shouldBe expected
-      }
-    }
-    should("validate TSO session name when there are other sessions and the name is unique") {
-      jTextField.text = "name"
-      val initialName = "initialName"
-
-      val tsoSessionConfig = TSOSessionConfig()
-      tsoSessionConfig.name = "tsoSessionName"
-      every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of(tsoSessionConfig)
-
-      val actual = validateTsoSessionName(jTextField, initialName, crudableMock)
-      val expected = null
-
-      assertSoftly {
-        actual shouldBe expected
-      }
-    }
-    should("validate TSO session name when there are other sessions and the name is not unique") {
-      jTextField.text = "name"
-      val initialName = "initialName"
-
-      val tsoSessionConfig = TSOSessionConfig()
-      tsoSessionConfig.name = "name"
-      every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of(tsoSessionConfig)
-
-      val actual = validateTsoSessionName(jTextField, initialName, crudableMock)
-      val expected = ValidationInfo(
-        "You must provide unique TSO session name. TSO session \"${jTextField.text}\" already exists.",
-        jTextField
-      )
-
-      assertSoftly {
-        actual shouldBe expected
-      }
-    }
-    should("validate TSO session name when there are other sessions and the name is not unique but this name is ignored") {
-      jTextField.text = "name"
-      val initialName = "name"
-
-      val tsoSessionConfig = TSOSessionConfig()
-      tsoSessionConfig.name = "name"
-      every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of(tsoSessionConfig)
-
-      val actual = validateTsoSessionName(jTextField, initialName, crudableMock)
-      val expected = null
-
-      assertSoftly {
-        actual shouldBe expected
-      }
-    }
-    should("validate TSO session name when there are no other sessions and there is no ignore value") {
-      jTextField.text = "name"
-
-      every { crudableMock.getAll(TSOSessionConfig::class.java) } returns Stream.of()
-
-      val actual = validateTsoSessionName(component = jTextField, crudable = crudableMock)
-      val expected = null
-
-      assertSoftly {
-        actual shouldBe expected
-      }
-    }
-  }
-  context("validateConnectionSelection") {
-    val comboBox = ComboBox<ConnectionConfig>()
-    val connectionConfig = ConnectionConfig()
-    comboBox.model = CollectionComboBoxModel(listOf(connectionConfig))
-
-    should("validate connection selection if selected") {
-      comboBox.selectedItem = connectionConfig
-
-      val actual = validateConnectionSelection(comboBox)
-      val expected = null
-
-      assertSoftly {
-        actual shouldBe expected
-      }
-    }
-    should("validate connection selection if not selected") {
-      comboBox.selectedItem = null
-
-      val actual = validateConnectionSelection(comboBox)
-      val expected = ValidationInfo("You must provide a connection", comboBox)
-
-      assertSoftly {
-        actual shouldBe expected
-      }
-    }
-  }
-  context("validateTsoSessionSelection") {
-    val comboBox = ComboBox<TSOSessionConfig>()
-    val tsoSessionConfig = TSOSessionConfig()
-    comboBox.model = CollectionComboBoxModel(listOf(tsoSessionConfig))
-
-    val crudableMock = mockk<Crudable>()
-
-    should("validate TSO session selection if selected and connection config exists") {
-      comboBox.selectedItem = tsoSessionConfig
-
-      every {
-        crudableMock.getByUniqueKey(ConnectionConfig::class.java, any<String>())
-      } returns Optional.of(ConnectionConfig())
-
-      val actual = validateTsoSessionSelection(comboBox, crudableMock)
-      val expected = null
-
-      assertSoftly {
-        actual shouldBe expected
-      }
-    }
-    should("validate TSO session selection if selected and connection config does not exist") {
-      comboBox.selectedItem = tsoSessionConfig
-
-      every {
-        crudableMock.getByUniqueKey(ConnectionConfig::class.java, any<String>())
-      } returns Optional.empty()
-
-      val actual = validateTsoSessionSelection(comboBox, crudableMock)
-      val expected = ValidationInfo("TSO session must contain a connection", comboBox)
-
-      assertSoftly {
-        actual shouldBe expected
-      }
-    }
-    should("validate TSO session selection if not selected") {
-      comboBox.selectedItem = null
-
-      val actual = validateTsoSessionSelection(comboBox, crudableMock)
-      val expected = ValidationInfo("You must provide a TSO session", comboBox)
-
-      assertSoftly {
-        actual shouldBe expected
+        presentationData.coloredText.size shouldBe 1
       }
     }
   }

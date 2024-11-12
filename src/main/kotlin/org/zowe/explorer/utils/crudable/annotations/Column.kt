@@ -16,7 +16,7 @@ package org.zowe.explorer.utils.crudable.annotations
 import java.lang.annotation.Inherited
 
 /**
- * Interface to describe the column in configuration services
+ * Annotation to describe a column in configuration services
  * @param name the name of the column
  * @param unique property to show that the column must be unique
  */

@@ -151,50 +151,6 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
   private val tsoSessionToConfigMap = mutableMapOf<String, TSOSessionConfig>()
 
   /**
-   * Static companion object for TSO tool window class
-   */
-  companion object {
-
-    /**
-     * Method is used to parse response for every TSO session created
-     * @param tsoResponse - response from TSO session
-     * @return String message
-     */
-    fun parseTSODataResponse(tsoResponse: TsoResponse): String {
-      val tsoData = tsoResponse.tsoData
-      var message = ""
-      tsoData.forEach {
-        if (it.tsoMessage?.data != null) {
-          message += (it.tsoMessage?.data)
-          message += "\n"
-        }
-      }
-      return message
-    }
-
-    /**
-     * Method is used to get all messages in queue for particular TSO session
-     * @param session - TSO session config wrapper instance
-     * @return an instance of TSO response
-     * @throws Exception if operation is not successful
-     */
-    fun getTsoMessageQueue(session: TSOConfigWrapper): TsoResponse {
-      runCatching {
-        DataOpsManager.getService().performOperation(
-          TsoOperation(
-            state = session,
-            mode = TsoOperationMode.GET_MESSAGES
-          )
-        )
-      }.onSuccess { return it }
-        .onFailure {
-          NotificationsService.errorNotification(it, custTitle = "Error getting TSO response messages")
-        }
-      return TsoResponse()
-    }
-  }
-
-  /**
    * Method is called to initialize TSO session console view. It registers content and displays it
    * @param project - a root project
    * @param toolWindow - a tool window instance
@@ -351,7 +307,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
                 "Unable to obtain the connection information for connection=${session.getConnectionConfig()}.\n Session will be closed.",
                 ProcessOutputType.STDOUT
               )
-              session.markSessionUnresponsive()
+              session.onSessionFailure(it)
               processHandler.destroyProcess()
             } else {
               processHandler.notifyTextAvailable(
@@ -550,7 +506,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               SESSION_RECONNECT_ERROR_MESSAGE,
               ProcessOutputType.STDOUT
             )
-            tsoSession.markSessionUnresponsive()
+            tsoSession.onSessionFailure(throwable)
             processHandler.destroyProcess()
             cancel()
             service.shutdown()
@@ -573,4 +529,42 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
    */
   abstract class TsoReconnectTask(val service: ScheduledExecutorService) : TimerTask()
 
+}
+
+/**
+ * Method is used to parse response for every TSO session created
+ * @param tsoResponse - response from TSO session
+ * @return String message
+ */
+fun parseTSODataResponse(tsoResponse: TsoResponse): String {
+  val tsoData = tsoResponse.tsoData
+  var message = ""
+  tsoData.forEach {
+    if (it.tsoMessage?.data != null) {
+      message += (it.tsoMessage?.data)
+      message += "\n"
+    }
+  }
+  return message
+}
+
+/**
+ * Method is used to get all messages in queue for particular TSO session
+ * @param session - TSO session config wrapper instance
+ * @return an instance of TSO response
+ * @throws Exception if operation is not successful
+ */
+fun getTsoMessageQueue(session: TSOConfigWrapper): TsoResponse {
+  runCatching {
+    DataOpsManager.getService().performOperation(
+      TsoOperation(
+        state = session,
+        mode = TsoOperationMode.GET_MESSAGES
+      )
+    )
+  }.onSuccess { return it }
+    .onFailure {
+      NotificationsService.getService().notifyError(it, custTitle = "Error getting TSO response messages")
+    }
+  return TsoResponse()
 }

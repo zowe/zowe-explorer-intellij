@@ -15,14 +15,16 @@
 package org.zowe.explorer.config.connect.ui
 
 import com.intellij.util.ui.ColumnInfo
+import org.zowe.explorer.common.message
 import org.zowe.explorer.config.connect.ui.renderer.UsernameColumnRenderer
 import javax.swing.table.TableCellRenderer
 
 /**
  * Class which represents column of username in GUI
  */
-class ConnectionUsernameColumn<ConnectionState : ConnectionDialogStateBase<*>>
-  : ColumnInfo<ConnectionState, String>("Username") {
+class ConnectionUsernameColumn<ConnectionState : ConnectionDialogStateBase<*>> : ColumnInfo<ConnectionState, String>(
+  message("configurable.connection.table.username")
+) {
 
   /**
    * Returns name of particular user
@@ -51,4 +53,7 @@ class ConnectionUsernameColumn<ConnectionState : ConnectionDialogStateBase<*>>
     return UsernameColumnRenderer(item.connectionConfig.zoweConfigPath != null)
   }
 
+  override fun getTooltipText(): String {
+    return message("configurable.ws.table.username.tooltip")
+  }
 }

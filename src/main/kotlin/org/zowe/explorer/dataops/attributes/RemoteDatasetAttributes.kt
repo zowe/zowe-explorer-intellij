@@ -40,9 +40,11 @@ data class RemoteDatasetAttributes(
    * @return cloned object
    */
   override fun clone(): RemoteDatasetAttributes {
-    return RemoteDatasetAttributes(datasetInfo.clone(), url, requesters.map {
-      MaskedRequester(it.connectionConfig, it.queryMask)
-    }.toMutableList())
+    return RemoteDatasetAttributes(
+      datasetInfo.clone(),
+      url,
+      requesters.map { MaskedRequester(it.connectionConfig, it.queryMask) }.toMutableList()
+    )
   }
 
   override val name

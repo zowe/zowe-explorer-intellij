@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 IBA Group.
+ * Copyright (c) 2020-2024 IBA Group.
  *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
@@ -12,11 +12,14 @@
  *   Zowe Community
  */
 
-package org.zowe.explorer.dataops.attributes;
+package org.zowe.explorer.dataops.attributes
 
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 
-/** Interface that is necessary to implement requests to z/OSMF for specific entity (USS files, datasets, jobs etc.) */
+/**
+ * Interface that is necessary to implement requests to z/OSMF for specific entity (USS files, datasets, jobs etc.)
+ * @property connectionConfig the related connection config
+ */
 interface Requester<Connection : ConnectionConfigBase> {
   val connectionConfig: Connection
 }

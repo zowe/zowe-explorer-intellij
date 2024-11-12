@@ -17,6 +17,7 @@ package org.zowe.explorer.dataops.operations.mover
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.attributes.Requester
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.operations.DeleteOperation
@@ -64,7 +65,8 @@ abstract class DefaultFileMover(protected val dataOpsManager: DataOpsManager) : 
       }.mapCatching {
         val operationMessage = if (operation.isMove) "move" else "copy"
         if (!it.isSuccessful) {
-          throw CallException(it, "Cannot $operationMessage ${operation.source.name} to ${operation.destination.name}")
+          val dst = if (operation.destinationAttributes is RemoteUssAttributes) operation.destinationAttributes.path else operation.destination.name
+          throw CallException(it, "Cannot $operationMessage ${operation.source.name} to $dst")
         } else {
           it
         }

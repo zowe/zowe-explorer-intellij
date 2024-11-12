@@ -303,7 +303,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
                   this@ExplorerTreeView
                     .ignoreVFileDeleteEvents
                     .compareAndSet(true, true) -> {
-                  null
+                  nodes
                 }
 
                 else -> {
@@ -489,7 +489,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
           )
           log.info(
             "Update attributes for file in editor.\nVirtual file - $openFile.\n" +
-                "Old attributes - $oldAttributes.\nNew attributes - $newAttributes."
+              "Old attributes - $oldAttributes.\nNew attributes - $newAttributes."
           )
           val attributesService =
             dataOpsManager.getAttributesService(oldAttributes::class.java, renamedFile::class.java)

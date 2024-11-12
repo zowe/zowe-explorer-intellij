@@ -36,7 +36,7 @@ import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
-import org.zowe.explorer.tso.TSOWindowFactory
+import org.zowe.explorer.tso.getTsoMessageQueue
 import org.zowe.explorer.utils.crudable.Crudable
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
@@ -259,8 +259,8 @@ class ConfigTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        mockkObject(TSOWindowFactory)
-        every { TSOWindowFactory.getTsoMessageQueue(any()) } answers {
+        mockkStatic("org.zowe.explorer.tso.TSOWindowFactoryKt")
+        every { getTsoMessageQueue(any()) } answers {
           TsoResponse(
             tsoData = listOf(
               TsoData(tsoPrompt = MessageType(""))

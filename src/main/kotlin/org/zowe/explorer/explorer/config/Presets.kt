@@ -27,7 +27,10 @@ enum class Presets(private val type: String) {
   SEQUENTIAL_DATASET("Sequential Dataset"),
   PDS_DATASET("PDS Dataset"),
   PDS_WITH_EMPTY_MEMBER("PDS with empty member Dataset"),
-  PDS_WITH_SAMPLE_JCL_MEMBER("PDS with sample JCL member Dataset");
+  PDS_WITH_SAMPLE_JCL_MEMBER("PDS with sample JCL member Dataset"),
+  PDSE_DATASET("PDSE Dataset"),
+  PDSE_WITH_EMPTY_MEMBER("PDSE with empty member Dataset"),
+  PDSE_WITH_SAMPLE_JCL_MEMBER("PDSE with sample JCL member Dataset");
 
   override fun toString(): String {
     return type
@@ -41,7 +44,8 @@ enum class Presets(private val type: String) {
       return when (preset) {
         CUSTOM_DATASET -> PresetCustomDataset()
         SEQUENTIAL_DATASET -> PresetSeqDataset()
-        else -> PresetPdsDataset()
+        PDS_DATASET, PDS_WITH_EMPTY_MEMBER, PDS_WITH_SAMPLE_JCL_MEMBER -> PresetPdsDataset()
+        else -> PresetPdseDataset()
       }
     }
   }
@@ -51,66 +55,81 @@ enum class Presets(private val type: String) {
  * Interface which represents a preset default fields for a chosen data class
  */
 interface PresetType {
-  val datasetOrganization : DatasetOrganization
-  val spaceUnit : AllocationUnit
-  val primaryAllocation : Int
-  val secondaryAllocation : Int
-  val directoryBlocks : Int
-  val recordFormat : RecordFormat
-  val recordLength : Int
-  val blockSize : Int
-  val averageBlockLength : Int
+  val datasetOrganization: DatasetOrganization
+  val spaceUnit: AllocationUnit
+  val primaryAllocation: Int
+  val secondaryAllocation: Int
+  val directoryBlocks: Int
+  val recordFormat: RecordFormat
+  val recordLength: Int
+  val blockSize: Int
+  val averageBlockLength: Int
 }
 
 /**
  * Data class which represents a custom dataset
  */
 data class PresetCustomDataset(
-  override val datasetOrganization : DatasetOrganization = DatasetOrganization.PS,
-  override val spaceUnit : AllocationUnit = AllocationUnit.TRK,
-  override val primaryAllocation : Int = 0,
-  override val secondaryAllocation : Int = 0,
-  override val directoryBlocks : Int = 0,
-  override val recordFormat : RecordFormat = RecordFormat.FB,
-  override val recordLength : Int = 0,
-  override val blockSize : Int = 0,
-  override val averageBlockLength : Int = 0
+  override val datasetOrganization: DatasetOrganization = DatasetOrganization.PS,
+  override val spaceUnit: AllocationUnit = AllocationUnit.TRK,
+  override val primaryAllocation: Int = 0,
+  override val secondaryAllocation: Int = 0,
+  override val directoryBlocks: Int = 0,
+  override val recordFormat: RecordFormat = RecordFormat.FB,
+  override val recordLength: Int = 0,
+  override val blockSize: Int = 0,
+  override val averageBlockLength: Int = 0
 ) : PresetType
 
 /**
  * Data class which represents a sequential dataset
  */
 data class PresetSeqDataset(
-  override val datasetOrganization : DatasetOrganization = DatasetOrganization.PS,
-  override val spaceUnit : AllocationUnit = AllocationUnit.TRK,
-  override val primaryAllocation : Int = 10,
-  override val secondaryAllocation : Int = 5,
-  override val directoryBlocks : Int = 0,
-  override val recordFormat : RecordFormat = RecordFormat.FB,
-  override val recordLength : Int = 80,
-  override val blockSize : Int = 8000,
-  override val averageBlockLength : Int = 0
+  override val datasetOrganization: DatasetOrganization = DatasetOrganization.PS,
+  override val spaceUnit: AllocationUnit = AllocationUnit.TRK,
+  override val primaryAllocation: Int = 10,
+  override val secondaryAllocation: Int = 5,
+  override val directoryBlocks: Int = 0,
+  override val recordFormat: RecordFormat = RecordFormat.FB,
+  override val recordLength: Int = 80,
+  override val blockSize: Int = 8000,
+  override val averageBlockLength: Int = 0
 ) : PresetType
 
 /**
  * Data class which represents a PDS dataset
  */
 data class PresetPdsDataset(
-  override val datasetOrganization : DatasetOrganization = DatasetOrganization.PO,
-  override val spaceUnit : AllocationUnit = AllocationUnit.TRK,
-  override val primaryAllocation : Int = 100,
-  override val secondaryAllocation : Int = 40,
-  override val directoryBlocks : Int = 10,
-  override val recordFormat : RecordFormat = RecordFormat.FB,
-  override val recordLength : Int = 80,
-  override val blockSize : Int = 32000,
-  override val averageBlockLength : Int = 0,
+  override val datasetOrganization: DatasetOrganization = DatasetOrganization.PO,
+  override val spaceUnit: AllocationUnit = AllocationUnit.TRK,
+  override val primaryAllocation: Int = 100,
+  override val secondaryAllocation: Int = 40,
+  override val directoryBlocks: Int = 10,
+  override val recordFormat: RecordFormat = RecordFormat.FB,
+  override val recordLength: Int = 80,
+  override val blockSize: Int = 32000,
+  override val averageBlockLength: Int = 0,
+) : PresetType
+
+/**
+ * Data class which represents a PDSE dataset
+ */
+data class PresetPdseDataset(
+  override val datasetOrganization: DatasetOrganization = DatasetOrganization.POE,
+  override val spaceUnit: AllocationUnit = AllocationUnit.TRK,
+  override val primaryAllocation: Int = 100,
+  override val secondaryAllocation: Int = 40,
+  override val directoryBlocks: Int = 10,
+  override val recordFormat: RecordFormat = RecordFormat.FB,
+  override val recordLength: Int = 80,
+  override val blockSize: Int = 32000,
+  override val averageBlockLength: Int = 0,
 ) : PresetType
 
 /**
  * Open function to get the content of the default JCL member
  */
-fun getSampleJclMemberContent(defaultUser: String) : String {
+fun getSampleJclMemberContent(defaultUser: String): String {
   return "//* THE SAMPLE JOB WHICH DO NOTHING\n" +
       "//MYJOB    JOB MSGCLASS=A,MSGLEVEL=1,NOTIFY=${defaultUser}\n" +
       "//*-------------------------------------------------------------------\n" +

@@ -34,7 +34,7 @@ class UrlColumn<WSConfig : WorkingSetConfig>(
    * @return url stored in instance of working set config
    */
   override fun valueOf(item: WSConfig): String {
-    return getUrl(item) ?: message("configurable.ws.tables.ws.url.error.empty")
+    return getUrl(item) ?: message("configurable.ws.table.url.error.empty")
   }
 
   /**
@@ -53,10 +53,13 @@ class UrlColumn<WSConfig : WorkingSetConfig>(
    */
   override fun getRenderer(item: WSConfig): TableCellRenderer {
     return ErrorableTableCellRenderer(
-      errorMessage = message("configurable.ws.tables.ws.url.error.empty.tooltip")
+      errorMessage = message("configurable.ws.table.url.error.empty.tooltip")
     ) {
       getUrl(item) == null
     }
   }
 
+  override fun getTooltipText(): String {
+    return message("configurable.ws.table.url.tooltip")
+  }
 }

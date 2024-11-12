@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.dsl.builder.panel
+import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.DEFAULT_ROW_HEIGHT
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.ValidatingTableView
@@ -292,7 +293,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
       })
 
     return panel {
-      group("z/OSMF Connections", false) {
+      group(message("configurable.connection.title"), false) {
         row {
           tableWithToolbar(table) {
             configureDecorator {

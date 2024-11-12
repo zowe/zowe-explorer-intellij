@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
 import org.zowe.explorer.common.isDebugModeEnabled
+import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
 import org.zowe.explorer.dataops.operations.MessageData
 import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.tso.SESSION_COMMAND_ENTERED
@@ -161,7 +162,9 @@ class TSOConsoleView(
     processHandler.addProcessListener(object : ProcessListener {
       override fun startNotified(event: ProcessEvent) {}
 
-      override fun processTerminated(event: ProcessEvent) {}
+      override fun processTerminated(event: ProcessEvent) {
+        reopenSessionButton.isEnabled = tsoSession.unresponsiveReason !is CredentialsNotFoundForConnectionException
+      }
 
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
         cancelCommandButton.isEnabled =

@@ -19,11 +19,19 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.IconUtil
+import org.zowe.explorer.common.message
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.explorer.ExplorerUnit
+import org.zowe.explorer.utils.append
+import org.zowe.explorer.utils.toHumanReadableFormat
 import org.zowe.explorer.vfs.MFVirtualFile
+import java.time.LocalDateTime
 
 /** USS file representation in the explorer tree */
 class UssFileNode(
@@ -41,11 +49,26 @@ class UssFileNode(
   override fun update(presentation: PresentationData) {
     updateNodeTitleUsingCutBuffer(value.presentableName, presentation)
     val icon = IconUtil.computeFileIcon(value, Iconable.ICON_FLAG_READ_STATUS, explorer.nullableProject)
+
     if (this.navigating) {
       presentation.setIcon(AnimatedIcon.Default())
     } else {
       presentation.setIcon(icon)
     }
+
+    val attributes = attributesService.getAttributes(value)
+    attributes?.modificationTime?.let {
+      presentation
+        .append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        .append(
+          message("explorer.tree.node.label.modified", LocalDateTime.parse(it).toHumanReadableFormat()),
+          SimpleTextAttributes.GRAY_ATTRIBUTES
+        )
+    }
+    presentation.tooltip = message(
+      "explorer.tree.uss.node.tooltip",
+      attributes?.owner ?: "NULL", attributes?.fileMode ?: "NULL"
+    )
   }
 
   override fun getVirtualFile(): MFVirtualFile {
@@ -55,4 +78,7 @@ class UssFileNode(
   override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
     return mutableListOf()
   }
+
+  private val attributesService
+    get() = DataOpsManager.getService().getAttributesService<RemoteUssAttributes, MFVirtualFile>()
 }

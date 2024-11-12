@@ -34,6 +34,7 @@ import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.UIComponentManager
+import org.zowe.explorer.utils.append
 import org.zowe.explorer.utils.isBeingEditingNow
 import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
@@ -97,7 +98,7 @@ abstract class ExplorerTreeNode<Connection : ConnectionConfigBase, Value : Any>(
     } else {
       SimpleTextAttributes.REGULAR_ATTRIBUTES
     }
-    presentationData.addText(text, textAttributes)
+    presentationData.append(text, textAttributes)
   }
 
   override fun navigate(requestFocus: Boolean) {

@@ -17,14 +17,11 @@ package org.zowe.explorer.dataops.operations
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.api.api
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.UnitOperation
-import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
-import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
-import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
-import org.zowe.explorer.dataops.attributes.getLibraryAttributes
+import org.zowe.explorer.dataops.attributes.*
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.findAnyNullable
@@ -33,6 +30,7 @@ import org.zowe.explorer.utils.runWriteActionInEdt
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.XIBMOption
+import retrofit2.Call
 
 class DeleteRunnerFactory : OperationRunnerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): OperationRunner<*, *> {
@@ -40,8 +38,52 @@ class DeleteRunnerFactory : OperationRunnerFactory {
   }
 }
 
-class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
-  OperationRunner<DeleteOperation, Unit> {
+/**
+ * Send delete operation call and delete the respective element from the virtual file system
+ * @param operation the delete operation instance
+ * @param opRunner the operation runner
+ * @param progressIndicator the progress indicator to cancel the operation by on the call end
+ * @param requesters the requesters to perform the operation for
+ * @param deleteOperationCallBuilder the operation call builder to build the call
+ * @param exceptionMsg the exception message to put in the [CallException] if the operation was not successful
+ */
+private fun processDeleteForRequesters(
+  operation: DeleteOperation,
+  opRunner: DeleteOperationRunner,
+  progressIndicator: ProgressIndicator,
+  requesters: List<Requester<ConnectionConfig>>,
+  deleteOperationCallBuilder: (ConnectionConfig) -> Call<Void>,
+  exceptionMsg: String = "Cannot delete the element"
+) {
+  var throwable: Throwable? = null
+  requesters
+    .stream()
+    .map { requester ->
+      try {
+        progressIndicator.checkCanceled()
+        val response = deleteOperationCallBuilder(requester.connectionConfig)
+          .cancelByIndicator(progressIndicator)
+          .execute()
+        if (response.isSuccessful) {
+          runWriteActionInEdt { operation.file.delete(opRunner) }
+          true
+        } else {
+          throwable = CallException(response, exceptionMsg)
+          false
+        }
+      } catch (t: Throwable) {
+        throwable = t
+        false
+      }
+    }
+    .filter { it }
+    .findAnyNullable()
+    ?: throw (throwable ?: Throwable("Unknown"))
+}
+
+class DeleteOperationRunner(
+  private val dataOpsManager: DataOpsManager
+) : OperationRunner<DeleteOperation, Unit> {
   override val operationClass = DeleteOperation::class.java
   override val log = log<DeleteOperationRunner>()
 
@@ -63,53 +105,41 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         } else {
           operation.file.isWritable = false
         }
-        var throwable: Throwable? = null
-        attr.requesters.stream().map {
-          try {
-            progressIndicator.checkCanceled()
-            val response = api<DataAPI>(it.connectionConfig).deleteDataset(
-              authorizationToken = it.connectionConfig.authToken,
-              datasetName = attr.name
-            ).cancelByIndicator(progressIndicator).execute()
-            if (response.isSuccessful) {
-              runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
-              true
-            } else {
-              throwable = CallException(response, "Cannot delete data set")
-              false
-            }
-          } catch (t: Throwable) {
-            throwable = t
-            false
-          }
-        }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
+        val deleteOperationCallBuilder = { connectionConfig: ConnectionConfig ->
+          api<DataAPI>(connectionConfig).deleteDataset(
+            authorizationToken = connectionConfig.authToken,
+            datasetName = attr.name
+          )
+        }
+        processDeleteForRequesters(
+          operation,
+          this,
+          progressIndicator,
+          attr.requesters,
+          deleteOperationCallBuilder,
+          "Cannot delete data set"
+        )
       }
 
       is RemoteMemberAttributes -> {
         operation.file.isWritable = false
         val libraryAttributes = attr.getLibraryAttributes(dataOpsManager)
         if (libraryAttributes != null) {
-          var throwable: Throwable? = null
-          libraryAttributes.requesters.stream().map {
-            try {
-              progressIndicator.checkCanceled()
-              val response = api<DataAPI>(it.connectionConfig).deleteDatasetMember(
-                authorizationToken = it.connectionConfig.authToken,
-                datasetName = libraryAttributes.name,
-                memberName = attr.name
-              ).cancelByIndicator(progressIndicator).execute()
-              if (response.isSuccessful) {
-                runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
-                true
-              } else {
-                throwable = CallException(response, "Cannot delete data set member")
-                false
-              }
-            } catch (t: Throwable) {
-              throwable = t
-              false
-            }
-          }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
+          val deleteOperationCallBuilder = { connectionConfig: ConnectionConfig ->
+            api<DataAPI>(connectionConfig).deleteDatasetMember(
+              authorizationToken = connectionConfig.authToken,
+              datasetName = libraryAttributes.name,
+              memberName = attr.name
+            )
+          }
+          processDeleteForRequesters(
+            operation,
+            this,
+            progressIndicator,
+            libraryAttributes.requesters,
+            deleteOperationCallBuilder,
+            "Cannot delete data set member"
+          )
         }
       }
 
@@ -119,28 +149,21 @@ class DeleteOperationRunner(private val dataOpsManager: DataOpsManager) :
         } else {
           operation.file.isWritable = false
         }
-        var throwable: Throwable? = null
-        attr.requesters.stream().map {
-          try {
-            progressIndicator.checkCanceled()
-            val response = api<DataAPI>(it.connectionConfig).deleteUssFile(
-              authorizationToken = it.connectionConfig.authToken,
-              filePath = FilePath(attr.path),
-              xIBMOption = XIBMOption.RECURSIVE
-            ).cancelByIndicator(progressIndicator).execute()
-            if (response.isSuccessful) {
-              // TODO: clarify issue with removing from MF Virtual file system
-              // runWriteActionInEdt { operation.file.delete(this@DeleteOperationRunner) }
-              true
-            } else {
-              throwable = CallException(response, "Cannot delete USS File/Directory")
-              false
-            }
-          } catch (t: Throwable) {
-            throwable = t
-            false
-          }
-        }.filter { it }.findAnyNullable() ?: throw (throwable ?: Throwable("Unknown"))
+        val deleteOperationCallBuilder = { connectionConfig: ConnectionConfig ->
+          api<DataAPI>(connectionConfig).deleteUssFile(
+            authorizationToken = connectionConfig.authToken,
+            filePath = FilePath(attr.path),
+            xIBMOption = XIBMOption.RECURSIVE
+          )
+        }
+        processDeleteForRequesters(
+          operation,
+          this,
+          progressIndicator,
+          attr.requesters,
+          deleteOperationCallBuilder,
+          "Cannot delete USS File/Directory"
+        )
       }
     }
   }

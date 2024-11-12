@@ -15,13 +15,15 @@
 package org.zowe.explorer.config.connect.ui
 
 import com.intellij.util.ui.ColumnInfo
+import org.zowe.explorer.common.message
 
 /**
  * Class represents a connection url column in connection table model.
  * It extends ColumnInfo abstract class and overloads getter and setter methods as values for this column.
  */
-class ConnectionUrlColumn<ConnectionState: ConnectionDialogStateBase<*>>(columnName: String)
-  : ColumnInfo<ConnectionState, String>(columnName) {
+class ConnectionUrlColumn<ConnectionState : ConnectionDialogStateBase<*>> : ColumnInfo<ConnectionState, String>(
+  message("configurable.connection.table.url")
+) {
 
   /**
    * Overloaded getter method of ColumnInfo abstract class.
@@ -37,4 +39,7 @@ class ConnectionUrlColumn<ConnectionState: ConnectionDialogStateBase<*>>(columnN
     item.connectionUrl = value
   }
 
+  override fun getTooltipText(): String {
+    return message("configurable.connection.table.url.tooltip")
+  }
 }

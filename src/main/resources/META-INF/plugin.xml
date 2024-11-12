@@ -97,6 +97,10 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <extensionPoint name="nameResolver"
                         interface="org.zowe.explorer.dataops.operations.mover.names.CopyPasteNameResolverFactory"/>
+
+        <extensionPoint name="operationRunnerV3"
+                        interface="org.zowe.explorer.v3.operations.OperationRunner"
+                        dynamic="true"/>
     </extensionPoints>
 
     <applicationListeners>
@@ -184,6 +188,8 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <operationRunner implementation="org.zowe.explorer.dataops.operations.UssChangeModeFactory"/>
 
+        <operationRunner implementation="org.zowe.explorer.dataops.operations.UssChangeOwnerFactory"/>
+
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.mover.MemberToPdsMoverFactory"/>
 
@@ -270,6 +276,8 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <operationRunner
                 implementation="org.zowe.explorer.dataops.operations.uss.ChangeFileTagOperationRunnerFactory"/>
+
+        <operationRunnerV3 implementation="org.zowe.explorer.v3.operations.RenameOperationRunner"/>
 
         <logFetcher implementation="org.zowe.explorer.dataops.log.JobLogFetcherFactory"/>
 

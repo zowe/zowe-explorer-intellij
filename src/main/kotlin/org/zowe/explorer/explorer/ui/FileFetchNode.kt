@@ -16,7 +16,6 @@ package org.zowe.explorer.explorer.ui
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
@@ -30,9 +29,7 @@ import org.zowe.explorer.dataops.Query
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.fetch.LibraryQuery
 import org.zowe.explorer.explorer.ExplorerUnit
-import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.locked
-import org.zowe.explorer.utils.toHumanReadableFormat
+import org.zowe.explorer.utils.*
 import java.time.LocalDateTime
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -51,16 +48,12 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
   private val lock = ReentrantLock()
   private val condition = lock.newCondition()
 
-  private val connectionError = "Error: Check connection"
-  private val refreshLabel = "latest refresh:"
-  private val outOfSync: String = "Out of sync"
-
   @Volatile
   private var needsToShowPlus = true
 
   private var cachedChildren: List<AbstractTreeNode<*>>? by locked(null, lock)
 
-  private val fileFetchProvider
+  protected val fileFetchProvider
     get() = DataOpsManager.getService()
       .getFileFetchProvider(requestClass, queryClass, vFileClass)
 
@@ -145,10 +138,11 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
           } else {
             if (possibleToFetch) {
               possibleToFetch = false
-              runBackgroundableTask(
+              runBackgroundableSyncTask(
                 title = makeFetchTaskTitle(q),
                 project = project,
-                cancellable = true
+                cancellable = true,
+                virtualFile = virtualFile
               ) {
                 var isMembersFetchOnInvalidDS = false
                 // This functionality is going to skip the fetch of dataset members
@@ -182,7 +176,7 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
         } else {
           errorNode(
             if (unit.connectionConfig == null) {
-              connectionError
+              message("explorer.tree.node.label.error.connection")
             } else {
               q?.let { it1 -> fileFetchProvider.getFetchedErrorMessage(it1) } ?: message("title.error")
             }
@@ -221,12 +215,19 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
     if (q != null) {
       val lastKnownRefreshTime = fileFetchProvider.findCacheRefreshDateIfPresent(q)
       if (lastKnownRefreshTime != null) {
-        presentation.addText(
-          " $refreshLabel ${lastKnownRefreshTime.toHumanReadableFormat()}",
-          SimpleTextAttributes.GRAYED_ATTRIBUTES
-        )
+        presentation
+          .append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+          .append(
+            message("explorer.tree.node.label.refreshed", lastKnownRefreshTime.toHumanReadableFormat()),
+            SimpleTextAttributes.GRAY_ATTRIBUTES
+          )
       }
-    } else presentation.addText(" $outOfSync", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    } else presentation
+      .append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      .append(
+        message("explorer.tree.node.label.outOfSync"),
+        SimpleTextAttributes.GRAYED_ATTRIBUTES
+      )
   }
 
   /**

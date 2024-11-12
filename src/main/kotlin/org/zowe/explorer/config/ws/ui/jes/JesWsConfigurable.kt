@@ -15,6 +15,7 @@
 package org.zowe.explorer.config.ws.ui.jes
 
 import com.intellij.util.containers.toMutableSmartList
+import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.config.ConfigSandbox
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
@@ -27,9 +28,9 @@ import org.zowe.explorer.utils.crudable.Crudable
  * Implementation of AbstractWsConfigurable class for modifying JES Working Set configurations.
  * @see AbstractWsConfigurable
  */
-class JesWsConfigurable
-  : AbstractWsConfigurable<JesWorkingSetConfig, JesWsTableModel, JesWorkingSetDialogState>("JES Working Sets") {
-
+class JesWsConfigurable : AbstractWsConfigurable<JesWorkingSetConfig, JesWsTableModel, JesWorkingSetDialogState>(
+  message("configurable.ws.jes.title")
+) {
   override val wsConfigClass = JesWorkingSetConfig::class.java
   override val wsTableModel = JesWsTableModel(ConfigSandbox.getService().crudable)
 

@@ -15,13 +15,16 @@
 package org.zowe.explorer.tso.config.ui.table
 
 import com.intellij.util.ui.ColumnInfo
+import org.zowe.explorer.common.message
 import org.zowe.explorer.tso.config.ui.TSOSessionDialogState
 
 /**
  * Class represents an account number column in TSO session table model.
  * It extends ColumnInfo abstract class and overloads getter and setter methods as values for this column
  */
-class AccountNumberColumn: ColumnInfo<TSOSessionDialogState, String>("Account Number") {
+class AccountNumberColumn : ColumnInfo<TSOSessionDialogState, String>(
+  message("configurable.tso.table.account")
+) {
 
   /**
    * Overloaded getter method of ColumnInfo abstract class
@@ -37,4 +40,7 @@ class AccountNumberColumn: ColumnInfo<TSOSessionDialogState, String>("Account Nu
     state.accountNumber = value
   }
 
+  override fun getTooltipText(): String {
+    return message("configurable.tso.table.account.tooltip")
+  }
 }

@@ -76,9 +76,9 @@ data class RemoteUssAttributes(
   override val requesters: MutableList<UssRequester>,
   override val length: Long = 0L,
   val uid: Long? = null,
-  val owner: String? = null,
+  var owner: String? = null,
   val gid: Long? = null,
-  val groupId: String? = null,
+  var groupId: String? = null,
   val modificationTime: String? = null,
   val symlinkTarget: String? = null,
   var charset: Charset = DEFAULT_BINARY_CHARSET
@@ -137,9 +137,9 @@ data class RemoteUssAttributes(
         fileMode?.all
       }
       return mode == FileModeValue.WRITE.mode
-          || mode == FileModeValue.WRITE_EXECUTE.mode
-          || mode == FileModeValue.READ_WRITE.mode
-          || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+        || mode == FileModeValue.WRITE_EXECUTE.mode
+        || mode == FileModeValue.READ_WRITE.mode
+        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
     }
 
   val isReadable: Boolean

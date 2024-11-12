@@ -29,15 +29,8 @@ import org.zowe.explorer.explorer.FileExplorer
 import org.zowe.explorer.explorer.FilesWorkingSetImpl
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import io.mockk.Called
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.clearMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.unmockkAll
-import io.mockk.verify
+import org.zowe.explorer.utils.append
+import io.mockk.*
 import java.time.LocalDateTime
 
 class FileFetchNodeTestSpec : WithApplicationShouldSpec({
@@ -83,8 +76,8 @@ class FileFetchNodeTestSpec : WithApplicationShouldSpec({
     context("updateRefreshDateAndTime") {
       should("should update node presentation with correct refresh date and time given valid query") {
         //given
-        val text = " latest refresh: 30 DECEMBER 10:00:00"
-        every { presentationMock.addText(any(), any()) } just Runs
+        val text = "refreshed: 30 DEC 10:00:00"
+        every { presentationMock.append(any(), any()) } answers {presentationMock}
         every { datasetFileFetchProvider.getRealQueryInstance(any()) } returns queryMock
         every { datasetFileFetchProvider.findCacheRefreshDateIfPresent(any()) } returns lastRefreshDate
 
@@ -93,15 +86,15 @@ class FileFetchNodeTestSpec : WithApplicationShouldSpec({
 
         //then
         verify(exactly = 1) { datasetFileFetchProvider.findCacheRefreshDateIfPresent(queryMock) }
-        verify(exactly = 1) { presentationMock.addText(text, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+        verify(exactly = 1) { presentationMock.append(text, SimpleTextAttributes.GRAY_ATTRIBUTES) }
         clearMocks(presentationMock, verificationMarks = true)
 
       }
 
       should("should update node presentation with correct refresh date and time given valid query if no real instance found") {
         //given
-        val text = " latest refresh: 30 DECEMBER 10:00:00"
-        every { presentationMock.addText(any(), any()) } just Runs
+        val text = "refreshed: 30 DEC 10:00:00"
+        every { presentationMock.append(any(), any()) } answers {presentationMock}
         every { datasetFileFetchProvider.getRealQueryInstance(any()) } returns null
         every { datasetFileFetchProvider.findCacheRefreshDateIfPresent(any()) } returns lastRefreshDate
 
@@ -109,7 +102,7 @@ class FileFetchNodeTestSpec : WithApplicationShouldSpec({
         classUnderTest.updateRefreshDateAndTime(presentationMock)
 
         //then
-        verify(exactly = 1) { presentationMock.addText(text, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+        verify(exactly = 1) { presentationMock.append(text, SimpleTextAttributes.GRAY_ATTRIBUTES) }
         clearMocks(presentationMock, verificationMarks = true)
       }
 
@@ -128,16 +121,16 @@ class FileFetchNodeTestSpec : WithApplicationShouldSpec({
 
       should("should update node presentation with Out-Of-Sync text if no valid query") {
         //given
-        val text = " Out of sync"
+        val text = "Out of sync"
         every { mockedWorkingSet.connectionConfig } returns null
-        every { presentationMock.addText(any(), any()) } just Runs
+        every { presentationMock.append(any(), any()) } answers  {presentationMock}
         every { datasetFileFetchProvider.getRealQueryInstance(any()) } returns null
 
         //when
         classUnderTest.updateRefreshDateAndTime(presentationMock)
 
         //then
-        verify(exactly = 1) { presentationMock.addText(text, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+        verify(exactly = 1) { presentationMock.append(text, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
       }
     }
     unmockkAll()

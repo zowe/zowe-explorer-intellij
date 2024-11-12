@@ -47,9 +47,10 @@ data class RemoteJobAttributes(
    */
   override fun clone(): FileAttributes {
     return RemoteJobAttributes(
-      jobInfo.clone(), url, requesters.map {
-        JobsRequester(it.connectionConfig, it.jobsFilter)
-      }.toMutableList()
+      jobInfo.clone(),
+      url,
+      requesters.map { JobsRequester(it.connectionConfig, it.jobsFilter) }
+        .toMutableList()
     )
   }
 

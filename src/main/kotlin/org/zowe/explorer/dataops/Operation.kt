@@ -15,8 +15,8 @@
 package org.zowe.explorer.dataops
 
 /**
- * Interface to describe an operation in plugin.
- * @param Result result that should be returned after operation execution.
+ * Interface to describe an operation in the plugin
+ * @property resultClass the result class of the result that should be returned after an operation execution
  */
 interface Operation<Result> {
 

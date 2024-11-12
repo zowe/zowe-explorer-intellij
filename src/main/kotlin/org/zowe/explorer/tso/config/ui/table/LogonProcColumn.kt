@@ -15,13 +15,16 @@
 package org.zowe.explorer.tso.config.ui.table
 
 import com.intellij.util.ui.ColumnInfo
+import org.zowe.explorer.common.message
 import org.zowe.explorer.tso.config.ui.TSOSessionDialogState
 
 /**
  * Class represents a logon procedure column in TSO session table model.
  * It extends ColumnInfo abstract class and overloads getter and setter methods as values for this column
  */
-class LogonProcColumn : ColumnInfo<TSOSessionDialogState, String>("Logon Procedure") {
+class LogonProcColumn : ColumnInfo<TSOSessionDialogState, String>(
+  message("configurable.tso.table.logon")
+) {
 
   /**
    * Overloaded getter method of ColumnInfo abstract class
@@ -37,4 +40,7 @@ class LogonProcColumn : ColumnInfo<TSOSessionDialogState, String>("Logon Procedu
     item.logonProcedure = value
   }
 
+  override fun getTooltipText(): String {
+    return message("configurable.tso.table.logon.tooltip")
+  }
 }

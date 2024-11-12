@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
@@ -27,8 +28,7 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import javax.swing.JComponent
 import com.intellij.ui.dsl.builder.*
 import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
-import org.zowe.explorer.utils.getParamTextValueOrUnknown
-import org.zowe.explorer.utils.getSupportedEncodings
+import org.zowe.explorer.utils.*
 import org.zowe.kotlinsdk.*
 import java.nio.charset.Charset
 
@@ -38,37 +38,8 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
 
   private val sameWidthGroup = "USS_FILE_PROPERTIES_DIALOG_LABELS_WIDTH_GROUP"
 
-  private lateinit var generalTab: DialogPanel
-
-  private lateinit var permissionTab: DialogPanel
-
-  private lateinit var comboBox: Cell<ComboBox<Charset>>
-
-  var fileTypeName: String = "File"
-
-  private val fileModeValues = listOf(
-    FileModeValue.NONE,
-    FileModeValue.EXECUTE,
-    FileModeValue.WRITE,
-    FileModeValue.WRITE_EXECUTE,
-    FileModeValue.READ,
-    FileModeValue.READ_EXECUTE,
-    FileModeValue.READ_WRITE,
-    FileModeValue.READ_WRITE_EXECUTE
-  )
-
-  init {
-
-    if (state.ussAttributes.isDirectory)
-      fileTypeName = "Directory"
-    title = "$fileTypeName Properties"
-    init()
-  }
-
-  override fun createCenterPanel(): JComponent {
-    val tabbedPanel = JBTabbedPane()
-
-    generalTab = panel {
+  private val generalTab by lazy{
+  panel {
       row {
         label("$fileTypeName name: ")
           .widthGroup(sameWidthGroup)
@@ -134,22 +105,30 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
         }
       }
     }
+  }
 
-    permissionTab = panel {
+  private val permissionTab by lazy{
+    panel {
       row {
         label("Owner: ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(getParamTextValueOrUnknown(state.ussAttributes.owner))
-          .applyToComponent { isEditable = false }
+          .bindText(
+            { state.ussAttributes.owner ?: UNKNOWN_PARAM_VALUE },
+            { state.ussAttributes.owner = it }
+          )
+          .validationOnApply { validateForBlank(it) ?: validateFieldWithLengthRestriction(it, 8, "Owner") }
           .align(AlignX.FILL)
       }
       row {
         label("Group: ")
           .widthGroup(sameWidthGroup)
         textField()
-          .text(getParamTextValueOrUnknown(state.ussAttributes.groupId))
-          .applyToComponent { isEditable = false }
+          .bindText(
+            { state.ussAttributes.groupId ?: UNKNOWN_PARAM_VALUE },
+            { state.ussAttributes.groupId = it }
+          )
+          .validationOnApply { validateForBlank(it) ?: validateFieldWithLengthRestriction(it, 8, "Group") }
           .align(AlignX.FILL)
       }
       row {
@@ -191,7 +170,35 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
           .align(AlignX.FILL)
       }
     }
+  }
 
+  private lateinit var comboBox: Cell<ComboBox<Charset>>
+
+  var fileTypeName: String = "File"
+
+  private val fileModeValues = listOf(
+    FileModeValue.NONE,
+    FileModeValue.EXECUTE,
+    FileModeValue.WRITE,
+    FileModeValue.WRITE_EXECUTE,
+    FileModeValue.READ,
+    FileModeValue.READ_EXECUTE,
+    FileModeValue.READ_WRITE,
+    FileModeValue.READ_WRITE_EXECUTE
+  )
+
+  init {
+    if (state.ussAttributes.isDirectory)
+      fileTypeName = "Directory"
+    title = "$fileTypeName Properties"
+    permissionTab.registerValidators(myDisposable) { map ->
+      isOKActionEnabled = map.isEmpty()
+    }
+    init()
+  }
+
+  override fun createCenterPanel(): JComponent {
+    val tabbedPanel = JBTabbedPane()
     tabbedPanel.add("General", generalTab)
     tabbedPanel.add("Permissions", permissionTab)
 
@@ -202,6 +209,13 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
     generalTab.apply()
     permissionTab.apply()
     super.doOKAction()
+  }
+
+  /**
+   * Overloaded method to validate components in the permissionTab panel
+   */
+  override fun doValidate(): ValidationInfo? {
+    return permissionTab.validateAll().firstOrNull() ?: super.doValidate()
   }
 
 }

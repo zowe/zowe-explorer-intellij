@@ -16,11 +16,10 @@ package org.zowe.explorer.dataops.attributes
 
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.DSMask
-import org.zowe.explorer.utils.nullIfBlank
 
 /**
  * Information object with query mask and connection configuration inside
- * to send request for a list of datasets to zosmf.
+ * to send request for a list of datasets to z/OSMF.
  * @param connectionConfig connection configuration to specify the system to work with.
  * @param queryMask datasets mask.
  */

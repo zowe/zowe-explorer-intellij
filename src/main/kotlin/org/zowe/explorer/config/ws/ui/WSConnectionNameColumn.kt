@@ -20,9 +20,6 @@ import org.zowe.explorer.common.message
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.config.ws.WorkingSetConfig
 import org.zowe.explorer.utils.crudable.Crudable
-import org.zowe.explorer.utils.crudable.find
-import org.zowe.explorer.utils.crudable.getAll
-import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.nullable
 import org.zowe.explorer.utils.toMutableList
 import javax.swing.table.TableCellEditor
@@ -30,8 +27,10 @@ import javax.swing.table.TableCellEditor
 /**
  * Class which represents working set connection name column in working set table model
  */
-class WSConnectionNameColumn<Connection: ConnectionConfigBase, WSConfig : WorkingSetConfig>(private val crudable: Crudable, val connectionClass: Class<out Connection>) :
-  ColumnInfo<WSConfig, String>(message("configurable.ws.tables.ws.connection.name")) {
+class WSConnectionNameColumn<Connection : ConnectionConfigBase, WSConfig : WorkingSetConfig>(private val crudable: Crudable, val connectionClass: Class<out Connection>) :
+  ColumnInfo<WSConfig, String>(
+    message("configurable.ws.table.connection.name")
+  ) {
 
   inner class ConnectionTableCellEditor : ComboBoxCellEditor() {
     override fun getComboBoxItems(): MutableList<String> {
@@ -60,7 +59,7 @@ class WSConnectionNameColumn<Connection: ConnectionConfigBase, WSConfig : Workin
   }
 
   override fun getTooltipText(): String {
-    return message("configurable.ws.tables.ws.connection.tooltip")
+    return message("configurable.ws.table.connection.tooltip")
   }
 
 }

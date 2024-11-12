@@ -76,29 +76,41 @@ class DatasetAllocator : Allocator<DatasetAllocationOperation> {
       if (operation.request.presets != Presets.CUSTOM_DATASET
         && operation.request.presets != Presets.SEQUENTIAL_DATASET
         && operation.request.presets != Presets.PDS_DATASET
+        && operation.request.presets != Presets.PDSE_DATASET
       ) {
         // Allocate member
         var throwable: Throwable? = null
         runCatching {
+          val contentToWrite = if (
+            operation.request.presets == Presets.PDS_WITH_EMPTY_MEMBER
+            || operation.request.presets == Presets.PDSE_WITH_EMPTY_MEMBER
+          ) {
+            byteArrayOf()
+          } else {
+            getSampleJclMemberContent(CredentialService.getUsername(operation.connectionConfig))
+              .encodeToByteArray()
+          }
           val memberResponse = apiWithBytesConverter<DataAPI>(operation.connectionConfig).writeToDatasetMember(
             authorizationToken = operation.connectionConfig.authToken,
             datasetName = operation.request.datasetName,
             memberName = operation.request.memberName,
-            content = if (operation.request.presets == Presets.PDS_WITH_EMPTY_MEMBER) {
-              byteArrayOf()
-            } else {
-              getSampleJclMemberContent(CredentialService.getUsername(operation.connectionConfig))
-                .encodeToByteArray()
-            }
+            content = contentToWrite
           ).cancelByIndicator(progressIndicator).execute()
           if (!memberResponse.isSuccessful) {
             throwable = CallException(
               memberResponse,
               "Cannot create sample member ${operation.request.memberName} in ${operation.request.datasetName} " +
-                  "on ${operation.connectionConfig.name}"
+                "on ${operation.connectionConfig.name}"
             )
+            throw throwable as CallException
           }
-        }.onFailure { if (throwable != null) throw Throwable(cause = throwable) else throw Exception("Error allocating a new sample member ${operation.request.memberName}") }
+        }
+          .onFailure {
+            // Suppressed as the compiler does not correctly recognize the throwable state change
+            @Suppress("KotlinConstantConditions")
+            if (throwable != null) throw Throwable(cause = throwable)
+            else throw Exception("Error allocating a new sample member ${operation.request.memberName}")
+          }
       }
     }
   }

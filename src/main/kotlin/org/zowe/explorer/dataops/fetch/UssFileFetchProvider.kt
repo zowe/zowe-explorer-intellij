@@ -81,16 +81,17 @@ class UssFileFetchProvider(
       .execute()
 
     if (response.isSuccessful) {
-      attributes = response.body()?.items?.filter {
-        it.name != UPPER_DIR_NAME
-      }?.map {
-        RemoteUssAttributes(
-          rootPath = query.request.path,
-          ussFile = it,
-          url = query.connectionConfig.url,
-          connectionConfig = query.connectionConfig
-        )
-      }
+      attributes = response.body()
+        ?.items
+        ?.filter { it.name != UPPER_DIR_NAME }
+        ?.map {
+          RemoteUssAttributes(
+            rootPath = query.request.path,
+            ussFile = it,
+            url = query.connectionConfig.url,
+            connectionConfig = query.connectionConfig
+          )
+        }
       log.info("${query.request} returned ${attributes?.size ?: 0} entities")
       log.debug {
         attributes?.joinToString("\n") ?: ""
