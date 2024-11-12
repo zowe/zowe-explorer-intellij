@@ -6,6 +6,11 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ### Bugfixes
 
+* Bugfix: Fixed NullPointerException during a sort action ([42c9ee5a](https://github.com/zowe/zowe-explorer-intellij/commit/42c9ee5a))
+* Bugfix: Fixed issue with purge that won't trigger a refresh ([b93118b7](https://github.com/zowe/zowe-explorer-intellij/commit/b93118b7))
+* Bugfix: Fixed issue with refreshing USS folders when a working set or a mask is refreshed ([19a08a9b](https://github.com/zowe/zowe-explorer-intellij/commit/19a08a9b))
+* Bugfix: Fixed working with trusted certificates ([41b52b83](https://github.com/zowe/zowe-explorer-intellij/commit/41b52b83))
+* Bugfix: Fixed issue with refresh that won't work when a connection is changed on a working set ([90825a6d](https://github.com/zowe/zowe-explorer-intellij/commit/90825a6d))
 * Bugfix: Fixed issue with cross-system folder copy with name conflicts ([c5345051](https://github.com/zowe/zowe-explorer-intellij/commit/c5345051))
 * Bugfix: Clarified 401 error ([f36ec547](https://github.com/zowe/zowe-explorer-intellij/commit/f36ec547))
 * Bugfix: Fixed issue with USS copy that would lead to incorrect encoding error ([b4cb705a](https://github.com/zowe/zowe-explorer-intellij/commit/b4cb705a))
