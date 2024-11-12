@@ -173,6 +173,7 @@ class ConnectionDialog(
                   "04.26.00" -> ZVersion.ZOS_2_3
                   "04.27.00" -> ZVersion.ZOS_2_4
                   "04.28.00" -> ZVersion.ZOS_2_5
+                  "04.29.00" -> ZVersion.ZOS_3_1
                   else -> ZVersion.ZOS_2_1
                 }
                 newTestedConnConfig.zVersion = state.zVersion
