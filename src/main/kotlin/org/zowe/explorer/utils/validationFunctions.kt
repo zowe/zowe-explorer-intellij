@@ -21,12 +21,11 @@ import org.zowe.explorer.explorer.ui.UssDirNode
 import org.zowe.explorer.explorer.ui.UssFileNode
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
-import org.zowe.kotlinsdk.DatasetOrganization
 import javax.swing.JComponent
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 
-private val urlRegex = Regex("^(https?|http)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")
+private val urlRegex = Regex("^https?:\\/\\/((([a-zA-Z0-9\\-_]+\\.)+[a-zA-Z]{2,})|(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}))(:\\d+)?((\\/[a-zA-Z0-9\\-_\\.~]+)?)*\\/?\$")
 private val maskRegex = Regex("^[A-Za-z\\$\\*%@#][A-Za-z0-9\\-\\$\\*%@#]{0,7}")
 private val ussPathRegex = Regex("^/$|^(/[^/]+)+$")
 private val forbiddenSymbol = "/"

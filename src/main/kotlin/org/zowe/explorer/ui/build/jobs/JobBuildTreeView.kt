@@ -32,11 +32,14 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.log.JobLogFetcher
 import org.zowe.explorer.dataops.log.JobProcessInfo
 import org.zowe.explorer.dataops.log.MFLogger
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.zowe.kotlinsdk.SpoolFile
 import java.awt.BorderLayout
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreeNode
 
 val JOBS_LOG_VIEW = DataKey.create<JobBuildTreeView>("jobsLogView")
 const val JOBS_LOG_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.ExplorerNotificationGroup"
@@ -100,20 +103,25 @@ class JobBuildTreeView(
       treeConsoleView.component.add(it.component, BorderLayout.PAGE_START)
     }
 
-    jobLogger.onNextLog {
+    jobLogger.startLogging()
+
+    fun onNextLog() {
       val cachedSpoolLog = jobLogger.logFetcher.getCachedLog()
-      cachedSpoolLog
-        .minus(spoolFileToLogMap.keys)
-        .forEach {
+      if (cachedSpoolLog.count() != spoolFileToLogMap.count()) {
+        cachedSpoolLog.minus(spoolFileToLogMap.keys).forEach {
           treeConsoleView.onEvent(buildId, StartEventImpl(it.key.id, buildId, Date().time, it.key.ddName))
         }
-      cachedSpoolLog
-        .forEach {
+        cachedSpoolLog.forEach {
           val prevLog = spoolFileToLogMap[it.key] ?: ""
           val logToDisplay = if (it.value.length >= prevLog.length) it.value.substring(prevLog.length) else prevLog
           treeConsoleView.onEvent(buildId, OutputBuildEventImpl(it.key.id, logToDisplay, true))
           spoolFileToLogMap[it.key] = it.value
         }
+      }
+    }
+
+    jobLogger.onNextLog {
+      onNextLog()
     }
 
     jobLogger.onLogFinished {
@@ -122,42 +130,81 @@ class JobBuildTreeView(
         .getCachedJobStatus()
         ?.returnedCode
         ?.uppercase()
-      var codeWithWarning = false
-      val result = if (rc == null || rc.contains(Regex("ERR|ABEND|CANCEL|FAIL"))) FailureResultImpl()
-      else if (rc.contains("CC")) { // result code can be in format "CC nnnn"
+      //Variables were added to set the correct icon depending on the result of the job execution.
+      //For any execution status, FailureResultImpl will be used to display DDs
+      val ret = if (rc?.contains("CC") == true) { // result code can be in format "CC nnnn"
         val completionCode = rc.split(" ")[1].toInt()
         when (completionCode) {
-          SUCCESSFUL_JOB_COMPLETION_CODE -> SuccessResultImpl()
-
-          SUCCESSFUL_JOB_COMPLETION_CODE_WITH_WARNING -> {
-            codeWithWarning = true
-            SuccessResultImpl()
-          }
-
-          else -> FailureResultImpl()
+          SUCCESSFUL_JOB_COMPLETION_CODE -> ReturnCode.SUCCESS
+          SUCCESSFUL_JOB_COMPLETION_CODE_WITH_WARNING -> ReturnCode.WARNING
+          else -> ReturnCode.ERROR
         }
-      } else SuccessResultImpl()
+      } else ReturnCode.ERROR
 
-      jobLogger.logFetcher.getCachedLog()
-        .forEach {
-          treeConsoleView.onEvent(buildId, FinishEventImpl(it.key.id, buildId, Date().time, it.key.ddName, result))
-        }
-      runCatching {
-        val buildNode = (treeConsoleView.tree.model.root as DefaultMutableTreeNode).firstChild
-        val buildExecutionNode = (buildNode as DefaultMutableTreeNode).userObject as ExecutionNode
-        if (result is FailureResultImpl) {
-          buildExecutionNode.setIconProvider { AllIcons.General.BalloonError }
-        } else if (codeWithWarning) {
-          buildExecutionNode.setIconProvider { AllIcons.General.BalloonWarning }
-        } else {
-          buildExecutionNode.setIconProvider { AllIcons.General.InspectionsOK }
-        }
+      jobLogger.fetchLog()
+      var finalLogFiles = jobLogger.logFetcher.getCachedLog()
+      if (finalLogFiles.count() != spoolFileToLogMap.count()) {
+        onNextLog()
       }
-      treeConsoleView.onEvent(buildId, FinishBuildEventImpl(buildId, buildId, Date().time, buildId, result))
-    }
 
-    jobLogger.startLogging()
+      runBlocking {
+        //TODO Need to be reworked
+        //It is possible that not all DDs are displayed (but information about them already exists),
+        // And, accordingly, the correct icon cannot be set for them.
+        //Sleep for 1 second to wait for display
+        if ((treeConsoleView.tree.model.root as DefaultMutableTreeNode).firstChild.childCount < spoolFileToLogMap.count())
+          delay(1000)
+
+        setIconRec(
+          (treeConsoleView.tree.model.root as DefaultMutableTreeNode).firstChild,
+          ret
+        )
+      }
+
+      finalLogFiles
+        .forEach {
+          treeConsoleView.onEvent(
+            buildId,
+            FinishEventImpl(it.key.id, buildId, Date().time, it.key.ddName, FailureResultImpl())
+          )
+        }
+      treeConsoleView.onEvent(
+        buildId,
+        FinishBuildEventImpl(buildId, buildId, Date().time, buildId, FailureResultImpl())
+      )
+    }
   }
+
+  /**
+   * The function recursively sets the job execution status icon
+   */
+  private fun setIconRec(buildNode: TreeNode, ret: ReturnCode) {
+    setIcon(buildNode, ret)
+    if (buildNode.childCount > 0)
+      for (currChild in buildNode.children()) {
+        setIcon(currChild, ret)
+      }
+  }
+
+  /**
+   * The function  sets the job execution status icon
+   */
+  private fun setIcon(buildNode: TreeNode, ret: ReturnCode) {
+    val buildExecutionNode = (buildNode as DefaultMutableTreeNode).userObject as ExecutionNode
+    when (ret) {
+      ReturnCode.ERROR -> buildExecutionNode.setIconProvider { AllIcons.General.BalloonError }
+      ReturnCode.WARNING -> buildExecutionNode.setIconProvider { AllIcons.General.BalloonWarning }
+      ReturnCode.SUCCESS -> buildExecutionNode.setIconProvider { AllIcons.General.InspectionsOK }
+    }
+  }
+
+  /**
+   * Enum for job execution status
+   */
+  enum class ReturnCode {
+    SUCCESS, WARNING, ERROR
+  }
+
 
   /**
    * Stops requesting logs from mainframe.
