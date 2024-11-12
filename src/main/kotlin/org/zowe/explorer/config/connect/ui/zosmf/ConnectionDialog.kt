@@ -32,6 +32,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import org.zowe.explorer.common.message
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.zowe.explorer.common.ui.DialogMode
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.showUntilDone
@@ -47,10 +48,13 @@ import org.zowe.explorer.dataops.operations.ChangePasswordOperation
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
-import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getAll
+import org.zowe.explorer.utils.runTask
+import org.zowe.explorer.utils.validateConnectionName
+import org.zowe.explorer.utils.validateForBlank
+import org.zowe.explorer.utils.validateZosmfUrl
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component

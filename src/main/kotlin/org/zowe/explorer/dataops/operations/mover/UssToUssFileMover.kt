@@ -111,7 +111,7 @@ class UssToUssFileMover(private val dataOpsManager: DataOpsManager) : AbstractFi
           from = from,
           overwrite = operation.forceOverwriting,
           links = CopyDataUSS.Links.ALL,
-          preserve = CopyDataUSS.Preserve.ALL,
+          preserve = CopyDataUSS.Preserve.NONE,
           recursive = true
         ),
         filePath = FilePath(
