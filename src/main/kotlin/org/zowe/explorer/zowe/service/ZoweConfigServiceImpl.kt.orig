@@ -490,6 +490,22 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         val currZoweConfigState = if (existingConnection == null) {
           ZoweConfigState.NEED_TO_ADD
         } else {
+<<<<<<< HEAD
+          ret = setZoweConfigState(ret, ZoweConfigState.NEED_TO_ADD)
+          continue
+        }
+        val zoweUsername = zosConnection.user
+        val zowePassword = zosConnection.password
+
+        ret = if (
+          existingConnection == newConnection
+          && CredentialService.getUsername(newConnection) == zoweUsername
+          && CredentialService.getPassword(newConnection) == zowePassword
+        ) {
+          setZoweConfigState(ret, ZoweConfigState.SYNCHRONIZED)
+        } else {
+          setZoweConfigState(ret, ZoweConfigState.NEED_TO_UPDATE)
+=======
           val newConnectionList = zoweConfig.getListOfZosmfConections()
             .filter { it.profileName == getProfileNameFromConnName(existingConnection.name) }
           if (newConnectionList.isNotEmpty()) {
@@ -500,8 +516,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
             val zowePassword = zosConnection.password
             if (
               existingConnection == newConnection
-              && CredentialService.getUsername(newConnection) == zoweUsername
-              && CredentialService.getPassword(newConnection) == zowePassword
+              && getUsername(newConnection) == zoweUsername
+              && getPassword(newConnection) == zowePassword
             ) {
               ZoweConfigState.SYNCHRONIZED
             } else {
@@ -510,6 +526,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
           } else {
             ZoweConfigState.NEED_TO_ADD
           }
+>>>>>>> 8d1f99dc (IJMP-1898 Zowe config from .json enchancement: plus button when connection is not added yet)
         }
         setZoweConfigState(prevZoweConfigState, currZoweConfigState)
       }

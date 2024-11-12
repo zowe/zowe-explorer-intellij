@@ -14,6 +14,7 @@
 
 package org.zowe.explorer.zowe.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -92,6 +93,13 @@ class UpdateZoweConfigAction : DumbAwareAction() {
         zoweConfigService.globalZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
       }
       val zoweState = zoweConfigService.getZoweConfigState(false, type = type)
+      if (zoweState == ZoweConfigState.NEED_TO_ADD) {
+        e.presentation.icon = AllIcons.General.Add
+        e.presentation.text = "Add Zowe Config connections"
+      } else {
+        e.presentation.icon = AllIcons.Actions.BuildLoadChanges
+        e.presentation.text = "Update Zowe Config connections"
+      }
       e.presentation.isEnabledAndVisible =
         zoweState == ZoweConfigState.NEED_TO_UPDATE || zoweState == ZoweConfigState.NEED_TO_ADD
       if (type == ZoweConfigType.LOCAL) {
