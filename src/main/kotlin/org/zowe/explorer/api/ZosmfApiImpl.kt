@@ -15,6 +15,7 @@
 package org.zowe.explorer.api
 
 import com.google.gson.GsonBuilder
+import com.intellij.util.net.ssl.CertificateManager
 import org.zowe.kotlinsdk.buildApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.kotlinsdk.buildApiWithBytesConverter
@@ -22,15 +23,13 @@ import okhttp3.ConnectionPool
 import okhttp3.ConnectionSpec
 import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.converter.scalars.ScalarsConverterFactory
+import org.zowe.kotlinsdk.buildApi
+import org.zowe.kotlinsdk.buildApiWithBytesConverter
 import java.security.SecureRandom
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
+import javax.net.ssl.*
 
 /**
  * Class that implements z/OSMF API for sending requests.
@@ -101,44 +100,8 @@ class ZosmfApiImpl : ZosmfApi {
   }
 }
 
-private val gsonFactory = GsonConverterFactory.create(GsonBuilder().create())
-private val scalarsConverterFactory = ScalarsConverterFactory.create()
-
 /**
- * Connection pool is initialized and the connection parameters are set.
- */
-private fun OkHttpClient.Builder.addThreadPool(): OkHttpClient.Builder {
-  readTimeout(5, TimeUnit.MINUTES)
-  connectTimeout(5, TimeUnit.MINUTES)
-  connectionPool(ConnectionPool(100, 5, TimeUnit.MINUTES))
-  dispatcher(Dispatcher().apply {
-    maxRequests = 100
-    maxRequestsPerHost = 100
-  })
-  return this
-}
-
-val unsafeOkHttpClient by lazy { buildUnsafeClient() }
-val safeOkHttpClient: OkHttpClient by lazy {
-  OkHttpClient.Builder()
-    .setupClient()
-    .build()
-}
-
-/**
- * Setups http client. Adds the necessary headers. Configures connection specs.
- */
-private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
-  return addThreadPool()
-    .addInterceptor {
-      it.request().newBuilder().addHeader("X-CSRF-ZOSMF-HEADER", "").build().let { request ->
-        it.proceed(request)
-      }
-    }.connectionSpecs(mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT))
-}
-
-/**
- * Returns [OkHttpClient] depending on whether self-signed certificates are allowed or not.
+ * Returns [OkHttpClient] depending on whether self-signed certificates are allowed or not
  * @param isAllowSelfSigned whether to allow self-signed certificates.
  * @return safe or unsafe [OkHttpClient] object.
  */
@@ -150,43 +113,84 @@ private fun getOkHttpClient(isAllowSelfSigned: Boolean): OkHttpClient {
   }
 }
 
+private val unsafeOkHttpClient by lazy { buildUnsafeClient() }
+private val safeOkHttpClient by lazy { buildSafeClient() }
+
 /**
- * Method for building an unsafe http client that allows the use of self-signed certificates.
- * @throws RuntimeException if timeout is exceeded.
- * @return unsafe [OkHttpClient] object.
+ * Build an unsafe HTTP client that will allow the use of self-signed certificates
+ * @return unsafe [OkHttpClient] object
  */
 private fun buildUnsafeClient(): OkHttpClient {
-  return try {
-    val trustAllCerts: Array<TrustManager> = arrayOf(
-      object : X509TrustManager {
-        @Throws(CertificateException::class)
-        override fun checkClientTrusted(
-          chain: Array<X509Certificate?>?,
-          authType: String?
-        ) {
-        }
-
-        @Throws(CertificateException::class)
-        override fun checkServerTrusted(
-          chain: Array<X509Certificate?>?,
-          authType: String?
-        ) {
-        }
-
-        override fun getAcceptedIssuers(): Array<X509Certificate> {
-          return arrayOf()
-        }
+  val trustAllCerts: Array<TrustManager> = arrayOf(
+    object : X509TrustManager {
+      @Throws(CertificateException::class)
+      override fun checkClientTrusted(
+        chain: Array<X509Certificate?>?,
+        authType: String?
+      ) {
       }
+
+      @Throws(CertificateException::class)
+      override fun checkServerTrusted(
+        chain: Array<X509Certificate?>?,
+        authType: String?
+      ) {
+      }
+
+      override fun getAcceptedIssuers(): Array<X509Certificate> {
+        return arrayOf()
+      }
+    }
+  )
+  val sslContext = SSLContext.getInstance("TLSv1.2")
+  sslContext.init(null, trustAllCerts, SecureRandom())
+  val sslSocketFactory = sslContext.socketFactory
+  return OkHttpClient.Builder()
+    .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
+    .hostnameVerifier { _, _ -> true }
+    .setupClient()
+    .build()
+}
+
+/**
+ * Build a safe HTTP client that will reuse all allowed secured trusted certificates across the client's system
+ * (as well as those uploaded into IntelliJ's server certificates store)
+ * @return safe [OkHttpClient] object
+ */
+private fun buildSafeClient(): OkHttpClient {
+  val trustManager = CertificateManager.getInstance().trustManager
+  val sslContext = CertificateManager.getInstance().sslContext
+  return OkHttpClient.Builder()
+    .sslSocketFactory(sslContext.socketFactory, trustManager)
+    .setupClient()
+    .build()
+}
+
+/** Set up an HTTP client. Adds the necessary headers. Configures connection specs */
+private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
+  return addThreadPool()
+    .addInterceptor {
+      it.request()
+        .newBuilder()
+        .addHeader("X-CSRF-ZOSMF-HEADER", "")
+        .build()
+        .let { request ->
+          it.proceed(request)
+        }
+    }
+    .connectionSpecs(
+      mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT)
     )
-    val sslContext = SSLContext.getInstance("TLSv1.2")
-    sslContext.init(null, trustAllCerts, SecureRandom())
-    val sslSocketFactory = sslContext.socketFactory
-    val builder = OkHttpClient.Builder()
-    builder.sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
-    builder.hostnameVerifier { _, _ -> true }
-    builder.setupClient()
-    builder.build()
-  } catch (e: Exception) {
-    throw RuntimeException(e)
-  }
+}
+
+/** Connection pool is initialized and the connection parameters are set */
+private fun OkHttpClient.Builder.addThreadPool(): OkHttpClient.Builder {
+  readTimeout(5, TimeUnit.MINUTES)
+  connectTimeout(5, TimeUnit.MINUTES)
+  connectionPool(ConnectionPool(100, 5, TimeUnit.MINUTES))
+  dispatcher(Dispatcher().apply {
+    maxRequests = 100
+    maxRequestsPerHost = 100
+  })
+  return this
 }

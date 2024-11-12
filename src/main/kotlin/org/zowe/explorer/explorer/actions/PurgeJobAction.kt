@@ -118,11 +118,14 @@ class PurgeJobAction : AnAction() {
     jobsByFilterWaitingPurgeMap.keys.forEach { filterNode ->
       val query = filterNode.query
       if (query != null) {
+        // If we performed purge from the job filter defined with JOBID, then OWNER and PREFIX should be "*".
+        // Do not send userCorrelator for a job filter defined with JOBID as described in the specification
         val response = api<JESApi>(query.connectionConfig).getFilteredJobs(
           basicCredentials = query.connectionConfig.authToken,
-          owner = query.request.owner,
-          prefix = query.request.prefix,
-          userCorrelator = query.request.userCorrelatorFilter,
+          owner = query.request.owner.ifEmpty { "*" },
+          prefix = query.request.prefix.ifEmpty { "*" },
+          jobId = query.request.jobId.ifEmpty { null },
+          userCorrelator = query.request.userCorrelatorFilter.ifEmpty { null },
           execData = ExecData.YES
         ).execute()
         val result = response.body()
@@ -153,9 +156,9 @@ class PurgeJobAction : AnAction() {
     if (filtersWithRefreshErrors.isNotEmpty()) {
       var errorFilterNames = ""
       for (entry in filtersWithRefreshErrors) {
-        errorFilterNames += entry.key.unit.name + "\n"
+        errorFilterNames += entry.key.name + "\n"
       }
-      throw RuntimeException("Refresh error. Failed filters are: $errorFilterNames")
+      throw RuntimeException("Refresh error. Failed job filters are: $errorFilterNames")
     }
   }
 

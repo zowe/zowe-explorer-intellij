@@ -145,10 +145,10 @@ class LibraryNode(
     return {
       val memberInfo =
         (DataOpsManager.getService()
-          .tryToGetAttributes((it as FileLikeDatasetNode).virtualFile) as RemoteMemberAttributes).info
+          .tryToGetAttributes((it as FileLikeDatasetNode).virtualFile) as? RemoteMemberAttributes)?.info
       when (key) {
-        SortQueryKeys.MEMBER_NAME -> memberInfo.name
-        SortQueryKeys.MEMBER_MODIFICATION_DATE -> memberInfo.modificationDate
+        SortQueryKeys.MEMBER_NAME -> memberInfo?.name
+        SortQueryKeys.MEMBER_MODIFICATION_DATE -> memberInfo?.modificationDate
         else -> null
       }
     }

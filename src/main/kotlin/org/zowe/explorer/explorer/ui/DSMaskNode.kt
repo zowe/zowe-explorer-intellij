@@ -152,9 +152,9 @@ class DSMaskNode(
     return {
       val datasetAttributes = when (it) {
         is FileLikeDatasetNode -> DataOpsManager.getService()
-          .tryToGetAttributes(it.virtualFile) as RemoteDatasetAttributes
+          .tryToGetAttributes(it.virtualFile) as? RemoteDatasetAttributes
 
-        is LibraryNode -> DataOpsManager.getService().tryToGetAttributes(it.virtualFile) as RemoteDatasetAttributes
+        is LibraryNode -> DataOpsManager.getService().tryToGetAttributes(it.virtualFile) as? RemoteDatasetAttributes
         else -> null
       }
       when (key) {

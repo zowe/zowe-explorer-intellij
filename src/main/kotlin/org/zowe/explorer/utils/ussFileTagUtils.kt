@@ -15,12 +15,14 @@
 package org.zowe.explorer.utils
 
 import com.ibm.mq.headers.CCSID
+import org.zowe.explorer.common.message
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
 import org.zowe.explorer.dataops.operations.uss.ChangeFileTagOperation
 import org.zowe.explorer.dataops.operations.uss.ChangeFileTagOperationParams
+import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.telemetry.NotificationsService
 import okhttp3.ResponseBody
 import okhttp3.internal.indexOfNonWhitespace
@@ -36,14 +38,43 @@ import java.nio.charset.Charset
 fun checkUssFileTag(attributes: RemoteUssAttributes) {
   val charset = getUssFileTagCharset(attributes)
   if (charset != null) {
-    attributes.charset = charset
+    if (getSupportedEncodings().contains(charset)) {
+      attributes.charset = charset
+    } else {
+      NotificationsService.errorNotification(
+        NotificationCompatibleException(
+          message("filetag.unsupported.encoding.error.title", charset),
+          message("filetag.unsupported.encoding.error.message", DEFAULT_BINARY_CHARSET.name())
+        )
+      )
+      attributes.charset = DEFAULT_BINARY_CHARSET
+    }
   } else {
     attributes.charset = DEFAULT_BINARY_CHARSET
   }
 }
 
+/** Matching file tag with CCSID value */
+private val fileTagToCcsidMap = mapOf(
+  "TIS-620" to 874,
+  "ISO8859-13" to 921,
+  "IBM-EUCJC" to 932,
+  "IBM-943" to 943,
+  "BIG5" to 950,
+  "IBM-4396" to 4396,
+  "IBM-4946" to 4946,
+  "IBM-5031" to 5031,
+  "IBM-5346" to 5346,
+  "IBM-5347" to 5347,
+  "IBM-5348" to 5348,
+  "IBM-5349" to 5349,
+  "IBM-5350" to 5350,
+  "IBM-5488" to 5488,
+  "EUCJP" to 33722,
+)
+
 /**
- * Get encoding from file tag or return null if it doesn't exist.
+ * Get encoding from file tag or return null if it doesn't exist or encoding could not be determined.
  * @param attributes uss file attributes.
  */
 fun getUssFileTagCharset(attributes: RemoteUssAttributes): Charset? {
@@ -55,9 +86,21 @@ fun getUssFileTagCharset(attributes: RemoteUssAttributes): Charset? {
       val startPos = stdout.indexOfNonWhitespace(1)
       val endPos = stdout.indexOf(' ', startPos)
       val tagCharset = stdout.substring(startPos, endPos)
-      val ccsid = CCSID.getCCSID(tagCharset)
-      val codePage = CCSID.getCodepage(ccsid)
-      return Charset.forName(codePage)
+      runCatching {
+        val ccsid = fileTagToCcsidMap[tagCharset] ?: CCSID.getCCSID(tagCharset)
+        val codePage = CCSID.getCodepage(ccsid)
+        return Charset.forName(codePage)
+      }.onFailure {
+        runCatching {
+          return Charset.forName(tagCharset)
+        }.onFailure {
+          NotificationsService.errorNotification(
+            it,
+            custTitle = message("filetag.encoding.detection.error.title"),
+            custDetailsShort = message("filetag.encoding.detection.error.message", DEFAULT_BINARY_CHARSET.name()),
+          )
+        }
+      }
     }
   }
   return null

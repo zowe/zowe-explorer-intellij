@@ -438,8 +438,36 @@ class UtilsTestSpec : ShouldSpec({
 
       should("validate correct URL") {
         component.text = "https://some.url"
-        val actual = validateZosmfUrl(component)
+        var actual = validateZosmfUrl(component)
         val expected = null
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+
+        component.text = "http://another.url"
+        actual = validateZosmfUrl(component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+
+        component.text = "http://10.10.10.10"
+        actual = validateZosmfUrl(component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+
+        component.text = "https://10.10.10.10:10000"
+        actual = validateZosmfUrl(component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+
+        component.text = "http://another.url/hello/world"
+        actual = validateZosmfUrl(component)
 
         assertSoftly {
           actual shouldBe expected
@@ -447,9 +475,37 @@ class UtilsTestSpec : ShouldSpec({
       }
       should("validate wrong URL") {
         component.text = "wrong url\""
-        val actual = validateZosmfUrl(component)
+        var actual = validateZosmfUrl(component)
         val expected =
           ValidationInfo("Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443", component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+
+        component.text = "another.url"
+        actual = validateZosmfUrl(component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+
+        component.text = "http://another"
+        actual = validateZosmfUrl(component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+
+        component.text = "http://10.10.10:10"
+        actual = validateZosmfUrl(component)
+
+        assertSoftly {
+          actual shouldBe expected
+        }
+
+        component.text = "http://another.url/hell?0/world&!?"
+        actual = validateZosmfUrl(component)
 
         assertSoftly {
           actual shouldBe expected

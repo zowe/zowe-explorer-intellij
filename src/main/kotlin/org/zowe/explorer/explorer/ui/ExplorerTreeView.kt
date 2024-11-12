@@ -221,6 +221,8 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
           if (explorer == this@ExplorerTreeView.explorer) {
             myFsTreeStructure.findByValue(unit).forEach {
               myStructure.invalidate(it, true)
+            if (explorer is FileExplorer)
+              myTree.selectionPaths = null
             }
           }
         }

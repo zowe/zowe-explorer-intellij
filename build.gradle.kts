@@ -119,6 +119,7 @@ dependencies {
     instrumentationTools()
     pluginVerifier()
     testFramework(TestFrameworkType.Plugin.Java)
+    zipSigner()
   }
   implementation(group = "com.squareup.retrofit2", name = "retrofit", version = retrofit2Vertion)
   implementation("com.squareup.retrofit2:converter-gson:$retrofit2Vertion")
