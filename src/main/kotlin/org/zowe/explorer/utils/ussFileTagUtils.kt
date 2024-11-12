@@ -15,6 +15,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.service
+import org.zowe.explorer.common.message
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
@@ -37,14 +38,41 @@ const val FILE_TAG_NOTIFICATION_GROUP_ID = "org.zowe.explorer.utils.FileTagNotif
 fun checkUssFileTag(attributes: RemoteUssAttributes) {
   val charset = getUssFileTagCharset(attributes)
   if (charset != null) {
-    attributes.charset = charset
+    if (getSupportedEncodings().contains(charset)) {
+      attributes.charset = charset
+    } else {
+      notifyError(
+        message("filetag.unsupported.encoding.error.title", charset),
+        message("filetag.unsupported.encoding.error.message", DEFAULT_BINARY_CHARSET.name())
+      )
+      attributes.charset = DEFAULT_BINARY_CHARSET
+    }
   } else {
     attributes.charset = DEFAULT_BINARY_CHARSET
   }
 }
 
+/** Matching file tag with CCSID value */
+private val fileTagToCcsidMap = mapOf(
+  "TIS-620" to 874,
+  "ISO8859-13" to 921,
+  "IBM-EUCJC" to 932,
+  "IBM-943" to 943,
+  "BIG5" to 950,
+  "IBM-4396" to 4396,
+  "IBM-4946" to 4946,
+  "IBM-5031" to 5031,
+  "IBM-5346" to 5346,
+  "IBM-5347" to 5347,
+  "IBM-5348" to 5348,
+  "IBM-5349" to 5349,
+  "IBM-5350" to 5350,
+  "IBM-5488" to 5488,
+  "EUCJP" to 33722,
+)
+
 /**
- * Get encoding from file tag or return null if it doesn't exist.
+ * Get encoding from file tag or return null if it doesn't exist or encoding could not be determined.
  * @param attributes uss file attributes.
  */
 fun getUssFileTagCharset(attributes: RemoteUssAttributes): Charset? {
@@ -56,9 +84,20 @@ fun getUssFileTagCharset(attributes: RemoteUssAttributes): Charset? {
       val startPos = stdout.indexOfNonWhitespace(1)
       val endPos = stdout.indexOf(' ', startPos)
       val tagCharset = stdout.substring(startPos, endPos)
-      val ccsid = CCSID.getCCSID(tagCharset)
-      val codePage = CCSID.getCodepage(ccsid)
-      return Charset.forName(codePage)
+      runCatching {
+        val ccsid = fileTagToCcsidMap[tagCharset] ?: CCSID.getCCSID(tagCharset)
+        val codePage = CCSID.getCodepage(ccsid)
+        return Charset.forName(codePage)
+      }.onFailure {
+        runCatching {
+          return Charset.forName(tagCharset)
+        }.onFailure {
+          notifyError(
+            message("filetag.encoding.detection.error.title"),
+            message("filetag.encoding.detection.error.message", DEFAULT_BINARY_CHARSET.name()),
+          )
+        }
+      }
     }
   }
   return null
@@ -96,7 +135,7 @@ fun listUssFileTag(attributes: RemoteUssAttributes): ResponseBody? {
       ),
     )
   }.onFailure {
-    notifyError(it,"Cannot list uss file tag for ${attributes.path}")
+    notifyError("Cannot list uss file tag for ${attributes.path}", it.message ?: "")
   }
   return response
 }
@@ -146,7 +185,7 @@ private fun setUssFileTagCommon(charsetName: String, filePath: String, connectio
       )
     )
   }.onFailure {
-    notifyError(it, "Cannot set uss file tag for $filePath")
+    notifyError("Cannot set uss file tag for $filePath", it.message ?: "")
   }
 }
 
@@ -167,21 +206,21 @@ fun removeUssFileTag(attributes: RemoteUssAttributes) {
       )
     )
   }.onFailure {
-    notifyError(it, "Cannot remove uss file tag for ${attributes.path}")
+    notifyError("Cannot remove uss file tag for ${attributes.path}", it.message ?: "")
   }
 }
 
 /**
  * Displays an error notification if an error was received.
- * @param th thrown error.
- * @param title error text.
+ * @param title error title.
+ * @param message error message.
  */
-private fun notifyError(th: Throwable, title: String) {
+private fun notifyError(title: String, message: String) {
   Notifications.Bus.notify(
     Notification(
       FILE_TAG_NOTIFICATION_GROUP_ID,
       title,
-      th.message ?: "",
+      message,
       NotificationType.ERROR
     )
   )

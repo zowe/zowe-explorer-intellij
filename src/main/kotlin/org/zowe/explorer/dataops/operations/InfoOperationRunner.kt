@@ -57,7 +57,11 @@ class InfoOperationRunner : OperationRunner<InfoOperation, SystemsResponse> {
       .cancelByIndicator(progressIndicator)
       .execute()
     if (!response.isSuccessful) {
-      val headMessage = responseMessageMap[response.message()] ?: response.message()
+      log.info("Test connection response: $response")
+      val zosmfMessage = response.message().trim()
+      val headMessage = if (zosmfMessage.isNotEmpty())
+        responseMessageMap[zosmfMessage] ?: zosmfMessage
+      else responseMessageMap["Unauthorized"] ?: zosmfMessage
       throw CallException(response, headMessage)
     }
     return response.body() ?: throw CallException(response, "Cannot parse z/OSMF info request body")

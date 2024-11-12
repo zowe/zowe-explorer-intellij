@@ -86,7 +86,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       sourceFileFetchProvider.reload(sourceQuery)
     }
 
-    val pathToDir = destAttributes.path + "/" + sourceFile.name
+    val pathToDir = destAttributes.path + "/" + (operation.newName ?: sourceFile.name)
 
     if (operation.forceOverwriting) {
       destFile.children.firstOrNull { it.name == sourceFile.name }?.let {
@@ -110,7 +110,7 @@ class CrossSystemUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
     val createdDirFile = attributesService.getOrCreateVirtualFile(
       RemoteUssAttributes(
         destAttributes.path,
-        UssFile(sourceFile.name, "drwxrwxrwx"),
+        UssFile(operation.newName ?: sourceFile.name, "drwxrwxrwx"),
         destConnectionConfig.url,
         destConnectionConfig
       )

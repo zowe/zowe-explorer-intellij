@@ -38,6 +38,11 @@ interface MFLogger<LFetcher: LogFetcher<out MFProcessInfo>> {
   fun onLogFinished(finishHandler: () -> Unit)
 
   /**
+   * Fetch log files
+   */
+  fun fetchLog()
+
+  /**
    * Sets handler for event after requesting next portion of mainframe log.
    * @param nextLogHandler handler that will be invoked after next request to fetching log from mainframe.
    */

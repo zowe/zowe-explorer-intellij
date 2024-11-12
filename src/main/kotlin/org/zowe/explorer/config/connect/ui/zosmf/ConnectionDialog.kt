@@ -31,12 +31,17 @@ import org.zowe.explorer.config.connect.*
 import org.zowe.explorer.config.connect.ui.ChangePasswordDialog
 import org.zowe.explorer.config.connect.ui.ChangePasswordDialogState
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.operations.*
+import org.zowe.explorer.dataops.operations.ChangePasswordOperation
+import org.zowe.explorer.dataops.operations.InfoOperation
+import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
-import org.zowe.explorer.utils.*
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getAll
+import org.zowe.explorer.utils.runTask
+import org.zowe.explorer.utils.validateConnectionName
+import org.zowe.explorer.utils.validateForBlank
+import org.zowe.explorer.utils.validateZosmfUrl
 import org.zowe.kotlinsdk.ChangePassword
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.Component
@@ -59,10 +64,11 @@ class ConnectionDialog(
    * In case of DialogMode.UPDATE takes the last successful state from crudable, takes default state otherwise
    */
   private val lastSuccessfulState: ConnectionDialogState =
-    if(state.mode == DialogMode.UPDATE) crudable.find<ConnectionConfig> { it.uuid == state.connectionUuid }
+    if (state.mode == DialogMode.UPDATE) crudable.find<ConnectionConfig> { it.uuid == state.connectionUuid }
       .findAny()
       .orElseGet { state.connectionConfig }
       .toDialogState(crudable) else ConnectionDialogState()
+
   companion object {
 
     /** Show Test connection dialog and test the connection regarding the dialog state.
@@ -81,11 +87,17 @@ class ConnectionDialog(
         initialState = initialState,
         factory = { ConnectionDialog(crudable, initialState, project) },
         test = { state ->
-          val newTestedConnConfig : ConnectionConfig
+          val newTestedConnConfig: ConnectionConfig
           if (initialState.mode == DialogMode.UPDATE) {
             val newState = state.clone()
             newState.initEmptyUuids(crudable)
-            newTestedConnConfig = ConnectionConfig(newState.connectionUuid, newState.connectionName, newState.connectionUrl, newState.isAllowSsl, newState.zVersion)
+            newTestedConnConfig = ConnectionConfig(
+              newState.connectionUuid,
+              newState.connectionName,
+              newState.connectionUrl,
+              newState.isAllowSsl,
+              newState.zVersion
+            )
             CredentialService.instance.setCredentials(
               connectionConfigUuid = newState.connectionUuid,
               username = newState.username,
@@ -97,7 +109,8 @@ class ConnectionDialog(
             CredentialService.instance.setCredentials(
               connectionConfigUuid = state.connectionUuid,
               username = state.username,
-              password = state.password)
+              password = state.password
+            )
           }
           val throwable = runTask(title = "Testing Connection to ${newTestedConnConfig.url}", project = project) {
             return@runTask try {
@@ -169,7 +182,7 @@ class ConnectionDialog(
         EXPLORER_NOTIFICATION_GROUP_ID,
         "Unable to retrieve USS username",
         "Cannot retrieve USS username. An error happened while executing TSO request.\n" +
-            "When working with USS files the same username will be used that was specified by the user when connecting.",
+          "When working with USS files the same username will be used that was specified by the user when connecting.",
         NotificationType.WARNING
       ).let {
         Notifications.Bus.notify(it, project)
@@ -222,7 +235,7 @@ class ConnectionDialog(
         textField()
           .bindText(state::connectionUrl)
           .validationOnApply {
-            it.text = it.text.trim().removeTrailingSlashes()
+            it.text = it.text.trim()
             validateForBlank(it) ?: validateZosmfUrl(it)
           }
           .also { urlTextField = it.component }

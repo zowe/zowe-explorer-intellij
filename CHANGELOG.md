@@ -4,6 +4,17 @@ All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
 
 ## [Unreleased]
 
+### Bugfixes
+
+* Bugfix: Fixed issue with cross-system folder copy with name conflicts ([c5345051](https://github.com/zowe/zowe-explorer-intellij/commit/c5345051))
+* Bugfix: Clarified 401 error ([f36ec547](https://github.com/zowe/zowe-explorer-intellij/commit/f36ec547))
+* Bugfix: Fixed issue with USS copy that would lead to incorrect encoding error ([b4cb705a](https://github.com/zowe/zowe-explorer-intellij/commit/b4cb705a))
+* Bugfix: Fixed issue with jobs DDs display in console ([8a75f21a](https://github.com/zowe/zowe-explorer-intellij/commit/8a75f21a))
+* Bugfix: Fixed issue with copying another user's folder in USS ([66676550](https://github.com/zowe/zowe-explorer-intellij/commit/66676550))
+* Bugfix: Some encodings are made unsupported ([080c25ab](https://github.com/zowe/zowe-explorer-intellij/commit/080c25ab))
+* Bugfix: Fixed issue during a file upload to a PDS ([954bf01f](https://github.com/zowe/zowe-explorer-intellij/commit/954bf01f))
+* Bugfix: Fixed issue with URL field when typing incorrect information, the last slash at the end of https:// is deleted ([91ab962d](https://github.com/zowe/zowe-explorer-intellij/commit/91ab962d))
+
 ## [1.2.3-221] (2024-10-03)
 
 ### Features
