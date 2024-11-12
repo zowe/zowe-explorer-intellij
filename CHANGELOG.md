@@ -6,6 +6,7 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ### Bugfixes
 
+* Bugfix: Fixed FileNotFoundException for Zowe config ([d4665459](https://github.com/zowe/zowe-explorer-intellij/commit/d4665459))
 * Bugfix: Fixed NullPointerException during a sort action ([42c9ee5a](https://github.com/zowe/zowe-explorer-intellij/commit/42c9ee5a))
 * Bugfix: Fixed issue with purge that won't trigger a refresh ([b93118b7](https://github.com/zowe/zowe-explorer-intellij/commit/b93118b7))
 * Bugfix: Fixed issue with refreshing USS folders when a working set or a mask is refreshed ([19a08a9b](https://github.com/zowe/zowe-explorer-intellij/commit/19a08a9b))
