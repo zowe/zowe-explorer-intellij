@@ -4,6 +4,23 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ## [Unreleased]
 
+### Bugfixes
+
+* Bugfix: Fixed FileNotFoundException for Zowe config ([d4665459](https://github.com/zowe/zowe-explorer-intellij/commit/d4665459))
+* Bugfix: Fixed NullPointerException during a sort action ([42c9ee5a](https://github.com/zowe/zowe-explorer-intellij/commit/42c9ee5a))
+* Bugfix: Fixed issue with purge that won't trigger a refresh ([b93118b7](https://github.com/zowe/zowe-explorer-intellij/commit/b93118b7))
+* Bugfix: Fixed issue with refreshing USS folders when a working set or a mask is refreshed ([19a08a9b](https://github.com/zowe/zowe-explorer-intellij/commit/19a08a9b))
+* Bugfix: Fixed working with trusted certificates ([41b52b83](https://github.com/zowe/zowe-explorer-intellij/commit/41b52b83))
+* Bugfix: Fixed issue with refresh that won't work when a connection is changed on a working set ([90825a6d](https://github.com/zowe/zowe-explorer-intellij/commit/90825a6d))
+* Bugfix: Fixed issue with cross-system folder copy with name conflicts ([c5345051](https://github.com/zowe/zowe-explorer-intellij/commit/c5345051))
+* Bugfix: Clarified 401 error ([f36ec547](https://github.com/zowe/zowe-explorer-intellij/commit/f36ec547))
+* Bugfix: Fixed issue with USS copy that would lead to incorrect encoding error ([b4cb705a](https://github.com/zowe/zowe-explorer-intellij/commit/b4cb705a))
+* Bugfix: Fixed issue with jobs DDs display in console ([8a75f21a](https://github.com/zowe/zowe-explorer-intellij/commit/8a75f21a))
+* Bugfix: Fixed issue with copying another user's folder in USS ([66676550](https://github.com/zowe/zowe-explorer-intellij/commit/66676550))
+* Bugfix: Some encodings are made unsupported ([080c25ab](https://github.com/zowe/zowe-explorer-intellij/commit/080c25ab))
+* Bugfix: Fixed issue during a file upload to a PDS ([954bf01f](https://github.com/zowe/zowe-explorer-intellij/commit/954bf01f))
+* Bugfix: Fixed issue with URL field when typing incorrect information, the last slash at the end of https:// is deleted ([91ab962d](https://github.com/zowe/zowe-explorer-intellij/commit/91ab962d))
+
 ## [2.0.0] (2024-10-03)
 
 ### Features
