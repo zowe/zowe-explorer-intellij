@@ -346,7 +346,6 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       isInputStreamCalled shouldBe true
       isReturnedZoweConfig shouldBe true
       isScanForZoweConfigCalled shouldBe true
-      isZOSInfoCalled shouldBe false
     }
 
     should("delete zowe team config connection") {
@@ -377,20 +376,23 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
         j = true
         listOf(jWSConf).stream()
       }
-      var isShowOkCancelDialogCalled = false
-      val showOkCancelDialogMock: (String, String, String, String, Icon?) -> Int = ::showOkCancelDialog
-      mockkStatic(showOkCancelDialogMock as KFunction<*>)
-      every {
-        showOkCancelDialogMock(any<String>(), any<String>(), any<String>(), any<String>(), any())
-      } answers {
-        isShowOkCancelDialogCalled = true
-        Messages.OK
+      val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+      notificationsService.testInstance = object : TestNotificationsServiceImpl() {
+        override fun notifyError(
+          t: Throwable,
+          project: Project?,
+          custTitle: String?,
+          custDetailsShort: String?,
+          custDetailsLong: String?
+        ) {
+          notified = true
+        }
       }
       mockedZoweConfigService.deleteZoweConfig(type = ZoweConfigType.LOCAL)
 
       f shouldBe true
       j shouldBe true
-      isShowOkCancelDialogCalled shouldBe true
+      notified shouldBe true
       isConnectionDeleted shouldBe false
     }
 
