@@ -14,6 +14,7 @@
 
 package org.zowe.explorer.zowe.actions
 
+import com.google.gson.JsonSyntaxException
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -84,12 +85,17 @@ class UpdateZoweConfigAction : DumbAwareAction() {
         zoweConfigService.localZoweConfig
       else
         zoweConfigService.globalZoweConfig
-      if (type == ZoweConfigType.LOCAL) {
-        zoweConfigService.localZoweConfig = parseConfigJson(editor.document.text)
-        zoweConfigService.localZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
-      } else {
-        zoweConfigService.globalZoweConfig = parseConfigJson(editor.document.text)
-        zoweConfigService.globalZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
+      try {
+        if (type == ZoweConfigType.LOCAL) {
+          zoweConfigService.localZoweConfig = parseConfigJson(editor.document.text)
+          zoweConfigService.localZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
+        } else {
+          zoweConfigService.globalZoweConfig = parseConfigJson(editor.document.text)
+          zoweConfigService.globalZoweConfig?.extractSecureProperties(vFile.path.split("/").toTypedArray())
+        }
+      } catch (ex: JsonSyntaxException) {
+        e.presentation.isEnabledAndVisible = false
+        return
       }
       val zoweState = zoweConfigService.getZoweConfigState(false, type = type)
       e.presentation.isEnabledAndVisible =
