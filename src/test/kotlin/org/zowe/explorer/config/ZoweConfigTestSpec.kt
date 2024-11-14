@@ -130,6 +130,21 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       Optional.of(ConnectionConfig())
     }
 
+    val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+    notificationsService.testInstance = object : TestNotificationsServiceImpl() {
+      override fun notifyError(
+        t: Throwable,
+        project: Project?,
+        custTitle: String?,
+        custDetailsShort: String?,
+        custDetailsLong: String?
+      ) {
+        if (custTitle == "Error with Zowe config file") {
+          notified = true
+        }
+      }
+    }
+
     afterEach {
       isFilesWriteTriggered = false
       isRunWriteActionCalled = false

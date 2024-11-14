@@ -142,7 +142,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         }
       }
     } catch (e: Exception) {
-      throw Exception("Cannot parse $type Zowe config file")
+      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
+      return null
     }
   }
 
@@ -283,7 +284,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         }
       }
     } catch (e: Exception) {
-      NotificationsService.getService().notifyError(e)
+      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
     }
   }
 
@@ -362,7 +363,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       }
 
     } catch (e: Exception) {
-      NotificationsService.getService().notifyError(e)
+      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
     }
   }
 
@@ -470,11 +471,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   override fun getZoweConfigState(scanProject: Boolean, type: ZoweConfigType): ZoweConfigState {
     if (scanProject) {
-      try {
-        scanForZoweConfig(type)
-      } catch (e: Exception) {
-        NotificationsService.getService().notifyError(e)
-      }
+      scanForZoweConfig(type)
     }
     val zoweConfig = if (type == ZoweConfigType.LOCAL)
       localZoweConfig ?: return ZoweConfigState.NOT_EXISTS
