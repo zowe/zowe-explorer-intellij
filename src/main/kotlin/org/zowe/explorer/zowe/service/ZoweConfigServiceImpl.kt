@@ -14,10 +14,8 @@
 
 package org.zowe.explorer.zowe.service
 
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -38,6 +36,7 @@ import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.explorer.EXPLORER_NOTIFICATION_GROUP_ID
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.runTask
@@ -63,9 +62,6 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 import kotlin.collections.set
-
-
-const val ZOWE_CONFIG_NOTIFICATION_GROUP_ID = "org.zowe.explorerzowe.service.ZoweConfigNotificationGroupId"
 
 const val ZOWE_PROJECT_PREFIX = "zowe-"
 
@@ -124,22 +120,6 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   override var globalZoweConfig: ZoweConfig? = null
 
   /**
-   * Displays an error notification if an error was received.
-   * @param t thrown error.
-   * @param title error text.
-   */
-  private fun notifyError(t: Throwable, title: String? = null) {
-    Notifications.Bus.notify(
-      Notification(
-        ZOWE_CONFIG_NOTIFICATION_GROUP_ID,
-        title ?: "Error with Zowe config file",
-        t.message ?: t.toString(),
-        NotificationType.ERROR
-      )
-    )
-  }
-
-  /**
    * Checks project contains zowe.config.json. If zowe config presented
    * it will parse it and save to object model inside zoweConfig field.
    * @return ZoweConfig instance if zowe.config.json is presented or null otherwise.
@@ -162,7 +142,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         }
       }
     } catch (e: Exception) {
-      throw Exception("Cannot parse $type Zowe config file")
+      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
+      return null
     }
   }
 
@@ -208,8 +189,8 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
 
   /**
    * Added notification about connection failure with action of force connection adding.
-   * @param title - notification title.
-   * @param content - notification content.
+   * @param title notification title.
+   * @param content notification content.
    * @return Nothing.
    */
   private fun notifyUiOnConnectionFailure(title: String, content: String, type: ZoweConfigType) {
@@ -277,27 +258,23 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
         this.globalZoweConfig
       zoweConfig ?: throw Exception("Cannot get $type Zowe config")
 
-      var allPreparedConn = mutableListOf<ConnectionConfig>()
-      if (checkConnection) {
-        val failedURLs = mutableListOf<String>()
-        allPreparedConn = testAndPrepareAllZosmfConnections(zoweConfig, type, failedURLs)
-        if (failedURLs.isNotEmpty()) {
-          val andMore = if (failedURLs.size > 3)
-            "..."
-          else
-            ""
-          notifyUiOnConnectionFailure(
-            "Connection failed to:",
-            "${failedURLs.joinToString(separator = ", <p>")} ${andMore}",
-            type
-          )
-          return
-        }
+      val (allPreparedConn, failedConnections) = testAndPrepareAllZosmfConnections(zoweConfig, type)
+      if (checkConnection and failedConnections.isNotEmpty()) {
+        val andMore = if (failedConnections.size > 3) "..." else ""
+        notifyUiOnConnectionFailure(
+          "Connection failed to:",
+          "${failedConnections.map{it.url}.joinToString(separator = ", <p>")} $andMore",
+          type
+        )
       }
-      for (zosmfConnection in allPreparedConn) {
+      val conToAdd = if (checkConnection)
+        allPreparedConn.subtract(failedConnections.toSet())
+      else
+        allPreparedConn
+      conToAdd.forEach { zosmfConnection ->
         val connectionOpt = configCrudable.addOrUpdate(zosmfConnection)
         if (!connectionOpt.isEmpty) {
-          var topic = if (type == ZoweConfigType.LOCAL)
+          val topic = if (type == ZoweConfigType.LOCAL)
             LOCAL_ZOWE_CONFIG_CHANGED
           else
             GLOBAL_ZOWE_CONFIG_CHANGED
@@ -306,7 +283,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       }
 
     } catch (e: Exception) {
-      notifyError(e)
+      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
     }
   }
 
@@ -319,9 +296,9 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
   private fun prepareConnection(zosmfConnection: ZOSConnection, type: ZoweConfigType): ConnectionConfig {
     val username = zosmfConnection.user
     val password = zosmfConnection.password
-    val zoweConnection = findExistingConnection(type, zosmfConnection.profileName)?.let {
-      zosmfConnection.toConnectionConfig(it.uuid, it.zVersion, type = type)
-    } ?: zosmfConnection.toConnectionConfig(UUID.randomUUID().toString(), type = type)
+    val zoweConnection = findExistingConnection(type, zosmfConnection.profileName)
+      ?.let { zosmfConnection.toConnectionConfig(it.uuid, it.zVersion, type = type) }
+      ?: zosmfConnection.toConnectionConfig(UUID.randomUUID().toString(), type = type)
     CredentialService.getService().setCredentials(zoweConnection.uuid, username, password)
     return zoweConnection
   }
@@ -330,24 +307,25 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * Convert all zosmf connections from zowe config file to ConnectionConfig and tests them
    * @param zoweConfig
    * @param type of zowe config
-   * @return list of URLs which did not pass the test
+   * @return pair of lists, one is the connections list, the second is the list of URLs which did not pass the test
    */
   private fun testAndPrepareAllZosmfConnections(
     zoweConfig: ZoweConfig,
-    type: ZoweConfigType,
-    failedURLs: MutableList<String>
-  ): MutableList<ConnectionConfig> {
-    var allPreparedConn = mutableListOf<ConnectionConfig>()
-    for (zosmfConnection in zoweConfig.getListOfZosmfConections()) {
-      val zoweConnection = prepareConnection(zosmfConnection, type)
-      try {
-        testAndPrepareConnection(zoweConnection)
-      } catch (t: Throwable) {
-        failedURLs.add(zoweConnection.url)
+    type: ZoweConfigType
+  ): Pair<List<ConnectionConfig>, List<ConnectionConfig>> {
+    return zoweConfig.getListOfZosmfConections()
+      .fold(
+        mutableListOf<ConnectionConfig>() to mutableListOf<ConnectionConfig>()
+      ) { (allConnectionConfigs, failedURLs), zosmfConnection ->
+        val zoweConnection = prepareConnection(zosmfConnection, type)
+        try {
+          testAndPrepareConnection(zoweConnection)
+        } catch (t: Throwable) {
+          failedURLs.add(zoweConnection)
+        }
+        allConnectionConfigs.add(zoweConnection)
+        allConnectionConfigs to failedURLs
       }
-      allPreparedConn.add(zoweConnection)
-    }
-    return allPreparedConn
   }
 
   /**
@@ -384,7 +362,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       }
 
     } catch (e: Exception) {
-      notifyError(e)
+      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
     }
   }
 
@@ -434,18 +412,20 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val allConnections = configCrudable.getAll<ConnectionConfig>().toList()
     val allConnectionsNames: MutableList<String> = allConnections.map { it.name }.toMutableList()
 
-    allConnections.filter { it.zoweConfigPath == getZoweConfigLocation(myProject, type) }.forEach {
-      var index = 1
-      var newName = it.name
-      while (allConnectionsNames.contains(newName)) {
-        newName = it.name.plus(index.toString())
-        index++
+    allConnections
+      .filter { it.zoweConfigPath == getZoweConfigLocation(myProject, type) }
+      .forEach {
+        var index = 1
+        var newName = it.name
+        while (allConnectionsNames.contains(newName)) {
+          newName = it.name.plus(index.toString())
+          index++
+        }
+        allConnectionsNames.add(newName)
+        it.name = newName
+        it.zoweConfigPath = null
+        configCrudable.update(it)
       }
-      allConnectionsNames.add(newName)
-      it.name = newName
-      it.zoweConfigPath = null
-      configCrudable.update(it)
-    }
   }
 
   private fun createZoweSchemaJsonIfNotExists() {
@@ -490,11 +470,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    */
   override fun getZoweConfigState(scanProject: Boolean, type: ZoweConfigType): ZoweConfigState {
     if (scanProject) {
-      try {
         scanForZoweConfig(type)
-      } catch (e: Exception) {
-        notifyError(e)
-      }
     }
     val zoweConfig = if (type == ZoweConfigType.LOCAL)
       localZoweConfig ?: return ZoweConfigState.NOT_EXISTS
@@ -502,39 +478,37 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
       globalZoweConfig ?: return ZoweConfigState.NOT_EXISTS
 
     findAllZosmfExistingConnection(type) ?: return ZoweConfigState.NEED_TO_ADD
-    var ret = ZoweConfigState.SYNCHRONIZED
 
-    for (zosConnection in zoweConfig.getListOfZosmfConections()) {
-      val existingConnection =
-        findExistingConnection(type, zosConnection.profileName)
-      if (existingConnection == null)
-        ret = setZoweConfigState(ret, ZoweConfigState.NEED_TO_ADD)
-      else {
-        val newConnectionList = zoweConfig.getListOfZosmfConections()
-          .filter { it.profileName == getProfileNameFromConnName(existingConnection.name) }
-        val newConnection = if (newConnectionList.isNotEmpty()) {
-          newConnectionList[0].toConnectionConfig(
-            existingConnection.uuid.toString(), existingConnection.zVersion, existingConnection.owner, type = type
-          )
+    return zoweConfig
+      .getListOfZosmfConections()
+      .fold(ZoweConfigState.SYNCHRONIZED) { prevZoweConfigState, zosConnection ->
+        val existingConnection = findExistingConnection(type, zosConnection.profileName)
+        val currZoweConfigState = if (existingConnection == null) {
+          ZoweConfigState.NEED_TO_ADD
         } else {
-          ret = setZoweConfigState(ret, ZoweConfigState.NEED_TO_ADD)
-          continue
+          val newConnectionList = zoweConfig.getListOfZosmfConections()
+            .filter { it.profileName == getProfileNameFromConnName(existingConnection.name) }
+          if (newConnectionList.isNotEmpty()) {
+            val newConnection = newConnectionList[0].toConnectionConfig(
+              existingConnection.uuid, existingConnection.zVersion, existingConnection.owner, type = type
+            )
+            val zoweUsername = zosConnection.user
+            val zowePassword = zosConnection.password
+            if (
+              existingConnection == newConnection
+              && CredentialService.getUsername(newConnection) == zoweUsername
+              && CredentialService.getPassword(newConnection) == zowePassword
+            ) {
+              ZoweConfigState.SYNCHRONIZED
+            } else {
+              ZoweConfigState.NEED_TO_UPDATE
+            }
+          } else {
+            ZoweConfigState.NEED_TO_ADD
+          }
         }
-        val zoweUsername = zosConnection.user
-        val zowePassword = zosConnection.password
-
-        ret = if (
-          existingConnection == newConnection
-          && CredentialService.getUsername(newConnection) == zoweUsername
-          && CredentialService.getPassword(newConnection) == zowePassword
-        ) {
-          setZoweConfigState(ret, ZoweConfigState.SYNCHRONIZED)
-        } else {
-          setZoweConfigState(ret, ZoweConfigState.NEED_TO_UPDATE)
-        }
+        setZoweConfigState(prevZoweConfigState, currZoweConfigState)
       }
-    }
-    return ret
   }
 
   /**

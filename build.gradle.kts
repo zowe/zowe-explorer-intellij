@@ -52,7 +52,7 @@ val plugins = listOf(
     jvmTargetVersion = JavaVersion.VERSION_21,
     since = "243.12818",
     getUntil = { provider { null } },
-    sdkVersion = "243-EAP-SNAPSHOT",
+    sdkVersion = "2024.3",
     sourceFolder = "IC-243"
   )
 )

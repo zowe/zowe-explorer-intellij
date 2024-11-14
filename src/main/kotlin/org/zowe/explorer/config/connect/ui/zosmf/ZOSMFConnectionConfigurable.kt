@@ -14,6 +14,9 @@
 
 package org.zowe.explorer.config.connect.ui.zosmf
 
+import com.google.gson.JsonSyntaxException
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -34,6 +37,7 @@ import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.JesWorkingSetConfig
 import org.zowe.explorer.config.ws.WorkingSetConfig
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.isThe
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
@@ -109,7 +113,16 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
           return
         }
 
-      val zoweConfig = parseConfigJson(configFile.inputStream)
+      val zoweConfig = try {
+        parseConfigJson(configFile.inputStream)
+      } catch (e: JsonSyntaxException) {
+        NotificationsService.errorNotification(
+          e,
+          project = DataManager.getInstance().getDataContext(panel).getData(PlatformDataKeys.PROJECT),
+          custTitle = "Error with Zowe config file"
+        )
+        return
+      }
       zoweConfig.extractSecureProperties(configFile.path.split("/").toTypedArray())
       kotlin.runCatching {
         zoweConfig.updateFromState(state)
