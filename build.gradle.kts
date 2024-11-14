@@ -67,7 +67,6 @@ val kotestVersion = "5.9.1"
 val retrofit2Vertion = "2.11.0"
 val junitVersion = "5.11.1"
 val mockkVersion = "1.13.12"
-val ibmMqVersion = "9.4.0.0"
 val jGraphTVersion = "1.5.2"
 val zoweKotlinSdkVersion = "0.5.0"
 val javaKeytarVersion = "1.0.0"
@@ -128,7 +127,6 @@ dependencies {
   implementation("org.jgrapht:jgrapht-core:$jGraphTVersion")
   implementation("com.starxg:java-keytar:$javaKeytarVersion")
   implementation("org.zowe.sdk:zowe-kotlin-sdk:$zoweKotlinSdkVersion")
-  implementation("com.ibm.mq:com.ibm.mq.allclient:$ibmMqVersion")
   implementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
   testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
   testImplementation("io.mockk:mockk:$mockkVersion")

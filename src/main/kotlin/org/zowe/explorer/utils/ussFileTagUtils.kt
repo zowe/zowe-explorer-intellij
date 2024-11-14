@@ -14,7 +14,6 @@
 
 package org.zowe.explorer.utils
 
-import com.ibm.mq.headers.CCSID
 import org.zowe.explorer.common.message
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
@@ -30,6 +29,7 @@ import org.zowe.kotlinsdk.FileTagList
 import org.zowe.kotlinsdk.TagAction
 import org.zowe.kotlinsdk.UssFileDataType
 import java.nio.charset.Charset
+import java.nio.charset.UnsupportedCharsetException
 
 /**
  * Checks if the uss file tag is set.
@@ -54,25 +54,6 @@ fun checkUssFileTag(attributes: RemoteUssAttributes) {
   }
 }
 
-/** Matching file tag with CCSID value */
-private val fileTagToCcsidMap = mapOf(
-  "TIS-620" to 874,
-  "ISO8859-13" to 921,
-  "IBM-EUCJC" to 932,
-  "IBM-943" to 943,
-  "BIG5" to 950,
-  "IBM-4396" to 4396,
-  "IBM-4946" to 4946,
-  "IBM-5031" to 5031,
-  "IBM-5346" to 5346,
-  "IBM-5347" to 5347,
-  "IBM-5348" to 5348,
-  "IBM-5349" to 5349,
-  "IBM-5350" to 5350,
-  "IBM-5488" to 5488,
-  "EUCJP" to 33722,
-)
-
 /**
  * Get encoding from file tag or return null if it doesn't exist or encoding could not be determined.
  * @param attributes uss file attributes.
@@ -87,19 +68,15 @@ fun getUssFileTagCharset(attributes: RemoteUssAttributes): Charset? {
       val endPos = stdout.indexOf(' ', startPos)
       val tagCharset = stdout.substring(startPos, endPos)
       runCatching {
-        val ccsid = fileTagToCcsidMap[tagCharset] ?: CCSID.getCCSID(tagCharset)
-        val codePage = CCSID.getCodepage(ccsid)
-        return Charset.forName(codePage)
+        val ccsid = getCcsidByFileTag(tagCharset)
+        val codePage = ccsid?.let { getCodepage(it) }
+        return Charset.forName(codePage ?: tagCharset)
       }.onFailure {
-        runCatching {
-          return Charset.forName(tagCharset)
-        }.onFailure {
-          NotificationsService.errorNotification(
-            it,
-            custTitle = message("filetag.encoding.detection.error.title"),
-            custDetailsShort = message("filetag.encoding.detection.error.message", DEFAULT_BINARY_CHARSET.name()),
-          )
-        }
+        NotificationsService.errorNotification(
+          it,
+          custTitle = message("filetag.encoding.detection.error.title"),
+          custDetailsShort = message("filetag.encoding.detection.error.message", DEFAULT_BINARY_CHARSET.name()),
+        )
       }
     }
   }
@@ -168,14 +145,8 @@ fun setUssFileTag(charset: String, path: String, connectionConfig: ConnectionCon
  * @param connectionConfig connection config on which the file is located.
  */
 private fun setUssFileTagCommon(charsetName: String, filePath: String, connectionConfig: ConnectionConfig) {
-  var charset = charsetName
-  if (charset.contains("x-IBM")) {
-    charset = charset.substring(2)
-  }
-  val ccsid = CCSID.getCCSID(charset)
-  val codeSet = ccsid.toString()
-
   runCatching {
+    val codeSet = getCcsid(charsetName)?.toString() ?: throw UnsupportedCharsetException(charsetName)
     DataOpsManager.getService().performOperation(
       operation = ChangeFileTagOperation(
         request = ChangeFileTagOperationParams(
@@ -214,18 +185,16 @@ fun removeUssFileTag(attributes: RemoteUssAttributes) {
 }
 
 private val unsupportedEncodings = listOf(
-  "GBK", "x-IBM300", "UTF-16"
+  "UTF-16"
 )
 
 /**
  * Returns a list of supported encodings to set in a file tag.
  */
 fun getSupportedEncodings(): List<Charset> {
-  val ccsids = CCSID.getCCSIDs().toList()
-  val encodings = ccsids.mapNotNull {
+  val encodings = getCodepages().mapNotNull {
     runCatching {
-      val codepage = CCSID.getCodepage(it as Int)
-      Charset.forName(codepage)
+      Charset.forName(it)
     }.getOrNull()
   }.distinct().filter {
     !unsupportedEncodings.contains(it.name())
