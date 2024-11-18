@@ -397,6 +397,18 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
             isEnableAndVisibleAction = true
           }
 
+          should("action is not visible when no selected nodes") {
+            isEnableAndVisibleAction = true
+            mySelectedData = mutableListOf()
+            every { jesExplorerView.mySelectedNodesData } returns mySelectedData
+            every { mockActionEventForJesEx.presentation.isEnabledAndVisible } returns false
+            purgeAction.update(mockActionEventForJesEx)
+
+            assertSoftly {
+              isEnableAndVisibleAction shouldBe false
+            }
+          }
+
           should("action is not visible when selected job nodes contains wrong node") {
             isEnableAndVisibleAction = true
             val nodeData1 = NodeData(jobNode1, virtualFileMock, attributes1)
