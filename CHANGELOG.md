@@ -1,6 +1,6 @@
 # Zowe® Explorer plug-in for IntelliJ IDEA™ Changelog
 
-All notable changes to the Zowe IntelliJ Plugin will be documented in this file.
+All notable changes to the For Mainframe Plugin will be documented in this file.
 
 ## [Unreleased]
 
