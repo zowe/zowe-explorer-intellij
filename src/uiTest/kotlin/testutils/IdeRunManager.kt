@@ -40,7 +40,10 @@ class IdeRunManager private constructor() {
   private val testCaseDesc by lazy {
     TestCase(IdeProductProvider.IC, LocalProjectInfo(Paths.get(mockProjectRelativePathStr)))
   }
-  private val testContext: IDETestContext
+  private val testContext: IDETestContext = Starter
+    .newContext("test_plugin_action", testCase = testCaseDesc.useRelease(ideVersion))
+    .prepareProjectCleanImport()
+    .disableAutoImport(disabled = true)
   private var isPolicyDialogAlreadyClosed = false
 
   val runningIde: BackgroundRun
@@ -55,8 +58,9 @@ class IdeRunManager private constructor() {
      */
     fun prepareRunManager(): IdeRunManager {
       createdRunManager.runningIde
+      val driver = createdRunManager.runningIde.driver
       if (!createdRunManager.isPolicyDialogAlreadyClosed) {
-        createdRunManager.runningIde.driver.ideFrame {
+        driver.ideFrame {
           // Dismiss policy dialog
           val policyDialog = dialog(title = "For Mainframe Plugin Privacy Policy and Terms and Conditions")
           assert(policyDialog.isVisible())
@@ -64,7 +68,7 @@ class IdeRunManager private constructor() {
           dismissButton.setFocus()
           dismissButton.click()
 
-          createdRunManager.runningIde.driver.waitForIndicators(1.minutes)
+          createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
         }
         createdRunManager.isPolicyDialogAlreadyClosed = true
       }
@@ -83,18 +87,13 @@ class IdeRunManager private constructor() {
   }
 
   init {
-    testCaseDesc.useRelease(ideVersion)
-    testContext = Starter
-      .newContext("test_plugin_action", testCase = testCaseDesc)
-      .prepareProjectCleanImport()
-      .disableAutoImport(disabled = true)
     testContext.pluginConfigurator.installPluginFromPath(Paths.get(pluginPathStr))
     runningIde = testContext.runIdeWithConfiguredDriver()
   }
 
   /** Prepare the IDE and the driver for further usage */
   private fun IDETestContext.runIdeWithConfiguredDriver(): BackgroundRun {
-    val commands = CommandChain().waitForDumbMode(10)
+    val commands = CommandChain().waitForDumbMode(20)
 
     return this.runIdeWithDriver(
       commands = commands,

@@ -137,11 +137,11 @@ open class IdeaInteractionClass {
     }.getOrDefault(false)
 
     internal fun buildDatasetConfigString(
-        dsName: String,
-        dsntp: String,
-        datasetOrganization: String,
-        recordLength: Int,
-        recordFormatShort: String
+      dsName: String,
+      dsntp: String,
+      datasetOrganization: DatasetOrganization,
+      recordLength: Int,
+      recordFormatShort: String
     ): String {
         return "{\n" +
                 "      \"dsname\": \"${dsName}\",\n" +
@@ -150,7 +150,7 @@ open class IdeaInteractionClass {
                 "      \"cdate\": \"2021/11/15\",\n" +
                 "      \"dev\": \"3390\",\n" +
                 "      \"dsntp\": \"${dsntp}\",\n" +
-                "      \"dsorg\": \"${datasetOrganization}\",\n" +
+                "      \"dsorg\": \"${datasetOrganization.value}\",\n" +
                 "      \"edate\": \"***None***\",\n" +
                 "      \"extx\": \"1\",\n" +
                 "      \"lrecl\": \"${recordLength}\",\n" +
@@ -193,18 +193,18 @@ open class IdeaInteractionClass {
     }
 
     internal fun allocateDataSet(
-        wsName: String,
-        datasetName: String,
-        datasetOrganization: String,
-        allocationUnit: String,
-        primaryAllocation: Int,
-        secondaryAllocation: Int,
-        directory: Int,
-        recordFormat: String,
-        recordLength: Int,
-        blockSize: Int,
-        averageBlockLength: Int,
-        remoteRobot: RemoteRobot,
+      wsName: String,
+      datasetName: String,
+      datasetOrganization: DatasetOrganization,
+      allocationUnit: String,
+      primaryAllocation: Int,
+      secondaryAllocation: Int,
+      directory: Int,
+      recordFormat: String,
+      recordLength: Int,
+      blockSize: Int,
+      averageBlockLength: Int,
+      remoteRobot: RemoteRobot,
     ) = with(remoteRobot) {
         ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
@@ -329,7 +329,7 @@ open class IdeaInteractionClass {
     ) = with(remoteRobot) {
         openDatasetProperty(datasetName, remoteRobot)
         responseDispatcher.injectRecallPds(datasetName)
-        mapListDatasets[datasetName] = listDS(datasetName, PDS_TYPE, PO_ORG_SHORT)
+        mapListDatasets[datasetName] = listDS(datasetName, "PDS", "PO")
         ideFrameImpl(PROJECT_NAME, fixtureStack) {
             actionMenuItem(remoteRobot, RECALL_POINT_TEXT).click()
         }

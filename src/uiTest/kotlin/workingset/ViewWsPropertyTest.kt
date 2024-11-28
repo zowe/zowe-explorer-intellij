@@ -103,7 +103,7 @@ class ViewWsPropertyTest : IdeaInteractionClass() {
         injectSingleSpecificMember(pdsName, memberName)
         responseDispatcher.injectAllocationResultPds(pdsName)
         responseDispatcher.injectAllocationResultPo(
-            SEQUENTIAL_ORG_SHORT,
+            "PS",
             TRACKS_ALLOCATION_UNIT_SHORT,
             dsName,
             VB_RECORD_FORMAT_SHORT,
@@ -111,7 +111,7 @@ class ViewWsPropertyTest : IdeaInteractionClass() {
         )
         injectAllocateUssFile(ussMaskName, ussFileName)
         injectAllocateUssFile(ussMaskName, ussDirName)
-        mapListDatasets[pdsName] = listDS(pdsName, PDS_TYPE, PO_ORG_SHORT)
+        mapListDatasets[pdsName] = listDS(pdsName, "PDS", "PO")
         allocatePDSAndCreateMask(
             wsName,
             pdsName,
@@ -122,7 +122,7 @@ class ViewWsPropertyTest : IdeaInteractionClass() {
             directory = 2
         )
         createMask(wsName, ussMaskName, fixtureStack, closableFixtureCollector, USS_MASK, remoteRobot)
-        mapListDatasets[dsName] = listDS(dsName, "", SEQUENTIAL_ORG_SHORT)
+        mapListDatasets[dsName] = listDS(dsName, "", "PS")
         allocateDataSet(wsName, dsName, fixtureStack, remoteRobot)
         mapListDatasetMembers[memberName] = memList
         allocateMemberForPDS(pdsName, memberName, fixtureStack, remoteRobot)
@@ -171,7 +171,7 @@ class ViewWsPropertyTest : IdeaInteractionClass() {
         openPropertyDatasetName(dsName, fixtureStack, remoteRobot)
         val datasetPropertyValid = isDatasetPropertyValid(
             dsName, "<Unknown>", "TEST.CATALOG.MASTER", "TESTVOL",
-            "3390", "Sequential (PS)", "VB", "255", "3200", "10",
+            "3390", DatasetOrganization.SEQUENTIAL_ORG_PROPERTY.value, "VB", "255", "3200", "10",
             "TRACKS", "1", "1", "2021/11/15", "2021/11/17", "***None***", remoteRobot
         )
         clickByText(OK_TEXT, fixtureStack, remoteRobot)
@@ -186,7 +186,7 @@ class ViewWsPropertyTest : IdeaInteractionClass() {
         openPropertyDatasetName(pdsName, fixtureStack, remoteRobot)
         val datasetPropertyValid = isDatasetPropertyValid(
             pdsName, "PDS", "TEST.CATALOG.MASTER", "TESTVOL",
-            "3390", PO_ORG_FULL, "VB", "255", "3200", "10",
+            "3390", DatasetOrganization.PO_ORG_PROPERTY.value, "VB", "255", "3200", "10",
             "TRACKS", "1", "1", "2021/11/15", "2021/11/17", "***None***", remoteRobot
         )
         clickByText(OK_TEXT, fixtureStack, remoteRobot)

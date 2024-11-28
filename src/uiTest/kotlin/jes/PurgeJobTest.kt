@@ -102,7 +102,7 @@ class PurgeJobTest {
 
         injectTestInfoForPdsDataset(testInfo.displayName, datasetParams, datasetName)
 
-        mapListDatasets[datasetName] = listDS(datasetName, PDS_TYPE, PO_ORG_SHORT)
+        mapListDatasets[datasetName] = listDS(datasetName, "PDS", "PO")
 
         injectListAllAllocatedDatasetsWithContents(testInfo, datasetName, mapListDatasets)
         injectJobList(testInfo, datasetName, listMembersInDataset)

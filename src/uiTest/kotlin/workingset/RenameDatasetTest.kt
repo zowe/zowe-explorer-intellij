@@ -89,12 +89,12 @@ class RenameDatasetTest : IdeaInteractionClass() {
     fun setUp(testInfo: TestInfo, remoteRobot: RemoteRobot){
         injectTestInfoForPdsDataset(testInfo.displayName, DATASET_FOR_RENAME_PROPERTY, pdsName)
 
-        responseDispatcher.injectAllocationResultPo(PO_ORG_FULL, VB_RECORD_FORMAT_SHORT, dsName, PO_ORG_SHORT, 255)
-        responseDispatcher.injectAllocationResultPo(PO_ORG_FULL, VB_RECORD_FORMAT_SHORT, anotherDsName, PO_ORG_SHORT, 255)
+        responseDispatcher.injectAllocationResultPo(DatasetOrganization.PO_ORG_FULL_ITEM.value, VB_RECORD_FORMAT_SHORT, dsName, "PO", 255)
+        responseDispatcher.injectAllocationResultPo(DatasetOrganization.PO_ORG_FULL_ITEM.value, VB_RECORD_FORMAT_SHORT, anotherDsName, "PO", 255)
 
-        mapListDatasets[dsName] = listDS(dsName, PDS_TYPE, PO_ORG_SHORT)
-        mapListDatasets[anotherDsName] = listDS(anotherDsName, PDS_TYPE, PO_ORG_SHORT)
-        mapListDatasets[pdsName] = listDS(pdsName, PDS_TYPE, PO_ORG_SHORT)
+        mapListDatasets[dsName] = listDS(dsName, "PDS", "PO")
+        mapListDatasets[anotherDsName] = listDS(anotherDsName, "PDS", "PO")
+        mapListDatasets[pdsName] = listDS(pdsName, "PDS", "PO")
 
         openWSAndListDatasets(testInfo, remoteRobot)
     }
@@ -216,7 +216,7 @@ class RenameDatasetTest : IdeaInteractionClass() {
         injectMemberList(testInfo, pdsName, listOf(memberFinalName, anotherMemberName))
         injectRenameDataset(testInfo, dsFinalName, dsName)
         mapListDatasets.remove(dsName)
-        mapListDatasets[dsFinalName] = listDS(dsFinalName, PDS_TYPE, PO_ORG_SHORT)
+        mapListDatasets[dsFinalName] = listDS(dsFinalName, "PDS", "PO")
         injectListAllAllocatedDatasets("$ZOS_USERID.UI.TEST*".uppercase(),mapListDatasets)
         callRenameDatasetPoint(fixtureStack, dsName, remoteRobot)
         newDatasetNameInput(dsFinalName,fixtureStack,remoteRobot)

@@ -38,7 +38,6 @@ import okhttp3.tls.HeldCertificate
 import org.junit.jupiter.api.TestInfo
 import testutils.MockResponseDispatcher
 import workingset.*
-import workingset.*
 //import workingset.testutils.InjectDispatcher
 import java.awt.event.KeyEvent
 import java.net.InetAddress
@@ -742,7 +741,7 @@ fun allocatePDSAndCreateMask(
         actionMenu(remoteRobot, NEW_POINT_TEXT).click()
         actionMenuItem(remoteRobot, DATASET_POINT_TEXT).click()
         allocateDatasetDialog(fixtureStack) {
-            allocateDataset(datasetName, PO_ORG_FULL, "TRK", 10, 1, directory, "VB", 255, 6120)
+            allocateDataset(datasetName, DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 1, directory, "VB", 255, 6120)
             clickButton(OK_TEXT)
             Thread.sleep(500)
         }
@@ -855,7 +854,7 @@ fun allocateDataSet(
         actionMenu(remoteRobot, "New").click()
         actionMenuItem(remoteRobot, "Dataset").click()
         allocateDatasetDialog(fixtureStack) {
-            allocateDataset(datasetName, POE_ORG_FULL, "TRK", 10, 1, 1, "VB", 255, 6120)
+            allocateDataset(datasetName, DatasetOrganization.POE_ORG_FULL_ITEM, "TRK", 10, 1, 1, "VB", 255, 6120)
             clickButton(OK_TEXT)
       Thread.sleep(3000)
         }
