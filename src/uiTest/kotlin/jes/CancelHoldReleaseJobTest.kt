@@ -79,7 +79,7 @@ class CancelHoldReleaseJobTest {
         setUpTestEnvironment(fixtureStack, closableFixtureCollector, remoteRobot)
         createValidConnectionWithMock(testInfo, connectionName, fixtureStack, closableFixtureCollector, remoteRobot)
         injectTestInfoForPdsDataset(testInfo.displayName, datasetBody, datasetName)
-        mapListDatasets[datasetName] = listDS(datasetName, PDS_TYPE, PO_ORG_SHORT)
+        mapListDatasets[datasetName] = listDS(datasetName, "PDS", "PO")
         injectListAllAllocatedDatasetsWithContents(testInfo,datasetName,mapListDatasets)
         injectSingleMember(testInfo, datasetName, listMembersInDataset)
         utilObject.createWsAndMask(wsName, connectionName, fixtureStack, closableFixtureCollector, remoteRobot,datasetMaskPair)

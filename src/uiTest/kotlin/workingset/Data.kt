@@ -15,10 +15,40 @@ package workingset
 
 import auxiliary.*
 
+
 //Global constants
 enum class JobAction { SUBMIT, CANCEL, HOLD, RELEASE, PURGED, ERROR_PURGED}
-const val PROJECT_NAME = "untitled"
+enum class RecordFormatsShort { F, FB, V, VA, VB, U}
+enum class DatasetOrganization(val value: String){
+  PO_ORG_FULL_ITEM("Partitioned Organization (PO)"),
+  PO_ORG_PROPERTY("Partitioned (PO)"),
+  PO_ORG_SHORT_ITEM("PO"),
+  SEQUENTIAL_ORG_FULL_ITEM("Physical Sequential (PS)"),
+  SEQUENTIAL_ORG_PROPERTY("Sequential (PS)"),
+  SEQUENTIAL_ORG_SHORT_ITEM("PS"),
+  POE_ORG_FULL_ITEM("Partitioned Data Set Extended (PO-E)"),
+  POE_ORG_PROPERTY("Partitioned Extended (PO-E)"),
+  PDS_TYPE_ITEM("PDS")
+}
 
+data class AllocateDatasetParams(
+  val name: String,
+  val preset: String,
+  val memberName: String?=null,
+  var primaryAlloc: String? = null,
+  var blockSize: String? = null,
+  var secondaryAlloc: String,
+  var avgBlockLen: String? = null,
+  var unit: String? = null,
+  var dsOrganisationShort: String? = null,
+  var dirBlock: String? = null,
+  var organisation: DatasetOrganization? = null,
+  var format: String? = null,
+  var recordLength: String? = null,
+)
+
+
+const val PROJECT_NAME = "untitled"
 
 object Constants {
     val ideLaunchFolder: String = System.getProperty("ideLaunchFolder")
@@ -46,14 +76,6 @@ const val CONNECTIONS = "Connections"
 
 const val PREFIX_WORD = "Prefix"
 
-// Datasets types
-const val PO_ORG_FULL = "Partitioned (PO)"
-const val PO_ORG_SHORT = "PO"
-const val SEQUENTIAL_ORG_FULL = "Sequential (PS)"
-const val SEQUENTIAL_ORG_SHORT = "PS"
-const val POE_ORG_FULL = "Partitioned Extended (PO-E)"
-//const val POE_ORG_SHORT = "POE"
-const val PDS_TYPE = "PDS"
 
 //rename dataset
 const val DATASET_FOR_RENAME_PROPERTY = "{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":2,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255, \"migr\":false}"
@@ -125,9 +147,9 @@ var duplicateConnectionNameError = "You must provide unique connection name. Con
 var INVALID_CREEDS_ERROR = "Credentials are not valid"
 var CERTIFICATE_ERROR = "Unable to find valid certification path to requested "
 var INVALID_URL_ERROR = "Please provide a valid URL to z/OSMF. Example: https://myhost.com:10443"
-val UNABLE_FIND_VALID_CERTIFICATE = "Unable to find valid certification path to requested target"
-val EXIST_DEPENDED_WS_ERROR = "The following Files working sets use selected connections:%s."
-val EXIST_DEPENDED_JWS_ERROR = "The following JES working sets use selected connections:%s."
+const val UNABLE_FIND_VALID_CERTIFICATE = "Unable to find valid certification path to requested target"
+const val EXIST_DEPENDED_WS_ERROR = "The following Files working sets use selected connections:%s."
+const val EXIST_DEPENDED_JWS_ERROR = "The following JES working sets use selected connections:%s."
 
 const val ABSENT_ERROR_MSG = "Failed to find 'ComponentFixture' by '//div[@class='LinkLabel']'"
 
@@ -142,46 +164,46 @@ const val HMIGRATE_MIGRATE_OPTIONS = "hmigrate"
 
 //bad alloc params cases
 data class InvalidAllocate(
-   val wsName: String,
-   val datasetName: String,
-   val datasetOrganization: String,
-   val allocationUnit: String,
-   val primaryAllocation: Int,
-   val secondaryAllocation: Int,
-   val directory: Int,
-   val recordFormat: String,
-   val recordLength: Int,
-   val blockSize: Int,
-   val averageBlockLength: Int,
-   val message: String
+  val wsName: String,
+  val datasetName: String,
+  val datasetOrganization: DatasetOrganization,
+  val allocationUnit: String,
+  val primaryAllocation: Int,
+  val secondaryAllocation: Int,
+  val directory: Int,
+  val recordFormat: String,
+  val recordLength: Int,
+  val blockSize: Int,
+  val averageBlockLength: Int,
+  val message: String
 )
 
 val invalidDatasetNameParams = InvalidAllocate(
-    "", "A23456789.A", PO_ORG_FULL, "TRK", 10, 1,
+    "", "A23456789.A", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 1,
     1,    "FB", 80, 3200, 0, invalidDatasetNameConstant
 )
 val invalidPrimaryAllocationParams = InvalidAllocate(
-    "", "A23.A23", PO_ORG_FULL, "TRK", -2, 0, 1,
+    "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", -2, 0, 1,
             "FB", 80, 3200, 0, enterValueInCorrectRangeFromOneMsg)
 
 val invalidDirectoryParams = InvalidAllocate(
-            "", "A23.A23", PO_ORG_FULL, "TRK", 10, 0, 0,
+            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 0, 0,
             "FB", 80, 3200, 0,enterValueInCorrectRangeFromOneMsg
         )
 val invalidRecordLengthParams = InvalidAllocate(
-            "", "A23.A23", PO_ORG_FULL, "TRK", 10, 0, 1,
+            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 0, 1,
             "FB", 0, 3200, 0,enterValueInCorrectRangeFromOneMsg
         )
 val invalidSecondaryAllocationParams = InvalidAllocate(
-            "", "A23.A23", PO_ORG_FULL, "TRK", 10, -10, 1,
+            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, -10, 1,
             "FB", 80, 3200, 0, enterValueInCorrectRangeFromZeroMsg
         )
 val invalidBlockSizeParams = InvalidAllocate(
-            "", "A23.A23", PO_ORG_FULL, "TRK", 10, 0, 1,
+            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 0, 1,
             "FB", 80, -1, 0, enterValueInCorrectRangeFromZeroMsg
         )
 val invalidAverageBlockLengthParams = InvalidAllocate(
-            "", "A23.A23", PO_ORG_FULL, "TRK", 10, 0, 1,
+            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 0, 1,
             "FB", 80, 3200, -1, enterValueInCorrectRangeFromZeroMsg
         )
 
@@ -262,7 +284,7 @@ const val USS_MASK = "USS"
 
 //masks/mask types combo
 
-val ZOSMF_WORD = "ZOSMFAD"
+const val ZOSMF_WORD = "ZOSMFAD"
 val zosUserDatasetMask = "$ZOS_USERID.*".uppercase()
 val zosUserDatasetMaskDoubleStar = "$ZOS_USERID.**".uppercase()
 val ussMask = "/u/${ZOS_USERID.uppercase()}"
@@ -314,19 +336,19 @@ const val SETTING_DIALOG = "Setting"
 const val ADD_DIALOG_NAME = "Add Connection Dialog"
 
 //permissions
-val RWE_TYPES_PERMISSION = "READ_WRITE_EXECUTE"
-val R_PERMISSION = "READ"
-val RW_TYPES_PERMISSION = "READ_WRITE"
+const val RWE_TYPES_PERMISSION = "READ_WRITE_EXECUTE"
+const val R_PERMISSION = "READ"
+const val RW_TYPES_PERMISSION = "READ_WRITE"
 
 //uss tests contsants
 const val USS_FILE_NAME = "testFile"
 const val USS_DIR_NAME = "testFolder"
 
 //jobs constants
-val RC_0000 = "CC 0000"
+const val RC_0000 = "CC 0000"
 var holdWord = "HOLD"
-val SPOOL_FILE_CONTENT = "mock/getSpoolFileContentRC00.txt"
-val jobMemberCombo = "%s (%s)"
+const val SPOOL_FILE_CONTENT = "mock/getSpoolFileContentRC00.txt"
+const val jobMemberCombo = "%s (%s)"
 
 val jobCancelNotification = "%s: %s has been cancelled"
 val jobHoldNotification = "%s: %s has been held"
@@ -345,7 +367,7 @@ val buttonCancelActionName = "Cancel Job ()"
 val buttonHoldActionName = "Hold Job ()"
 val buttonReleaseActionName = "Release Job ()"
 
-val UNIVERSAL_JOB_ID = "JOB07380"
+const val UNIVERSAL_JOB_ID = "JOB07380"
 
 val validJobsFilters = listOf(
     Triple("*", "ZOSID", ""),
@@ -387,47 +409,47 @@ val invalidJobsFiltersMap = mapOf(
 )
 
 val filterAllAndZos = Triple("*", ZOS_USERID, "")
-val filterAllAndZosAlt = Triple("*", ZOS_USERID+"*", "")
+val filterAllAndZosAlt = Triple("*", "$ZOS_USERID*", "")
 
 val prefixAndOwnerPattern = "PREFIX=%s OWNER=%s".uppercase()
 val jobIdPattern = "JobID=%s"
 
-val FILE_DATASET_NAME_JOB_NAME = "{\"file\":\"//'%s(%s)'\"}"
+const val FILE_DATASET_NAME_JOB_NAME = "{\"file\":\"//'%s(%s)'\"}"
 
 //Explorer data
-val FILE_EXPLORER_W = "File Explorer"
-val JES_EXPLORER_W = "JES Explorer"
-val LOADING_TEXT = "loading…"
-val ERROR_TEXT = "Error"
+const val FILE_EXPLORER_W = "File Explorer"
+const val JES_EXPLORER_W = "JES Explorer"
+const val LOADING_TEXT = "loading…"
+const val ERROR_TEXT = "Error"
 
 
 // ws name constants
-val jwsNameV1 = "JWS1"
-val jwsNameV2 = "JWS2"
-val jwsNameV3 = "JWS3"
-val jwsNameV4 = "JWS4"
-val jwsNameV5 = "JWS5"
-val jwsNameV6 = "JWS6"
-val jwsNameV7 = "JWS7"
-val jwsNameV8 = "JWS8"
-val jwsNameV9 = "JWS9"
-val jwsNameV10 = "JWS10"
-val jwsNameV11 = "JWS11"
-val jwsNameV12 = "JWS12"
-val jwsNameV13 = "JWS13"
-val jwsNameV14 = "JWS14"
-val jwsNameV15 = "JWS15"
-val jwsNameV16 = "JWS16"
-val jwsNameV17 = "JWS17"
-val jwsNameV18 = "JWS18"
-val jwsNameV19 = "JWS19"
-val jwsNameV20 = "JWS20"
+const val jwsNameV1 = "JWS1"
+const val jwsNameV2 = "JWS2"
+const val jwsNameV3 = "JWS3"
+const val jwsNameV4 = "JWS4"
+const val jwsNameV5 = "JWS5"
+const val jwsNameV6 = "JWS6"
+const val jwsNameV7 = "JWS7"
+const val jwsNameV8 = "JWS8"
+const val jwsNameV9 = "JWS9"
+const val jwsNameV10 = "JWS10"
+const val jwsNameV11 = "JWS11"
+const val jwsNameV12 = "JWS12"
+const val jwsNameV13 = "JWS13"
+const val jwsNameV14 = "JWS14"
+const val jwsNameV15 = "JWS15"
+const val jwsNameV16 = "JWS16"
+const val jwsNameV17 = "JWS17"
+const val jwsNameV18 = "JWS18"
+const val jwsNameV19 = "JWS19"
+const val jwsNameV20 = "JWS20"
 
 //files with job content:
-val FILE_NAME_GET_SPOOL = "getSpoolFiles"
-val FILE_NAME_GET_STATUS = "getStatus"
-val FILE_NAME_GET_JOB = "getJob"
-val GET_SINGLE_SPOOL_FILE = "getSingleSpoolFile"
+const val FILE_NAME_GET_SPOOL = "getSpoolFiles"
+const val FILE_NAME_GET_STATUS = "getStatus"
+const val FILE_NAME_GET_JOB = "getJob"
+const val GET_SINGLE_SPOOL_FILE = "getSingleSpoolFile"
 
 //spool fields
 val spoolDataTabParams = listOf(

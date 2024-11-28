@@ -30,7 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.junit.jupiter.params.provider.ValueSource
 import testutils.ProcessManager
 import java.time.Duration
 import java.util.stream.Stream
@@ -62,6 +61,13 @@ class AllocateDatasetTest : IdeaInteractionClass() {
                 Arguments.of(entry.key, entry.value)
             }
         }
+
+        @JvmStatic
+        fun organisationValues() = listOf(
+            DatasetOrganization.SEQUENTIAL_ORG_FULL_ITEM,
+            DatasetOrganization.PO_ORG_FULL_ITEM,
+            DatasetOrganization.POE_ORG_FULL_ITEM
+        )
     }
 
     private var mapListDatasets = mutableMapOf<String, String>()
@@ -105,8 +111,8 @@ class AllocateDatasetTest : IdeaInteractionClass() {
      * Tests to allocate PO, PS, POE datasets with valid parameters.
      */
     @ParameterizedTest
-    @ValueSource(strings = [SEQUENTIAL_ORG_FULL, PO_ORG_FULL, POE_ORG_FULL])
-    fun testAllocateValidPODatasets(input: String, remoteRobot: RemoteRobot) {
+    @MethodSource("organisationValues")
+    fun testAllocateValidPODatasets(input: DatasetOrganization, remoteRobot: RemoteRobot) {
         doValidTest(input, remoteRobot)
     }
 
@@ -135,30 +141,28 @@ class AllocateDatasetTest : IdeaInteractionClass() {
     /**
      * Allocates dataset with different record formats.
      */
-    private fun doValidTest(datasetOrganization: String, remoteRobot: RemoteRobot) {
+    private fun doValidTest(datasetOrganization: DatasetOrganization, remoteRobot: RemoteRobot) {
         recordFormats.forEach { s ->
             val recordLength = if (s == F_RECORD_FORMAT_SHORT) {
                 3200
             } else {
                 80
             }
-            val dsOrganisationShort = "\\((.*?)\\)".toRegex().find(datasetOrganization)?.groupValues?.get(1)
+            val dsOrganisationShort = datasetOrganization.value.substringAfter('(').substringBefore(')')
             val dsName = "${datasetMask}${dsOrganisationShort}.${s}".uppercase().replace("-", "")
 
-            if (dsOrganisationShort != null) {
-                responseDispatcher.injectAllocationResultPo(
-                    datasetOrganization, s, dsName, dsOrganisationShort, recordLength
-                )
-            }
+            responseDispatcher.injectAllocationResultPo(
+                datasetOrganization.value, s, dsName, dsOrganisationShort, recordLength
+            )
             allocateDataSet(
                 wsName, dsName, datasetOrganization, TRACKS_ALLOCATION_UNIT_SHORT, 10, 1, 1,
                 s, recordLength, 3200, 0, remoteRobot
             )
 
-            val dsntp = if (dsOrganisationShort == SEQUENTIAL_ORG_SHORT) {
+            val dsntp = if (dsOrganisationShort == "PS") {
                 ""
             } else {
-                PDS_TYPE
+                "PDS"
             }
 
             val listDs = buildDatasetConfigString(dsName, dsntp, datasetOrganization, recordLength, s)
@@ -173,7 +177,7 @@ class AllocateDatasetTest : IdeaInteractionClass() {
     private fun invalidAllocateDataSet(
         wsName: String,
         datasetName: String,
-        datasetOrganization: String,
+        datasetOrganization: DatasetOrganization,
         allocationUnit: String,
         primaryAllocation: Int,
         secondaryAllocation: Int,
@@ -188,7 +192,7 @@ class AllocateDatasetTest : IdeaInteractionClass() {
         ideFrameImpl(PROJECT_NAME, fixtureStack) {
             explorer {
                 fileExplorer.click()
-                find<ComponentFixture>(viewTree).findText(wsName).rightClick()
+                this.find<ComponentFixture>(viewTree).findText(wsName).rightClick()
             }
             actionMenu(remoteRobot, NEW_POINT_TEXT).click()
             actionMenuItem(remoteRobot, DATASET_POINT_TEXT).click()

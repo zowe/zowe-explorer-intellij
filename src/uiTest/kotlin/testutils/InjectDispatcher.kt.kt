@@ -108,7 +108,8 @@ fun injectSingleSpecificMember(pdsName: String, memberName:  String, responseCod
 fun injectListAllAllocatedDatasets(datasetMask: String, mapListDatasets: MutableMap<String, String>, handler: Boolean = false){
     responseDispatcher.injectEndpoint(
         "listAllAllocatedDatasets_restfiles",
-        { it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetMask}*") ?: handler },
+        { it ->
+            it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetMask}*") ?: handler },
         { MockResponse().setBody(buildFinalListDatasetJson(mapListDatasets)) }
     )
 }
