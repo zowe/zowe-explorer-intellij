@@ -20,6 +20,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
 
+/**
+ * @see [org.zowe.explorer.v3.operations.move.conflict.SourceConflictResolver]
+ */
+@Deprecated("No longer in use")
 class RemoteDatasetComputeConflicts(
   dataOpsManager: DataOpsManager,
   sourceFiles: List<VirtualFile>,
@@ -40,12 +44,6 @@ class RemoteDatasetComputeConflicts(
     var showRenameMessage = false
     var nameIssuesCount = 0
     val renameMap = mutableMapOf<VirtualFile, String>()
-
-    // IJMP-1959: Allow conflicts related to copying/moving into the same library
-    conflictsThatCannotBeOverwritten.forEach {
-      if (it.first == it.second.parent) conflicts.add(it)
-    }
-
     for (sourceFileTmp in sourceFiles) {
       val newNameStr = dataOpsManager.getNameResolver(sourceFileTmp, pasteDestinations[0])
         .resolve(sourceFileTmp, sourceFiles, pasteDestinations[0])

@@ -36,7 +36,7 @@ class SeqToPDSResolver(val dataOpsManager: DataOpsManager) : IndexedNameResolver
         destinationAttributes is RemoteDatasetAttributes
   }
 
-  override fun resolveNameWithIndex(source: VirtualFile, destination: VirtualFile, index: Int?): String {
+  override fun resolveNameWithIndex(source: VirtualFile, destination: VirtualFile?, index: Int?): String {
     val lastQualifier = source.name.split(".").last()
     return if (index == null) lastQualifier else "${lastQualifier.take(8 - index.toString().length)}${index}"
   }

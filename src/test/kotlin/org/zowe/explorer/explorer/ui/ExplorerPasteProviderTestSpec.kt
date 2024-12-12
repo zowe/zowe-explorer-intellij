@@ -2534,19 +2534,21 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
             )
           } returns Messages.YES
           every {
-            Messages.showOkCancelDialog(
+            Messages.showDialog(
+              any() as Project?,
               any() as String,
               any() as String,
-              any() as String,
-              any() as String,
+              any() as Array<String>,
+              0,
               any() as Icon?,
+              null
             )
           } answers {
             if (!decideOptionSelected) {
               decideOptionSelected = true
-              Messages.OK
+              2
             } else {
-              Messages.CANCEL
+              2
             }
           }
 

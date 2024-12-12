@@ -17,7 +17,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsComponentFactory
 
-interface CopyPasteNameResolverFactory: DataOpsComponentFactory<CopyPasteNameResolver>
+interface CopyPasteNameResolverFactory : DataOpsComponentFactory<CopyPasteNameResolver>
 
 /**
  * Class to represent a name resolution for conflicting situation.
@@ -47,11 +47,25 @@ interface CopyPasteNameResolver {
   fun getConflictingChild(source: VirtualFile, sourceFiles: List<VirtualFile>, destination: VirtualFile): VirtualFile?
 
   /**
+   * Checks if the source file has conflicts with other source files.
+   * @return true if there is a conflict and else otherwise.
+   */
+  fun hasConflictingSource(source: VirtualFile, sourceFiles: List<VirtualFile>): Boolean
+
+  /**
    * Creates new name for source file to make it possible to be copied in destination folder.
    * @param source source file to copy in destination folder (or folder-like entity).
-   * @param sourceFiles list of all source files to copy
+   * @param sourceFiles list of all source files to copy.
    * @param destination folder-like entity to copy file to.
+   * @param newNames list of new names that were resolved at the destination.
    * @return string with new file name.
    */
-  fun resolve(source: VirtualFile, sourceFiles: List<VirtualFile>, destination: VirtualFile): String
+  fun resolve(source: VirtualFile, sourceFiles: List<VirtualFile>, destination: VirtualFile?, newNames: List<String> = emptyList()): String
+
+  /**
+   * Creates new name for the conflict between the source files.
+   * @param source source file to copy in destination folder (or folder-like entity).
+   * @param sourceFiles list of all source files to copy.
+   */
+  fun resolveSources(source: VirtualFile, sourceFiles: List<VirtualFile>): String
 }

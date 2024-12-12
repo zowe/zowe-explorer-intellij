@@ -20,12 +20,12 @@ import com.intellij.openapi.vfs.VirtualFile
  * It just adds _(<index>) to the end of the file name before extension.
  * @author Valiantsin Krus
  */
-class DefaultNameResolver: IndexedNameResolver() {
+class DefaultNameResolver : IndexedNameResolver() {
   override fun accepts(source: VirtualFile, destination: VirtualFile): Boolean {
     return true
   }
 
-  override fun resolveNameWithIndex(source: VirtualFile, destination: VirtualFile, index: Int?): String {
+  override fun resolveNameWithIndex(source: VirtualFile, destination: VirtualFile?, index: Int?): String {
     val sourceName = source.name
     return if (index == null) {
       sourceName
