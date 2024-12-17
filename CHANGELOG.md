@@ -2,11 +2,12 @@
 
 All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be documented in this file.
 
-## [Unreleased]
+## [2.0.1] (2024-11-18)
 
 ### Bugfixes
 
 * Bugfix: Fixed IDE error in case of invalid Zowe config ([71b495c4](https://github.com/zowe/zowe-explorer-intellij/commit/71b495c4))
+* Bugfix: Fixed IndexOutOfBoundException in JES Explorer ([a80bf073](https://github.com/zowe/zowe-explorer-intellij/commit/a80bf073))
 * Bugfix: Fixed FileNotFoundException for Zowe config ([d4665459](https://github.com/zowe/zowe-explorer-intellij/commit/d4665459))
 * Bugfix: Fixed NullPointerException during a sort action ([42c9ee5a](https://github.com/zowe/zowe-explorer-intellij/commit/42c9ee5a))
 * Bugfix: Fixed issue with purge that won't trigger a refresh ([b93118b7](https://github.com/zowe/zowe-explorer-intellij/commit/b93118b7))
@@ -579,6 +580,7 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 * Bugfix: GitHub issue #85: The windows 'Add Working Set'/'Edit Working Set' are automatically resized if z/OSMF
   connection with very long name is added
 
+[2.0.1]: https://github.com/zowe/zowe-explorer-intellij/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.2-231...2.0.0
 [1.2.2-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.1-231...1.2.2-231
 [1.2.1-231]: https://github.com/zowe/zowe-explorer-intellij/compare/1.2.0-231...1.2.1-231

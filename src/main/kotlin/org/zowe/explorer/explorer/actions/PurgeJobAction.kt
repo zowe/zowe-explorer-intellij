@@ -315,7 +315,7 @@ class PurgeJobAction : AnAction() {
       val selected = view.mySelectedNodesData
       val wrongNode = selected.find { it.node !is JobNode }
       e.presentation.apply {
-        isEnabledAndVisible = wrongNode == null && isSelectedJobNodesFromSameWS(selected)
+        isEnabledAndVisible = selected.isNotEmpty() && wrongNode == null && isSelectedJobNodesFromSameWS(selected)
         text = if (isEnabledAndVisible && selected.size > 1) "Purge Jobs" else "Purge Job"
       }
     } else if (view is JobBuildTreeView) {

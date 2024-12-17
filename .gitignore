@@ -3,6 +3,8 @@
 .intellijPlatform
 /build
 /ide_for_launch
+/out
+/allure-results
 
 verifier-all.jar
 
