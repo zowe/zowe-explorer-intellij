@@ -85,6 +85,7 @@ class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
 
       every { connectionConfig.name } returns "test_connection"
       every { connectionConfig.authToken } returns "auth_token"
+      every { connectionConfig.uuid } returns "test_uuid"
 
       every { datasetAllocationParams.memberName } returns "test"
       every { datasetAllocationParams.datasetName } returns "ZOSMFAD.TEST"

@@ -181,6 +181,7 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
           if (doUploadContent && isFileUploadNeeded(syncProvider)) {
             log.info("Save strategy decided to forcefully update file content on mainframe.")
             val newContentPrepared = contentAdapter.prepareContentToMainframe(fileContent, syncProvider.file)
+              .let { contentAdapter.adaptWhitespaces(it) }
             runWriteActionInEdtAndWait { syncProvider.loadNewContent(newContentPrepared) }
             uploadNewContent(attributes, newContentPrepared, progressIndicator)
             successfulStatesStorage.writeStream(recordId).use { it.write(newContentPrepared) }

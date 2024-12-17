@@ -32,10 +32,11 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.*
 import org.zowe.kotlinsdk.UssFile
 import org.zowe.kotlinsdk.XIBMDataType
+import org.zowe.kotlinsdk.annotations.ZVersion
 import kotlin.reflect.KFunction
 
 class RemoteUssAttributesServiceTestSpec : ShouldSpec({
-  context("dataops module: attributes/RemoteUssAttributes") {
+  context("dataops/attributes/RemoteUssAttributesService") {
     lateinit var fsModelMock: MFVirtualFileSystemModel
     lateinit var fsRootMock: MFVirtualFile
     lateinit var mfVFileSystemMock: MFVirtualFileSystem
@@ -89,7 +90,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test",
         UssFile(),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
 
       val mfVirtualFileMock = mockk<MFVirtualFile>()
@@ -122,7 +130,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test",
         UssFile(),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
 
       val mfVirtualFileMock = mockk<MFVirtualFile>()
@@ -159,7 +174,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test",
         UssFile(),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
 
       val mfVirtualFileMock = mockk<MFVirtualFile>()
@@ -189,7 +211,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test1",
         UssFile(),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
 
       remoteUssAttributesService.updateAttributes(createdUSSFile, updatedAttributes)
@@ -211,7 +240,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test",
         UssFile(),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
 
       val mfVirtualFileMock = mockk<MFVirtualFile>()
@@ -241,7 +277,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "/test1/test",
         UssFile(),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
 
       remoteUssAttributesService.updateAttributes(createdUSSFile, updatedAttributes)
@@ -262,7 +305,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test",
         UssFile(mode = "drwxrwxrwx"),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
 
       val mfVirtualFileMock = mockk<MFVirtualFile>()
@@ -288,7 +338,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test",
         UssFile(),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
 
       remoteUssAttributesService.updateWritableFlagAfterContentChanged(createdUSSFile, updatedAttributes)
@@ -304,7 +361,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test",
         UssFile(),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
 
       val mfVirtualFileMock = mockk<MFVirtualFile>()
@@ -330,7 +394,14 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         "test",
         UssFile(mode = "drwxrwxrwx"),
         "test",
-        ConnectionConfig()
+        ConnectionConfig(
+          uuid = "test",
+          name = "test",
+          url = "test",
+          isAllowSelfSigned = true,
+          zVersion = ZVersion.ZOS_2_3,
+          owner = "TSTOWNR"
+        )
       )
       updatedAttributes.contentMode = XIBMDataType(XIBMDataType.Type.TEXT)
 

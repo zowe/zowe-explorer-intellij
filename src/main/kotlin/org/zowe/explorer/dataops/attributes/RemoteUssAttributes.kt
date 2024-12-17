@@ -26,8 +26,6 @@ import org.zowe.kotlinsdk.UssFile
 import org.zowe.kotlinsdk.XIBMDataType
 import java.nio.charset.Charset
 
-private const val CURRENT_DIR_NAME = "."
-
 /**
  * Constructs path to file/folder depending on if object is file or folder
  * and if object is located in root directory or deeper in file hierarchy
@@ -37,20 +35,13 @@ private const val CURRENT_DIR_NAME = "."
  */
 private fun constructPath(rootPath: String, ussFile: UssFile): String {
   return when {
-    ussFile.name.isEmpty() || ussFile.name == CURRENT_DIR_NAME -> {
-      rootPath
-    }
-
-    rootPath == USS_DELIMITER -> {
-      rootPath + ussFile.name
-    }
-
-    else -> {
-      rootPath + USS_DELIMITER + ussFile.name
-    }
+    ussFile.name.isEmpty() || ussFile.name == CURRENT_DIR_NAME -> rootPath
+    rootPath == USS_DELIMITER -> rootPath + ussFile.name
+    else -> rootPath + USS_DELIMITER + ussFile.name
   }
 }
 
+const val CURRENT_DIR_NAME = "."
 const val USS_DELIMITER = "/"
 
 /**
@@ -107,6 +98,20 @@ data class RemoteUssAttributes(
     charset = DEFAULT_BINARY_CHARSET
   )
 
+  /** Get file mode access number basing on the file owner and the available requesters to use the file */
+  private fun getAvailableFileModeAccessNum(): Int {
+    val hasFileOwnerInRequesters = requesters.any { requester ->
+      val savedOwner = CredentialService.getOwner(requester.connectionConfig)
+      val ownerOrUsername =
+        if (savedOwner == "") CredentialService.getUsername(requester.connectionConfig)
+        else savedOwner
+      ownerOrUsername.equals(owner, ignoreCase = true)
+    }
+    return if (fileMode != null) {
+      if (hasFileOwnerInRequesters) fileMode.owner else fileMode.all
+    } else FileModeValue.NONE.mode
+  }
+
   /**
    * Clones uss attributes objects and returns copy of it
    */
@@ -125,17 +130,7 @@ data class RemoteUssAttributes(
 
   val isWritable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any {
-        runCatching { CredentialService.getOwner(it.connectionConfig) }
-          .getOrNull()
-          ?.equals(owner, ignoreCase = true)
-          ?: false
-      }
-      val mode = if (hasFileOwnerInRequesters) {
-        fileMode?.owner
-      } else {
-        fileMode?.all
-      }
+      val mode = getAvailableFileModeAccessNum()
       return mode == FileModeValue.WRITE.mode
         || mode == FileModeValue.WRITE_EXECUTE.mode
         || mode == FileModeValue.READ_WRITE.mode
@@ -144,17 +139,7 @@ data class RemoteUssAttributes(
 
   val isReadable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any {
-        runCatching { CredentialService.getOwner(it.connectionConfig) }
-          .getOrNull()
-          ?.equals(owner, ignoreCase = true)
-          ?: false
-      }
-      val mode = if (hasFileOwnerInRequesters) {
-        fileMode?.owner
-      } else {
-        fileMode?.all
-      }
+      val mode = getAvailableFileModeAccessNum()
       return mode == FileModeValue.READ.mode
         || mode == FileModeValue.READ_WRITE.mode
         || mode == FileModeValue.READ_EXECUTE.mode
@@ -163,15 +148,7 @@ data class RemoteUssAttributes(
 
   val isExecutable: Boolean
     get() {
-      val hasFileOwnerInRequesters = requesters.any {
-        CredentialService.getOwner(it.connectionConfig)
-          .equals(owner, ignoreCase = true)
-      }
-      val mode = if (hasFileOwnerInRequesters) {
-        fileMode?.owner
-      } else {
-        fileMode?.all
-      }
+      val mode = getAvailableFileModeAccessNum()
       return mode == FileModeValue.EXECUTE.mode
         || mode == FileModeValue.READ_EXECUTE.mode
         || mode == FileModeValue.WRITE_EXECUTE.mode

@@ -52,4 +52,12 @@ interface MFContentAdapter {
    * @return adapted content bytes.
    */
   fun adaptContentFromMainframe(content: ByteArray, file: VirtualFile): ByteArray
+
+  /**
+   * Additionally prepares content for uploading to the mainframe. Function adapts trailing whitespaces
+   * based on content adapter. Needs to be overriden by any content adapter which extends this interface
+   * @param content content to adapt
+   * @return adapted content
+   */
+  fun <T> adaptWhitespaces(content: T) : T
 }

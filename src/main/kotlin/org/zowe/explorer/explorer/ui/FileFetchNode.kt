@@ -30,7 +30,6 @@ import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.fetch.LibraryQuery
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.utils.*
-import java.time.LocalDateTime
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -160,12 +159,8 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
                   if (needToLoadMore) {
                     fileFetchProvider.loadMore(q, it)
                   } else {
-                    fileFetchProvider.apply {
-                      reload(q, it)
-                      applyRefreshCacheDate(q, this@FileFetchNode, LocalDateTime.now())
-                    }
+                    fileFetchProvider.reload(q, it)
                   }
-
                 }
                 needToLoadMore = false
                 possibleToFetch = true

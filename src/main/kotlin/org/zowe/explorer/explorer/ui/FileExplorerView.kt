@@ -552,12 +552,14 @@ class FileExplorerView(
         return true
       val nodeAndFilePairs = optimizeDeletion(selected)
       return if (nodeAndFilePairs.isNotEmpty()) {
+        // Enable deletion for the following selection only:
+        // 1) nodes selection have identical attribute types only, e.g. RemoteUssAttributes, RemoteDatasetAttributes
+        // 2) Nodes selection does not contain different nature, e.g. UssDirNode and DsMaskNode
+        // 3) nodes selection is accepted by delete operation
+        // Nested nodes selection, e.g. Directory + SubDirectory + SubDirectory file is handled by optimizeDeletion
         val filesAttrTypes = nodeAndFilePairs.mapNotNull { it.first.attributes }.map { it::class.simpleName }.distinct()
-        var checkForUss = true
-        if (filesAttrTypes.any { it == "RemoteUssAttributes" })
-          checkForUss = nodeAndFilePairs.map { it.first.node::class.simpleName }.distinct().size == 1
         filesAttrTypes.size == 1 && wsNodes.isEmpty() && deleteOperations.any { op ->
-          dataOpsManager.isOperationSupported(op) && checkForUss
+          dataOpsManager.isOperationSupported(op)
         }
       } else false
     }

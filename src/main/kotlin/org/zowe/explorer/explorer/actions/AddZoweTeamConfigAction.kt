@@ -81,6 +81,8 @@ class AddZoweTeamConfigAction : AnAction() {
 
       CredentialService.getService().setCredentials(connectionConfig.uuid, state.username, state.password)
       configCrudable.add(connectionConfig)
+
+      VirtualFileManager.getInstance().findFileByNioPath(Path.of(project.basePath.toString()))?.refresh(false, false)
     } else {
       return
     }

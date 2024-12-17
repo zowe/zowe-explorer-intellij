@@ -78,8 +78,11 @@ abstract class LReclContentAdapter<Attributes : FileAttributes>(
       } else {
         var nextLine = it
         while (nextLine.length > lrecl) {
-          resultRows.add(nextLine.slice(IntRange(0, lrecl - 1)))
-          nextLine = nextLine.slice(IntRange(lrecl, nextLine.length - 1))
+          // make sure that substring we are going to split does not end with whitespace
+          // If it does, trim the trailing whitespace and move the remaining string to the next line
+          val lineToInspect = nextLine.substring(0, lrecl)
+          resultRows.add(if (lineToInspect.last().isWhitespace()) lineToInspect.trimEnd() else lineToInspect)
+          nextLine = nextLine.substring(lrecl, nextLine.length)
         }
         resultRows.add(nextLine)
       }
