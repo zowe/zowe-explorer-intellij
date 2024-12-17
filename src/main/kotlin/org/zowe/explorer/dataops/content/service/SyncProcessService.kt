@@ -55,4 +55,10 @@ interface SyncProcessService {
    */
   fun areDependentFilesSyncingNow(file: VirtualFile): Boolean
 
+  /**
+   * Check if any file is currently synchronized.
+   * @return true if any file is syncing now or false otherwise.
+   */
+  fun isAnyFileSyncingNow(): Boolean
+
 }

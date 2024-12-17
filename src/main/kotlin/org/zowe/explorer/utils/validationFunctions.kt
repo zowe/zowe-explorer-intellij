@@ -28,6 +28,7 @@ import org.zowe.explorer.explorer.ui.UssFileNode
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.find
 import org.zowe.explorer.utils.crudable.getByUniqueKey
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JPasswordField
 import javax.swing.JTextField
@@ -79,7 +80,7 @@ fun validateForBlank(text: String, component: JComponent): ValidationInfo? {
  * @param component confirm password component
  */
 fun validateForPassword(password: String, component: JPasswordField): ValidationInfo? {
-  return if (password != component.text) ValidationInfo("Passwords do not match", component) else null
+  return if (password != component.password.toString()) ValidationInfo("Passwords do not match", component) else null
 }
 
 /**
@@ -527,6 +528,28 @@ fun validateBatchSize(component: JTextField): ValidationInfo? {
   return if (component.text.toIntOrNull() == 0)
     ValidationInfo("Setting 0 may lead to performance issues due to elements long fetch processing.").asWarning()
       .withOKEnabled()
+  else null
+}
+
+/**
+ * Validates job return codes in int text fields.
+ * @param successField filed with minimal success return code
+ * @param defaultSuccessValue previous success return code
+ * @param warningField  filed with minimal warning return code
+ * @param defaultWarningValue previous success return code
+ * @param component current focused component
+ */
+fun validateJobReturnCode(
+  successField: JTextField, defaultSuccessValue: AtomicInteger,
+  warningField: JTextField, defaultWarningValue: AtomicInteger,
+  component: JTextField
+): ValidationInfo? {
+  return if ((successField.text.toIntOrNull() ?: defaultSuccessValue.toInt()) < 0 ||
+    (warningField.text.toIntOrNull() ?: defaultWarningValue.toInt()) < 0)
+    ValidationInfo("Return code should be greater or equal than 0", component)
+  else if ((warningField.text.toIntOrNull() ?: defaultWarningValue.toInt()) <=
+    (successField.text.toIntOrNull() ?: defaultSuccessValue.toInt()))
+    ValidationInfo("Success return code should be less than warning return code", component)
   else null
 }
 

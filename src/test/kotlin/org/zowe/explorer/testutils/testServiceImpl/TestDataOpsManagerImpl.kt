@@ -77,6 +77,10 @@ open class TestDataOpsManagerImpl : DataOpsManager {
       return contentSynchronizerMock
     }
 
+    override fun clearFileCache(): Boolean {
+      TODO("Not yet implemented")
+    }
+
     override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {
       TODO("Not yet implemented")
     }
@@ -138,6 +142,10 @@ open class TestDataOpsManagerImpl : DataOpsManager {
 
   override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
     return this.testInstance.getContentSynchronizer(file)
+  }
+
+  override fun clearFileCache(): Boolean {
+    return this.testInstance.clearFileCache()
   }
 
   override fun getMFContentAdapter(file: VirtualFile): MFContentAdapter {

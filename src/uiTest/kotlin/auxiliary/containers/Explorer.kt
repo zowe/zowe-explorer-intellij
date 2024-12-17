@@ -24,6 +24,9 @@ import com.intellij.remoterobot.fixtures.ContainerFixture
 import com.intellij.remoterobot.fixtures.FixtureName
 import com.intellij.remoterobot.search.locators.Locator
 import workingset.*
+import workingset.actionButtonLoc
+import workingset.callSettingButtonLoc
+import workingset.explorerLoc
 import java.time.Duration
 
 /**

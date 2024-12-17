@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanel
+import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.log.JobLogFetcher
@@ -47,9 +48,6 @@ import javax.swing.tree.TreeNode
 
 val JOBS_LOG_VIEW = DataKey.create<JobBuildTreeView>("jobsLogView")
 const val JOBS_LOG_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.ExplorerNotificationGroup"
-
-const val SUCCESSFUL_JOB_COMPLETION_CODE = 0
-const val SUCCESSFUL_JOB_COMPLETION_CODE_WITH_WARNING = 4
 
 /**
  * Console with BuildTree for display job execution process and results.
@@ -136,11 +134,12 @@ class JobBuildTreeView(
         ?.uppercase()
       //Variables were added to set the correct icon depending on the result of the job execution.
       //For any execution status, FailureResultImpl will be used to display DDs
+      val configService = ConfigService.getService()
       val ret = if (rc?.contains("CC") == true) { // result code can be in format "CC nnnn"
         val completionCode = rc.split(" ")[1].toInt()
-        when (completionCode) {
-          SUCCESSFUL_JOB_COMPLETION_CODE -> ReturnCode.SUCCESS
-          SUCCESSFUL_JOB_COMPLETION_CODE_WITH_WARNING -> ReturnCode.WARNING
+        when {
+          completionCode <= configService.successMaxCode -> ReturnCode.SUCCESS
+          completionCode in configService.successMaxCode + 1..configService.warningMaxCode -> ReturnCode.WARNING
           else -> ReturnCode.ERROR
         }
       } else ReturnCode.ERROR
@@ -208,7 +207,6 @@ class JobBuildTreeView(
   enum class ReturnCode {
     SUCCESS, WARNING, ERROR
   }
-
 
   /**
    * Stops requesting logs from mainframe.

@@ -92,6 +92,18 @@ class ConfigServiceImpl : ConfigService {
       state.settings.batchSize = value
     }
 
+  override var successMaxCode: Int
+    get() = state.settings.successMaxCode
+    set(value) {
+      state.settings.successMaxCode = value
+    }
+
+  override var warningMaxCode: Int
+    get() = state.settings.warningMaxCode
+    set(value) {
+      state.settings.warningMaxCode = value
+    }
+
   override var rateUsNotificationDelay: Long
     get() = state.settings.rateUsNotificationDelay
     set(value) {

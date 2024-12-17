@@ -21,6 +21,8 @@ import com.intellij.remoterobot.search.locators.Locator
 import workingset.*
 import workingset.Constants.remoteRobotUrl
 import workingset.auxiliary.components.elements.ButtonElement
+import workingset.editWorkingSetDialogLocAlt
+import workingset.inputFieldLoc
 import java.time.Duration
 
 class EditJobFilterSubDialog(fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) :AbstractDialog(fixtureStack, remoteRobot) {

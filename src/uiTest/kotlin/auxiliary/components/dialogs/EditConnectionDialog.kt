@@ -22,6 +22,10 @@ import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import workingset.*
 import workingset.auxiliary.components.elements.ButtonElement
+import workingset.cancelButtonAddConnection
+import workingset.editConnectionDialogLoc
+import workingset.inputFieldLoc
+import workingset.okButtonAddConnection
 import java.time.Duration
 
 class EditConnectionDialogUtil(fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) :AbstractDialog(fixtureStack, remoteRobot) {

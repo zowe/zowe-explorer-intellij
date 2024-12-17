@@ -1,0 +1,1 @@
+# This folder is needed for UI regression testing. During a run, it will be opened as a project folder to test

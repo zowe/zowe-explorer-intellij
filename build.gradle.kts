@@ -14,9 +14,12 @@
 
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+
+//!IMPORTANT!: to refer "libs", use ./gradle/libs.versions.toml
 
 fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
@@ -44,9 +47,16 @@ val plugins = listOf(
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_17,
     since = "233.11799",
-    getUntil = { provider { "242.*" } },
+    getUntil = { provider { "241.*" } },
     sdkVersion = "2023.3",
     sourceFolder = "IC-233"
+  ),
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_21,
+    since = "242.20224",
+    getUntil = { provider { "242.*" } },
+    sdkVersion = "2024.2",
+    sourceFolder = "IC-242"
   ),
   PluginDescriptor(
     jvmTargetVersion = JavaVersion.VERSION_21,
@@ -61,24 +71,15 @@ val descriptor = plugins.first { it.sourceFolder == productName }
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
-val remoteRobotVersion = "0.11.23"
-val okHttp3Version = "4.12.0"
-val kotestVersion = "5.9.1"
-val retrofit2Vertion = "2.11.0"
-val junitVersion = "5.11.1"
-val mockkVersion = "1.13.12"
-val jGraphTVersion = "1.5.2"
-val zoweKotlinSdkVersion = "0.5.0"
-val javaKeytarVersion = "1.0.0"
 
 plugins {
-  id("org.sonarqube") version "5.1.0.4882"
-  id("org.jetbrains.intellij.platform") version "2.1.0"
-  id("org.jetbrains.changelog") version "2.2.1"
-  kotlin("jvm") version "1.9.22"
+  alias(libs.plugins.gradle) // IntelliJ Platform Gradle Plugin
+  alias(libs.plugins.kotlinJvm)
+  alias(libs.plugins.sonarqube)
+  alias(libs.plugins.changelog)
+  alias(libs.plugins.kover)
+  alias(libs.plugins.dependencycheck)
   java
-  id("org.jetbrains.kotlinx.kover") version "0.8.3"
-  id("org.owasp.dependencycheck") version "10.0.4"
 }
 
 repositories {
@@ -109,6 +110,25 @@ kotlin {
   }
 }
 
+/** Source sets configuration */
+sourceSets {
+  main {
+    java {
+      srcDir("src/${descriptor.sourceFolder}/kotlin")
+    }
+    resources {
+      srcDir("src/${descriptor.sourceFolder}/resources")
+    }
+  }
+  create("uiTest") {
+    compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.test.get().compileClasspath
+    runtimeClasspath += output + compileClasspath
+  }
+}
+
+configurations["uiTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
+configurations["uiTestImplementation"].extendsFrom(configurations.testImplementation.get())
+
 dependencies {
   intellijPlatform {
 //    intellijIdeaCommunity(descriptor.sdkVersion)
@@ -118,28 +138,19 @@ dependencies {
     instrumentationTools()
     pluginVerifier()
     testFramework(TestFrameworkType.Plugin.Java)
+    testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
     zipSigner()
   }
-  implementation(group = "com.squareup.retrofit2", name = "retrofit", version = retrofit2Vertion)
-  implementation("com.squareup.retrofit2:converter-gson:$retrofit2Vertion")
-  implementation("com.squareup.retrofit2:converter-scalars:$retrofit2Vertion")
-  implementation("com.squareup.okhttp3:okhttp:$okHttp3Version")
-  implementation("org.jgrapht:jgrapht-core:$jGraphTVersion")
-  implementation("com.starxg:java-keytar:$javaKeytarVersion")
-  implementation("org.zowe.sdk:zowe-kotlin-sdk:$zoweKotlinSdkVersion")
-  implementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
-  testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-  testImplementation("io.mockk:mockk:$mockkVersion")
-  testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
-  testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
-  testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
-  testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
-  testImplementation("com.squareup.okhttp3:mockwebserver:$okHttp3Version")
-  testImplementation("com.squareup.okhttp3:okhttp-tls:$okHttp3Version")
-  testImplementation("com.squareup.okhttp3:logging-interceptor:$okHttp3Version")
-  testImplementation("com.intellij.remoterobot:ide-launcher:$remoteRobotVersion")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junitVersion")
+  implementation(libs.retrofit2)
+  implementation(libs.retrofit2.converter.gson)
+  implementation(libs.retrofit2.converter.scalars)
+  implementation(libs.okhttp3)
+  implementation(libs.jgrapht.core)
+  implementation(libs.java.keytar)
+  implementation(libs.zowe.kotlin.sdk)
+  testImplementation(libs.mockk)
+  testImplementation(libs.kotest.assertions.core)
+  testImplementation(libs.kotest.runner.junit5)
 }
 
 intellijPlatform {
@@ -230,33 +241,16 @@ tasks {
     )
   }
 
-//  withType<ClasspathIndexCleanupTask> {
-//    onlyIf {
-//      gradle.startParameter.taskNames.contains("test")
-//    }
-//    dependsOn(compileTestKotlin)
-//  }
-
-//
-//  withType<ClasspathIndexCleanupTask> {
-//    onlyIf {
-//      gradle.startParameter.taskNames.contains("uiTest")
-//    }
-//    dependsOn("compileUiTestKotlin")
-//  }
+  withType<KotlinCompile>().configureEach {
+    if (name == "compileUiTestKotlin") {
+      onlyIf {
+        gradle.startParameter.taskNames.any { it.contains("uiTests") }
+      }
+    }
+  }
 
   test {
     useJUnitPlatform()
-
-    // To run unit tests only and do not trigger "uiTest" task related things (like "compileUiTestKotlin")
-    onlyIf { !gradle.startParameter.taskNames.contains("uiTest") }
-
-    jvmArgs("--add-opens", "java.desktop/java.awt=ALL-UNNAMED")
-    jvmArgs("--add-opens", "java.desktop/sun.awt=ALL-UNNAMED")
-    jvmArgs("--add-opens", "java.desktop/java.awt.event=ALL-UNNAMED")
-    jvmArgs("--add-opens", "java.base/java.lang=ALL-UNNAMED")
-    jvmArgs("--add-exports", "java.base/jdk.internal.vm=ALL-UNNAMED")
-    jvmArgs("--add-opens", "java.base/java.nio.file=ALL-UNNAMED")
 
     testLogging {
       events("passed", "skipped", "failed")
@@ -327,102 +321,101 @@ tasks {
         .map { it }
     )
   }
+}
+
+/**
+ * UI tests task. Describes setup that provides the tools to run UI tests.
+ * This task is available only for IDEs since version 242
+ */
+// https://github.com/JetBrains/intellij-community/blob/master/platform/remote-driver/README.md
+val uiTests by intellijPlatformTesting.testIdeUi.registering {
+  task {
+    enabled = gradle.startParameter.taskNames.any { it.contains("uiTests") } && descriptor.since >= "242"
+    archiveFile.set(tasks.buildPlugin.flatMap { it.archiveFile })
+    testClassesDirs = sourceSets["uiTest"].output.classesDirs
+    classpath = sourceSets["uiTest"].runtimeClasspath
+
+    useJUnitPlatform {
+      isScanForTestClasses = false
+      includeTags("New")
+    }
+
+    jvmArgumentProviders += CommandLineArgumentProvider {
+      listOf(
+        "-Xmx2g",
+        "-Xms512m",
+        "-Dide.test.version=${descriptor.sdkVersion}",
+        "-Dplugin.path=${tasks.buildPlugin.flatMap { it.archiveFile }.get().asFile.absolutePath}",
+        "-Dui.tests.mock.project.path=src/uiTest/resources/mock_project",
+        "-Didea.trust.all.projects=true",
+        "-Dide.show.tips.on.startup.default.value=false",
+        "-Didea.log.config.properties.file=src/uiTest/resources/log.properties",
+        "-Didea.log.path=src/uiTest/resources/mock_project",
+        // TODO: delete
+        "-DideLaunchFolder=ide_for_launch",
+        "-DremoteRobotUrl=http://127.0.0.1",
+        "-DideaBuildVersionForTest=ideaIC-242.20224.91",
+        "-DrobotServerForTest=robot-server-plugin-0.11.23",
+        "-Didea.trust.all.projects=true",
+        "-Dide.show.tips.on.startup.default.value=false",
+        "-Dkotest.framework.classpath.scanning.autoscan.disable=true",
+      )
+    }
+
+    testLogging {
+      events("passed", "skipped", "failed", "standardOut", "standardError")
+    }
+  }
+
+  plugins {
+    robotServerPlugin()
+  }
+
+  dependencies {
+//    testImplementation(libs.junit.platform.launcher)
+//    testImplementation(libs.junit.platform.suite)
+//    testImplementation(libs.junit.jupiter)
+//    testImplementation(libs.junit.jupiter.engine)
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit.jupiter.params)
+    testImplementation(libs.okhttp3.mockwebserver)
+    testImplementation(libs.okhttp3.okhttp.tls)
+    // TODO: revise and delete old unnecessary deps
+    testImplementation("com.intellij.remoterobot:ide-launcher:0.11.23")
+    testImplementation("com.intellij.remoterobot:remote-robot:0.11.23")
+    testImplementation("com.intellij.remoterobot:remote-fixtures:0.11.23")
+  }
+}
 
 // TODO: fix
-//  downloadRobotServerPlugin {
-//    version.set(remoteRobotVersion)
+///**
+// * Runs the first UI test, which agrees to the license agreement
+// */
+//val firstTimeUiTest = task<Test>("firstTimeUiTest") {
+//  description = "Gets rid of license agreement, etc."
+//  group = "verification"
+//  testClassesDirs = sourceSets["uiTest"].output.classesDirs
+//  classpath = sourceSets["uiTest"].runtimeClasspath
+//  useJUnitPlatform {
+//    includeTags("FirstTime")
 //  }
-
-// TODO: fix
-//  runIdeForUiTests {
-//    systemProperty("idea.trust.all.projects", "true")
-//    systemProperty("ide.show.tips.on.startup.default.value", "false")
+//  testLogging {
+//    events("passed", "skipped", "failed")
 //  }
-}
-
-/**
- * Adds uiTest source sets
- */
-sourceSets {
-  main {
-    java {
-      srcDir("src/${descriptor.sourceFolder}/kotlin")
-    }
-    resources {
-      srcDir("src/${descriptor.sourceFolder}/resources")
-    }
-  }
-  create("uiTest") {
-    compileClasspath += sourceSets.main.get().output
-    runtimeClasspath += sourceSets.main.get().output
-    java.srcDirs("src/uiTest/java", "src/uiTest/kotlin")
-    resources.srcDirs("src/uiTest/resources")
-  }
-}
-
-/**
- * configures the UI Tests to inherit the testImplementation in dependencies
- */
-val uiTestImplementation by configurations.getting {
-  extendsFrom(configurations.testImplementation.get())
-}
-
-/**
- * configures the UI Tests to inherit the testRuntimeOnly in dependencies
- */
-configurations["uiTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
-
-/**
- * runs UI tests
- */
-val uiTest = task<Test>("uiTest") {
-  description = "Runs the integration tests for UI."
-  group = "verification"
-  systemProperty("ideLaunchFolder", System.getProperty("ideLaunchFolder"))
-  systemProperty("forMainframePath", System.getProperty("forMainframePath"))
-  systemProperty("remoteRobotUrl", System.getProperty("remoteRobotUrl"))
-  systemProperty("ideaVersionForTest", System.getProperty("ideaVersionForTest"))
-  systemProperty("ideaBuildVersionForTest", System.getProperty("ideaBuildVersionForTest"))
-  systemProperty("robotServerForTest", System.getProperty("robotServerForTest"))
-  testClassesDirs = sourceSets["uiTest"].output.classesDirs
-  classpath = sourceSets["uiTest"].runtimeClasspath
-  useJUnitPlatform {
-    excludeTags("FirstTime")
-    excludeTags("SmokeTest")
-  }
-  testLogging {
-    events("passed", "skipped", "failed")
-  }
-}
-
-/**
- * Runs the first UI test, which agrees to the license agreement
- */
-val firstTimeUiTest = task<Test>("firstTimeUiTest") {
-  description = "Gets rid of license agreement, etc."
-  group = "verification"
-  testClassesDirs = sourceSets["uiTest"].output.classesDirs
-  classpath = sourceSets["uiTest"].runtimeClasspath
-  useJUnitPlatform {
-    includeTags("FirstTime")
-  }
-  testLogging {
-    events("passed", "skipped", "failed")
-  }
-}
-
-/**
- * Runs the smoke ui test
- */
-val smokeUiTest = task<Test>("smokeUiTest") {
-  description = "Gets rid of license agreement, etc."
-  group = "verification"
-  testClassesDirs = sourceSets["uiTest"].output.classesDirs
-  classpath = sourceSets["uiTest"].runtimeClasspath
-  useJUnitPlatform {
-    includeTags("SmokeTest")
-  }
-  testLogging {
-    events("passed", "skipped", "failed")
-  }
-}
+//}
+//
+///**
+// * Runs the smoke ui test
+// */
+//val smokeUiTest = task<Test>("smokeUiTest") {
+//  description = "Gets rid of license agreement, etc."
+//  group = "verification"
+//  testClassesDirs = sourceSets["uiTest"].output.classesDirs
+//  classpath = sourceSets["uiTest"].runtimeClasspath
+//  useJUnitPlatform {
+//    includeTags("SmokeTest")
+//  }
+//  testLogging {
+//    events("passed", "skipped", "failed")
+//  }
+//}

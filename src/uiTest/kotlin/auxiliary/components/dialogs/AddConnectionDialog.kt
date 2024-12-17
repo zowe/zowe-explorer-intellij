@@ -21,6 +21,7 @@ import com.intellij.remoterobot.fixtures.JTextFieldFixture
 import com.intellij.remoterobot.search.locators.Locator
 import workingset.*
 import workingset.auxiliary.components.elements.ButtonElement
+import workingset.*
 import java.time.Duration
 
 class AddConnectionDialogUtil(fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) :AbstractDialog(fixtureStack, remoteRobot) {

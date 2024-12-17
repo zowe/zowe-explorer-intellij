@@ -23,10 +23,10 @@ import org.zowe.explorer.dataops.operations.TsoOperationMode
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
+import org.zowe.explorer.tso.getTsoMessageQueue
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
-import org.zowe.explorer.tso.getTsoMessageQueue
 import org.zowe.kotlinsdk.*
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call

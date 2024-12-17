@@ -30,6 +30,9 @@ import workingset.auxiliary.components.dialogs.AddJesWorkingSetSubDialog
 import workingset.auxiliary.components.dialogs.SettingsDialogUtil
 import workingset.auxiliary.components.elements.ButtonElement
 import workingset.testutils.*
+import workingset.jobConsolePurgeButton
+import workingset.jobSubmittedIdLoc
+import workingset.subOkButtonLoc
 
 /**
  * Tests purging jobs and check results.

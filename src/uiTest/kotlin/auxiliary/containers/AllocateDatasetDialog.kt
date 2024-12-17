@@ -22,6 +22,10 @@ import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
 import com.intellij.remoterobot.search.locators.byXpath
 import workingset.*
+import workingset.datasetNameInputLoc
+import workingset.datasetOrgDropDownLoc
+import workingset.dropdownsLoc
+import workingset.inputFieldLoc
 import java.time.Duration
 
 /**

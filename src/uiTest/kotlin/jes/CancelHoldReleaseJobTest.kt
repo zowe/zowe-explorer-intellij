@@ -31,6 +31,7 @@ import testutils.injectSingleMember
 import workingset.*
 import workingset.auxiliary.components.elements.ButtonElement
 import workingset.testutils.*
+import workingset.*
 import java.awt.event.KeyEvent
 import java.time.Duration
 

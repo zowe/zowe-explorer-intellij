@@ -28,6 +28,7 @@ import workingset.*
 import workingset.auxiliary.components.dialogs.JobPropertiesDialog
 import workingset.auxiliary.components.dialogs.SpoolFilePropertyDialog
 import workingset.testutils.*
+import workingset.dataTabLoc
 
 /**
  * Tests viewing job and spool file properties.

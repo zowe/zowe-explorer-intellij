@@ -67,6 +67,8 @@ interface DataOpsManager : Disposable {
    */
   fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer?
 
+  fun clearFileCache(): Boolean
+
   fun getMFContentAdapter(file: VirtualFile): MFContentAdapter
 
   fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver

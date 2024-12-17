@@ -79,3 +79,17 @@ fun checkFileForSync(
     true
   } else false
 }
+
+/**
+ * Check if any file is syncing now and show the warning dialog if so.
+ * @param project project to show dialog.
+ * @return true if any file is syncing now and false otherwise.
+ */
+fun checkForSync(project: Project? = null): Boolean {
+  val message = "You can't perform this action because some file is currently being synchronized"
+  val title = "Synchronization Is In Progress"
+  return if (SyncProcessService.getService().isAnyFileSyncingNow()) {
+    Messages.showWarningDialog(project, message, title)
+    true
+  } else false
+}

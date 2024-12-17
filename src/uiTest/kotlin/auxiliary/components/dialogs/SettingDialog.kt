@@ -23,6 +23,7 @@ import com.intellij.remoterobot.utils.keyboard
 import workingset.*
 import workingset.auxiliary.components.elements.ButtonElement
 import workingset.auxiliary.components.elements.TabElement
+import workingset.*
 import java.awt.event.KeyEvent
 
 class SettingsDialogUtil(fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) :AbstractDialog(fixtureStack, remoteRobot) {

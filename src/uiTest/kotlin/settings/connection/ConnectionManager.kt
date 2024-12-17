@@ -30,6 +30,7 @@ import workingset.auxiliary.components.dialogs.EditConnectionDialogUtil
 import workingset.auxiliary.components.dialogs.SettingsDialogUtil
 import workingset.auxiliary.components.elements.ButtonElement
 import workingset.testutils.*
+import workingset.*
 import java.time.Duration
 
 /**

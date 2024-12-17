@@ -1,0 +1,60 @@
+[versions]
+# libraries
+retrofit2 = "2.11.0"
+junit4 = "4.13.2"
+junit-platform = "1.11.3"
+junit-jupiter = "5.11.3"
+remoterobot = "0.11.23"
+okhttp3 = "4.12.0"
+mockk = "1.13.12"
+kotest = "5.9.1"
+jgrapht = "1.5.2"
+keytar = "1.0.0"
+zowe-kotlin-sdk = "0.5.0"
+ibm-mq-allclient = "9.4.0.0"
+
+# plugins
+gradle = "2.1.0"
+kotlinJvm = "1.9.22"
+sonarqube = "5.1.0.4882"
+changelog = "2.2.1"
+kover = "0.8.3"
+dependencycheck = "10.0.4"
+
+[libraries]
+# build deps
+retrofit2 = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit2" }
+retrofit2-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit2" }
+retrofit2-converter-scalars = { group = "com.squareup.retrofit2", name = "converter-scalars", version.ref = "retrofit2" }
+okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp3" }
+jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht" }
+java-keytar = { group = "com.starxg", name = "java-keytar", version.ref = "keytar" }
+zowe-kotlin-sdk = { group = "org.zowe.sdk", name = "zowe-kotlin-sdk", version.ref = "zowe-kotlin-sdk" }
+ibm-mq-allclient = { group = "com.ibm.mq", name = "com.ibm.mq.allclient", version.ref = "ibm-mq-allclient" }
+
+# test deps
+okhttp3-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp3" }
+okhttp3-okhttp-tls = { group = "com.squareup.okhttp3", name = "okhttp-tls", version.ref = "okhttp3" }
+okhttp3-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp3" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+kotest-runner-junit5 = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit-platform" }
+junit-platform-suite = { group = "org.junit.platform", name = "junit-platform-suite", version.ref = "junit-platform" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit-jupiter" }
+junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit-jupiter" }
+junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit-jupiter" }
+junit-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit-jupiter" }
+junit-vintage-engine = { group = "org.junit.vintage", name = "junit-vintage-engine", version.ref = "junit-jupiter" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
+remoterobot-ide-launcher = { group = "com.intellij.remoterobot", name = "ide-launcher", version.ref = "remoterobot" }
+remoterobot-remote-robot = { group = "com.intellij.remoterobot", name = "remote-robot", version.ref = "remoterobot" }
+remoterobot-remote-fixtures = { group = "com.intellij.remoterobot", name = "remote-fixtures", version.ref = "remoterobot" }
+
+[plugins]
+gradle = { id = "org.jetbrains.intellij.platform", version.ref = "gradle" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlinJvm" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+dependencycheck = { id = "org.owasp.dependencycheck", version.ref = "dependencycheck" }

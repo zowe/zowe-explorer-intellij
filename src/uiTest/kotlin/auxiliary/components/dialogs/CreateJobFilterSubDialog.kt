@@ -20,6 +20,7 @@ import com.intellij.remoterobot.search.locators.Locator
 import workingset.*
 import workingset.Constants.remoteRobotUrl
 import workingset.auxiliary.components.elements.ButtonElement
+import workingset.inputFieldLoc
 
 class CreateJobFilterSubDialog(fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) :AbstractDialog(fixtureStack, remoteRobot) {
 

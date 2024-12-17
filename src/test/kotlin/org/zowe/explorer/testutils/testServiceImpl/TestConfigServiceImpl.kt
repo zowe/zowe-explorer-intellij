@@ -26,6 +26,8 @@ open class TestConfigServiceImpl : ConfigService {
 
   var isIsAutoSyncEnabledChanged = false
   var isBatchSizeChanged = false
+  var isSuccessMinCodeChanged = false
+  var isWarningMinCodeeChanged = false
   var isRateUsNotificationDelayChanged = false
 
   var testInstance = object : ConfigService {
@@ -35,6 +37,8 @@ open class TestConfigServiceImpl : ConfigService {
     override val autoSaveDelay: Duration = mockk<Duration>()
     override var isAutoSyncEnabled: Boolean = true
     override var batchSize: Int = 100
+    override var successMaxCode: Int = 0
+    override var warningMaxCode: Int = 7
     override var rateUsNotificationDelay: Long = 1L
 
     override fun <T : Any> getConfigDeclaration(rowClass: Class<out T>): ConfigDeclaration<T> {
@@ -83,6 +87,18 @@ open class TestConfigServiceImpl : ConfigService {
       field = value
     }
 
+  override var successMaxCode = testInstance.successMaxCode
+    set(value) {
+      isSuccessMinCodeChanged = true
+      field = value
+    }
+
+  override var warningMaxCode = testInstance.warningMaxCode
+    set(value) {
+      isWarningMinCodeeChanged = true
+      field = value
+    }
+
   override var rateUsNotificationDelay = testInstance.rateUsNotificationDelay
     set(value) {
       isRateUsNotificationDelayChanged = true
@@ -120,6 +136,8 @@ open class TestConfigServiceImpl : ConfigService {
   fun resetTestService() {
     isIsAutoSyncEnabledChanged = false
     isBatchSizeChanged = false
+    isSuccessMinCodeChanged = false
+    isWarningMinCodeeChanged = false
     isRateUsNotificationDelayChanged = false
   }
 

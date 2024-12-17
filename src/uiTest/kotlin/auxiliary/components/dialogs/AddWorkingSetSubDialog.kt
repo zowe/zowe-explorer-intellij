@@ -22,6 +22,8 @@ import com.intellij.remoterobot.search.locators.Locator
 import workingset.*
 import workingset.Constants.remoteRobotUrl
 import workingset.auxiliary.components.elements.ButtonElement
+import workingset.datasetNameInputLoc
+import workingset.dropdownsLoc
 
 class AddWorkingSetSubDialog(fixtureStack: MutableList<Locator>, remoteRobot: RemoteRobot) :AbstractDialog(fixtureStack, remoteRobot) {
 

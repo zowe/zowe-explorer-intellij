@@ -25,6 +25,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 import workingset.*
 import workingset.Constants.remoteRobotUrl
 import workingset.auxiliary.components.elements.ButtonElement
+import workingset.datasetNameInputLoc
+import workingset.myDialogXpathLoc
 import java.time.Duration
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

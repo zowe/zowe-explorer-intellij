@@ -21,5 +21,7 @@ package org.zowe.explorer.config
 data class SettingsState(
   var isAutoSyncEnabled: Boolean = false,
   var batchSize: Int = 100,
+  var successMaxCode: Int = 0,
+  var warningMaxCode: Int = 7,
   var rateUsNotificationDelay: Long = 5 * 60 * 1000 // 5 minutes
 )

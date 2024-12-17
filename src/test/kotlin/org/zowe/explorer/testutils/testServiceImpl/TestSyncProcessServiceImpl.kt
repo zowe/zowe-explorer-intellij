@@ -38,6 +38,10 @@ open class TestSyncProcessServiceImpl : SyncProcessService {
       return false
     }
 
+    override fun isAnyFileSyncingNow(): Boolean {
+      return false
+    }
+
   }
 
   override fun startFileSync(file: VirtualFile, progressIndicator: ProgressIndicator) {
@@ -54,6 +58,10 @@ open class TestSyncProcessServiceImpl : SyncProcessService {
 
   override fun areDependentFilesSyncingNow(file: VirtualFile): Boolean {
     return testInstance.areDependentFilesSyncingNow(file)
+  }
+
+  override fun isAnyFileSyncingNow(): Boolean {
+    return testInstance.isAnyFileSyncingNow()
   }
 
 }

@@ -91,7 +91,6 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
   val attributesService by lazy { dataOpsManager.getAttributesService(attributesClass, vFileClass) }
   private val successfulStatesStorage by lazy { ContentStorage(SUCCESSFUL_CONTENT_STORAGE_NAME_PREFIX + entityName) }
   private val handlerToStorageIdMap = ConcurrentHashMap<SyncProvider, Int>()
-  private val idToBinaryFileMap = ConcurrentHashMap<Int, VirtualFile>()
   private val fetchedAtLeastOnce = ConcurrentHashMap.newKeySet<SyncProvider>()
   private val needToUpload = ConcurrentHashMap.newKeySet<SyncProvider>()
 
@@ -226,5 +225,17 @@ abstract class RemoteAttributedContentSynchronizer<FAttributes : FileAttributes>
    */
   override fun markAsNotNeededForSync(syncProvider: SyncProvider) {
     needToUpload.remove(syncProvider)
+  }
+
+  /**
+   * Base implementation of [ContentSynchronizer.clearFileCache] method for each content synchronizer.
+   */
+  override fun clearFileCache() {
+    handlerToStorageIdMap.values.forEach {
+      successfulStatesStorage.deleteRecord(it)
+    }
+    handlerToStorageIdMap.clear()
+    fetchedAtLeastOnce.clear()
+    needToUpload.clear()
   }
 }

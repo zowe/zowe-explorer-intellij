@@ -22,10 +22,10 @@ const val PROJECT_NAME = "untitled"
 
 object Constants {
     val ideLaunchFolder: String = System.getProperty("ideLaunchFolder")
-    val forMainframePath: String = System.getProperty("forMainframePath")
+    val forMainframePath: String = System.getProperty("plugin.path")
     val remoteRobotUrl: String = System.getProperty("remoteRobotUrl")
     val ideaBuildVersionForTest: String = System.getProperty("ideaBuildVersionForTest")
-    val ideaVersionForTest: String = System.getProperty("ideaVersionForTest")
+    val ideaVersionForTest: String = System.getProperty("ide.test.version")
     val robotServerForTest: String = System.getProperty("robotServerForTest")
 }
 

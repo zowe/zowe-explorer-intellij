@@ -20,7 +20,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.content.service.SyncProcessService
+import org.zowe.explorer.dataops.content.service.SyncProcessServiceImpl
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
+import org.zowe.explorer.dataops.content.synchronizer.checkForSync
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestSyncProcessServiceImpl
 import io.kotest.assertions.assertSoftly
@@ -115,6 +117,28 @@ class ContentTestSpec : WithApplicationShouldSpec({
         wasWarningShown shouldBe false
       }
     }
+    // syncUtils.checkForSync
+    should("check that any file is syncing") {
+      syncProcessService.testInstance = object : TestSyncProcessServiceImpl() {
+        override fun isAnyFileSyncingNow(): Boolean {
+          return true
+        }
+      }
+
+      val result = checkForSync(mockk())
+      assertSoftly {
+        result shouldBe true
+        wasWarningShown shouldBe true
+      }
+    }
+    should("check that no file is syncing") {
+      val result = checkForSync()
+
+      assertSoftly {
+        result shouldBe false
+        wasWarningShown shouldBe false
+      }
+    }
     // SyncAction.actionPerformed
     should("synchronize the file with the remote file") {}
     // MemberContentSynchronizer.fetchRemoteContentBytes
@@ -133,56 +157,59 @@ class ContentTestSpec : WithApplicationShouldSpec({
     should("adapt content for the dataset from mainframe with variable print length") {}
   }
   context("dataops module: content/service") {
+    val syncProcessService = SyncProcessServiceImpl()
 
     val virtualFileMock = mockk<VirtualFile>()
     val progressIndicatorMock = mockk<ProgressIndicator>()
 
     beforeEach {
+      syncProcessService.startFileSync(virtualFileMock, progressIndicatorMock)
+
       val isAncestorRef: (VirtualFile, VirtualFile, Boolean) -> Boolean = VfsUtilCore::isAncestor
       mockkStatic(isAncestorRef as KFunction<*>)
     }
 
     afterEach {
+      syncProcessService.stopFileSync(virtualFileMock)
+
       unmockkAll()
     }
 
     // SyncProcessServiceImpl.isFileSyncingNow
-    // TODO: rewrite to the service usage
-//    should("file is syncing now") {
-//      every { progressIndicatorMock.isRunning } returns true
-//
-//      val result = SyncProcessService.getService().isFileSyncingNow(virtualFileMock)
-//
-//      assertSoftly {
-//        result shouldBe true
-//      }
-//    }
+    should("file is syncing now") {
+      every { progressIndicatorMock.isRunning } returns true
+
+      val result = syncProcessService.isFileSyncingNow(virtualFileMock)
+
+      assertSoftly {
+        result shouldBe true
+      }
+    }
     should("file is not syncing now") {
       every { progressIndicatorMock.isRunning } returns false
 
-      val result = SyncProcessService.getService().isFileSyncingNow(virtualFileMock)
+      val result = syncProcessService.isFileSyncingNow(virtualFileMock)
 
       assertSoftly {
         result shouldBe false
       }
     }
     // SyncProcessServiceImpl.areDependentFilesSyncingNow
-    // TODO: rewrite to the service usage
-//    should("dependent files are syncing now") {
-//      every { progressIndicatorMock.isRunning } returns true
-//      every { VfsUtilCore.isAncestor(virtualFileMock, any(), true) } returns true
-//
-//      val result = SyncProcessService.getService().areDependentFilesSyncingNow(virtualFileMock)
-//
-//      assertSoftly {
-//        result shouldBe true
-//      }
-//    }
+    should("dependent files are syncing now") {
+      every { progressIndicatorMock.isRunning } returns true
+      every { VfsUtilCore.isAncestor(virtualFileMock, any(), true) } returns true
+
+      val result = syncProcessService.areDependentFilesSyncingNow(virtualFileMock)
+
+      assertSoftly {
+        result shouldBe true
+      }
+    }
     should("dependent files are not syncing now") {
       every { progressIndicatorMock.isRunning } returns true
       every { VfsUtilCore.isAncestor(virtualFileMock, any(), true) } returns false
 
-      val result = SyncProcessService.getService().areDependentFilesSyncingNow(virtualFileMock)
+      val result = syncProcessService.areDependentFilesSyncingNow(virtualFileMock)
 
       assertSoftly {
         result shouldBe false
@@ -191,7 +218,26 @@ class ContentTestSpec : WithApplicationShouldSpec({
     should("dependent files are not syncing now because no sync is running") {
       every { progressIndicatorMock.isRunning } returns false
 
-      val result = SyncProcessService.getService().areDependentFilesSyncingNow(virtualFileMock)
+      val result = syncProcessService.areDependentFilesSyncingNow(virtualFileMock)
+
+      assertSoftly {
+        result shouldBe false
+      }
+    }
+    // SyncProcessServiceImpl.isAnyFileSyncingNow
+    should("any file is syncing now") {
+      every { progressIndicatorMock.isRunning } returns true
+
+      val result = syncProcessService.isAnyFileSyncingNow()
+
+      assertSoftly {
+        result shouldBe true
+      }
+    }
+    should("no file is syncing now") {
+      every { progressIndicatorMock.isRunning } returns false
+
+      val result = syncProcessService.isAnyFileSyncingNow()
 
       assertSoftly {
         result shouldBe false

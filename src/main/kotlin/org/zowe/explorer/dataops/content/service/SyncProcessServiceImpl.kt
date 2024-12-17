@@ -56,4 +56,11 @@ class SyncProcessServiceImpl: SyncProcessService {
     }
   }
 
+  /**
+   * Base implementation of [SyncProcessService.isAnyFileSyncingNow] method.
+   */
+  override fun isAnyFileSyncingNow(): Boolean {
+    return fileToProgressIndicatorMap.values.any { it.isRunning }
+  }
+
 }

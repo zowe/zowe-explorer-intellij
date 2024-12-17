@@ -79,4 +79,9 @@ interface ContentSynchronizer {
    */
   fun markAsNotNeededForSync(syncProvider: SyncProvider)
 
+  /**
+   * Clears all file records from the content storage and other related values.
+   */
+  fun clearFileCache()
+
 }

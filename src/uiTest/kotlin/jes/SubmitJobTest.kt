@@ -16,7 +16,6 @@ package jes
 
 import auxiliary.*
 import auxiliary.closable.ClosableFixtureCollector
-import auxiliary.containers.*
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.*
 import com.intellij.remoterobot.search.locators.Locator
@@ -28,6 +27,9 @@ import org.junit.jupiter.params.provider.ValueSource
 import testutils.ProcessManager
 import workingset.*
 import workingset.testutils.*
+import workingset.editorLoc
+import workingset.jobConsoleHeaderLoc
+import workingset.jobSubmittedIdLoc
 import java.awt.event.KeyEvent
 
 /**

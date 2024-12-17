@@ -76,17 +76,23 @@ We have two options of tests:
    \Program Files\Git\usr\bin\bash.exe" --login -i
 2. Make Java version 17 available from command line (add to PATH)
 
-### To run UI tests:
+### To run UI tests (new):
+
+Before running the tests, make sure you use the configuration after IntelliJ IDEA v2024.3.
+Just run `./gradlew uiTests` task, or use [Kotest](https://plugins.jetbrains.com/plugin/14080-kotest) plug-in for
+ IntelliJ IDEA. The plug-in will provide the buttons against the test cases and suites in **src/uiTest** folder
+
+### To run UI tests (old):
 
 1. change values for ZOS_USERID, ZOS_PWD, CONNECTION_URL in src/uiTest/kotlin/auxiliary/utils.kt
 2. run ./gradlew buildPlugin in console
-4. run the script uiTest.sh
-5. once IdeForUiTests started make it as main window on the screen and do not touch mouse anymore
-6. on first launch a ide_for_launch folder will be created and ide will be downloaded
+3. run the script uiTest.sh
+4. once IdeForUiTests started make it as main window on the screen and do not touch mouse anymore
+5. on first launch aт ide_for_launch folder will be created and ide will be downloaded
 
 UI tests results: build/reports/tests/uiTest/index.html
 
-### To run smoke test:
+### To run smoke test (old):
 
 1. change values for ZOS_USERID, ZOS_PWD, CONNECTION_URL in src/uiTest/kotlin/auxiliary/utils.kt
 2. run the script smokeTest.sh

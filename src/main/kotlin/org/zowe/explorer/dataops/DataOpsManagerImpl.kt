@@ -17,7 +17,9 @@ package org.zowe.explorer.dataops
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.attributes.AttributesService
@@ -25,6 +27,7 @@ import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.content.adapters.DefaultContentAdapter
 import org.zowe.explorer.dataops.content.adapters.MFContentAdapter
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
+import org.zowe.explorer.dataops.content.synchronizer.checkForSync
 import org.zowe.explorer.dataops.fetch.FileFetchProvider
 import org.zowe.explorer.dataops.log.AbstractMFLoggerBase
 import org.zowe.explorer.dataops.log.LogFetcher
@@ -36,6 +39,8 @@ import org.zowe.explorer.dataops.operations.mover.names.DefaultNameResolver
 import org.zowe.explorer.utils.associateListedBy
 import org.zowe.explorer.utils.findAnyNullable
 import org.zowe.explorer.utils.log
+import org.zowe.explorer.utils.runInEdtAndWait
+import org.zowe.explorer.vfs.MFVirtualFile
 
 /**
  * Data operation manager implementation class.
@@ -168,6 +173,32 @@ class DataOpsManagerImpl : DataOpsManager {
    */
   override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
     return contentSynchronizers.firstOrNull { it.accepts(file) }
+  }
+
+  /**
+   * Closes all [MFVirtualFile] files opened in the editor and clears the cache of all registered content synchronizers.
+   * @return true if the file cache is cleared and false otherwise.
+   */
+  override fun clearFileCache(): Boolean {
+    ProjectManager.getInstance().openProjects.forEach { project ->
+      val fileEditorManager = FileEditorManager.getInstance(project)
+      runInEdtAndWait {
+        fileEditorManager.openFiles.forEach {
+          if (it is MFVirtualFile) {
+            fileEditorManager.closeFile(it)
+          }
+        }
+      }
+    }
+    var syncInProgress = false
+    runInEdtAndWait {
+      syncInProgress = checkForSync()
+    }
+    if (!syncInProgress) {
+      contentSynchronizers.forEach { it.clearFileCache() }
+      return true
+    }
+    return false
   }
 
   /**
