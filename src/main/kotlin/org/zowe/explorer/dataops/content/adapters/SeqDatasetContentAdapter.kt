@@ -41,6 +41,17 @@ class SeqDatasetContentAdapter(
   override val vFileClass = MFVirtualFile::class.java
   override val attributesClass = RemoteDatasetAttributes::class.java
 
+  @Suppress("UNCHECKED_CAST")
+  override fun <T> adaptWhitespaces(content: T): T {
+    content.castOrNull<String>()?.let {
+      return removeTrailingWhitespaces(it) as T
+    }
+    content.castOrNull<ByteArray>()?.let {
+      return removeTrailingWhitespaces(String(it)).toByteArray() as T
+    }
+    return content
+  }
+
   /**
    * Checks if text exceed record length of dataset. If it is then it transfers
    * the end of the line on the next row. It also checks file on variable format.

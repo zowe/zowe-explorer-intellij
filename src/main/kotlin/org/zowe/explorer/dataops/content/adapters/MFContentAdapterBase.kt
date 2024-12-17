@@ -56,7 +56,7 @@ abstract class MFContentAdapterBase<Attributes : FileAttributes>(
   @Suppress("UNCHECKED_CAST")
   override fun <T>prepareContentToMainframe(content: T, file: VirtualFile): T {
     val attributes = dataOpsManager.tryToGetAttributes(file) ?: return content
-    return if (attributes.`is`(attributesClass)) adaptContentToMainframe(content, attributes as Attributes) else content
+    return if (attributes.`is`(attributesClass)) { adaptContentToMainframe(content, attributes as Attributes) } else content
   }
 
   /**
@@ -78,5 +78,18 @@ abstract class MFContentAdapterBase<Attributes : FileAttributes>(
       content,
       attributes as Attributes
     ) else content
+  }
+
+  /**
+   * Function is used to remove all trailing whitespaces x'40' from each line of content
+   * separated by CRLF(\r\n or \r or \n) flag
+   * @param content content in string format (ISO codepage)
+   * @return content in string format without trailing whitespaces
+   */
+  protected fun removeTrailingWhitespaces(content: String) : String {
+    val lineSeparatorRegex = "\r\n|\n|\r"
+    val contentRows = content.split(Regex(lineSeparatorRegex))
+    return contentRows
+      .joinToString("\n") { if (it.isNotEmpty() && it.last().isWhitespace()) it.trimEnd() else it }
   }
 }

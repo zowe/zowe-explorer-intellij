@@ -28,6 +28,8 @@ class DefaultContentAdapter(dataOpsManager: DataOpsManager) : MFContentAdapterBa
   override val vFileClass = MFVirtualFile::class.java
   override val attributesClass = FileAttributes::class.java
 
+  override fun <T> adaptWhitespaces(content: T): T = content
+
   /**
    * Passes content to mainframe with no changes.
    * @see MFContentAdapterBase.adaptContentToMainframe

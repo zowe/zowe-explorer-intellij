@@ -14,7 +14,6 @@
 
 package org.zowe.explorer.dataops.fetch
 
-import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,8 +29,10 @@ import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.runIfTrue
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import org.zowe.explorer.utils.sendTopic
+import java.security.cert.CertificateException
 import java.time.LocalDateTime
 import java.util.concurrent.locks.ReentrantLock
+import javax.net.ssl.SSLPeerUnverifiedException
 import kotlin.collections.set
 import kotlin.concurrent.withLock
 
@@ -51,8 +52,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
 
   private val cache = mutableMapOf<RemoteQuery<Connection, Request, Unit>, Collection<File>>()
   private val cacheState = mutableMapOf<RemoteQuery<Connection, Request, Unit>, CacheState>()
-  private val refreshCacheState =
-    mutableMapOf<Pair<AbstractTreeNode<*>, RemoteQuery<Connection, Request, Unit>>, LocalDateTime>()
+  private val refreshCacheState = mutableMapOf<RemoteQuery<Connection, Request, Unit>, LocalDateTime>()
   private var errorMessages = mutableMapOf<RemoteQuery<Connection, Request, Unit>, String>()
 
   /**
@@ -156,6 +156,11 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
       sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onFetchCancelled(query)
     } else {
       var errorMessage = throwable.message ?: "Error"
+
+      //The certificate error message has been truncated for prettier output.
+      if (throwable is SSLPeerUnverifiedException || throwable is CertificateException)
+        errorMessage = errorMessage.split("\n")[0].let { it.substring(0, it.length - 1) }
+
       errorMessage = errorMessage.replace("\n", " ")
       if (throwable is CallException) {
         val details = throwable.errorParams?.get("details")
@@ -230,7 +235,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
       cacheState[query] = CacheState.FETCHED
       files
     }
-      .onSuccess { publishCacheUpdated(query, it) }
+      .onSuccess { publishCacheUpdated(query, it).also { applyRefreshCacheDate(query, LocalDateTime.now()) } }
       .onFailure { publishFetchCancelledOrFailed(query, it) }
   }
 
@@ -272,14 +277,13 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
 
   override fun applyRefreshCacheDate(
     query: RemoteQuery<Connection, Request, Unit>,
-    node: AbstractTreeNode<*>,
     lastRefresh: LocalDateTime
   ) {
-    lock.withLock { refreshCacheState.computeIfAbsent(Pair(node, query)) { _ -> lastRefresh } }
+    lock.withLock { refreshCacheState.computeIfAbsent(query) { _ -> lastRefresh } }
   }
 
   override fun findCacheRefreshDateIfPresent(query: RemoteQuery<Connection, Request, Unit>): LocalDateTime? {
-    return refreshCacheState.filter { it.key.second == query }.firstOrNull()?.value
+    return refreshCacheState.filter { it.key == query }.firstOrNull()?.value
   }
 
   /**
@@ -303,11 +307,18 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
    * @param sendTopic topic send flag.
    */
   private fun cleanCacheInternal(query: RemoteQuery<Connection, Request, Unit>, sendTopic: Boolean) {
-    cacheState.remove(query)
+    cacheState.remove(query).also { cleanRefreshCache(query) }
     if (sendTopic) {
-      lock.withLock { refreshCacheState.keys.removeIf { it.second == query } }
       sendTopic(FileFetchProvider.CACHE_CHANGES, dataOpsManager.componentManager).onCacheCleaned(query)
     }
+  }
+
+  /**
+   * Function is used to clear refresh date cache by provided query
+   * @param query - query to search refresh cache state
+   */
+  private fun cleanRefreshCache(query: RemoteQuery<Connection, Request, Unit>) {
+    lock.withLock { refreshCacheState.keys.removeIf { it == query } }
   }
 
   abstract val responseClass: Class<out Response>

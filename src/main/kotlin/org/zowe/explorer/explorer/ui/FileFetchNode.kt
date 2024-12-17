@@ -33,7 +33,6 @@ import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.locked
 import org.zowe.explorer.utils.toHumanReadableFormat
-import java.time.LocalDateTime
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -166,12 +165,8 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
                   if (needToLoadMore) {
                     fileFetchProvider.loadMore(q, it)
                   } else {
-                    fileFetchProvider.apply {
-                      reload(q, it)
-                      applyRefreshCacheDate(q, this@FileFetchNode, LocalDateTime.now())
-                    }
+                    fileFetchProvider.reload(q, it)
                   }
-
                 }
                 needToLoadMore = false
                 possibleToFetch = true

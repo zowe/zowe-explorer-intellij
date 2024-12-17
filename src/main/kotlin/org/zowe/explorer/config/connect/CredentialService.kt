@@ -69,19 +69,19 @@ interface CredentialService {
 
     /**
      * Returns owner of particular connection config if the owner field is not empty or conforms
-     * the [USER_OR_OWNER_SYMBOLS_MAX_SIZE] in length, or the username otherwise.
+     * the [USER_OR_OWNER_SYMBOLS_MAX_SIZE] in length, or the empty string otherwise.
      * If whoAmI function failed for some reason it could contain empty "" or error string inside owner variable.
-     * If it is such case, then it returns username of the connection config.
+     * If it is such case, then it returns an empty string.
      * @param connectionConfig connection config instance to get owner from
-     * @return owner or username of the connection config if the owner is incorrect or missing
+     * @return owner of the connection config if the owner is present, empty string otherwise
      */
     @JvmStatic
     fun getOwner(connectionConfig: ConnectionConfig): String {
       val possibleOwner = connectionConfig.owner
-      return if (possibleOwner.isNotEmpty() && possibleOwner.chars().count() <= USER_OR_OWNER_SYMBOLS_MAX_SIZE) {
+      return if (possibleOwner.isNotEmpty() && possibleOwner.length <= USER_OR_OWNER_SYMBOLS_MAX_SIZE) {
         possibleOwner
       } else {
-        getUsername(connectionConfig)
+        ""
       }
     }
 

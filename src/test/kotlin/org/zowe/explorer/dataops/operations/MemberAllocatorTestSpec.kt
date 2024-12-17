@@ -17,22 +17,15 @@ package org.zowe.explorer.dataops.operations
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.authToken
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
+import org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.Runs
-import io.mockk.clearAllMocks
-import io.mockk.clearMocks
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.spyk
-import io.mockk.unmockkAll
-import io.mockk.verify
+import io.mockk.*
 import org.junit.jupiter.api.assertThrows
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.Member
@@ -54,9 +47,21 @@ class MemberAllocatorTestSpec : WithApplicationShouldSpec({
 
       val progressIndicator = mockk<ProgressIndicator>()
       every { progressIndicator.checkCanceled() } just Runs
+
+      val credentialService = CredentialService.getService() as TestCredentialsServiceImpl
+      credentialService.testInstance = object : TestCredentialsServiceImpl() {
+        override fun getUsernameByKey(connectionConfigUuid: String): String {
+          return "test"
+        }
+
+        override fun getPasswordByKey(connectionConfigUuid: String): String {
+          return "test"
+        }
+      }
+
       val connectionConfig = mockk<ConnectionConfig>()
       every { connectionConfig.name } returns "test_connection"
-      every { connectionConfig.authToken } returns "auth_token"
+      every { connectionConfig.uuid } returns "test_uuid"
       val memberAllocationParams = mockk<MemberAllocationParams>()
       val memberAllocationOperation = mockk<MemberAllocationOperation>()
       every { memberAllocationParams.memberName } returns "test"
