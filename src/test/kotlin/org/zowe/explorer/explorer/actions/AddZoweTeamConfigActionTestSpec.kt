@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -65,6 +66,12 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
 
     val vfMock = mockk<VirtualFile>()
     every { vfMock.refresh(any(), any()) } returns Unit
+    every { vfMock.isValid } returns true
+    every { vfMock.isDirectory } returns false
+    every { vfMock.fileType } returns com.intellij.openapi.fileTypes.FileTypes.PLAIN_TEXT
+    mockkConstructor(OpenFileDescriptor::class)
+    every { anyConstructed<OpenFileDescriptor>().navigate(any<Boolean>()) } returns Unit
+
     val vfmMock: VirtualFileManager = mockk<VirtualFileManager>()
     mockkStatic(VirtualFileManager::class)
     every { VirtualFileManager.getInstance() } returns vfmMock
@@ -87,7 +94,7 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
     mockkConstructor(ZoweConfigServiceImpl::class)
     every { anyConstructed<ZoweConfigServiceImpl>().addZoweConfigFile(any<ConnectionDialogState>()) } returns
 
-        mockkConstructor(ZoweTeamConfigDialog::class)
+      mockkConstructor(ZoweTeamConfigDialog::class)
     every { anyConstructed<ZoweTeamConfigDialog>().showAndGet() } returns true
     var initState = ConnectionDialogState()
 
@@ -110,7 +117,7 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
       initState
     }
 
-    mockkObject(MessageDialogBuilder.Companion)
+    mockkObject(MessageDialogBuilder)
     every { MessageDialogBuilder.yesNo(any<String>(), any<String>()) } returns mockk {
       every { icon(any()) } returns this
       every { asWarning() } returns this
@@ -159,10 +166,26 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
         }
       }
       isFindFileByNioPathCalled shouldBe true
-      isShowUntilDoneSucceeded shouldBe true
+      isShowUntilDoneSucceeded shouldBe false
     }
 
-    should("actionPerformed null project ") {
+    should("actionPerformed null project and file exists") {
+      every { event.project } returns null
+      runBlocking {
+        withContext(Dispatchers.EDT) {
+          addZoweTeamConfigAction.actionPerformed(event)
+        }
+      }
+      isShowUntilDoneSucceeded shouldBe false
+      isFindFileByNioPathCalled shouldBe true
+      every { event.project } returns ProjectManager.getInstance().defaultProject
+    }
+
+    should("actionPerformed null project and file does not exist") {
+      every { vfmMock.findFileByNioPath(any<Path>()) } answers {
+        isFindFileByNioPathCalled = true
+        null
+      }
       every { event.project } returns null
       runBlocking {
         withContext(Dispatchers.EDT) {
@@ -170,8 +193,12 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
         }
       }
       isShowUntilDoneSucceeded shouldBe true
-      isFindFileByNioPathCalled shouldBe false
+      isFindFileByNioPathCalled shouldBe true
       every { event.project } returns ProjectManager.getInstance().defaultProject
+      every { vfmMock.findFileByNioPath(any<Path>()) } answers {
+        isFindFileByNioPathCalled = true
+        vfMock
+      }
     }
 
     should("actionPerformed null findFileByNioPath ") {
