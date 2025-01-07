@@ -97,6 +97,29 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
   private var treeModel: AsyncTreeModel
 
   /**
+   * Function is called when onFetchCancelled event has been raised.
+   * It searches for nodes by provided @param Query, looks through the tree and collects
+   * TreePath objects on Promise resolution. For every found TreePath collapses this path
+   * @param query - query on which 'fetch cancelled' event has been occurred
+   */
+  private fun collapseNodesByQuery(query: Query<*, *>) {
+    // Collapse only those nodes for which TreePath has been resolved.
+    // If tree path cannot be resolved as the result of Promise resolution,
+    // it means that node does not present in the tree model anymore
+    myFsTreeStructure.findByPredicate { it is FetchNode && it.query == query }
+      .mapNotNull { myStructure.promisePath(it, myTree).get() }
+      .forEach { foundTreePath ->
+        treeModel.onValidThread {
+          myTree.collapsePath(foundTreePath)
+          synchronized(myNodesToInvalidateOnExpand) {
+            val node = foundTreePath.lastPathComponent
+            myNodesToInvalidateOnExpand.add(node)
+          }
+        }
+      }
+  }
+
+  /**
    * Get node by provided query and invalidate them. The nodes will be either collapsed or invalidated on this action, basing on the provided parameters
    * @param query the query to search nodes by
    * @param [collapse] collapse the nodes if the parameter is true. False by default
@@ -326,7 +349,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
         }
 
         override fun <R : Any, Q : Query<R, Unit>> onFetchCancelled(query: Q) {
-          getNodesByQueryAndInvalidate(query, collapse = true, invalidate = false)
+          collapseNodesByQuery(query)
         }
 
         override fun <R : Any, Q : Query<R, Unit>> onFetchFailure(query: Q, throwable: Throwable) {

@@ -1,0 +1,6 @@
+<component name="CopyrightManager">
+  <copyright>
+    <option name="notice" value="Copyright (c) &amp;#36;originalComment.match(&quot;Copyright \(c\) (\d+)&quot;, 1, &quot;-&quot;)&amp;#36;today.year IBA Group.&#10;&#10;This program and the accompanying materials are made available under the terms of the&#10;Eclipse Public License v2.0 which accompanies this distribution, and is available at&#10;https://www.eclipse.org/legal/epl-v20.html&#10;&#10;SPDX-License-Identifier: EPL-2.0&#10;&#10;Contributors:&#10;  IBA Group&#10;  Zowe Community" />
+    <option name="myName" value="ijmp" />
+  </copyright>
+</component>
