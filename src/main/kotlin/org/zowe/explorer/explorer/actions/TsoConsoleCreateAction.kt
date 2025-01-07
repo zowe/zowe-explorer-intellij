@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.Key
 import com.intellij.util.containers.isEmpty
+import org.zowe.explorer.common.message
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
@@ -31,6 +32,7 @@ import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.tso.SESSION_ADDED_TOPIC
 import org.zowe.explorer.tso.config.TSOConfigWrapper
 import org.zowe.explorer.tso.config.TSOSessionConfig
+import org.zowe.explorer.utils.addTooltip
 import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.utils.crudable.getByUniqueKey
 import org.zowe.explorer.utils.runTask
@@ -113,12 +115,12 @@ class TsoConsoleCreateAction : AnAction() {
     e.presentation.text = presentationText
     if (ConfigService.getService().crudable.getAll<ConnectionConfig>().isEmpty()) {
       e.presentation.isEnabled = false
-      e.presentation.putClientProperty(Key(JComponent.TOOL_TIP_TEXT_KEY), "Create connection first")
+      e.presentation.addTooltip(message("create.connection.tooltip"))
       return
     }
     if (ConfigService.getService().crudable.getAll<TSOSessionConfig>().isEmpty()) {
       e.presentation.isEnabled = false
-      e.presentation.putClientProperty(Key(JComponent.TOOL_TIP_TEXT_KEY), "Create TSO session first")
+      e.presentation.addTooltip(message("create.tso.session.tooltip"))
       return
     }
   }

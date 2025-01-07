@@ -18,6 +18,8 @@ import com.google.gson.Gson
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.util.Key
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.containers.toArray
 import org.zowe.explorer.config.ConfigDeclaration
@@ -38,6 +40,7 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
 import javax.swing.JButton
+import javax.swing.JComponent
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 
@@ -386,4 +389,12 @@ fun createHelpButton(): JButton {
   helpButton.isBorderPainted = false
   helpButton.isContentAreaFilled = false
   return helpButton
+}
+
+/**
+ * Wrapper for [Presentation.putClientProperty] to add tooltip to the presentation
+ * @param tooltipText tooltip text to add
+ */
+fun Presentation.addTooltip(tooltipText: String) {
+  this.putClientProperty(Key(JComponent.TOOL_TIP_TEXT_KEY), tooltipText)
 }
