@@ -4,6 +4,18 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ## [Unreleased]
 
+### Bugfixes
+
+* Bugfix: Fixed invalid refresh cache date for nodes in case fetching was canceled by user ([d7682be0](https://github.com/zowe/zowe-explorer-intellij/commit/d7682be0))
+* Bugfix: Fixed issue with "Delete" button was disabled when multiple entities are selected ([33f23417](https://github.com/zowe/zowe-explorer-intellij/commit/33f23417))
+* Bugfix: Fixed remote conflict issue ([82b6fb7b](https://github.com/zowe/zowe-explorer-intellij/commit/82b6fb7b))
+* Bugfix: Fixed invalid message in tree related to a server certificate ([82b4af43](https://github.com/zowe/zowe-explorer-intellij/commit/82b4af43))
+* Bugfix: Fixed regex analysis failure ([6b00aa4c](https://github.com/zowe/zowe-explorer-intellij/commit/6b00aa4c))
+* Bugfix: Fixed issue with connection delete ([dee0202e](https://github.com/zowe/zowe-explorer-intellij/commit/dee0202e))
+* Bugfix: Fixed error when uploading local file to USS ([c5dcd7fa](https://github.com/zowe/zowe-explorer-intellij/commit/c5dcd7fa))
+* Bugfix: Fixed issue when error message does not disappear after errors are corrected in a Job Filter ([64a6d209](https://github.com/zowe/zowe-explorer-intellij/commit/64a6d209))
+* Bugfix: Fixed NullPointerException on cancel operation ([f8d08fd4](https://github.com/zowe/zowe-explorer-intellij/commit/f8d08fd4))
+
 ## [2.0.1] (2024-11-18)
 
 ### Bugfixes
