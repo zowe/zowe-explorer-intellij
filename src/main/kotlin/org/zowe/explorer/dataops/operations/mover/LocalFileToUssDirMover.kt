@@ -46,6 +46,8 @@ class LocalFileToUssDirMoverFactory : OperationRunnerFactory {
  */
 class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileMover() {
 
+  private val sourceContentType = "text/plain; charset=UTF-8"
+
   /**
    * Checks that source is local file, dest is uss directory, and destination
    * file is located on remote system (by fetching its attributes).
@@ -82,16 +84,19 @@ class LocalFileToUssDirMover(val dataOpsManager: DataOpsManager) : AbstractFileM
 
     val pathToFile = destAttributes.path + "/" + newName
 
-    val contentToUpload = sourceFile.contentsToByteArray().toMutableList()
+    val currentFileContent = sourceFile.contentsToByteArray()
     val xIBMDataType =
       if (sourceFile.fileType.isBinary) XIBMDataType(XIBMDataType.Type.BINARY) else XIBMDataType(XIBMDataType.Type.TEXT)
 
+    val contentToUpload = if (sourceFile.fileType.isBinary) currentFileContent else
+      currentFileContent.toString(sourceFile.charset).encodeToByteArray()
 
     val response = apiWithBytesConverter<DataAPI>(destConnectionConfig).writeToUssFile(
       authorizationToken = destConnectionConfig.authToken,
       filePath = FilePath(pathToFile),
-      body = contentToUpload.toByteArray(),
-      xIBMDataType = xIBMDataType
+      body = contentToUpload,
+      xIBMDataType = xIBMDataType,
+      contentType = sourceContentType
     ).applyIfNotNull(progressIndicator) { indicator ->
       cancelByIndicator(indicator)
     }.execute()
