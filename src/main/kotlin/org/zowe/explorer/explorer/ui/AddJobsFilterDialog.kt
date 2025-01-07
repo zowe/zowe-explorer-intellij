@@ -67,7 +67,7 @@ class AddJobsFilterDialog(
         dialogPanel.validateAll()
         var validationInfo: ValidationInfo? = null
         componentsToIsJobId.forEach { (component, isJobId) ->
-          validationInfo = validateJobFilter(prefixField.text, ownerField.text, jobIdField.text, state.ws.masks, component, isJobId)
+          validationInfo = validateJobFilter(prefixField.text, ownerField.text, jobIdField.text, state.selectedWS.masks, component, isJobId)
           if (validationInfo != null) return validationInfo
         }
         return null
