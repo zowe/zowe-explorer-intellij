@@ -6,6 +6,7 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ### Bugfixes
 
+* Bugfix: Fixed zowe.config.json: connection is not deleted correctly ([38012f3b](https://github.com/zowe/zowe-explorer-intellij/commit/38012f3b))
 * Bugfix: Fixed invalid refresh cache date for nodes in case fetching was canceled by user ([d7682be0](https://github.com/zowe/zowe-explorer-intellij/commit/d7682be0))
 * Bugfix: Fixed issue with "Delete" button was disabled when multiple entities are selected ([33f23417](https://github.com/zowe/zowe-explorer-intellij/commit/33f23417))
 * Bugfix: Fixed remote conflict issue ([82b6fb7b](https://github.com/zowe/zowe-explorer-intellij/commit/82b6fb7b))
