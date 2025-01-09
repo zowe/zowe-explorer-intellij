@@ -179,7 +179,7 @@ private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
         }
     }
     .connectionSpecs(
-      mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT)
+      mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT) //NOSONAR User is fully responsible for this functionality to take place
     )
 }
 
