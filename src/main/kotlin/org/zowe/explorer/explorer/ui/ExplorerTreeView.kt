@@ -359,7 +359,7 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
         }
 
         override fun <R : Any, Q : Query<R, Unit>> onFetchCancelled(query: Q) {
-          val nodes = getNodesByQuery(query)
+          val nodes = getNodesByQuery(query).filter { myStructure.promisePath(it, myTree).get() != null }
           collapseNodes(nodes)
         }
 
