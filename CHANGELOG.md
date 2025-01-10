@@ -15,6 +15,7 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 * Bugfix: Fixed issue with connection delete ([dee0202e](https://github.com/zowe/zowe-explorer-intellij/commit/dee0202e))
 * Bugfix: Fixed error when uploading local file to USS ([c5dcd7fa](https://github.com/zowe/zowe-explorer-intellij/commit/c5dcd7fa))
 * Bugfix: Fixed issue when error message does not disappear after errors are corrected in a Job Filter ([64a6d209](https://github.com/zowe/zowe-explorer-intellij/commit/64a6d209))
+* Bugifx: Fixed NullPointerException on cancel operation ([fa2eaf5b](https://github.com/zowe/zowe-explorer-intellij/commit/fa2eaf5b))
 
 ## [2.0.1] (2024-11-18)
 
