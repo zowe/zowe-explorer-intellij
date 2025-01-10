@@ -147,7 +147,7 @@ private fun buildUnsafeClient(): OkHttpClient {
   val sslSocketFactory = sslContext.socketFactory
   return OkHttpClient.Builder()
     .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
-    .hostnameVerifier { _, _ -> true }
+    .hostnameVerifier { _, _ -> true } //NOSONAR User is fully responsible for this functionality to take place
     .setupClient()
     .build()
 }
@@ -179,7 +179,7 @@ private fun OkHttpClient.Builder.setupClient(): OkHttpClient.Builder {
         }
     }
     .connectionSpecs(
-      mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT)
+      mutableListOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT) //NOSONAR User is fully responsible for this functionality to take place
     )
 }
 
