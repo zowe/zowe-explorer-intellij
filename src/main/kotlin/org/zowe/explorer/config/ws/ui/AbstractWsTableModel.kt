@@ -53,7 +53,7 @@ abstract class AbstractWsTableModel<Connection : ConnectionConfigBase, WSConfig 
             username = if (connectionConfig != null) {
               CredentialService.getUsername(connectionConfig)
             } else {
-              message("configurable.ws.tables.ws.username.error.empty")
+              message("configurable.ws.table.username.error.empty")
             }
           } catch (_: CredentialsNotFoundForConnectionException) {
           }
