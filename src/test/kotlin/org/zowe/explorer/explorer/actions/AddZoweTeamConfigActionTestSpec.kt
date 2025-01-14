@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
@@ -35,8 +36,10 @@ import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.ui.zosmf.ZoweTeamConfigDialog
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
+import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
 import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
 import java.nio.file.Path
 import java.util.*
@@ -51,13 +54,27 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
 
   var isFindFileByNioPathCalled = false
   var isShowUntilDoneSucceeded = false
+  var isErrorNotificationProduced = false
 
   beforeEach {
     isFindFileByNioPathCalled = false
     isShowUntilDoneSucceeded = false
+    isErrorNotificationProduced = false
   }
 
   context("AddZoweTeamConfigAction") {
+    val notificationsServiceMock = NotificationsService.getService() as TestNotificationsServiceImpl
+    notificationsServiceMock.testInstance = object : TestNotificationsServiceImpl() {
+      override fun notifyError(
+        t: Throwable,
+        project: Project?,
+        custTitle: String?,
+        custDetailsShort: String?,
+        custDetailsLong: String?
+      ) {
+        isErrorNotificationProduced = true
+      }
+    }
 
     val addZoweTeamConfigAction = spyk<AddZoweTeamConfigAction>(recordPrivateCalls = true)
     val event = mockk<AnActionEvent>()
@@ -126,15 +143,21 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
 
     should("getActionUpdateThread") {
       addZoweTeamConfigAction.actionUpdateThread shouldBe ActionUpdateThread.EDT
+      
+      assertSoftly { isErrorNotificationProduced shouldBe false }
     }
 
     should("isDumbAware") {
       addZoweTeamConfigAction.isDumbAware shouldBe true
+
+      assertSoftly { isErrorNotificationProduced shouldBe false }
     }
 
     should("update") {
       addZoweTeamConfigAction.update(event)
       isFindFileByNioPathCalled shouldBe true
+
+      assertSoftly { isErrorNotificationProduced shouldBe false }
     }
 
     should("update null project ") {
@@ -142,6 +165,8 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
       addZoweTeamConfigAction.update(event)
       every { event.project } returns ProjectManager.getInstance().defaultProject
       isFindFileByNioPathCalled shouldBe false
+
+      assertSoftly { isErrorNotificationProduced shouldBe false }
     }
 
     should("update null file ") {
@@ -155,6 +180,8 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
         isFindFileByNioPathCalled = true
         vfMock
       }
+
+      assertSoftly { isErrorNotificationProduced shouldBe false }
     }
 
     should("actionPerformed") {
@@ -167,6 +194,8 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
       }
       isFindFileByNioPathCalled shouldBe true
       isShowUntilDoneSucceeded shouldBe false
+
+      assertSoftly { isErrorNotificationProduced shouldBe false }
     }
 
     should("actionPerformed null project and file exists") {
@@ -179,6 +208,8 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
       isShowUntilDoneSucceeded shouldBe false
       isFindFileByNioPathCalled shouldBe true
       every { event.project } returns ProjectManager.getInstance().defaultProject
+
+      assertSoftly { isErrorNotificationProduced shouldBe false }
     }
 
     should("actionPerformed null project and file does not exist") {
@@ -199,6 +230,8 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
         isFindFileByNioPathCalled = true
         vfMock
       }
+
+      assertSoftly { isErrorNotificationProduced shouldBe true }
     }
 
     should("actionPerformed null findFileByNioPath ") {
@@ -217,6 +250,8 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
         isFindFileByNioPathCalled = true
         vfMock
       }
+
+      assertSoftly { isErrorNotificationProduced shouldBe false }
     }
 
   }

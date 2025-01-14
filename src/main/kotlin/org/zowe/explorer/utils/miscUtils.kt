@@ -31,6 +31,7 @@ import org.zowe.explorer.explorer.WorkingSet
 import org.zowe.explorer.explorer.ui.ExplorerTreeView
 import org.zowe.explorer.explorer.ui.ExplorerUnitTreeNodeBase
 import java.awt.Dimension
+import java.io.InputStream
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -397,4 +398,15 @@ fun createHelpButton(): JButton {
  */
 fun Presentation.addTooltip(tooltipText: String) {
   this.putClientProperty(Key(JComponent.TOOL_TIP_TEXT_KEY), tooltipText)
+}
+
+/**
+ * Function returns an input stream for reading the specified resource.
+ * This function is required for testing purposes
+ * @param classLoader - current ClassLoader
+ * @param strPath - the resource path
+ * @return fn input stream for reading the resource; null if the resource could not be found
+ */
+fun getResourceAsStreamWrappable(classLoader: ClassLoader, strPath: String): InputStream? {
+  return classLoader.getResourceAsStream(strPath)
 }

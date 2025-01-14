@@ -105,6 +105,12 @@ interface ZoweConfigService {
    */
   fun checkAndRemoveOldZoweConnection(type: ZoweConfigType)
 
+  /**
+   * Finds All existing connections related to zowe.config.json.
+   * @return list of found ConnectionConfigs related to zowe config if it exists or null otherwise.
+   */
+  fun findAllZosmfExistingConnection(type: ZoweConfigType): List<ConnectionConfig>
+
   companion object {
     fun getInstance(project: Project): ZoweConfigService = project.getService(ZoweConfigService::class.java)
     val lock = ReentrantReadWriteLock()

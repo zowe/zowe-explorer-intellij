@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         product: ["IC-231","IC-233","IC-242","IC-243"]
@@ -40,6 +40,9 @@ jobs:
     outputs:
       pluginVerifierHomeDir: ${{ steps.properties.outputs.pluginVerifierHomeDir }}
     steps:
+
+      - name: Install libsecret-tools
+        run: sudo apt-get install -y libsecret-tools
 
       - name: Checkout the plugin GitHub repository
         uses: actions/checkout@v4
@@ -101,7 +104,7 @@ jobs:
 
   test_and_sonar:
     needs: [build]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         product: ["IC-231","IC-233","IC-242","IC-243"]
@@ -121,6 +124,9 @@ jobs:
       max-parallel: 10
       fail-fast: false
     steps:
+
+      - name: Install libsecret-tools
+        run: sudo apt-get install -y libsecret-tools
 
       - name: Checkout the plugin GitHub repository
         uses: actions/checkout@v4
@@ -145,7 +151,7 @@ jobs:
       - name: Publish tests result to artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tests-summary-success-report-${{ matrix.product }}
+          name: tests-report-${{ matrix.product }}
           path: ${{ github.workspace }}/build/reports/tests
 
       - name: Publish code coverage report to artifacts
@@ -174,7 +180,7 @@ jobs:
   verify:
     if: ${{ contains(github.ref, 'refs/heads/release/') || contains(github.ref, 'refs/heads/main') }}
     needs: [build]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         product: ["IC-231","IC-233","IC-242","IC-243"]
@@ -200,6 +206,9 @@ jobs:
         with:
           tool-cache: false
           large-packages: false
+
+      - name: Install libsecret-tools
+        run: sudo apt-get install -y libsecret-tools
 
       - name: Checkout the plugin GitHub repository
         uses: actions/checkout@v4
