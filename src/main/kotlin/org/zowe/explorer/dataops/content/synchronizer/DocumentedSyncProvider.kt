@@ -95,6 +95,8 @@ class DocumentedSyncProvider(
   override val isReadOnly: Boolean
     get() = getDocument()?.isWritable != true
 
+  override var isSyncSuccessful: Boolean = false
+
   /**
    * Initialize the file properties (charset, line separator)
    * when the file is opened for the first time.
@@ -163,6 +165,7 @@ class DocumentedSyncProvider(
   }
 
   override fun onThrowable(t: Throwable) {
+    isSyncSuccessful = false
     if (t.message?.contains("Permission denied") == true) {
       onThrowableHandler(Throwable("Permission denied. " + t.message))
       return
@@ -171,6 +174,7 @@ class DocumentedSyncProvider(
   }
 
   override fun onSyncSuccess() {
+    isSyncSuccessful = true
     onSyncSuccessHandler()
   }
 

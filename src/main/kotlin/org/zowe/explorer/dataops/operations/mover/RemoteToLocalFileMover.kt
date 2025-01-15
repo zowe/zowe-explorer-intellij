@@ -91,6 +91,8 @@ class RemoteToLocalFileMover(val dataOpsManager: DataOpsManager) : AbstractFileM
       sourceFileAttributes.contentMode = XIBMDataType(XIBMDataType.Type.TEXT)
     }
     contentSynchronizer.synchronizeWithRemote(syncProvider, progressIndicator)
+    if (!syncProvider.isSyncSuccessful) return null
+
     val sourceContent = contentSynchronizer.successfulContentStorage(syncProvider)
 
     val createdFileJava = Paths.get(destFile.path, newFileName).toFile().apply { createNewFile() }
