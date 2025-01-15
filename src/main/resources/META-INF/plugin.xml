@@ -437,7 +437,7 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <action id="org.zowe.explorer.explorer.actions.AddZoweTeamConfigAction"
                 class="org.zowe.explorer.explorer.actions.AddZoweTeamConfigAction"
-                text="Zowe Team Configuration"
+                text="Add Zowe Team Configuration"
                 description="Create Zowe Team Configuration file"
                 icon="ForMainframeIcons.ExplorerToolbarIcon"/>
 

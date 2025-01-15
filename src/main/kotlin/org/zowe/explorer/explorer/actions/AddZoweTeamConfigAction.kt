@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.CredentialService
@@ -53,8 +54,8 @@ class AddZoweTeamConfigAction : AnAction() {
     runReadAction {
       VirtualFileManager.getInstance().findFileByNioPath(Path.of(zoweConfigLocation))
     }?.let {
-      e.presentation.isEnabled = false
-      e.presentation.description = "$ZOWE_CONFIG_NAME already exists in the project"
+      e.presentation.text = "Edit Zowe Team Configuration"
+      e.presentation.description = "Edit Zowe Team Configuration file"
     } ?: return
   }
 
@@ -63,6 +64,13 @@ class AddZoweTeamConfigAction : AnAction() {
    * @see com.intellij.openapi.actionSystem.AnAction.actionPerformed
    */
   override fun actionPerformed(e: AnActionEvent) {
+    runReadAction {
+      VirtualFileManager.getInstance().findFileByNioPath(Path.of("${e.project?.basePath}/$ZOWE_CONFIG_NAME"))
+    }?.let {vf ->
+      e.project?.let { project -> OpenFileDescriptor(project, vf) }?.navigate(false)
+      return
+    }
+
     val configCrudable = ConfigService.getService().crudable
     val state = ZoweTeamConfigDialog.showAndTestConnection(
       crudable = configCrudable,
@@ -72,8 +80,8 @@ class AddZoweTeamConfigAction : AnAction() {
     if (state != null) {
       val connectionConfig = state.connectionConfig
       val project = e.project ?: let {
-        e.presentation.isEnabled = false
-        e.presentation.description = "$ZOWE_CONFIG_NAME already exists in the project"
+        e.presentation.text = "Edit Zowe Team Configuration"
+        e.presentation.description = "Edit Zowe Team Configuration file"
         return
       }
       val zoweConfigService = ZoweConfigService.getInstance(project)
