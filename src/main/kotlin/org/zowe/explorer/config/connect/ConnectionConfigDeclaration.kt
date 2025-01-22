@@ -12,16 +12,13 @@ package org.zowe.explorer.config.connect
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import org.zowe.explorer.config.ConfigDeclaration
 import org.zowe.explorer.config.connect.ui.CollectedConfigurable
-import org.zowe.explorer.utils.crudable.Crudable
 
 /**
  * Abstract class to declare connection configs.
  * @param Connection The system (such as zosmf, cics etc.) connection class to work with (see [ConnectionConfigBase]).
- * @param crudable [Crudable] instance to get data from.
  * @author Valiantsin Krus
  */
-abstract class ConnectionConfigDeclaration<Connection: ConnectionConfigBase>(crudable: Crudable)
-  : ConfigDeclaration<Connection>(crudable) {
+abstract class ConnectionConfigDeclaration<Connection : ConnectionConfigBase> : ConfigDeclaration<Connection>() {
 
   companion object {
     /** list of available connection configurables. */
