@@ -64,16 +64,6 @@ internal fun makeCrudableWithoutListenersOld(
   stateGetter: () -> ConfigState
 ): Crudable {
   val crudableLists = CrudableLists(
-    addFilter = object: AddFilter {
-      override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
-        return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
-      }
-    },
-    updateFilter = object: UpdateFilter {
-      override operator fun <T: Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
-        return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
-      }
-    },
     nextUuidProvider = { UUID.randomUUID().toString() },
     getListByClass = {
       if (it == Credentials::class.java) {
@@ -90,5 +80,15 @@ internal fun makeCrudableWithoutListenersOld(
       }
     }
   )
+  crudableLists.addFilter = object: AddFilter {
+    override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
+      return ConfigService.instance.getConfigDeclaration(clazz).getDecider(crudableLists).canAdd(addingRow)
+    }
+  }
+  crudableLists.updateFilter = object: UpdateFilter {
+    override operator fun <T: Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
+      return ConfigService.instance.getConfigDeclaration(clazz).getDecider(crudableLists).canUpdate(currentRow, updatingRow)
+    }
+  }
   return ConcurrentCrudable(crudableLists, SimpleReadWriteAdapter())
 }
