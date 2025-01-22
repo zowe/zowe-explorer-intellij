@@ -69,9 +69,6 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
   /** Indicates whether the next children fetch should load more child elements to the children list */
   var needToLoadMore = false
 
-  /** Indicates whether it is possible to fetch for the current node or is it currently being executed  */
-  private var possibleToFetch = true
-
   protected abstract fun Collection<File>.toChildrenNodes(): List<AbstractTreeNode<*>>
 
   protected abstract fun makeFetchTaskTitle(query: Q): String
@@ -109,7 +106,7 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
         val q = fileFetchProvider.getRealQueryInstance(query) ?: query
         if (q != null && fileFetchProvider.isCacheValid(q)) {
           val fetched = fileFetchProvider.getCached(q)?.toMutableList()
-          if (fetched != null && !needToLoadMore) {
+          if (fetched != null && !needToLoadMore && !fileFetchProvider.isCacheFetching(q)) {
             fetched
               .toChildrenNodes()
               .toMutableList()
@@ -135,8 +132,7 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
                 cachedChildren = it
               }
           } else {
-            if (possibleToFetch) {
-              possibleToFetch = false
+            if (!fileFetchProvider.isCacheFetching(q)) {
               runBackgroundableSyncTask(
                 title = makeFetchTaskTitle(q),
                 project = project,
@@ -163,7 +159,6 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
                   }
                 }
                 needToLoadMore = false
-                possibleToFetch = true
               }
             }
             (fetched?.toChildrenNodes()?.toMutableList() ?: mutableListOf()).apply { add(loadingNode) }

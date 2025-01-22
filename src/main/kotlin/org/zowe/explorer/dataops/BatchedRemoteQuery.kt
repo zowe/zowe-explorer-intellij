@@ -58,6 +58,13 @@ class BatchedRemoteQuery<R>(
     alreadyFetched = 0
   }
 
+  fun set(query: BatchedRemoteQuery<*>) {
+    totalRows = query.totalRows
+    alreadyFetched = query.alreadyFetched
+    start = query.start
+    fetchNeeded = query.fetchNeeded
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

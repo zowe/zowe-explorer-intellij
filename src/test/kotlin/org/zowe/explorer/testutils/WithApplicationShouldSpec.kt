@@ -32,7 +32,7 @@ import io.mockk.*
 import org.zowe.explorer.zowe.ZoweStartupActivity
 import org.zowe.kotlinsdk.zowe.config.DefaultKeytarWrapper
 
-private var appFixture: CodeInsightTestFixture? = null
+var testAppFixture: CodeInsightTestFixture? = null
 
 /**
  * [ShouldSpec] wrapper that provides implemented beforeSpec, initializing an [Application]
@@ -45,12 +45,12 @@ abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : Sho
    */
   override suspend fun beforeSpec(spec: Spec) {
     super.beforeSpec(spec)
-    if (appFixture == null) {
+    if (testAppFixture == null) {
       val factory = IdeaTestFixtureFactory.getFixtureFactory()
       val lightFixture = factory.createLightFixtureBuilder("zowe-explorer").fixture
-      appFixture = factory
+      testAppFixture = factory
         .createCodeInsightFixture(lightFixture, LightTempDirTestFixtureImpl(true))
-      appFixture?.setUp() ?: throw Exception("Fixture setup is failed")
+      testAppFixture?.setUp() ?: throw Exception("Fixture setup is failed")
     }
 
     (ConfigSandbox.getService() as TestConfigSandboxImpl).testInstance = TestConfigSandboxImpl()
@@ -70,7 +70,7 @@ abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : Sho
 
   override suspend fun afterSpec(spec: Spec) {
     // TODO: figure out, why it does not work properly
-//    appFixture.tearDown()
+//    testAppFixture.tearDown()
     super.afterSpec(spec)
   }
 

@@ -44,7 +44,6 @@ interface CredentialService {
 
   companion object {
 
-    @JvmStatic
     fun getService(): CredentialService = service()
 
     /**
@@ -52,20 +51,20 @@ interface CredentialService {
      * @param connectionConfig connection config instance to search username for
      * @return the username of the connection config
      */
-    @JvmStatic
-    fun <ConnectionConfig : ConnectionConfigBase> getUsername(connectionConfig: ConnectionConfig) =
-      getService().getUsernameByKey(connectionConfig.uuid)
+    fun <ConnectionConfig : ConnectionConfigBase> getUsername(connectionConfig: ConnectionConfig): String {
+      return getService().getUsernameByKey(connectionConfig.uuid)
         ?: throw CredentialsNotFoundForConnectionException(connectionConfig)
+    }
 
     /**
      * Returns a password of a particular connection config or throws the [CredentialsNotFoundForConnectionException]
      * @param connectionConfig connection config instance to search password for
      * @return the password of the connection config
      */
-    @JvmStatic
-    fun <ConnectionConfig : ConnectionConfigBase> getPassword(connectionConfig: ConnectionConfig) =
-      getService().getPasswordByKey(connectionConfig.uuid)
+    fun <ConnectionConfig : ConnectionConfigBase> getPassword(connectionConfig: ConnectionConfig): CharArray {
+      return getService().getPasswordByKey(connectionConfig.uuid)
         ?: throw CredentialsNotFoundForConnectionException(connectionConfig)
+    }
 
     /**
      * Returns owner of particular connection config if the owner field is not empty or conforms
@@ -75,7 +74,6 @@ interface CredentialService {
      * @param connectionConfig connection config instance to get owner from
      * @return owner of the connection config if the owner is present, empty string otherwise
      */
-    @JvmStatic
     fun getOwner(connectionConfig: ConnectionConfig): String {
       val possibleOwner = connectionConfig.owner
       return if (possibleOwner.isNotEmpty() && possibleOwner.length <= USER_OR_OWNER_SYMBOLS_MAX_SIZE) {
@@ -99,7 +97,7 @@ interface CredentialService {
    * @param connectionConfigUuid id of connection config
    * @return password of config
    */
-  fun getPasswordByKey(connectionConfigUuid: String): String?
+  fun getPasswordByKey(connectionConfigUuid: String): CharArray?
 
   /**
    * Sets user and password for particular connection config
@@ -107,7 +105,7 @@ interface CredentialService {
    * @param username username to set in config
    * @param password password to set in config
    */
-  fun setCredentials(connectionConfigUuid: String, username: String, password: String)
+  fun setCredentials(connectionConfigUuid: String, username: String, password: CharArray)
 
   /**
    * Resets user and password in particular connection config
@@ -121,5 +119,5 @@ val ConnectionConfig.authToken: String
   get() = runTask("Retrieving information for auth token") {
     val username = CredentialService.getUsername(this)
     val password = CredentialService.getPassword(this)
-    Credentials.basic(username, password)
+    Credentials.basic(username, String(password))
   }

@@ -40,6 +40,12 @@ class RemoteDatasetComputeConflicts(
     var showRenameMessage = false
     var nameIssuesCount = 0
     val renameMap = mutableMapOf<VirtualFile, String>()
+
+    // IJMP-1959: Allow conflicts related to copying/moving into the same library
+    conflictsThatCannotBeOverwritten.forEach {
+      if (it.first == it.second.parent) conflicts.add(it)
+    }
+
     for (sourceFileTmp in sourceFiles) {
       val newNameStr = dataOpsManager.getNameResolver(sourceFileTmp, pasteDestinations[0])
         .resolve(sourceFileTmp, sourceFiles, pasteDestinations[0])

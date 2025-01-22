@@ -585,6 +585,12 @@ Thank you for considering IBA Group for your mainframe needs.
             <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
         </action>
 
+        <action id="org.zowe.explorer.explorer.actions.ExecuteRexxAction"
+                class="org.zowe.explorer.explorer.actions.rexx.ExecuteRexxAction"
+                text="Execute REXX"
+                description="Executes REXX from a given member"
+                icon="AllIcons.Actions.Execute"/>
+
         <action id="org.zowe.explorer.explorer.actions.DuplicateMemberAction"
                 class="org.zowe.explorer.explorer.actions.DuplicateMemberAction"
                 text="Duplicate"
@@ -773,6 +779,7 @@ Thank you for considering IBA Group for your mainframe needs.
             <reference id="org.zowe.explorer.explorer.actions.AllocateLikeAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.SubmitJobAction"/>
+            <reference id="org.zowe.explorer.explorer.actions.ExecuteRexxAction"/>
             <separator/>
             <reference id="org.zowe.explorer.explorer.actions.RefreshNodeAction"/>
             <separator/>

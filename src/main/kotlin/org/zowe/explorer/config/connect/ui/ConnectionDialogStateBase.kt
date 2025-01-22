@@ -26,7 +26,7 @@ abstract class ConnectionDialogStateBase<ConnectionConfig: ConnectionConfigBase>
   abstract var connectionName: String
   abstract var username: String
   abstract var owner: String
-  abstract var password: String
+  abstract var password: CharArray
   abstract var connectionUrl: String
   abstract var credentials: Credentials
   abstract var connectionConfig: ConnectionConfig

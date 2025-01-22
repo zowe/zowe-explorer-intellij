@@ -17,6 +17,7 @@ package org.zowe.explorer.dataops.operations
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.explorer.config.Presets
@@ -37,12 +38,12 @@ class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
 
   afterSpec {
     unmockkAll()
+    clearAllMocks()
   }
 
   context("run dataset allocation operation") {
     val datasetAllocator = spyk<DatasetAllocator>()
     val progressIndicator = mockk<ProgressIndicator>()
-//    mockkStatic("org.zowe.explorer.config.connect.CredentialServiceKt")
     val connectionConfig = mockk<ConnectionConfig>()
     val datasetAllocationParams = mockk<DatasetAllocationParams>()
     val datasetAllocationOperation = mockk<DatasetAllocationOperation>()

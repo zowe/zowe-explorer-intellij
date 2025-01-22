@@ -81,8 +81,8 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         configServiceImpl.testInstance = object : TestConfigServiceImpl() {
           override fun <T : Any> getConfigDeclaration(rowClass: Class<out T>): ConfigDeclaration<T> {
             return when (rowClass) {
-              ConnectionConfig::class.java -> ZOSMFConnectionConfigDeclaration(crudable) as ConfigDeclaration<T>
-              Credentials::class.java -> CredentialsConfigDeclaration(crudable) as ConfigDeclaration<T>
+              ConnectionConfig::class.java -> ZOSMFConnectionConfigDeclaration() as ConfigDeclaration<T>
+              Credentials::class.java -> CredentialsConfigDeclaration() as ConfigDeclaration<T>
               else -> super.getConfigDeclaration(rowClass)
             }
           }
@@ -192,8 +192,8 @@ class ConfigTestSpec : WithApplicationShouldSpec({
     }
     context("Credentials.hashCode") {
       should("check hashcode for uniqueness") {
-        val credentials = Credentials("uuid", "username", "password")
-        val credentials2 = Credentials("uuid", "username", "password")
+        val credentials = Credentials("uuid", "username", "password".toCharArray())
+        val credentials2 = Credentials("uuid", "username", "password".toCharArray())
         val hashcode = credentials.hashCode()
         val hashcode2 = credentials2.hashCode()
 

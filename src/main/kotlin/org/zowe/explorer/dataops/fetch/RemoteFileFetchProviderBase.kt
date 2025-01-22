@@ -19,10 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.rd.util.firstOrNull
 import org.zowe.explorer.config.connect.ConnectionConfigBase
-import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Query
-import org.zowe.explorer.dataops.RemoteQuery
-import org.zowe.explorer.dataops.UnitRemoteQueryImpl
+import org.zowe.explorer.dataops.*
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.dataops.services.ErrorSeparatorService
 import org.zowe.explorer.utils.castOrNull
@@ -45,7 +42,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
 ) : FileFetchProvider<Request, RemoteQuery<Connection, Request, Unit>, File> {
 
   private enum class CacheState {
-    FETCHED, ERROR
+    FETCHING, FETCHED, ERROR
   }
 
   private val lock = ReentrantLock()
@@ -71,6 +68,10 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
    */
   override fun isCacheValid(query: RemoteQuery<Connection, Request, Unit>): Boolean {
     return lock.withLock { cacheState[query] != CacheState.ERROR }
+  }
+
+  override fun isCacheFetching(query: RemoteQuery<Connection, Request, Unit>): Boolean {
+    return lock.withLock { cacheState[query] == CacheState.FETCHING }
   }
 
   /**
@@ -190,7 +191,12 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
   ) {
     fetchedFiles.forEach { fetchedFile ->
       for ((cacheQuery, values) in cache) {
-        if (cacheQuery != originalQuery && values.contains(fetchedFile)) {
+        if (cacheQuery != originalQuery && values.contains(fetchedFile) && !isCacheFetching(cacheQuery)) {
+          val batchedCacheQ = cacheQuery.castOrNull<BatchedRemoteQuery<*>>()
+          val batchedOriginalQ = originalQuery.castOrNull<BatchedRemoteQuery<*>>()
+          if (batchedCacheQ != null && batchedOriginalQ != null) {
+            batchedCacheQ.set(batchedOriginalQ)
+          }
           val newCacheForQuery = values.toMutableList()
           newCacheForQuery.replaceAll { if (compareOldAndNewFile(it, fetchedFile)) fetchedFile else it }
           cache[cacheQuery] = newCacheForQuery
@@ -212,6 +218,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
     progressIndicator: ProgressIndicator
   ) {
     runCatching {
+      cacheState[query] = CacheState.FETCHING
+
       val files: List<File> = getFetchedFiles(query, progressIndicator)
 
       // Cleans up attributes of invalid files
@@ -228,7 +236,7 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
           }
         }
 
-      //TODO: the only known evidence to use refresh of colliding query is related to BatchedQuery
+      // TODO: the only known evidence to use refresh of colliding query is related to BatchedQuery
       query.castOrNull(UnitRemoteQueryImpl::class.java) ?: refreshCacheOfCollidingQuery(query, files)
 
       cache[query] = files
@@ -249,6 +257,8 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
     progressIndicator: ProgressIndicator
   ) {
     runCatching {
+      cacheState[query] = CacheState.FETCHING
+
       val files = getFetchedFiles(query, progressIndicator)
 
       refreshCacheOfCollidingQuery(query, files)

@@ -33,10 +33,7 @@ import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.getAncestorNodes
-import org.zowe.explorer.utils.getMinimalCommonParents
-import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.utils.*
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import org.zowe.kotlinsdk.DatasetOrganization
@@ -155,7 +152,7 @@ class ExplorerPasteProvider : PasteProvider {
     }
     val destinationNodesToRefresh = destinationFilesToRefresh
       .asSequence()
-      .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed() }
+      .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).ifEmpty { explorerView.myFsTreeStructure.findByPredicate { it.virtualFile == file } }.reversed() }
       .flatten()
       .distinctBy { it.path }
       .toList()
@@ -183,20 +180,6 @@ class ExplorerPasteProvider : PasteProvider {
     val destinationsToRefresh = nodesToRefresh[DESTINATIONS]
 
     if (sourcesToRefresh != null) {
-
-      sourcesToRefresh.forEach { node ->
-        if (node is UssDirNode || node is UssFileNode) {
-          // If we have SOURCES in map, that means we performed Move/Cut operation,
-          // so, in order to have appropriate nodes representation (without any error) during refresh
-          // we have to delete "moved" nodes from Virtual File System first
-          runWriteActionInEdtAndWait {
-            node.virtualFile?.let {
-              it.fileSystem.model.deleteFile(ExplorerPasteProvider::class.java, it)
-            }
-          }
-        }
-      }
-
       // get the common parent nodes for each child node in the provided SOURCES key
       val parentNodes = sourcesToRefresh.mapNotNull { it.virtualFile }
         .getMinimalCommonParents()
@@ -206,8 +189,7 @@ class ExplorerPasteProvider : PasteProvider {
         .flatten()
         .distinct()
 
-      // TODO: Need to think about... Sometimes it looks like Swing model is not ready yet which still causes refresh to fail, but putting a little delay fixes it
-      Thread.sleep(1000).let { runParentNodesRefresh(parentNodes, explorerView) }
+      runParentNodesRefresh(parentNodes, explorerView)
     }
 
     destinationsToRefresh?.let { runParentNodesRefresh(it, explorerView) }
@@ -215,11 +197,8 @@ class ExplorerPasteProvider : PasteProvider {
 
   private fun runParentNodesRefresh(parentNodes: List<ExplorerTreeNode<*, *>>, explorerView: FileExplorerView) {
     parentNodes.forEach { node ->
-      val parentNode = node.castOrNull<FileFetchNode<*, *, *, *, *, *>>() ?: return@forEach
+      val parentNode = node.castOrNull<FileFetchNode<*,*,*,*,*,*>>() ?: return@forEach
       cleanInvalidateOnExpand(parentNode, explorerView)
-      // we have to invalidate all parent nodes before cleaning the cache
-      // to say that Swing tree model has been changed for them
-      explorerView.myStructure.invalidate(parentNode, true)
       parentNode.cleanCache(cleanBatchedQuery = true)
     }
   }

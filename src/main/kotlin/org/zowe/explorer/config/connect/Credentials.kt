@@ -28,10 +28,10 @@ class Credentials {
   var username = ""
 
   @Column
-  var password = ""
+  var password: CharArray = charArrayOf()
 
   constructor()
-  constructor(connectionConfigUuid: String, username: String, password: String) {
+  constructor(connectionConfigUuid: String, username: String, password: CharArray) {
     this.configUuid = connectionConfigUuid
     this.username = username
     this.password = password
@@ -42,7 +42,7 @@ class Credentials {
     if (other == null || javaClass != other.javaClass) return false
     val that = other as Credentials
     if (configUuid != that.configUuid) return false
-    return username == that.username && password == that.password
+    return username == that.username && password.contentEquals(that.password)
   }
 
   override fun hashCode(): Int {
