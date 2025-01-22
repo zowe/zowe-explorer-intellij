@@ -130,9 +130,7 @@ class ZoweTeamConfigDialog(
       row {
         label("Username")
           .widthGroup(sameWidthLabelsGroup)
-        (
-            cell(JPasswordField())
-            )
+        passwordField()
           .bindText(state::username)
           .validationOnApply {
             validateForBlank(String(it.password).trim(), it)
@@ -145,8 +143,8 @@ class ZoweTeamConfigDialog(
       row {
         label("Password: ")
           .widthGroup(sameWidthLabelsGroup)
-        cell(JPasswordField())
-          .bindText(state::password)
+        passwordField()
+          .bindText({ String(state.password) }, { state.password = it.toCharArray() })
           .validationOnApply { validateForBlank(it) }
           .align(AlignX.FILL)
       }

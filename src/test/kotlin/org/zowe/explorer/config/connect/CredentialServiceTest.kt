@@ -56,11 +56,11 @@ class CredentialServiceTest : WithApplicationShouldSpec({
 
     should("getPasswordByKey") {
       credentialServiceMock.getPasswordByKey("000UID") shouldBe null
-      credentialServiceMock.getPasswordByKey("validUid") shouldBe "password"
+      String(credentialServiceMock.getPasswordByKey("validUid") ?: charArrayOf()) shouldBe "password"
     }
 
     should("setCredentials") {
-      credentialServiceMock.setCredentials("validUid", "user", "password")
+      credentialServiceMock.setCredentials("validUid", "user", "password".toCharArray())
       isNullSet shouldBe false
       isCredentionalsSet shouldBe true
     }

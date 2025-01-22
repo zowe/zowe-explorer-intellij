@@ -14,7 +14,6 @@
 
 package org.zowe.explorer.config
 
-import com.google.gson.Gson
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
@@ -28,7 +27,6 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.*
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.config.connect.Credentials
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.whoAmI
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
@@ -44,7 +42,6 @@ import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
 import org.zowe.explorer.utils.crudable.*
-import org.zowe.explorer.utils.runIfTrue
 import org.zowe.explorer.utils.validateForBlank
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
@@ -58,10 +55,8 @@ import org.zowe.kotlinsdk.annotations.ZVersion
 import org.zowe.kotlinsdk.zowe.client.sdk.core.ZOSConnection
 import org.zowe.kotlinsdk.zowe.config.KeytarWrapper
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
-import org.zowe.kotlinsdk.zowe.config.encodeToBase64
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
 import java.io.InputStream
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.stream.Stream
@@ -79,7 +74,7 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
     connectionName = "a",
     connectionUrl = "https://111.111.111.111:555",
     username = "testUser",
-    password = "testPass",
+    password = "testPass".toCharArray(),
     isAllowSsl = true
   )
 
@@ -627,43 +622,6 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
       notified shouldBe true
     }
 
-    fun createSinglePassword(filePath: String, user: String, password: String): String {
-      val credentialsMap = mutableMapOf<String, Map<String, Any?>>(
-        Pair(
-          filePath, mapOf(
-            Pair("profiles.base.properties.user", user),
-            Pair("profiles.base.properties.password", password)
-          )
-        )
-      )
-      return Gson().toJson(credentialsMap).encodeToBase64()
-    }
-
-    fun makeCrudableWithoutListeners(
-      withCredentials: Boolean,
-      credentialsGetter: () -> MutableList<Credentials> = { mutableListOf() },
-      stateGetter: () -> ConfigStateV2
-    ): Crudable {
-      val crudableLists = CrudableLists(addFilter = object : AddFilter {
-        override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
-          return ConfigService.getService().getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
-        }
-      }, updateFilter = object : UpdateFilter {
-        override operator fun <T : Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
-          return ConfigService.getService().getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
-        }
-      }, nextUuidProvider = { UUID.randomUUID().toString() }, getListByClass = {
-        if (it == Credentials::class.java) {
-          withCredentials.runIfTrue {
-            credentialsGetter()
-          }
-        } else {
-          stateGetter().get(it)
-        }
-      })
-      return ConcurrentCrudable(crudableLists, SimpleReadWriteAdapter())
-    }
-
     should("findAllZosmfExistingConnection") {
       val configCollections: MutableMap<String, MutableList<*>> = mutableMapOf(
         Pair(ConnectionConfig::class.java.name, mutableListOf<ConnectionConfig>(connection)),
@@ -671,8 +629,9 @@ class ZoweConfigTestSpec : WithApplicationShouldSpec({
         Pair(JesWorkingSetConfig::class.java.name, mutableListOf<ConnectionConfig>()),
       )
       val sandboxState = SandboxState(ConfigStateV2(configCollections))
-      val crudable = org.zowe.explorer.config.makeCrudableWithoutListeners(true,
-        { sandboxState.credentials }) { sandboxState.configState }
+      val crudable = makeCrudableWithoutListeners(true, { sandboxState.credentials }) {
+        sandboxState.configState
+      }
 
       mockedZoweConfigService::class.declaredMemberProperties.find { it.name == "configCrudable" }?.let {
         it.isAccessible = true

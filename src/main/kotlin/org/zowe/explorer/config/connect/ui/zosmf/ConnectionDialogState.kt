@@ -61,21 +61,6 @@ data class ConnectionDialogState(
       password = value.password
     }
 
-  override fun equals(other: Any?): Boolean {
-    if (other == null) {
-      return false
-    }
-    if (other === this) {
-      return true
-    }
-    if (other !is ConnectionDialogState) {
-      return false
-    }
-    return this.connectionConfig == other.connectionConfig && this.mode == other.mode
-  }
-
-  override fun hashCode(): Int = Objects.hash(connectionConfig, mode)
-
   public override fun clone(): ConnectionDialogState {
     return ConnectionDialogState(
       connectionUuid = connectionUuid,
@@ -101,6 +86,7 @@ data class ConnectionDialogState(
     if (!password.contentEquals(other.password)) return false
     if (owner != other.owner) return false
     if (zVersion != other.zVersion) return false
+    if (zoweConfigPath != other.zoweConfigPath) return false
     if (mode != other.mode) return false
 
     return true
@@ -115,6 +101,7 @@ data class ConnectionDialogState(
     result = 31 * result + password.contentHashCode()
     result = 31 * result + owner.hashCode()
     result = 31 * result + zVersion.hashCode()
+    result = 31 * result + (zoweConfigPath?.hashCode() ?: 0)
     result = 31 * result + mode.hashCode()
     return result
   }

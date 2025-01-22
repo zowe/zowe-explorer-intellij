@@ -87,7 +87,7 @@ class ZOSMFConnectionConfigurable : BoundSearchableConfigurable("z/OSMF Connecti
     port = if (uri.port == -1) 10443 else uri.port.toLong()
     protocol = state.connectionUrl.split("://")[0]
     user = state.username
-    password = state.password
+    password = String(state.password)
     rejectUnauthorized = !state.isAllowSsl
     restoreProfile()
   }

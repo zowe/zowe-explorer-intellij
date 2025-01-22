@@ -300,7 +300,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     val zoweConnection = findExistingConnection(type, zosmfConnection.profileName)
       ?.let { zosmfConnection.toConnectionConfig(it.uuid, it.zVersion, type = type) }
       ?: zosmfConnection.toConnectionConfig(UUID.randomUUID().toString(), type = type)
-    CredentialService.getService().setCredentials(zoweConnection.uuid, username, password)
+    CredentialService.getService().setCredentials(zoweConnection.uuid, username, password.toCharArray())
     return zoweConnection
   }
 
@@ -498,7 +498,7 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
             if (
               existingConnection == newConnection
               && CredentialService.getUsername(newConnection) == zoweUsername
-              && CredentialService.getPassword(newConnection) == zowePassword
+              && CredentialService.getPassword(newConnection).contentEquals(zowePassword.toCharArray())
             ) {
               ZoweConfigState.SYNCHRONIZED
             } else {

@@ -322,7 +322,7 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
     )
     state.connectionUrl = "https://testhost.com"
     state.username = "testuser"
-    state.password = "testpass"
+    state.password = "testpass".toCharArray()
     state.owner = "owner"
     state.zoweConfigPath = "zowe/config/path"
     state.mode = DialogMode.UPDATE
