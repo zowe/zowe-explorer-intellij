@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: ["IC-231","IC-233","IC-243"]
+        product: ["IC-231","IC-233","IC-242","IC-243"]
         include:
           - product: "IC-231"
             distribution: "zulu"
@@ -29,6 +29,9 @@ jobs:
           - product: "IC-233"
             distribution: "zulu"
             java: "17"
+          - product: "IC-242"
+            distribution: "zulu"
+            java: "21"
           - product: "IC-243"
             distribution: "zulu"
             java: "21"
@@ -101,7 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: ["IC-231","IC-233","IC-243"]
+        product: ["IC-231","IC-233","IC-242","IC-243"]
         include:
           - product: "IC-231"
             distribution: "zulu"
@@ -109,6 +112,9 @@ jobs:
           - product: "IC-233"
             distribution: "zulu"
             java: "17"
+          - product: "IC-242"
+            distribution: "zulu"
+            java: "21"
           - product: "IC-243"
             distribution: "zulu"
             java: "21"
@@ -164,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: ["IC-231","IC-233","IC-243"]
+        product: ["IC-231","IC-233","IC-242","IC-243"]
         include:
           - product: "IC-231"
             distribution: "zulu"
@@ -172,6 +178,9 @@ jobs:
           - product: "IC-233"
             distribution: "zulu"
             java: "17"
+          - product: "IC-242"
+            distribution: "zulu"
+            java: "21"
           - product: "IC-243"
             distribution: "zulu"
             java: "21"
