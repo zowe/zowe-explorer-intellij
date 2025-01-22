@@ -138,6 +138,7 @@ dependencies {
     instrumentationTools()
     pluginVerifier()
     testFramework(TestFrameworkType.Plugin.Java)
+    zipSigner()
     testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
     zipSigner()
   }
