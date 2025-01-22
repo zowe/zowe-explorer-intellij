@@ -49,7 +49,7 @@ class Credentials {
     var result = super.hashCode()
     result = 31 * result + configUuid.hashCode()
     result = 31 * result + username.hashCode()
-    result = 31 * result + password.hashCode()
+    result = 31 * result + password.contentHashCode()
     return result
   }
 
