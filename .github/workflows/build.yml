@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         product: ["IC-231","IC-233","IC-242","IC-243"]
@@ -101,7 +101,7 @@ jobs:
 
   test_and_sonar:
     needs: [build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         product: ["IC-231","IC-233","IC-242","IC-243"]
@@ -145,7 +145,7 @@ jobs:
       - name: Publish tests result to artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tests-report-${{ matrix.product }}
+          name: tests-summary-success-report-${{ matrix.product }}
           path: ${{ github.workspace }}/build/reports/tests
 
       - name: Publish code coverage report to artifacts
@@ -164,10 +164,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
           PRODUCT_NAME: ${{ matrix.product }}
 
+      - name: Save test failure report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-summary-failure-report-${{ matrix.product }}
+          path: ${{ github.workspace }}/build/reports/tests/test
+
   verify:
     if: ${{ contains(github.ref, 'refs/heads/release/') || contains(github.ref, 'refs/heads/main') }}
     needs: [build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         product: ["IC-231","IC-233","IC-242","IC-243"]
