@@ -308,6 +308,8 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <postStartupActivity implementation="org.zowe.explorer.rateus.RateUsStartupActivity"/>
 
+        <postStartupActivity implementation="org.zowe.explorer.v3.lang.MockWebServerActivity"/>
+
         <applicationConfigurable id="org.zowe.explorer.config.MainframeConfigurableProvider"
                                  displayName="Zowe Explorer"
                                  provider="org.zowe.explorer.config.MainframeConfigurableProvider"/>
