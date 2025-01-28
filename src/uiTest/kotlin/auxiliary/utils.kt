@@ -984,7 +984,7 @@ fun startMockServer() {
     val localhost = InetAddress.getByName("localhost").canonicalHostName
     val localhostCertificate = HeldCertificate.Builder()
         .addSubjectAlternativeName(localhost)
-        .duration(10, TimeUnit.MINUTES)
+        .duration(60, TimeUnit.MINUTES)
         .build()
     val serverCertificates = HandshakeCertificates.Builder()
         .heldCertificate(localhostCertificate)

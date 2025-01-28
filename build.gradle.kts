@@ -154,6 +154,10 @@ dependencies {
   testImplementation(libs.mockk)
   testImplementation(libs.kotest.assertions.core)
   testImplementation(libs.kotest.runner.junit5)
+
+  // Students
+  implementation(libs.okhttp3.mockwebserver)
+  implementation(libs.okhttp3.okhttp.tls)
 }
 
 intellijPlatform {
