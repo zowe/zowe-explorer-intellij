@@ -24,22 +24,20 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  * Factory to create instance of [TSOSessionConfigDeclaration]
  */
 class TSOSessionConfigDeclarationFactory: ConfigDeclarationFactory {
-  override fun buildConfigDeclaration(crudable: Crudable): ConfigDeclaration<*> {
-    return TSOSessionConfigDeclaration(crudable)
+  override fun buildConfigDeclaration(): ConfigDeclaration<*> {
+    return TSOSessionConfigDeclaration()
   }
 }
 
 /**
  * Declaration for TSO session config which describes the logic for working with the config
  */
-class TSOSessionConfigDeclaration(
-  crudable: Crudable
-) : ConfigDeclaration<TSOSessionConfig>(crudable) {
+class TSOSessionConfigDeclaration() : ConfigDeclaration<TSOSessionConfig>() {
 
   override val clazz = TSOSessionConfig::class.java
   override val configPriority = 4.0
 
-  override fun getDecider(): ConfigDecider<TSOSessionConfig> {
+  override fun getDecider(crudable: Crudable): ConfigDecider<TSOSessionConfig> {
     return object: ConfigDecider<TSOSessionConfig>() {
 
       /**

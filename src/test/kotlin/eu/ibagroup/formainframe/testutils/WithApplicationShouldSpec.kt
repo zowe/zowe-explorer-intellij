@@ -31,7 +31,7 @@ import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.clearMocks
 
-private var appFixture: CodeInsightTestFixture? = null
+var testAppFixture: CodeInsightTestFixture? = null
 
 /**
  * [ShouldSpec] wrapper that provides implemented beforeSpec, initializing an [Application]
@@ -44,12 +44,12 @@ abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : Sho
    */
   override suspend fun beforeSpec(spec: Spec) {
     super.beforeSpec(spec)
-    if (appFixture == null) {
+    if (testAppFixture == null) {
       val factory = IdeaTestFixtureFactory.getFixtureFactory()
       val lightFixture = factory.createLightFixtureBuilder("for-mainframe").fixture
-      appFixture = factory
+      testAppFixture = factory
         .createCodeInsightFixture(lightFixture, LightTempDirTestFixtureImpl(true))
-      appFixture?.setUp() ?: throw Exception("Fixture setup is failed")
+      testAppFixture?.setUp() ?: throw Exception("Fixture setup is failed")
     }
 
     (AnalyticsService.getService() as TestAnalyticsServiceImpl).testInstance = TestAnalyticsServiceImpl()
@@ -70,7 +70,7 @@ abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : Sho
 
   override suspend fun afterSpec(spec: Spec) {
     // TODO: figure out, why it does not work properly
-//    appFixture.tearDown()
+//    testAppFixture.tearDown()
     super.afterSpec(spec)
   }
 

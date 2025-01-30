@@ -33,7 +33,7 @@ data class ConnectionDialogState(
   override var connectionUrl: String = "",
   /*var apiMeditationLayer: String = "",*/
   override var username: String = "",
-  override var password: String = "",
+  override var password: CharArray = charArrayOf(),
   override var owner: String = "",
   var isAllowSsl: Boolean = false,
   var zVersion: ZVersion = ZVersion.ZOS_2_1,
@@ -70,6 +70,36 @@ data class ConnectionDialogState(
       owner = owner
     )
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ConnectionDialogState) return false
+
+    if (isAllowSsl != other.isAllowSsl) return false
+    if (connectionUuid != other.connectionUuid) return false
+    if (connectionName != other.connectionName) return false
+    if (connectionUrl != other.connectionUrl) return false
+    if (username != other.username) return false
+    if (!password.contentEquals(other.password)) return false
+    if (owner != other.owner) return false
+    if (zVersion != other.zVersion) return false
+    if (mode != other.mode) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = isAllowSsl.hashCode()
+    result = 31 * result + connectionUuid.hashCode()
+    result = 31 * result + connectionName.hashCode()
+    result = 31 * result + connectionUrl.hashCode()
+    result = 31 * result + username.hashCode()
+    result = 31 * result + password.contentHashCode()
+    result = 31 * result + owner.hashCode()
+    result = 31 * result + zVersion.hashCode()
+    result = 31 * result + mode.hashCode()
+    return result
+  }
 }
 
 fun ConnectionDialogState.initEmptyUuids(crudable: Crudable): ConnectionDialogState {
@@ -79,7 +109,7 @@ fun ConnectionDialogState.initEmptyUuids(crudable: Crudable): ConnectionDialogSt
 
 fun ConnectionConfig.toDialogState(crudable: Crudable): ConnectionDialogState {
   var username = ""
-  var password = ""
+  var password = charArrayOf()
   var owner = ""
   try {
     username = CredentialService.getUsername(this)

@@ -90,7 +90,7 @@ class ConnectionDialog(
       return initialState.connectionName != state.connectionName &&
         initialState.connectionUrl == state.connectionUrl &&
         initialState.username == state.username &&
-        initialState.password == state.password &&
+        initialState.password.contentEquals(state.password) &&
         initialState.isAllowSsl == state.isAllowSsl
     }
 
@@ -310,8 +310,8 @@ class ConnectionDialog(
       row {
         label("Password: ")
           .widthGroup(sameWidthLabelsGroup)
-        passField = cell(JPasswordField())
-          .bindText(state::password)
+        passField = passwordField()
+          .bindText({ String(state.password) }, { state.password = it.toCharArray() })
           .validationOnApply { validateForBlank(it) }
           .align(AlignX.FILL)
       }
@@ -356,8 +356,8 @@ class ConnectionDialog(
         }
         if (state.zVersion > ZVersion.ZOS_2_4) {
           row {
-            button("Change user password") {
-              val changePasswordInitState = ChangePasswordDialogState(state.username, state.password, "")
+            button("Change User Password") {
+              val changePasswordInitState = ChangePasswordDialogState(state.username, state.password, charArrayOf())
               val dataOpsManager = DataOpsManager.getService()
               showUntilDone(
                 initialState = changePasswordInitState,
@@ -372,8 +372,8 @@ class ConnectionDialog(
                         operation = ChangePasswordOperation(
                           request = ChangePassword(
                             changePasswordState.username,
-                            changePasswordState.oldPassword,
-                            changePasswordState.newPassword
+                            String(changePasswordState.oldPassword),
+                            String(changePasswordState.newPassword)
                           ),
                           connectionConfig = state.connectionConfig
                         ),
@@ -402,7 +402,7 @@ class ConnectionDialog(
                   } else {
                     if (state.username == changePasswordState.username) {
                       passField.applyToComponent {
-                        this.text = changePasswordState.newPassword
+                        this.text = String(changePasswordState.newPassword)
                         state.password = changePasswordState.newPassword
                         val balloon = JBPopupFactory.getInstance()
                           .createHtmlTextBalloonBuilder(

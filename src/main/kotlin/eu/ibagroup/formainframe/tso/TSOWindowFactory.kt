@@ -32,6 +32,7 @@ import eu.ibagroup.formainframe.dataops.operations.MessageData
 import eu.ibagroup.formainframe.dataops.operations.MessageType
 import eu.ibagroup.formainframe.dataops.operations.TsoOperation
 import eu.ibagroup.formainframe.dataops.operations.TsoOperationMode
+import eu.ibagroup.formainframe.explorer.actions.rexx.ExecuteRexxAction
 import eu.ibagroup.formainframe.telemetry.NotificationsService
 import eu.ibagroup.formainframe.tso.config.TSOConfigWrapper
 import eu.ibagroup.formainframe.tso.config.TSOSessionConfig
@@ -125,6 +126,19 @@ interface TSOSessionReopenHandler {
   fun reopen(project: Project, console: TSOConsoleView)
 }
 
+/**
+ * Interface class which represents execute rexx from explorer topic handler
+ */
+interface TSOSessionExecuteRexxFromExplorerHandler {
+  /**
+   * Function which is called when execute rexx event is triggered
+   * @param project
+   * @param tsoConfig
+   * @param rexxConfig
+   */
+  fun executeRexx(project: Project, tsoConfig: TSOConfigWrapper, rexxConfig: ExecuteRexxAction.RexxParams)
+}
+
 @JvmField
 val SESSION_ADDED_TOPIC = Topic.create("tsoSessionAdded", TSOSessionCreateHandler::class.java)
 
@@ -139,6 +153,9 @@ val SESSION_CLOSED_TOPIC = Topic.create("tsoSessionClosed", TSOSessionCloseHandl
 
 @JvmField
 val SESSION_REOPEN_TOPIC = Topic.create("tsoSessionReopen", TSOSessionReopenHandler::class.java)
+
+@JvmField
+val SESSION_EXECUTE_REXX_TOPIC = Topic.create("tsoSessionExecuteRexx", TSOSessionExecuteRexxFromExplorerHandler::class.java)
 
 const val SESSION_RECONNECT_ERROR_MESSAGE = "Unable to reconnect to the TSO session. Session is closed."
 
@@ -380,6 +397,53 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               project = project,
               custTitle = "Error starting a new TSO session"
             )
+          }
+        }
+      }
+    )
+
+    subscribe(
+      project = project,
+      topic = SESSION_EXECUTE_REXX_TOPIC,
+      handler = object : TSOSessionExecuteRexxFromExplorerHandler {
+        override fun executeRexx(
+          project: Project,
+          tsoConfig: TSOConfigWrapper,
+          rexxConfig: ExecuteRexxAction.RexxParams
+        ) {
+          sendTopic(SESSION_ADDED_TOPIC, project).create(project, tsoConfig)
+          val selectedSessionContent = toolWindow.contentManager.selectedContent
+          if (selectedSessionContent != null) {
+            var commandToExecute = "EXEC '${rexxConfig.rexxLibrary}(${rexxConfig.execMember})'"
+            var passedArguments = ""
+            val consoleView = selectedSessionContent.component as TSOConsoleView
+            val processHandler = consoleView.getProcessHandler()
+
+            if (rexxConfig.rexxArguments.isNotEmpty()) {
+              rexxConfig.rexxArguments.forEach { passedArguments += "$it," }
+                .also { passedArguments = passedArguments.removeSuffix(",") }
+              commandToExecute += " '$passedArguments'"
+            }
+
+            processHandler.notifyTextAvailable(commandToExecute + "\n", ProcessOutputType.STDOUT)
+            sendTopic(SESSION_COMMAND_ENTERED).processCommand(
+              project,
+              consoleView,
+              tsoConfig,
+              commandToExecute,
+              MessageType.TSO_RESPONSE,
+              MessageData.DATA_DATA,
+              processHandler
+            )
+            processHandler.notifyTextAvailable("> ", ProcessOutputType.STDOUT)
+          } else {
+            NotificationsService
+              .errorNotification(
+                Exception(),
+                project = project,
+                custTitle = "Error getting TSO runtime session",
+                custDetailsShort = "Cannot execute REXX program, because we cannot find TSO session. Please retry"
+              )
           }
         }
       }

@@ -4,14 +4,40 @@ All notable changes to the For Mainframe Plugin will be documented in this file.
 
 ## [Unreleased]
 
+### Features
+
+* Feature: GitHub issue #224: USS files and folders: owner, permissions and other specifics for the entities ([0dfb055c](https://github.com/zowe/zowe-explorer-intellij/commit/0dfb055c))
+* Feature: GitHub issue #223: Add hint to the working set option in plus dropdown ([c8bfba3c](https://github.com/zowe/zowe-explorer-intellij/commit/c8bfba3c))
+* Feature: GitHub issue #222: Settings -> Clear files cache ([8b71d7f0](https://github.com/zowe/zowe-explorer-intellij/commit/8b71d7f0))
+* Feature: GitHub issue #221: JES Explorer: add settings for return codes ([f98817b8](https://github.com/zowe/zowe-explorer-intellij/commit/f98817b8))
+* Feature: GitHub issue #220: Dataset allocation dialog: enchancements ([451b7900](https://github.com/zowe/zowe-explorer-intellij/commit/451b7900))
+* Feature: GitHub issue #219: Add colouring for JES job results ([6fc1974e](https://github.com/zowe/zowe-explorer-intellij/commit/6fc1974e))
+* Feature: GitHub issue #218: Dataset templates: PDS/E template ([451b7900](https://github.com/zowe/zowe-explorer-intellij/commit/451b7900))
+* Feature: GitHub issue #217: Tooltips for columns in settings ([96aafcb4](https://github.com/zowe/zowe-explorer-intellij/commit/96aafcb4))
+* Feature: GitHub issue #216: Decide what to do with requesters ([6a3e55ad](https://github.com/zowe/zowe-explorer-intellij/commit/6a3e55ad))
+* Feature: GitHub issue #215: Remove usage of com.ibm.mq:com.ibm.mq.allclient library ([14f6c482](https://github.com/zowe/zowe-explorer-intellij/commit/14f6c482))
+* Feature: GitHub issue #210: Ability to run REXX members directly from the File Explorer view (via a TSO EXEC) ([6661f255](https://github.com/zowe/zowe-explorer-intellij/commit/6661f255))
+* Feature: Working sets and masks deletion for several elements ([399f9f97](https://github.com/zowe/zowe-explorer-intellij/commit/399f9f97))
+* Feature: Make sync operations blocking ([fbf42408](https://github.com/zowe/zowe-explorer-intellij/commit/fbf42408))
+* Feature: USS Properties: change feature for owner and group ([3696042f](https://github.com/zowe/zowe-explorer-intellij/commit/3696042f))
+* Feature: Disable "Reopen session" button for TSO Console when CredentialsNotFound exception appears ([8bdc90c4](https://github.com/zowe/zowe-explorer-intellij/commit/8bdc90c4))
+
 ### Bugfixes
 
+* Bugfix: Fixed USS path display ([97be3b24](https://github.com/zowe/zowe-explorer-intellij/commit/97be3b24))
+* Bugfix: Fixed SonarCloud analysis issue for passwords ([cfda6e67](https://github.com/zowe/zowe-explorer-intellij/commit/cfda6e67))
+* Bugfix: Fixed a file downloading without read permission ([2bd8b3d6](https://github.com/zowe/zowe-explorer-intellij/commit/2bd8b3d6))
+* Bugfix: Fixed the new name functionality in case of name conflict does not apply when copying to the same member ([7fb4d746](https://github.com/zowe/zowe-explorer-intellij/commit/7fb4d746))
+* Bugfix: Fixed renaming member in one dataset was causing a "load more" to appear in the same dataset in one of the masks ([2e956c78](https://github.com/zowe/zowe-explorer-intellij/commit/2e956c78))
+* Bugfix: Fixed error during a file move ([16665ed6](https://github.com/zowe/zowe-explorer-intellij/commit/16665ed6))
+* Bugfix: Fixed creating a file or folder does not trigger refresh action for the intersecting mask ([6a7a2eb3](https://github.com/zowe/zowe-explorer-intellij/commit/6a7a2eb3))
 * Bugfix: Fixed invalid refresh cache date for nodes in case fetching was canceled by user ([d7682be0](https://github.com/zowe/zowe-explorer-intellij/commit/d7682be0))
 * Bugfix: Fixed issue with "Delete" button was disabled when multiple entities are selected ([33f23417](https://github.com/zowe/zowe-explorer-intellij/commit/33f23417))
 * Bugfix: Fixed remote conflict issue ([82b6fb7b](https://github.com/zowe/zowe-explorer-intellij/commit/82b6fb7b))
 * Bugfix: Fixed invalid message in tree related to a server certificate ([82b4af43](https://github.com/zowe/zowe-explorer-intellij/commit/82b4af43))
 * Bugfix: Fixed regex analysis failure ([6b00aa4c](https://github.com/zowe/zowe-explorer-intellij/commit/6b00aa4c))
 * Bugfix: Fixed issue with connection delete ([dee0202e](https://github.com/zowe/zowe-explorer-intellij/commit/dee0202e))
+* Bugfix: Fixed connection not showing after creation ([b1cdf610](https://github.com/zowe/zowe-explorer-intellij/commit/b1cdf610))
 * Bugfix: Fixed error when uploading local file to USS ([c5dcd7fa](https://github.com/zowe/zowe-explorer-intellij/commit/c5dcd7fa))
 * Bugfix: Fixed issue when error message does not disappear after errors are corrected in a Job Filter ([64a6d209](https://github.com/zowe/zowe-explorer-intellij/commit/64a6d209))
 * Bugifx: Fixed NullPointerException on cancel operation ([fa2eaf5b](https://github.com/zowe/zowe-explorer-intellij/commit/fa2eaf5b))

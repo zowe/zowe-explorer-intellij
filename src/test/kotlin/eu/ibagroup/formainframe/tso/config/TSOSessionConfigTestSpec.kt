@@ -777,11 +777,11 @@ class TSOSessionConfigTestSpec : WithApplicationShouldSpec({
       Stream.of(TSOSessionConfig())
     }
 
-    val configDeclaration = TSOSessionConfigDeclaration(crudableMock)
+    val configDeclaration = TSOSessionConfigDeclaration()
 
     // ConfigDecider.canUpdate
     should("check if the config can be updated") {
-      val decider = configDeclaration.getDecider()
+      val decider = configDeclaration.getDecider(crudableMock)
 
       val sessionConfigA = TSOSessionConfig()
       val sessionConfigB = TSOSessionConfig()

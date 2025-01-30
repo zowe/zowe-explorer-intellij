@@ -22,11 +22,11 @@ open class TestCredentialsServiceImpl : CredentialService {
       return "testUser"
     }
 
-    override fun getPasswordByKey(connectionConfigUuid: String): String {
-      return "testPassword"
+    override fun getPasswordByKey(connectionConfigUuid: String): CharArray? {
+      return "testPassword".toCharArray()
     }
 
-    override fun setCredentials(connectionConfigUuid: String, username: String, password: String) {
+    override fun setCredentials(connectionConfigUuid: String, username: String, password: CharArray) {
     }
 
     override fun clearCredentials(connectionConfigUuid: String) {
@@ -38,11 +38,11 @@ open class TestCredentialsServiceImpl : CredentialService {
     return this.testInstance.getUsernameByKey(connectionConfigUuid)
   }
 
-  override fun getPasswordByKey(connectionConfigUuid: String): String? {
+  override fun getPasswordByKey(connectionConfigUuid: String): CharArray? {
     return this.testInstance.getPasswordByKey(connectionConfigUuid)
   }
 
-  override fun setCredentials(connectionConfigUuid: String, username: String, password: String) {
+  override fun setCredentials(connectionConfigUuid: String, username: String, password: CharArray) {
     this.testInstance.setCredentials(connectionConfigUuid, username, password)
   }
 

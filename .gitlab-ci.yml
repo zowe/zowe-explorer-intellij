@@ -1,49 +1,100 @@
-build-job:
+.build-shared: &build-shared
+  - |
+    echo "Build is going to proceed with the next Java:"
+    java -version
+    echo "Gradle Wrapper:"
+    ./gradlew -v
+    echo "Current directory state:"
+    ls -la
+    ./gradlew buildPlugin
+    cd build/distributions
+    ZIP_NAME_WITH_EXT=`ls *.zip`
+    unzip "$ZIP_NAME_WITH_EXT" -d content
+    mv content/* ../../built-plugin
+
+.test-shared: &test-shared
+  - |
+    echo "Test is going to proceed with the next Java:"
+    java -version
+    echo "Gradle Wrapper:"
+    ./gradlew -v
+    echo "Current directory state:"
+    ls -la
+  - ./gradlew test
+  - mv build/reports/tests junit-report
+  - mv build/reports/kover/html kover-report
+
+java17:build:
   stage: build
-  image: openjdk:17
   parallel:
     matrix:
       - PRODUCT_NAME: "IC-231"
       - PRODUCT_NAME: "IC-233"
-      - PRODUCT_NAME: "IC-243"
+  variables:
+    JAVA_HOME: "/usr/lib/jvm/java-17-openjdk-amd64"
+  before_script:
+    export PATH=$JAVA_HOME/bin:$PATH
   script:
-    - |
-      echo "Build is going to proceed with the next Java:"
-      java -version
-      echo "Gradle Wrapper:"
-      ./gradlew -v
-      echo "Current directory state:"
-      ls -la
-      ./gradlew buildPlugin
-      cd build/distributions
-      ZIP_NAME_WITH_EXT=`ls *.zip`
-      unzip "$ZIP_NAME_WITH_EXT" -d content
-      mv content/* ../../built-plugin
+    - *build-shared
   artifacts:
     name: "${CI_PROJECT_NAME}_${CI_COMMIT_REF_SLUG}_${CI_PIPELINE_ID}"
     paths:
       - built-plugin/
     expire_in: 4 weeks
 
-test-job:
+java21:build:
+  stage: build
+  parallel:
+    matrix:
+    - PRODUCT_NAME: "IC-242"
+    - PRODUCT_NAME: "IC-243"
+  variables:
+    JAVA_HOME: "/usr/lib/jvm/java-21-openjdk-amd64"
+  before_script:
+    export PATH=$JAVA_HOME/bin:$PATH
+  script:
+    - *build-shared
+  artifacts:
+    name: "${CI_PROJECT_NAME}_${CI_COMMIT_REF_SLUG}_${CI_PIPELINE_ID}"
+    paths:
+      - built-plugin/
+    expire_in: 4 weeks
+
+java17:test:
   stage: test
-  image: openjdk:17
+  needs: [java17:build]
   parallel:
     matrix:
       - PRODUCT_NAME: "IC-231"
       - PRODUCT_NAME: "IC-233"
-      - PRODUCT_NAME: "IC-243"
+  variables:
+    JAVA_HOME: "/usr/lib/jvm/java-17-openjdk-amd64"
+  before_script:
+    export PATH=$JAVA_HOME/bin:$PATH
   script:
-    - |
-      echo "Test is going to proceed with the next Java:"
-      java -version
-      echo "Gradle Wrapper:"
-      ./gradlew -v
-      echo "Current directory state:"
-      ls -la
-    - ./gradlew test
-    - mv build/reports/tests junit-report
-    - mv build/reports/kover/html kover-report
+    - *test-shared
+  artifacts:
+    name: "for-mainframe-test-results"
+    paths:
+      - junit-report/
+      - kover-report/
+    reports:
+      junit: build/test-results/test/*.xml
+    expire_in: 4 weeks
+
+java21:test:
+  stage: test
+  needs: [java21:build]
+  parallel:
+    matrix:
+      - PRODUCT_NAME: "IC-242"
+      - PRODUCT_NAME: "IC-243"
+  variables:
+    JAVA_HOME: "/usr/lib/jvm/java-21-openjdk-amd64"
+  before_script:
+    export PATH=$JAVA_HOME/bin:$PATH
+  script:
+    - *test-shared
   artifacts:
     name: "for-mainframe-test-results"
     paths:

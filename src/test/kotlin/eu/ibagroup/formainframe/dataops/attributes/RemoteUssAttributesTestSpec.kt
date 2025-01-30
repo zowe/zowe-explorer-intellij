@@ -14,16 +14,23 @@
 
 package eu.ibagroup.formainframe.dataops.attributes
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
+import eu.ibagroup.formainframe.dataops.DataOpsManager
+import eu.ibagroup.formainframe.dataops.Operation
 import eu.ibagroup.formainframe.dataops.content.synchronizer.DEFAULT_BINARY_CHARSET
+import eu.ibagroup.formainframe.dataops.operations.TsoOperation
+import eu.ibagroup.formainframe.dataops.operations.TsoOperationMode
+import eu.ibagroup.formainframe.testutils.testAppFixture
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestCredentialsServiceImpl
+import eu.ibagroup.formainframe.testutils.testServiceImpl.TestDataOpsManagerImpl
 import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
-import org.zowe.kotlinsdk.FileMode
-import org.zowe.kotlinsdk.FileModeValue
-import org.zowe.kotlinsdk.UssFile
+import org.zowe.kotlinsdk.*
 
 class RemoteUssAttributesTestSpec : ShouldSpec({
 
@@ -38,12 +45,38 @@ class RemoteUssAttributesTestSpec : ShouldSpec({
     val testRootPath = "test_root_path"
     val testUrl = "test_url"
 
-    mockkObject(CredentialService)
-
     lateinit var connectionConfig: ConnectionConfig
     lateinit var ussFile: UssFile
 
+    val credentialServiceMock: CredentialService
+    if (testAppFixture == null) {
+      credentialServiceMock = mockk<CredentialService>()
+      every { credentialServiceMock.getUsernameByKey(any<String>()) } returns testUsername
+
+      mockkStatic(ApplicationManager::getApplication)
+      every { ApplicationManager.getApplication() } returns mockk {
+        every { getService(CredentialService::class.java) } returns credentialServiceMock
+      }
+    } else {
+      credentialServiceMock = CredentialService.getService() as TestCredentialsServiceImpl
+      credentialServiceMock.testInstance = object : TestCredentialsServiceImpl() {
+        override fun getUsernameByKey(connectionConfigUuid: String): String {
+          return testUsername
+        }
+      }
+    }
+
     beforeEach {
+      if (testAppFixture == null) {
+        every { credentialServiceMock.getUsernameByKey(any<String>()) } returns testUsername
+      } else {
+        (credentialServiceMock as TestCredentialsServiceImpl).testInstance = object : TestCredentialsServiceImpl() {
+          override fun getUsernameByKey(connectionConfigUuid: String): String {
+            return testUsername
+          }
+        }
+      }
+
       ussFile = mockk<UssFile> {
         every { name } returns "test_name"
         every { isDirectory } returns false
@@ -57,9 +90,9 @@ class RemoteUssAttributesTestSpec : ShouldSpec({
         every { target } returns "test_target"
       }
       connectionConfig = mockk<ConnectionConfig> {
+        every { uuid } returns "test_uuid"
         every { owner } returns testOwner
       }
-      every { CredentialService.getUsername(any()) } returns testUsername
     }
 
     context("constructPath") {
@@ -132,7 +165,15 @@ class RemoteUssAttributesTestSpec : ShouldSpec({
           every { all } returns FileModeValue.WRITE.mode
         }
         every { connectionConfig.owner } returns ""
-        every { CredentialService.getUsername(any()) } returns "TSTFAKE"
+        if (testAppFixture == null) {
+          every { credentialServiceMock.getUsernameByKey(any<String>()) } returns "TSTFAKE"
+        } else {
+          (credentialServiceMock as TestCredentialsServiceImpl).testInstance = object : TestCredentialsServiceImpl() {
+            override fun getUsernameByKey(connectionConfigUuid: String): String {
+              return "TSTFAKE"
+            }
+          }
+        }
 
         val remoteUssAttributes = RemoteUssAttributes(testRootPath, ussFile, testUrl, connectionConfig)
 

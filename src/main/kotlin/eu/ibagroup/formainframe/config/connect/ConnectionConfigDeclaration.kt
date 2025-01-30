@@ -16,16 +16,13 @@ package eu.ibagroup.formainframe.config.connect
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import eu.ibagroup.formainframe.config.ConfigDeclaration
 import eu.ibagroup.formainframe.config.connect.ui.CollectedConfigurable
-import eu.ibagroup.formainframe.utils.crudable.Crudable
 
 /**
  * Abstract class to declare connection configs.
  * @param Connection The system (such as zosmf, cics etc.) connection class to work with (see [ConnectionConfigBase]).
- * @param crudable [Crudable] instance to get data from.
  * @author Valiantsin Krus
  */
-abstract class ConnectionConfigDeclaration<Connection: ConnectionConfigBase>(crudable: Crudable)
-  : ConfigDeclaration<Connection>(crudable) {
+abstract class ConnectionConfigDeclaration<Connection : ConnectionConfigBase> : ConfigDeclaration<Connection>() {
 
   companion object {
     /** list of available connection configurables. */

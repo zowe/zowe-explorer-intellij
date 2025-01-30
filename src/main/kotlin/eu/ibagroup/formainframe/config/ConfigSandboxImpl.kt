@@ -187,7 +187,7 @@ class ConfigSandboxImpl : ConfigSandbox {
           .filterIsInstance<EntityWithUuid>()
           .map {
             with(CredentialService.getService()) {
-              Credentials(it.uuid, getUsernameByKey(it.uuid) ?: "", getPasswordByKey(it.uuid) ?: "")
+              Credentials(it.uuid, getUsernameByKey(it.uuid) ?: "", getPasswordByKey(it.uuid) ?: charArrayOf())
             }
           }
       } else {

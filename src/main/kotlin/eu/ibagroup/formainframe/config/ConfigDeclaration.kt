@@ -27,16 +27,15 @@ import eu.ibagroup.formainframe.config.connect.ZOSMFConnectionConfigDeclaration
 interface ConfigDeclarationFactory {
 
   /** Creates instance of [ConfigDeclaration]. */
-  fun buildConfigDeclaration(crudable: Crudable): ConfigDeclaration<*>
+  fun buildConfigDeclaration(): ConfigDeclaration<*>
 }
 
 /**
  * Declares config class, that will be stored in persisted state [ConfigService].
  * @param T template parameter that specifies config class.
- * @property crudable instance of [Crudable] through which to work with config data.
  * @author Valiantsin Krus
  */
-abstract class ConfigDeclaration<T: Any>(val crudable: Crudable) {
+abstract class ConfigDeclaration<T: Any> {
 
   /** Instance of connection config class */
   abstract val clazz: Class<out T>
@@ -79,8 +78,11 @@ abstract class ConfigDeclaration<T: Any>(val crudable: Crudable) {
   }
 
 
-  /** Provider decider in for config class. */
-  abstract fun getDecider(): ConfigDecider<T>
+  /**
+   * Provider decider in for config class.
+   * @param crudable instance of [Crudable] through which to work with config data.
+   * */
+  abstract fun getDecider(crudable: Crudable): ConfigDecider<T>
 
   /** Builds configurable that will be displayed in settings. */
   open fun getConfigurable(): BoundSearchableConfigurable? = null

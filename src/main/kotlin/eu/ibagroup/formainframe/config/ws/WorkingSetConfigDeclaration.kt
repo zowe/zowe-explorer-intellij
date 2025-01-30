@@ -26,8 +26,8 @@ import eu.ibagroup.formainframe.utils.crudable.Crudable
  */
 class FilesWorkingSetConfigDeclarationFactory : ConfigDeclarationFactory {
 
-  override fun buildConfigDeclaration(crudable: Crudable): ConfigDeclaration<*> {
-    return object : WorkingSetConfigDeclaration<FilesWorkingSetConfig>(crudable, FilesWorkingSetConfig::class.java) {
+  override fun buildConfigDeclaration(): ConfigDeclaration<*> {
+    return object : WorkingSetConfigDeclaration<FilesWorkingSetConfig>(FilesWorkingSetConfig::class.java) {
       override val configPriority = 3.0
       override fun getConfigurable() = FilesWSConfigurable()
     }
@@ -40,8 +40,8 @@ class FilesWorkingSetConfigDeclarationFactory : ConfigDeclarationFactory {
  * @author Valiantsin Krus
  */
 class JesWorkingSetConfigDeclarationFactory : ConfigDeclarationFactory {
-  override fun buildConfigDeclaration(crudable: Crudable): ConfigDeclaration<*> {
-    return object : WorkingSetConfigDeclaration<JesWorkingSetConfig>(crudable, JesWorkingSetConfig::class.java) {
+  override fun buildConfigDeclaration(): ConfigDeclaration<*> {
+    return object : WorkingSetConfigDeclaration<JesWorkingSetConfig>(JesWorkingSetConfig::class.java) {
       override val configPriority = 2.0
       override fun getConfigurable() = JesWsConfigurable()
     }
@@ -50,16 +50,14 @@ class JesWorkingSetConfigDeclarationFactory : ConfigDeclarationFactory {
 
 /**
  * Abstract class with wrapped logic of working with working sets configs.
- * @param crudable instance of [Crudable] through which to work with config data.
  * @param clazz instance of class that implements [WorkingSetConfig].
  * @author Valiantsin Krus.
  */
 abstract class WorkingSetConfigDeclaration<WS : WorkingSetConfig>(
-  crudable: Crudable,
   override val clazz: Class<out WS>
-) : ConfigDeclaration<WS>(crudable) {
+) : ConfigDeclaration<WS>() {
 
-  override fun getDecider(): ConfigDecider<WS> {
+  override fun getDecider(crudable: Crudable): ConfigDecider<WS> {
     return object : ConfigDecider<WS>() {
 
       /**

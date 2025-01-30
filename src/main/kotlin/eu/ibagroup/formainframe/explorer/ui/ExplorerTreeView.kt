@@ -287,7 +287,8 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
         override fun after(events: List<VFileEvent>) {
           events
             .mapNotNull {
-              val nodes = myFsTreeStructure.findByVirtualFile(it.file ?: return@mapNotNull null)
+              val eventFile = it.file ?: return@mapNotNull null
+              val nodes = myFsTreeStructure.findByVirtualFile(eventFile)
               when {
                 this@ExplorerTreeView
                   .ignoreVFSChangeEvents

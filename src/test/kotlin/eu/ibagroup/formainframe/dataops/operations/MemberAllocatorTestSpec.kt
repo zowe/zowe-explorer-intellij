@@ -54,8 +54,8 @@ class MemberAllocatorTestSpec : WithApplicationShouldSpec({
           return "test"
         }
 
-        override fun getPasswordByKey(connectionConfigUuid: String): String {
-          return "test"
+        override fun getPasswordByKey(connectionConfigUuid: String): CharArray? {
+          return "test".toCharArray()
         }
       }
 

@@ -27,10 +27,8 @@ import eu.ibagroup.formainframe.common.ui.showUntilDone
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
 import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.dataops.DataOpsManager
-import eu.ibagroup.formainframe.dataops.RemoteQuery
 import eu.ibagroup.formainframe.dataops.attributes.RemoteUssAttributes
 import eu.ibagroup.formainframe.dataops.exceptions.CredentialsNotFoundForConnectionException
-import eu.ibagroup.formainframe.dataops.fetch.UssQuery
 import eu.ibagroup.formainframe.dataops.getAttributesService
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationOperation
 import eu.ibagroup.formainframe.dataops.operations.UssAllocationParams
@@ -125,12 +123,6 @@ abstract class CreateUssEntityAction : AnAction() {
               progressIndicator = indicator
             )
 
-            val fileFetchProvider = dataOpsManager
-              .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
-                UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
-              )
-            ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }
-
             changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
 
             AnalyticsService.getService().trackAnalyticsEvent(
@@ -140,7 +132,10 @@ abstract class CreateUssEntityAction : AnAction() {
               )
             )
           }.onSuccess {
-            ussDirNode?.cleanCache(false)
+            ussDirNode?.let {
+              view.myFsTreeStructure.findByPredicate { node -> node is FetchNode && node.query == it.query }
+                .forEach { node -> node.cleanCacheIfPossible(false) }
+            }
             res = true
           }.onFailure { t ->
             NotificationsService.errorNotification(t, project)

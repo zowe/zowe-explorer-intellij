@@ -19,7 +19,27 @@ package eu.ibagroup.formainframe.config.connect.ui
  */
 data class ChangePasswordDialogState(
   var username: String = "",
-  var oldPassword: String = "",
-  var newPassword: String = "",
-  var confirmPassword: String = ""
-)
+  var oldPassword: CharArray = charArrayOf(),
+  var newPassword: CharArray = charArrayOf(),
+  var confirmPassword: CharArray = charArrayOf()
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ChangePasswordDialogState) return false
+
+    if (username != other.username) return false
+    if (!oldPassword.contentEquals(other.oldPassword)) return false
+    if (!newPassword.contentEquals(other.newPassword)) return false
+    if (!confirmPassword.contentEquals(other.confirmPassword)) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = username.hashCode()
+    result = 31 * result + oldPassword.contentHashCode()
+    result = 31 * result + newPassword.contentHashCode()
+    result = 31 * result + confirmPassword.contentHashCode()
+    return result
+  }
+}

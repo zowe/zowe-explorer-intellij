@@ -58,16 +58,16 @@ class CredentialServiceImpl : CredentialService {
    * Get user password by connection config UUID.
    * @see CredentialService.getPasswordByKey
    */
-  override fun getPasswordByKey(connectionConfigUuid: String): String? {
+  override fun getPasswordByKey(connectionConfigUuid: String): CharArray? {
     val credentials = getCredentials(connectionConfigUuid)
-    return credentials?.getPasswordAsString()
+    return credentials?.password?.chars
   }
 
   /**
    * Set user credentials.
    * @see CredentialService.setCredentials
    */
-  override fun setCredentials(connectionConfigUuid: String, username: String, password: String) {
+  override fun setCredentials(connectionConfigUuid: String, username: String, password: CharArray) {
     val credentialAttributes = createCredentialAttributes(connectionConfigUuid)
     val credentials = Credentials(username, password)
     runBackgroundableTask("Setting user credentials") {

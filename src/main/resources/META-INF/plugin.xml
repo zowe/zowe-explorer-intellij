@@ -584,6 +584,12 @@ Example of how to see the output:<br/>
             <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
         </action>
 
+        <action id="eu.ibagroup.formainframe.explorer.actions.ExecuteRexxAction"
+                class="eu.ibagroup.formainframe.explorer.actions.rexx.ExecuteRexxAction"
+                text="Execute REXX"
+                description="Executes REXX from a given member"
+                icon="AllIcons.Actions.Execute"/>
+
         <action id="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"
                 class="eu.ibagroup.formainframe.explorer.actions.DuplicateMemberAction"
                 text="Duplicate"
@@ -771,6 +777,7 @@ Example of how to see the output:<br/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.AllocateLikeAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.SubmitJobAction"/>
+            <reference id="eu.ibagroup.formainframe.explorer.actions.ExecuteRexxAction"/>
             <separator/>
             <reference id="eu.ibagroup.formainframe.explorer.actions.RefreshNodeAction"/>
             <separator/>

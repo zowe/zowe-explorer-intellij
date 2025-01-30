@@ -17,6 +17,7 @@ package eu.ibagroup.formainframe.dataops.operations
 import com.intellij.openapi.progress.ProgressIndicator
 import eu.ibagroup.formainframe.api.ZosmfApi
 import eu.ibagroup.formainframe.config.connect.ConnectionConfig
+import eu.ibagroup.formainframe.config.connect.CredentialService
 import eu.ibagroup.formainframe.config.connect.authToken
 import eu.ibagroup.formainframe.dataops.exceptions.CallException
 import eu.ibagroup.formainframe.explorer.config.Presets
@@ -37,12 +38,12 @@ class DatasetAllocatorTestSpec : WithApplicationShouldSpec({
 
   afterSpec {
     unmockkAll()
+    clearAllMocks()
   }
 
   context("run dataset allocation operation") {
     val datasetAllocator = spyk<DatasetAllocator>()
     val progressIndicator = mockk<ProgressIndicator>()
-//    mockkStatic("eu.ibagroup.formainframe.config.connect.CredentialServiceKt")
     val connectionConfig = mockk<ConnectionConfig>()
     val datasetAllocationParams = mockk<DatasetAllocationParams>()
     val datasetAllocationOperation = mockk<DatasetAllocationOperation>()

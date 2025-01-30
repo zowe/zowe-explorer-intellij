@@ -101,8 +101,8 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
           return "user"
         }
 
-        override fun getPasswordByKey(connectionConfigUuid: String): String {
-          return "pas"
+        override fun getPasswordByKey(connectionConfigUuid: String): CharArray? {
+          return "pas".toCharArray()
         }
       }
 

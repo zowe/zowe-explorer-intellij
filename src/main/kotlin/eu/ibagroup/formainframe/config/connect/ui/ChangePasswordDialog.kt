@@ -32,7 +32,7 @@ class ChangePasswordDialog(
 
   init {
     init()
-    title = "Change user password"
+    title = "Change User Password"
   }
 
   /** Create dialog with the fields */
@@ -54,8 +54,8 @@ class ChangePasswordDialog(
       row {
         label("Old password: ")
           .widthGroup(sameWidthLabelsGroup)
-        cell(JPasswordField())
-          .bindText(state::oldPassword)
+        passwordField()
+          .bindText({ String(state.oldPassword) }, { state.oldPassword = it.toCharArray() })
           .applyToComponent {
             this.layout = BorderLayout()
             addShowHidePasswordIcon(this)
@@ -66,14 +66,14 @@ class ChangePasswordDialog(
       row {
         label("New password: ")
           .widthGroup(sameWidthLabelsGroup)
-        cell(JPasswordField())
-          .bindText(state::newPassword)
+        passwordField()
+          .bindText({ String(state.newPassword) }, { state.newPassword = it.toCharArray() })
           .applyToComponent {
             this.layout = BorderLayout()
             addShowHidePasswordIcon(this)
             addFocusListener(object : FocusAdapter() {
               override fun focusLost(e: FocusEvent?) {
-                state.newPassword = String(this@applyToComponent.password)
+                state.newPassword = this@applyToComponent.password
               }
             })
           }
@@ -83,8 +83,8 @@ class ChangePasswordDialog(
       row {
         label("Confirm password: ")
           .widthGroup(sameWidthLabelsGroup)
-        cell(JPasswordField())
-          .bindText(state::confirmPassword)
+        passwordField()
+          .bindText({ String(state.confirmPassword) }, { state.confirmPassword = it.toCharArray() })
           .applyToComponent {
             this.layout = BorderLayout()
             addShowHidePasswordIcon(this)
@@ -115,6 +115,5 @@ class ChangePasswordDialog(
 
     component.add(eyeIcon, BorderLayout.EAST)
   }
-
 
 }
