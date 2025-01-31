@@ -13,11 +13,14 @@ on:
 
 jobs:
   changelog-and-preparations:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
+    
+      - name: Install libsecret-tools
+        run: sudo apt-get install -y libsecret-tools
 
       - name: Checkout the plugin GitHub repository
         uses: actions/checkout@v4
@@ -108,7 +111,7 @@ jobs:
 
   release:
     needs: [changelog-and-preparations]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     strategy:
@@ -130,6 +133,9 @@ jobs:
       max-parallel: 10
       fail-fast: false
     steps:
+
+      - name: Install libsecret-tools
+        run: sudo apt-get install -y libsecret-tools
 
       - name: Checkout the plugin GitHub repository
         uses: actions/checkout@v4

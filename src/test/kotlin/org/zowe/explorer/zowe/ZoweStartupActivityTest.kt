@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.zowe.service.ZoweConfigService
 import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
@@ -51,6 +52,7 @@ class ZoweStartupActivityTest : WithApplicationShouldSpec({
     every { mockedZoweConfigService.deleteZoweConfig(type = any<ZoweConfigType>()) } answers {
       isConnDeleted = true
     }
+    every { mockedZoweConfigService.findAllZosmfExistingConnection(any<ZoweConfigType>()) } returns listOf(mockk<ConnectionConfig>())
     var ret = 0
     val showDialogRef: (Project, String, String, Array<String>, Int, Icon) -> Int = Messages::showDialog
     mockkStatic(showDialogRef as KFunction<*>)
@@ -62,6 +64,7 @@ class ZoweStartupActivityTest : WithApplicationShouldSpec({
     }
 
     should("showDialogForDeleteZoweConfigIfNeeded NEED_TO_ADD") {
+      every { mockedZoweConfigService.findAllZosmfExistingConnection(any<ZoweConfigType>()) } returns emptyList()
       showDialogForDeleteZoweConfigIfNeeded(mockedProject, ZoweConfigType.LOCAL)
       isDialogCalled shouldBe false
     }
@@ -73,6 +76,7 @@ class ZoweStartupActivityTest : WithApplicationShouldSpec({
     }
 
     should("showDialogForDeleteZoweConfigIfNeeded SYNCHRONIZED") {
+      every { mockedZoweConfigService.findAllZosmfExistingConnection(any<ZoweConfigType>()) } returns listOf(mockk<ConnectionConfig>())
       every { mockedZoweConfigService.getZoweConfigState(type = any<ZoweConfigType>()) } returns ZoweConfigState.SYNCHRONIZED
       showDialogForDeleteZoweConfigIfNeeded(mockedProject, ZoweConfigType.LOCAL)
       isDialogCalled shouldBe true
