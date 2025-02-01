@@ -13,6 +13,7 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 * Bugfix: Fixed invalid message in tree related to a server certificate ([82b4af43](https://github.com/zowe/zowe-explorer-intellij/commit/82b4af43))
 * Bugfix: Fixed regex analysis failure ([6b00aa4c](https://github.com/zowe/zowe-explorer-intellij/commit/6b00aa4c))
 * Bugfix: Fixed issue with connection delete ([dee0202e](https://github.com/zowe/zowe-explorer-intellij/commit/dee0202e))
+* Bugfix: Fixed connection not showing after creation ([b1cdf610](https://github.com/zowe/zowe-explorer-intellij/commit/b1cdf610))
 * Bugfix: Fixed error when uploading local file to USS ([c5dcd7fa](https://github.com/zowe/zowe-explorer-intellij/commit/c5dcd7fa))
 * Bugfix: Fixed issue when error message does not disappear after errors are corrected in a Job Filter ([64a6d209](https://github.com/zowe/zowe-explorer-intellij/commit/64a6d209))
 * Bugifx: Fixed NullPointerException on cancel operation ([fa2eaf5b](https://github.com/zowe/zowe-explorer-intellij/commit/fa2eaf5b))
