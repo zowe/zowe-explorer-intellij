@@ -21,6 +21,9 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 * Feature: Make sync operations blocking ([fbf42408](https://github.com/zowe/zowe-explorer-intellij/commit/fbf42408))
 * Feature: USS Properties: change feature for owner and group ([3696042f](https://github.com/zowe/zowe-explorer-intellij/commit/3696042f))
 * Feature: Disable "Reopen session" button for TSO Console when CredentialsNotFound exception appears ([8bdc90c4](https://github.com/zowe/zowe-explorer-intellij/commit/8bdc90c4))
+* Feature: Now if the Zowe config is already parsed, the plugin gives an option to edit the existing config ([1cb03710](https://github.com/zowe/zowe-explorer-intellij/commit/1cb03710))
+* Feature: When zowe.config.json is opened, plus button appears if the connection is not added yet ([185e0dd2](https://github.com/zowe/zowe-explorer-intellij/commit/185e0dd2))
+* Feature: Zowe connection indexes added ([4646b27a](https://github.com/zowe/zowe-explorer-intellij/commit/4646b27a))
 
 ### Bugfixes
 
