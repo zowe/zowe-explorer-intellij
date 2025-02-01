@@ -6,6 +6,7 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ### Bugfixes
 
+* Bugfix: Fixed connection not showing after creation ([b1cdf610](https://github.com/zowe/zowe-explorer-intellij/commit/b1cdf610))
 * Bugfix: Fixed error when uploading local file to USS ([c5dcd7fa](https://github.com/zowe/zowe-explorer-intellij/commit/c5dcd7fa))
 * Bugfix: Fixed issue when error message does not disappear after errors are corrected in a Job Filter ([64a6d209](https://github.com/zowe/zowe-explorer-intellij/commit/64a6d209))
 * Bugfix: Fixed NullPointerException on cancel operation ([f8d08fd4](https://github.com/zowe/zowe-explorer-intellij/commit/f8d08fd4))
