@@ -24,10 +24,8 @@ import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.RemoteQuery
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.exceptions.CredentialsNotFoundForConnectionException
-import org.zowe.explorer.dataops.fetch.UssQuery
 import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.dataops.operations.UssAllocationOperation
 import org.zowe.explorer.dataops.operations.UssAllocationParams
@@ -122,15 +120,12 @@ abstract class CreateUssEntityAction : AnAction() {
               progressIndicator = indicator
             )
 
-            val fileFetchProvider = dataOpsManager
-              .getFileFetchProvider<UssQuery, RemoteQuery<ConnectionConfig, UssQuery, Unit>, MFVirtualFile>(
-                UssQuery::class.java, RemoteQuery::class.java, MFVirtualFile::class.java
-              )
-            ussDirNode?.query?.let { query -> fileFetchProvider.reload(query) }
-
             changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
           }.onSuccess {
-            ussDirNode?.cleanCache(false)
+            ussDirNode?.let {
+              view.myFsTreeStructure.findByPredicate { node -> node is FetchNode && node.query == it.query }
+                .forEach { node -> node.cleanCacheIfPossible(false) }
+            }
             res = true
           }.onFailure { t ->
             NotificationsService.errorNotification(t, project)

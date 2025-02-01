@@ -49,7 +49,7 @@ To start using the plugin:
 
 ## Developer guide
 
-- IntelliJ IDEA platform IDE version 2022.3 and later (Community will be enough)
+- IntelliJ IDEA platform IDE version 2023.1 and later (Community will be enough)
 - Java SDK 17 (IntelliJ IDEA platform IDE's built-in)
 
 ### Setup steps
