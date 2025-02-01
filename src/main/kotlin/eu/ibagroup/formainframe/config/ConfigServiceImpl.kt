@@ -77,7 +77,7 @@ class ConfigServiceImpl : ConfigService {
   /** List of registered config declarations */
   private val configDeclarations: List<ConfigDeclaration<out Any>> by lazy {
     ConfigDeclaration.EP.extensionList.map {
-      it.buildConfigDeclaration(crudable)
+      it.buildConfigDeclaration()
     }
   }
 
@@ -201,15 +201,17 @@ internal fun makeCrudableWithoutListeners(
   credentialsGetter: () -> MutableList<Credentials> = { mutableListOf() },
   stateGetter: () -> ConfigStateV2,
 ): Crudable {
+  lateinit var crudable: Crudable
+
   val crudableLists = CrudableLists(
-    addFilter = object: AddFilter {
+    addFilter = object : AddFilter {
       override operator fun <T : Any> invoke(clazz: Class<out T>, addingRow: T): Boolean {
-        return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canAdd(addingRow)
+        return ConfigService.instance.getConfigDeclaration(clazz).getDecider(crudable).canAdd(addingRow)
       }
     },
-    updateFilter = object: UpdateFilter {
-      override operator fun <T: Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
-        return ConfigService.instance.getConfigDeclaration(clazz).getDecider().canUpdate(currentRow, updatingRow)
+    updateFilter = object : UpdateFilter {
+      override operator fun <T : Any> invoke(clazz: Class<out T>, currentRow: T, updatingRow: T): Boolean {
+        return ConfigService.instance.getConfigDeclaration(clazz).getDecider(crudable).canUpdate(currentRow, updatingRow)
       }
     },
     nextUuidProvider = { UUID.randomUUID().toString() },
@@ -223,5 +225,7 @@ internal fun makeCrudableWithoutListeners(
       }
     }
   )
-  return ConcurrentCrudable(crudableLists, SimpleReadWriteAdapter())
+
+  crudable = ConcurrentCrudable(crudableLists, SimpleReadWriteAdapter())
+  return crudable
 }

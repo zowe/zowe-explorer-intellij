@@ -61,10 +61,10 @@ class ConfigTestSpec : WithApplicationShouldSpec({
         val mockConfigServiceInstance = mockk<ConfigService>()
         every {
           mockConfigServiceInstance.getConfigDeclaration(ConnectionConfig::class.java)
-        } returns ZOSMFConnectionConfigDeclaration(crudable)
+        } returns ZOSMFConnectionConfigDeclaration()
         every {
           mockConfigServiceInstance.getConfigDeclaration(Credentials::class.java)
-        } returns CredentialsConfigDeclaration(crudable)
+        } returns CredentialsConfigDeclaration()
 
         mockkObject(ConfigService)
         every { ConfigService.instance } returns mockConfigServiceInstance

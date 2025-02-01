@@ -6,6 +6,7 @@ All notable changes to the For Mainframe Plugin will be documented in this file.
 
 ### Bugfixes
 
+* Bugfix: Fixed connection not showing after creation ([b1cdf610](https://github.com/zowe/zowe-explorer-intellij/commit/b1cdf610))
 * Bugfix: Fixed error when uploading local file to USS ([c5dcd7fa](https://github.com/zowe/zowe-explorer-intellij/commit/c5dcd7fa))
 * Bugfix: Fixed issue when error message does not disappear after errors are corrected in a Job Filter ([64a6d209](https://github.com/zowe/zowe-explorer-intellij/commit/64a6d209))
 * Bugfix: Privacy Policy was open for modifications ([cd917844](https://github.com/zowe/zowe-explorer-intellij/commit/cd917844))

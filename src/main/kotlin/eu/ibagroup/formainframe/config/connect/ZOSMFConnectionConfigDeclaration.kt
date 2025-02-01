@@ -22,24 +22,22 @@ import eu.ibagroup.formainframe.utils.crudable.getByColumnLambda
  * @author Valiantsin Krus
  */
 class ConnectionConfigDeclarationFactory : ConfigDeclarationFactory {
-  override fun buildConfigDeclaration(crudable: Crudable): ConfigDeclaration<*> {
-    return ZOSMFConnectionConfigDeclaration(crudable)
+  override fun buildConfigDeclaration(): ConfigDeclaration<*> {
+    return ZOSMFConnectionConfigDeclaration()
   }
 }
 
 /**
  * Declares connection config that will represent connection to zosmf.
- * @param crudable instance of [Crudable] through which to work with config data.
  * @author Valiantsin Krus
  */
-class ZOSMFConnectionConfigDeclaration(crudable: Crudable) :
-  ConnectionConfigDeclaration<ConnectionConfig>(crudable) {
+class ZOSMFConnectionConfigDeclaration : ConnectionConfigDeclaration<ConnectionConfig>() {
 
   override val clazz = ConnectionConfig::class.java
   override val useCredentials = true
   override val configPriority = 1.0
 
-  override fun getDecider(): ConfigDecider<ConnectionConfig> {
+  override fun getDecider(crudable: Crudable): ConfigDecider<ConnectionConfig> {
     return object : ConfigDecider<ConnectionConfig>() {
       /**
        * Enables to add connection config only if no existing connection with such name found.
