@@ -32,7 +32,7 @@ jobs:
               ./gradlew uiTests
             reportName: ui-test-fails-report-linux
 
-          - os: macOS-latest
+          - os: macos-latest
             prepareEnv: echo "No preparations needed for MacOS"
             runTests: ./gradlew uiTests
             reportName: ui-test-fails-report-mac
@@ -51,11 +51,6 @@ jobs:
         with:
           distribution: zulu
           java-version: 21
-
-      - name: Setup FFmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3.1
-        with:
-          github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
 
       - name: Prepare test env
         run: ${{ matrix.prepareEnv }}

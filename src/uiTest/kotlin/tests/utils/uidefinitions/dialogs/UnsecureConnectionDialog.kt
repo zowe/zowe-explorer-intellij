@@ -10,26 +10,21 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
-package tests.utils.notification
+package tests.utils.uidefinitions.dialogs
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.components.*
 
-
-class CreateConnectionErrorNotification(val driver: Driver) {
-
+class UnsecureConnectionDialog(val driver: Driver) {
   lateinit var dialog: DialogUiComponent
-  val yesButton by lazy { dialog.actionButton { byVisibleText("Yes") } }
-  val noButton by lazy { dialog.actionButton { byVisibleText("No") } }
+  val proceedButton by lazy { dialog.actionButton { byVisibleText("Proceed") } }
 
   init {
     driver.ideFrame {
-      dialog = dialog(title = "Error Creating Connection")
-
+      dialog = dialog("//div[@class='JEditorPane' and @visible_text='Attempt to create an unsecured connection']/ancestor::div[@class='MyDialog'][1]")
     }
   }
-
-
 }

@@ -104,7 +104,7 @@ class ViewWsPropertyTest : IdeaInteractionClass() {
         responseDispatcher.injectAllocationResultPds(pdsName)
         responseDispatcher.injectAllocationResultPo(
             "PS",
-            TRACKS_ALLOCATION_UNIT_SHORT,
+            "TRK",
             dsName,
             VB_RECORD_FORMAT_SHORT,
             255
