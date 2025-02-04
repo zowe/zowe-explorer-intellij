@@ -15,8 +15,6 @@
 package testutils
 
 import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.ui.components.actionButton
-import com.intellij.driver.sdk.ui.components.dialog
 import com.intellij.driver.sdk.ui.components.ideFrame
 import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.driver.engine.BackgroundRun
@@ -61,13 +59,6 @@ class IdeRunManager private constructor() {
       val driver = createdRunManager.runningIde.driver
       if (!createdRunManager.isPolicyDialogAlreadyClosed) {
         driver.ideFrame {
-          // Dismiss policy dialog
-          val policyDialog = dialog(title = "For Mainframe Plugin Privacy Policy and Terms and Conditions")
-          assert(policyDialog.isVisible())
-          val dismissButton = policyDialog.actionButton { byText("Dismiss") }
-          dismissButton.setFocus()
-          dismissButton.click()
-
           createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
         }
         createdRunManager.isPolicyDialogAlreadyClosed = true

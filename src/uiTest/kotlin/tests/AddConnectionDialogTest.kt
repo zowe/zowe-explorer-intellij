@@ -79,8 +79,6 @@ class AddConnectionDialogTest {
   fun fieldsPresenceTest() {
     filesExplorerPanel.openExplorerToolWindow(ActionMenuPoints.CONNECTION)
 
-
-
     addConnectionDialog.passwordInput.click()
     assert(addConnectionDialog.connectionDialogPanel.isVisible())
     assert(addConnectionDialog.connectionNameLabel.isVisible())
@@ -105,9 +103,9 @@ class AddConnectionDialogTest {
     addConnectionDialog.urlInput.text = "https://${mockServer.hostName}:${mockServer.port}"
     addConnectionDialog.userNameInput.text = "userNameInput"
     addConnectionDialog.acceptSelfSignedCheckbox.click()
-    unsecureConnectionDialog.preceedButton.click()
+    unsecureConnectionDialog.proceedButton.click()
 
     addConnectionDialog.connectionDialogOkButton.click()
-    unsecureConnectionDialog.preceedButton.click()
+    unsecureConnectionDialog.proceedButton.click()
   }
 }

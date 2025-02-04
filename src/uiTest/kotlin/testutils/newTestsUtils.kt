@@ -74,7 +74,6 @@ fun createValidConnectionWithMock(testInfo: TestInfo, connectionName: String, id
 /**
  * Steps to create a connection(valid or invalid) from settings .
  */
-
 fun createConnection(
   connectionName: String,
   isValidConnection: Boolean,
@@ -93,9 +92,9 @@ fun createConnection(
   } else {
     addConnectionDialog.fillDialog(connectionName, "${url}1", user, password, useSsl)
   }
-  unsecureConnectionDialog.preceedButton.click()
+  unsecureConnectionDialog.proceedButton.click()
   addConnectionDialog.connectionDialogOkButton.click()
-  unsecureConnectionDialog.preceedButton.click()
+  unsecureConnectionDialog.proceedButton.click()
   if (isValidConnection.not()) {
     CreateConnectionErrorNotification(ideDriver).yesButton.click()
   }

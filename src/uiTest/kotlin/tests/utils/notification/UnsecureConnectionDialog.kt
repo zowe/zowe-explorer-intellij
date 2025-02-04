@@ -17,18 +17,13 @@ package tests.utils.notification
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.components.*
 
-
 class UnsecureConnectionDialog(val driver: Driver) {
-
   lateinit var dialog: DialogUiComponent
-  val preceedButton by lazy { dialog.actionButton { byVisibleText("Proceed") } }
+  val proceedButton by lazy { dialog.actionButton { byVisibleText("Proceed") } }
 
   init {
     driver.ideFrame {
       dialog = dialog(xpath = "//div[@accessiblename='Attempt to create an unsecured connection']")
-
     }
   }
-
-
 }

@@ -62,7 +62,7 @@ class SmokeTest {
     // Check input fields
     val inputFields = connectionDialogPanel.xx { byClass("JBTextField") }
     assert(inputFields.list().size == 3)
-    val passwordInput = connectionDialogPanel.x { byClass("JPasswordField") }
+    val passwordInput = connectionDialogPanel.x { byClass("JBPasswordField") }
     assert(passwordInput.isVisible())
 
     // Check question mark
@@ -329,40 +329,32 @@ class SmokeTest {
   private fun checkOtherSettingsTab(settingsDialog: UiComponent) {
     // Check all elements are in place
     val tabContents = settingsDialog.xx("//div[@class='DialogPanel']/div").list()
-    assert(tabContents[0].allTextAsString() == "Analytics")
-    val showPrivacyPolicyButton = tabContents[1].button("Show the Privacy Policy")
-    assert(showPrivacyPolicyButton.isVisible())
-    val privacyPolicyResult = tabContents[2].x(JLabelUiComponent::class.java) { byClass("JLabel") }
-    assert(privacyPolicyResult.getText() == "you haven't agreed to the collection and processing of data")
-    assert(tabContents[3].allTextAsString() == "Other Settings")
-    val batchAmountLabel = tabContents[4].x(JLabelUiComponent::class.java) { byClass("JLabel") }
+    assert(tabContents.size == 14)
+    assert(tabContents[0].allTextAsString() == "JES Explorer")
+    val maxRCSuccessLabel = tabContents[1].x(JLabelUiComponent::class.java) { byClass("JLabel") }
+    assert(maxRCSuccessLabel.getText() == "Max RC to consider as success")
+    val maxRCSuccessInput = tabContents[2].textField { byClass("JBTextField") }
+    assert(maxRCSuccessInput.text == "0")
+    val maxRCWarningLabel = tabContents[3].x(JLabelUiComponent::class.java) { byClass("JLabel") }
+    assert(maxRCWarningLabel.getText() == "Max RC to consider as warning")
+    val maxRCWarningInput = tabContents[4].textField { byClass("JBTextField") }
+    assert(maxRCWarningInput.text == "7")
+    val otherRCLabel = tabContents[5].x(JLabelUiComponent::class.java) { byClass("JLabel") }
+    assert(otherRCLabel.getText() == "Other RC value will be considered as an error")
+    assert(tabContents[6].allTextAsString() == "Other Settings")
+    val batchAmountLabel = tabContents[7].x(JLabelUiComponent::class.java) { byClass("JLabel") }
     assert(batchAmountLabel.getText() == "Batch amount to show per fetch")
-    val batchAmountInput = tabContents[5].textField { byClass("JBTextField") }
+    val batchAmountInput = tabContents[8].textField { byClass("JBTextField") }
     assert(batchAmountInput.text == "100")
-    val autoSyncCheckBox = tabContents[6].checkBox { byClass("JBCheckBox") }
+    val autoSyncCheckBox = tabContents[9].checkBox { byClass("JBCheckBox") }
     assert(!autoSyncCheckBox.isSelected())
     assert(autoSyncCheckBox.text == "Enable auto-sync with mainframe")
-    assert(tabContents[7].allTextAsString() == "Rate Us")
-    val reviewLabel = tabContents[8].x(JLabelUiComponent::class.java) { byClass("JLabel") }
+    val clearFilesCacheButton = tabContents[10].button { byClass("JButton") }
+    assert(clearFilesCacheButton.text == "Clear File Cache")
+    assert(tabContents[11].allTextAsString() == "Rate Us")
+    val reviewLabel = tabContents[12].x(JLabelUiComponent::class.java) { byClass("JLabel") }
     assert(reviewLabel.getText() == "If you want to leave a review:")
-    assert(tabContents[9].allTextAsString() == "click here")
-
-    // Check Privacy Policy dialog
-    showPrivacyPolicyButton.setFocus()
-    showPrivacyPolicyButton.click()
-
-    val privacyPolicyTitle = settingsDialog.x(
-      "//div[@class='DialogHeader']/div[@class='JLabel' and @visible_text='For Mainframe Plugin Privacy Policy and Terms and Conditions']"
-    )
-    assert(privacyPolicyTitle.isVisible())
-    val policyText = settingsDialog.x("//div[@class='JBTextArea' and contains(@visible_text,'Privacy Policy')]")
-    assert(policyText.isVisible() && policyText.allTextAsString().contains("Information IBA Group Collects"))
-    val bottomText = settingsDialog.x { byClass("DslLabel") }
-    assert(bottomText.isVisible() && bottomText.allTextAsString().contains("By clicking “I agree” the User agrees"))
-
-    val dismissButton = settingsDialog.actionButton { byText("Dismiss") }
-    dismissButton.setFocus()
-    dismissButton.click()
+    assert(tabContents[13].allTextAsString() == "click here")
   }
 
   /**
@@ -373,7 +365,7 @@ class SmokeTest {
   private fun checkSettings(ideFrameComponent: IdeaFrameUI, settingsDialog: UiComponent) {
     // Check that we are actually in the plug-in's settings
     val forMainframeBreadcrumb = settingsDialog.x {
-      and(byClass("Breadcrumbs"), byVisibleText("For Mainframe"))
+      and(byClass("Breadcrumbs"), byVisibleText("Zowe Explorer"))
     }
     assert(forMainframeBreadcrumb.isVisible())
 
@@ -492,25 +484,29 @@ class SmokeTest {
 
     val plusDropdownTooltipForConnection = ideFrameComponent.x { byClass("HeavyWeightWindow") }
     val plusDropdownList = plusDropdownTooltipForConnection.list { byClass("MyList") }
+    assert(plusDropdownList.isVisible())
 
-    assert(plusDropdownList.rawItems.size == 3)
+    assert(plusDropdownList.rawItems.size == 4)
     assert(plusDropdownList.rawItems[0] == "Connection")
+    assert(plusDropdownList.rawItems[1] == "Add Zowe Team Configuration")
     val wsItem = if (explorerViewType == "FileExplorerView") "Working Set" else "JES Working Set"
-    assert(plusDropdownList.rawItems[1] == wsItem)
-    assert(plusDropdownList.rawItems[2] == "TSO Console")
+    assert(plusDropdownList.rawItems[2] == wsItem)
+    assert(plusDropdownList.rawItems[3] == "TSO Console")
 
     // Check disabled items are functioning correctly
-    plusDropdownList.clickItemAtIndex(1) // Working Set
-    assert(plusDropdownList.isVisible())
-    plusDropdownList.clickItemAtIndex(2) // TSO Console
-    assert(plusDropdownList.isVisible())
-    plusDropdownList.hoverItemAtIndex(2) // TSO Console tooltip
+    plusDropdownList.clickItemAtIndex(2) // Working Set
+    plusDropdownList.hoverItemAtIndex(2) // Working Set tooltip
+    assert(
+      ideFrameComponent.x { and(byClass("Header"), byVisibleText("Create connection first")) }.isVisible()
+    )
+    plusDropdownList.clickItemAtIndex(3) // TSO Console
+    plusDropdownList.hoverItemAtIndex(3) // TSO Console tooltip
     assert(
       ideFrameComponent.x { and(byClass("Header"), byVisibleText("Create connection first")) }.isVisible()
     )
 
     // Check 'Connection' dialog is opened and correct for File Explorer
-    plusDropdownList.clickItem("Connection")
+    plusDropdownList.clickItemAtIndex(0)
     val explorerViewConnectionDialog = ideFrameComponent.dialog(title = "Add Connection")
     assert(explorerViewConnectionDialog.isVisible())
 
@@ -524,14 +520,14 @@ class SmokeTest {
     ideDriver.ideFrame {
       // Open the plug-in's tool window view
       val forMainframeTool = rightToolWindowToolbar.actionButton {
-        byAttribute("myaction", "For Mainframe (null)")
+        byAttribute("myaction", "Zowe Explorer (null)")
       }
       assert(forMainframeTool.isVisible())
       forMainframeTool.setFocus()
       forMainframeTool.click()
 
       // Check tool window elements are in place
-      val forMainframeTabs = x("//div[@class='TabPanel' and div[@class='BaseLabel' and @visible_text='For Mainframe']]")
+      val forMainframeTabs = x("//div[@class='TabPanel' and div[@class='BaseLabel' and @visible_text='Zowe Explorer']]")
 
       val fileExplorerTab = forMainframeTabs.x { byText("File Explorer") }
       assert(fileExplorerTab.isVisible())

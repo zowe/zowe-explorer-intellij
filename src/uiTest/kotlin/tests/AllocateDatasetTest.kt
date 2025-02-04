@@ -104,8 +104,6 @@ class AllocateDatasetTest {
       // Avoid check connection
       Thread.sleep(3000)
       createWsAndMask(ideDriver, wsName, connectionName, listOf(allocMask))
-
-
     }
 
     @JvmStatic
@@ -155,7 +153,5 @@ class AllocateDatasetTest {
     addWsNotification.skipButton.click()
 
     assert(isNotificationShown)
-
   }
-
 }

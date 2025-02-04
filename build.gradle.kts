@@ -379,6 +379,7 @@ val uiTests by intellijPlatformTesting.testIdeUi.registering {
 //    testImplementation(libs.junit.jupiter.engine)
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.junit.jupiter.params)
+    testImplementation(libs.okhttp3.logging.interceptor)
     testImplementation(libs.okhttp3.mockwebserver)
     testImplementation(libs.okhttp3.okhttp.tls)
     // TODO: revise and delete old unnecessary deps
