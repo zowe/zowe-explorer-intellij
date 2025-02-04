@@ -43,7 +43,7 @@ import javax.swing.JComponent
  * Class which represents TSO console creation action
  */
 class TsoConsoleCreateAction : AnAction() {
-  private val presentationText = "Zowe TSO Console"
+  private val presentationText = "TSO Console"
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT

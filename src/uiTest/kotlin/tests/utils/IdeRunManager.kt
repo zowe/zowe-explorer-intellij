@@ -1,23 +1,22 @@
 /*
- * Copyright (c) 2024 IBA Group.
- *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
+ * Copyright Contributors to the Zowe Project.
+ *
  * Contributors:
- *   IBA Group
  *   Zowe Community
+ *   IBA Group
+ *   Uladzislau Kalesnikau
  */
 
-package testutils
+package tests.utils
 
 import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.ui.components.actionButton
-import com.intellij.driver.sdk.ui.components.dialog
-import com.intellij.driver.sdk.ui.components.ideFrame
+import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.runIdeWithDriver
@@ -29,14 +28,16 @@ import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.waitForDumbMode
-import java.nio.file.Paths
+import java.nio.file.*
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.minutes
 
 /** IDE run manager. Provides functionalities to control IDE run process */
 class IdeRunManager private constructor() {
   private val ideVersion by lazy { System.getProperty("ide.test.version") }
   private val pluginPathStr by lazy { System.getProperty("plugin.path") }
-  private val mockProjectRelativePathStr by lazy { System.getProperty("ui.tests.mock.project.path") }
+  private val mockProjectRelativePathStr by lazy { System.getProperty("ui.test.mock.project.path") }
   private val testCaseDesc by lazy {
     TestCase(IdeProductProvider.IC, LocalProjectInfo(Paths.get(mockProjectRelativePathStr)))
   }
@@ -44,12 +45,14 @@ class IdeRunManager private constructor() {
     .newContext("test_plugin_action", testCase = testCaseDesc.useRelease(ideVersion))
     .prepareProjectCleanImport()
     .disableAutoImport(disabled = true)
-  private var isPolicyDialogAlreadyClosed = false
 
   val runningIde: BackgroundRun
 
   companion object {
+    private val formatter = DateTimeFormatter.ofPattern("yyyy_MMM_dd_HH_mm_ss_z")
     private val createdRunManager by lazy { IdeRunManager() }
+
+    private var isIDEAlreadyClosed = false
 
     /**
      * Prepare the IDE run manager instance.
@@ -57,32 +60,63 @@ class IdeRunManager private constructor() {
      * If the initialization is already done, will just return the IDE run manager instance
      */
     fun prepareRunManager(): IdeRunManager {
-      createdRunManager.runningIde
-      val driver = createdRunManager.runningIde.driver
-      if (!createdRunManager.isPolicyDialogAlreadyClosed) {
-        driver.ideFrame {
-          // Dismiss policy dialog
-          val policyDialog = dialog(title = "For Mainframe Plugin Privacy Policy and Terms and Conditions")
-          assert(policyDialog.isVisible())
-          val dismissButton = policyDialog.actionButton { byText("Dismiss") }
-          dismissButton.setFocus()
-          dismissButton.click()
-
-          createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
-        }
-        createdRunManager.isPolicyDialogAlreadyClosed = true
-      }
+      assert(!isIDEAlreadyClosed) { "IDE is already closed" }
+      createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
       return createdRunManager
     }
 
     /** Close the running IDE after tests are completed */
     fun closeIdeAfterTests() {
+      assert(!isIDEAlreadyClosed) { "IDE is already closed" }
       prepareRunManager().closeIde()
+      isIDEAlreadyClosed = true
     }
 
     /** Get the running IDE driver */
     fun getIdeDriver(): Driver {
+      assert(!isIDEAlreadyClosed) { "IDE is already closed" }
       return prepareRunManager().runningIde.driver
+    }
+
+    /**
+     * Take current IDE state screenshot.
+     * It makes a fullscreen screenshot and places the screenshot under a reports folder
+     * @param customScreenshotName custom screenshot file name with extension
+     */
+    fun takeCurrentIDEStateDebugScreenshot(customScreenshotName: String = "") {
+      assert(!isIDEAlreadyClosed) { "IDE is already closed" }
+
+      val testContextFolder = "debug"
+      prepareRunManager().runningIde.driver.takeScreenshot(testContextFolder)
+      val screenshotPath = prepareRunManager()
+        .testContext
+        .paths
+        .testHome
+        .resolve("log")
+        .resolve("screenshots")
+        .resolve(testContextFolder)
+        .resolve("full_screen.png")
+
+      val reportsFolderPath = Paths.get(System.getProperty("user.dir"), "build", "reports")
+      val screenshotPlacingPath = if (customScreenshotName.isNotEmpty()) {
+        reportsFolderPath.resolve(customScreenshotName)
+      } else {
+        val timestamp = ZonedDateTime.now().format(formatter)
+        reportsFolderPath.resolve("full_screen_${timestamp}.png")
+      }
+
+      Files.copy(screenshotPath, screenshotPlacingPath, StandardCopyOption.REPLACE_EXISTING)
+    }
+
+    /** Dump IDE XPath tree as an HTML doc */
+    fun dumpIDEXPathTree() {
+      assert(!isIDEAlreadyClosed) { "IDE is already closed" }
+
+      val timestamp = ZonedDateTime.now().format(formatter)
+      val reportsFolderPathStr = Paths.get(System.getProperty("user.dir"), "build", "reports").toString()
+
+      prepareRunManager().runningIde.driver.ui.robotProvider
+        .saveHierarchy(reportsFolderPathStr, "xpath_dump_${timestamp}.html")
     }
   }
 
@@ -99,6 +133,12 @@ class IdeRunManager private constructor() {
       commands = commands,
       commandLine = {
         IDECommandLine.OpenTestCaseProject(this)
+      },
+      runTimeout = 60.minutes,
+      configure = {
+        addVMOptionsPatch {
+          clearSystemProperty("ide.performance.screenshot")
+        }
       }
     )
   }

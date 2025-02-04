@@ -10,111 +10,170 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package tests
 
-import auxiliary.ZOS_USERID
-import auxiliary.mockServer
-import auxiliary.responseDispatcher
-import auxiliary.startMockServer
 import io.kotest.core.annotation.Description
-import testutils.*
-
 import com.intellij.driver.client.Driver
+import okhttp3.mockwebserver.MockResponse
 import org.junit.jupiter.api.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import tests.utils.FilesExplorerPanel
-import tests.utils.dialogs.AddConnectionDialog
-import tests.utils.dialogs.AllocateDatasetDialog
+import tests.utils.*
+import tests.utils.uidefinitions.dialogs.AddConnectionDialog
+import tests.utils.uidefinitions.dialogs.AllocateDatasetDialog
 import tests.utils.notification.AddWorkingSetSuccessNotification
-import tests.utils.notification.UnsecureConnectionDialog
-
-import workingset.*
-
+import tests.utils.uidefinitions.dialogs.UnsecureConnectionDialog
+import tests.utils.uidefinitions.ActionMenuPoints
+import tests.utils.uidefinitions.FilesExplorerPanel
+import tests.utils.uidefinitions.dialogs.AddWorkingSetDialog
 import java.util.stream.Stream
+
+private val dsTemplate =
+  "{" +
+  "\"dsname\": \"###dsname###\"," +
+  "\"blksz\": \"###blksz###\"," +
+  "\"catnm\": \"CATALOG.Z23D.MASTER\"," +
+  "\"cdate\": \"2023/08/28\"," +
+  "\"dev\": \"3390\"," +
+  "\"dsorg\": \"###dsorg###\"," +
+  "\"edate\": \"***None***\"," +
+  "\"extx\": \"1\"," +
+  "\"lrecl\": \"###lrecl###\"," +
+  "\"migr\": \"NO\"," +
+  "\"mvol\": \"N\"," +
+  "\"ovf\": \"NO\"," +
+  "\"rdate\": \"2024/10/09\"," +
+  "\"recfm\": \"###recfm###\"," +
+  "\"sizex\": \"6\"," +
+  "\"spacu\": \"###spacu###\"," +
+  "\"used\": \"16\"," +
+  "\"vol\": \"D3SYS1\"," +
+  "\"vols\": \"D3SYS1\"" +
+  "}"
 
 @Description("Tests to check the functionality associated with dataset allocation")
 class AllocateDatasetTest {
-  private lateinit var ideDriver: Driver
-  private lateinit var filesExplorerPanel: FilesExplorerPanel
   lateinit var addConnectionDialog: AddConnectionDialog
-  private lateinit var unsecureConnectionDialog: UnsecureConnectionDialog
   private lateinit var allocateDatasetDialog: AllocateDatasetDialog
   private lateinit var addWsNotification: AddWorkingSetSuccessNotification
 
   companion object {
-    const val connectionName = "valid connection"
-    const val wsName = "WS1"
-    private val allocMask = Pair("$ZOS_USERID.ALLOC.*", "z/OS")
+    const val connectionName = "CON00001"
+    const val wsName = "WS000001"
+    private val tstHlq = "$UI_TEST_USERNAME.UI.REGRESS.TEST"
+    private val allocMask = Pair("$tstHlq.*", "z/OS")
+    private val createdDatasets = mutableListOf<String>()
+
+    private lateinit var ideDriver: Driver
+    private lateinit var filesExplorerPanel: FilesExplorerPanel
 
     @JvmStatic
     fun provideOrgTypes(): Stream<Arguments> {
-      val datasetOrg = listOf(
-        DatasetOrganization.SEQUENTIAL_ORG_FULL_ITEM,
-        DatasetOrganization.PO_ORG_FULL_ITEM,
-        DatasetOrganization.POE_ORG_FULL_ITEM
-      )
+      val dsNameToDsOrg = listOf(DsOrg.PS, DsOrg.PO, DsOrg.POE)
 
-      return RecordFormatsShort.entries.flatMap { recordFormat ->
-        datasetOrg.map { organisationType ->
-          val datasetOrgShort = organisationType.value.substringAfter('(').substringBefore(')')
-          val allocateDatasetPram = AllocateDatasetParams(
-            name = datasetOrgShort,
-            preset = "Custom Dataset",
-            primaryAlloc = "10",
-            blockSize = "3200",
-            secondaryAlloc = "1",
-            avgBlockLen = "0",
-            unit = TRACKS_ALLOCATION_UNIT_SHORT,
-            dsOrganisationShort = datasetOrgShort
-          )
-          allocateDatasetPram.organisation = organisationType
-          allocateDatasetPram.format = recordFormat.name
-          if (organisationType != DatasetOrganization.SEQUENTIAL_ORG_FULL_ITEM) {
-            allocateDatasetPram.dirBlock = "1"
+      return RecFM
+        .entries
+        .filter { recordFormat -> recordFormat != RecFM.U }
+        .flatMap { recordFormat ->
+          dsNameToDsOrg.map { dsOrg ->
+            val dirBlock = if (dsOrg != DsOrg.PS) "1" else null
+            val lrecl = if (recordFormat == RecFM.F) "3200" else "80"
+            val allocateDatasetParams = AllocateDatasetParams(
+              name = "${tstHlq}.${calcDsHlqLastElem(dsOrg.value.short)}",
+              preset = "Custom Dataset",
+              dsOrg = dsOrg,
+              primAlloc = "10",
+              secAlloc = "1",
+              blksz = "3200",
+              avgBlkLen = "0",
+              unit = AllocUnit.TRK,
+              recfm = recordFormat,
+              dirBlock = dirBlock,
+              lrecl = lrecl
+            )
+            Arguments.of(allocateDatasetParams)
           }
-          allocateDatasetPram.recordLength = if (recordFormat.name == F_RECORD_FORMAT_SHORT) "3200" else "80"
-
-          Arguments.of(allocateDatasetPram)
         }
-      }.stream()
+        .stream()
     }
 
     @JvmStatic
     @BeforeAll
     fun prepareBeforeAll(testInfo: TestInfo) {
-      startMockServer()
-
       IdeRunManager.prepareRunManager()
         .runningIde
         .resetTestEnv()
 
-      val ideDriver = IdeRunManager.getIdeDriver()
+      ideDriver = IdeRunManager.getIdeDriver()
 
-      callRightSidePanel(ideDriver)
+      openZoweExplorerPanel(ideDriver)
 
-      createValidConnectionWithMock(
-        testInfo,
-        connectionName,
-        ideDriver
+      MockWebServerManager.injectEndpoint(
+        "${testInfo.displayName}_info",
+        jsonMock = "infoResponse",
+        endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false }
       )
-      // Avoid check connection
-      Thread.sleep(3000)
-      createWsAndMask(ideDriver, wsName, connectionName, listOf(allocMask))
+      MockWebServerManager.injectEndpoint(
+        "${testInfo.displayName}_resttopology",
+        jsonMock = "infoResponse",
+        endpointResolver = { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false }
+      )
+      MockWebServerManager.injectEndpoint(
+        "${testInfo.displayName}_dslevel",
+        endpointResolver = { it?.requestLine?.contains("/zosmf/restfiles/ds?dslevel=${allocMask.first}") ?: false },
+        customHandler = {
+          MockResponse()
+            .setBody(
+              "{\n" +
+              "\"items\": [${createdDatasets.joinToString(",")}],\n" +
+              "\"returnedRows\": ${createdDatasets.size},\n" +
+              "\"JSONversion\": 1\n" +
+              "}"
+            )
+        }
+      )
 
+      MockWebServerManager.injectEndpoint(
+        "${testInfo.displayName}_DELETE_ds",
+        endpointResolver = { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/") ?: false },
+        customHandler = {
+          if (it == null) {
+            fail("It is expected that the request is not empty")
+          }
+          val dsn = it.requestLine
+            .substringAfter("/zosmf/restfiles/ds/")
+            .substringBefore(" HTTP")
+          val dsToDelete = createdDatasets.find { datasetDefinition -> datasetDefinition.contains("\"$dsn\"") }
+          createdDatasets.remove(dsToDelete)
+          MockResponse().setResponseCode(204)
+        }
+      )
 
+      filesExplorerPanel = FilesExplorerPanel(ideDriver)
+      filesExplorerPanel.createValidConnection(ideDriver, connectionName)
+
+      filesExplorerPanel.openDialogByPlusButtonInExplorer(ActionMenuPoints.WORKING_SET)
+      val addWsDialog = AddWorkingSetDialog(ideDriver)
+      addWsDialog.fillDialog(connectionName, wsName, listOf(allocMask))
+      addWsDialog.okButton.click()
     }
 
     @JvmStatic
     @AfterAll
     fun afterAll() {
-      mockServer.shutdown()
+      IdeRunManager.prepareRunManager()
+        .runningIde
+        .resetTestEnv()
+      filesExplorerPanel.deleteAllMaskElements(1)
+      deleteConfigEntities(ideDriver, "Working Sets")
+      deleteConfigEntities(ideDriver, "Connections")
+      MockWebServerManager.removeAllEndpoints()
     }
   }
-
 
   @BeforeEach
   fun prepareTestEnv() {
@@ -124,38 +183,76 @@ class AllocateDatasetTest {
     ideDriver = IdeRunManager.getIdeDriver()
     filesExplorerPanel = FilesExplorerPanel(ideDriver)
     addConnectionDialog = AddConnectionDialog(ideDriver)
-    unsecureConnectionDialog = UnsecureConnectionDialog(ideDriver)
     allocateDatasetDialog = AllocateDatasetDialog(ideDriver)
     addWsNotification = AddWorkingSetSuccessNotification(ideDriver)
   }
 
-  @AfterEach
-  fun finalizeTestEnv() {
-    IdeRunManager.prepareRunManager()
-      .runningIde
-      .resetTestEnv()
-  }
-
+  /**
+   * @see
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#allocate-data-sets">
+   *   Regression: Allocate data sets
+   * </a>
+   */
   @Tag("New")
   @ParameterizedTest
   @MethodSource("provideOrgTypes")
   fun allocateDatasetsTest(allocationParams: AllocateDatasetParams) {
-    filesExplorerPanel.callSubMenuForRow(0, NEW_POINT_TEXT, DATASET_POINT_TEXT)
+    // Right-click on a working set, New -> Dataset
+    filesExplorerPanel.selectRightClickMenuItem(0, "New", "Dataset")
     allocateDatasetDialog.fillDialog(allocationParams)
-    responseDispatcher.injectAllocationResultPo(
-      allocationParams.organisation.toString(),
-      allocationParams.format.toString(),
-      allocationParams.name,
-      allocationParams.dsOrganisationShort.toString(),
-      allocationParams.recordLength.toString().toInt()
+
+    val dsName = allocationParams.name
+    val dsOrg = allocationParams.dsOrg
+
+    MockWebServerManager.injectEndpoint(
+      "testAllocateValid_${dsOrg.value.full}_Datasets_${allocationParams.recfm}_restfiles",
+      endpointResolver = {
+        it?.requestLine?.contains("POST /zosmf/restfiles/ds/${dsName}") ?: false
+      },
+      customHandler = {
+        if (it == null) {
+          fail("It is expected that the request is not empty")
+        } else {
+          val dsn = it.requestLine
+            .substringAfter("/zosmf/restfiles/ds/")
+            .substringBefore(" HTTP")
+          val allocRequestParams = it.body.clone().readUtf8()
+          val blksz = allocRequestParams.substringAfter("blksize\":")
+            .substringBefore(",")
+            .substringBefore("}")
+          val dsorg = allocRequestParams.substringAfter("dsorg\":\"").substringBefore("\"")
+          val lrecl = allocRequestParams.substringAfter("lrecl\":")
+            .substringBefore(",")
+            .substringBefore("}")
+          val recfm = allocRequestParams.substringAfter("recfm\":\"").substringBefore("\"")
+          val alcunit = allocRequestParams.substringAfter("alcunit\":\"").substringBefore("\"")
+          val spacu = if (alcunit == AllocUnit.TRK.toString()) "TRACKS" else "CYLINDERS"
+          val newDs = dsTemplate
+            .replace("###dsname###", dsn)
+            .replace("###blksz###", blksz)
+            .replace("###dsorg###", dsorg)
+            .replace("###lrecl###", lrecl)
+            .replace("###recfm###", recfm)
+            .replace("###spacu###", spacu)
+          createdDatasets.add(newDs)
+        }
+        MockResponse()
+      }
     )
+
     allocateDatasetDialog.okButton.click()
+    // Right-click on a dataset mask, Refresh
+    filesExplorerPanel.selectRightClickMenuItem(1, "Refresh")
 
-    val isNotificationShown = addWsNotification.isAllocNotificationVisible(allocationParams.name)
-    addWsNotification.skipButton.click()
+    filesExplorerPanel
+      .waitForTreeToLoadRow(filesExplorerPanel.fileExplorerTree.collectExpandedPaths().size - 1)
+    val fileExplorerTreePaths = filesExplorerPanel.fileExplorerTree.collectExpandedPaths()
+    assert(fileExplorerTreePaths.last().path.any { it.contains(dsName) })
 
-    assert(isNotificationShown)
+    // TODO: the other test???
+//    val isNotificationShown = addWsNotification.isAllocNotificationVisible(dsName)
+//    addWsNotification.skipButton.click()
 
+//    assert(isNotificationShown)
   }
-
 }
