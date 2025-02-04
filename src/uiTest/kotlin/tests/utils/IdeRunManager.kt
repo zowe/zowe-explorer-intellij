@@ -1,22 +1,21 @@
 /*
- * Copyright (c) 2024 IBA Group.
- *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
+ * Copyright Contributors to the Zowe Project.
+ *
  * Contributors:
- *   IBA Group
  *   Zowe Community
+ *   IBA Group
+ *   Uladzislau Kalesnikau
  */
 
-package testutils
+package tests.utils
 
 import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.ui.components.actionButton
-import com.intellij.driver.sdk.ui.components.dialog
 import com.intellij.driver.sdk.ui.components.ideFrame
 import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.driver.engine.BackgroundRun
@@ -36,7 +35,7 @@ import kotlin.time.Duration.Companion.minutes
 class IdeRunManager private constructor() {
   private val ideVersion by lazy { System.getProperty("ide.test.version") }
   private val pluginPathStr by lazy { System.getProperty("plugin.path") }
-  private val mockProjectRelativePathStr by lazy { System.getProperty("ui.tests.mock.project.path") }
+  private val mockProjectRelativePathStr by lazy { System.getProperty("ui.test.mock.project.path") }
   private val testCaseDesc by lazy {
     TestCase(IdeProductProvider.IC, LocalProjectInfo(Paths.get(mockProjectRelativePathStr)))
   }
@@ -44,7 +43,6 @@ class IdeRunManager private constructor() {
     .newContext("test_plugin_action", testCase = testCaseDesc.useRelease(ideVersion))
     .prepareProjectCleanImport()
     .disableAutoImport(disabled = true)
-  private var isPolicyDialogAlreadyClosed = false
 
   val runningIde: BackgroundRun
 
@@ -57,21 +55,7 @@ class IdeRunManager private constructor() {
      * If the initialization is already done, will just return the IDE run manager instance
      */
     fun prepareRunManager(): IdeRunManager {
-      createdRunManager.runningIde
-      val driver = createdRunManager.runningIde.driver
-      if (!createdRunManager.isPolicyDialogAlreadyClosed) {
-        driver.ideFrame {
-          // Dismiss policy dialog
-          val policyDialog = dialog(title = "For Mainframe Plugin Privacy Policy and Terms and Conditions")
-          assert(policyDialog.isVisible())
-          val dismissButton = policyDialog.actionButton { byText("Dismiss") }
-          dismissButton.setFocus()
-          dismissButton.click()
-
-          createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
-        }
-        createdRunManager.isPolicyDialogAlreadyClosed = true
-      }
+      createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
       return createdRunManager
     }
 

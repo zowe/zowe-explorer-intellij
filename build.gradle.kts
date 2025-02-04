@@ -10,11 +10,13 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.time.Duration
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -331,6 +333,7 @@ tasks {
 // https://github.com/JetBrains/intellij-community/blob/master/platform/remote-driver/README.md
 val uiTests by intellijPlatformTesting.testIdeUi.registering {
   task {
+    timeout.set(Duration.ofMinutes(60))
     enabled = gradle.startParameter.taskNames.any { it.contains("uiTests") } && descriptor.since >= "242"
     archiveFile.set(tasks.buildPlugin.flatMap { it.archiveFile })
     testClassesDirs = sourceSets["uiTest"].output.classesDirs
@@ -347,18 +350,11 @@ val uiTests by intellijPlatformTesting.testIdeUi.registering {
         "-Xms512m",
         "-Dide.test.version=${descriptor.sdkVersion}",
         "-Dplugin.path=${tasks.buildPlugin.flatMap { it.archiveFile }.get().asFile.absolutePath}",
-        "-Dui.tests.mock.project.path=src/uiTest/resources/mock_project",
+        "-Dui.test.mock.project.path=src/uiTest/resources/mock_project",
         "-Didea.trust.all.projects=true",
         "-Dide.show.tips.on.startup.default.value=false",
         "-Didea.log.config.properties.file=src/uiTest/resources/log.properties",
         "-Didea.log.path=src/uiTest/resources/mock_project",
-        // TODO: delete
-        "-DideLaunchFolder=ide_for_launch",
-        "-DremoteRobotUrl=http://127.0.0.1",
-        "-DideaBuildVersionForTest=ideaIC-242.20224.91",
-        "-DrobotServerForTest=robot-server-plugin-0.11.23",
-        "-Didea.trust.all.projects=true",
-        "-Dide.show.tips.on.startup.default.value=false",
         "-Dkotest.framework.classpath.scanning.autoscan.disable=true",
       )
     }
@@ -373,12 +369,9 @@ val uiTests by intellijPlatformTesting.testIdeUi.registering {
   }
 
   dependencies {
-//    testImplementation(libs.junit.platform.launcher)
-//    testImplementation(libs.junit.platform.suite)
-//    testImplementation(libs.junit.jupiter)
-//    testImplementation(libs.junit.jupiter.engine)
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.junit.jupiter.params)
+    testImplementation(libs.okhttp3.logging.interceptor)
     testImplementation(libs.okhttp3.mockwebserver)
     testImplementation(libs.okhttp3.okhttp.tls)
     // TODO: revise and delete old unnecessary deps
@@ -387,36 +380,3 @@ val uiTests by intellijPlatformTesting.testIdeUi.registering {
     testImplementation("com.intellij.remoterobot:remote-fixtures:0.11.23")
   }
 }
-
-// TODO: fix
-///**
-// * Runs the first UI test, which agrees to the license agreement
-// */
-//val firstTimeUiTest = task<Test>("firstTimeUiTest") {
-//  description = "Gets rid of license agreement, etc."
-//  group = "verification"
-//  testClassesDirs = sourceSets["uiTest"].output.classesDirs
-//  classpath = sourceSets["uiTest"].runtimeClasspath
-//  useJUnitPlatform {
-//    includeTags("FirstTime")
-//  }
-//  testLogging {
-//    events("passed", "skipped", "failed")
-//  }
-//}
-//
-///**
-// * Runs the smoke ui test
-// */
-//val smokeUiTest = task<Test>("smokeUiTest") {
-//  description = "Gets rid of license agreement, etc."
-//  group = "verification"
-//  testClassesDirs = sourceSets["uiTest"].output.classesDirs
-//  classpath = sourceSets["uiTest"].runtimeClasspath
-//  useJUnitPlatform {
-//    includeTags("SmokeTest")
-//  }
-//  testLogging {
-//    events("passed", "skipped", "failed")
-//  }
-//}

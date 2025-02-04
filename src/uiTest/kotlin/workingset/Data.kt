@@ -10,43 +10,22 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
+
 package workingset
 
 import auxiliary.*
 
-
 //Global constants
 enum class JobAction { SUBMIT, CANCEL, HOLD, RELEASE, PURGED, ERROR_PURGED}
-enum class RecordFormatsShort { F, FB, V, VA, VB, U}
-enum class DatasetOrganization(val value: String){
+enum class DatasetOrganization(val value: String) {
   PO_ORG_FULL_ITEM("Partitioned Organization (PO)"),
   PO_ORG_PROPERTY("Partitioned (PO)"),
-  PO_ORG_SHORT_ITEM("PO"),
   SEQUENTIAL_ORG_FULL_ITEM("Physical Sequential (PS)"),
   SEQUENTIAL_ORG_PROPERTY("Sequential (PS)"),
-  SEQUENTIAL_ORG_SHORT_ITEM("PS"),
   POE_ORG_FULL_ITEM("Partitioned Data Set Extended (PO-E)"),
-  POE_ORG_PROPERTY("Partitioned Extended (PO-E)"),
-  PDS_TYPE_ITEM("PDS")
 }
-
-data class AllocateDatasetParams(
-  val name: String,
-  val preset: String,
-  val memberName: String?=null,
-  var primaryAlloc: String? = null,
-  var blockSize: String? = null,
-  var secondaryAlloc: String,
-  var avgBlockLen: String? = null,
-  var unit: String? = null,
-  var dsOrganisationShort: String? = null,
-  var dirBlock: String? = null,
-  var organisation: DatasetOrganization? = null,
-  var format: String? = null,
-  var recordLength: String? = null,
-)
-
 
 const val PROJECT_NAME = "untitled"
 
@@ -58,9 +37,6 @@ object Constants {
     val ideaVersionForTest: String = System.getProperty("ide.test.version")
     val robotServerForTest: String = System.getProperty("robotServerForTest")
 }
-
-//Allocation unit shorts
-const val TRACKS_ALLOCATION_UNIT_SHORT = "TRK"
 
 //Button text
 const val NO_TEXT = "No"
@@ -75,7 +51,6 @@ const val JES_WORKING_SETS = "JES Working Sets"
 const val CONNECTIONS = "Connections"
 
 const val PREFIX_WORD = "Prefix"
-
 
 //rename dataset
 const val DATASET_FOR_RENAME_PROPERTY = "{\"dsorg\":\"PO\",\"alcunit\":\"TRK\",\"primary\":10,\"secondary\":1,\"dirblk\":2,\"recfm\":\"VB\",\"blksize\":6120,\"lrecl\":255, \"migr\":false}"
