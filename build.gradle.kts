@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 import org.jetbrains.changelog.Changelog
@@ -347,7 +348,7 @@ val uiTests by intellijPlatformTesting.testIdeUi.registering {
         "-Xms512m",
         "-Dide.test.version=${descriptor.sdkVersion}",
         "-Dplugin.path=${tasks.buildPlugin.flatMap { it.archiveFile }.get().asFile.absolutePath}",
-        "-Dui.tests.mock.project.path=src/uiTest/resources/mock_project",
+        "-Dui.test.mock.project.path=src/uiTest/resources/mock_project",
         "-Didea.trust.all.projects=true",
         "-Dide.show.tips.on.startup.default.value=false",
         "-Didea.log.config.properties.file=src/uiTest/resources/log.properties",

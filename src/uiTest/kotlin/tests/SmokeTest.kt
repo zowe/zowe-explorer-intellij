@@ -20,8 +20,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import testutils.IdeRunManager
-import testutils.resetTestEnv
+import tests.utils.IdeRunManager
+import tests.utils.resetTestEnv
 import java.awt.Point
 
 @Description("Smoke test case to check basic functionalities of the plug-in")

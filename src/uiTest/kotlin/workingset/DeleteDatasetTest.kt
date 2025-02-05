@@ -120,7 +120,7 @@ class DeleteDatasetTest : IdeaInteractionClass() {
                     recordLength
                 )
             allocateDataSet(
-                wsName, dsName, datasetOrganization, TRACKS_ALLOCATION_UNIT_SHORT, 10, 1, 1,
+                wsName, dsName, datasetOrganization, "TRK", 10, 1, 1,
                 s, recordLength, 3200, 0, remoteRobot
             )
 

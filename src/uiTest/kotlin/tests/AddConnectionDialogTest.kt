@@ -10,24 +10,20 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package tests
 
 import auxiliary.mockServer
-import auxiliary.startMockServer
 import io.kotest.core.annotation.Description
-
 import com.intellij.driver.client.Driver
 import org.junit.jupiter.api.*
-import tests.utils.ActionMenuPoints
-import tests.utils.FilesExplorerPanel
-import tests.utils.dialogs.AddConnectionDialog
+import tests.utils.*
+import tests.utils.uidefinitions.dialogs.AddConnectionDialog
 import tests.utils.notification.UnsecureConnectionDialog
-import testutils.*
-
-import workingset.testutils.injectTestInfo
-import workingset.testutils.injectTestInfoRestTopology
+import tests.utils.uidefinitions.ActionMenuPoints
+import tests.utils.uidefinitions.FilesExplorerPanel
 
 @Description("Tests for interaction and filling the connection creation dialog")
 class AddConnectionDialogTest {
@@ -40,12 +36,11 @@ class AddConnectionDialogTest {
     @JvmStatic
     @BeforeAll
     fun prepareBeforeAll() {
-      startMockServer()
       IdeRunManager.prepareRunManager()
         .runningIde
         .resetTestEnv()
       val ideDriver = IdeRunManager.getIdeDriver()
-      callRightSidePanel(ideDriver)
+      openZoweExplorerPanel(ideDriver)
     }
 
     @JvmStatic
@@ -54,7 +49,6 @@ class AddConnectionDialogTest {
       mockServer.shutdown()
     }
   }
-
 
   @BeforeEach
   fun prepareTestEnv() {
@@ -72,12 +66,13 @@ class AddConnectionDialogTest {
     IdeRunManager.prepareRunManager()
       .runningIde
       .resetTestEnv()
+    MockWebServerManager.removeAllEndpoints()
   }
 
   @Test
   @Tag("New")
   fun fieldsPresenceTest() {
-    filesExplorerPanel.openExplorerToolWindow(ActionMenuPoints.CONNECTION)
+    filesExplorerPanel.openDialogByPlusButtonInExplorer(ActionMenuPoints.CONNECTION)
 
     addConnectionDialog.passwordInput.click()
     assert(addConnectionDialog.connectionDialogPanel.isVisible())
@@ -93,10 +88,20 @@ class AddConnectionDialogTest {
   @Test
   @Tag("New")
   fun createInvalidConnectionTest(testInfo: TestInfo) {
-    injectTestInfo(testInfo)
-    injectTestInfoRestTopology(testInfo)
+    val mockServer = MockWebServerManager.prepareMockServer()
 
-    filesExplorerPanel.openExplorerToolWindow(ActionMenuPoints.CONNECTION)
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_info",
+      jsonMock = "infoResponse",
+      endpointResolver = { it?.requestLine?.contains("zosmf/info") ?: false }
+    )
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_resttopology",
+      jsonMock = "infoResponse",
+      endpointResolver = { it?.requestLine?.contains("zosmf/resttopology/systems") ?: false }
+    )
+
+    filesExplorerPanel.openDialogByPlusButtonInExplorer(ActionMenuPoints.CONNECTION)
 
     addConnectionDialog.passwordInput.text = "passwordInput"
     addConnectionDialog.connectionNameInput.text = "nameInput"

@@ -1,18 +1,19 @@
 /*
- * Copyright (c) 2024 IBA Group.
- *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
+ * Copyright Contributors to the Zowe Project.
+ *
  * Contributors:
- *   IBA Group
  *   Zowe Community
+ *   IBA Group
+ *   Uladzislau Kalesnikau
  */
 
-package testutils
+package tests.utils
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.components.ideFrame
@@ -34,7 +35,7 @@ import kotlin.time.Duration.Companion.minutes
 class IdeRunManager private constructor() {
   private val ideVersion by lazy { System.getProperty("ide.test.version") }
   private val pluginPathStr by lazy { System.getProperty("plugin.path") }
-  private val mockProjectRelativePathStr by lazy { System.getProperty("ui.tests.mock.project.path") }
+  private val mockProjectRelativePathStr by lazy { System.getProperty("ui.test.mock.project.path") }
   private val testCaseDesc by lazy {
     TestCase(IdeProductProvider.IC, LocalProjectInfo(Paths.get(mockProjectRelativePathStr)))
   }

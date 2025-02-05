@@ -1,23 +1,22 @@
 /*
- * Copyright (c) 2024 IBA Group.
- *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
+ * Copyright Contributors to the Zowe Project.
+ *
  * Contributors:
- *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
-package tests.utils.dialogs
+package tests.utils.uidefinitions.dialogs
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.components.*
 import com.intellij.driver.sdk.ui.components.textField
-
 
 class AddConnectionDialog(val driver: Driver) {
 
@@ -32,7 +31,7 @@ class AddConnectionDialog(val driver: Driver) {
   val connectionUrlLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Connection URL: ")) } }
   val connectionUsernameLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Username: ")) } }
   val passwordLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Password: ")) } }
-  val passwordInput by lazy { connectionDialog.textField { byClass("JPasswordField") } }
+  val passwordInput by lazy { connectionDialog.textField { byClass("JBPasswordField") } }
   val questionMark by lazy { connectionDialogPanel.x { byAttribute("defaulticon", "questionMark.svg") } }
   val questionMarkTip by lazy { connectionDialog.x { byClass("HeavyWeightWindow") } }
   val questionMarkTipParagraph by lazy { questionMarkTip.x { byClass("Paragraph") } }
