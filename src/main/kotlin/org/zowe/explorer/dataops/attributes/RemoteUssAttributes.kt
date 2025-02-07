@@ -98,13 +98,22 @@ data class RemoteUssAttributes(
     charset = DEFAULT_BINARY_CHARSET
   )
 
-  /** Get file mode access number basing on the file owner and the available requesters to use the file */
-  private fun getAvailableFileModeAccessNum(): Int {
-    val hasFileOwnerInRequesters = requesters.any { requester ->
-      val savedOwner = CredentialService.getOwner(requester.connectionConfig)
-      val ownerOrUsername =
-        if (savedOwner == "") CredentialService.getUsername(requester.connectionConfig)
-        else savedOwner
+  /** Get file mode access number basing on the file owner and the available requesters/connection to use the file */
+  private fun getAvailableFileModeAccessNum(connConfig: ConnectionConfig? = null): Int {
+    val hasFileOwnerInRequesters = if (connConfig == null) {
+      requesters.any { requester ->
+        val savedOwner = CredentialService.getOwner(requester.connectionConfig)
+        val ownerOrUsername =
+          if (savedOwner == "") CredentialService.getUsername(requester.connectionConfig)
+          else savedOwner
+        ownerOrUsername.equals(owner, ignoreCase = true)
+      }
+    } else {
+      val savedOwner = CredentialService.getOwner(connConfig)
+      val ownerOrUsername = if (savedOwner == "")
+        CredentialService.getUsername(connConfig)
+      else
+        savedOwner
       ownerOrUsername.equals(owner, ignoreCase = true)
     }
     return if (fileMode != null) {
@@ -130,16 +139,24 @@ data class RemoteUssAttributes(
 
   val isWritable: Boolean
     get() {
-      val mode = getAvailableFileModeAccessNum()
-      return mode == FileModeValue.WRITE.mode
-        || mode == FileModeValue.WRITE_EXECUTE.mode
-        || mode == FileModeValue.READ_WRITE.mode
-        || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+      return isWritableForConnection()
     }
+
+  fun isWritableForConnection(connConfig: ConnectionConfig? = null): Boolean {
+    val mode = getAvailableFileModeAccessNum(connConfig)
+    return mode == FileModeValue.WRITE.mode
+      || mode == FileModeValue.WRITE_EXECUTE.mode
+      || mode == FileModeValue.READ_WRITE.mode
+      || mode == FileModeValue.READ_WRITE_EXECUTE.mode
+  }
 
   val isReadable: Boolean
     get() {
-      val mode = getAvailableFileModeAccessNum()
+      return isReadableForConnection()
+    }
+
+  fun isReadableForConnection(connConfig: ConnectionConfig? = null): Boolean {
+    val mode = getAvailableFileModeAccessNum(connConfig)
       return mode == FileModeValue.READ.mode
         || mode == FileModeValue.READ_WRITE.mode
         || mode == FileModeValue.READ_EXECUTE.mode
