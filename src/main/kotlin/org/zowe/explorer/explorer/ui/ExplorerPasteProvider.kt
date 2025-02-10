@@ -37,9 +37,9 @@ import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.getAncestorNodes
 import org.zowe.explorer.utils.getMinimalCommonParents
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
-import org.zowe.explorer.v3.operations.move.conflict.DestinationConflictResolver
-import org.zowe.explorer.v3.operations.move.conflict.SourceConflictResolver
-import org.zowe.explorer.v3.operations.move.conflict.mergeConflictResolutions
+import org.zowe.explorer.v3.operations.transfer.conflict.DestinationConflictResolver
+import org.zowe.explorer.v3.operations.transfer.conflict.SourceConflictResolver
+import org.zowe.explorer.v3.operations.transfer.conflict.mergeConflictResolutions
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import org.zowe.kotlinsdk.DatasetOrganization

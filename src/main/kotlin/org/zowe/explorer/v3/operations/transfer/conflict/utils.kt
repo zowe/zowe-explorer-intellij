@@ -12,7 +12,7 @@
  *   Zowe Community
  */
 
-package org.zowe.explorer.v3.operations.move.conflict
+package org.zowe.explorer.v3.operations.transfer.conflict
 
 import org.zowe.explorer.explorer.ui.ConflictResolution
 

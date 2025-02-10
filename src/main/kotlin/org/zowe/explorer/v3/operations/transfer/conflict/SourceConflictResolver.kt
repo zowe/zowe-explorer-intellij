@@ -12,7 +12,7 @@
  *   Zowe Community
  */
 
-package org.zowe.explorer.v3.operations.move.conflict
+package org.zowe.explorer.v3.operations.transfer.conflict
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
