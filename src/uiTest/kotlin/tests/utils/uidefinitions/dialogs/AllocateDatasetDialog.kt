@@ -54,21 +54,22 @@ val inputToIdx = mapOf(
 
 class AllocateDatasetDialog(val driver: Driver) {
 
-  private lateinit var allocateDsDialog: DialogUiComponent
-  val okButton: ActionButtonUi by lazy { allocateDsDialog.actionButton { byVisibleText("OK") } }
-  val cancelButton: ActionButtonUi by lazy { allocateDsDialog.actionButton { byVisibleText("Cancel") } }
-  val datasetNameInput: JTextFieldUI by lazy { allocateDsDialog.textField("//div[@class='JBTextField']") }
+  lateinit var dialogComponent: DialogUiComponent
 
-  val choosePresetButton: JComboBoxUiComponent by lazy { allocateDsDialog.comboBox("(//div[@class='ComboBox'])[1]") }
-  val chooseOrgButton: JComboBoxUiComponent by lazy { allocateDsDialog.comboBox("(//div[@class='ComboBox'])[2]") }
-  val chooseUnitButton: JComboBoxUiComponent by lazy { allocateDsDialog.comboBox("(//div[@class='ComboBox'])[3]") }
-  val chooseFormatButton: JComboBoxUiComponent by lazy { allocateDsDialog.comboBox("(//div[@class='ComboBox'])[4]") }
-  val datasetParameterExpand: UiComponent by lazy { allocateDsDialog.x { byText("Dataset Parameters") } }
-  val advancedParameterExpand: UiComponent by lazy { allocateDsDialog.x { byText("Advanced Parameters") } }
+  private val datasetNameInput: JTextFieldUI by lazy { dialogComponent.textField("//div[@class='JBTextField']") }
+  private val choosePresetButton: JComboBoxUiComponent by lazy { dialogComponent.comboBox("(//div[@class='ComboBox'])[1]") }
+  private val chooseOrgButton: JComboBoxUiComponent by lazy { dialogComponent.comboBox("(//div[@class='ComboBox'])[2]") }
+  private val chooseUnitButton: JComboBoxUiComponent by lazy { dialogComponent.comboBox("(//div[@class='ComboBox'])[3]") }
+  private val chooseFormatButton: JComboBoxUiComponent by lazy { dialogComponent.comboBox("(//div[@class='ComboBox'])[4]") }
+  private val datasetParameterExpand: UiComponent by lazy { dialogComponent.x { byText("Dataset Parameters") } }
+  private val advancedParameterExpand: UiComponent by lazy { dialogComponent.x { byText("Advanced Parameters") } }
+
+  val okButton: ActionButtonUi by lazy { dialogComponent.actionButton { byVisibleText("OK") } }
+  val cancelButton: ActionButtonUi by lazy { dialogComponent.actionButton { byVisibleText("Cancel") } }
 
   init {
     driver.ideFrame {
-      allocateDsDialog = dialog(title = "Allocate Dataset")
+      dialogComponent = dialog(title = "Allocate Dataset")
     }
   }
 
@@ -102,20 +103,20 @@ class AllocateDatasetDialog(val driver: Driver) {
     chooseFormatButton.selectItem(allocationParams.recfm.toString())
 
     driver.ideFrame {
-      textField(getJBTextFieldXPathFor(inputToIdx["Primary allocation (${allocationTypeKey})"])).text =
-        allocationParams.primAlloc ?: ""
-      textField(getJBTextFieldXPathFor(inputToIdx["Secondary allocation (${allocationTypeKey})"])).text =
-        allocationParams.secAlloc ?: ""
+      textField(getJBTextFieldXPathFor(inputToIdx["Primary allocation (${allocationTypeKey})"]))
+        .text = allocationParams.primAlloc ?: ""
+      textField(getJBTextFieldXPathFor(inputToIdx["Secondary allocation (${allocationTypeKey})"]))
+        .text = allocationParams.secAlloc ?: ""
       if (allocationParams.dsOrg != DsOrg.PS) {
-        textField(getJBTextFieldXPathFor(inputToIdx["dirBlock (${allocationTypeKey})"])).text =
-          allocationParams.dirBlock ?: ""
+        textField(getJBTextFieldXPathFor(inputToIdx["dirBlock (${allocationTypeKey})"]))
+          .text = allocationParams.dirBlock ?: ""
       }
-      textField(getJBTextFieldXPathFor(inputToIdx["Record len (${allocationTypeKey})"])).text =
-        allocationParams.lrecl ?: ""
-      textField(getJBTextFieldXPathFor(inputToIdx["Block size (${allocationTypeKey})"])).text =
-        allocationParams.blksz ?: ""
-      textField(getJBTextFieldXPathFor(inputToIdx["Avg block (${allocationTypeKey})"])).text =
-        allocationParams.avgBlkLen ?: ""
+      textField(getJBTextFieldXPathFor(inputToIdx["Record len (${allocationTypeKey})"]))
+        .text = allocationParams.lrecl ?: ""
+      textField(getJBTextFieldXPathFor(inputToIdx["Block size (${allocationTypeKey})"]))
+        .text = allocationParams.blksz ?: ""
+      textField(getJBTextFieldXPathFor(inputToIdx["Avg block (${allocationTypeKey})"]))
+        .text = allocationParams.avgBlkLen ?: ""
     }
 
   }

@@ -20,39 +20,37 @@ import com.intellij.driver.sdk.ui.components.textField
 
 class AddConnectionDialog(val driver: Driver) {
 
-  private lateinit var connectionDialog: DialogUiComponent
+  lateinit var dialogComponent: DialogUiComponent
 
-  val connectionDialogPanel by lazy { connectionDialog.x { byClass("DialogPanel") } }
-  val connectionNameLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Connection name: ")) } }
+  private val connectionDialogPanel by lazy { dialogComponent.x { byClass("DialogPanel") } }
+  private val connectionNameLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Connection name: ")) } }
   private val inputFields by lazy { connectionDialogPanel.xx { byClass("JBTextField") }.list() }
-  val connectionNameInput by lazy { inputFields[0].textField() }
-  val urlInput by lazy { inputFields[1].textField() }
-  val userNameInput by lazy { inputFields[2].textField() }
-  val connectionUrlLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Connection URL: ")) } }
-  val connectionUsernameLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Username: ")) } }
-  val passwordLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Password: ")) } }
-  val passwordInput by lazy { connectionDialog.textField { byClass("JBPasswordField") } }
-  val questionMark by lazy { connectionDialogPanel.x { byAttribute("defaulticon", "questionMark.svg") } }
-  val questionMarkTip by lazy { connectionDialog.x { byClass("HeavyWeightWindow") } }
-  val questionMarkTipParagraph by lazy { questionMarkTip.x { byClass("Paragraph") } }
-  val acceptSelfSignedCheckbox by lazy {
+  private val connectionNameInput by lazy { inputFields[0].textField() }
+  private val urlInput by lazy { inputFields[1].textField() }
+  private val userNameInput by lazy { inputFields[2].textField() }
+  private val connectionUrlLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Connection URL: ")) } }
+  private val connectionUsernameLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Username: ")) } }
+  private val passwordLabel by lazy { connectionDialogPanel.x { and(byClass("JLabel"), byText("Password: ")) } }
+  private val passwordInput by lazy { dialogComponent.textField { byClass("JBPasswordField") } }
+  private val questionMark by lazy { connectionDialogPanel.x { byAttribute("defaulticon", "questionMark.svg") } }
+  private val questionMarkTip by lazy { dialogComponent.x { byClass("HeavyWeightWindow") } }
+  private val questionMarkTipParagraph by lazy { questionMarkTip.x { byClass("Paragraph") } }
+  private val acceptSelfSignedCheckbox by lazy {
     connectionDialogPanel.x {
       and(byClass("JBCheckBox"), byText("Accept self-signed SSL certificates"))
     }
   }
-  val connectionDialogCancelButton by lazy { connectionDialog.actionButton { byVisibleText("Cancel") } }
-  val connectionDialogOkButton by lazy { connectionDialog.actionButton { byVisibleText("OK") } }
 
+  val cancelButton by lazy { dialogComponent.actionButton { byVisibleText("Cancel") } }
+  val okButton by lazy { dialogComponent.actionButton { byVisibleText("OK") } }
 
   init {
     driver.ideFrame {
-      connectionDialog = dialog(title = "Add Connection")
+      dialogComponent = dialog(title = "Add Connection")
     }
   }
 
-  /**
-   * Fills in the required information for adding a new connection.
-   */
+  /** Fills in the required information for adding a new connection */
   fun fillDialog(
     connectionName: String,
     connectionUrl: String,
@@ -69,5 +67,16 @@ class AddConnectionDialog(val driver: Driver) {
     }
   }
 
+  /** Check that all the dialog fields are present and visible on a screen */
+  fun checkFieldsArePresent() {
+    assert(connectionDialogPanel.isVisible())
+    assert(connectionNameLabel.isVisible())
+    assert(connectionUrlLabel.isVisible())
+    assert(connectionUsernameLabel.isVisible())
+    assert(passwordLabel.isVisible())
+    assert(passwordInput.isVisible())
+    assert(questionMark.isVisible())
+    assert(cancelButton.isVisible())
+  }
 
 }

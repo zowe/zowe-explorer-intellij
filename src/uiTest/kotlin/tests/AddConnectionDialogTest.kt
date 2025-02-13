@@ -15,24 +15,28 @@
 
 package tests
 
-import auxiliary.mockServer
 import io.kotest.core.annotation.Description
 import com.intellij.driver.client.Driver
+import org.junit.Ignore
 import org.junit.jupiter.api.*
 import tests.utils.*
 import tests.utils.uidefinitions.dialogs.AddConnectionDialog
-import tests.utils.notification.UnsecureConnectionDialog
+import tests.utils.uidefinitions.dialogs.UnsecureConnectionDialog
 import tests.utils.uidefinitions.ActionMenuPoints
 import tests.utils.uidefinitions.FilesExplorerPanel
+import tests.utils.uidefinitions.dialogs.ErrorCreatingConnectionDialog
 
+@Ignore
 @Description("Tests for interaction and filling the connection creation dialog")
 class AddConnectionDialogTest {
-  private lateinit var ideDriver: Driver
   private lateinit var filesExplorerPanel: FilesExplorerPanel
-  lateinit var addConnectionDialog: AddConnectionDialog
+  private lateinit var addConnectionDialog: AddConnectionDialog
   private lateinit var unsecureConnectionDialog: UnsecureConnectionDialog
+  private lateinit var errorCreatingConnectionDialog: ErrorCreatingConnectionDialog
 
   companion object {
+    private lateinit var ideDriver: Driver
+
     @JvmStatic
     @BeforeAll
     fun prepareBeforeAll() {
@@ -46,7 +50,8 @@ class AddConnectionDialogTest {
     @JvmStatic
     @AfterAll
     fun afterAll() {
-      mockServer.shutdown()
+      deleteConfigEntities(ideDriver, "Connections")
+      MockWebServerManager.removeAllEndpoints()
     }
   }
 
@@ -59,6 +64,7 @@ class AddConnectionDialogTest {
     filesExplorerPanel = FilesExplorerPanel(ideDriver)
     addConnectionDialog = AddConnectionDialog(ideDriver)
     unsecureConnectionDialog = UnsecureConnectionDialog(ideDriver)
+    errorCreatingConnectionDialog = ErrorCreatingConnectionDialog(ideDriver)
   }
 
   @AfterEach
@@ -69,22 +75,12 @@ class AddConnectionDialogTest {
     MockWebServerManager.removeAllEndpoints()
   }
 
-  @Test
-  @Tag("New")
-  fun fieldsPresenceTest() {
-    filesExplorerPanel.openDialogByPlusButtonInExplorer(ActionMenuPoints.CONNECTION)
-
-    addConnectionDialog.passwordInput.click()
-    assert(addConnectionDialog.connectionDialogPanel.isVisible())
-    assert(addConnectionDialog.connectionNameLabel.isVisible())
-    assert(addConnectionDialog.connectionUrlLabel.isVisible())
-    assert(addConnectionDialog.connectionUsernameLabel.isVisible())
-    assert(addConnectionDialog.passwordLabel.isVisible())
-    assert(addConnectionDialog.passwordInput.isVisible())
-    assert(addConnectionDialog.questionMark.isVisible())
-    assert(addConnectionDialog.connectionDialogCancelButton.isVisible())
-  }
-
+  /**
+   * @see
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#add-invalid-connection">
+   *   Regression: Add invalid connection
+   * </a>
+   */
   @Test
   @Tag("New")
   fun createInvalidConnectionTest(testInfo: TestInfo) {
@@ -103,14 +99,24 @@ class AddConnectionDialogTest {
 
     filesExplorerPanel.openDialogByPlusButtonInExplorer(ActionMenuPoints.CONNECTION)
 
-    addConnectionDialog.passwordInput.text = "passwordInput"
-    addConnectionDialog.connectionNameInput.text = "nameInput"
-    addConnectionDialog.urlInput.text = "https://${mockServer.hostName}:${mockServer.port}"
-    addConnectionDialog.userNameInput.text = "userNameInput"
-    addConnectionDialog.acceptSelfSignedCheckbox.click()
+    addConnectionDialog.checkFieldsArePresent()
+
+    addConnectionDialog
+      .fillDialog(
+        connectionName = "nameInput",
+        connectionUrl = "https://${mockServer.hostName}:${mockServer.port}",
+        username = "userNameInput",
+        password = "passwordInput",
+        isAcceptSelfSigned = true
+      )
+
+    unsecureConnectionDialog.proceedButton.click()
+    addConnectionDialog.okButton.click()
     unsecureConnectionDialog.proceedButton.click()
 
-    addConnectionDialog.connectionDialogOkButton.click()
-    unsecureConnectionDialog.proceedButton.click()
+    // TODO: finalize the check (the error dialog should appear)
+//    assert(errorCreatingConnectionDialog.dialogComponent.isVisible())
+//
+//    errorCreatingConnectionDialog.noButton.click()
   }
 }

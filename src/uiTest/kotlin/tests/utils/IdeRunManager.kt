@@ -43,7 +43,6 @@ class IdeRunManager private constructor() {
     .newContext("test_plugin_action", testCase = testCaseDesc.useRelease(ideVersion))
     .prepareProjectCleanImport()
     .disableAutoImport(disabled = true)
-  private var isPolicyDialogAlreadyClosed = false
 
   val runningIde: BackgroundRun
 
@@ -56,14 +55,7 @@ class IdeRunManager private constructor() {
      * If the initialization is already done, will just return the IDE run manager instance
      */
     fun prepareRunManager(): IdeRunManager {
-      createdRunManager.runningIde
-      val driver = createdRunManager.runningIde.driver
-      if (!createdRunManager.isPolicyDialogAlreadyClosed) {
-        driver.ideFrame {
-          createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
-        }
-        createdRunManager.isPolicyDialogAlreadyClosed = true
-      }
+      createdRunManager.runningIde.driver.waitForIndicators(5.minutes)
       return createdRunManager
     }
 

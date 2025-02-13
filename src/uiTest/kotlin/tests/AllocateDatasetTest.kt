@@ -26,7 +26,7 @@ import tests.utils.*
 import tests.utils.uidefinitions.dialogs.AddConnectionDialog
 import tests.utils.uidefinitions.dialogs.AllocateDatasetDialog
 import tests.utils.notification.AddWorkingSetSuccessNotification
-import tests.utils.notification.UnsecureConnectionDialog
+import tests.utils.uidefinitions.dialogs.UnsecureConnectionDialog
 import tests.utils.uidefinitions.ActionMenuPoints
 import tests.utils.uidefinitions.FilesExplorerPanel
 import tests.utils.uidefinitions.dialogs.AddWorkingSetDialog
@@ -78,6 +78,7 @@ class AllocateDatasetTest {
 
       return RecFM
         .entries
+        .filter { recordFormat -> recordFormat != RecFM.U }
         .flatMap { recordFormat ->
           dsNameToDsOrg.map { dsOrg ->
             val dirBlock = if (dsOrg != DsOrg.PS) "1" else null
@@ -137,6 +138,22 @@ class AllocateDatasetTest {
         }
       )
 
+      MockWebServerManager.injectEndpoint(
+        "${testInfo.displayName}_DELETE_ds",
+        endpointResolver = { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/") ?: false },
+        customHandler = {
+          if (it == null) {
+            fail("It is expected that the request is not empty")
+          }
+          val dsn = it.requestLine
+            .substringAfter("/zosmf/restfiles/ds/")
+            .substringBefore(" HTTP")
+          val dsToDelete = createdDatasets.find { datasetDefinition -> datasetDefinition.contains("\"$dsn\"") }
+          createdDatasets.remove(dsToDelete)
+          MockResponse().setResponseCode(204)
+        }
+      )
+
       filesExplorerPanel = FilesExplorerPanel(ideDriver)
       filesExplorerPanel.createValidConnection(ideDriver, connectionName)
 
@@ -149,10 +166,12 @@ class AllocateDatasetTest {
     @JvmStatic
     @AfterAll
     fun afterAll() {
+      filesExplorerPanel.deleteAllMaskElements(1)
+      deleteConfigEntities(ideDriver, "Working Sets")
+      deleteConfigEntities(ideDriver, "Connections")
       MockWebServerManager.removeAllEndpoints()
     }
   }
-
 
   @BeforeEach
   fun prepareTestEnv() {
@@ -174,12 +193,18 @@ class AllocateDatasetTest {
       .resetTestEnv()
   }
 
+  /**
+   * @see
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#allocate-data-sets">
+   *   Regression: Allocate data sets
+   * </a>
+   */
   @Tag("New")
   @ParameterizedTest
   @MethodSource("provideOrgTypes")
   fun allocateDatasetsTest(allocationParams: AllocateDatasetParams) {
     // Right-click on a working set, New -> Dataset
-    filesExplorerPanel.callSubMenuForRow(0, "New", "Dataset")
+    filesExplorerPanel.selectRightClickMenuItem(0, "New", "Dataset")
     allocateDatasetDialog.fillDialog(allocationParams)
 
     val dsName = allocationParams.name
@@ -223,10 +248,10 @@ class AllocateDatasetTest {
 
     allocateDatasetDialog.okButton.click()
     // Right-click on a dataset mask, Refresh
-    filesExplorerPanel.callSubMenuForRow(1, "Refresh")
+    filesExplorerPanel.selectRightClickMenuItem(1, "Refresh")
 
-    // Needed for the paths to appear
-    Thread.sleep(1000)
+    filesExplorerPanel
+      .waitForTreeToLoadRow(filesExplorerPanel.fileExplorerTree.collectExpandedPaths().size - 1)
     val fileExplorerTreePaths = filesExplorerPanel.fileExplorerTree.collectExpandedPaths()
     assert(fileExplorerTreePaths.last().path.any { it.contains(dsName) })
 

@@ -19,7 +19,7 @@ import com.intellij.driver.sdk.ui.components.*
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration.Companion.seconds
 
-// TODO: doc
+/** Testing connection dialog wrapper. The dialog appears when a connection dialog is fulfilled */
 class TestingConnectionDialog(val driver: Driver) {
   private lateinit var testingDialog: DialogUiComponent
 

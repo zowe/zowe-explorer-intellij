@@ -1,0 +1,73 @@
+#
+# This program and the accompanying materials are made available under the terms of the
+# Eclipse Public License v2.0 which accompanies this distribution, and is available at
+# https://www.eclipse.org/legal/epl-v20.html
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Copyright Contributors to the Zowe Project.
+#
+# Contributors:
+#   Zowe Community
+#   Uladzislau Kalesnikau
+#
+
+name: Regression testing
+on: workflow_dispatch
+
+jobs:
+  run-regression:
+    name: Run regression for ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            prepareEnv: |
+              export DISPLAY=:99.0
+              Xvfb -ac :99 -screen 0 1920x1080x24 &
+              sleep 10
+            runTests: |
+              export DISPLAY=:99.0
+              ./gradlew uiTests
+            reportName: ui-test-fails-report-linux
+
+          - os: macos-latest
+            prepareEnv: echo "No preparations needed for MacOS"
+            runTests: ./gradlew uiTests
+            reportName: ui-test-fails-report-mac
+
+          - os: windows-latest
+            prepareEnv: echo "No preparations needed for Windows"
+            runTests: ./gradlew uiTests
+            reportName: ui-test-fails-report-windows
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Setup Java
+        uses: actions/setup-java@v4.7.0
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Prepare test env
+        run: ${{ matrix.prepareEnv }}
+
+      - name: Run tests
+        run: ${{ matrix.runTests }}
+        env:
+          PRODUCT_NAME: "IC-243"
+
+      - name: Copy logs
+        if: ${{ failure() }}
+        run: mv ${{ github.workspace }}/src/uiTest/resources/mock_project/idea.log ${{ github.workspace }}/build/reports/idea.log
+
+      - name: Save fails report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.reportName }}
+          path: |
+            ${{ github.workspace }}/build/reports

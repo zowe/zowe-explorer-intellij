@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import tests.utils.IdeRunManager
+import tests.utils.openZoweExplorerPanel
 import tests.utils.resetTestEnv
 import java.awt.Point
 
@@ -90,11 +91,11 @@ class SmokeTest {
 
   /**
    * Check the selected settings tab basic elements if it is a table view tab
-   * @param forMainframeSettingsTabs the settings tab to check
+   * @param zoweExplorerSettingsTabs the settings tab to check
    * @param tabText the tab text to distinguish between different types of tabs
    * @return a plus button on the tab for further checking
    */
-  private fun checkSettingsTabElements(forMainframeSettingsTabs: UiComponent, tabText: String): ActionButtonUi {
+  private fun checkSettingsTabElements(zoweExplorerSettingsTabs: UiComponent, tabText: String): ActionButtonUi {
     val (titledSeparatorText, tabContentsHeaderText) = when (tabText) {
       "Connections" -> "z/OSMF Connections" to "Name || z/OSMF URL || Username || Owner"
       "JES Working Sets" -> "JES Working Sets" to "Name || Connection || Username || z/OSMF URL"
@@ -104,7 +105,7 @@ class SmokeTest {
     }
 
     // Check the tab content
-    val tabContents = forMainframeSettingsTabs.x(
+    val tabContents = zoweExplorerSettingsTabs.x(
       "//div[@class='DialogPanel' and div[@class='TitledSeparator' and @originaltext='$titledSeparatorText']]"
     )
     assert(tabContents.isVisible())
@@ -364,40 +365,40 @@ class SmokeTest {
    */
   private fun checkSettings(ideFrameComponent: IdeaFrameUI, settingsDialog: UiComponent) {
     // Check that we are actually in the plug-in's settings
-    val forMainframeBreadcrumb = settingsDialog.x {
+    val zoweExplorerBreadcrumb = settingsDialog.x {
       and(byClass("Breadcrumbs"), byVisibleText("Zowe Explorer"))
     }
-    assert(forMainframeBreadcrumb.isVisible())
+    assert(zoweExplorerBreadcrumb.isVisible())
 
-    val forMainframeSettingsTabs = settingsDialog.x {
+    val zoweExplorerSettingsTabs = settingsDialog.x {
       and(byClass("JBEditorTabs"), byAttribute("nextaction", "Select Next Tab (Activate next tab)"))
     }
-    assert(forMainframeSettingsTabs.isVisible())
+    assert(zoweExplorerSettingsTabs.isVisible())
 
     // Check tabs
-    val connectionsTab = forMainframeSettingsTabs.x {
+    val connectionsTab = zoweExplorerSettingsTabs.x {
       and(byClass("SimpleColoredComponent"), byVisibleText("Connections"))
     }
     assert(connectionsTab.isVisible())
-    val jesWorkingSetsTab = forMainframeSettingsTabs.x {
+    val jesWorkingSetsTab = zoweExplorerSettingsTabs.x {
       and(byClass("SimpleColoredComponent"), byVisibleText("JES Working Sets"))
     }
     assert(jesWorkingSetsTab.isVisible())
-    val filesWorkingSetsTab = forMainframeSettingsTabs.x {
+    val filesWorkingSetsTab = zoweExplorerSettingsTabs.x {
       and(byClass("SimpleColoredComponent"), byVisibleText("Working Sets"))
     }
     assert(filesWorkingSetsTab.isVisible())
-    val tsoSessionsTab = forMainframeSettingsTabs.x {
+    val tsoSessionsTab = zoweExplorerSettingsTabs.x {
       and(byClass("SimpleColoredComponent"), byVisibleText("TSO Sessions"))
     }
     assert(tsoSessionsTab.isVisible())
-    val otherSettingsTab = forMainframeSettingsTabs.x {
+    val otherSettingsTab = zoweExplorerSettingsTabs.x {
       and(byClass("SimpleColoredComponent"), byVisibleText("Settings"))
     }
     assert(otherSettingsTab.isVisible())
 
     // Check Connections tab
-    val connectionsTabPlusButton = checkSettingsTabElements(forMainframeSettingsTabs, "Connections")
+    val connectionsTabPlusButton = checkSettingsTabElements(zoweExplorerSettingsTabs, "Connections")
 
     // Check "plus" action for Connections tab
     connectionsTabPlusButton.setFocus()
@@ -416,7 +417,7 @@ class SmokeTest {
     jesWorkingSetsTab.setFocus()
     jesWorkingSetsTab.click()
 
-    val jesWorkingSetsTabPlusButton = checkSettingsTabElements(forMainframeSettingsTabs, "JES Working Sets")
+    val jesWorkingSetsTabPlusButton = checkSettingsTabElements(zoweExplorerSettingsTabs, "JES Working Sets")
 
     // Check "plus" action for JES Working Sets tab
     jesWorkingSetsTabPlusButton.setFocus()
@@ -429,7 +430,7 @@ class SmokeTest {
     filesWorkingSetsTab.setFocus()
     filesWorkingSetsTab.click()
 
-    val filesWorkingSetsTabPlusButton = checkSettingsTabElements(forMainframeSettingsTabs, "Working Sets")
+    val filesWorkingSetsTabPlusButton = checkSettingsTabElements(zoweExplorerSettingsTabs, "Working Sets")
 
     // Check "plus" action for JES Working Sets tab
     filesWorkingSetsTabPlusButton.setFocus()
@@ -442,7 +443,7 @@ class SmokeTest {
     tsoSessionsTab.setFocus()
     tsoSessionsTab.click()
 
-    val tsoSessionsTabPlusButton = checkSettingsTabElements(forMainframeSettingsTabs, "TSO Sessions")
+    val tsoSessionsTabPlusButton = checkSettingsTabElements(zoweExplorerSettingsTabs, "TSO Sessions")
 
     // Check "plus" action for TSO Sessions tab
     tsoSessionsTabPlusButton.setFocus()
@@ -482,8 +483,7 @@ class SmokeTest {
     explorerViewAddButton.setFocus()
     explorerViewAddButton.click()
 
-    val plusDropdownTooltipForConnection = ideFrameComponent.x { byClass("HeavyWeightWindow") }
-    val plusDropdownList = plusDropdownTooltipForConnection.list { byClass("MyList") }
+    var plusDropdownList = ideFrameComponent.popup().list()
     assert(plusDropdownList.isVisible())
 
     assert(plusDropdownList.rawItems.size == 4)
@@ -494,16 +494,18 @@ class SmokeTest {
     assert(plusDropdownList.rawItems[3] == "TSO Console")
 
     // Check disabled items are functioning correctly
-    plusDropdownList.clickItemAtIndex(2) // Working Set
     plusDropdownList.hoverItemAtIndex(2) // Working Set tooltip
     assert(
       ideFrameComponent.x { and(byClass("Header"), byVisibleText("Create connection first")) }.isVisible()
     )
-    plusDropdownList.clickItemAtIndex(3) // TSO Console
     plusDropdownList.hoverItemAtIndex(3) // TSO Console tooltip
     assert(
       ideFrameComponent.x { and(byClass("Header"), byVisibleText("Create connection first")) }.isVisible()
     )
+
+    // To reset hover
+    ideFrameComponent.moveMouse()
+    plusDropdownList = ideFrameComponent.popup().list()
 
     // Check 'Connection' dialog is opened and correct for File Explorer
     plusDropdownList.clickItemAtIndex(0)
@@ -517,21 +519,14 @@ class SmokeTest {
   @Tag("New")
   fun smokeTestCase() {
     val ideDriver = IdeRunManager.getIdeDriver()
+    openZoweExplorerPanel(ideDriver)
     ideDriver.ideFrame {
-      // Open the plug-in's tool window view
-      val forMainframeTool = rightToolWindowToolbar.actionButton {
-        byAttribute("myaction", "Zowe Explorer (null)")
-      }
-      assert(forMainframeTool.isVisible())
-      forMainframeTool.setFocus()
-      forMainframeTool.click()
-
       // Check tool window elements are in place
-      val forMainframeTabs = x("//div[@class='TabPanel' and div[@class='BaseLabel' and @visible_text='Zowe Explorer']]")
+      val zoweExplorerTabs = x("//div[@class='TabPanel' and div[@class='BaseLabel' and @visible_text='Zowe Explorer']]")
 
-      val fileExplorerTab = forMainframeTabs.x { byText("File Explorer") }
+      val fileExplorerTab = zoweExplorerTabs.x { byText("File Explorer") }
       assert(fileExplorerTab.isVisible())
-      val jesExplorerTab = forMainframeTabs.x { byText("JES Explorer") }
+      val jesExplorerTab = zoweExplorerTabs.x { byText("JES Explorer") }
       assert(jesExplorerTab.isVisible())
 
       // Check button elements are in place for File Explorer
