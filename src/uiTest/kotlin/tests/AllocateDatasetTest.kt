@@ -30,6 +30,7 @@ import tests.utils.uidefinitions.dialogs.UnsecureConnectionDialog
 import tests.utils.uidefinitions.ActionMenuPoints
 import tests.utils.uidefinitions.FilesExplorerPanel
 import tests.utils.uidefinitions.dialogs.AddWorkingSetDialog
+import workingset.invalidAllocateScenarios
 import java.util.stream.Stream
 
 private val dsTemplate =
@@ -70,6 +71,13 @@ class AllocateDatasetTest {
 
     private lateinit var ideDriver: Driver
     private lateinit var filesExplorerPanel: FilesExplorerPanel
+
+    @JvmStatic
+    fun getInvalidDatasetConfigs(): Stream<Arguments> {
+      return invalidAllocateScenarios.stream().map{
+        Arguments.of(it.first, it.second)
+      }
+    }
 
     @JvmStatic
     fun provideOrgTypes(): Stream<Arguments> {
@@ -251,5 +259,16 @@ class AllocateDatasetTest {
 //    addWsNotification.skipButton.click()
 
 //    assert(isNotificationShown)
+  }
+
+  @Tag("New")
+  @ParameterizedTest
+  @MethodSource("getInvalidDatasetConfigs")
+  fun invalidAllocateDatasetsTest(allocationParams: AllocateDatasetParams, expectedMsg: String){
+    filesExplorerPanel.selectRightClickMenuItem(0, "New", "Dataset")
+    allocateDatasetDialog.fillDialog(allocationParams)
+    allocateDatasetDialog.okButton.click()
+    val uiErrorMsg = allocateDatasetDialog.errorMsg.allTextAsString()
+    assert(uiErrorMsg==expectedMsg){"Incorrect error msg. expected '$expectedMsg', in ui: $uiErrorMsg"}
   }
 }

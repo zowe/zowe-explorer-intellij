@@ -16,6 +16,10 @@
 package workingset
 
 import auxiliary.*
+import tests.utils.AllocUnit
+import tests.utils.AllocateDatasetParams
+import tests.utils.DsOrg
+import tests.utils.RecFM
 
 //Global constants
 enum class JobAction { SUBMIT, CANCEL, HOLD, RELEASE, PURGED, ERROR_PURGED}

@@ -63,6 +63,7 @@ class AllocateDatasetDialog(val driver: Driver) {
   private val chooseFormatButton: JComboBoxUiComponent by lazy { dialogComponent.comboBox("(//div[@class='ComboBox'])[4]") }
   private val datasetParameterExpand: UiComponent by lazy { dialogComponent.x { byText("Dataset Parameters") } }
   private val advancedParameterExpand: UiComponent by lazy { dialogComponent.x { byText("Advanced Parameters") } }
+  val errorMsg: UiComponent by lazy { dialogComponent.x { byClass("MyContentPanel") } }
 
   val okButton: ActionButtonUi by lazy { dialogComponent.actionButton { byVisibleText("OK") } }
   val cancelButton: ActionButtonUi by lazy { dialogComponent.actionButton { byVisibleText("Cancel") } }
