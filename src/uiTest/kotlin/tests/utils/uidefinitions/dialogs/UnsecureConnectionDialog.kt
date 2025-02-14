@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package tests.utils.uidefinitions.dialogs
@@ -23,7 +24,11 @@ class UnsecureConnectionDialog(val driver: Driver) {
 
   init {
     driver.ideFrame {
+<<<<<<<< HEAD:src/uiTest/kotlin/tests/utils/notification/UnsecureConnectionDialog.kt
       dialog = dialog(xpath = "//div[@accessiblename='Attempt to create an unsecured connection']")
+========
+      dialog = dialog("//div[@class='JEditorPane' and @visible_text='Attempt to create an unsecured connection']/ancestor::div[@class='MyDialog'][1]")
+>>>>>>>> origin/feature/GH-282-automated-test-pipeline-run:src/uiTest/kotlin/tests/utils/uidefinitions/dialogs/UnsecureConnectionDialog.kt
     }
   }
 }

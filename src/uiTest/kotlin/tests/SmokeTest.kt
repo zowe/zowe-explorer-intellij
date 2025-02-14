@@ -35,13 +35,6 @@ class SmokeTest {
       .resetTestEnv()
   }
 
-  @AfterEach
-  fun finalizeTestEnv() {
-    IdeRunManager.prepareRunManager()
-      .runningIde
-      .resetTestEnv()
-  }
-
   /** Check Add Connection dialog elements are correct **/
   private fun checkConnectionDialog(connectionDialog: UiComponent) {
     // Check text fields
@@ -522,12 +515,10 @@ class SmokeTest {
     openZoweExplorerPanel(ideDriver)
     ideDriver.ideFrame {
       // Check tool window elements are in place
-      val zoweExplorerTabs = x("//div[@class='TabPanel' and div[@class='BaseLabel' and @visible_text='Zowe Explorer']]")
+      val zoweExplorerTabs = x("//div[@class='ToolWindowHeader'][.//div[@class='BaseLabel' and @visible_text='Zowe Explorer']]")
 
       val fileExplorerTab = zoweExplorerTabs.x { byText("File Explorer") }
       assert(fileExplorerTab.isVisible())
-      val jesExplorerTab = zoweExplorerTabs.x { byText("JES Explorer") }
-      assert(jesExplorerTab.isVisible())
 
       // Check button elements are in place for File Explorer
       val fileExplorerView = x("//div[@class='SimpleToolWindowPanel' and div[@class='FileExplorerView']]")
@@ -548,8 +539,25 @@ class SmokeTest {
       checkSettings(this, settingsDialog)
 
       // Check JES Explorer tab elements
-      jesExplorerTab.setFocus()
-      jesExplorerTab.click()
+      // For some displays the JES Explorer tab is not visible right away, so there is a way to open it in another way
+      val jesExplorerTabPotentialElements = zoweExplorerTabs.xx { byText("JES Explorer") }.list()
+      if (jesExplorerTabPotentialElements.isNotEmpty()) {
+        val jesExplorerTab = jesExplorerTabPotentialElements[0]
+        assert(jesExplorerTab.isVisible())
+        jesExplorerTab.setFocus()
+        jesExplorerTab.click()
+      } else {
+        val chevronWithOtherTabs = zoweExplorerTabs
+          .actionButtonByXpath("//div[@class='ActionButton' and contains(@myicon,'chevron')]")
+        chevronWithOtherTabs.setFocus()
+        val showOtherElementsPopup = popup()
+        assert(showOtherElementsPopup.isVisible())
+        chevronWithOtherTabs.click()
+        val jesExplorerTabPopup = popup()
+        assert(jesExplorerTabPopup.allTextAsString().contains("JES Explorer"))
+        val jesExplorerTabPopupList = jesExplorerTabPopup.list("//div[@class='MyList']")
+        jesExplorerTabPopupList.clickItemAtIndex(0)
+      }
 
       val jesExplorerView = x("//div[@class='SimpleToolWindowPanel' and div[@class='JesExplorerView']]")
       val jesExplorerViewSettingsButton = jesExplorerView.actionButton {

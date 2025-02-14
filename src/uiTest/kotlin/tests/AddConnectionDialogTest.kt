@@ -69,9 +69,6 @@ class AddConnectionDialogTest {
 
   @AfterEach
   fun finalizeTestEnv() {
-    IdeRunManager.prepareRunManager()
-      .runningIde
-      .resetTestEnv()
     MockWebServerManager.removeAllEndpoints()
   }
 

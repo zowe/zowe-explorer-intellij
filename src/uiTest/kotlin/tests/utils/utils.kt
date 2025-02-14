@@ -15,11 +15,11 @@
 
 package tests.utils
 
+import com.intellij.driver.sdk.ui.components.dialog
 import com.intellij.driver.sdk.ui.components.ideFrame
 import com.intellij.driver.sdk.ui.components.isDialogOpened
 import com.intellij.driver.sdk.ui.components.waitForNoOpenedDialogs
 import com.intellij.ide.starter.driver.engine.BackgroundRun
-import com.jediterm.core.input.KeyEvent
 
 /**
  * Reset the running IDE test environment.
@@ -28,7 +28,8 @@ import com.jediterm.core.input.KeyEvent
 fun BackgroundRun.resetTestEnv(): BackgroundRun {
   driver.ideFrame {
     while (isDialogOpened()) {
-      robot.pressAndReleaseKey(KeyEvent.VK_ESCAPE)
+      dialog("//div[@class='MyDialog' and not(ancestor::div[@class='MyDialog'])]").setFocus()
+      keyboard { escape() }
     }
     waitForNoOpenedDialogs()
   }

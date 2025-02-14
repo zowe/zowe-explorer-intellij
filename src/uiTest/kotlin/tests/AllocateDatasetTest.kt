@@ -58,7 +58,6 @@ private val dsTemplate =
 @Description("Tests to check the functionality associated with dataset allocation")
 class AllocateDatasetTest {
   lateinit var addConnectionDialog: AddConnectionDialog
-  private lateinit var unsecureConnectionDialog: UnsecureConnectionDialog
   private lateinit var allocateDatasetDialog: AllocateDatasetDialog
   private lateinit var addWsNotification: AddWorkingSetSuccessNotification
 
@@ -181,16 +180,8 @@ class AllocateDatasetTest {
     ideDriver = IdeRunManager.getIdeDriver()
     filesExplorerPanel = FilesExplorerPanel(ideDriver)
     addConnectionDialog = AddConnectionDialog(ideDriver)
-    unsecureConnectionDialog = UnsecureConnectionDialog(ideDriver)
     allocateDatasetDialog = AllocateDatasetDialog(ideDriver)
     addWsNotification = AddWorkingSetSuccessNotification(ideDriver)
-  }
-
-  @AfterEach
-  fun finalizeTestEnv() {
-    IdeRunManager.prepareRunManager()
-      .runningIde
-      .resetTestEnv()
   }
 
   /**
