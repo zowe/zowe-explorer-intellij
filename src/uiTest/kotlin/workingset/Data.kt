@@ -94,6 +94,7 @@ const val invalidDatasetNameConstant = "Each name segment (qualifier) is 1 to 8 
         "a hyphen (-). Name segments are separated by a period (.)"
 
 const val enterValueInCorrectRangeFromOneMsg = "Please enter a number from 1 to 2,147,483,646"
+const val enterValueInCorrectRangeFromOneNoSeparateMsg = "Please enter a number from 1 to 2147483646"
 const val enterValueInCorrectRangeFromZeroMsg = "Please enter a number from 0 to 2,147,483,646"
 const val MEMBER_ALREADY_EXISTS = "ISRZ002 Member already exists - Directory already contains the specified member name."
 const val RENAME_MEMBER_FAILED = "Rename member failed"
@@ -157,43 +158,43 @@ data class InvalidAllocate(
   val message: String
 )
 
-val invalidDatasetNameParams = InvalidAllocate(
-    "", "A23456789.A", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 1,
-    1,    "FB", 80, 3200, 0, invalidDatasetNameConstant
-)
-val invalidPrimaryAllocationParams = InvalidAllocate(
-    "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", -2, 0, 1,
-            "FB", 80, 3200, 0, enterValueInCorrectRangeFromOneMsg)
+val invalidDatasetNameParams = Pair(AllocateDatasetParams(
+  name="A23456789.A", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "1",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), invalidDatasetNameConstant)
+val invalidPrimaryAllocationParams = Pair(AllocateDatasetParams(
+  name="A23.A2", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "-2", secAlloc = "1",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), enterValueInCorrectRangeFromOneMsg)
+val invalidDirectoryParams = Pair(AllocateDatasetParams(
+  name="A23.A3", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="0", lrecl="80"
+), enterValueInCorrectRangeFromOneMsg)
+val invalidRecordLengthParams = Pair(AllocateDatasetParams(
+  name="A23.A4", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="0"
+), enterValueInCorrectRangeFromOneNoSeparateMsg)
+val invalidSecondaryAllocationParams = Pair(AllocateDatasetParams(
+  name="A23.A5", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "-10",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), enterValueInCorrectRangeFromZeroMsg)
+val invalidBlockSizeParams = Pair(AllocateDatasetParams(
+  name="A23.A6", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="-1", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), enterValueInCorrectRangeFromZeroMsg)
+val invalidAverageBlockLengthParams = Pair(AllocateDatasetParams(
+  name="A23.A7", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "-1", dirBlock="1", lrecl="80"
+), enterValueInCorrectRangeFromZeroMsg)
 
-val invalidDirectoryParams = InvalidAllocate(
-            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 0, 0,
-            "FB", 80, 3200, 0,enterValueInCorrectRangeFromOneMsg
-        )
-val invalidRecordLengthParams = InvalidAllocate(
-            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 0, 1,
-            "FB", 0, 3200, 0,enterValueInCorrectRangeFromOneMsg
-        )
-val invalidSecondaryAllocationParams = InvalidAllocate(
-            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, -10, 1,
-            "FB", 80, 3200, 0, enterValueInCorrectRangeFromZeroMsg
-        )
-val invalidBlockSizeParams = InvalidAllocate(
-            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 0, 1,
-            "FB", 80, -1, 0, enterValueInCorrectRangeFromZeroMsg
-        )
-val invalidAverageBlockLengthParams = InvalidAllocate(
-            "", "A23.A23", DatasetOrganization.PO_ORG_FULL_ITEM, "TRK", 10, 0, 1,
-            "FB", 80, 3200, -1, enterValueInCorrectRangeFromZeroMsg
-        )
-
-val invalidAllocateScenarios = mapOf(
-    Pair("invalidDatasetNameParams", invalidDatasetNameParams),
-    Pair("invalidPrimaryAllocationParams", invalidPrimaryAllocationParams),
-    Pair("invalidDirectoryParams", invalidDirectoryParams),
-    Pair("invalidRecordLengthParams", invalidRecordLengthParams),
-    Pair("invalidSecondaryAllocationParams", invalidSecondaryAllocationParams),
-    Pair("invalidBlockSizeParams", invalidBlockSizeParams),
-    Pair("invalidAverageBlockLengthParams", invalidAverageBlockLengthParams),
+val invalidAllocateScenarios = listOf(
+  invalidDatasetNameParams,
+  invalidPrimaryAllocationParams,
+  invalidDirectoryParams,
+  invalidRecordLengthParams,
+  invalidSecondaryAllocationParams,
+  invalidBlockSizeParams,
+  invalidAverageBlockLengthParams
 )
 
 //rename members constants
