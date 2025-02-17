@@ -94,6 +94,7 @@ const val invalidDatasetNameConstant = "Each name segment (qualifier) is 1 to 8 
         "a hyphen (-). Name segments are separated by a period (.)"
 
 const val enterValueInCorrectRangeFromOneMsg = "Please enter a number from 1 to 2,147,483,646"
+const val enterNumberMsg = "Please enter a number"
 const val enterValueInCorrectRangeFromOneNoSeparateMsg = "Please enter a number from 1 to 2147483646"
 const val enterValueInCorrectRangeFromZeroMsg = "Please enter a number from 0 to 2,147,483,646"
 const val MEMBER_ALREADY_EXISTS = "ISRZ002 Member already exists - Directory already contains the specified member name."
@@ -186,6 +187,65 @@ val invalidAverageBlockLengthParams = Pair(AllocateDatasetParams(
   name="A23.A7", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
   recfm=RecFM.FB, blksz="3200", avgBlkLen = "-1", dirBlock="1", lrecl="80"
 ), enterValueInCorrectRangeFromZeroMsg)
+val textInBlockLengthParams = Pair(AllocateDatasetParams(
+  name="A23.A7", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="Abc", avgBlkLen = "1", dirBlock="1", lrecl="80"
+), enterNumberMsg)
+
+val specSymbolsInBlockLengthParams = Pair(AllocateDatasetParams(
+  name="A23.A7", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="#!@#$%", avgBlkLen = "1", dirBlock="1", lrecl="80"
+), enterNumberMsg)
+
+val textInBlockSizeParams = Pair(AllocateDatasetParams(
+  name="A23.A6", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="Abc", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), enterNumberMsg)
+
+val specSymbolsInBlockSizeParams = Pair(AllocateDatasetParams(
+  name="A23.A6", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="#@$%^&*", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), enterNumberMsg)
+
+val textInSecondaryAllocationParams = Pair(AllocateDatasetParams(
+  name="A23.A5", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "Abc",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), enterNumberMsg)
+
+val specSymbolsInSecondaryAllocationParams = Pair(AllocateDatasetParams(
+  name="A23.A5", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "#@$%^&*",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), enterNumberMsg)
+
+val textInRecordLengthParams = Pair(AllocateDatasetParams(
+  name="A23.A4", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="Abc"
+), enterValueInCorrectRangeFromOneNoSeparateMsg)
+val specSymbolsInRecordLengthParams = Pair(AllocateDatasetParams(
+  name="A23.A4", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="#@\$%^&*"
+), enterValueInCorrectRangeFromOneNoSeparateMsg)
+
+val textInDirectoryParams = Pair(AllocateDatasetParams(
+  name="A23.A3", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="Abc", lrecl="80"
+), enterNumberMsg)
+
+val specSymbolsInDirectoryParams = Pair(AllocateDatasetParams(
+  name="A23.A3", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "0",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="#@/$%^&*", lrecl="80"
+), enterNumberMsg)
+
+val textInPrimaryAllocationParams = Pair(AllocateDatasetParams(
+  name="A23.A2", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "Abc", secAlloc = "1",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), enterNumberMsg)
+
+val specSymbolsInAllocationParams = Pair(AllocateDatasetParams(
+  name="A23.A2", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "#@/\$%^&*", secAlloc = "1",
+  recfm=RecFM.FB, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="80"
+), enterNumberMsg)
+
 
 val invalidAllocateScenarios = listOf(
   invalidDatasetNameParams,
@@ -194,7 +254,21 @@ val invalidAllocateScenarios = listOf(
   invalidRecordLengthParams,
   invalidSecondaryAllocationParams,
   invalidBlockSizeParams,
-  invalidAverageBlockLengthParams
+
+  invalidAverageBlockLengthParams,
+  textInRecordLengthParams,
+  specSymbolsInRecordLengthParams,
+  textInDirectoryParams,
+  specSymbolsInDirectoryParams,
+  textInPrimaryAllocationParams,
+  specSymbolsInAllocationParams,
+  textInBlockLengthParams,
+  specSymbolsInBlockLengthParams,
+  textInBlockSizeParams,
+  specSymbolsInBlockSizeParams,
+  textInSecondaryAllocationParams,
+  specSymbolsInSecondaryAllocationParams
+
 )
 
 //rename members constants
