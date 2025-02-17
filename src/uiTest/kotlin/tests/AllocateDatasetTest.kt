@@ -26,7 +26,6 @@ import tests.utils.*
 import tests.utils.uidefinitions.dialogs.AddConnectionDialog
 import tests.utils.uidefinitions.dialogs.AllocateDatasetDialog
 import tests.utils.notification.AddWorkingSetSuccessNotification
-import tests.utils.uidefinitions.dialogs.UnsecureConnectionDialog
 import tests.utils.uidefinitions.ActionMenuPoints
 import tests.utils.uidefinitions.FilesExplorerPanel
 import tests.utils.uidefinitions.dialogs.AddWorkingSetDialog
@@ -261,6 +260,12 @@ class AllocateDatasetTest {
 //    assert(isNotificationShown)
   }
 
+  /**
+   * @see
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#Allocating-data-sets-with-invalid-parameters">
+   *   Regression: Allocate data sets
+   * </a>
+   */
   @Tag("New")
   @ParameterizedTest
   @MethodSource("getInvalidDatasetConfigs")
