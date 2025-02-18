@@ -13,7 +13,6 @@
  */
 
 package testutils
-//import auxiliary.buildFinalListDatasetJson
 import auxiliary.buildListMembersJson
 import auxiliary.responseDispatcher
 import okhttp3.mockwebserver.Dispatcher
@@ -59,10 +58,11 @@ open class MockResponseDispatcher : Dispatcher() {
   fun injectAllocationResultPo(
     datasetOrganization: String,
     recordFormatShort: String,
-    dsName:String,
-    dsOrganisationShort:String,
-    recordLength:Int,
-    handler: Boolean = false){
+    dsName: String,
+    dsOrganisationShort: String,
+    recordLength: Int,
+    handler: Boolean = false
+  ) {
 
     responseDispatcher.injectEndpoint(
       "testAllocateValid${datasetOrganization}Datasets_${recordFormatShort}_restfiles",
@@ -72,7 +72,7 @@ open class MockResponseDispatcher : Dispatcher() {
 
   }
 
-  fun injectAllocationResultPds(pdsName: String, handler: Boolean = false){
+  fun injectAllocationResultPds(pdsName: String, handler: Boolean = false) {
 
     responseDispatcher.injectEndpoint(
       "allocatePds_restfiles",
@@ -82,7 +82,7 @@ open class MockResponseDispatcher : Dispatcher() {
 
   }
 
-  fun injectAllocatedDatasets(datasetMask: String, body: String, datasetName:String, handler: Boolean = false){
+  fun injectAllocatedDatasets(datasetMask: String, body: String, datasetName: String, handler: Boolean = false) {
     responseDispatcher.injectEndpoint(
       "listAllocatedDatasets_restfiles_${datasetMask}",
       { it?.requestLine?.contains("GET /zosmf/restfiles/ds?dslevel=${datasetName}*") ?: handler },
@@ -91,7 +91,7 @@ open class MockResponseDispatcher : Dispatcher() {
   }
 
 
-  fun injectListMembers(body: String, handler: Boolean = false){
+  fun injectListMembers(body: String, handler: Boolean = false) {
     responseDispatcher.injectEndpoint(
       "listMembers_restfiles",
       { it?.requestLine?.contains("/member") ?: handler },
@@ -99,7 +99,7 @@ open class MockResponseDispatcher : Dispatcher() {
     )
   }
 
-  fun injectListAllDatasetMembersRestfiles(pdsName: String, body: String, handler: Boolean = false){
+  fun injectListAllDatasetMembersRestfiles(pdsName: String, body: String, handler: Boolean = false) {
     responseDispatcher.injectEndpoint(
       "listAllDatasetMembers_restfiles",
       { it?.requestLine?.contains("GET /zosmf/restfiles/ds/$pdsName/member") ?: handler },
@@ -107,7 +107,7 @@ open class MockResponseDispatcher : Dispatcher() {
     )
   }
 
-  fun injectDeleteDataset(datasetName: String, handler: Boolean = false){
+  fun injectDeleteDataset(datasetName: String, handler: Boolean = false) {
     responseDispatcher.injectEndpoint(
       "deleteDataset_restfiles_${datasetName}",
       { it?.requestLine?.contains("DELETE /zosmf/restfiles/ds/${datasetName}") ?: handler },
@@ -115,7 +115,7 @@ open class MockResponseDispatcher : Dispatcher() {
     )
   }
 
-  fun injectTestInfo(testInfo: TestInfo,handler: Boolean = false){
+  fun injectTestInfo(testInfo: TestInfo, handler: Boolean = false) {
     responseDispatcher.injectEndpoint(
       "${testInfo.displayName}_info",
       { it?.requestLine?.contains("zosmf/info") ?: handler },
@@ -123,7 +123,7 @@ open class MockResponseDispatcher : Dispatcher() {
     )
   }
 
-  fun injectTestInfoRestTopology(testInfo: TestInfo, handler: Boolean = false){
+  fun injectTestInfoRestTopology(testInfo: TestInfo, handler: Boolean = false) {
     responseDispatcher.injectEndpoint(
       "${testInfo.displayName}_resttopology",
       { it?.requestLine?.contains("zosmf/resttopology/systems") ?: handler },
@@ -131,20 +131,24 @@ open class MockResponseDispatcher : Dispatcher() {
     )
   }
 
-  fun injectMigratePdsRestFiles(pdsName:String, contains: String, handler: Boolean = false){
+  fun injectMigratePdsRestFiles(pdsName: String, contains: String, handler: Boolean = false) {
     responseDispatcher.injectEndpoint(
       "migratePds_restfiles",
-      { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/$pdsName") ?: false &&
-              it?.body?.toString()?.contains(contains) ?: handler },
+      {
+        it?.requestLine?.contains("PUT /zosmf/restfiles/ds/$pdsName") ?: false &&
+          it?.body?.toString()?.contains(contains) ?: handler
+      },
       { MockResponse().setResponseCode(200) }
     )
   }
 
-  fun injectRecallPds(pdsName: String, handler: Boolean = false){
+  fun injectRecallPds(pdsName: String, handler: Boolean = false) {
     responseDispatcher.injectEndpoint(
       "migratePds_restfiles",
-      { it?.requestLine?.contains("PUT /zosmf/restfiles/ds/$pdsName") ?: false &&
-              it?.body?.toString()?.contains("hrecall") ?: handler },
+      {
+        it?.requestLine?.contains("PUT /zosmf/restfiles/ds/$pdsName") ?: false &&
+          it?.body?.toString()?.contains("hrecall") ?: handler
+      },
       { MockResponse().setResponseCode(200) }
     )
   }
@@ -175,25 +179,12 @@ open class MockResponseDispatcher : Dispatcher() {
 //  }
 
 
-
   override fun dispatch(request: RecordedRequest): MockResponse {
     val fileName = System.getProperty("user.dir") + "/src/uiTest/resources/request_received.txt"
 
 
-
     val x = validationList
       .firstOrNull { it.validator(request) }
-
-//    if (x?.handler != null && x != null){
-//      val kClass = x.handler::class
-//      val properties = kClass.memberProperties
-//
-//      for (property in properties) {
-//
-//        File(fileName).appendText("=================${property.name}===========")
-////        println("${property.name}: ${property.get(x.handler)}")
-//      }
-//    }
 
     File(fileName).appendText("${x?.name}\n${x?.validator}${x?.handler}\n${x?.handler}\n")
     return x
@@ -203,7 +194,7 @@ open class MockResponseDispatcher : Dispatcher() {
   }
 }
 
-fun injectSingleMember(testInfo:TestInfo, datasetName: String, listMembersInDataset:  MutableList<String>){
+fun injectSingleMember(testInfo: TestInfo, datasetName: String, listMembersInDataset: MutableList<String>) {
   responseDispatcher.injectEndpoint(
     "${testInfo.displayName}_restfiles_listmembers",
     { it?.requestLine?.contains("GET /zosmf/restfiles/ds/${datasetName}/member") ?: false },

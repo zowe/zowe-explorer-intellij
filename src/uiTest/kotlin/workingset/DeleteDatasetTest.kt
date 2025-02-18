@@ -22,7 +22,7 @@ import com.intellij.remoterobot.search.locators.Locator
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
+import org.junit.jupiter.params.provider.MethodSource
 import testutils.ProcessManager
 import workingset.testutils.injectListAllAllocatedDatasets
 
@@ -41,6 +41,15 @@ class DeleteDatasetTest : IdeaInteractionClass() {
     private var datasetsToBeDeleted = mutableListOf<String>()
     private var mapListDatasets = mutableMapOf<String, String>()
     private lateinit var processManager: ProcessManager
+
+    companion object {
+        @JvmStatic
+        fun organisationValues() = listOf(
+            DatasetOrganization.SEQUENTIAL_ORG_FULL_ITEM,
+            DatasetOrganization.PO_ORG_FULL_ITEM,
+            DatasetOrganization.POE_ORG_FULL_ITEM
+        )
+    }
 
     /**
      * Opens the project and Explorer, clears test environment, creates working set and mask.
@@ -84,8 +93,8 @@ class DeleteDatasetTest : IdeaInteractionClass() {
      * Tests to allocate PO datasets with valid parameters.
      */
     @ParameterizedTest
-    @ValueSource(strings = [SEQUENTIAL_ORG_FULL, PO_ORG_FULL, POE_ORG_FULL])
-    fun testDeleteDatasets(input: String, remoteRobot: RemoteRobot) {
+    @MethodSource("organisationValues")
+    fun testDeleteDatasets(input: DatasetOrganization, remoteRobot: RemoteRobot) {
         doValidTest(input, remoteRobot)
         deleteDatasets(remoteRobot)
     }
@@ -93,34 +102,32 @@ class DeleteDatasetTest : IdeaInteractionClass() {
     /**
      * Allocates dataset with different record formats.
      */
-    private fun doValidTest(datasetOrganization: String, remoteRobot: RemoteRobot) {
+    private fun doValidTest(datasetOrganization: DatasetOrganization, remoteRobot: RemoteRobot) {
         recordFormats.forEach { s ->
             val recordLength = if (s == F_RECORD_FORMAT_SHORT) {
                 3200
             } else {
                 80
             }
-            val dsOrganisationShort = "\\((.*?)\\)".toRegex().find(datasetOrganization)?.groupValues?.get(1)
+            val dsOrganisationShort = datasetOrganization.value.substringAfter('(').substringBefore(')')
             val dsName = "${datasetName}${dsOrganisationShort}.${s}".uppercase().replace("-", "")
 
-            if (dsOrganisationShort != null) {
                 responseDispatcher.injectAllocationResultPo(
-                    datasetOrganization,
+                    datasetOrganization.value,
                     s,
                     dsName,
                     dsOrganisationShort,
                     recordLength
                 )
-            }
             allocateDataSet(
-                wsName, dsName, datasetOrganization, TRACKS_ALLOCATION_UNIT_SHORT, 10, 1, 1,
+                wsName, dsName, datasetOrganization, "TRK", 10, 1, 1,
                 s, recordLength, 3200, 0, remoteRobot
             )
 
-            val dsntp = if (dsOrganisationShort == SEQUENTIAL_ORG_SHORT) {
+            val dsntp = if (dsOrganisationShort == "PS") {
                 ""
             } else {
-                PDS_TYPE
+                "PDS"
             }
 
             val listDs = buildDatasetConfigString(dsName, dsntp, datasetOrganization, recordLength, s)

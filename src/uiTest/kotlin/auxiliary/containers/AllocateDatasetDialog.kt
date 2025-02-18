@@ -41,19 +41,19 @@ open class AllocateDatasetDialog(
      * Fills in the parameters for allocating dataset.
      */
     fun allocateDataset(
-        datasetName: String,
-        datasetOrganization: String,
-        allocationUnit: String,
-        primaryAllocation: Int,
-        secondaryAllocation: Int,
-        directory: Int,
-        recordFormat: String,
-        recordLength: Int,
-        blockSize: Int,
-        averageBlockLength: Int = 0
+      datasetName: String,
+      datasetOrganization: DatasetOrganization,
+      allocationUnit: String,
+      primaryAllocation: Int,
+      secondaryAllocation: Int,
+      directory: Int,
+      recordFormat: String,
+      recordLength: Int,
+      blockSize: Int,
+      averageBlockLength: Int = 0
     ) {
         findAll<JTextFieldFixture>(datasetNameInputLoc)[0].text = datasetName
-        findAll<ComboBoxFixture>(datasetOrgDropDownLoc)[1].selectItem(datasetOrganization)
+        findAll<ComboBoxFixture>(datasetOrgDropDownLoc)[1].selectItem(datasetOrganization.value)
 
         val datasetTextParams = findAll<JTextFieldFixture>(inputFieldLoc)
         val datasetComboBoxParams = findAll<ComboBoxFixture>(dropdownsLoc)
@@ -63,7 +63,7 @@ open class AllocateDatasetDialog(
         datasetTextParams[2].text = secondaryAllocation.toString()
         datasetComboBoxParams[3].selectItem(recordFormat)
 
-        if (datasetOrganization == SEQUENTIAL_ORG_FULL) {
+        if (datasetOrganization == DatasetOrganization.PO_ORG_FULL_ITEM) {
             datasetTextParams[3].text = recordLength.toString()
             datasetTextParams[4].text = blockSize.toString()
             datasetTextParams[5].text = averageBlockLength.toString()

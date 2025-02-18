@@ -63,7 +63,7 @@ class MigrateDatasetTest:IdeaInteractionClass() {
             remoteRobot,
             "https://${mockServer.hostName}:${mockServer.port}"
         )
-        mapListDatasets[pdsName] = auxiliary.listDS(pdsName, PDS_TYPE, PO_ORG_SHORT)
+        mapListDatasets[pdsName] = auxiliary.listDS(pdsName, "PDS", "PO")
         injectListAllAllocatedDatasets(pdsName, mapListDatasets, true)
         responseDispatcher.injectListAllDatasetMembersRestfiles(
             pdsName,

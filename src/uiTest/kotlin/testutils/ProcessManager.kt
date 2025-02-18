@@ -11,7 +11,6 @@
  *   IBA Group
  *   Zowe Community
  */
-
 package testutils
 
 import workingset.IdeaInteractionClass

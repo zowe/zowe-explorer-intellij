@@ -103,7 +103,7 @@ class ViewDatasetTest :IdeaInteractionClass(){
    */
   @Test
   fun testViewEmptyPDS(testInfo: TestInfo, remoteRobot: RemoteRobot) {
-    createWsAndMaskWithMock(wsNameWs1, userIdPrefix+emptyPdsDatasetNameTell, EMPTY_MEMBER_CONTENT, PDS_TYPE, PO_ORG_SHORT, testInfo, remoteRobot)
+    createWsAndMaskWithMock(wsNameWs1, userIdPrefix+emptyPdsDatasetNameTell, EMPTY_MEMBER_CONTENT, "PDS", "PO", testInfo, remoteRobot)
     openOrCloseWorkingSetInExplorer(wsNameWs1, fixtureStack, remoteRobot)
     findMessageInExplorer(noItemsFoundMsg, remoteRobot)
   }
@@ -115,7 +115,7 @@ class ViewDatasetTest :IdeaInteractionClass(){
   @MethodSource("pairProvider")
   fun testViewPsDataset(wsName: String, memberContent:String, tell: String, testInfo: TestInfo, remoteRobot: RemoteRobot){
     val datasetName = userIdPrefix + tell
-    createWsAndMaskWithMock(wsName, datasetName, memberContent, EMPTY_STRING, SEQUENTIAL_ORG_SHORT, testInfo, remoteRobot)
+    createWsAndMaskWithMock(wsName, datasetName, memberContent, EMPTY_STRING, "PS", testInfo, remoteRobot)
     openOrCloseWorkingSetInExplorer(wsName, fixtureStack, remoteRobot)
 
     injectPsDatasetContent(testInfo, datasetName, memberContent)
@@ -129,7 +129,7 @@ class ViewDatasetTest :IdeaInteractionClass(){
    */
   @Test
   fun testViewNonEmptyPDS(testInfo: TestInfo, remoteRobot: RemoteRobot) {
-    createWsAndMaskWithMock(WS_NAME_4, pdsDatasetName, SHORT_MEMBER_CONTENT, PDS_TYPE, PO_ORG_SHORT, testInfo, remoteRobot)
+    createWsAndMaskWithMock(WS_NAME_4, pdsDatasetName, SHORT_MEMBER_CONTENT, "PDS", "PO", testInfo, remoteRobot)
     openOrCloseWorkingSetInExplorer(WS_NAME_4, fixtureStack, remoteRobot)
 
     injectMemberContent(testInfo,pdsDatasetName, MEMBER_NAME_1)
@@ -159,7 +159,7 @@ class ViewDatasetTest :IdeaInteractionClass(){
 
     injectListAllAllocatedDatasetsWithContents(testInfo, datasetName, mapListDatasets)
 
-    if (memberContent != EMPTY_MEMBER_CONTENT && dsNtp == PDS_TYPE) {
+    if (memberContent != EMPTY_MEMBER_CONTENT && dsNtp == "PDS") {
       for (i in 1..5) {
         listMembersInDataset.add(MEMBER_NAME_PATTERN+"$i")
       }

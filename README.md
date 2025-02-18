@@ -137,9 +137,7 @@ the [contribution guide](CONTRIBUTING.md).
 If you have any questions, related to the project development, further plans or something else, you can reach as out by
 some of the communication chanels:
 
-* [For Mainframe Slack channel in IBA workspace](https://iba-mainframe-tools.slack.com/archives/C01V4MZL9DH)
 * [Zowe Explorer IntelliJ team Slack channel in Open Mainframe Project workspace](https://openmainframeproject.slack.com/archives/C020BGPSU0M)
-* [For Mainframe GitHub (create or review issues)](https://github.com/for-mainframe/For-Mainframe/issues)
 * [Zowe Explorer plug-in for IntelliJ IDEA GitHub (create or review issues)](https://github.com/zowe/zowe-explorer-intellij/issues)
 * Email to: <a href="mailto:ukalesnikau@ibagroup.eu">Uladzislau Kalesnikau (Team Lead of the Zowe Explorer IntelliJ squad)</a>
 * Email to: <a href="mailto:aburak@ibagroup.eu">Alex Burak (Product Owner)</a>
