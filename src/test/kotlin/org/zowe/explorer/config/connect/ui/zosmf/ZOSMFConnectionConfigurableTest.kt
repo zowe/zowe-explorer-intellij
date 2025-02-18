@@ -14,9 +14,6 @@
 
 package org.zowe.explorer.config.connect.ui.zosmf
 
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -204,14 +201,26 @@ class ZOSMFConnectionConfigurableTest : WithApplicationShouldSpec({
       zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
         ?.let {
           it.isAccessible = true
-          try {
-            it.call(zOSMFConnectionConfigurableMock, state)
-          } catch (t: Throwable) {
-            println("ghjkk")
-            t.cause.toString().shouldContain("Zowe config file not found")
-          }
+          it.call(zOSMFConnectionConfigurableMock, state)
         }
       notified  shouldBe true
+    }
+
+    every { vfMock.inputStream } answers {
+      isInputStreamCalled = true
+      "".toByteArray().inputStream()
+    }
+
+    should("updateZoweConfigIfNeeded empty zowe config file") {
+      zOSMFConnectionConfigurableMock::class.declaredMemberFunctions.find { it.name == "updateZoweConfigIfNeeded" }
+        ?.let {
+          it.isAccessible = true
+          it.call(zOSMFConnectionConfigurableMock, state)
+        }
+      notified shouldBe true
+      isShowOkCancelDialogCalled shouldBe true
+      isFindFileByNioPathCalled shouldBe true
+      isInputStreamCalled shouldBe true
     }
 
     every { vfMock.inputStream } answers {
