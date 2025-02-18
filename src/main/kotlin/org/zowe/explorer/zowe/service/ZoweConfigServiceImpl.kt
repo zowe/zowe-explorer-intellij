@@ -49,6 +49,7 @@ import org.zowe.explorer.utils.crudable.getAll
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.explorer.zowe.service.ZoweConfigService.Companion.lock
 import org.zowe.kotlinsdk.annotations.ZVersion
+import org.zowe.kotlinsdk.exceptions.EmptyZoweConfigFileException
 import org.zowe.kotlinsdk.zowe.client.sdk.core.ZOSConnection
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
@@ -185,7 +186,9 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
           }
         }
       } catch (e: Exception) {
-        NotificationsService.errorNotification(e, project = myProject, custTitle = "Error with Zowe config file")
+        //parseConfigJson returns EmptyZoweConfigFileException in case of empty file
+        if (e !is EmptyZoweConfigFileException)
+          NotificationsService.errorNotification(e, project = myProject, custTitle = "Error with Zowe config file")
         return@runTask null
       }
     }
