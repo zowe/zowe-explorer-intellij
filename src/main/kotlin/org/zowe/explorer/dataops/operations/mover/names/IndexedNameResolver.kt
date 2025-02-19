@@ -16,20 +16,23 @@ package org.zowe.explorer.dataops.operations.mover.names
 import com.intellij.openapi.vfs.VirtualFile
 
 /**
- * Name resolver that generates new name based on the index (e.g. file_(1), file_(2) and etc.)
+ * Name resolver that generates new name based on the index (e.g. file_(1), file_(2) etc.)
  * This is an abstract class, it only finds the necessary index but doesn't create a new name.
  * It could be, for example file1, file2, file3. It all depends on implementation needs.
  * @author Valiantsin Krus
  */
-abstract class IndexedNameResolver: CopyPasteNameResolver {
+abstract class IndexedNameResolver : CopyPasteNameResolver {
 
   override fun getConflictingChild(source: VirtualFile, sourceFiles: List<VirtualFile>, destination: VirtualFile): VirtualFile? {
-    val rowNameToCopy = resolveNameWithIndex(source, destination, null)
-    val resolveName = internalResolve(source, destination, buildNewNamesList(source, sourceFiles, destination))
-    var ret = destination.children.firstOrNull { it.name == rowNameToCopy }
-    if (rowNameToCopy != resolveName && ret == null)
-      ret = destination
-    return ret
+    val resolvedName = internalResolve(source, null, buildNewNamesList(source, sourceFiles, true))
+    return destination.children.firstOrNull { it.name == resolvedName }
+  }
+
+  override fun hasConflictingSource(source: VirtualFile, sourceFiles: List<VirtualFile>): Boolean {
+    val resolvedName = resolveNameWithIndex(source, null, null)
+    return sourceFiles.minus(source).any {
+      resolveNameWithIndex(it, null, null) == resolvedName
+    }
   }
 
   /**
@@ -39,20 +42,21 @@ abstract class IndexedNameResolver: CopyPasteNameResolver {
    * @param index generated index to add to the source name. If it is null, then no index is needed to add.
    * @return new name with joined index.
    */
-  abstract fun resolveNameWithIndex(source: VirtualFile, destination: VirtualFile, index: Int?): String
+  abstract fun resolveNameWithIndex(source: VirtualFile, destination: VirtualFile?, index: Int?): String
 
   /**
    * Creates new names list for a source files list.
    * @param source source file to copy in destination folder (or folder-like entity).
    * @param sourceFiles list of all source files to copy
-   * @param destination folder-like entity to copy file to.
+   * @param basedOnIndex create list based on the index of the source file in the list
    * @return new names list
    */
-  private fun buildNewNamesList(source: VirtualFile, sourceFiles: List<VirtualFile>, destination: VirtualFile) :List<String>
-  {
-    val newNames: MutableList<String> = mutableListOf<String>()
-    for (s in sourceFiles.take(sourceFiles.indexOf(source))) {
-      newNames.add(internalResolve(s, destination, newNames))
+  private fun buildNewNamesList(source: VirtualFile, sourceFiles: List<VirtualFile>, basedOnIndex: Boolean = false): List<String> {
+    val newNames = mutableListOf<String>()
+    val sourcesToAdd = if (basedOnIndex) sourceFiles.take(sourceFiles.indexOf(source))
+    else sourceFiles.minus(source)
+    for (sourceFile in sourcesToAdd) {
+      newNames.add(internalResolve(sourceFile, null, newNames))
     }
     return newNames
   }
@@ -64,16 +68,21 @@ abstract class IndexedNameResolver: CopyPasteNameResolver {
    * @param newNames list of new file names
    * @return string with new file name.
    */
-  private fun internalResolve(source: VirtualFile, destination: VirtualFile, newNames: List<String>): String {
+  private fun internalResolve(source: VirtualFile, destination: VirtualFile?, newNames: List<String>): String {
     var newName = resolveNameWithIndex(source, destination, null)
     var index = 1
-    while (newName in newNames || destination.children.any { it.name == newName }) {
+    while (newName in newNames || destination?.children?.any { it.name == newName } == true) {
       newName = resolveNameWithIndex(source, destination, index++)
     }
     return newName
   }
 
-  override fun resolve(source: VirtualFile, sourceFiles: List<VirtualFile>, destination: VirtualFile): String {
-    return internalResolve(source, destination, buildNewNamesList(source, sourceFiles, destination))
+  override fun resolve(source: VirtualFile, sourceFiles: List<VirtualFile>, destination: VirtualFile?, newNames: List<String>): String {
+    return internalResolve(source, destination, buildNewNamesList(source, sourceFiles).plus(newNames).distinct())
   }
+
+  override fun resolveSources(source: VirtualFile, sourceFiles: List<VirtualFile>): String {
+    return internalResolve(source, null, buildNewNamesList(source, sourceFiles, true))
+  }
+
 }
