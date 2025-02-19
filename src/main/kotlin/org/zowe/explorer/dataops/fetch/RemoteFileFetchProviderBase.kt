@@ -70,6 +70,19 @@ abstract class RemoteFileFetchProviderBase<Connection : ConnectionConfigBase, Re
     return lock.withLock { cacheState[query] != CacheState.ERROR }
   }
 
+  /**
+   * Sets cache state to [CacheState.FETCHING] for the specified query.
+   * @param query query that identifies the cache.
+   */
+  override fun markCacheAsFetching(query: RemoteQuery<Connection, Request, Unit>) {
+    lock.withLock { cacheState[query] = CacheState.FETCHING }
+  }
+
+  /**
+   * Checks if the cache is fetching.
+   * @param query query that identifies the cache.
+   * @return true if fetching is in progress, false if not.
+   */
   override fun isCacheFetching(query: RemoteQuery<Connection, Request, Unit>): Boolean {
     return lock.withLock { cacheState[query] == CacheState.FETCHING }
   }
