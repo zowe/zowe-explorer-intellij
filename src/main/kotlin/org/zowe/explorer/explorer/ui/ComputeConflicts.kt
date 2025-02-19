@@ -26,7 +26,10 @@ import org.zowe.explorer.dataops.DataOpsManager
  * @param sourceFile File to be copied.
  * @param destinationFile Child of file to be copy to that have conflict with source file.
  * @param project Current project
+ *
+ * @see [org.zowe.explorer.v3.operations.move.conflict.DestinationConflictResolver]
  */
+@Deprecated("No longer in use")
 abstract class ComputeConflicts(
   val dataOpsManager: DataOpsManager,
   val sourceFiles: List<VirtualFile>,

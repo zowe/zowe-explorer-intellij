@@ -34,10 +34,6 @@ import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
-import org.zowe.explorer.dataops.operations.mover.names.CopyPasteNameResolver
-import org.zowe.explorer.dataops.operations.mover.names.DatasetOrDirResolver
-import org.zowe.explorer.dataops.operations.mover.names.DefaultNameResolver
-import org.zowe.explorer.dataops.operations.mover.names.SeqToPDSResolver
 import org.zowe.explorer.explorer.AbstractExplorerBase
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.explorer.FilesWorkingSet
@@ -54,6 +50,7 @@ import org.zowe.explorer.vfs.MFVirtualFileSystemModel
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.dataops.operations.mover.names.*
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
 import java.util.*
@@ -1949,7 +1946,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         }
       }
 
-      context("Test config resolution") {
+      context("Test conflict resolution") {
         isPastePerformed = false
         every { mockedFileExplorerView.isCut } returns AtomicBoolean(false)
 
@@ -2534,19 +2531,21 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
             )
           } returns Messages.YES
           every {
-            Messages.showOkCancelDialog(
+            Messages.showDialog(
+              any() as Project?,
               any() as String,
               any() as String,
-              any() as String,
-              any() as String,
+              any() as Array<String>,
+              0,
               any() as Icon?,
+              null
             )
           } answers {
             if (!decideOptionSelected) {
               decideOptionSelected = true
-              Messages.OK
+              2
             } else {
-              Messages.CANCEL
+              2
             }
           }
 
@@ -2935,6 +2934,250 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
           assertSoftly {
             file1CopiedWithNewName shouldBe true
             file2Copied shouldBe false
+          }
+        }
+
+        should("Resolve conflicts in source files when copying to PDS") {
+          var file1CopiedWithOverwrite = false
+          var file2CopiedWithNewName = false
+
+          val mockedSourceParent = mockk<MFVirtualFile> {
+            every { parent } returns null
+          }
+          val (mockedSourceFile1, mockedSourceAttributes1) =
+            addMockedSourceFile("filename1.txt", parent = mockedSourceParent)
+          val (mockedSourceFile2, mockedSourceAttributes2) =
+            addMockedSourceFile("filename2.txt", parent = mockedSourceParent)
+          val (mockedTargetFile1, mockedTargetAttributes1) = addMockedTargetChildFile("FILENAME")
+          val (mockedTargetFile2, mockedTargetAttributes2) = addMockedTargetChildFile("FILENAM1")
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1, mockedSourceFile2)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
+
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return NotSeqToPDSResolver(dataOpsManagerService)
+            }
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedSourceFile2 -> mockedSourceAttributes2
+                mockedTargetFile1 -> mockedTargetAttributes1
+                mockedTargetFile2 -> mockedTargetAttributes2
+                mockedTargetFolder -> mockk<RemoteDatasetAttributes> {
+                  every { datasetInfo.datasetOrganization } returns DatasetOrganization.PO
+                }
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                if (operation.source == mockedSourceFile1 && operation.newName == "FILENAME" && operation.forceOverwriting) {
+                  file1CopiedWithOverwrite = true
+                }
+
+                if (operation.source == mockedSourceFile2 && operation.newName == "FILENAM2") {
+                  file2CopiedWithNewName = true
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
+            }
+          }
+
+          mockkStatic(Messages::class)
+          every {
+            Messages.showOkCancelDialog(
+              any() as Project,
+              any() as String,
+              any() as String,
+              any() as String,
+              any() as String,
+              any() as Icon?,
+            )
+          } returns Messages.OK
+          every {
+            Messages.showYesNoDialog(
+              any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+            )
+          } returns Messages.YES
+          every {
+            Messages.showDialog(
+              any() as Project?,
+              any() as String,
+              any() as String,
+              any() as Array<String>,
+              0,
+              any() as Icon?,
+              null
+            )
+          } answers {
+            val message = secondArg<String>()
+            if (message.contains("Cannot move '${mockedSourceFile1.name}' to ${mockedTargetFolder.name}")) {
+              1
+            } else if (message.contains("Cannot move '${mockedSourceFile2.name}' to ${mockedTargetFolder.name}")) {
+              2
+            } else {
+              throw IllegalArgumentException("Unknown dialog called, that should not be shown.")
+            }
+          }
+
+          mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+          assertSoftly {
+            file1CopiedWithOverwrite shouldBe true
+            file2CopiedWithNewName shouldBe true
+          }
+        }
+        should("Resolve conflicts in source files when copying to PDS from different source directories") {
+          var file1CopiedWithNewName = false
+          var numOfCopiedFiles = 0
+
+          val mockedSourceParent1 = mockk<MFVirtualFile> {
+            every { parent } returns null
+          }
+          val mockedSourceParent2 = mockk<MFVirtualFile> {
+            every { parent } returns null
+          }
+          val (mockedSourceFile1, mockedSourceAttributes1) =
+            addMockedSourceFile("filename1.txt", parent = mockedSourceParent1)
+          val (mockedSourceFile2, mockedSourceAttributes2) =
+            addMockedSourceFile("filename2.txt", parent = mockedSourceParent1)
+          val (mockedSourceFile3, mockedSourceAttributes3) =
+            addMockedSourceFile("filename3.txt", parent = mockedSourceParent1)
+          val (mockedSourceFile4, mockedSourceAttributes4) =
+            addMockedSourceFile("filename1.txt", parent = mockedSourceParent2)
+          val (mockedSourceFile5, mockedSourceAttributes5) =
+            addMockedSourceFile("filename2.txt", parent = mockedSourceParent2)
+          val (mockedSourceFile6, mockedSourceAttributes6) =
+            addMockedSourceFile("filename3.txt", parent = mockedSourceParent2)
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1, mockedSourceFile2)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
+
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return NotSeqToPDSResolver(dataOpsManagerService)
+            }
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedSourceFile2 -> mockedSourceAttributes2
+                mockedSourceFile3 -> mockedSourceAttributes3
+                mockedSourceFile4 -> mockedSourceAttributes4
+                mockedSourceFile5 -> mockedSourceAttributes5
+                mockedSourceFile6 -> mockedSourceAttributes6
+                mockedTargetFolder -> mockk<RemoteDatasetAttributes> {
+                  every { datasetInfo.datasetOrganization } returns DatasetOrganization.PO
+                }
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                numOfCopiedFiles++
+
+                if (operation.source == mockedSourceFile1 && operation.newName == "FILENAME") {
+                  file1CopiedWithNewName = true
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
+            }
+          }
+
+          mockkStatic(Messages::class)
+          every {
+            Messages.showOkCancelDialog(
+              any() as Project,
+              any() as String,
+              any() as String,
+              any() as String,
+              any() as String,
+              any() as Icon?,
+            )
+          } returns Messages.OK
+          every {
+            Messages.showYesNoDialog(
+              any() as Project?, any() as String, any() as String, any() as String, any() as String, any() as Icon?
+            )
+          } returns Messages.YES
+
+          mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+          assertSoftly {
+            file1CopiedWithNewName shouldBe true
+            numOfCopiedFiles shouldBe 6
+          }
+        }
+        should("Cancel copying if there are conflicts in source files") {
+          isPastePerformed = false
+
+          val mockedSourceParent = mockk<MFVirtualFile> {
+            every { parent } returns null
+          }
+          val (mockedSourceFile1, mockedSourceAttributes1) =
+            addMockedSourceFile("filename1.txt", parent = mockedSourceParent)
+          val (mockedSourceFile2, mockedSourceAttributes2) =
+            addMockedSourceFile("filename2.txt", parent = mockedSourceParent)
+
+          val mockedClipboardBufferLocal = listOf(mockedSourceFile1, mockedSourceFile2)
+          every { mockedCopyPasterProvider.getSourceFilesFromClipboard() } returns mockedClipboardBufferLocal
+
+          dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+            override fun getNameResolver(source: VirtualFile, destination: VirtualFile): CopyPasteNameResolver {
+              return NotSeqToPDSResolver(dataOpsManagerService)
+            }
+
+            override fun tryToGetAttributes(file: VirtualFile): FileAttributes? {
+              return when (file) {
+                mockedSourceFile1 -> mockedSourceAttributes1
+                mockedSourceFile2 -> mockedSourceAttributes2
+                mockedTargetFolder -> mockk<RemoteDatasetAttributes> {
+                  every { datasetInfo.datasetOrganization } returns DatasetOrganization.PO
+                }
+                else -> super.tryToGetAttributes(file)
+              }
+            }
+
+            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
+              if (operation is MoveCopyOperation) {
+                isPastePerformed = true
+
+                @Suppress("UNCHECKED_CAST")
+                return Unit as R
+              } else {
+                return super.performOperation(operation, progressIndicator)
+              }
+            }
+          }
+
+          mockkStatic(Messages::class)
+          every {
+            Messages.showOkCancelDialog(
+              any() as Project,
+              any() as String,
+              any() as String,
+              any() as String,
+              any() as String,
+              any() as Icon?,
+            )
+          } returns Messages.CANCEL
+
+          mockedExplorerPasteProvider.performPaste(mockedDataContext)
+
+          assertSoftly {
+            isPastePerformed shouldBe false
           }
         }
       }

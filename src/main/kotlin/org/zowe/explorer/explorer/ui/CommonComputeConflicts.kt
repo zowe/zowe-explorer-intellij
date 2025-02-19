@@ -21,6 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.utils.ui.WindowsLikeMessageDialog
 
+/**
+ * @see [org.zowe.explorer.v3.operations.move.conflict.ConflictResolver]
+ */
+@Deprecated("No longer in use")
 class CommonComputeConflicts(
   dataOpsManager: DataOpsManager,
   sourceFiles: List<VirtualFile>,

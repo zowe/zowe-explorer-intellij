@@ -33,7 +33,13 @@ import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
 import org.zowe.explorer.dataops.operations.mover.MoveCopyOperation
 import org.zowe.explorer.explorer.FileExplorerContentProvider
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.utils.*
+import org.zowe.explorer.utils.castOrNull
+import org.zowe.explorer.utils.getAncestorNodes
+import org.zowe.explorer.utils.getMinimalCommonParents
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
+import org.zowe.explorer.v3.operations.transfer.conflict.DestinationConflictResolver
+import org.zowe.explorer.v3.operations.transfer.conflict.SourceConflictResolver
+import org.zowe.explorer.v3.operations.transfer.conflict.mergeConflictResolutions
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import org.zowe.kotlinsdk.DatasetOrganization
@@ -47,7 +53,7 @@ object ExplorerDataKeys {
  * Wrapper for conflict. It contains source and destination files that have a conflict between them.
  * It is also needed to indicate how to properly resolve them. 3 options are possible: skip, overwrite, use new name.
  * @param sourceFile file to be copied.
- * @param destinationFile child of file to be copy to that have conflict with source file.
+ * @param destinationFile child of file to be copied to that have conflict with source file.
  * @author Valiantsin Krus
  */
 class ConflictResolution(
@@ -80,10 +86,23 @@ class ConflictResolution(
    */
   fun resolveByUsingNewName(newName: String) {
     if (newName == destinationFile.name) {
-      throw IllegalArgumentException("Resolve name should be the same as destination file name: '${newName}'.")
+      throw IllegalArgumentException("Resolve name should not be the same as destination file name: '${newName}'.")
     }
     this.newName = newName
     overwrite = false
+    skip = false
+  }
+
+  /**
+   * Indicate that source file should have new name in target but the target already has a file with the same name
+   * and should be resolved by overwriting conflicting file.
+   */
+  fun resolveByUsingNewNameWithOverwrite(newName: String) {
+    if (newName == destinationFile.name) {
+      throw IllegalArgumentException("Resolve name should not be the same as destination file name: '${newName}'.")
+    }
+    this.newName = newName
+    overwrite = true
     skip = false
   }
 
@@ -349,22 +368,19 @@ class ExplorerPasteProvider : PasteProvider {
       }
 
       // conflicts start
-      val conflictsResolutions = runCatching {
-        if (dataOpsManager.tryToGetAttributes(pasteDestinations[0]) is RemoteDatasetAttributes)
-          RemoteDatasetComputeConflicts(
-            dataOpsManager,
-            sourceFiles,
-            pasteDestinations,
-            project
-          ).computeConflictAndAskForResolution().toMutableList()
-        else
-          CommonComputeConflicts(
-            dataOpsManager,
-            sourceFiles,
-            pasteDestinations,
-            project
-          ).computeConflictAndAskForResolution().toMutableList()
+      val sourceConflictResolutions = runCatching {
+        SourceConflictResolver(
+          sourceFiles, pasteDestinations, project
+        ).computeConflictsAndAskForResolution()
       }.getOrNull() ?: return
+
+      val destinationConflictResolutions = runCatching {
+        DestinationConflictResolver(
+          sourceFiles, pasteDestinations, sourceConflictResolutions, project
+        ).computeConflictsAndAskForResolution()
+      }.getOrNull() ?: return
+
+      val conflictsResolutions = mergeConflictResolutions(sourceConflictResolutions, destinationConflictResolutions).toMutableList()
 
       // conflicts end
       // specific configs resolution
