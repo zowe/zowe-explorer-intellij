@@ -37,6 +37,8 @@ interface FileFetchProvider<R : Any, Q : Query<R, Unit>, File : VirtualFile> {
 
   fun isCacheValid(query: Q): Boolean
 
+  fun markCacheAsFetching(query: Q)
+
   fun isCacheFetching(query: Q): Boolean
 
   fun getFetchedErrorMessage(query: Q): String? = "Error"
