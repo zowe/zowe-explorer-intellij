@@ -94,6 +94,23 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
   }
 
   /**
+   * Checks whether to skip the fetch of dataset members
+   * in case the dataset became plain. This might happen when the dataset
+   * got new mainframe attributes that changed it state but not the presentation.
+   */
+  private fun isMembersFetchOnInvalidDS(q: Q): Boolean {
+    if (q.request is LibraryQuery && this@FileFetchNode is LibraryNode) {
+      val dsNode = this@FileFetchNode as LibraryNode
+      val dataOpsManager = DataOpsManager.getService()
+      val attributes = dataOpsManager.tryToGetAttributes(dsNode.virtualFile)
+      if (attributes is RemoteDatasetAttributes && !attributes.hasDsOrg) {
+        return true
+      }
+    }
+    return false
+  }
+
+  /**
    * Method which is called when tree node is expanded or refresh is pressed on tree node.
    * It fetches the children nodes if no cached nodes are present / displays "loading..." during fetch / displays any Error if an error happened during fetch.
    * Normally, this function is called after nodes invalidation
@@ -132,26 +149,18 @@ abstract class FileFetchNode<Connection : ConnectionConfigBase, Value : Any, R :
                 cachedChildren = it
               }
           } else {
+            val membersFetchOnInvalidDS = isMembersFetchOnInvalidDS(q)
             if (!fileFetchProvider.isCacheFetching(q)) {
+              if (!membersFetchOnInvalidDS) {
+                fileFetchProvider.markCacheAsFetching(q)
+              }
               runBackgroundableSyncTask(
                 title = makeFetchTaskTitle(q),
                 project = project,
                 cancellable = true,
                 virtualFile = virtualFile
               ) {
-                var isMembersFetchOnInvalidDS = false
-                // This functionality is going to skip the fetch of dataset members
-                // in case the dataset became plain. This might happed when the dataset
-                // got new mainframe attributes that changed it state but not the presentation
-                if (q.request is LibraryQuery && this@FileFetchNode is LibraryNode) {
-                  val dsNode = this@FileFetchNode as LibraryNode
-                  val dataOpsManager = DataOpsManager.getService()
-                  val attributes = dataOpsManager.tryToGetAttributes(dsNode.virtualFile)
-                  if (attributes is RemoteDatasetAttributes && !attributes.hasDsOrg) {
-                    isMembersFetchOnInvalidDS = true
-                  }
-                }
-                if (!isMembersFetchOnInvalidDS) {
+                if (!membersFetchOnInvalidDS) {
                   if (needToLoadMore) {
                     fileFetchProvider.loadMore(q, it)
                   } else {
