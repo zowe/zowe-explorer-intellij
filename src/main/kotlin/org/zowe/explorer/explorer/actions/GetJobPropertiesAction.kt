@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -34,9 +35,7 @@ import org.zowe.explorer.explorer.ui.getExplorerView
 /** Action to get job or spool file properties*/
 class GetJobPropertiesAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /** Create properties dialog depending on received attributes*/
   override fun actionPerformed(e: AnActionEvent) {

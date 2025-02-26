@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.config.ws.ui
@@ -58,15 +59,6 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
   open val isSingleConnectionOnlyAllowed: Boolean = false,
   open val connectionConfigToSelect: Connection? = null
 ) : DialogWrapper(false), StatefulComponent<WSDState> {
-
-  companion object {
-
-    // TODO: Remove when it becomes possible to mock class constructor with init section.
-    /** Wrapper for init() method. It is necessary only for test purposes for now. */
-    private fun initialize(init: () -> Unit) {
-      init()
-    }
-  }
 
   abstract val wsConfigClass: Class<out WSConfig>
   abstract val connectionClass: Class<out Connection>
