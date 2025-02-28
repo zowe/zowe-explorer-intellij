@@ -16,6 +16,9 @@ package org.zowe.explorer.explorer.ui
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.ui.AnimatedIcon
@@ -25,6 +28,9 @@ import org.zowe.explorer.common.message
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
+import org.zowe.explorer.dataops.content.service.SyncProcessService
+import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
+import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.getAttributesService
 import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.explorer.ExplorerUnit
@@ -69,6 +75,41 @@ class UssFileNode(
       "explorer.tree.uss.node.tooltip",
       attributes?.owner ?: "NULL", attributes?.fileMode ?: "NULL"
     )
+  }
+
+  /**
+   * This method is required to set the correct permissions to open USS file.
+   * @see ExplorerTreeNode.navigate
+   */
+  override fun navigate(requestFocus: Boolean) {
+    val file = virtualFile ?: return
+    if (file.isWritable) {
+      val syncProvider = DocumentedSyncProvider(file, SaveStrategy.default(project))
+      val contentSynchronizer = DataOpsManager.getService().getContentSynchronizer(file)
+      val currentContent = runReadAction { syncProvider.retrieveCurrentContent() }
+      val previousContent = contentSynchronizer?.successfulContentStorage(syncProvider)
+      val needToUpload = contentSynchronizer?.isFileUploadNeeded(syncProvider) == true
+      if (
+        !(currentContent contentEquals previousContent)
+        && needToUpload
+        && !SyncProcessService.getService().isFileSyncingNow(file)
+      ) {
+        runCatching {
+          runInEdt {
+            FileEditorManager.getInstance(project).closeFile(file)
+          }
+        }
+      }
+    }
+
+    val originConnectionConfig = unit.connectionConfig
+    val attributes = DataOpsManager.getService().tryToGetAttributes(file)
+    if (attributes is RemoteUssAttributes) {
+      file.isReadable = attributes.isReadableForConnection(originConnectionConfig)
+      file.isWritable = attributes.isWritableForConnection(originConnectionConfig)
+    }
+
+    super.navigate(requestFocus)
   }
 
   override fun getVirtualFile(): MFVirtualFile {
