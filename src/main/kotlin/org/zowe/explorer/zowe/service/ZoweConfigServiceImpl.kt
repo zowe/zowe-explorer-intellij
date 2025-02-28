@@ -163,25 +163,26 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
    * @return ZoweConfig instance if zowe.config.json is presented or null otherwise.
    */
   private fun scanForZoweConfig(type: ZoweConfigType): ZoweConfig? {
-
-    val zoweFile = runReadAction {
-      VirtualFileManager.getInstance().findFileByNioPath(Path.of(getZoweConfigLocation(myProject, type)))
-    } ?: return null
-    return try {
-      zoweFile.inputStream.use { zoweFileInputStream ->
-        parseConfigJson(zoweFileInputStream).also { tmpZoweConfig ->
-          tmpZoweConfig.extractSecureProperties(zoweFile.path.split("/").toTypedArray())
-          lock.write {
-            if (type == ZoweConfigType.LOCAL)
-              localZoweConfig = tmpZoweConfig
-            else
-              globalZoweConfig = tmpZoweConfig
+    return runTask(title = "Scanning for ${type} zowe config file", project = myProject) {
+      val zoweFile = runReadAction {
+        VirtualFileManager.getInstance().findFileByNioPath(Path.of(getZoweConfigLocation(myProject, type)))
+      } ?: return@runTask null
+      return@runTask try {
+        zoweFile.inputStream.use { zoweFileInputStream ->
+          parseConfigJson(zoweFileInputStream).also { tmpZoweConfig ->
+            tmpZoweConfig.extractSecureProperties(zoweFile.path.split("/").toTypedArray())
+            lock.write {
+              if (type == ZoweConfigType.LOCAL)
+                localZoweConfig = tmpZoweConfig
+              else
+                globalZoweConfig = tmpZoweConfig
+            }
           }
         }
+      } catch (e: Exception) {
+        NotificationsService.errorNotification(e, project = myProject, custTitle = "Error with Zowe config file")
+        return@runTask null
       }
-    } catch (e: Exception) {
-      NotificationsService.errorNotification(e, project = myProject, custTitle="Error with Zowe config file")
-      return null
     }
   }
 
