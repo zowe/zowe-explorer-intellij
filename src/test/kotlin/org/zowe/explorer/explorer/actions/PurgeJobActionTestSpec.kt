@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -77,14 +78,13 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
   context("explorer module: actions/PurgeJobAction") {
     context("actionPerformed") {
       val purgeAction = PurgeJobAction()
-      val mockActionEventForJesEx = mockk<AnActionEvent>()
-      val jesExplorerView = mockk<JesExplorerView>()
-      val job = mockk<Job>()
-
-      every { job.jobName } returns "name"
-      every { job.jobId } returns "id"
-      val connectionConfig = mockk<ConnectionConfig>()
-      every { connectionConfig.uuid } returns "uuid"
+      val job = mockk<Job> {
+        every { jobName } returns "name"
+        every { jobId } returns "id"
+      }
+      val connectionConfig = mockk<ConnectionConfig> {
+        every { uuid } returns "uuid"
+      }
       val jobsFilter = spyk(
         JobsFilter(
           "owner",
@@ -106,32 +106,43 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
         }
       }
 
-      every { mockActionEventForJesEx.getExplorerView<JesExplorerView>() } returns jesExplorerView
-
-      val jobNode = mockk<JobNode>()
-      val virtualFile = mockk<MFVirtualFile>()
-
-      val nodeData = spyk(
-        NodeData(
-          jobNode,
-          virtualFile,
-          null
-        )
-      )
-      every { jesExplorerView.mySelectedNodesData } returns listOf(nodeData)
-
-      val parentNode = mockk<JesFilterNode>()
-      val query = spyk(
+      val mockQuery = spyk(
         UnitRemoteQueryImpl(
           jobsFilter,
           connectionConfig
         )
       )
-      every { parentNode.query } returns query
+      val mockVirtualFile = mockk<MFVirtualFile>()
+      val parentNode = mockk<JesFilterNode> {
+        every { query } returns mockQuery
+      }
+      val mockExplorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>> {
+        every { componentManager } returns ApplicationManager.getApplication()
+      }
+      val jobNode = mockk<JobNode> {
+        every { virtualFile } returns mockVirtualFile
+        every { parent } returns parentNode
+        every { explorer } returns mockExplorer
+      }
+      val nodeData = spyk(
+        NodeData(
+          jobNode,
+          mockVirtualFile,
+          null
+        )
+      )
+      val jesExplorerView = mockk<JesExplorerView> {
+        every { mySelectedNodesData } returns listOf(nodeData)
+        every { explorer } returns mockExplorer
+      }
+      val mockProject = mockk<Project>()
+
       justRun { parentNode.cleanCache() }
 
-      val jesApi = mockk<JESApi>()
       val call = mockk<Call<List<Job>>>()
+      val jesApi = mockk<JESApi> {
+        every { getFilteredJobs(any(), any(), any(), any(), any(), any(), any(), any()) } returns call
+      }
       val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
       zosmfApi.testInstance = object : TestZosmfApiImpl() {
         override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
@@ -142,9 +153,10 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
           }
         }
       }
-      every { jesApi.getFilteredJobs(any(), any(), any(), any(), any(), any(), any(), any()) } returns call
 
-      val response = mockk<Response<List<Job>>>()
+      val response = mockk<Response<List<Job>>> {
+        every { isSuccessful } returns true
+      }
       val jobList = mutableListOf(job, job)
       every { call.execute() } returns response
       every {
@@ -158,25 +170,8 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
           null
         }
       }
-      every { response.isSuccessful } returns true
-
-      every { jobNode.virtualFile } returns virtualFile
-      every { jobNode.parent } returns parentNode
-
-      val explorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>>()
-      every { jobNode.explorer } returns explorer
-      every { explorer.componentManager } returns ApplicationManager.getApplication()
 
       lateinit var dataOpsManager: TestDataOpsManagerImpl
-
-      val project = mockk<Project>()
-      every {
-        mockActionEventForJesEx.project
-      } returns project
-
-      every {
-        jesExplorerView.explorer
-      } returns explorer
 
       val mockRequest = mockk<CancelJobPurgeOutRequest>()
       val jobAttr = spyk(
@@ -185,25 +180,27 @@ class PurgeJobActionTestSpec : WithApplicationShouldSpec({
           "test",
           mutableListOf(JobsRequester(connectionConfig, jobsFilter))
         )
-      )
-      every { jobAttr.clone() } returns jobAttr
-
-      val mockActionEventForJobsLog = mockk<AnActionEvent>()
-      val jobsLogView = mockk<JobBuildTreeView>()
-
-      every { mockActionEventForJobsLog.getData(any() as DataKey<Any>) } returns jobsLogView
-      every { mockActionEventForJobsLog.project } returns project
+      ) {
+        every { clone() } returns this@spyk
+      }
 
       val mockkLogger = mockk<MFLogger<JobLogFetcher>>()
-      val mockkFetcher = mockk<JobLogFetcher>()
+      val jobsLogView = mockk<JobBuildTreeView> {
+        every { getJobLogger() } returns mockkLogger
+        every { getConnectionConfig() } returns connectionConfig
+      }
+      val mockActionEventForJobsLog = mockk<AnActionEvent> {
+        every { getData(any() as DataKey<Any>) } returns jobsLogView
+        every { project } returns mockProject
+      }
 
-      every { jobsLogView.getJobLogger() } returns mockkLogger
+      val mockkFetcher = mockk<JobLogFetcher> {
+        every { getCachedJobStatus() } returns job
+      }
       every {
         hint(JobLogFetcher::class)
         mockkLogger.logFetcher
       } returns mockkFetcher
-      every { mockkFetcher.getCachedJobStatus() } returns job
-      every { jobsLogView.getConnectionConfig() } returns connectionConfig
 
       should("perform purge on job successfully") {
 

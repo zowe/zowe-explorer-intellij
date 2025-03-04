@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -19,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import io.mockk.*
+import io.mockk.clearAllMocks
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.dataops.DataOpsManager
@@ -29,62 +32,52 @@ import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.attributes.RemoteSpoolFileAttributes
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.JesWorkingSetImpl
-import org.zowe.explorer.explorer.ui.JesExplorerView
-import org.zowe.explorer.explorer.ui.JobNode
-import org.zowe.explorer.explorer.ui.JobPropertiesDialog
-import org.zowe.explorer.explorer.ui.JobState
-import org.zowe.explorer.explorer.ui.NodeData
-import org.zowe.explorer.explorer.ui.SpoolFileNode
-import org.zowe.explorer.explorer.ui.SpoolFilePropertiesDialog
-import org.zowe.explorer.explorer.ui.SpoolFileState
-import org.zowe.explorer.explorer.ui.getExplorerView
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.utils.gson
 import org.zowe.explorer.vfs.MFVirtualFile
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.spyk
-import io.mockk.unmockkObject
-import io.mockk.verify
+import org.zowe.explorer.explorer.ui.*
 import org.zowe.kotlinsdk.Job
 import org.zowe.kotlinsdk.SpoolFile
 
 class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
   afterSpec {
+    unmockkAll()
     clearAllMocks()
   }
   context("explorer module: actions/GetJobPropertiesAction") {
     context("actionPerformed") {
-      val getPropertiesEvent = mockk<AnActionEvent>()
-      val project = mockk<Project>()
-      every { getPropertiesEvent.project } returns project
+      val mockProject = mockk<Project>()
+      var jesView = mockk<JesExplorerView>()
+      val getPropertiesEvent = mockk<AnActionEvent> {
+        every { project } returns mockProject
+        every { getData(EXPLORER_VIEW) } returns jesView
+      }
+      val mockVirtualFile = mockk<MFVirtualFile>()
+      val mockExplorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>> {
+        every { componentManager } returns ApplicationManager.getApplication()
+      }
+      val connectionConfig = mockk<ConnectionConfig> {
+        every { uuid } returns "uuid"
+      }
 
-      val virtualFile = mockk<MFVirtualFile>()
-
-      val jesView = mockk<JesExplorerView>()
-      val explorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>>()
-      every { getPropertiesEvent.getExplorerView<JesExplorerView>() } returns jesView
-
-      val connectionConfig = mockk<ConnectionConfig>()
-      every { connectionConfig.uuid } returns "uuid"
+      beforeEach {
+        jesView = mockk<JesExplorerView>()
+        every { getPropertiesEvent.getData(EXPLORER_VIEW) } returns jesView
+      }
 
       should("get job properties") {
-        val jobNode = mockk<JobNode>()
-        every { jobNode.virtualFile } returns virtualFile
-        val nodeData = spyk(NodeData(jobNode, virtualFile, null))
+        val jobNode = mockk<JobNode> {
+          every { virtualFile } returns mockVirtualFile
+          every { explorer } returns mockExplorer
+        }
+        val nodeData = spyk(NodeData(jobNode, mockVirtualFile, null))
 
         every { jesView.mySelectedNodesData } returns listOf(nodeData)
 
-        every { jobNode.explorer } returns explorer
-        every { explorer.componentManager } returns ApplicationManager.getApplication()
-
-        val job = mockk<Job>()
-        every { job.jobName } returns "name"
-        every { job.jobId } returns "id"
+        val job = mockk<Job> {
+          every { jobName } returns "name"
+          every { jobId } returns "id"
+        }
         val jobsFilter = spyk(JobsFilter("owner", "prefix", "id"))
         val jobAttr = spyk(RemoteJobAttributes(job, "test", mutableListOf(JobsRequester(connectionConfig, jobsFilter))))
 
@@ -99,8 +92,9 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        val dialogMock = mockk<JobPropertiesDialog>()
-        every { dialogMock.showAndGet() } returns true
+        val dialogMock = mockk<JobPropertiesDialog> {
+          every { showAndGet() } returns true
+        }
 
         mockkStatic(JobPropertiesDialog::class)
         mockkObject(JobPropertiesDialog)
@@ -119,23 +113,19 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
 
       }
       should("get spool file properties") {
-        val spoolFileNode = mockk<SpoolFileNode>()
-        every { spoolFileNode.virtualFile } returns virtualFile
-        val nodeData = spyk(NodeData(spoolFileNode, virtualFile, null))
+        val spoolFileNode = mockk<SpoolFileNode> {
+          every { virtualFile } returns mockVirtualFile
+          every { explorer } returns mockExplorer
+        }
+        val nodeData = spyk(NodeData(spoolFileNode, mockVirtualFile, null))
 
         every { jesView.mySelectedNodesData } returns listOf(nodeData)
 
-        every { spoolFileNode.explorer } returns explorer
-        every { explorer.componentManager } returns ApplicationManager.getApplication()
-
-        val spoolFile = mockk<SpoolFile>()
-
-        every { spoolFile.ddName } returns "ddname"
-        every { spoolFile.jobId } returns "jobid"
-        every { spoolFile.id } returns 1
-
-        mockkObject(gson)
-        every { gson.fromJson(any() as String, SpoolFile::class.java) } returns spoolFile
+        val spoolFile = mockk<SpoolFile> {
+          every { ddName } returns "ddname"
+          every { jobId } returns "jobid"
+          every { id } returns 1
+        }
 
         val parentFile = mockk<MFVirtualFile>()
         val spoolFileAttr = spyk(RemoteSpoolFileAttributes(spoolFile, parentFile))
@@ -151,8 +141,9 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        val dialogMock = mockk<SpoolFilePropertiesDialog>()
-        every { dialogMock.showAndGet() } returns true
+        val dialogMock = mockk<SpoolFilePropertiesDialog> {
+          every { showAndGet() } returns true
+        }
 
         mockkStatic(JobPropertiesDialog::class)
         mockkObject(JobPropertiesDialog)
@@ -170,7 +161,6 @@ class GetJobPropertiesActionTestSpec : WithApplicationShouldSpec({
         GetJobPropertiesAction().actionPerformed(getPropertiesEvent)
 
         verify { dialogMock.showAndGet() }
-        unmockkObject(gson)
       }
     }
   }

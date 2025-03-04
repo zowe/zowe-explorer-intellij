@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.config
@@ -36,6 +37,7 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.zowe.explorer.utils.initialize
 import java.util.*
 import java.util.stream.Stream
 import javax.swing.JComponent
@@ -222,8 +224,8 @@ class ConfigTestSpec : WithApplicationShouldSpec({
     lateinit var crudableMockk: Crudable
 
     beforeEach {
-      mockkObject(AbstractWsDialog)
-      every { AbstractWsDialog["initialize"](any<() -> Unit>()) } returns Unit
+      mockkStatic(::initialize)
+      every { initialize(any()) } returns Unit
 
       crudableMockk = mockk<Crudable>()
       every { crudableMockk.getAll(ConnectionConfig::class.java) } returns Stream.of()

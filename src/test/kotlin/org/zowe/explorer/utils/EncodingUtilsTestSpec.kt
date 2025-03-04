@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.utils
@@ -110,8 +111,8 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
     val attributesMock = mockk<RemoteUssAttributes>()
 
-    mockkObject(ChangeEncodingDialog)
-    every { ChangeEncodingDialog["initialize"](any<() -> Unit>()) } returns Unit
+    mockkStatic(::initialize)
+    every { initialize(any()) } returns Unit
 
     mockkConstructor(ChangeEncodingDialog::class)
     every { anyConstructed<ChangeEncodingDialog>().show() } returns Unit

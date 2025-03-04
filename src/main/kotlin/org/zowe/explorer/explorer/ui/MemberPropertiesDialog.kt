@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -26,6 +27,7 @@ import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.utils.UNKNOWN_PARAM_VALUE
 import org.zowe.explorer.utils.getParamTextValueOrUnknown
+import org.zowe.explorer.utils.initialize
 import javax.swing.JComponent
 
 class MemberPropertiesDialog(var project: Project?, override var state: MemberState) : DialogWrapper(project),
@@ -33,7 +35,7 @@ class MemberPropertiesDialog(var project: Project?, override var state: MemberSt
 
   init {
     title = "Member Properties"
-    init()
+    initialize { init() }
   }
 
   override fun createCenterPanel(): JComponent {
