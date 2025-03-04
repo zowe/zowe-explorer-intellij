@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -34,16 +35,13 @@ import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
 import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.utils.castOrNull
-import org.zowe.explorer.utils.reloadIn
-import org.zowe.explorer.utils.saveIn
-import org.zowe.explorer.utils.updateFileTag
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.zowe.explorer.utils.*
 import java.awt.event.ActionEvent
 import java.nio.charset.Charset
 import javax.swing.Action
@@ -87,8 +85,8 @@ class ChangeEncodingDialogTestSpec : WithApplicationShouldSpec({
     val documentMockk = mockk<Document>()
     every { anyConstructed<DocumentedSyncProvider>().getDocument() } returns documentMockk
 
-    mockkObject(ChangeEncodingDialog)
-    every { ChangeEncodingDialog["initialize"](any<() -> Unit>()) } returns Unit
+    mockkStatic(::initialize)
+    every { initialize(any()) } returns Unit
 
     val actionEventMock = mockk<ActionEvent>()
 

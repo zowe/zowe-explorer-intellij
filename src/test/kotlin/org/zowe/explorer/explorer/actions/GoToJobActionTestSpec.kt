@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -51,6 +52,7 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.zowe.explorer.utils.initialize
 import org.zowe.kotlinsdk.Job
 import java.util.*
 import java.util.stream.Stream
@@ -140,8 +142,8 @@ class GoToJobActionTestSpec : WithApplicationShouldSpec({
       val expectedNotificationMessage =
         "Job Filter(s): JobID=JOB_ID, successfully created on connection: $connectionConfigMock"
       val jesWsNodesTest = mutableListOf<JesWsNode>()
-      mockkObject(AbstractWsDialog)
-      every { AbstractWsDialog["initialize"](any<() -> Unit>()) } returns Unit
+      mockkStatic(::initialize)
+      every { initialize(any()) } returns Unit
       mockkConstructor(JesWsDialog::class)
       every { anyConstructed<JesWsDialog>().showAndGet() } returns true
       every { myFsTreeStructureMock.findByPredicate(any()) } returns jesWsNodesTest
@@ -190,8 +192,8 @@ class GoToJobActionTestSpec : WithApplicationShouldSpec({
       val jesWsNodesTest = mutableListOf(jesWsNodeForTest)
       every { myFsTreeStructureMock.findByPredicate(any()) } returns jesWsNodesTest
 
-      mockkObject(AddJobsFilterDialog)
-      every { AddJobsFilterDialog["initialize"](any<() -> Unit>()) } returns Unit
+      mockkStatic(::initialize)
+      every { initialize(any()) } returns Unit
       mockkConstructor(AddJobsFilterDialog::class)
       every { anyConstructed<AddJobsFilterDialog>().showAndGet() } returns true
 

@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -47,15 +48,6 @@ class AddOrEditMaskDialog(
     }
   } else {
     null
-  }
-
-  companion object {
-
-    // TODO: Remove when it becomes possible to mock class constructor with init section.
-    /** Wrapper for init() method. It is necessary only for test purposes for now. */
-    private fun initialize(init: () -> Unit) {
-      init()
-    }
   }
 
   init {

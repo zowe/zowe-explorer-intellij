@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -37,6 +38,7 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.zowe.explorer.utils.initialize
 import java.util.*
 
 class EditMaskActionTestSpec : WithApplicationShouldSpec({
@@ -95,8 +97,8 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
       }
       every { anActionEventMock.project } returns mockk()
 
-      mockkObject(AddOrEditMaskDialog)
-      every { AddOrEditMaskDialog["initialize"](any<() -> Unit>()) } returns Unit
+      mockkStatic(::initialize)
+      every { initialize(any()) } returns Unit
 
       mockkConstructor(AddOrEditMaskDialog::class)
       every { anyConstructed<AddOrEditMaskDialog>().showAndGet() } returns true
@@ -124,7 +126,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
       }
       context("generic") {
         should("not perform edit action if explorer view is null") {
-          every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
+          every { anActionEventMock.getData(EXPLORER_VIEW) } returns null
 
           runBlocking {
             withContext(Dispatchers.EDT) {
@@ -458,7 +460,7 @@ class EditMaskActionTestSpec : WithApplicationShouldSpec({
         assertSoftly { enabledAndVisible shouldBe false }
       }
       should("edit action is not enabled and not visible if explorer view is null") {
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
+        every { anActionEventMock.getData(EXPLORER_VIEW) } returns null
 
         editMaskAction.update(anActionEventMock)
 

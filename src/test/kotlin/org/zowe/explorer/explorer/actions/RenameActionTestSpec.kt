@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -134,8 +135,8 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
       mockkObject(OperationsService.Companion)
       every { OperationsService.getService() } returns operationsServiceMock
 
-      mockkObject(RenameDialog)
-      every { RenameDialog["initialize"](any<() -> Unit>()) } returns Unit
+      mockkStatic(::initialize)
+      every { initialize(any()) } returns Unit
 
       mockkConstructor(RenameDialog::class)
       every { anyConstructed<RenameDialog>().showAndGet() } returns true

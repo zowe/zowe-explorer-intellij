@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -32,10 +33,7 @@ import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
-import org.zowe.explorer.utils.reloadIn
-import org.zowe.explorer.utils.runWriteActionInEdt
-import org.zowe.explorer.utils.saveIn
-import org.zowe.explorer.utils.updateFileTag
+import org.zowe.explorer.utils.*
 import java.awt.event.ActionEvent
 import java.nio.charset.Charset
 import javax.swing.Action
@@ -55,12 +53,6 @@ class ChangeEncodingDialog(
   companion object {
     const val RELOAD_EXIT_CODE = 10
     const val CONVERT_EXIT_CODE = 20
-
-    // TODO: Remove when it becomes possible to mock class constructor with init section.
-    /** Wrapper for init() method. It is necessary only for test purposes for now. */
-    private fun initialize(init: () -> Unit) {
-      init()
-    }
   }
 
   private val message: String
