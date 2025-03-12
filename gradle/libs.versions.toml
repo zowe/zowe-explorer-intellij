@@ -12,6 +12,7 @@ jgrapht = "1.5.2"
 keytar = "1.0.0"
 zowe-kotlin-sdk = "0.5.0"
 ibm-mq-allclient = "9.4.0.0"
+tensorflow = "1.0.0-rc.2"
 
 # plugins
 gradle = "2.1.0"
@@ -31,6 +32,7 @@ jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jg
 java-keytar = { group = "com.starxg", name = "java-keytar", version.ref = "keytar" }
 zowe-kotlin-sdk = { group = "org.zowe.sdk", name = "zowe-kotlin-sdk", version.ref = "zowe-kotlin-sdk" }
 ibm-mq-allclient = { group = "com.ibm.mq", name = "com.ibm.mq.allclient", version.ref = "ibm-mq-allclient" }
+tensorflow-core-platform = { group = "org.tensorflow", name = "tensorflow-core-platform", version.ref = "tensorflow" }
 
 # test deps
 okhttp3-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp3" }
@@ -58,3 +60,4 @@ sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 dependencycheck = { id = "org.owasp.dependencycheck", version.ref = "dependencycheck" }
+

@@ -23,12 +23,14 @@ import org.zowe.explorer.config.connect.authToken
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.exceptions.CallException
+import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.applyIfNotNull
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.findAnyNullable
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.utils.mapNotNull
+import org.zowe.explorer.v3.lang.ModelOperations
 import org.zowe.explorer.vfs.MFVirtualFile
 import okhttp3.ResponseBody
 import org.zowe.kotlinsdk.DataAPI
@@ -36,6 +38,7 @@ import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.XIBMDataType
 import retrofit2.Call
 import java.io.IOException
+
 
 class SeqDatasetContentSynchronizerFactory : ContentSynchronizerFactory {
   override fun buildComponent(dataOpsManager: DataOpsManager): ContentSynchronizer {
@@ -76,15 +79,29 @@ class SeqDatasetContentSynchronizer(
         }.applyIfNotNull(progressIndicator) { indicator ->
           cancelByIndicator(indicator)
         }.execute()
+
         if (response.isSuccessful) {
           log.info("Content has been fetched successfully")
 
           content = if (attributes.contentMode.type == XIBMDataType.Type.BINARY) {
             response.body()?.bytes()
           } else {
+            val predictions = response.body()?.string()?.let { it1 -> ModelOperations().runModel(it1) }
+            var responseLanguage = ""
+            val throwMessage = if (predictions != null){
+              responseLanguage = predictions.keys.first()
+              "Response body detected as ${responseLanguage}"
+            } else{
+              "Response body detected as NULL"
+            }
+            println(throwMessage)
+            if(responseLanguage=="cbl"){
+              NotificationsService.errorNotification(throwable, custTitle = "COBOL Language Detected", custDetailsShort = "COBOL detected", custDetailsLong = "COBOL language detected")
+              // call COBOL highlighting API
+            }
+            // Else call existing syntax highlighting API?
             response.body()?.string()?.removeLastNewLine()?.toByteArray()
           }
-
         } else {
           throwable = CallException(response, "Cannot fetch data from ${attributes.name}")
         }

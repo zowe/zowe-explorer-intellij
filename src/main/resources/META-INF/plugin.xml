@@ -13,6 +13,8 @@
     <name>Zowe® Explorer</name>
     <vendor email="zowe.robot@gmail.com" url="https://https://github.com/zowe/zowe-explorer-intellij">Zowe</vendor>
     <depends>com.intellij.modules.platform</depends>
+    <depends optional="true" config-file="zowe-cobol.xml">org.zowe.cobol</depends>
+<!--    <depends optional="true" config-file="../../../../../zowe-cobol-language-support-intellij/src/main/resources/META-INF/plugin.xml"> org.zowe.cobol </depends>-->
     <description><![CDATA[
 Zowe® Explorer for IntelliJ IDEA™ is an open-source plugin by the <a href="https://github.com/zowe/community">Zowe Community</a>, which gives access to mainframes from a modern IDE.
 The plugin is a core component of the Zowe project.
