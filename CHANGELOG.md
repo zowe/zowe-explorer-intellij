@@ -4,6 +4,8 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ## [Unreleased]
 
+## [2.1.1] (2024-03-17)
+
 ### Bugfixes
 
 * Bugfix: GitHub issue #232: Slow operations in EDT ([ef4de426](https://github.com/zowe/zowe-explorer-intellij/commit/ef4de426))
