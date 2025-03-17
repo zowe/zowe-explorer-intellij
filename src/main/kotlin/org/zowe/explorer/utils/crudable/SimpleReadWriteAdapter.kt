@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 
 /**
  * Class that implements abstract read/write lock adapter class.
- * Triggers reentrant read/write lock on read or write lock
+ * Triggers reentrant read/write lock on read/write lock getter
  */
 class SimpleReadWriteAdapter : ReadWriteLocksAdapter() {
 

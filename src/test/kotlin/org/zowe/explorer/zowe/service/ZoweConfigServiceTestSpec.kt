@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.zowe.service
@@ -17,15 +18,20 @@ package org.zowe.explorer.zowe.service
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.UsefulTestCase.assertThrows
 import com.intellij.util.messages.Topic
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.fail
+import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.zowe.explorer.config.ConfigService
@@ -40,15 +46,10 @@ import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.operations.InfoOperation
 import org.zowe.explorer.dataops.operations.ZOSInfoOperation
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestCredentialsServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
+import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.getResourceAsStreamWrappable
 import org.zowe.explorer.utils.optional
-import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.kotlinsdk.InfoResponse
 import org.zowe.kotlinsdk.SystemsResponse
@@ -63,18 +64,17 @@ import java.util.function.Predicate
 import javax.swing.Icon
 import kotlin.reflect.KFunction
 
-class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
+class ZoweConfigServiceTestSpec : ShouldSpec({
   afterSpec {
     clearAllMocks()
     unmockkAll()
   }
 
   context("zowe/service/ZoweConfigService") {
-    lateinit var credentialServiceMock: TestCredentialsServiceImpl
-    lateinit var dataOpsManagerServiceMock: TestDataOpsManagerImpl
-    lateinit var configServiceMock: ConfigService
+    lateinit var credentialServiceMock: CredentialService
+    lateinit var dataOpsManagerServiceMock: DataOpsManager
     lateinit var configServiceCrudableMock: Crudable
-    lateinit var notificationsServiceMock: TestNotificationsServiceImpl
+    lateinit var notificationsServiceMock: NotificationsService
 
     var errorNotificationTrigerredCount = 0
 
@@ -88,32 +88,36 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
 
     mockkStatic(VirtualFileManager::getInstance)
 
+    val applicationMock = mockk<Application>()
+    mockkStatic(ApplicationManager::getApplication)
+    every { ApplicationManager.getApplication() } returns applicationMock
+
     beforeEach {
       errorNotificationTrigerredCount = 0
 
-      configServiceMock = ConfigService.getService() as TestConfigServiceImpl
-      configServiceCrudableMock = configServiceMock.crudable
-      every {
-        configServiceCrudableMock.getAll(any<Class<out ConnectionConfig>>())
-      } answers {
-        emptyList<ConnectionConfig>().stream()
+      configServiceCrudableMock = mockk<Crudable> {
+        every {
+          getAll(any<Class<out ConnectionConfig>>())
+        } answers {
+          emptyList<ConnectionConfig>().stream()
+        }
       }
-
-      credentialServiceMock = CredentialService.getService() as TestCredentialsServiceImpl
-      dataOpsManagerServiceMock = DataOpsManager.getService() as TestDataOpsManagerImpl
-      notificationsServiceMock = NotificationsService.getService() as TestNotificationsServiceImpl
-
-      notificationsServiceMock.testInstance = object : TestNotificationsServiceImpl() {
-        override fun notifyError(
-          t: Throwable,
-          project: Project?,
-          custTitle: String?,
-          custDetailsShort: String?,
-          custDetailsLong: String?
-        ) {
+      credentialServiceMock = mockk()
+      dataOpsManagerServiceMock = mockk()
+      notificationsServiceMock = mockk {
+        every {
+          notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+        } answers {
           errorNotificationTrigerredCount += 1
         }
       }
+
+      every { applicationMock.getService(ConfigService::class.java) } returns mockk {
+        every { crudable } returns configServiceCrudableMock
+      }
+      every { applicationMock.getService(CredentialService::class.java) } returns credentialServiceMock
+      every { applicationMock.getService(DataOpsManager::class.java) } returns dataOpsManagerServiceMock
+      every { applicationMock.getService(NotificationsService::class.java) } returns notificationsServiceMock
 
       every { whoAmI(any<ConnectionConfig>()) } returns "USERID"
 
@@ -201,30 +205,25 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
       var infoOperationCount = 0
       var zosInfoOperationCount = 0
 
-      val sendTopicRef: (Topic<ZoweConfigHandler>, Project) -> ZoweConfigHandler = ::sendTopic
-      mockkStatic(sendTopicRef as KFunction<*>)
-      every {
-        sendTopic(any<Topic<ZoweConfigHandler>>())
-      } answers {
-        mockk {
-          every {
-            onConfigSaved(any<ZoweConfig>(), any<ConnectionConfig>())
-          } answers {
-            onConfigSavedCalledCount += 1
-          }
-        }
-      }
-
       mockkStatic(NotificationGroupManager::getInstance)
 
       val parseConfigJsonRef: (InputStream) -> ZoweConfig = ::parseConfigJson
       mockkStatic(parseConfigJsonRef as KFunction<*>)
 
-      every {
-        configServiceCrudableMock.addOrUpdate(any<ConnectionConfig>())
-      } answers {
-        addOrUpdateCalledCount += 1
-        firstArg<ConnectionConfig>().optional
+      mockkStatic(ProgressManager::getInstance)
+      every { ProgressManager.getInstance() } returns mockk {
+        every {
+          run(any<com.intellij.openapi.progress.Task.WithResult<*, *>>())
+        } answers {
+          val task = firstArg<com.intellij.openapi.progress.Task.WithResult<*, *>>()
+          task
+            .run(
+              mockk {
+                every { text = any<String>() } returns Unit
+              }
+            )
+          task.result
+        }
       }
 
       beforeEach {
@@ -234,35 +233,96 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
         infoOperationCount = 0
         zosInfoOperationCount = 0
 
-        credentialServiceMock.testInstance = object : TestCredentialsServiceImpl() {
-          override fun setCredentials(connectionConfigUuid: String, username: String, password: CharArray) {
+        configServiceCrudableMock = mockk<Crudable> {
+          every {
+            getAll(any<Class<out ConnectionConfig>>())
+          } answers {
+            emptyList<ConnectionConfig>().stream()
+          }
+          every {
+            addOrUpdate(any<ConnectionConfig>())
+          } answers {
+            addOrUpdateCalledCount += 1
+            firstArg<ConnectionConfig>().optional
+          }
+        }
+        credentialServiceMock = mockk {
+          every {
+            setCredentials(any<String>(), any<String>(), any<CharArray>())
+          } answers {
             setCredentialsCalledCount += 1
           }
         }
+        dataOpsManagerServiceMock = mockk()
+        notificationsServiceMock = mockk {
+          every {
+            notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+          } answers {
+            errorNotificationTrigerredCount += 1
+          }
+        }
 
-        dataOpsManagerServiceMock.testInstance = object : TestDataOpsManagerImpl() {}
+        every { applicationMock.getService(ConfigService::class.java) } returns mockk {
+          every { crudable } returns configServiceCrudableMock
+        }
+        every { applicationMock.getService(CredentialService::class.java) } returns credentialServiceMock
+        every { applicationMock.getService(DataOpsManager::class.java) } returns dataOpsManagerServiceMock
+        every { applicationMock.getService(NotificationsService::class.java) } returns notificationsServiceMock
+        every { applicationMock.messageBus } returns mockk {
+          every {
+            syncPublisher(any<Topic<*>>())
+          } answers {
+            val topic = value as Topic<*>
+            if (
+              topic.displayName.contains(LOCAL_ZOWE_CONFIG_CHANGED.displayName)
+              || topic.displayName.contains(GLOBAL_ZOWE_CONFIG_CHANGED.displayName)
+            ) {
+              val zoweConfigEventListener = value.castOrNull<Topic<ZoweConfigHandler>>()
+              if (zoweConfigEventListener != null) {
+                mockk<ZoweConfigHandler> {
+                  every {
+                    onConfigSaved(any<ZoweConfig>(), any<ConnectionConfig>())
+                  } answers {
+                    onConfigSavedCalledCount += 1
+                  }
+                }
+              } else {
+                fail("Topic is impossible to cast to Topic<ZoweConfigHandler>")
+              }
+            } else {
+              fail("Unrecognized event listener: ${topic.displayName}")
+            }
+          }
+        }
+        every {
+          applicationMock.runReadAction(any<Computable<Any>>())
+        } answers {
+          firstArg<Computable<Any>>().compute()
+        }
       }
 
       should("update an existing connection config for the local Zowe config") {
         val testProfileName = "test_profile"
 
-        dataOpsManagerServiceMock.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            return when (operation) {
+        every { applicationMock.getService(DataOpsManager::class.java) } returns mockk {
+          every {
+            performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+          } answers {
+            when (firstArg<Operation<*>>()) {
               is InfoOperation -> {
                 infoOperationCount += 1
-                mockk<SystemsResponse>() as R
+                mockk<SystemsResponse>()
               }
 
               is ZOSInfoOperation -> {
                 zosInfoOperationCount += 1
                 mockk<InfoResponse> {
                   every { zosVersion } returns "04.28.00"
-                } as R
+                }
               }
 
               else -> {
-                mockk<Any>() as R
+                mockk<Any>()
               }
             }
           }
@@ -326,32 +386,32 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
         var extractSecurePropertiesCalledCount = 0
         var isCorrectConnectionErrorNotificationTrigerred = false
 
-        dataOpsManagerServiceMock.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            return when (operation) {
-              is InfoOperation -> {
-                infoOperationCount += 1
-                if (infoOperationCount == 1) {
-                  throw Exception()
-                } else {
-                  mockk<SystemsResponse>() as R
+        every {
+          dataOpsManagerServiceMock.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+        } answers {
+          when (firstArg<Operation<*>>()) {
+            is InfoOperation -> {
+              infoOperationCount += 1
+              if (infoOperationCount == 1) {
+                throw Exception()
+              } else {
+                mockk<SystemsResponse>()
+              }
+            }
+
+            is ZOSInfoOperation -> {
+              zosInfoOperationCount += 1
+              if (zosInfoOperationCount == 1) {
+                throw Exception()
+              } else {
+                mockk<InfoResponse> {
+                  every { zosVersion } returns "04.29.00"
                 }
               }
+            }
 
-              is ZOSInfoOperation -> {
-                zosInfoOperationCount += 1
-                if (zosInfoOperationCount == 1) {
-                  throw Exception()
-                } else {
-                  mockk<InfoResponse> {
-                    every { zosVersion } returns "04.29.00"
-                  } as R
-                }
-              }
-
-              else -> {
-                mockk<Any>() as R
-              }
+            else -> {
+              mockk<Any>()
             }
           }
         }
@@ -454,6 +514,7 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
         zoweConfigService
           .addOrUpdateZoweConfig(scanProject = true, checkConnection = true, ZoweConfigType.LOCAL)
 
+        assertSoftly { errorNotificationTrigerredCount shouldBe 0 }
         assertSoftly { setCredentialsCalledCount shouldBe 3 }
         assertSoftly { onConfigSavedCalledCount shouldBe 1 }
         assertSoftly { extractSecurePropertiesCalledCount shouldBe 1 }
@@ -468,24 +529,24 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
 
         every { whoAmI(any<ConnectionConfig>()) } returns null
 
-        dataOpsManagerServiceMock.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            return when (operation) {
-              is InfoOperation -> {
-                infoOperationCount += 1
-                mockk<SystemsResponse>() as R
-              }
+        every {
+          dataOpsManagerServiceMock.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+        } answers {
+          when (firstArg<Operation<*>>()) {
+            is InfoOperation -> {
+              infoOperationCount += 1
+              mockk<SystemsResponse>()
+            }
 
-              is ZOSInfoOperation -> {
-                zosInfoOperationCount += 1
-                mockk<InfoResponse> {
-                  every { zosVersion } returns "04.27.00"
-                } as R
+            is ZOSInfoOperation -> {
+              zosInfoOperationCount += 1
+              mockk<InfoResponse> {
+                every { zosVersion } returns "04.27.00"
               }
+            }
 
-              else -> {
-                mockk<Any>() as R
-              }
+            else -> {
+              mockk<Any>()
             }
           }
         }
@@ -530,6 +591,7 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
         zoweConfigService
           .addOrUpdateZoweConfig(scanProject = false, checkConnection = false, ZoweConfigType.GLOBAL)
 
+        assertSoftly { errorNotificationTrigerredCount shouldBe 0 }
         assertSoftly { setCredentialsCalledCount shouldBe 1 }
         assertSoftly { onConfigSavedCalledCount shouldBe 1 }
         assertSoftly { infoOperationCount shouldBe 1 }
@@ -551,32 +613,32 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
         var extractSecurePropertiesCalledCount = 0
         var isCorrectConnectionErrorNotificationTrigerred = false
 
-        dataOpsManagerServiceMock.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            return when (operation) {
-              is InfoOperation -> {
-                infoOperationCount += 1
-                if (infoOperationCount <= 2) {
-                  throw Exception()
-                } else {
-                  mockk<SystemsResponse>() as R
+        every {
+          dataOpsManagerServiceMock.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+        } answers {
+          when (firstArg<Operation<*>>()) {
+            is InfoOperation -> {
+              infoOperationCount += 1
+              if (infoOperationCount <= 2) {
+                throw Exception()
+              } else {
+                mockk<SystemsResponse>()
+              }
+            }
+
+            is ZOSInfoOperation -> {
+              zosInfoOperationCount += 1
+              if (zosInfoOperationCount <= 2) {
+                throw Exception()
+              } else {
+                mockk<InfoResponse> {
+                  every { zosVersion } returns "04.26.00"
                 }
               }
+            }
 
-              is ZOSInfoOperation -> {
-                zosInfoOperationCount += 1
-                if (zosInfoOperationCount <= 2) {
-                  throw Exception()
-                } else {
-                  mockk<InfoResponse> {
-                    every { zosVersion } returns "04.26.00"
-                  } as R
-                }
-              }
-
-              else -> {
-                mockk<Any>() as R
-              }
+            else -> {
+              mockk<Any>()
             }
           }
         }
@@ -718,6 +780,7 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
         zoweConfigService
           .addOrUpdateZoweConfig(scanProject = true, checkConnection = true, ZoweConfigType.GLOBAL)
 
+        assertSoftly { errorNotificationTrigerredCount shouldBe 0 }
         assertSoftly { setCredentialsCalledCount shouldBe 5 }
         assertSoftly { onConfigSavedCalledCount shouldBe 0 }
         assertSoftly { extractSecurePropertiesCalledCount shouldBe 1 }
@@ -790,10 +853,10 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
           Messages.OK
         }
 
-        credentialServiceMock.testInstance = object : TestCredentialsServiceImpl() {
-          override fun clearCredentials(connectionConfigUuid: String) {
-            isClearCredentialsCalled = true
-          }
+        every {
+          credentialServiceMock.clearCredentials(any<String>())
+        } answers {
+          isClearCredentialsCalled = true
         }
 
         every {
@@ -1187,14 +1250,9 @@ class ZoweConfigServiceTestSpec : WithApplicationShouldSpec({
       val testProfileName = "test_profile_name.test_profile_name_inner"
       val testIsAllowSelfSigned = false
 
-      credentialServiceMock.testInstance = object : TestCredentialsServiceImpl() {
-        override fun getUsernameByKey(connectionConfigUuid: String): String {
-          return testUsername
-        }
-
-        override fun getPasswordByKey(connectionConfigUuid: String): CharArray {
-          return testPassword.toCharArray()
-        }
+      beforeEach {
+        every { credentialServiceMock.getUsernameByKey(any<String>()) } returns testUsername
+        every { credentialServiceMock.getPasswordByKey(any<String>()) } returns testPassword.toCharArray()
       }
 
       should("return SYNCHRONIZED config state for the local Zowe config") {

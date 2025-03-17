@@ -15,6 +15,6 @@
 package org.zowe.explorer.v3
 
 /** Class to track USS requests origins */
-class UssRequester<ConnectionConfigType : ConnectionConfig>(
+class UssRequester<ConnectionConfigType : ConnectionConfigOldStruct>(
   override val connectionConfig: ConnectionConfigType
 ) : Requester<ConnectionConfigType>
