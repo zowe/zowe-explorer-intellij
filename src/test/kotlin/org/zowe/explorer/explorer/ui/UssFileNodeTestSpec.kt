@@ -19,10 +19,16 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.TreeAnchorizer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase.HARD_REF_TO_DOCUMENT_KEY
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.openapi.vfs.VirtualFile
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.mockk.*
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.ConnectionConfigBase
 import org.zowe.explorer.dataops.DataOpsManager
@@ -43,11 +49,8 @@ import org.zowe.explorer.utils.isBeingEditingNow
 import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
-import io.kotest.assertions.assertSoftly
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
-import io.mockk.*
 import org.zowe.kotlinsdk.FileMode
+import org.zowe.kotlinsdk.UssFile
 import java.time.LocalDateTime
 import javax.swing.Icon
 import javax.swing.tree.TreePath
@@ -70,19 +73,33 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       lateinit var dataOpsManagerService: TestDataOpsManagerImpl
       lateinit var uiComponentManagerService: TestUIComponentManager
       lateinit var ussFileNode: UssFileNode
+      lateinit var rootNode: ExplorerTreeNode<ConnectionConfig, Any>
+      var firstNode: ExplorerTreeNode<ConnectionConfig, Any>
 
       beforeEach {
         mockkObject(MFVirtualFileSystem)
         every { MFVirtualFileSystem.instance } returns mockk()
 
+        projectMock = mockk<Project>()
+
         fileMock = mockk()
         every { fileMock.isDirectory } returns false
-        every { fileMock.isReadable } returns true
+        var isReadable = true
+        every { fileMock.isReadable } returns isReadable
+        every { fileMock setProperty "isReadable" value any<Boolean>() } propertyType Boolean::class answers {
+          isReadable = value
+        }
+        var isWritable = true
+        every { fileMock.isWritable } returns isWritable
+        every { fileMock.isWritable = any<Boolean>() } answers { isWritable = firstArg() }
+        every { fileMock.isValid } returns true
+        every { fileMock.fileType } returns FileTypes.UNKNOWN
+        every { fileMock.detectedLineSeparator } returns "\n"
         every { fileMock.name } returns "navigate test"
+        every { fileMock.getUserData(HARD_REF_TO_DOCUMENT_KEY) } returns null
         mockkStatic(VirtualFile::isBeingEditingNow)
         every { fileMock.isBeingEditingNow() } returns false
 
-        projectMock = mockk()
 
         treeStructureMock = mockk()
         every { treeStructureMock.registerNode(any()) } returns mockk()
@@ -99,13 +116,49 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
           }
         }
 
-        explorerTreeNodeMock = mockk()
-
         explorer = mockk()
         every { explorer.componentManager } returns ApplicationManager.getApplication()
 
         explorerUnitMock = mockk()
         every { explorerUnitMock.explorer } returns explorer
+
+        rootNode =
+          object : ExplorerTreeNode<ConnectionConfig, Any>("rootNode", projectMock, null, mockk(), treeStructureMock) {
+            override fun update(presentation: PresentationData) {
+              TODO("Not yet implemented")
+            }
+
+            override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
+              TODO("Not yet implemented")
+            }
+          }
+
+        every { explorerUnitMock.connectionConfig } returns ConnectionConfig()
+        firstNode = object : ExplorerUnitTreeNodeBase<ConnectionConfig, Any, ExplorerUnit<ConnectionConfig>>(
+          "firstNode",
+          projectMock,
+          rootNode,
+          explorerUnitMock,
+          treeStructureMock
+        ) {
+          override fun update(presentation: PresentationData) {
+            TODO("Not yet implemented")
+          }
+
+          override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
+            TODO("Not yet implemented")
+          }
+        }
+
+        explorerTreeNodeMock = spyk(
+          UssFileNode(
+            fileMock, projectMock,
+            firstNode,
+            explorerUnitMock, treeStructureMock
+          ),
+          recordPrivateCalls = true
+        )
+        every { explorerTreeNodeMock.parent } answers { firstNode }
 
         dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
 
@@ -129,6 +182,12 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
+            every { contentSynchronizerMock.isFileUploadNeeded(any()) } answers {
+              false
+            }
+            every { contentSynchronizerMock.successfulContentStorage(any()) } answers {
+              byteArrayOf(Byte.MIN_VALUE, -1, 0, 1, Byte.MAX_VALUE)
+            }
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
               isSyncWithRemotePerformed = true
               val syncProvider = firstArg() as SyncProvider
@@ -154,9 +213,28 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       }
       should("perform navigate on file with failure due to permission denied") {
         var isSyncWithRemotePerformed = false
+        val ussFileMock = mockk<UssFile>()
+        every { ussFileMock.name } returns "USSFileName"
+        every { ussFileMock.isDirectory } returns false
+        every { ussFileMock.size } returns 100
+        every { ussFileMock.uid } returns 500
+        every { ussFileMock.user } returns "user"
+        every { ussFileMock.gid } returns 110
+        every { ussFileMock.groupId } returns "guid"
+        every { ussFileMock.modificationTime } returns "modTime"
+        every { ussFileMock.target } returns "target"
+        every { ussFileMock.fileMode } returns FileMode(7, 5, 5, "")
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return RemoteUssAttributes("rootPath", ussFileMock, "URL", ConnectionConfig())
+          }
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
+            every { contentSynchronizerMock.isFileUploadNeeded(any()) } answers { false }
+            every { contentSynchronizerMock.successfulContentStorage(any()) } answers {
+              byteArrayOf(Byte.MIN_VALUE, -1, 0, 1, Byte.MAX_VALUE)
+            }
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
               isSyncWithRemotePerformed = true
               val syncProvider = firstArg() as SyncProvider
@@ -189,8 +267,15 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       should("perform navigate on file with failure due to client is not authorized") {
         var isSyncWithRemotePerformed = false
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return RemoteUssAttributes("test", false, null, "test", mutableListOf())
+          }
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
+            every { contentSynchronizerMock.isFileUploadNeeded(any()) } answers { false }
+            every { contentSynchronizerMock.successfulContentStorage(any()) } answers {
+              byteArrayOf(Byte.MIN_VALUE, -1, 0, 1, Byte.MAX_VALUE)
+            }
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
               isSyncWithRemotePerformed = true
               val syncProvider = firstArg() as SyncProvider
@@ -218,6 +303,9 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       }
       should("exit 'navigate' when 'getContentSynchronizer' returns null") {
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return RemoteUssAttributes("test", false, null, "test", mutableListOf())
+          }
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
             return null
           }
@@ -258,8 +346,15 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
 
         var isNavigateContinued = false
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
+          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
+            return RemoteUssAttributes("test", false, null, "test", mutableListOf())
+          }
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
+            every { contentSynchronizerMock.isFileUploadNeeded(any()) } answers { false }
+            every { contentSynchronizerMock.successfulContentStorage(any()) } answers {
+              byteArrayOf(Byte.MIN_VALUE, -1, 0, 1, Byte.MAX_VALUE)
+            }
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
               isNavigateContinued = true
               val syncProvider = firstArg() as SyncProvider
@@ -274,10 +369,52 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         assertSoftly { isNavigateContinued shouldBe false }
       }
       should("perform navigate on a file that was already opened") {
+        every { fileMock.isWritable } returns false
+        firstNode = object : ExplorerTreeNode<ConnectionConfig, Any>(
+          "nullConnectionNode",
+          projectMock,
+          rootNode,
+          mockk<FileExplorer>(),
+          treeStructureMock
+        ) {
+          override fun update(presentation: PresentationData) {
+            TODO("Not yet implemented")
+          }
+          override fun getChildren(): MutableCollection<out AbstractTreeNode<*>> {
+            TODO("Not yet implemented")
+          }
+        }
+
+        explorerTreeNodeMock = spyk(
+          UssFileNode(
+            fileMock, projectMock,
+            firstNode,
+            explorerUnitMock, treeStructureMock
+          ),
+          recordPrivateCalls = true
+        )
+        every { explorerTreeNodeMock.parent } answers { firstNode }
+
+        ussFileNode = spyk(
+          UssFileNode(
+            fileMock,
+            projectMock,
+            explorerTreeNodeMock,
+            explorerUnitMock,
+            treeStructureMock
+          )
+        )
+        every { ussFileNode.update() } returns false
+        every { ussFileNode.virtualFile } returns fileMock
+
         var isSyncWithRemotePerformed = false
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
           override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
             val contentSynchronizerMock = mockk<ContentSynchronizer>()
+            every { contentSynchronizerMock.isFileUploadNeeded(any()) } answers { true }
+            every { contentSynchronizerMock.successfulContentStorage(any()) } answers {
+              byteArrayOf(Byte.MIN_VALUE, -1, 0, 1, Byte.MAX_VALUE)
+            }
             every { contentSynchronizerMock.synchronizeWithRemote(any(), any()) } answers {
               isSyncWithRemotePerformed = true
               val syncProvider = firstArg() as SyncProvider

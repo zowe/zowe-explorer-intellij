@@ -4,6 +4,13 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ## [Unreleased]
 
+## [2.1.1] (2024-03-17)
+
+### Bugfixes
+
+* Bugfix: GitHub issue #232: Slow operations in EDT ([ef4de426](https://github.com/zowe/zowe-explorer-intellij/commit/ef4de426))
+* Bugfix: GitHub issue #241: Writing to a file without access rights ([ecda8e21](https://github.com/zowe/zowe-explorer-intellij/commit/ecda8e21))
+
 ## [2.1.0] (2024-02-03)
 
 ### Features
