@@ -18,6 +18,6 @@ package org.zowe.explorer.v3
  * Interface to track requests origins. Represents the elements that requested a related data
  * @property connectionConfig the related connection config
  */
-interface Requester<ConnectionConfigType : ConnectionConfig> {
+interface Requester<ConnectionConfigType : ConnectionConfigOldStruct> {
   val connectionConfig: ConnectionConfigType
 }

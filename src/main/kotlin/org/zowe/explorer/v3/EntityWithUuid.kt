@@ -13,31 +13,26 @@
  */
 package org.zowe.explorer.v3
 
-import org.zowe.explorer.utils.crudable.annotations.Column
+import com.intellij.util.xmlb.annotations.Attribute
+import java.util.*
 
 /**
  * Class that represents an entity with UUID
- * @param uuid the UUID of the entity
+ * @property uuid the UUID of the entity
  */
-abstract class EntityWithUuid(@Column(unique = true) var uuid: String = EMPTY_ID) {
+abstract class EntityWithUuid(
+  @get:Attribute
+  var uuid: String = EMPTY_ID
+) {
+
+  init {
+    if (uuid == EMPTY_ID) {
+      uuid = UUID.randomUUID().toString()
+    }
+  }
 
   companion object {
     const val EMPTY_ID = ""
-  }
-
-  override fun hashCode(): Int {
-    return uuid.hashCode()
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other == null || javaClass != other.javaClass) return false
-    val that = other as EntityWithUuid
-    return uuid == that.uuid
-  }
-
-  override fun toString(): String {
-    return "EntityWithUuid{uuid='$uuid'}"
   }
 
 }

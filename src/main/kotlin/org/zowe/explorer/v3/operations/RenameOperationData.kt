@@ -16,7 +16,7 @@ package org.zowe.explorer.v3.operations
 
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.attributes.FileAttributes
-import org.zowe.explorer.v3.ConnectionConfig
+import org.zowe.explorer.v3.ConnectionConfigOldStruct
 import org.zowe.explorer.v3.Requester
 
 /**
@@ -25,7 +25,7 @@ import org.zowe.explorer.v3.Requester
  * @param attributes the virtual file's attributes
  * @param newName the new name to apply to the virtual file
  */
-data class RenameOperationData<ConnectionConfigType : ConnectionConfig>(
+data class RenameOperationData<ConnectionConfigType : ConnectionConfigOldStruct>(
   val file: VirtualFile,
   val attributes: FileAttributes,
   val newName: String,

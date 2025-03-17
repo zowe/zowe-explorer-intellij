@@ -14,7 +14,7 @@
 
 package org.zowe.explorer.v3.operations
 
-import org.zowe.explorer.v3.ConnectionConfig
+import org.zowe.explorer.v3.ConnectionConfigOldStruct
 import org.zowe.explorer.v3.Requester
 
 /**
@@ -22,7 +22,7 @@ import org.zowe.explorer.v3.Requester
  * @property resultClass the result class of the result that should be returned after an operation execution
  * @property origin the exact operation requester to distinguish the source of the operation request
  */
-interface OperationData<Result, ConnectionConfigType : ConnectionConfig> {
+interface OperationData<Result, ConnectionConfigType : ConnectionConfigOldStruct> {
   val resultClass: Class<out Result>
   val origin: Requester<ConnectionConfigType>?
 }

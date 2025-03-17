@@ -46,13 +46,16 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.zowe.explorer.v3.ConnectionConfigOldStruct
 import org.zowe.kotlinsdk.annotations.ZVersion
 import java.util.*
 
 class RenameActionTestSpec : WithApplicationShouldSpec({
   afterSpec {
     clearAllMocks()
+    unmockkAll()
   }
+
   context("explorer module: actions/RenameAction") {
     val renameAction = RenameAction()
 
@@ -124,15 +127,15 @@ class RenameActionTestSpec : WithApplicationShouldSpec({
       val operationsServiceMock = mockk<OperationsService> {
         every {
           performOperation(
-            any<RenameOperationData<org.zowe.explorer.v3.ConnectionConfig>>(),
+            any<RenameOperationData<ConnectionConfigOldStruct>>(),
             any()
           )
         } answers {
           renamed = true
-          Unit
+          Result.success(Unit)
         }
       }
-      mockkObject(OperationsService.Companion)
+      mockkObject(OperationsService)
       every { OperationsService.getService() } returns operationsServiceMock
 
       mockkStatic(::initialize)

@@ -39,7 +39,6 @@ var testAppFixture: CodeInsightTestFixture? = null
  * instance to be able to use and mock services for tests
  */
 abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : ShouldSpec() {
-
   /**
    * Fixture setup to have access to the [Application] instance
    */

@@ -257,6 +257,7 @@ tasks {
 
     testLogging {
       events("passed", "skipped", "failed")
+      // showStandardStreams = true
     }
 
     //  ignoreFailures = true

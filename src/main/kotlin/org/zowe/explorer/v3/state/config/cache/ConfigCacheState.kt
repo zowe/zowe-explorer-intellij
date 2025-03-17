@@ -1,0 +1,27 @@
+/*
+ * Copyright (c) 2024 IBA Group.
+ *
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
+ */
+
+package org.zowe.explorer.v3.state.config.cache
+
+import org.zowe.explorer.v3.state.config.Config
+import org.zowe.explorer.v3.state.config.ConfigType
+import org.zowe.explorer.v3.state.config.ConfigsHolder
+
+/**
+ * Config cache state holder
+ * @property configs the configs map for the state to hold
+ */
+class ConfigCacheState(
+  override var configs: MutableMap<ConfigType, MutableList<Config>> = mutableMapOf()
+) : ConfigsHolder

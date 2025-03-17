@@ -14,12 +14,13 @@
 
 package org.zowe.explorer.v3.operations
 
-import org.zowe.explorer.v3.ConnectionConfig
+import org.zowe.explorer.v3.ConnectionConfigOldStruct
 
 /**
  * Interface to create operations without expecting any exact result
  */
-interface UnitOperationData<ConnectionConfigType : ConnectionConfig> : OperationData<Unit, ConnectionConfigType> {
+interface UnitOperationData<ConnectionConfigType : ConnectionConfigOldStruct> :
+  OperationData<Unit, ConnectionConfigType> {
   override val resultClass: Class<out Unit>
     get() = Unit::class.java
 }

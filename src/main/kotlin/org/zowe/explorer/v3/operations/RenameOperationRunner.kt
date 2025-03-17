@@ -25,7 +25,7 @@ import org.zowe.explorer.dataops.attributes.Requester
 import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.utils.cancelByIndicator
 import org.zowe.explorer.utils.runWriteActionInEdtAndWait
-import org.zowe.explorer.v3.ConnectionConfig
+import org.zowe.explorer.v3.ConnectionConfigOldStruct
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import org.zowe.kotlinsdk.MoveUssFile
@@ -36,18 +36,19 @@ typealias ConnectionConfigOld = org.zowe.explorer.config.connect.ConnectionConfi
 typealias UssRequesterOld = org.zowe.explorer.dataops.attributes.UssRequester
 
 /** [RenameOperationData] runner */
-class RenameOperationRunner<ConnectionConfigType : ConnectionConfig> :
+class RenameOperationRunner<ConnectionConfigType : ConnectionConfigOldStruct> :
   UnitOperationRunner<ConnectionConfigType, RenameOperationData<ConnectionConfigType>>() {
 
   override val operationDataClass = RenameOperationData::class.java
 
+  // TODO: introduce other entities rename and change canRun respectively
   /**
    * Allow operation run only for datasets, members and USS files / folders
    * @see [OperationRunner.canRun]
    */
   override fun canRun(operationData: RenameOperationData<ConnectionConfigType>): Boolean {
     return with(operationData.attributes) {
-      this is RemoteMemberAttributes || this is RemoteDatasetAttributes || this is RemoteUssAttributes
+      this is RemoteUssAttributes
     }
   }
 
@@ -60,62 +61,62 @@ class RenameOperationRunner<ConnectionConfigType : ConnectionConfig> :
     progressIndicator: ProgressIndicator
   ) {
     when (val attributes = operationData.attributes) {
-      is RemoteDatasetAttributes -> {
-        // TODO: rework entirely
-        // TODO: requesters.forEach - remove
-        attributes.requesters.forEach {
-          val renameOperationCallBuilder = { connectionConfig: ConnectionConfigOld ->
-            api<DataAPI>(connectionConfig).renameDataset(
-              authorizationToken = connectionConfig.authToken,
-              body = RenameData(
-                fromDataset = RenameData.FromDataset(
-                  oldDatasetName = attributes.name
-                )
-              ),
-              toDatasetName = operationData.newName
-            )
-          }
-          processRenameOperation(
-            operationData,
-            progressIndicator,
-            it,
-            renameOperationCallBuilder,
-            "Unable to rename the selected dataset"
-          )
-        }
-      }
+//      TODO: rework entirely
+//      is RemoteDatasetAttributes -> {
+//        // TODO: requesters.forEach - remove
+//        attributes.requesters.forEach {
+//          val renameOperationCallBuilder = { connectionConfig: ConnectionConfigOld ->
+//            api<DataAPI>(connectionConfig).renameDataset(
+//              authorizationToken = connectionConfig.authToken,
+//              body = RenameData(
+//                fromDataset = RenameData.FromDataset(
+//                  oldDatasetName = attributes.name
+//                )
+//              ),
+//              toDatasetName = operationData.newName
+//            )
+//          }
+//          processRenameOperation(
+//            operationData,
+//            progressIndicator,
+//            it,
+//            renameOperationCallBuilder,
+//            "Unable to rename the selected dataset"
+//          )
+//        }
+//      }
+//
+//      TODO: rework entirely
+//      is RemoteMemberAttributes -> {
+//        val parentAttributes = DataOpsManager.getService()
+//          .tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
+//        // TODO: requesters.forEach - remove
+//        parentAttributes.requesters.forEach {
+//          val renameOperationCallBuilder = { connectionConfig: ConnectionConfigOld ->
+//            api<DataAPI>(connectionConfig).renameDatasetMember(
+//              authorizationToken = connectionConfig.authToken,
+//              body = RenameData(
+//                fromDataset = RenameData.FromDataset(
+//                  oldDatasetName = parentAttributes.datasetInfo.name,
+//                  oldMemberName = attributes.info.name
+//                )
+//              ),
+//              toDatasetName = parentAttributes.datasetInfo.name,
+//              memberName = operationData.newName
+//            )
+//          }
+//          processRenameOperation(
+//            operationData,
+//            progressIndicator,
+//            it,
+//            renameOperationCallBuilder,
+//            "Unable to rename the selected member"
+//          )
+//        }
+//      }
 
-      is RemoteMemberAttributes -> {
-        // TODO: rework entirely
-        val parentAttributes = DataOpsManager.getService()
-          .tryToGetAttributes(attributes.parentFile) as RemoteDatasetAttributes
-        // TODO: requesters.forEach - remove
-        parentAttributes.requesters.forEach {
-          val renameOperationCallBuilder = { connectionConfig: ConnectionConfigOld ->
-            api<DataAPI>(connectionConfig).renameDatasetMember(
-              authorizationToken = connectionConfig.authToken,
-              body = RenameData(
-                fromDataset = RenameData.FromDataset(
-                  oldDatasetName = parentAttributes.datasetInfo.name,
-                  oldMemberName = attributes.info.name
-                )
-              ),
-              toDatasetName = parentAttributes.datasetInfo.name,
-              memberName = operationData.newName
-            )
-          }
-          processRenameOperation(
-            operationData,
-            progressIndicator,
-            it,
-            renameOperationCallBuilder,
-            "Unable to rename the selected member"
-          )
-        }
-      }
-
+      // TODO: rework
       is RemoteUssAttributes -> {
-        // TODO: rework
         val newRequester = operationData.origin
         val oldRequester = UssRequesterOld(
           ConnectionConfigOld(
