@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.explorer.ui
@@ -121,6 +122,15 @@ abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSe
       .findByPredicate {
         it is FetchNode && it.query == query
       }
+  }
+
+  /**
+   * Get nodes by the provided file
+   * @param file the virtual file to search nodes by
+   * @return collection of the nodes found by the provided file
+   */
+  fun getNodesByFile(file: VirtualFile): Collection<ExplorerTreeNode<*, *>> {
+    return myFsTreeStructure.findByPredicate { it.virtualFile == file }
   }
 
   /**

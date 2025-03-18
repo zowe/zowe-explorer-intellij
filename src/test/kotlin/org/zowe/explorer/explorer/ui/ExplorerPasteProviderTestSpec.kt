@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.explorer.ui
@@ -134,7 +135,6 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         val mockedDestinationVFile = mockk<MFVirtualFile>()
         val sourceParentFile = mockk<MFVirtualFile>()
         val targetParentFile = mockk<MFVirtualFile>()
-        every { mockedFileExplorerView.myFsTreeStructure } returns mockk()
         every { mockedFileExplorerView.myStructure } returns mockk()
         every { nodeToRefreshSource.parent } returns nodeToRefreshSource
         every { nodeToRefreshSource.path } returns mockk<TreePath>()
@@ -152,7 +152,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedDestinationVFile.fileSystem } returns mockk<MFVirtualFileSystem>()
         every { mockedDestinationVFile.fileSystem.model } returns mockk<MFVirtualFileSystemModel>()
         every { mockedDestinationVFile.fileSystem.model.deleteFile(any(), any()) } just Runs
-        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(any() as VirtualFile) } returns listOf(
+        every { mockedFileExplorerView.getNodesByFile(any() as VirtualFile) } returns listOf(
           nodeToRefreshSource,
           nodeToRefreshTarget
         )
@@ -474,7 +474,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         } returns
           mutableListOf(Pair(mockedTargetFile, mockedSourceFile))
 
-        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(any() as VirtualFile) } answers {
+        every { mockedFileExplorerView.getNodesByFile(any() as VirtualFile) } answers {
           isPastePerformed = true
           listOf(
             mockk {
@@ -527,6 +527,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedSourceNode.virtualFile } returns mockedSourceFile
         every { mockedSourceNode.parent } returns mockedSourceNodeParent
         every { mockedSourceNode.path } returns mockk<TreePath>()
+        every { mockedSourceNode.parent?.path } returns  mockk<TreePath>()
         every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
         every { mockedSourceFile.fileSystem.model } returns mockk<MFVirtualFileSystemModel>()
         every { mockedSourceFile.fileSystem.model.deleteFile(any(), any()) } just Runs
@@ -597,10 +598,10 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
         // overwrite default behavior to check if nodes are actually refreshed
         every {
-          mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile)
+          mockedFileExplorerView.getNodesByFile(mockedSourceFile)
         } returns listOf(mockedSourceNode)
         every {
-          mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile)
+          mockedFileExplorerView.getNodesByFile(mockedTargetFile)
         } returns listOf(mockedNodeTarget)
         every { mockedFileExplorerView.myStructure.invalidate(mockedSourceNodeParent, true) } returns mockk()
         every { mockedFileExplorerView.myStructure.invalidate(mockedNodeTarget, true) } returns mockk()
@@ -723,10 +724,10 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
 
         // overwrite default behavior to check if nodes are actually refreshed
         every {
-          mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile)
+          mockedFileExplorerView.getNodesByFile(mockedSourceFile)
         } returns listOf(mockedSourceNode)
         every {
-          mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile)
+          mockedFileExplorerView.getNodesByFile(mockedTargetFile)
         } returns listOf(mockedNodeTarget)
         every { mockedFileExplorerView.myStructure.invalidate(mockedSourceNodeParent, true) } returns mockk()
         every { mockedFileExplorerView.myStructure.invalidate(mockedNodeTarget, true) } returns mockk()
@@ -776,6 +777,7 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedSourceNode.virtualFile } returns mockedSourceFile
         every { mockedSourceNode.parent } returns mockedSourceNodeParent
         every { mockedSourceNode.path } returns mockk<TreePath>()
+        every { mockedSourceNode.parent?.path } returns mockk<TreePath>()
         every { mockedSourceFile.name } returns "TEST.FILE"
         every { mockedSourceFile.isInLocalFileSystem } returns false
         every { mockedSourceFile.fileSystem } returns mockk<MFVirtualFileSystem>()
@@ -844,10 +846,10 @@ class ExplorerPasteProviderTestSpec : WithApplicationShouldSpec({
         every { mockedFileExplorerView.mySelectedNodesData } returns listOf(mockedSourceNodeData)
 
         // special config for PS/PDS files
-        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedSourceFile) } returns listOf(
+        every { mockedFileExplorerView.getNodesByFile(mockedSourceFile) } returns listOf(
           mockedSourceNode
         )
-        every { mockedFileExplorerView.myFsTreeStructure.findByVirtualFile(mockedTargetFile) } returns listOf(
+        every { mockedFileExplorerView.getNodesByFile(mockedTargetFile) } returns listOf(
           mockedNodeTarget
         )
         every { mockedFileExplorerView.myStructure.invalidate(mockedSourceNodeParent, true) } returns mockk()

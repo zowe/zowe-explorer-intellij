@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.explorer.ui
@@ -171,13 +172,17 @@ class ExplorerPasteProvider : PasteProvider {
     }
     val destinationNodesToRefresh = destinationFilesToRefresh
       .asSequence()
-      .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).ifEmpty { explorerView.myFsTreeStructure.findByPredicate { it.virtualFile == file } }.reversed() }
+      .map { file ->
+        explorerView.getNodesByFile(file).reversed()
+      }
       .flatten()
       .distinctBy { it.path }
       .toList()
     return if (explorerView.isCut.get()) {
       val sourceNodesToRefresh = sourceFilesToRefresh
-        .map { file -> explorerView.myFsTreeStructure.findByVirtualFile(file).reversed().map { it } }
+        .map { file ->
+          explorerView.getNodesByFile(file).reversed().map { it }
+        }
         .flatten()
         .distinctBy { it.path }
       mutableMapOf(Pair(SOURCES, sourceNodesToRefresh), Pair(DESTINATIONS, destinationNodesToRefresh))
@@ -203,10 +208,10 @@ class ExplorerPasteProvider : PasteProvider {
       val parentNodes = sourcesToRefresh.mapNotNull { it.virtualFile }
         .getMinimalCommonParents()
         .map { vFile ->
-          explorerView.myFsTreeStructure.findByVirtualFile(vFile).reversed().mapNotNull { it.parent }
+          explorerView.getNodesByFile(vFile).reversed().mapNotNull { it.parent }
         }
         .flatten()
-        .distinct()
+        .distinctBy { it.path }
 
       runParentNodesRefresh(parentNodes, explorerView)
     }
