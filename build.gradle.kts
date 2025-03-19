@@ -68,7 +68,7 @@ val plugins = listOf(
     sourceFolder = "IC-243"
   )
 )
-val productName = System.getenv("PRODUCT_NAME") ?: "IC-233"
+val productName = System.getenv("PRODUCT_NAME") ?: "IC-231"
 val descriptor = plugins.first { it.sourceFolder == productName }
 
 group = properties("pluginGroup").get()
@@ -143,7 +143,6 @@ dependencies {
     zipSigner()
     testFramework(TestFrameworkType.Starter, configurationName = "uiTestImplementation")
     zipSigner()
-//    localPlugin("C:\\Users\\varte\\Documents\\University\\Year 4 Sem. 2\\4475\\zowe-cobol-language-support-intellij\\build\\distributions\\cobol-0.0.2.zip")
   }
   implementation(libs.retrofit2)
   implementation(libs.retrofit2.converter.gson)
@@ -152,14 +151,10 @@ dependencies {
   implementation(libs.jgrapht.core)
   implementation(libs.java.keytar)
   implementation(libs.zowe.kotlin.sdk)
+  implementation(libs.tensorflow.core.platform)
   testImplementation(libs.mockk)
   testImplementation(libs.kotest.assertions.core)
   testImplementation(libs.kotest.runner.junit5)
-
-  // Students
-  implementation(libs.okhttp3.mockwebserver)
-  implementation(libs.okhttp3.okhttp.tls)
-  implementation(libs.tensorflow.core.platform)
 }
 
 intellijPlatform {
@@ -372,7 +367,6 @@ val uiTests by intellijPlatformTesting.testIdeUi.registering {
   }
 
   plugins {
-    robotServerPlugin()
     robotServerPlugin()
   }
 

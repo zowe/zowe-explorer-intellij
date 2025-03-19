@@ -26,6 +26,7 @@ import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.utils.changeEncodingTo
+import org.zowe.explorer.v3.lang.LanguageByContentRecognizerService
 import org.zowe.explorer.vfs.MFVirtualFile
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicBoolean
