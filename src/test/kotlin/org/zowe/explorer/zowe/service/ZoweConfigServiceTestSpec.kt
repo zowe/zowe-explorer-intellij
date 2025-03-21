@@ -11,6 +11,7 @@
  *   IBA Group
  *   Zowe Community
  *   Uladzislau Kalesnikau
+ *   Katsiaryna Tsytsenia
  */
 
 package org.zowe.explorer.zowe.service
@@ -21,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -220,6 +222,7 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
             .run(
               mockk {
                 every { text = any<String>() } returns Unit
+                every { isCanceled } returns false
               }
             )
           task.result
@@ -246,7 +249,12 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
             firstArg<ConnectionConfig>().optional
           }
         }
+
+        val testUsername = "TSTUSR"
+        val testPassword = "TSTPWD"
         credentialServiceMock = mockk {
+          every { getUsernameByKey(any<String>()) } returns testUsername
+          every { getPasswordByKey(any<String>()) } returns testPassword.toCharArray()
           every {
             setCredentials(any<String>(), any<String>(), any<CharArray>())
           } answers {
@@ -359,6 +367,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
               every { rejectUnauthorized } returns true
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             }
           )
         }
@@ -374,6 +384,82 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
         assertSoftly { zosInfoOperationCount shouldBe 1 }
         assertSoftly { onConfigSavedCalledCount shouldBe 1 }
         assertSoftly { addOrUpdateCalledCount shouldBe 1 }
+      }
+
+      should("cancel testing Zowe config connections") {
+        val testFailProfileName5 = "test_profile_name_fail5"
+        var extractSecurePropertiesCalledCount = 0
+        var cancelationCount = 0
+
+        every {
+          dataOpsManagerServiceMock.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+        } answers {
+          when (val operation = firstArg<Operation<*>>()) {
+            is InfoOperation -> {
+              infoOperationCount += 1
+              if (operation.connectionConfig.uuid == "throw") {
+                cancelationCount += 1
+                throw ProcessCanceledException()
+              } else {
+                mockk<SystemsResponse>()
+              }
+            }
+
+            else -> {
+              mockk<Any>()
+            }
+          }
+        }
+
+        val globalZoweConfig: ZoweConfig = mockk {
+          every {
+            extractSecureProperties(any<Array<String>>(), any<KeytarWrapper>())
+          } answers {
+            extractSecurePropertiesCalledCount += 1
+          }
+          every {
+            getListOfZosmfConections()
+          } returns listOf(
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns testFailProfileName5
+              every { basePath } returns "test/base/path/"
+              every { host } returns "testFailHost5"
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns null
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            }
+          )
+        }
+
+        every { parseConfigJsonRef(any<InputStream>()) } returns globalZoweConfig
+
+        every {
+          configServiceCrudableMock.find(any<Class<out ConnectionConfig>>(), any<Predicate<in ConnectionConfig>>())
+        } answers {
+          listOf<ConnectionConfig>(
+            mockk {
+              every { uuid } returns "throw"
+              every { zVersion } returns ZVersion.ZOS_2_4
+              every { name } returns "$ZOWE_PROJECT_PREFIX${ZoweConfigType.GLOBAL}-$testFailProfileName5"
+              every { zoweConfigPath } returns System.getProperty("user.home").replace("((\\*)|(/*))$", "") + "/.zowe/" + ZOWE_CONFIG_NAME
+            }
+          )
+            .filter(secondArg<Predicate<ConnectionConfig>>()::test)
+            .stream()
+        }
+
+        val zoweConfigService = ZoweConfigServiceImpl(projectMock)
+
+        zoweConfigService
+          .addOrUpdateZoweConfig(scanProject = true, checkConnection = true, ZoweConfigType.GLOBAL)
+        assertSoftly { cancelationCount shouldBe 1 }
+        assertSoftly { setCredentialsCalledCount shouldBe 1 }
+        assertSoftly { infoOperationCount shouldBe 1 }
+
       }
 
       should("add a new connection for the local Zowe config, scanning a project, with failed connections and their check") {
@@ -430,9 +516,9 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
                 } answers {
                   if (
                     notificationType == NotificationType.ERROR
-                    && title.contains("Connection failed to")
-                    && details.contains(testFailHost1)
-                    && details.contains(testFailHost2)
+                    && title.contains("Unsuccessfully tested profiles:")
+                    && details.contains(testFailProfileName1)
+                    && details.contains(testFailProfileName2)
                   ) {
                     isCorrectConnectionErrorNotificationTrigerred = true
                   }
@@ -460,6 +546,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
               every { rejectUnauthorized } returns null
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             },
             mockk {
               every { user } returns "TSTUSR"
@@ -470,6 +558,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
               every { rejectUnauthorized } returns false
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             },
             mockk {
               every { user } returns "TSTUSR"
@@ -480,6 +570,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
               every { rejectUnauthorized } returns true
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             }
           )
         }
@@ -564,6 +656,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
               every { rejectUnauthorized } returns true
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             }
           )
         }
@@ -601,14 +695,20 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
 
       should("try to add a new connection for the global Zowe config, scanning a project, with failed connections and their check") {
         val testSuccessProfileName = "test_profile_name_success"
+        val testSuccessProfileName1 = "test_profile_name_success1"
         val testFailProfileName1 = "test_profile_name_fail1"
         val testFailProfileName2 = "test_profile_name_fail2"
         val testFailProfileName3 = "test_profile_name_fail3"
         val testFailProfileName4 = "test_profile_name_fail4"
+        val testFailProfileName5 = "test_profile_name_fail5"
+        val testFailProfileName6 = "test_profile_name_fail6"
+        val testFailProfileName7 = "test_profile_name_fail7"
+        val testFailProfileName8 = "test_profile_name_fail8"
+        val testFailProfileName9 = "test_profile_name_fail9"
+        val testFailProfileName10 = "test_profile_name_fail10"
+        val testFailProfileName11 = "test_profile_name_fail11"
         val testFailHost1 = "test1.com"
-        val testFailHost2 = "test2.com"
-        val testFailHost3 = "test3.com"
-        val testFailHost4 = "test4.com"
+        val testSuccessHost = "test3.com"
 
         var extractSecurePropertiesCalledCount = 0
         var isCorrectConnectionErrorNotificationTrigerred = false
@@ -619,7 +719,7 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
           when (firstArg<Operation<*>>()) {
             is InfoOperation -> {
               infoOperationCount += 1
-              if (infoOperationCount <= 2) {
+              if (infoOperationCount <= 10) {
                 throw Exception()
               } else {
                 mockk<SystemsResponse>()
@@ -628,12 +728,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
 
             is ZOSInfoOperation -> {
               zosInfoOperationCount += 1
-              if (zosInfoOperationCount <= 2) {
-                throw Exception()
-              } else {
-                mockk<InfoResponse> {
-                  every { zosVersion } returns "04.26.00"
-                }
+              mockk<InfoResponse> {
+                every { zosVersion } returns "04.27.00"
               }
             }
 
@@ -657,11 +753,11 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
                 } answers {
                   if (
                     notificationType == NotificationType.ERROR
-                    && title.contains("Connection failed to")
-                    && details.contains(testFailHost1)
-                    && details.contains(testFailHost2)
-                    && details.contains(testFailHost3)
-                    && details.contains(testFailHost4)
+                    && title.contains("Unsuccessfully tested profiles:")
+                    && details.contains(testFailProfileName1)
+                    && details.contains(testFailProfileName2)
+                    && details.contains(testFailProfileName3)
+                    && details.contains(testFailProfileName4)
                     && details.contains("...")
                   ) {
                     isCorrectConnectionErrorNotificationTrigerred = true
@@ -685,51 +781,157 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { user } returns "TSTUSR"
               every { password } returns "TSTPWD"
               every { profileName } returns testFailProfileName1
-              every { basePath } returns "test/base/path/"
+              every { basePath } returns "test/base/path"
               every { host } returns testFailHost1
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
-              every { rejectUnauthorized } returns null
+              every { rejectUnauthorized } returns false
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             },
             mockk {
-              every { user } returns "TSTUSR"
+              every { user } returns "TSTUSR1"
               every { password } returns "TSTPWD"
               every { profileName } returns testFailProfileName2
               every { basePath } returns "test/base/path"
-              every { host } returns testFailHost2
+              every { host } returns testFailHost1
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
               every { rejectUnauthorized } returns false
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             },
             mockk {
               every { user } returns "TSTUSR"
-              every { password } returns "TSTPWD"
+              every { password } returns "TSTPWD1"
               every { profileName } returns testFailProfileName3
               every { basePath } returns "test/base/path"
-              every { host } returns testFailHost3
+              every { host } returns testFailHost1
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
               every { rejectUnauthorized } returns false
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             },
             mockk {
               every { user } returns "TSTUSR"
               every { password } returns "TSTPWD"
               every { profileName } returns testFailProfileName4
-              every { basePath } returns "test/base/path"
-              every { host } returns testFailHost4
+              every { basePath } returns "test/base/path/"
+              every { host } returns testFailHost1
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
               every { rejectUnauthorized } returns false
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            },
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns testFailProfileName5
+              every { basePath } returns "test/base/path"
+              every { host } returns testFailHost1
+              every { zosmfPort } returns "12345"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns false
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            },
+            mockk {
+              every { user } returns "TSTUSR1"
+              every { password } returns "TSTPWD"
+              every { profileName } returns testFailProfileName6
+              every { basePath } returns "test/base/path"
+              every { host } returns testFailHost1
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "http"
+              every { rejectUnauthorized } returns false
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            },
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns testFailProfileName7
+              every { basePath } returns "test/base/path"
+              every { host } returns testFailHost1
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns true
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            },
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns testFailProfileName8
+              every { basePath } returns "test/base/path7"
+              every { host } returns testFailHost1
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns null
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            },
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns testFailProfileName9
+              every { basePath } returns "test/base/path"
+              every { host } returns testFailHost1
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns false
+              every { encoding } returns 1048
+              every { responseTimeout } returns 600
+            },
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns testFailProfileName10
+              every { basePath } returns "test/base/path"
+              every { host } returns testFailHost1
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns false
+              every { encoding } returns 1047
+              every { responseTimeout } returns 601
+            },
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns testFailProfileName11
+              every { basePath } returns "test/base/path"
+              every { host } returns testFailHost1
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns false
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             },
             mockk {
               every { user } returns "TSTUSR"
               every { password } returns "TSTPWD"
               every { profileName } returns testSuccessProfileName
               every { basePath } returns "test/base/path"
-              every { host } returns "test3.com"
+              every { host } returns testSuccessHost
               every { zosmfPort } returns "1234"
               every { protocol } returns "https"
               every { rejectUnauthorized } returns true
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
+            },
+            mockk {
+              every { user } returns "TSTUSR"
+              every { password } returns "TSTPWD"
+              every { profileName } returns testSuccessProfileName1
+              every { basePath } returns "test/base/path"
+              every { host } returns testSuccessHost
+              every { zosmfPort } returns "1234"
+              every { protocol } returns "https"
+              every { rejectUnauthorized } returns true
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             }
           )
         }
@@ -762,6 +964,20 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zVersion } returns ZVersion.ZOS_2_4
               every { name } returns "$ZOWE_PROJECT_PREFIX${ZoweConfigType.LOCAL}-$testFailProfileName4/${projectMock.name}"
               every { zoweConfigPath } returns "${projectMock.basePath}/$ZOWE_CONFIG_NAME"
+            },
+            mockk {
+              every { uuid } returns "test_uuid_succ"
+              every { zVersion } returns ZVersion.ZOS_2_4
+              every { name } returns "$ZOWE_PROJECT_PREFIX${ZoweConfigType.GLOBAL}-${testSuccessProfileName}"
+              every { zoweConfigPath } returns System.getProperty("user.home")
+                .replace("((\\*)|(/*))$", "") + "/.zowe/" + ZOWE_CONFIG_NAME
+            },
+            mockk {
+              every { uuid } returns "test_uuid_succ1"
+              every { zVersion } returns ZVersion.ZOS_2_4
+              every { name } returns "$ZOWE_PROJECT_PREFIX${ZoweConfigType.GLOBAL}-${testSuccessProfileName1}"
+              every { zoweConfigPath } returns System.getProperty("user.home")
+                .replace("((\\*)|(/*))$", "") + "/.zowe/" + ZOWE_CONFIG_NAME
             }
           )
             .filter(secondArg<Predicate<ConnectionConfig>>()::test)
@@ -780,14 +996,13 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
         zoweConfigService
           .addOrUpdateZoweConfig(scanProject = true, checkConnection = true, ZoweConfigType.GLOBAL)
 
-        assertSoftly { errorNotificationTrigerredCount shouldBe 0 }
-        assertSoftly { setCredentialsCalledCount shouldBe 5 }
+        assertSoftly { setCredentialsCalledCount shouldBe 13 }
         assertSoftly { onConfigSavedCalledCount shouldBe 0 }
         assertSoftly { extractSecurePropertiesCalledCount shouldBe 1 }
-        assertSoftly { infoOperationCount shouldBe 5 }
-        assertSoftly { zosInfoOperationCount shouldBe 3 }
+        assertSoftly { infoOperationCount shouldBe 11 }
+        assertSoftly { zosInfoOperationCount shouldBe 1 }
         assertSoftly { isCorrectConnectionErrorNotificationTrigerred shouldBe true }
-        assertSoftly { addOrUpdateCalledCount shouldBe 1 }
+        assertSoftly { addOrUpdateCalledCount shouldBe 2 }
       }
 
       should("produce an error notification cause the Zowe config file is not found") {
@@ -1281,6 +1496,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zosmfPort } returns testPort
               every { protocol } returns testProtocol
               every { rejectUnauthorized } returns !testIsAllowSelfSigned
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             }
           )
         }
@@ -1322,6 +1539,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zosmfPort } returns testPort
               every { protocol } returns testProtocol
               every { rejectUnauthorized } returns true
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             }
           )
         }
@@ -1363,6 +1582,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zosmfPort } returns testPort
               every { protocol } returns testProtocol
               every { rejectUnauthorized } returns !testIsAllowSelfSigned
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             }
           )
         }
@@ -1404,6 +1625,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { zosmfPort } returns testPort
               every { protocol } returns testProtocol
               every { rejectUnauthorized } returns !testIsAllowSelfSigned
+              every { encoding } returns 1047
+              every { responseTimeout } returns 600
             }
           )
         }
