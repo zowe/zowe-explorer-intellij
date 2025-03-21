@@ -11,6 +11,7 @@
  *   IBA Group
  *   Zowe Community
  *   Uladzislau Kalesnikau
+ *   Katsiaryna Tsytsenia
  */
 
 package org.zowe.explorer.zowe.service
@@ -55,7 +56,6 @@ import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.kotlinsdk.InfoResponse
 import org.zowe.kotlinsdk.SystemsResponse
 import org.zowe.kotlinsdk.annotations.ZVersion
-import org.zowe.kotlinsdk.zowe.client.sdk.core.ZOSConnection
 import org.zowe.kotlinsdk.zowe.config.KeytarWrapper
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
@@ -249,7 +249,12 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
             firstArg<ConnectionConfig>().optional
           }
         }
+
+        val testUsername = "TSTUSR"
+        val testPassword = "TSTPWD"
         credentialServiceMock = mockk {
+          every { getUsernameByKey(any<String>()) } returns testUsername
+          every { getPasswordByKey(any<String>()) } returns testPassword.toCharArray()
           every {
             setCredentials(any<String>(), any<String>(), any<CharArray>())
           } answers {
@@ -704,8 +709,6 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
         val testFailProfileName11 = "test_profile_name_fail11"
         val testFailHost1 = "test1.com"
         val testSuccessHost = "test3.com"
-        val testUsername = "TSTUSR"
-        val testPassword = "TSTPWD"
 
         var extractSecurePropertiesCalledCount = 0
         var isCorrectConnectionErrorNotificationTrigerred = false
@@ -716,10 +719,17 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
           when (firstArg<Operation<*>>()) {
             is InfoOperation -> {
               infoOperationCount += 1
-              if (infoOperationCount <= 8) {
+              if (infoOperationCount <= 10) {
                 throw Exception()
               } else {
                 mockk<SystemsResponse>()
+              }
+            }
+
+            is ZOSInfoOperation -> {
+              zosInfoOperationCount += 1
+              mockk<InfoResponse> {
+                every { zosVersion } returns "04.27.00"
               }
             }
 
@@ -981,16 +991,6 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
           Optional.empty<ConnectionConfig>()
         }
 
-        credentialServiceMock = mockk {
-          every { getUsernameByKey(any<String>()) } returns testUsername
-          every { getPasswordByKey(any<String>()) } returns testPassword.toCharArray()
-          every {
-            setCredentials(any<String>(), any<String>(), any<CharArray>())
-          } answers {
-            setCredentialsCalledCount += 1
-          }
-        }
-
         val zoweConfigService = ZoweConfigServiceImpl(projectMock)
 
         zoweConfigService
@@ -1000,7 +1000,7 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
         assertSoftly { onConfigSavedCalledCount shouldBe 0 }
         assertSoftly { extractSecurePropertiesCalledCount shouldBe 1 }
         assertSoftly { infoOperationCount shouldBe 11 }
-        assertSoftly { zosInfoOperationCount shouldBe 3 }
+        assertSoftly { zosInfoOperationCount shouldBe 1 }
         assertSoftly { isCorrectConnectionErrorNotificationTrigerred shouldBe true }
         assertSoftly { addOrUpdateCalledCount shouldBe 2 }
       }
