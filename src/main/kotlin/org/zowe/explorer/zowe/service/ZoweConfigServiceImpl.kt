@@ -10,6 +10,8 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Katsiaryna Tsytsenia
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.zowe.service
@@ -263,68 +265,69 @@ class ZoweConfigServiceImpl(override val myProject: Project) : ZoweConfigService
     runTask("Testing Connections...", myProject, cancellable = true) { indicator ->
       runBlocking {
         for (zosmfConnection in zoweConnections) {
-          results.add(async {
-            val zoweConnection: ConnectionConfig = prepareConnection(zosmfConnection, type)
-            try {
-              runCatching {
-                if (!indicator.isCanceled) {
-                  indicator.text = if (zoweConnections.size == 1)
-                    "Testing Connection to ${zoweConnection.url}"
-                  else
-                    "Testing Connection to ${zoweConnections.size} connections"
-                  DataOpsManager.getService().performOperation(InfoOperation(zoweConnection), indicator)
-                } else {
-                  throw ProcessCanceledException()
-                }
-              }.onSuccess {
-                if (!indicator.isCanceled) {
-
-                  indicator.text = if (zoweConnections.size == 1)
-                    "Retrieving z/OS information for ${zoweConnection.url}"
-                  else
-                    "Retrieving z/OS information for ${zoweConnections.size} connections"
-                  val systemInfo =
-                    DataOpsManager.getService().performOperation(
-                      ZOSInfoOperation(zoweConnection),
-                      indicator
-                    )
-                  zoweConnection.zVersion = when (systemInfo.zosVersion) {
-                    "04.25.00" -> ZVersion.ZOS_2_2
-                    "04.26.00" -> ZVersion.ZOS_2_3
-                    "04.27.00" -> ZVersion.ZOS_2_4
-                    "04.28.00" -> ZVersion.ZOS_2_5
-                    "04.29.00" -> ZVersion.ZOS_3_1
-                    else -> ZVersion.ZOS_2_1
+          results.add(
+            async {
+              val zoweConnection: ConnectionConfig = prepareConnection(zosmfConnection, type)
+              try {
+                runCatching {
+                  if (!indicator.isCanceled) {
+                    indicator.text = if (zoweConnections.size == 1)
+                      "Testing Connection to ${zoweConnection.url}"
+                    else
+                      "Testing Connection to ${zoweConnections.size} connections"
+                    DataOpsManager.getService().performOperation(InfoOperation(zoweConnection), indicator)
+                  } else {
+                    throw ProcessCanceledException()
                   }
-                } else {
-                  throw ProcessCanceledException()
+                }.onSuccess {
+                  if (!indicator.isCanceled) {
+
+                    indicator.text = if (zoweConnections.size == 1)
+                      "Retrieving z/OS information for ${zoweConnection.url}"
+                    else
+                      "Retrieving z/OS information for ${zoweConnections.size} connections"
+                    val systemInfo =
+                      DataOpsManager.getService().performOperation(
+                        ZOSInfoOperation(zoweConnection),
+                        indicator
+                      )
+                    zoweConnection.zVersion = when (systemInfo.zosVersion) {
+                      "04.25.00" -> ZVersion.ZOS_2_2
+                      "04.26.00" -> ZVersion.ZOS_2_3
+                      "04.27.00" -> ZVersion.ZOS_2_4
+                      "04.28.00" -> ZVersion.ZOS_2_5
+                      "04.29.00" -> ZVersion.ZOS_3_1
+                      else -> ZVersion.ZOS_2_1
+                    }
+                  } else {
+                    throw ProcessCanceledException()
+                  }
+                }.onSuccess {
+                  if (!indicator.isCanceled) {
+                    indicator.text = if (zoweConnections.size == 1)
+                      "Retrieving user information for ${zoweConnection.url}"
+                    else
+                      "Retrieving user information for ${zoweConnections.size} connections"
+                    zoweConnection.owner = whoAmI(zoweConnection) ?: ""
+                  } else {
+                    throw ProcessCanceledException()
+                  }
+                }.onFailure {
+                  if (indicator.isCanceled)
+                    throw ProcessCanceledException()
+                  else {
+                    throw it
+                  }
                 }
-              }.onSuccess {
-                if (!indicator.isCanceled) {
-                  indicator.text = if (zoweConnections.size == 1)
-                    "Retrieving user information for ${zoweConnection.url}"
-                  else
-                    "Retrieving user information for ${zoweConnections.size} connections"
-                  zoweConnection.owner = whoAmI(zoweConnection) ?: ""
-                } else {
-                  throw ProcessCanceledException()
-                }
-              }.onFailure {
-                if (indicator.isCanceled)
-                  throw ProcessCanceledException()
-                else {
-                  throw it
-                }
+              } catch (t: Throwable) {
+                if (t is ProcessCanceledException)
+                  throwable = t
+                failedConnections.add(zoweConnection)
+                return@async zoweConnection
               }
-            } catch (t: Throwable) {
-              if (t is ProcessCanceledException)
-                throwable = t
-              failedConnections.add(zoweConnection)
+              succeededConnections.add(zoweConnection)
               return@async zoweConnection
             }
-            succeededConnections.add(zoweConnection)
-            return@async zoweConnection
-          }
           )
         }
       }
