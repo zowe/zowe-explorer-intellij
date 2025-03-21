@@ -55,6 +55,7 @@ import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.kotlinsdk.InfoResponse
 import org.zowe.kotlinsdk.SystemsResponse
 import org.zowe.kotlinsdk.annotations.ZVersion
+import org.zowe.kotlinsdk.zowe.client.sdk.core.ZOSConnection
 import org.zowe.kotlinsdk.zowe.config.KeytarWrapper
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
@@ -221,6 +222,7 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
             .run(
               mockk {
                 every { text = any<String>() } returns Unit
+                every { isCanceled } returns false
               }
             )
           task.result
@@ -384,22 +386,22 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
         var extractSecurePropertiesCalledCount = 0
         var cancelationCount = 0
 
-        dataOpsManagerServiceMock.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            return when (operation) {
-              is InfoOperation -> {
-                infoOperationCount += 1
-                if ((operation as InfoOperation).connectionConfig.uuid==("throw")){
-                  cancelationCount += 1
-                  throw ProcessCanceledException()
-                }
-                else {
-                  mockk<SystemsResponse>() as R
-                }
+        every {
+          dataOpsManagerServiceMock.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+        } answers {
+          when (val operation = firstArg<Operation<*>>()) {
+            is InfoOperation -> {
+              infoOperationCount += 1
+              if (operation.connectionConfig.uuid == "throw") {
+                cancelationCount += 1
+                throw ProcessCanceledException()
+              } else {
+                mockk<SystemsResponse>()
               }
-              else -> {
-                mockk<Any>() as R
-              }
+            }
+
+            else -> {
+              mockk<Any>()
             }
           }
         }
@@ -813,7 +815,6 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { encoding } returns 1047
               every { responseTimeout } returns 600
             },
-
             mockk {
               every { user } returns "TSTUSR"
               every { password } returns "TSTPWD"
@@ -886,7 +887,7 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { encoding } returns 1047
               every { responseTimeout } returns 601
             },
-              mockk {
+            mockk {
               every { user } returns "TSTUSR"
               every { password } returns "TSTPWD"
               every { profileName } returns testFailProfileName11
@@ -897,7 +898,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { rejectUnauthorized } returns false
               every { encoding } returns 1047
               every { responseTimeout } returns 600
-            },mockk {
+            },
+            mockk {
               every { user } returns "TSTUSR"
               every { password } returns "TSTPWD"
               every { profileName } returns testSuccessProfileName
@@ -908,7 +910,8 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
               every { rejectUnauthorized } returns true
               every { encoding } returns 1047
               every { responseTimeout } returns 600
-            }, mockk {
+            },
+            mockk {
               every { user } returns "TSTUSR"
               every { password } returns "TSTPWD"
               every { profileName } returns testSuccessProfileName1
@@ -978,16 +981,12 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
           Optional.empty<ConnectionConfig>()
         }
 
-        credentialServiceMock.testInstance = object : TestCredentialsServiceImpl() {
-          override fun getUsernameByKey(connectionConfigUuid: String): String {
-            return testUsername
-          }
-
-          override fun getPasswordByKey(connectionConfigUuid: String): CharArray {
-            return testPassword.toCharArray()
-          }
-
-          override fun setCredentials(connectionConfigUuid: String, username: String, password: CharArray) {
+        credentialServiceMock = mockk {
+          every { getUsernameByKey(any<String>()) } returns testUsername
+          every { getPasswordByKey(any<String>()) } returns testPassword.toCharArray()
+          every {
+            setCredentials(any<String>(), any<String>(), any<CharArray>())
+          } answers {
             setCredentialsCalledCount += 1
           }
         }
