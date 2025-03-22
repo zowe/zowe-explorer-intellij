@@ -56,6 +56,7 @@ import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 import org.zowe.kotlinsdk.InfoResponse
 import org.zowe.kotlinsdk.SystemsResponse
 import org.zowe.kotlinsdk.annotations.ZVersion
+import org.zowe.kotlinsdk.exceptions.EmptyZoweConfigFileException
 import org.zowe.kotlinsdk.zowe.config.KeytarWrapper
 import org.zowe.kotlinsdk.zowe.config.ZoweConfig
 import org.zowe.kotlinsdk.zowe.config.parseConfigJson
@@ -1657,6 +1658,18 @@ class ZoweConfigServiceTestSpec : ShouldSpec({
         zoweConfigService.globalZoweConfig = null
 
         val zoweConfigState = zoweConfigService.getZoweConfigState(false, ZoweConfigType.GLOBAL)
+
+        assertSoftly { zoweConfigState shouldBe ZoweConfigState.NOT_EXISTS }
+      }
+
+      should("return NOT_EXISTS config state for the empty local Zowe config file") {
+        val parseConfigJsonRef: (InputStream) -> ZoweConfig = ::parseConfigJson
+        mockkStatic(parseConfigJsonRef as KFunction<*>)
+        every { parseConfigJsonRef(any<InputStream>()) } answers { throw EmptyZoweConfigFileException() }
+
+        val zoweConfigService = spyk(ZoweConfigServiceImpl(projectMock), recordPrivateCalls = true)
+
+        val zoweConfigState = zoweConfigService.getZoweConfigState(true, ZoweConfigType.LOCAL)
 
         assertSoftly { zoweConfigState shouldBe ZoweConfigState.NOT_EXISTS }
       }
