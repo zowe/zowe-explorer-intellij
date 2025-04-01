@@ -27,15 +27,19 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
+import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.log.JobLogFetcher
 import org.zowe.explorer.dataops.log.JobProcessInfo
 import org.zowe.explorer.dataops.log.MFLogger
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.zowe.kotlinsdk.SpoolFile
+import org.zowe.kotlinsdk.annotations.ZVersion
 import java.awt.BorderLayout
+import java.text.SimpleDateFormat
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.tree.DefaultMutableTreeNode
@@ -62,15 +66,20 @@ class JobBuildTreeView(
   consoleView: ConsoleView,
   dataOpsManager: DataOpsManager,
   workingDir: String = "",
-  project: Project
+  project: Project,
+  attributes: RemoteJobAttributes?
 ) : ExecutionConsole, DataProvider, JBPanel<JobBuildTreeView>() {
 
   private val buildId = jobLogInfo.jobId ?: "UNKNOWN JOB ID"
   private val jobNameNotNull = jobLogInfo.jobName ?: "UNKNOWN JOB"
   private val connectionConfig = jobLogInfo.connectionConfig
 
-  private val buildDescriptor = DefaultBuildDescriptor(buildId, jobNameNotNull, workingDir, Date().time)
-  private val treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, consoleView) { false }
+  private val execStarted = getTimestampFromStr(attributes?.jobInfo?.execStarted, connectionConfig)
+  private val execSubmitted = getTimestampFromStr(attributes?.jobInfo?.execSubmitted, connectionConfig)
+  private val execEnded = getTimestampFromStr(attributes?.jobInfo?.execEnded, connectionConfig)
+
+  private val buildDescriptor = DefaultBuildDescriptor(buildId, jobNameNotNull, workingDir, execStarted ?: execSubmitted ?: Date().time)
+  private val treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, consoleView)  { false }
 
   private val actionToolbarGroup: ActionGroup = ActionManager.getInstance().getAction("org.zowe.explorer.actions.JobsLogActionBarGroup") as ActionGroup
   private val place: String = "Jobs Log"
@@ -109,7 +118,9 @@ class JobBuildTreeView(
       val cachedSpoolLog = jobLogger.logFetcher.getCachedLog()
       if (cachedSpoolLog.count() != spoolFileToLogMap.count()) {
         cachedSpoolLog.minus(spoolFileToLogMap.keys).forEach {
-          treeConsoleView.onEvent(buildId, StartEventImpl(it.key.id, buildId, Date().time, it.key.ddName))
+          treeConsoleView.onEvent(
+            buildId, StartEventImpl(it.key.id, buildId, execStarted ?: execSubmitted ?: Date().time, it.key.ddName)
+          )
         }
         cachedSpoolLog.forEach {
           val prevLog = spoolFileToLogMap[it.key] ?: ""
@@ -164,15 +175,38 @@ class JobBuildTreeView(
       finalLogFiles
         .forEach {
           treeConsoleView.onEvent(
-            buildId,
-            FinishEventImpl(it.key.id, buildId, Date().time, it.key.ddName, FailureResultImpl())
+            buildId, FinishEventImpl(
+              it.key.id,
+              buildId,
+              execEnded ?: execStarted ?: execSubmitted ?: Date().time,
+              it.key.ddName,
+              FailureResultImpl()
+            )
           )
         }
       treeConsoleView.onEvent(
-        buildId,
-        FinishBuildEventImpl(buildId, buildId, Date().time, buildId, FailureResultImpl())
+        buildId, FinishBuildEventImpl(
+          buildId, buildId, execEnded ?: execStarted ?: execSubmitted ?: Date().time, buildId, FailureResultImpl()
+        )
       )
     }
+  }
+
+  /**
+   * The function converts a date string to a timestamp from the beginning of the epoch
+   */
+  private fun getTimestampFromStr(attrDate: String?, connectionConfig: ConnectionConfig): Long? {
+    return if (attrDate != null) {
+      try {
+        if (connectionConfig.zVersion < ZVersion.ZOS_2_4)
+          SimpleDateFormat("dd MMM yyyy hh.mm.ss").parse(attrDate).time
+        else
+          SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS'Z'").parse(attrDate).time
+      } catch (e: Exception) {
+        null
+      }
+    }
+    else null
   }
 
   /**

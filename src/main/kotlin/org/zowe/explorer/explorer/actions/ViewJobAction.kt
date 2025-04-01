@@ -41,7 +41,8 @@ class ViewJobAction : AnAction() {
           project,
           attributes.requesters[0].connectionConfig,
           virtualFile.filenameInternal,
-          attributes.jobInfo
+          attributes.jobInfo,
+          attributes
         )
       }
     }

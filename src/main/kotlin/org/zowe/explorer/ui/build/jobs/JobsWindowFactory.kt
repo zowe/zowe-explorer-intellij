@@ -22,6 +22,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.log.JobProcessInfo
 import org.zowe.explorer.utils.subscribe
 import org.zowe.kotlinsdk.Job
@@ -29,7 +30,7 @@ import org.zowe.kotlinsdk.SubmitJobRequest
 
 interface JobHandler {
   fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest)
-  fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: Job)
+  fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: Job, attributes: RemoteJobAttributes)
 }
 
 @JvmField
@@ -58,7 +59,8 @@ class JobsWindowFactory: ToolWindowFactory {
     connectionConfig: ConnectionConfig,
     mfFilePath: String,
     jobId: String?,
-    jobName: String?
+    jobName: String?,
+    attributes: RemoteJobAttributes? = null
   ) {
     runInEdt {
       toolWindow.setAvailable(true, null)
@@ -71,7 +73,8 @@ class JobsWindowFactory: ToolWindowFactory {
         BuildTextConsoleView(project, true, emptyList()),
         service(),
         mfFilePath,
-        project
+        project,
+        attributes
       )
 
       Disposer.register(toolWindow.disposable, jobBuildTreeView)
@@ -101,8 +104,8 @@ class JobsWindowFactory: ToolWindowFactory {
         override fun submitted(project: Project, connectionConfig: ConnectionConfig, mfFilePath: String, jobRequest: SubmitJobRequest) {
           addJobBuildContentTab(project, toolWindow, connectionConfig, mfFilePath, jobRequest.jobid, jobRequest.jobname)
         }
-        override fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: Job) {
-          addJobBuildContentTab(project, toolWindow, connectionConfig, mfFileName, jobStatus.jobId, jobStatus.jobName)
+        override fun viewed(project: Project, connectionConfig: ConnectionConfig, mfFileName: String, jobStatus: Job, attributes: RemoteJobAttributes) {
+          addJobBuildContentTab(project, toolWindow, connectionConfig, mfFileName, jobStatus.jobId, jobStatus.jobName, attributes)
         }
       }
     )
