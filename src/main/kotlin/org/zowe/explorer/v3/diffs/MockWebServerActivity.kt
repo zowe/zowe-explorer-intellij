@@ -79,6 +79,7 @@ class MockWebServerActivity : ProjectActivity {
     }.canonicalHostName
     val localhostCertificate = HeldCertificate.Builder()
       .addSubjectAlternativeName(localhost)
+      .addSubjectAlternativeName("127.0.0.1")
       .duration(60, TimeUnit.MINUTES)
       .build()
     val serverCertificates = HandshakeCertificates.Builder()
