@@ -57,11 +57,11 @@ val EXPLORER_VIEW = DataKey.create<ExplorerTreeView<*, *, *>>("explorerView")
 
 private val log = log<ExplorerTreeView<*, *, *>>()
 
-fun <ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
+fun <ExplorerView : ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(clazz: Class<out ExplorerView>): ExplorerView? {
   return getData(EXPLORER_VIEW).castOrNull(clazz)
 }
 
-inline fun <reified ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(): ExplorerView? {
+inline fun <reified ExplorerView : ExplorerTreeView<*, *, *>> AnActionEvent.getExplorerView(): ExplorerView? {
   return getExplorerView(ExplorerView::class.java)
 }
 
@@ -74,7 +74,7 @@ inline fun <reified ExplorerView: ExplorerTreeView<*, *, *>> AnActionEvent.getEx
  * @param rootNodeProvider the root node provider for the root node of the explorer
  * @param cutProviderUpdater the cut provider updater to store the information about the cut elements
  */
-abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet<Connection, *>, UnitConfig : EntityWithUuid>
+abstract class ExplorerTreeView<Connection : ConnectionConfigBase, U : WorkingSet<Connection, *>, UnitConfig : EntityWithUuid>
   (
   val explorer: Explorer<Connection, U>,
   private val project: Project,
@@ -201,7 +201,7 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
       handler = object : ExplorerListener {
 
 
-        private fun <Connection: ConnectionConfigBase> onAddDelete(explorer: Explorer<Connection, *>) {
+        private fun <Connection : ConnectionConfigBase> onAddDelete(explorer: Explorer<Connection, *>) {
           if (explorer == this@ExplorerTreeView.explorer) {
             myFsTreeStructure.findByValue(explorer).forEach {
               myStructure.invalidate(it, true)
@@ -209,12 +209,18 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
           }
         }
 
-        override fun <Connection: ConnectionConfigBase> onAdded(explorer: Explorer<Connection, *>,unit: ExplorerUnit<Connection>) {
+        override fun <Connection : ConnectionConfigBase> onAdded(
+          explorer: Explorer<Connection, *>,
+          unit: ExplorerUnit<Connection>
+        ) {
           onAddDelete(explorer)
         }
 
 
-        override fun <Connection: ConnectionConfigBase> onChanged(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>) {
+        override fun <Connection : ConnectionConfigBase> onChanged(
+          explorer: Explorer<Connection, *>,
+          unit: ExplorerUnit<Connection>
+        ) {
           if (explorer == this@ExplorerTreeView.explorer) {
             myFsTreeStructure.findByValue(unit).forEach {
               myStructure.invalidate(it, true)
@@ -222,7 +228,10 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
           }
         }
 
-        override fun <Connection: ConnectionConfigBase> onDeleted(explorer: Explorer<Connection, *>, unit: ExplorerUnit<Connection>) {
+        override fun <Connection : ConnectionConfigBase> onDeleted(
+          explorer: Explorer<Connection, *>,
+          unit: ExplorerUnit<Connection>
+        ) {
           onAddDelete(explorer)
         }
       },
@@ -292,9 +301,9 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
                 }
 
                 it is VFileDeleteEvent &&
-                this@ExplorerTreeView
-                  .ignoreVFileDeleteEvents
-                  .compareAndSet(true, true) -> {
+                  this@ExplorerTreeView
+                    .ignoreVFileDeleteEvents
+                    .compareAndSet(true, true) -> {
                   null
                 }
 
@@ -399,7 +408,8 @@ abstract class ExplorerTreeView<Connection: ConnectionConfigBase, U : WorkingSet
 
     tree.selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
     tree.addTreeSelectionListener {
-      mySelectedNodesData = tree.selectionPaths?.mapNotNull { makeNodeDataFromTreePath<Connection>(explorer, it) } ?: listOf()
+      mySelectedNodesData =
+        tree.selectionPaths?.mapNotNull { makeNodeDataFromTreePath<Connection>(explorer, it) } ?: listOf()
     }
 
     tree.addTreeWillExpandListener(object : TreeWillExpandListener {
