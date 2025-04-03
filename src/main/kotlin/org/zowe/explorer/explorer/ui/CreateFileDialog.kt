@@ -109,7 +109,8 @@ class CreateFileDialog(project: Project?, override var state: CreateFileDialogSt
 
   init {
     val type = if (state.parameters.type == FileType.DIR) "Directory" else "File"
-    title = "Create $type under $filePath"
+    val shortFilePath = if (filePath.length > 30) filePath.substring(0, 27) + "..." else filePath
+    title = "Create $type under $shortFilePath"
     init()
   }
 
