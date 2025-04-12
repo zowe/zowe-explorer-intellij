@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
@@ -365,8 +366,10 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         }
 
         ussFileNode.navigate(requestFocus)
-        assertSoftly { isDialogCalled shouldBe true }
-        assertSoftly { isNavigateContinued shouldBe false }
+        assertSoftly {
+          isDialogCalled shouldBe true
+          isNavigateContinued shouldBe false
+        }
       }
       should("perform navigate on a file that was already opened") {
         every { fileMock.isWritable } returns false
@@ -392,8 +395,9 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
             explorerUnitMock, treeStructureMock
           ),
           recordPrivateCalls = true
-        )
-        every { explorerTreeNodeMock.parent } answers { firstNode }
+        ) {
+          every { parent } answers { firstNode }
+        }
 
         ussFileNode = spyk(
           UssFileNode(
@@ -403,9 +407,10 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
             explorerUnitMock,
             treeStructureMock
           )
-        )
-        every { ussFileNode.update() } returns false
-        every { ussFileNode.virtualFile } returns fileMock
+        ) {
+          every { update() } returns false
+          every { virtualFile } returns fileMock
+        }
 
         var isSyncWithRemotePerformed = false
         dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
@@ -435,19 +440,24 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         }
 
         var isOpenFileCalled = false
-        val fileEditorManager = mockk<FileEditorManager>()
-        every { fileEditorManager.openFile(any<VirtualFile>(), any<Boolean>()) } answers {
-          isOpenFileCalled = true
-          arrayOf()
+        val fileEditorManager = mockk<FileEditorManager>(relaxUnitFun = true) {
+          every {
+            openFile(any<VirtualFile>(), any<Boolean>())
+          } answers {
+            isOpenFileCalled = true
+            arrayOf()
+          }
         }
         every { fileMock.isBeingEditingNow() } returns true
         mockkStatic(FileEditorManager::getInstance)
         every { FileEditorManager.getInstance(any()) } returns fileEditorManager
 
         ussFileNode.navigate(requestFocus)
-        assertSoftly { isSyncWithRemotePerformed shouldBe false }
-        assertSoftly { isOnSyncSuccessTriggered shouldBe false }
-        assertSoftly { isOpenFileCalled shouldBe true }
+        assertSoftly {
+          isSyncWithRemotePerformed shouldBe false
+          isOnSyncSuccessTriggered shouldBe false
+          isOpenFileCalled shouldBe true
+        }
       }
       should("exit 'navigate' when the file is currently being synchronized ") {
         every { checkFileForSync(any(), any(), any()) } returns true
@@ -486,24 +496,28 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       }
 
       val virtualFileMock = mockk<MFVirtualFile>()
-      val mockedAttributes = mockk<RemoteUssAttributes>()
-      every { mockedAttributes.modificationTime } returns LocalDateTime.of(2002, 2, 17, 0, 0).toString()
-      every { mockedAttributes.fileMode } returns FileMode(6, 6, 6)
-      every { mockedAttributes.owner } returns "Test"
+      val mockedAttributes = mockk<RemoteUssAttributes> {
+        every { modificationTime } returns LocalDateTime.of(2002, 2, 17, 0, 0).toString()
+        every { fileMode } returns FileMode(6, 6, 6)
+        every { owner } returns "Test"
+      }
 
       val mockedProject = mockk<Project>()
       val parentNode = mockk<UssDirNode>()
-      val explorerUnit = mockk<ExplorerUnit<ConnectionConfig>>()
-      val explorer = mockk<FileExplorer>()
-      every { explorerUnit.explorer } returns explorer
-      val treeStructure = mockk<ExplorerTreeStructureBase>()
-      every { treeStructure.registerNode(any()) } just Runs
-
+      val explorerMock = mockk<FileExplorer> {
+        every { nullableProject } returns null
+      }
+      val explorerUnit = mockk<ExplorerUnit<ConnectionConfig>> {
+        every { explorer } returns explorerMock
+      }
+      val treeStructure = mockk<ExplorerTreeStructureBase> {
+        every { registerNode(any()) } just Runs
+      }
       val explorerContentProviderMock = mockk<FileExplorerContentProvider>()
       val uiComponentManagerService: TestUIComponentManager = UIComponentManager.getService() as TestUIComponentManager
       uiComponentManagerService.testInstance = object : TestUIComponentManager() {
         override fun <E : Explorer<*, *>> getExplorer(clazz: Class<out E>): E {
-          return explorer as E
+          return explorerMock as E
         }
 
         override fun <E : Explorer<*, *>> getExplorerContentProvider(
@@ -514,7 +528,10 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
       }
 
       val mockedUssNode = UssFileNode(virtualFileMock, mockedProject, parentNode, explorerUnit, treeStructure)
-      val ussFileMockToSpy = spyk(mockedUssNode, recordPrivateCalls = true)
+      val ussFileMockToSpy = spyk(mockedUssNode, recordPrivateCalls = true) {
+        every { virtualFile } returns virtualFileMock
+        every { value } returns virtualFileMock
+      }
       every { ussFileMockToSpy["shouldUpdateData"]() } returns true
       every { ussFileMockToSpy["shouldPostprocess"]() } returns false
       every { ussFileMockToSpy["shouldApply"]() } returns true
@@ -523,8 +540,6 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
         updatePerformed = true
         true
       }
-      every { ussFileMockToSpy.virtualFile } returns virtualFileMock
-      every { ussFileMockToSpy.value } returns virtualFileMock
 
       context("ExplorerTreeNode.updateNodeTitleUsingCutBuffer") {
         every { virtualFileMock.presentableName } returns "test"
@@ -566,8 +581,9 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
 
         should("perform an update of the node if content provider is null") {
           val explorerUnitToTest = mockk<ExplorerUnit<ConnectionConfig>>()
-          val explorerToTest = mockk<FileExplorer>()
-          every { explorerUnitToTest.explorer } returns explorerToTest
+          every { explorerUnitToTest.explorer } returns mockk<FileExplorer> {
+            every { nullableProject } returns null
+          }
           uiComponentManagerService.testInstance = object : TestUIComponentManager() {
             override fun <E : Explorer<*, *>> getExplorerContentProvider(
               clazz: Class<out E>
@@ -577,7 +593,10 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
           }
           val mockedUssNodeToTest =
             UssFileNode(virtualFileMock, mockedProject, parentNode, explorerUnitToTest, treeStructure)
-          val ussFileMockToSpyTest = spyk(mockedUssNodeToTest, recordPrivateCalls = true)
+          val ussFileMockToSpyTest = spyk(mockedUssNodeToTest, recordPrivateCalls = true) {
+            every { virtualFile } returns virtualFileMock
+            every { value } returns virtualFileMock
+          }
           every { ussFileMockToSpyTest["shouldUpdateData"]() } returns true
           every { ussFileMockToSpyTest["shouldPostprocess"]() } returns false
           every { ussFileMockToSpyTest["shouldApply"]() } returns true
@@ -586,8 +605,6 @@ class UssFileNodeTestSpec : WithApplicationShouldSpec({
             updatePerformed = true
             true
           }
-          every { ussFileMockToSpyTest.virtualFile } returns virtualFileMock
-          every { ussFileMockToSpyTest.value } returns virtualFileMock
           ussFileMockToSpyTest.update()
 
           assertSoftly {

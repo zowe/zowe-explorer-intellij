@@ -10,11 +10,13 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.utils
 
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.ui.ComboBox
@@ -64,6 +66,14 @@ import java.util.stream.Stream
 import javax.swing.JTextField
 
 class UtilsTestSpec : ShouldSpec({
+  mockkStatic(ApplicationManager::getApplication)
+  every { ApplicationManager.getApplication() } returns null
+
+  afterSpec {
+    unmockkAll()
+    clearAllMocks()
+  }
+
   context("utils module: validationFunctions") {
     context("validateForBlank") {
       val jTextField = JTextField()

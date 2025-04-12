@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.testutils
@@ -29,8 +30,8 @@ import org.zowe.explorer.testutils.testServiceImpl.*
 import io.kotest.core.spec.Spec
 import io.kotest.core.spec.style.ShouldSpec
 import io.mockk.*
+import kotlinx.coroutines.runBlocking
 import org.zowe.explorer.zowe.ZoweStartupActivity
-import org.zowe.kotlinsdk.zowe.config.DefaultKeytarWrapper
 
 var testAppFixture: CodeInsightTestFixture? = null
 
@@ -77,6 +78,10 @@ abstract class WithApplicationShouldSpec(body: ShouldSpec.() -> Unit = {}) : Sho
     body()
     // TODO: rework
     mockkConstructor(ZoweStartupActivity::class)
-    every { anyConstructed<ZoweStartupActivity>().runActivity(any()) } just Runs
+    every {
+      runBlocking {
+        anyConstructed<ZoweStartupActivity>().execute(any())
+      }
+    } just Runs
   }
 }

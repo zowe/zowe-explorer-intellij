@@ -21,30 +21,36 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolWrapper
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapperPeerFactory
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingUtil.Magic8
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.util.ui.EDT
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
 import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.explorer.ui.ChangeEncodingDialog
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import io.kotest.assertions.assertSoftly
+import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.Charset
@@ -54,31 +60,84 @@ import java.nio.charset.UnsupportedCharsetException
 import javax.swing.Icon
 import kotlin.reflect.KFunction
 
-class EncodingUtilsTestSpec : WithApplicationShouldSpec({
+class EncodingUtilsTestSpec : ShouldSpec({
+  afterSpec {
+    unmockkAll()
+    clearAllMocks()
+  }
+
   context("utils module: encodingUtils") {
 
-    val text = "text"
-    val textBuf = CharBuffer.wrap(text)
+    val testText = "text"
+    val textBuf = CharBuffer.wrap(testText)
     val bytes = byteArrayOf(116, 101, 120, 116)
     val bytesByf = ByteBuffer.wrap(bytes)
     var isEncodingSet = false
 
     val contentSynchronizerMock = mockk<ContentSynchronizer>()
-    val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
     every { contentSynchronizerMock.successfulContentStorage(any()) } returns bytes
 
-    val charsetName = "charsetName"
-    val charsetMock = mockk<Charset>()
-    every { charsetMock.name() } returns charsetName
-    every { charsetMock.displayName() } returns charsetName
+    val dataOpsManagerServiceMock = mockk<DataOpsManager>()
 
-    val virtualFileMock = mockk<VirtualFile>()
-    every { virtualFileMock.name } returns "fileName"
-    every { virtualFileMock.charset = charsetMock } returns Unit
-    every { virtualFileMock.charset } returns charsetMock
-    every { virtualFileMock.getOutputStream(null) } returns mockk {
-      every { close() } returns Unit
-      every { write(any<ByteArray>()) } returns Unit
+    val applicationMock = mockk<Application> {
+      every {
+        getService(any<Class<*>>())
+      } answers {
+        val serviceClass = firstArg<Class<*>>()
+        when (serviceClass) {
+          DataOpsManager::class.java -> dataOpsManagerServiceMock
+          WindowManager::class.java -> mockk<WindowManagerEx> {
+            every { suggestParentWindow(any<Project>()) } returns mockk()
+          }
+          ActionManager::class.java -> mockk<ActionManager>()
+          ProjectManager::class.java -> mockk<ProjectManager> {
+            every { openProjects } returns arrayOf(mockk())
+          }
+          EncodingManager::class.java -> mockk<EncodingManager> {
+            every {
+              setEncoding(any<VirtualFile>(), any<Charset>())
+            } answers {
+              isEncodingSet = true
+            }
+          }
+          DialogWrapperPeerFactory::class.java -> mockk<DialogWrapperPeerFactory> {
+            every {
+              createPeer(any(), any<Project>(), any<Boolean>(), any<DialogWrapper.IdeModalityType>())
+            } returns mockk(relaxUnitFun = true) {
+              every { window } returns null
+            }
+          }
+          else -> null
+        }
+      }
+      every { invokeAndWait(any()) } answers { firstArg<Runnable>().run() }
+      every { runWriteAction(any<Computable<Unit>>()) } answers { firstArg<Computable<Unit>>().compute() }
+      every { runReadAction(any<Computable<Any>>()) } answers { firstArg<Computable<Any>>().compute() }
+      every { isUnitTestMode } returns true
+      every { extensionArea } returns mockk {
+        every { hasExtensionPoint(any<ExtensionPointName<*>>()) } returns false
+      }
+    }
+    mockkStatic(ApplicationManager::getApplication)
+    every { ApplicationManager.getApplication() } returns applicationMock
+
+    mockkStatic(EDT::isCurrentThreadEdt)
+    every { EDT.isCurrentThreadEdt() } returns true
+
+    val charsetName = "charsetName"
+    val charsetMock = mockk<Charset> {
+      every { name() } returns charsetName
+      every { displayName() } returns charsetName
+    }
+
+    val virtualFileMock = mockk<VirtualFile> {
+      every { name } returns "fileName"
+      every { charset = charsetMock } returns Unit
+      every { charset } returns charsetMock
+      every { getOutputStream(null) } returns mockk {
+        every { close() } returns Unit
+        every { write(any<ByteArray>()) } returns Unit
+      }
     }
 
     mockkConstructor(DocumentedSyncProvider::class)
@@ -86,25 +145,18 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     every { anyConstructed<DocumentedSyncProvider>().loadNewContent(any<ByteArray>()) } returns Unit
     every { anyConstructed<DocumentedSyncProvider>().retrieveCurrentContent() } returns bytes
 
-    val documentMockk = mockk<Document>()
-    every { documentMockk.text } returns text
-    every { documentMockk.modificationStamp } returns 0L
-
-    mockkStatic(EncodingManager::getInstance)
-    every { EncodingManager.getInstance() } answers {
-      object : TestEncodingManager() {
-        override fun setEncoding(virtualFileOrDir: VirtualFile?, charset: Charset?) {
-          isEncodingSet = true
-          return
-        }
-      }
+    val documentMockk = mockk<Document> {
+      every { text } returns testText
+      every { modificationStamp } returns 0L
     }
 
     val decoderMock = mockk<CharsetDecoder>()
     every { charsetMock.newDecoder() } returns decoderMock
 
     val lineSeparator = "\n"
-    every { FileDocumentManager.getInstance().getLineSeparator(virtualFileMock, null) } returns lineSeparator
+    every { applicationMock.getService(FileDocumentManager::class.java) } returns mockk {
+      every { getLineSeparator(virtualFileMock, null) } returns lineSeparator
+    }
 
     val encoderMock = mockk<CharsetEncoder>()
     every { charsetMock.newEncoder() } returns encoderMock
@@ -140,11 +192,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     mockkStatic(showDialogRef as KFunction<*>)
 
     beforeEach {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer {
-          return contentSynchronizerMock
-        }
-      }
+      every { dataOpsManagerServiceMock.getContentSynchronizer(any<VirtualFile>()) } returns contentSynchronizerMock
 
       every { anyConstructed<DocumentedSyncProvider>().getDocument() } returns documentMockk
 
@@ -189,7 +237,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     }
     // isSafeToReloadIn
     should("check if it is safe to reload into 'ABSOLUTELY' encoding") {
-      val actual = isSafeToReloadIn(virtualFileMock, text, bytes, charsetMock)
+      val actual = isSafeToReloadIn(virtualFileMock, testText, bytes, charsetMock)
 
       val expected = Magic8.ABSOLUTELY
 
@@ -198,7 +246,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     should("check if it is safe to reload into 'WELL_IF_YOU_INSIST' encoding") {
       every { decoderMock.decode(any()) } returns CharBuffer.wrap("ÈÁÌÈ")
 
-      val actual = isSafeToReloadIn(virtualFileMock, text, bytes, charsetMock)
+      val actual = isSafeToReloadIn(virtualFileMock, testText, bytes, charsetMock)
 
       val expected = Magic8.WELL_IF_YOU_INSIST
 
@@ -207,7 +255,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     should("check if it is safe to reload into 'NO_WAY' encoding") {
       every { decoderMock.decode(any()) } throws UnsupportedCharsetException("")
 
-      val actual = isSafeToReloadIn(virtualFileMock, text, bytes, charsetMock)
+      val actual = isSafeToReloadIn(virtualFileMock, testText, bytes, charsetMock)
 
       val expected = Magic8.NO_WAY
 
@@ -215,7 +263,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     }
     // isSafeToConvertTo
     should("check if it is safe to convert to 'ABSOLUTELY' encoding") {
-      val actual = isSafeToConvertTo(virtualFileMock, text, charsetMock)
+      val actual = isSafeToConvertTo(virtualFileMock, testText, charsetMock)
 
       val expected = Magic8.ABSOLUTELY
 
@@ -224,7 +272,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
     should("check if it is safe to convert to 'NO_WAY' encoding") {
       every { encoderMock.encode(any()) } throws UnsupportedCharsetException("")
 
-      val actual = isSafeToConvertTo(virtualFileMock, text, charsetMock)
+      val actual = isSafeToConvertTo(virtualFileMock, testText, charsetMock)
 
       val expected = Magic8.NO_WAY
 
@@ -265,11 +313,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
       assertSoftly { throwable shouldBe expected }
     }
     should("inspect safe encoding change when content synchronizer is null") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
-          return null
-        }
-      }
+      every { dataOpsManagerServiceMock.getContentSynchronizer(any<VirtualFile>()) } returns null
 
       var throwable: Throwable? = null
       runCatching {
@@ -289,11 +333,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns ChangeEncodingDialog.RELOAD_EXIT_CODE
 
-      val actual = runBlocking {
-        withContext(Dispatchers.EDT) {
-          changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
-        }
-      }
+      val actual = changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
 
       assertSoftly { actual shouldBe true }
     }
@@ -303,11 +343,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns ChangeEncodingDialog.CONVERT_EXIT_CODE
 
-      val actual = runBlocking {
-        withContext(Dispatchers.EDT) {
-          changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
-        }
-      }
+      val actual = changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
 
       assertSoftly { actual shouldBe true }
     }
@@ -317,11 +353,7 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       every { anyConstructed<ChangeEncodingDialog>().exitCode } returns 1
 
-      val actual = runBlocking {
-        withContext(Dispatchers.EDT) {
-          changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
-        }
-      }
+      val actual = changeFileEncodingAction(projectMock, virtualFileMock, attributesMock, charsetMock)
 
       assertSoftly { actual shouldBe false }
     }
@@ -378,7 +410,5 @@ class EncodingUtilsTestSpec : WithApplicationShouldSpec({
 
       assertSoftly { actual shouldBe false }
     }
-
-    unmockkAll()
   }
 })

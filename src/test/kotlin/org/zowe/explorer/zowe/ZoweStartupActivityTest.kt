@@ -10,16 +10,20 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.zowe
 
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.zowe.service.ZoweConfigService
 import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
 import org.zowe.explorer.zowe.service.ZoweConfigState
@@ -27,7 +31,7 @@ import org.zowe.explorer.zowe.service.ZoweConfigType
 import javax.swing.Icon
 import kotlin.reflect.KFunction
 
-class ZoweStartupActivityTest : WithApplicationShouldSpec({
+class ZoweStartupActivityTest : ShouldSpec({
   var isDialogCalled = false
   var isConnDeleted = false
 
@@ -42,17 +46,30 @@ class ZoweStartupActivityTest : WithApplicationShouldSpec({
   }
 
   context("ZoweStartupActivity") {
-    val mockedProject = mockk<Project>(relaxed = true)
-    every { mockedProject.basePath } returns "test"
-    every { mockedProject.name } returns "testProj"
-    val mockedZoweConfigService = spyk(ZoweConfigServiceImpl(mockedProject), recordPrivateCalls = true)
-    every { mockedProject.getService(ZoweConfigService::class.java) } returns mockedZoweConfigService
-    every { mockedZoweConfigService.getZoweConfigState(type = any<ZoweConfigType>()) } returns ZoweConfigState.NEED_TO_ADD
-    every { mockedZoweConfigService.checkAndRemoveOldZoweConnection(any()) } returns Unit
-    every { mockedZoweConfigService.deleteZoweConfig(type = any<ZoweConfigType>()) } answers {
-      isConnDeleted = true
+    val mockedProject = mockk<Project> {
+      every { basePath } returns "test"
+      every { name } returns "testProj"
     }
-    every { mockedZoweConfigService.findAllZosmfExistingConnection(any<ZoweConfigType>()) } returns listOf(mockk<ConnectionConfig>())
+
+    val applicationMock = mockk<Application>()
+    mockkStatic(ApplicationManager::getApplication)
+    every { ApplicationManager.getApplication() } returns applicationMock
+
+    every { applicationMock.getService(ConfigService::class.java) } returns mockk {
+      every { crudable } returns mockk()
+    }
+
+    val mockedZoweConfigService = spyk(ZoweConfigServiceImpl(mockedProject), recordPrivateCalls = true) {
+      every { getZoweConfigState(type = any<ZoweConfigType>()) } returns ZoweConfigState.NEED_TO_ADD
+      every { checkAndRemoveOldZoweConnection(any()) } returns Unit
+      every {
+        deleteZoweConfig(type = any<ZoweConfigType>())
+      } answers {
+        isConnDeleted = true
+      }
+      every { findAllZosmfExistingConnection(any<ZoweConfigType>()) } returns listOf(mockk<ConnectionConfig>())
+    }
+    every { mockedProject.getService(ZoweConfigService::class.java) } returns mockedZoweConfigService
     var ret = 0
     val showDialogRef: (Project, String, String, Array<String>, Int, Icon) -> Int = Messages::showDialog
     mockkStatic(showDialogRef as KFunction<*>)

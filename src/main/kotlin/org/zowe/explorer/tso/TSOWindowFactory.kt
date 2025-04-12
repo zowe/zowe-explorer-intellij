@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.tso
@@ -33,6 +34,7 @@ import org.zowe.explorer.dataops.operations.MessageType
 import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
 import org.zowe.explorer.explorer.actions.rexx.ExecuteRexxAction
+import org.zowe.explorer.telemetry.NotificationCompatibleException
 import org.zowe.explorer.telemetry.NotificationsService
 import org.zowe.explorer.tso.config.TSOConfigWrapper
 import org.zowe.explorer.tso.config.TSOSessionConfig
@@ -213,25 +215,27 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
   override fun init(toolWindow: ToolWindow) {
     val project = toolWindow.project
 
-    toolWindow.addContentManagerListener(object : ContentManagerListener {
-      override fun contentRemoved(event: ContentManagerEvent) {
-        val contentManager = toolWindow.contentManager
-        val component = event.content.component as TSOConsoleView
-        val session = component.getTsoSession()
-        wrapInlineCall { sendTopic(SESSION_CLOSED_TOPIC, project).close(project, session) }
-        if (contentManager.contents.isEmpty()) toolWindow.isAvailable = false
-      }
+    toolWindow.addContentManagerListener(
+      object : ContentManagerListener {
+        override fun contentRemoved(event: ContentManagerEvent) {
+          val contentManager = toolWindow.contentManager
+          val component = event.content.component as TSOConsoleView
+          val session = component.tsoSession
+          wrapInlineCall { sendTopic(SESSION_CLOSED_TOPIC, project).close(project, session) }
+          if (contentManager.contents.isEmpty()) toolWindow.isAvailable = false
+        }
 
-      override fun contentAdded(event: ContentManagerEvent) {
-        val contentManager = toolWindow.contentManager
-        contentManager.setSelectedContent(event.content, true)
-        toolWindow.apply {
-          activate(null, true)
-          isAvailable = true
-          show()
+        override fun contentAdded(event: ContentManagerEvent) {
+          val contentManager = toolWindow.contentManager
+          contentManager.setSelectedContent(event.content, true)
+          toolWindow.apply {
+            activate(null, true)
+            isAvailable = true
+            show()
+          }
         }
       }
-    })
+    )
 
     subscribe(
       project = project,
@@ -270,19 +274,18 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
               val newServletKey =
                 sessionResponse.servletKey ?: throw Exception("TSO session servletKey must not be null.")
               currentTsoSession = it
-              console.setTsoSession(it)
+              console.tsoSession = it
               fetchNewSessionResponseMessages(console, it)
               tsoSessionToConfigMap.remove(oldServletKey)
               tsoSessionToConfigMap[newServletKey] = it.getTSOSessionConfig()
-            }
+            } ?: throw Exception("TSO session servletKey is null, TSO response is not correct.")
           } else {
-            NotificationsService
-              .errorNotification(
-                Exception(),
-                project = project,
-                custTitle = "Error getting TSO session info",
-                custDetailsShort = "Could not find old TSO session ID"
-              )
+            val notificationException = NotificationCompatibleException(
+              "Error getting TSO session info",
+              "Could not find old TSO session ID"
+            )
+            NotificationsService.errorNotification(notificationException, project = project)
+            throw notificationException
           }
         }
       }
@@ -381,7 +384,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
       topic = SESSION_REOPEN_TOPIC,
       handler = object : TSOSessionReopenHandler {
         override fun reopen(project: Project, console: TSOConsoleView) {
-          val oldConfig = console.getTsoSession()
+          val oldConfig = console.tsoSession
           runInEdt {
             toolWindow.contentManager.apply {
               selectedContent?.let { removeContent(it, true) }
@@ -417,7 +420,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
             var commandToExecute = "EXEC '${rexxConfig.rexxLibrary}(${rexxConfig.execMember})'"
             var passedArguments = ""
             val consoleView = selectedSessionContent.component as TSOConsoleView
-            val processHandler = consoleView.getProcessHandler()
+            val processHandler = consoleView.processHandler
 
             if (rexxConfig.rexxArguments.isNotEmpty()) {
               rexxConfig.rexxArguments.forEach { passedArguments += "$it," }
@@ -487,7 +490,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
    */
   private fun fetchNewSessionResponseMessages(console: TSOConsoleView, newConfig: TSOConfigWrapper) {
     val sessionResponse = newConfig.getTSOResponse()
-    val processHandler = console.getProcessHandler()
+    val processHandler = console.processHandler
     processHandler
       .notifyTextAvailable(parseTSODataResponse(sessionResponse), ProcessOutputType.STDOUT)
     while (newConfig.getTSOResponseMessageQueue().last().tsoPrompt == null) {
@@ -512,7 +515,7 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
     tsoConsole: TSOConsoleView,
     block: () -> Unit
   ) {
-    val processHandler = tsoConsole.getProcessHandler()
+    val processHandler = tsoConsole.processHandler
     processHandler.notifyTextAvailable(
       "Attempting to reconnect $maxAttempts times with timeout $timeout(s) each respectively...\n",
       ProcessOutputType.STDOUT
@@ -542,8 +545,8 @@ class TSOWindowFactory : ToolWindowFactory, PossiblyDumbAware, DumbAware {
   ): TimerTask {
     return object : TsoReconnectTask(service) {
       override fun run() {
-        val tsoSession = tsoConsole.getTsoSession()
-        val processHandler = tsoConsole.getProcessHandler()
+        val tsoSession = tsoConsole.tsoSession
+        val processHandler = tsoConsole.processHandler
         runCatching {
           tsoSession.incrementReconnectAttempt()
           processHandler.notifyTextAvailable(

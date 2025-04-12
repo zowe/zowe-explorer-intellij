@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.utils
@@ -363,6 +364,11 @@ fun getParamTextValueOrUnknown(param: Any?): String {
 /** Wrapper for init() method. It is necessary only for test purposes for now. */
 fun initialize(init: () -> Unit) {
   init()
+}
+
+/** Lazy property wrapper. Simplifies unit testing */
+fun <R> lazyInjectable(initProp: () -> R): R {
+  return initProp()
 }
 
 /**

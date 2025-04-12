@@ -79,6 +79,13 @@ jobs:
           # prepare list of IDEs to use by plugin verifier:
           ./gradlew --quiet printProductsReleases > build/productReleases.txt
 
+#      - name: Prepare verification-metadata.xml
+#        shell: bash
+#        run: ./gradlew --write-verification-metadata sha256
+#        # run: ./gradlew --write-verification-metadata pgp,sha256 --export-keys
+#        env:
+#          PRODUCT_NAME: ${{ matrix.product }}
+
       - name: Build plugin
         shell: bash
         run: ./gradlew buildPlugin
