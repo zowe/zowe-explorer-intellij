@@ -6,6 +6,10 @@
   SPDX-License-Identifier: EPL-2.0
 
   Copyright IBA Group 2020
+
+  Contributors:
+    Zowe Community
+    Uladzislau Kalesnikau
 -->
 <idea-plugin>
     <id>org.zowe.explorer</id>
@@ -379,7 +383,7 @@ Thank you for considering IBA Group for your mainframe needs.
 
         <applicationService serviceInterface="org.zowe.explorer.explorer.UIComponentManager"
                             serviceImplementation="org.zowe.explorer.explorer.UIComponentManagerImpl"
-                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManager"/>
+                            testServiceImplementation="org.zowe.explorer.testutils.testServiceImpl.TestUIComponentManagerImpl"/>
 
         <applicationService serviceInterface="org.zowe.explorer.dataops.services.ErrorSeparatorService"
                             serviceImplementation="org.zowe.explorer.dataops.services.ErrorSeparatorServiceImpl"/>

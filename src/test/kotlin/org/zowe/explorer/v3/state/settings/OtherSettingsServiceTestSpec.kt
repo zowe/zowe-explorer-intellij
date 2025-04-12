@@ -10,138 +10,96 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.state.settings
 
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.messages.Topic
-import org.zowe.explorer.utils.castOrNull
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.sendTopic
+import org.zowe.explorer.utils.subscribe
 import org.zowe.explorer.v3.state.storage.StableStorage
 import org.zowe.explorer.v3.state.storage.StorageService
-import io.kotest.assertions.assertSoftly
-import io.kotest.assertions.fail
-import io.kotest.core.spec.style.ShouldSpec
-import io.kotest.matchers.shouldBe
-import io.mockk.*
 
 @OptIn(StableStorage::class)
-class OtherSettingsServiceTestSpec : ShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("v3/state/settings/OtherSettingsService") {
+class OtherSettingsServiceTestSpec : AppInitShouldSpec("v3/state/settings/OtherSettingsService", {
+  context("all functions") {
     var otherSettingsReloadCount = 0
     var otherSettingsChangeCount = 0
     var didSettingsUpdatedInStorage = false
     var didSettingsReloadedFromStorage = false
-    lateinit var subscriptionObj: OtherSettingsEventListener
 
-    lateinit var otherSettingsService: OtherSettingsService
+    val otherSettingsService = OtherSettingsService()
+
+    subscribe(
+      StorageService.OTHER_SETTINGS_TOPIC,
+      object : OtherSettingsEventListener {
+        override fun otherSettingsReloaded(newSettings: OtherSettingsHolder) {
+          didSettingsReloadedFromStorage = true
+        }
+
+        override fun otherSettingsChanged(newSettings: OtherSettingsHolder) {
+          didSettingsUpdatedInStorage = true
+        }
+      }
+    )
+
+    subscribe(
+      OtherSettingsService.TOPIC,
+      object : OtherSettingsEventListener {
+        override fun otherSettingsReloaded(newSettings: OtherSettingsHolder) {
+          otherSettingsReloadCount += 1
+        }
+
+        override fun otherSettingsChanged(newSettings: OtherSettingsHolder) {
+          otherSettingsChangeCount += 1
+        }
+      }
+    )
 
     beforeEach {
       otherSettingsReloadCount = 0
       otherSettingsChangeCount = 0
       didSettingsUpdatedInStorage = false
       didSettingsReloadedFromStorage = false
-
-      // Needed or companion object initialization
-      StorageService.Companion
-      val applicationMockk = mockk<Application> {
-        every { getService(StorageService::class.java) } returns mockk {
-          every {
-            updateSettingsInStorage(any())
-          } answers {
-            didSettingsUpdatedInStorage = true
-          }
-          every {
-            reloadOtherSettingsFromStorage()
-          } answers {
-            didSettingsReloadedFromStorage = true
-          }
-        }
-        every { messageBus } returns mockk {
-          every { connect() } returns mockk {
-            every {
-              subscribe(any<Topic<OtherSettingsEventListener>>(), any<OtherSettingsEventListener>())
-            } answers {
-              subscriptionObj = secondArg<OtherSettingsEventListener>()
-            }
-          }
-          every {
-            syncPublisher(any<Topic<*>>())
-          } answers {
-            val topic = value as Topic<*>
-            if (topic.displayName.contains("OtherSettingsEventListener")) {
-              val otherSettingsEventListener = value.castOrNull<Topic<OtherSettingsEventListener>>()
-              if (otherSettingsEventListener != null) {
-                mockk<OtherSettingsEventListener> {
-                  every {
-                    otherSettingsReloaded(any<OtherSettingsHolder>())
-                  } answers {
-                    otherSettingsReloadCount += 1
-                  }
-                  every {
-                    otherSettingsChanged(any<OtherSettingsHolder>())
-                  } answers {
-                    otherSettingsChangeCount += 1
-                  }
-                }
-              } else {
-                fail("Topic is impossible to cast to Topic<OtherSettingsEventListener>")
-              }
-            } else {
-              fail("Unrecognized event listener")
-            }
-          }
-        }
-      }
-
-      mockkStatic(ApplicationManager::getApplication)
-      every { ApplicationManager.getApplication() } returns applicationMockk
-
-      otherSettingsService = OtherSettingsService()
-
-      every { applicationMockk.getService(OtherSettingsService::class.java) } returns otherSettingsService
     }
 
     should("reload other settings when the respective event is arrived") {
       val newSettings = OtherSettingsState()
-      subscriptionObj.otherSettingsReloaded(newSettings)
+      sendTopic(StorageService.OTHER_SETTINGS_TOPIC).otherSettingsReloaded(newSettings)
 
       val result = otherSettingsService.getOtherSettings()
       assertSoftly { result shouldBe newSettings }
       assertSoftly { otherSettingsReloadCount shouldBe 1 }
       assertSoftly { otherSettingsChangeCount shouldBe 0 }
       assertSoftly { didSettingsUpdatedInStorage shouldBe false }
-      assertSoftly { didSettingsReloadedFromStorage shouldBe false }
+      assertSoftly { didSettingsReloadedFromStorage shouldBe true }
     }
 
     should("update other settings when the respective event is arrived") {
       val newSettings = OtherSettingsState()
-      subscriptionObj.otherSettingsChanged(newSettings)
+      sendTopic(StorageService.OTHER_SETTINGS_TOPIC).otherSettingsChanged(newSettings)
 
       val result = otherSettingsService.getOtherSettings()
       assertSoftly { result shouldBe newSettings }
       assertSoftly { otherSettingsReloadCount shouldBe 0 }
       assertSoftly { otherSettingsChangeCount shouldBe 1 }
-      assertSoftly { didSettingsUpdatedInStorage shouldBe false }
+      assertSoftly { didSettingsUpdatedInStorage shouldBe true }
       assertSoftly { didSettingsReloadedFromStorage shouldBe false }
     }
 
     should("not update other settings when the respective event is arrived cause the settings are the same") {
       val newSettings = OtherSettingsState()
-      subscriptionObj.otherSettingsChanged(newSettings)
-      subscriptionObj.otherSettingsChanged(newSettings)
+      sendTopic(StorageService.OTHER_SETTINGS_TOPIC).otherSettingsChanged(newSettings)
+      sendTopic(StorageService.OTHER_SETTINGS_TOPIC).otherSettingsChanged(newSettings)
 
       val result = otherSettingsService.getOtherSettings()
       assertSoftly { result shouldBe newSettings }
       assertSoftly { otherSettingsReloadCount shouldBe 0 }
       assertSoftly { otherSettingsChangeCount shouldBe 1 }
-      assertSoftly { didSettingsUpdatedInStorage shouldBe false }
+      assertSoftly { didSettingsUpdatedInStorage shouldBe true }
       assertSoftly { didSettingsReloadedFromStorage shouldBe false }
     }
 
@@ -155,7 +113,7 @@ class OtherSettingsServiceTestSpec : ShouldSpec({
 
     should("reload other settings from storage") {
       otherSettingsService.reloadOtherSettingsFromStorage()
-      assertSoftly { otherSettingsReloadCount shouldBe 0 }
+      assertSoftly { otherSettingsReloadCount shouldBe 1 }
       assertSoftly { otherSettingsChangeCount shouldBe 0 }
       assertSoftly { didSettingsUpdatedInStorage shouldBe false }
       assertSoftly { didSettingsReloadedFromStorage shouldBe true }

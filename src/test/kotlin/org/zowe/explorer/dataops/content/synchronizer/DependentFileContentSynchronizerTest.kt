@@ -10,53 +10,40 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Katsiaryna Tsytsenia
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.content.synchronizer
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.attributes.AttributesService
-import org.zowe.explorer.dataops.attributes.FileAttributes
 import org.zowe.explorer.dataops.attributes.JobsRequester
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributesService
 import org.zowe.explorer.dataops.attributes.RemoteSpoolFileAttributes
 import org.zowe.explorer.dataops.attributes.Requester
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.utils.log
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.matchers.shouldBe
-import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.unmockkAll
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.SpoolFile
 import retrofit2.Response
 
-class DependentFileContentSynchronizerTest : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("DependentFileContentSynchronizer:") {
-
+class DependentFileContentSynchronizerTest : AppInitShouldSpec("dataops/content/synchronizer/DependentFileContentSynchronizer", {
+  context("all functions") {
     var message: Boolean? = false
     var isResponsed = false
 
-    afterEach {
-      message = false
-      isResponsed = false
-    }
+    val dataOpsManager = DataOpsManager.getService()
+    every { dataOpsManager.componentManager } returns ApplicationManager.getApplication()
 
-    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
     var responseStringFun: () -> Response<String>
     var responseVoidFun: () -> Response<Void>?
     var responseStr: Response<String> = Response.success(200, "Successful request")
@@ -116,26 +103,30 @@ class DependentFileContentSynchronizerTest : WithApplicationShouldSpec({
       }
     }
 
-    val mockedRemoteSpoolFileAttributes = mockk<RemoteSpoolFileAttributes>()
-    every { mockedRemoteSpoolFileAttributes.name } returns "RemoteSpoolFileAttributesName"
-    val mockedMFVirtualFile = mockk<MFVirtualFile>()
-    every { mockedMFVirtualFile.path } returns "path"
-    every { mockedRemoteSpoolFileAttributes.parentFile } returns mockedMFVirtualFile
+    val mockedMFVirtualFile = mockk<MFVirtualFile> {
+      every { path } returns "path"
+    }
+    val mockedRemoteSpoolFileAttributes = mockk<RemoteSpoolFileAttributes> {
+      every { name } returns "RemoteSpoolFileAttributesName"
+      every { parentFile } returns mockedMFVirtualFile
+    }
     val mockedProgressIndicator = mockk<ProgressIndicator>()
 
-    val mockedRemoteJobAttributesService = mockk<RemoteJobAttributesService>()
-    val mockedRemoteJobAttributes = mockk<RemoteJobAttributes>()
-    val mockedJobRequester = mockk<JobsRequester>()
-    every { mockedRemoteJobAttributes.requesters } returns mutableListOf(mockedJobRequester)
-    every { mockedRemoteJobAttributes.name } returns "RemoteJobAttributesName"
-    every { mockedRemoteJobAttributesService.getAttributes(any<MFVirtualFile>()) } returns mockedRemoteJobAttributes
-    dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-      override fun <A : FileAttributes, F : VirtualFile> getAttributesService(
-        attributesClass: Class<out A>, vFileClass: Class<out F>
-      ): AttributesService<A, F> {
-        @Suppress("UNCHECKED_CAST")
-        return mockedRemoteJobAttributesService as AttributesService<A, F>
-      }
+    val mockedRemoteJobAttributes = mockk<RemoteJobAttributes> {
+      every { requesters } returns mutableListOf(mockk<JobsRequester>())
+      every { name } returns "RemoteJobAttributesName"
+    }
+    val mockedRemoteJobAttributesService = mockk<RemoteJobAttributesService> {
+      every { getAttributes(any<MFVirtualFile>()) } returns mockedRemoteJobAttributes
+    }
+
+    every {
+      dataOpsManager.getAttributesService(RemoteJobAttributes::class.java, MFVirtualFile::class.java)
+    } returns mockedRemoteJobAttributesService
+
+    afterEach {
+      message = false
+      isResponsed = false
     }
 
     should("Fetch remote content bytes for the dataset member: successful") {

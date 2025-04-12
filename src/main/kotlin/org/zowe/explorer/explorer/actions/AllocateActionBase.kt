@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -48,9 +49,7 @@ const val ALLOCATE_ACTION_NOTIFICATION_GROUP_ID = "org.zowe.explorer.explorer.Al
 
 abstract class AllocateActionBase : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Returns null if object doesn't contain anything

@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.tso.config
@@ -34,9 +35,9 @@ class TSOConfigWrapper(
   var unresponsive: Boolean = false
   var unresponsiveReason: Throwable? = null
 
-  val onSessionFailure: (Throwable) -> Unit = {
+  fun onSessionFailure(t: Throwable) {
     markSessionUnresponsive()
-    unresponsiveReason = it
+    unresponsiveReason = t
   }
 
   /**

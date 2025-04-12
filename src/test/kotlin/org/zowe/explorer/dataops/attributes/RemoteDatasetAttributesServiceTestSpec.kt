@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.attributes
@@ -19,30 +20,28 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import com.intellij.util.messages.Topic
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.testutils.setPrivateFieldValue
 import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import org.zowe.explorer.vfs.MFVirtualFileSystemModel
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
-import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.spyk
-import io.mockk.unmockkAll
+import org.zowe.explorer.testutils.MockkAwareShouldSpec
+import org.zowe.explorer.testutils.setPrivateFieldValue
 import org.zowe.kotlinsdk.Dataset
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.HasMigrated
 import kotlin.reflect.KFunction
 
-class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
+class RemoteDatasetAttributesServiceTestSpec : MockkAwareShouldSpec({
   context("dataops module: attributes/RemoteDatasetAttributesService") {
     context("getOrCreateVirtualFile") {
       lateinit var fsModelMock: MFVirtualFileSystemModel
@@ -53,19 +52,16 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
       beforeEach {
         fsModelMock = mockk<MFVirtualFileSystemModel>()
         fsRootMock = mockk<MFVirtualFile>()
-        mfVFileSystemMock = mockk<MFVirtualFileSystem>()
-        dataOpsManager = mockk<DataOpsManager>()
+        mfVFileSystemMock = mockk<MFVirtualFileSystem> {
+          every { model } returns fsModelMock
+          every { root } returns fsRootMock
+        }
+        dataOpsManager = mockk<DataOpsManager> {
+          every { componentManager } returns mockk()
+        }
 
-        every { mfVFileSystemMock.model } returns fsModelMock
-        every { mfVFileSystemMock.root } returns fsRootMock
         mockkObject(MFVirtualFileSystem)
         every { MFVirtualFileSystem.instance } returns mfVFileSystemMock
-        every { dataOpsManager.componentManager } returns mockk()
-      }
-
-      afterEach {
-        unmockkAll()
-        clearAllMocks()
       }
 
       should("get existing virtual file by the provided attributes") {
@@ -75,8 +71,9 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val remoteDsAttrs = RemoteDatasetAttributes(dsInfo, "test", SmartList())
         val remoteDsAttrsIncorrect = RemoteDatasetAttributes(dsInfo, "test_wrong", SmartList())
 
-        val mfVFileMock = mockk<MFVirtualFile>()
-        every { mfVFileMock.isValid } returns true
+        val mfVFileMock = mockk<MFVirtualFile> {
+          every { isValid } returns true
+        }
 
         every { fsModelMock.findOrCreate(any(), any(), any(), any()) } returns mfVFileMock
 
@@ -86,15 +83,15 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val remoteDsAttrsService = spyk(RemoteDatasetAttributesService(dataOpsManager))
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "attributesToFileMap",
-          attributesToFileMapMock
+          attributesToFileMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "fileToAttributesMap",
-          fileToAttributesMapMock
+          fileToAttributesMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
 
         val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
@@ -132,27 +129,27 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val remoteDsAttrsService = spyk(RemoteDatasetAttributesService(dataOpsManager))
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "attributesToFileMap",
-          attributesToFileMapMock
+          attributesToFileMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "fileToAttributesMap",
-          fileToAttributesMapMock
+          fileToAttributesMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
 
         val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
         mockkStatic(sendTopicRef as KFunction<*>)
-        every { sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>()) } answers {
-          val attributesListenerMock = mockk<AttributesListener>()
+        every {
+          sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>())
+        } returns mockk<AttributesListener> {
           every {
-            attributesListenerMock.onCreate(any(), any())
+            onCreate(any(), any())
           } answers {
             isCreateAttributesTriggered = true
           }
-          attributesListenerMock
         }
 
         val returned = remoteDsAttrsService.getOrCreateVirtualFile(remoteDsAttrs)
@@ -168,9 +165,10 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val remoteDsAttrs = RemoteDatasetAttributes(dsInfo, "test", SmartList())
         val remoteDsAttrsIncorrect = RemoteDatasetAttributes(dsInfo, "test_wrong", SmartList())
 
-        val mfVFileMock = mockk<MFVirtualFile>()
-        every { mfVFileMock.name } returns "dsTestName"
-        every { mfVFileMock.path } returns "test/Data Sets/dsTestVolser/dsTestName/"
+        val mfVFileMock = mockk<MFVirtualFile> {
+          every { name } returns "dsTestName"
+          every { path } returns "test/Data Sets/dsTestVolser/dsTestName/"
+        }
 
         every { fsModelMock.findOrCreate(any(), any(), any(), any()) } returns mfVFileMock
 
@@ -179,27 +177,27 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val remoteDsAttrsService = spyk(RemoteDatasetAttributesService(dataOpsManager))
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "attributesToFileMap",
-          attributesToFileMapMock
+          attributesToFileMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "fileToAttributesMap",
-          fileToAttributesMapMock
+          fileToAttributesMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
 
         val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
         mockkStatic(sendTopicRef as KFunction<*>)
-        every { sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>()) } answers {
-          val attributesListenerMock = mockk<AttributesListener>()
+        every {
+          sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>())
+        } returns mockk {
           every {
-            attributesListenerMock.onCreate(any(), any())
+            onCreate(any(), any())
           } answers {
             isCreateAttributesTriggered = true
           }
-          attributesListenerMock
         }
 
         val returned = remoteDsAttrsService.getOrCreateVirtualFile(remoteDsAttrs)
@@ -215,8 +213,9 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val remoteDsAttrs = RemoteDatasetAttributes(dsInfo, "test", SmartList())
         val remoteDsAttrsIncorrect = RemoteDatasetAttributes(dsInfo, "test_wrong", SmartList())
 
-        val mfVFileMock = mockk<MFVirtualFile>()
-        every { mfVFileMock.isValid } returns false
+        val mfVFileMock = mockk<MFVirtualFile> {
+          every { isValid } returns false
+        }
 
         every {
           fsModelMock.findOrCreate(any(), any(), any(), any())
@@ -230,33 +229,33 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val remoteDsAttrsService = spyk(RemoteDatasetAttributesService(dataOpsManager))
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "attributesToFileMap",
-          attributesToFileMapMock
+          attributesToFileMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "fileToAttributesMap",
-          fileToAttributesMapMock
+          fileToAttributesMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "subDirectory",
-          mockk<MFVirtualFile>()
+          mockk<MFVirtualFile>(),
+          MFRemoteAttributesServiceBase::class.java
         )
 
         val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
         mockkStatic(sendTopicRef as KFunction<*>)
-        every { sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>()) } answers {
-          val attributesListenerMock = mockk<AttributesListener>()
+        every {
+          sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>())
+        } returns mockk {
           every {
-            attributesListenerMock.onCreate(any(), any())
+            onCreate(any(), any())
           } answers {
             isCreateAttributesTriggered = true
           }
-          attributesListenerMock
         }
 
         val returned = remoteDsAttrsService.getOrCreateVirtualFile(remoteDsAttrs)
@@ -270,8 +269,9 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val dsInfo = Dataset("dsTestName", volumeSerial = "dsTestVolser")
         val remoteDsAttrs = RemoteDatasetAttributes(dsInfo, "test", SmartList())
 
-        val mfVFileMock = mockk<MFVirtualFile>()
-        every { mfVFileMock.isValid } returns true
+        val mfVFileMock = mockk<MFVirtualFile> {
+          every { isValid } returns true
+        }
 
         every { fsModelMock.findOrCreate(any(), any(), any(), any()) } returns mfVFileMock
 
@@ -280,27 +280,27 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val remoteDsAttrsService = spyk(RemoteDatasetAttributesService(dataOpsManager))
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "attributesToFileMap",
-          attributesToFileMapMock
+          attributesToFileMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "fileToAttributesMap",
-          fileToAttributesMapMock
+          fileToAttributesMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
 
         val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
         mockkStatic(sendTopicRef as KFunction<*>)
-        every { sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>()) } answers {
-          val attributesListenerMock = mockk<AttributesListener>()
+        every {
+          sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>())
+        } returns mockk {
           every {
-            attributesListenerMock.onCreate(any(), any())
+            onCreate(any(), any())
           } answers {
             isCreateAttributesTriggered = true
           }
-          attributesListenerMock
         }
 
         val returned = remoteDsAttrsService.getOrCreateVirtualFile(remoteDsAttrs)
@@ -318,19 +318,16 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
       beforeEach {
         fsModelMock = mockk<MFVirtualFileSystemModel>()
         fsRootMock = mockk<MFVirtualFile>()
-        mfVFileSystemMock = mockk<MFVirtualFileSystem>()
-        dataOpsManager = mockk<DataOpsManager>()
+        mfVFileSystemMock = mockk<MFVirtualFileSystem> {
+          every { model } returns fsModelMock
+          every { root } returns fsRootMock
+        }
+        dataOpsManager = mockk<DataOpsManager> {
+          every { componentManager } returns mockk()
+        }
 
-        every { mfVFileSystemMock.model } returns fsModelMock
-        every { mfVFileSystemMock.root } returns fsRootMock
         mockkObject(MFVirtualFileSystem)
         every { MFVirtualFileSystem.instance } returns mfVFileSystemMock
-        every { dataOpsManager.componentManager } returns mockk()
-      }
-
-      afterEach {
-        unmockkAll()
-        clearAllMocks()
       }
 
       should("clear attributes for the provided virtual file") {
@@ -346,29 +343,31 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
 
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "attributesToFileMap",
-          attributesToFileMapMock
+          attributesToFileMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "fileToAttributesMap",
-          fileToAttributesMapMock
+          fileToAttributesMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
 
         val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
         mockkStatic(sendTopicRef as KFunction<*>)
-        every { sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>()) } answers {
-          val attributesListenerMock = mockk<AttributesListener>()
-          every {
-            attributesListenerMock.onDelete(any(), any())
-          } answers {
-            val fileToClearAttributes = secondArg<MFVirtualFile>()
-            assertSoftly { fileToClearAttributes shouldBe mfVFileMock }
-            isDeleteAttributesTriggered = true
+        every {
+          sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>())
+        } answers {
+          mockk {
+            every {
+              onDelete(any(), any())
+            } answers {
+              val fileToClearAttributes = secondArg<MFVirtualFile>()
+              assertSoftly { fileToClearAttributes shouldBe mfVFileMock }
+              isDeleteAttributesTriggered = true
+            }
           }
-          attributesListenerMock
         }
 
         remoteDsAttrsService.clearAttributes(mfVFileMock)
@@ -388,23 +387,23 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
 
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "fileToAttributesMap",
-          fileToAttributesMapMock
+          fileToAttributesMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
 
         val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
         mockkStatic(sendTopicRef as KFunction<*>)
         every { sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>()) } answers {
-          val attributesListenerMock = mockk<AttributesListener>()
-          every {
-            attributesListenerMock.onDelete(any(), any())
-          } answers {
-            val fileToClearAttributes = secondArg<MFVirtualFile>()
-            assertSoftly { fileToClearAttributes shouldBe mfVFileMock }
-            isDeleteAttributesTriggered = true
+          mockk {
+            every {
+              onDelete(any(), any())
+            } answers {
+              val fileToClearAttributes = secondArg<MFVirtualFile>()
+              assertSoftly { fileToClearAttributes shouldBe mfVFileMock }
+              isDeleteAttributesTriggered = true
+            }
           }
-          attributesListenerMock
         }
 
         remoteDsAttrsService.clearAttributes(mfVFileMock)
@@ -421,19 +420,16 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
       beforeEach {
         fsModelMock = mockk<MFVirtualFileSystemModel>()
         fsRootMock = mockk<MFVirtualFile>()
-        mfVFileSystemMock = mockk<MFVirtualFileSystem>()
-        dataOpsManager = mockk<DataOpsManager>()
+        mfVFileSystemMock = mockk<MFVirtualFileSystem> {
+          every { model } returns fsModelMock
+          every { root } returns fsRootMock
+        }
+        dataOpsManager = mockk<DataOpsManager> {
+          every { componentManager } returns mockk()
+        }
 
-        every { mfVFileSystemMock.model } returns fsModelMock
-        every { mfVFileSystemMock.root } returns fsRootMock
         mockkObject(MFVirtualFileSystem)
         every { MFVirtualFileSystem.instance } returns mfVFileSystemMock
-        every { dataOpsManager.componentManager } returns mockk()
-      }
-
-      afterEach {
-        unmockkAll()
-        clearAllMocks()
       }
 
       should("update attributes for the provided virtual file") {
@@ -451,16 +447,17 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
         val oldRemoteDsAttrs = RemoteDatasetAttributes(oldDsInfo, "test", SmartList())
         val newRemoteDsAttrs = RemoteDatasetAttributes(newDsInfo, "test", SmartList())
 
-        val mfVFileMock = mockk<MFVirtualFile>()
-        every {
-          mfVFileMock.move(any(), any())
-        } answers {
-          isMoveCalled = true
-        }
-        every {
-          mfVFileMock.rename(any(), any())
-        } answers {
-          isRenameCalled = true
+        val mfVFileMock = mockk<MFVirtualFile> {
+          every {
+            move(any(), any())
+          } answers {
+            isMoveCalled = true
+          }
+          every {
+            rename(any(), any())
+          } answers {
+            isRenameCalled = true
+          }
         }
 
         val attributesToFileMapMock = hashMapOf(oldRemoteDsAttrs to mfVFileMock)
@@ -470,35 +467,37 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
 
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "attributesToFileMap",
-          attributesToFileMapMock
+          attributesToFileMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "fileToAttributesMap",
-          fileToAttributesMapMock
+          fileToAttributesMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "subDirectory",
-          mockk<MFVirtualFile>()
+          mockk<MFVirtualFile>(),
+          MFRemoteAttributesServiceBase::class.java
         )
 
         val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
         mockkStatic(sendTopicRef as KFunction<*>)
-        every { sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>()) } answers {
-          val attributesListenerMock = mockk<AttributesListener>()
-          every {
-            attributesListenerMock.onUpdate(any(), any(), any())
-          } answers {
-            val newAttributesActual = secondArg<RemoteDatasetAttributes>()
-            assertSoftly { newAttributesActual shouldBe newRemoteDsAttrs }
-            isUpdateAttributesTriggered = true
+        every {
+          sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>())
+        } answers {
+          mockk {
+            every {
+              onUpdate(any(), any(), any())
+            } answers {
+              val newAttributesActual = secondArg<RemoteDatasetAttributes>()
+              assertSoftly { newAttributesActual shouldBe newRemoteDsAttrs }
+              isUpdateAttributesTriggered = true
+            }
           }
-          attributesListenerMock
         }
         every { fsModelMock.findOrCreate(any(), any(), any(), any()) } returns mfVFileMock
         every { fsModelMock.changeFileType(any(), any(), any()) } just Runs
@@ -522,21 +521,21 @@ class RemoteDatasetAttributesServiceTestSpec : ShouldSpec({
 
         setPrivateFieldValue(
           remoteDsAttrsService,
-          MFRemoteAttributesServiceBase::class.java,
           "fileToAttributesMap",
-          fileToAttributesMapMock
+          fileToAttributesMapMock,
+          MFRemoteAttributesServiceBase::class.java
         )
 
         val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
         mockkStatic(sendTopicRef as KFunction<*>)
-        every { sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>()) } answers {
-          val attributesListenerMock = mockk<AttributesListener>()
+        every {
+          sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>())
+        } returns mockk {
           every {
-            attributesListenerMock.onUpdate(any(), any(), any())
+            onUpdate(any(), any(), any())
           } answers {
             isUpdateAttributesTriggered = true
           }
-          attributesListenerMock
         }
 
         remoteDsAttrsService.updateAttributes(mfVFileMock, mockk<RemoteDatasetAttributes>())

@@ -27,7 +27,6 @@ import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.utils.UNKNOWN_PARAM_VALUE
 import org.zowe.explorer.utils.getParamTextValueOrUnknown
-import org.zowe.explorer.utils.initialize
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.HasMigrated
 import javax.swing.JComponent
@@ -37,7 +36,7 @@ class DatasetPropertiesDialog(val project: Project?, override var state: Dataset
 
   init {
     title = "Dataset Properties"
-    initialize { init() }
+    init()
   }
 
   override fun createCenterPanel(): JComponent {

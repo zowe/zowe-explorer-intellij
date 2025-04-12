@@ -10,76 +10,47 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.attributes
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
-import com.intellij.util.messages.Topic
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.utils.sendTopic
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import org.zowe.explorer.vfs.MFVirtualFileSystemModel
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.UssFile
 import org.zowe.kotlinsdk.XIBMDataType
 import org.zowe.kotlinsdk.annotations.ZVersion
-import kotlin.reflect.KFunction
 
-class RemoteUssAttributesServiceTestSpec : ShouldSpec({
-  context("dataops/attributes/RemoteUssAttributesService") {
+class RemoteUssAttributesServiceTestSpec : AppInitShouldSpec("dataops/attributes/RemoteUssAttributesService", {
+  context("all functions") {
     lateinit var fsModelMock: MFVirtualFileSystemModel
     lateinit var fsRootMock: MFVirtualFile
     lateinit var mfVFileSystemMock: MFVirtualFileSystem
-    lateinit var dataOpsManager: DataOpsManager
+
+    val dataOpsManager = DataOpsManager.getService()
+    every { dataOpsManager.componentManager } returns mockk {
+      every { messageBus } returns ApplicationManager.getApplication().messageBus
+    }
 
     beforeEach {
       fsModelMock = mockk<MFVirtualFileSystemModel>()
       fsRootMock = mockk<MFVirtualFile>()
-      mfVFileSystemMock = mockk<MFVirtualFileSystem>()
-      dataOpsManager = mockk<DataOpsManager>()
+      mfVFileSystemMock = mockk<MFVirtualFileSystem> {
+        every { model } returns fsModelMock
+        every { root } returns fsRootMock
+      }
 
-      every { mfVFileSystemMock.model } returns fsModelMock
-      every { mfVFileSystemMock.root } returns fsRootMock
       mockkObject(MFVirtualFileSystem)
       every { MFVirtualFileSystem.instance } returns mfVFileSystemMock
-      every { dataOpsManager.componentManager } returns mockk()
-
-      val sendTopicRef: (Topic<AttributesListener>, Project) -> AttributesListener = ::sendTopic
-      mockkStatic(sendTopicRef as KFunction<*>)
-      every { sendTopic(AttributesService.ATTRIBUTES_CHANGED, any<ComponentManager>()) } answers {
-        val attributesListenerMock = mockk<AttributesListener>()
-        every {
-          attributesListenerMock.onUpdate(any(), any(), any())
-        } just runs
-        every {
-          attributesListenerMock.onCreate(any(), any())
-        } just runs
-        attributesListenerMock
-      }
-
-      mockkStatic(ApplicationManager::getApplication)
-      every { ApplicationManager.getApplication().assertWriteAccessAllowed() } just runs
-      every { ApplicationManager.getApplication().invokeAndWait(any()) } answers {
-        firstArg<Runnable>().run()
-      }
-      every { ApplicationManager.getApplication().runWriteAction<Any>(any()) } answers  {
-        firstArg<Computable<() -> Unit>>().compute()
-      }
-    }
-
-    afterEach {
-      unmockkAll()
-      clearAllMocks()
     }
 
     should("create USS file") {
@@ -100,10 +71,10 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
         )
       )
 
-      val mfVirtualFileMock = mockk<MFVirtualFile>()
+      val mfVirtualFileMock = mockk<MFVirtualFile>(relaxUnitFun = true) {
+        every { isReadable } returns true
+      }
       every { mfVirtualFileMock.findChild(any()) } returns mfVirtualFileMock
-      every { mfVirtualFileMock.isReadable } returns true
-      every { mfVirtualFileMock.isReadable = any() } just runs
 
       every { remoteUssAttributesService.getVirtualFile(any()) } returns null
       every { fsRootMock.findChild(any()) } returns null
@@ -141,10 +112,10 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
       )
 
       val mfVirtualFileMock = mockk<MFVirtualFile>()
-      every { mfVirtualFileMock.findChild(any()) } returns mfVirtualFileMock
       every { mfVirtualFileMock.isValid } returns true
       every { mfVirtualFileMock.isReadable } returns true
       every { mfVirtualFileMock.isReadable = any() } just runs
+      every { mfVirtualFileMock.findChild(any()) } returns mfVirtualFileMock
 
       every { remoteUssAttributesService.getVirtualFile(any()) } returns null
       every { fsRootMock.findChild(any()) } returns null
@@ -372,7 +343,6 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
       )
 
       val mfVirtualFileMock = mockk<MFVirtualFile>()
-      every { mfVirtualFileMock.findChild(any()) } returns mfVirtualFileMock
       every { mfVirtualFileMock.isValid } returns true
       every { mfVirtualFileMock.isReadable } returns true
       every { mfVirtualFileMock.isReadable = any() } just runs
@@ -382,10 +352,15 @@ class RemoteUssAttributesServiceTestSpec : ShouldSpec({
           mfVirtualFileMock.isWritable
         } returns setWritable
       }
+      every { mfVirtualFileMock.findChild(any()) } returns null
 
       every { remoteUssAttributesService.getVirtualFile(any()) } returns null
       every { fsRootMock.findChild(any()) } returns null
-      every { fsModelMock.findOrCreate(any(), any(), any(), any()) } answers { callOriginal() }
+      every {
+        fsModelMock.findOrCreate(any(), any(), any(), any())
+      } answers {
+        callOriginal()
+      }
       every { fsModelMock.createChildWithAttributes(any(), any(), any(), any(), any()) } returns mfVirtualFileMock
 
       val createdUSSFile = remoteUssAttributesService.getOrCreateVirtualFile(attributes)

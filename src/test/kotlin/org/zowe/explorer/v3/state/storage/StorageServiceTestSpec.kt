@@ -10,19 +10,16 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.state.storage
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.XmlSerializer
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.testAppFixture
-import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.v3.state.config.Config
 import org.zowe.explorer.v3.state.config.ConfigDeclarator
 import org.zowe.explorer.v3.state.config.ConfigEventListener
@@ -37,27 +34,19 @@ import org.zowe.explorer.v3.state.settings.OtherSettingsHolder
 import org.zowe.explorer.v3.state.settings.OtherSettingsState
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.fail
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.jdom.Attribute
 import org.jdom.Element
 import org.junit.jupiter.api.assertThrows
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.testutils.getPrivateFieldValue
+import org.zowe.explorer.utils.subscribe
 import kotlin.reflect.KFunction
 
 @OptIn(StableStorage::class)
-class StorageServiceTestSpec : ShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("v3/state/storage/StorageService") {
-    val extensionPointNameMock = mockk<ExtensionPointName<ConfigDeclarator>>()
-    if (testAppFixture == null) {
-      mockkObject(ExtensionPointName)
-      every { ExtensionPointName.create<ConfigDeclarator>(any()) } returns extensionPointNameMock
-    }
+class StorageServiceTestSpec : AppInitShouldSpec("v3/state/storage/StorageService", {
+  context("all funcitons") {
     val testAppConfigDeclaratorEpName =
       ExtensionPointName<ConfigDeclarator>("org.zowe.explorer.configDeclarator")
     var testAppConfigDeclaratorEpNameDisposable = Disposer.newDisposable()
@@ -69,7 +58,6 @@ class StorageServiceTestSpec : ShouldSpec({
     var deleteConfigCallCount = 0
     var didOtherSettingsReload = false
     var didOtherSettingsChange = false
-    var storageService: StorageService
     var isErrorNotificationTriggered = false
 
     mockkObject(NotificationsService)
@@ -80,6 +68,68 @@ class StorageServiceTestSpec : ShouldSpec({
     }
 
     mockkStatic("org.zowe.explorer.v3.state.config.migration.UtilsKt")
+
+    val storageService = StorageService.getService()
+    val state = getPrivateFieldValue(storageService, "storageState") as StorageState
+
+    subscribe(
+      StorageService.STORAGE_CONFIGS_TOPIC,
+      object : ConfigEventListener {
+        override fun registered(configType: ConfigType) {
+          if (configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
+            registerConfigsCallCount += 1
+          } else {
+            fail("Wrong config type registered")
+          }
+        }
+
+        override fun added(config: Config) {
+          if (config.configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
+            addConfigCallCount += 1
+          } else {
+            fail("Wrong config added")
+          }
+        }
+
+        override fun updated(oldConfig: Config, newConfig: Config) {
+          if (
+            oldConfig.configType == ConfigType.FILES_WORKING_SET_CONFIG_V1
+            && oldConfig.configType == newConfig.configType
+          ) {
+            updateConfigCallCount += 1
+          } else {
+            fail("Wrong config updated")
+          }
+        }
+
+        override fun deleted(config: Config) {
+          if (config.configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
+            deleteConfigCallCount += 1
+          } else {
+            fail("Wrong config deleted")
+          }
+        }
+
+        override fun reloaded(configType: ConfigType, reloadedConfigs: List<Config>) {
+          if (configType == ConfigType.FILES_WORKING_SET_CONFIG_V1 && reloadedConfigs.size == 1) {
+            didReloadAfterLoadStateHappen = true
+          }
+        }
+      }
+    )
+
+    subscribe(
+      StorageService.OTHER_SETTINGS_TOPIC,
+      object : OtherSettingsEventListener {
+        override fun otherSettingsReloaded(newSettings: OtherSettingsHolder) {
+          didOtherSettingsReload = true
+        }
+
+        override fun otherSettingsChanged(newSettings: OtherSettingsHolder) {
+          didOtherSettingsChange = true
+        }
+      }
+    )
 
     beforeEach {
       testAppConfigDeclaratorEpNameDisposable = Disposer.newDisposable()
@@ -93,109 +143,15 @@ class StorageServiceTestSpec : ShouldSpec({
       didOtherSettingsChange = false
       isErrorNotificationTriggered = false
 
-      // Needed or companion object initialization
-      StorageService.Companion
-      storageService = StorageService()
-      mockkStatic(ApplicationManager::getApplication)
-      every { ApplicationManager.getApplication() } returns mockk {
-        every { getService(StorageService::class.java) } returns storageService
-        every { messageBus } returns mockk {
-          every {
-            syncPublisher(any<Topic<*>>())
-          } answers {
-            val topic = value as Topic<*>
-            if (topic.displayName.contains("ConfigEventListener")) {
-              val configEventListener = value.castOrNull<Topic<ConfigEventListener>>()
-              if (configEventListener != null) {
-                mockk<ConfigEventListener> {
-                  every {
-                    registered(any<ConfigType>())
-                  } answers {
-                    if (firstArg<ConfigType>() == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
-                      registerConfigsCallCount += 1
-                    } else {
-                      fail("Wrong config type registered")
-                    }
-                  }
-                  every {
-                    reloaded(any<ConfigType>(), any<List<Config>>())
-                  } answers {
-                    val configType = firstArg<ConfigType>()
-                    val reloadedConfigs = secondArg<List<Config>>()
-                    if (configType == ConfigType.FILES_WORKING_SET_CONFIG_V1 && reloadedConfigs.size == 1) {
-                      didReloadAfterLoadStateHappen = true
-                    }
-                  }
-                  every {
-                    added(any<Config>())
-                  } answers {
-                    if (firstArg<Config>().configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
-                      addConfigCallCount += 1
-                    } else {
-                      fail("Wrong config added")
-                    }
-                  }
-                  every {
-                    updated(any<Config>(), any<Config>())
-                  } answers {
-                    if (
-                      firstArg<Config>().configType == ConfigType.FILES_WORKING_SET_CONFIG_V1
-                      && firstArg<Config>().configType == secondArg<Config>().configType
-                    ) {
-                      updateConfigCallCount += 1
-                    } else {
-                      fail("Wrong config updated")
-                    }
-                  }
-                  every {
-                    deleted(any<Config>())
-                  } answers {
-                    if (firstArg<Config>().configType == ConfigType.FILES_WORKING_SET_CONFIG_V1) {
-                      deleteConfigCallCount += 1
-                    } else {
-                      fail("Wrong config deleted")
-                    }
-                  }
-                }
-              } else {
-                fail("Topic is impossible to cast to Topic<ConfigEventListener>")
-              }
-            } else if (topic.displayName.contains("OtherSettingsEventListener")) {
-              val otherSettingsEventListener = value.castOrNull<Topic<OtherSettingsEventListener>>()
-              if (otherSettingsEventListener != null) {
-                mockk<OtherSettingsEventListener> {
-                  every {
-                    otherSettingsReloaded(any<OtherSettingsHolder>())
-                  } answers {
-                    didOtherSettingsReload = true
-                  }
-                  every {
-                    otherSettingsChanged(any<OtherSettingsHolder>())
-                  } answers {
-                    didOtherSettingsChange = true
-                  }
-                }
-              } else {
-                fail("Topic is impossible to cast to Topic<OtherSettingsEventListener>")
-              }
-            } else {
-              fail("Unrecognized event listener")
-            }
-          }
-        }
-      }
-
       val testConfigDeclarator = FilesWorkingSetConfigDeclarator()
-      if (testAppFixture != null) {
-        ExtensionTestUtil
-          .maskExtensions(
-            testAppConfigDeclaratorEpName,
-            listOf(testConfigDeclarator),
-            testAppConfigDeclaratorEpNameDisposable
-          )
-      } else {
-        every { extensionPointNameMock.extensionList } returns listOf(testConfigDeclarator)
-      }
+      ExtensionTestUtil
+        .maskExtensions(
+          testAppConfigDeclaratorEpName,
+          listOf(testConfigDeclarator),
+          testAppConfigDeclaratorEpNameDisposable
+        )
+
+      state.configs = mutableMapOf()
     }
 
     afterEach {

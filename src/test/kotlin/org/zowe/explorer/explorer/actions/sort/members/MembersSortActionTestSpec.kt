@@ -1,37 +1,45 @@
+/*
+ * This program and the accompanying materials are made available under the terms of the
+ * Eclipse Public License v2.0 which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v20.html
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Copyright Contributors to the Zowe Project.
+ *
+ * Contributors:
+ *   Zowe Community
+ *   Uladzislau Kalesnikau
+ */
+
 package org.zowe.explorer.explorer.actions.sort.members
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataKey
 import org.zowe.explorer.dataops.BatchedRemoteQuery
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.dataops.fetch.LibraryQuery
 import org.zowe.explorer.dataops.sort.SortQueryKeys
 import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.*
+import org.zowe.explorer.testutils.MockkAwareShouldSpec
 
-class MembersSortActionTestSpec : WithApplicationShouldSpec({
-
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
+class MembersSortActionTestSpec : MockkAwareShouldSpec({
   context("Members sort action") {
-
     val actionEventMock = mockk<AnActionEvent>()
     val explorerViewMock = mockk<FileExplorerView>()
     // action to spy
     val classUnderTest = spyk(MembersSortAction())
 
-    should("returnSourceView_whenGetSourceView_givenActionEvent") {
-      every { actionEventMock.getData(any() as DataKey<FileExplorerView>) } returns explorerViewMock
+    beforeEach {
+      every { actionEventMock.getData(EXPLORER_VIEW) } returns explorerViewMock
+    }
 
+    should("returnSourceView_whenGetSourceView_givenActionEvent") {
       val actualExplorerView = classUnderTest.getSourceView(actionEventMock)
 
       assertSoftly {
@@ -41,13 +49,11 @@ class MembersSortActionTestSpec : WithApplicationShouldSpec({
     }
 
     should("returnNull_whenGetSourceView_givenActionEvent") {
-      every { actionEventMock.getData(any() as DataKey<FileExplorerView>) } returns null
+      every { actionEventMock.getData(EXPLORER_VIEW) } returns null
 
       val actualExplorerView = classUnderTest.getSourceView(actionEventMock)
 
-      assertSoftly {
-        actualExplorerView shouldBe null
-      }
+      assertSoftly { actualExplorerView shouldBe null }
     }
 
     should("returnSourceNode_whenGetSourceNode_givenView") {
@@ -60,9 +66,7 @@ class MembersSortActionTestSpec : WithApplicationShouldSpec({
 
       val actualNode = classUnderTest.getSourceNode(explorerViewMock)
 
-      assertSoftly {
-        actualNode shouldBe nodeMock
-      }
+      assertSoftly { actualNode shouldBe nodeMock }
     }
 
     should("returnNull_whenGetSourceNode_givenView") {
@@ -75,9 +79,7 @@ class MembersSortActionTestSpec : WithApplicationShouldSpec({
 
       val actualNode = classUnderTest.getSourceNode(explorerViewMock)
 
-      assertSoftly {
-        actualNode shouldBe null
-      }
+      assertSoftly { actualNode shouldBe null }
     }
 
     should("returnTrue_whenShouldEnableSortKeyForNode_givenSelectedNodeAndSortKey") {
@@ -87,9 +89,7 @@ class MembersSortActionTestSpec : WithApplicationShouldSpec({
 
       val shouldEnableSortKey = classUnderTest.shouldEnableSortKeyForNode(nodeMock, sortKey)
 
-      assertSoftly {
-        shouldEnableSortKey shouldBe true
-      }
+      assertSoftly { shouldEnableSortKey shouldBe true }
     }
 
     should("returnFalse_whenShouldEnableSortKeyForNode_givenSelectedNodeAndSortKey") {
@@ -99,9 +99,7 @@ class MembersSortActionTestSpec : WithApplicationShouldSpec({
 
       val shouldEnableSortKey = classUnderTest.shouldEnableSortKeyForNode(nodeMock, sortKey)
 
-      assertSoftly {
-        shouldEnableSortKey shouldBe false
-      }
+      assertSoftly { shouldEnableSortKey shouldBe false }
     }
 
     should("updateQuery_whenPerformQueryUpdateForNode_givenSelectedNodeAndSortKey") {
@@ -115,11 +113,7 @@ class MembersSortActionTestSpec : WithApplicationShouldSpec({
 
       classUnderTest.performQueryUpdateForNode(nodeMock, sortKey)
 
-      assertSoftly {
-        batchedQueryMock.sortKeys shouldContainExactly expectedSortKeys
-      }
+      assertSoftly { batchedQueryMock.sortKeys shouldContainExactly expectedSortKeys }
     }
-
   }
-
 })

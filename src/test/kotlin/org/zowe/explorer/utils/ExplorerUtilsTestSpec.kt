@@ -11,6 +11,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.utils
@@ -23,24 +24,19 @@ import org.zowe.explorer.config.ws.JobsFilter
 import org.zowe.explorer.config.ws.UssPath
 import org.zowe.explorer.explorer.*
 import org.zowe.explorer.explorer.ui.*
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.testutils.MockkAwareShouldSpec
 import javax.swing.Icon
 
-class ExplorerUtilsTestSpec : WithApplicationShouldSpec({
+class ExplorerUtilsTestSpec : MockkAwareShouldSpec({
 
   val filesWSSlot = slot<FilesWorkingSetImpl>()
   val dsMaskSlot = slot<DSMask>()
   val ussMaskSlot = slot<UssPath>()
   val jobFilterSlot = slot<JobsFilter>()
   val jesWSSlot = slot<JesWorkingSetImpl>()
-
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
 
   fun <T : ExplorerTreeNode<*,*>> T.doMockStubs() {
     val filesWorkingSet = mockk<FilesWorkingSetImpl>()
@@ -51,16 +47,18 @@ class ExplorerUtilsTestSpec : WithApplicationShouldSpec({
         every { filesWorkingSet.name } returns "DELETED_WORKING_SET"
       }
       is DSMaskNode -> {
-        val dsMask = mockk<DSMask>()
-        every { dsMask.mask } returns "DELETED_MASK"
+        val dsMask = mockk<DSMask> {
+          every { mask } returns "DELETED_MASK"
+        }
         every { node.unit } returns filesWorkingSet
         every { node.value } returns dsMask
         every { node.cleanCache(any(), any(), any(), any()) } just Runs
         every { node.unit.removeMask(capture(dsMaskSlot)) } just Runs
       }
       is UssDirNode -> {
-        val ussMask = mockk<UssPath>()
-        every { ussMask.path } returns "DELETED_USS_MASK"
+        val ussMask = mockk<UssPath> {
+          every { path } returns "DELETED_USS_MASK"
+        }
         every { node.isUssMask } returns true
         every { node.unit } returns filesWorkingSet
         every { node.value } returns ussMask
@@ -68,8 +66,9 @@ class ExplorerUtilsTestSpec : WithApplicationShouldSpec({
         every { node.unit.removeUssPath(capture(ussMaskSlot)) } just Runs
       }
       is JesFilterNode -> {
-        val jobsFilter = mockk<JobsFilter>()
-        every { jobsFilter.jobId } returns "DELETED_JOB_FILTER"
+        val jobsFilter = mockk<JobsFilter> {
+          every { jobId } returns "DELETED_JOB_FILTER"
+        }
         every { node.unit } returns jesWorkingSet
         every { node.value } returns jobsFilter
         every { node.unit.removeFilter(capture(jobFilterSlot)) } just Runs
@@ -83,17 +82,18 @@ class ExplorerUtilsTestSpec : WithApplicationShouldSpec({
 
   context("utils module: explorerUtils") {
 
-    val fileExplorer = mockk<Explorer<ConnectionConfig, FilesWorkingSet>>()
     val jesExplorer = mockk<Explorer<ConnectionConfig, JesWorkingSetImpl>>()
 
     // explorers
-    val fileExplorerView = mockk<FileExplorerView>()
-    every { fileExplorerView.explorer } returns fileExplorer
-    every { fileExplorerView.explorer.disposeUnit(capture(filesWSSlot)) } just Runs
+    val fileExplorerView = mockk<FileExplorerView> {
+      every { explorer } returns mockk<Explorer<ConnectionConfig, FilesWorkingSet>>()
+      every { explorer.disposeUnit(capture(filesWSSlot)) } just Runs
+    }
 
-    val jesExplorerView = mockk<JesExplorerView>()
-    every { jesExplorerView.explorer } returns jesExplorer
-    every { jesExplorerView.explorer.disposeUnit(capture(jesWSSlot)) } just Runs
+    val jesExplorerView = mockk<JesExplorerView> {
+      every { explorer } returns jesExplorer
+      every { explorer.disposeUnit(capture(jesWSSlot)) } just Runs
+    }
 
     val project = mockk<Project>()
 

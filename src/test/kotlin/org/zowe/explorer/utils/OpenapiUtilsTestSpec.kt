@@ -10,6 +10,8 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.utils
@@ -17,33 +19,34 @@ package org.zowe.explorer.utils
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.dataops.content.service.SyncProcessService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestSyncProcessServiceImpl
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
+import io.mockk.every
 import io.mockk.mockk
+import org.zowe.explorer.testutils.AppInitShouldSpec
 
-class OpenapiUtilsTestSpec : WithApplicationShouldSpec({
-
+class OpenapiUtilsTestSpec : AppInitShouldSpec("utils/openapiUtils", {
   context("runBackgroundableSyncTask") {
-
     var isStartFileSyncPerformed = false
     var isStopFileSyncPerformed = false
+    var didFileSyncTaskRun = false
+
+    val syncProcessService = SyncProcessService.getService()
+    every {
+      syncProcessService.startFileSync(any<VirtualFile>(), any<ProgressIndicator>())
+    } answers {
+      isStartFileSyncPerformed = true
+    }
+    every {
+      syncProcessService.stopFileSync(any<VirtualFile>())
+    } answers {
+      isStopFileSyncPerformed = true
+    }
 
     beforeEach {
       isStartFileSyncPerformed = false
       isStopFileSyncPerformed = false
-
-      val syncProcessService = SyncProcessService.getService() as TestSyncProcessServiceImpl
-      syncProcessService.testInstance = object : TestSyncProcessServiceImpl() {
-        override fun startFileSync(file: VirtualFile, progressIndicator: ProgressIndicator) {
-          isStartFileSyncPerformed = true
-        }
-
-        override fun stopFileSync(file: VirtualFile) {
-          isStopFileSyncPerformed = true
-        }
-      }
+      didFileSyncTaskRun = false
     }
 
     should("run backgroundable sync task when virtual file is null") {
@@ -52,10 +55,13 @@ class OpenapiUtilsTestSpec : WithApplicationShouldSpec({
         null,
         true,
         null,
-      ) { }
+      ) {
+        didFileSyncTaskRun = true
+      }
 
       assertSoftly {
         isStartFileSyncPerformed shouldBe false
+        didFileSyncTaskRun shouldBe true
         isStopFileSyncPerformed shouldBe false
       }
     }
@@ -65,13 +71,15 @@ class OpenapiUtilsTestSpec : WithApplicationShouldSpec({
         null,
         true,
         mockk(),
-      ) { }
+      ) {
+        didFileSyncTaskRun = true
+      }
 
       assertSoftly {
         isStartFileSyncPerformed shouldBe true
+        didFileSyncTaskRun shouldBe true
         isStopFileSyncPerformed shouldBe true
       }
     }
-
   }
 })

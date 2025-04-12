@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.utils
@@ -42,7 +43,6 @@ import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.vfs.MFVirtualFile
 import org.zowe.explorer.vfs.MFVirtualFileSystem
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
@@ -53,6 +53,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import retrofit2.Response
@@ -63,7 +64,7 @@ import java.util.*
 import java.util.stream.Stream
 import javax.swing.JTextField
 
-class UtilsTestSpec : ShouldSpec({
+class UtilsTestSpec : AppInitShouldSpec("utils/utils", {
   context("utils module: validationFunctions") {
     context("validateForBlank") {
       val jTextField = JTextField()

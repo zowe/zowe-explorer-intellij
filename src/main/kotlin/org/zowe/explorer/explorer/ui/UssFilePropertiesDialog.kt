@@ -194,7 +194,7 @@ class UssFilePropertiesDialog(project: Project?, override var state: UssFileStat
     permissionTab.registerValidators(myDisposable) { map ->
       isOKActionEnabled = map.isEmpty()
     }
-    initialize { init() }
+    init()
   }
 
   override fun createCenterPanel(): JComponent {

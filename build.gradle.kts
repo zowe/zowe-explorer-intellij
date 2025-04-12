@@ -137,7 +137,6 @@ dependencies {
 //    TO TEST EAP:
     intellijIdeaCommunity(descriptor.sdkVersion, useInstaller = false)
     jetbrainsRuntime()
-    instrumentationTools()
     pluginVerifier()
     testFramework(TestFrameworkType.Plugin.Java)
     zipSigner()

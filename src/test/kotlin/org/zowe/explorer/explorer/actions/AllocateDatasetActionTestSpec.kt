@@ -10,6 +10,8 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
+ *   Dzianis Lisiankou
  */
 
 package org.zowe.explorer.explorer.actions
@@ -18,7 +20,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -30,109 +31,143 @@ import org.zowe.explorer.common.ui.cleanInvalidateOnExpand
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Operation
+import org.zowe.explorer.dataops.operations.DatasetAllocationOperation
 import org.zowe.explorer.dataops.operations.DatasetAllocationParams
-import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.kotlinsdk.DatasetOrganization
 import org.zowe.kotlinsdk.DsnameType
 import java.util.*
-import javax.swing.Icon
 import kotlin.reflect.KFunction
 
-class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-  context("explorer module: actions/AllocateDatasetAction") {
-    val anActionEventMock = mockk<AnActionEvent>()
-    val viewMock = mockk<FileExplorerView>()
+class AllocateDatasetActionTestSpec : AppInitShouldSpec("explorer/actions/AllocateDatasetAction", {
+  context("all functions") {
     val allocateDsActionInst = AllocateDatasetAction()
+
+    val credentialService = CredentialService.getService()
+    every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+    every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
 
     context("actionPerformed") {
       var isCleanInvalidateOnExpandTriggered = false
       var isThrowableReported = false
+      var isOperationPerformed = false
+      var isUpdateOnConfigCrudableCalled = false
+
+      val anActionEventMock = mockk<AnActionEvent>()
+      val viewMock = mockk<FileExplorerView>()
       val filesWorkingSetConfigMock = mockk<FilesWorkingSetConfig>()
       val componentManagerMock = mockk<ComponentManager>()
-      val explorerMock = mockk<Explorer<ConnectionConfig, *>>()
-      val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+      val configServiceCrudableMock = mockk<Crudable>()
+      val workingSetMock = mockk<FilesWorkingSet> {
+        every { name } returns "test"
+        every { uuid } returns "test"
+        every { connectionConfig } returns mockk {
+          every { uuid } returns "fake_uuid"
+        }
+        every { explorer } returns mockk {
+          every { componentManager } returns componentManagerMock
+        }
+      }
+      val libraryNodeMock = mockk<LibraryNode> {
+        every { parent } returns mockk<DSMaskNode>(relaxUnitFun = true)
+        every { unit } returns workingSetMock
+      }
+
+      val notificationsService = NotificationsService.getService()
+      every {
+        notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+      } answers {
+        isThrowableReported = true
+      }
+
+      val dataOpsManager = DataOpsManager.getService()
+
+      val configService = ConfigService.getService()
+      every { configService.crudable } returns configServiceCrudableMock
 
       lateinit var addMaskActionInst: AnAction
+
+      val cleanInvalidateOnExpandMock: (
+        node: ExplorerTreeNode<*, *>,
+        view: ExplorerTreeView<ConnectionConfig, *, *>
+      ) -> Unit = ::cleanInvalidateOnExpand
+      mockkStatic(cleanInvalidateOnExpandMock as KFunction<*>)
+
+      val notifyRef: (Notification) -> Unit = Notifications.Bus::notify
+      mockkStatic(notifyRef as KFunction<*>)
+      mockkStatic(Notification::get)
+
+      val showUntilDoneMockk: (
+        DatasetAllocationParams,
+        (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
+        (DatasetAllocationParams) -> Boolean
+      ) -> DatasetAllocationParams? = ::showUntilDone
+      mockkStatic(showUntilDoneMockk as KFunction<*>)
 
       beforeEach {
         isCleanInvalidateOnExpandTriggered = false
         isThrowableReported = false
+        isOperationPerformed = false
+        isUpdateOnConfigCrudableCalled = false
 
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+        every { filesWorkingSetConfigMock.dsMasks } returns mutableListOf()
+        every { viewMock.mySelectedNodesData } returns listOf()
+        every { anActionEventMock.getData(EXPLORER_VIEW) } returns viewMock
         every { anActionEventMock.project } returns mockk()
 
-        every { explorerMock.componentManager } returns componentManagerMock
-
-        notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-          override fun notifyError(
-            t: Throwable,
-            project: Project?,
-            custTitle: String?,
-            custDetailsShort: String?,
-            custDetailsLong: String?
-          ) {
-            isThrowableReported = true
-          }
+        every {
+          configServiceCrudableMock.getByUniqueKey(FilesWorkingSetConfig::class.java, any<String>())
+        } returns Optional.of(filesWorkingSetConfigMock)
+        every {
+          configServiceCrudableMock.update(any<FilesWorkingSetConfig>())
+        } answers {
+          isUpdateOnConfigCrudableCalled = true
+          Optional.of(mockk())
         }
 
-        val cleanInvalidateOnExpandMock: (
-          node: ExplorerTreeNode<*, *>,
-          view: ExplorerTreeView<ConnectionConfig, *, *>
-        ) -> Unit = ::cleanInvalidateOnExpand
-        mockkStatic(cleanInvalidateOnExpandMock as KFunction<*>)
+        every {
+          dataOpsManager.performOperation(any<DatasetAllocationOperation>(), any<ProgressIndicator>())
+        } answers {
+          isOperationPerformed = true
+        }
+
         every {
           cleanInvalidateOnExpandMock(any<ExplorerTreeNode<*, *>>(), any<ExplorerTreeView<ConnectionConfig, *, *>>())
         } answers {
           isCleanInvalidateOnExpandTriggered = true
         }
 
-        val notifyRef: (Notification) -> Unit = Notifications.Bus::notify
-        mockkStatic(notifyRef as KFunction<*>)
-        mockkStatic(Notification::get)
-        every { Notifications.Bus.notify(any<Notification>()) } answers {
+        every {
+          Notifications.Bus.notify(any<Notification>())
+        } answers {
           val notification = firstArg<Notification>()
           every { Notification.get(any()) } returns notification
           addMaskActionInst = notification.actions.first { it.templateText == "Add mask" }
         }
-      }
 
-      afterEach {
-        clearAllMocks()
-        unmockkAll()
+        every {
+          showUntilDoneMockk(
+            any<DatasetAllocationParams>(),
+            any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
+            any<(DatasetAllocationParams) -> Boolean>()
+          )
+        } returns null
       }
 
       should("perform allocate PDS dataset action creating a new dataset mask") {
-        val workingSetMock = mockk<FilesWorkingSet>()
-        val nodeMock = mockk<LibraryNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
-        val dsMaskNodeMock = mockk<DSMaskNode>()
-        lateinit var initState: DatasetAllocationParams
-        var isOperationPerformed = false
-        var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
-        val showUntilDoneMockk: (
-          DatasetAllocationParams,
-          (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
-          (DatasetAllocationParams) -> Boolean
-        ) -> DatasetAllocationParams? = ::showUntilDone
-        mockkStatic(showUntilDoneMockk as KFunction<*>)
+        lateinit var initState: DatasetAllocationParams
+
         every {
-          hint(DatasetAllocationParams::class)
           showUntilDoneMockk(
             any<DatasetAllocationParams>(),
             any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
@@ -145,33 +180,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        every {
-          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
-        } returns Optional.of(filesWorkingSetConfigMock)
-        every {
-          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
-        } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
-
-        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
-        every { nodeMock.parent } returns dsMaskNodeMock
-        every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { workingSetMock.name } returns "test"
-        every { workingSetMock.uuid } returns "test"
-        val connectionConfig = mockk<ConnectionConfig>()
-        every { connectionConfig.uuid } returns "fake_uuid"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
-        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            isOperationPerformed = true
-            return true as R
-          }
-        }
-        every { workingSetMock.explorer } returns explorerMock
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(libraryNodeMock, null, null))
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
         addMaskActionInst.actionPerformed(anActionEventMock)
@@ -186,24 +195,11 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
       }
       should("perform allocate PS dataset action creating a new dataset mask") {
-        val workingSetMock = mockk<FilesWorkingSet>()
-        val nodeMock = mockk<LibraryNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
-        val dsMaskNodeMock = mockk<DSMaskNode>()
-        lateinit var initState: DatasetAllocationParams
-        var isOperationPerformed = false
-        var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
-        val showUntilDoneMockk: (
-          DatasetAllocationParams,
-          (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
-          (DatasetAllocationParams) -> Boolean
-        ) -> DatasetAllocationParams? = ::showUntilDone
-        mockkStatic(showUntilDoneMockk as KFunction<*>)
+        lateinit var initState: DatasetAllocationParams
+
         every {
-          hint(DatasetAllocationParams::class)
           showUntilDoneMockk(
             any<DatasetAllocationParams>(),
             any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
@@ -224,33 +220,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        every {
-          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
-        } returns Optional.of(filesWorkingSetConfigMock)
-        every {
-          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
-        } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
-
-        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
-        every { nodeMock.parent } returns dsMaskNodeMock
-        every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { workingSetMock.name } returns "test"
-        every { workingSetMock.uuid } returns "test"
-        val connectionConfig = mockk<ConnectionConfig>()
-        every { connectionConfig.uuid } returns "fake_uuid"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
-        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            isOperationPerformed = true
-            return true as R
-          }
-        }
-        every { workingSetMock.explorer } returns explorerMock
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(libraryNodeMock, null, null))
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
         addMaskActionInst.actionPerformed(anActionEventMock)
@@ -266,24 +236,11 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
       }
       should("perform allocate PO-E dataset action creating a new dataset mask") {
-        val workingSetMock = mockk<FilesWorkingSet>()
-        val nodeMock = mockk<LibraryNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
-        val dsMaskNodeMock = mockk<DSMaskNode>()
-        lateinit var initState: DatasetAllocationParams
-        var isOperationPerformed = false
-        var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
-        val showUntilDoneMockk: (
-          DatasetAllocationParams,
-          (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
-          (DatasetAllocationParams) -> Boolean
-        ) -> DatasetAllocationParams? = ::showUntilDone
-        mockkStatic(showUntilDoneMockk as KFunction<*>)
+        lateinit var initState: DatasetAllocationParams
+
         every {
-          hint(DatasetAllocationParams::class)
           showUntilDoneMockk(
             any<DatasetAllocationParams>(),
             any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
@@ -300,33 +257,8 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        every {
-          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
-        } returns Optional.of(filesWorkingSetConfigMock)
-        every {
-          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
-        } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
 
-        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
-        every { nodeMock.parent } returns dsMaskNodeMock
-        every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { workingSetMock.name } returns "test"
-        every { workingSetMock.uuid } returns "test"
-        val connectionConfig = mockk<ConnectionConfig>()
-        every { connectionConfig.uuid } returns "fake_uuid"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
-        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            isOperationPerformed = true
-            return true as R
-          }
-        }
-        every { workingSetMock.explorer } returns explorerMock
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(libraryNodeMock, null, null))
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
         addMaskActionInst.actionPerformed(anActionEventMock)
@@ -343,24 +275,11 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
       }
       should("perform allocate dataset action without creating a new dataset mask") {
-        val workingSetMock = mockk<FilesWorkingSet>()
-        val nodeMock = mockk<LibraryNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
-        val dsMaskNodeMock = mockk<DSMaskNode>()
-        lateinit var initState: DatasetAllocationParams
-        var isOperationPerformed = false
-        var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
-        val showUntilDoneMockk: (
-          DatasetAllocationParams,
-          (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
-          (DatasetAllocationParams) -> Boolean
-        ) -> DatasetAllocationParams? = ::showUntilDone
-        mockkStatic(showUntilDoneMockk as KFunction<*>)
+        lateinit var initState: DatasetAllocationParams
+
         every {
-          hint(DatasetAllocationParams::class)
           showUntilDoneMockk(
             any<DatasetAllocationParams>(),
             any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
@@ -373,33 +292,7 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        every {
-          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
-        } returns Optional.of(filesWorkingSetConfigMock)
-        every {
-          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
-        } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
-
-        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
-        every { nodeMock.parent } returns dsMaskNodeMock
-        every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { workingSetMock.name } returns "test"
-        every { workingSetMock.uuid } returns "test"
-        val connectionConfig = mockk<ConnectionConfig>()
-        every { connectionConfig.uuid } returns "fake_uuid"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
-        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            isOperationPerformed = true
-            return true as R
-          }
-        }
-        every { workingSetMock.explorer } returns explorerMock
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(libraryNodeMock, null, null))
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
@@ -413,24 +306,11 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
       }
       should("perform allocate dataset action when dataset mask already exists") {
-        val workingSetMock = mockk<FilesWorkingSet>()
-        val nodeMock = mockk<LibraryNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
-        val dsMaskNodeMock = mockk<DSMaskNode>()
-        lateinit var initState: DatasetAllocationParams
-        var isOperationPerformed = false
-        var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
-        val showUntilDoneMockk: (
-          DatasetAllocationParams,
-          (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
-          (DatasetAllocationParams) -> Boolean
-        ) -> DatasetAllocationParams? = ::showUntilDone
-        mockkStatic(showUntilDoneMockk as KFunction<*>)
+        lateinit var initState: DatasetAllocationParams
+
         every {
-          hint(DatasetAllocationParams::class)
           showUntilDoneMockk(
             any<DatasetAllocationParams>(),
             any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
@@ -444,37 +324,15 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        val dsMaskMock = mockk<DSMask>()
-        every { dsMaskMock.mask } returns "test.test.*"
-        every { filesWorkingSetConfigMock.dsMasks } returns mutableListOf(dsMaskMock)
-
         every {
-          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
-        } returns Optional.of(filesWorkingSetConfigMock)
-        every {
-          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
-        } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
-
-        every { dsMaskNodeMock.cleanCache(any(), any(), any(), any()) } returns Unit
-        every { nodeMock.parent } returns dsMaskNodeMock
-        every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { workingSetMock.name } returns "test"
-        every { workingSetMock.uuid } returns "test"
-        val connectionConfig = mockk<ConnectionConfig>()
-        every { connectionConfig.uuid } returns "fake_uuid"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
-        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            isOperationPerformed = true
-            return true as R
+          filesWorkingSetConfigMock.dsMasks
+        } returns mutableListOf(
+          mockk<DSMask> {
+            every { mask } returns "test.test.*"
           }
-        }
-        every { workingSetMock.explorer } returns explorerMock
+        )
+
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(libraryNodeMock, null, null))
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
@@ -488,23 +346,16 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
       }
       should("perform allocate dataset action creating new dataset mask without adding as the connection config is not found") {
-        val workingSetMock = mockk<FilesWorkingSet>()
-        val nodeMock = mockk<FilesWorkingSetNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
-        lateinit var initState: DatasetAllocationParams
-        var isOperationPerformed = false
-        var isUpdateOnConfigCrudableCalled = false
         var isShowUntilDoneSucceeded = false
 
-        val showUntilDoneMockk: (
-          DatasetAllocationParams,
-          (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
-          (DatasetAllocationParams) -> Boolean
-        ) -> DatasetAllocationParams? = ::showUntilDone
-        mockkStatic(showUntilDoneMockk as KFunction<*>)
+        val filesWorkingSetNodeMock = mockk<FilesWorkingSetNode> {
+          every { parent } returns null
+          every { unit } returns workingSetMock
+        }
+
+        lateinit var initState: DatasetAllocationParams
+
         every {
-          hint(DatasetAllocationParams::class)
           showUntilDoneMockk(
             any<DatasetAllocationParams>(),
             any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
@@ -518,31 +369,12 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
 
         every {
-          ConfigService.getService().crudable.getByUniqueKey<FilesWorkingSetConfig, String>(any(), any())
+          configServiceCrudableMock.getByUniqueKey(FilesWorkingSetConfig::class.java, any<String>())
         } returns Optional.ofNullable(null)
-        every {
-          ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>())
-        } answers {
-          isUpdateOnConfigCrudableCalled = true
-          Optional.of(mockk())
-        }
 
-        every { nodeMock.parent } returns null
-        every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { workingSetMock.name } returns "test"
-        every { workingSetMock.uuid } returns "test"
-        val connectionConfig = mockk<ConnectionConfig>()
-        every { connectionConfig.uuid } returns "fake_uuid"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
-        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            isOperationPerformed = true
-            return true as R
-          }
-        }
-        every { workingSetMock.explorer } returns explorerMock
+        every {
+          viewMock.mySelectedNodesData
+        } returns listOf(NodeData(filesWorkingSetNodeMock, null, null))
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
@@ -556,22 +388,16 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
       }
       should("perform allocate dataset action with failure on operation performing") {
-        val workingSetMock = mockk<FilesWorkingSet>()
-        val nodeMock = mockk<FilesWorkingSetNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
-        lateinit var initState: DatasetAllocationParams
-        val exceptionMsg = "test exception"
         var isShowUntilDoneSucceeded = false
 
-        val showUntilDoneMockk: (
-          DatasetAllocationParams,
-          (DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>,
-          (DatasetAllocationParams) -> Boolean
-        ) -> DatasetAllocationParams? = ::showUntilDone
-        mockkStatic(showUntilDoneMockk as KFunction<*>)
+        val filesWorkingSetNodeMock = mockk<FilesWorkingSetNode> {
+          every { unit } returns workingSetMock
+        }
+        val exceptionMsg = "test exception"
+
+        lateinit var initState: DatasetAllocationParams
+
         every {
-          hint(DatasetAllocationParams::class)
           showUntilDoneMockk(
             any<DatasetAllocationParams>(),
             any<(DatasetAllocationParams) -> StatefulDialog<DatasetAllocationParams>>(),
@@ -584,18 +410,13 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
           initState
         }
 
-        every { nodeMock.hint(FilesWorkingSet::class).unit } returns workingSetMock
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        val connectionConfig = mockk<ConnectionConfig>()
-        every { connectionConfig.uuid } returns "fake_uuid"
-        every { workingSetMock.hint(ConnectionConfig::class).connectionConfig } returns connectionConfig
-        val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-            throw Exception(exceptionMsg)
-          }
-        }
-        every { workingSetMock.explorer } returns explorerMock
+        every {
+          viewMock.mySelectedNodesData
+        } returns listOf(NodeData(filesWorkingSetNodeMock, null, null))
+
+        every {
+          dataOpsManager.performOperation(any<DatasetAllocationOperation>(), any<ProgressIndicator>())
+        } throws Exception(exceptionMsg)
 
         allocateDsActionInst.actionPerformed(anActionEventMock)
 
@@ -607,100 +428,102 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
       }
     }
+
     context("update") {
-      val presentationMock = mockk<Presentation>()
       var isPresentationEnabledAndVisible = false
       var isPresentationEnabled = false
 
-      beforeEach {
-        every {
-          presentationMock.isEnabledAndVisible = any<Boolean>()
-        } answers {
-          isPresentationEnabledAndVisible = firstArg<Boolean>()
+      val viewMock = mockk<FileExplorerView>()
+      val anActionEventMock = mockk<AnActionEvent> {
+        every { presentation } returns mockk(relaxUnitFun = true) {
+          every {
+            isEnabledAndVisible = any<Boolean>()
+          } answers {
+            isPresentationEnabledAndVisible = firstArg<Boolean>()
+          }
+          every {
+            isEnabled = any<Boolean>()
+          } answers {
+            isPresentationEnabled = firstArg<Boolean>()
+          }
         }
-        every {
-          presentationMock.isEnabled = any<Boolean>()
-        } answers {
-          isPresentationEnabled = firstArg<Boolean>()
-        }
-        every { presentationMock.icon = any<Icon>() } just Runs
-        every { anActionEventMock.presentation } returns presentationMock
       }
-      afterEach {
-        clearAllMocks()
-        unmockkAll()
+
+      beforeEach {
+        isPresentationEnabledAndVisible = false
+        isPresentationEnabled = false
+
+        every { viewMock.mySelectedNodesData } returns listOf()
+        every { anActionEventMock.getData(EXPLORER_VIEW) } returns viewMock
       }
 
       should("show the action on update function is triggered for LibraryNode") {
-        val nodeMock = mockk<LibraryNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
+        val nodeMock = mockk<LibraryNode> {
+          every { unit } returns mockk {
+            every { connectionConfig } returns mockk()
+          }
+        }
 
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
-        every { nodeMock.unit.connectionConfig } returns mockk()
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(nodeMock, null, null))
 
         allocateDsActionInst.update(anActionEventMock)
 
         assertSoftly { isPresentationEnabledAndVisible shouldBe true }
       }
       should("show the action on update function is triggered for FilesWorkingSetNode") {
-        val nodeMock = mockk<FilesWorkingSetNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
+        val nodeMock = mockk<FilesWorkingSetNode> {
+          every { unit } returns mockk {
+            every { connectionConfig } returns mockk()
+          }
+        }
 
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
-        every { nodeMock.unit.connectionConfig } returns mockk()
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(nodeMock, null, null))
 
         allocateDsActionInst.update(anActionEventMock)
 
         assertSoftly { isPresentationEnabledAndVisible shouldBe true }
       }
       should("show the action on update function is triggered for DSMaskNode") {
-        val nodeMock = mockk<DSMaskNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
+        val nodeMock = mockk<DSMaskNode> {
+          every { unit } returns mockk {
+            every { connectionConfig } returns mockk()
+          }
+        }
 
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
-        every { nodeMock.unit.connectionConfig } returns mockk()
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(nodeMock, null, null))
 
         allocateDsActionInst.update(anActionEventMock)
 
         assertSoftly { isPresentationEnabledAndVisible shouldBe true }
       }
       should("show the action on update function is triggered for FileLikeDatasetNode") {
-        val nodeMock = mockk<FileLikeDatasetNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
+        val nodeMock = mockk<FileLikeDatasetNode> {
+          every { unit } returns mockk {
+            every { connectionConfig } returns mockk()
+          }
+        }
 
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
-        every { nodeMock.unit.connectionConfig } returns mockk()
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(nodeMock, null, null))
 
         allocateDsActionInst.update(anActionEventMock)
 
         assertSoftly { isPresentationEnabledAndVisible shouldBe true }
       }
       should("not show the action on update function is triggered for JobNode") {
-        val nodeMock = mockk<JobNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
+        val nodeMock = mockk<JobNode> {
+          every { unit } returns mockk {
+            every { connectionConfig } returns mockk()
+          }
+        }
 
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
-        every { nodeMock.unit.connectionConfig } returns mockk()
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(nodeMock, null, null))
 
         allocateDsActionInst.update(anActionEventMock)
 
         assertSoftly { isPresentationEnabledAndVisible shouldBe false }
       }
       should("not show the action on update function is triggered without selected node") {
-        val selectedNodesData = listOf<NodeData<ConnectionConfig>>()
-
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
+        every { viewMock.mySelectedNodesData } returns listOf()
 
         allocateDsActionInst.update(anActionEventMock)
 
@@ -710,20 +533,20 @@ class AllocateDatasetActionTestSpec : WithApplicationShouldSpec({
         }
       }
       should("not show the action on update function is triggered outside the file explorer view") {
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns null
+        every { anActionEventMock.getData(EXPLORER_VIEW) } returns null
 
         allocateDsActionInst.update(anActionEventMock)
 
         assertSoftly { isPresentationEnabledAndVisible shouldBe false }
       }
       should("not enable the action on update function is triggered without connection config") {
-        val nodeMock = mockk<FilesWorkingSetNode>()
-        val nodeDataMock = NodeData(nodeMock, null, null)
-        val selectedNodesData = listOf(nodeDataMock)
+        val nodeMock = mockk<FilesWorkingSetNode> {
+          every { unit } returns mockk {
+            every { connectionConfig } returns null
+          }
+        }
 
-        every { viewMock.mySelectedNodesData } returns selectedNodesData
-        every { anActionEventMock.getExplorerView<FileExplorerView>() } returns viewMock
-        every { nodeMock.unit.connectionConfig } returns null
+        every { viewMock.mySelectedNodesData } returns listOf(NodeData(nodeMock, null, null))
 
         allocateDsActionInst.update(anActionEventMock)
 

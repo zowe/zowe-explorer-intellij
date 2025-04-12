@@ -1,48 +1,33 @@
 /*
- * Copyright (c) 2020-2024 IBA Group.
- *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
+ * Copyright Contributors to the Zowe Project.
+ *
  * Contributors:
- *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.common
 
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.*
-import java.util.Properties
+import io.mockk.every
+import io.mockk.mockkConstructor
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import java.util.*
 
-class CommonTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-  context("common module: ui") {
-    // ValidatingCellRenderer.getTableCellRendererComponent
-    should("get table cell renderer") {}
-    // ValidatingCellEditor.getTableCellEditorComponent
-    should("get table cell editor") {}
-    // treeUtils.makeNodeDataFromTreePath
-    should("make node data from tree path") {}
-    // treeUtils.getVirtualFile
-    should("get virtual file from tree path") {}
-    should("not get virtual file from tree path if it cannot be casted") {}
-    // StatefulDialog.showUntilDone
-    should("show dialog until it is fulfilled") {}
-  }
-  context("common module: SettingsPropertyManager") {
+class SettingsPropertyManagerTestSpec : AppInitShouldSpec("common/SettingsPropertyManager", {
+  context("isDebugModeEnabled") {
     val propertyName = "debug.mode"
 
     mockkConstructor(Properties::class)
 
-    // isDebugModeEnabled
     should("debug mode enabled") {
       every { anyConstructed<Properties>().getProperty(propertyName) } returns "true"
       val debugMode = isDebugModeEnabled()
@@ -75,7 +60,5 @@ class CommonTestSpec : WithApplicationShouldSpec({
         debugMode shouldBe false
       }
     }
-
-    unmockkAll()
   }
 })

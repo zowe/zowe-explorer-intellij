@@ -10,15 +10,12 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.operations
 
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.dataops.attributes.RemoteUssAttributes
@@ -26,22 +23,19 @@ import org.zowe.explorer.dataops.exceptions.CallException
 import org.zowe.explorer.v3.ConnectionConfigOldStruct
 import org.zowe.explorer.v3.Requester
 import io.kotest.assertions.assertSoftly
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.*
 import org.junit.jupiter.api.assertThrows
+import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Response
 import kotlin.reflect.KFunction
 
-class RenameOperationRunnerTestSpec : ShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
+class RenameOperationRunnerTestSpec : AppInitShouldSpec("v3/operations/RenameOperationRunner", {
   context("v3/operations/RenameOperationRunner") {
     val newName = "test_new_name"
 
@@ -103,35 +97,33 @@ class RenameOperationRunnerTestSpec : ShouldSpec({
       }
 
       val responseMock = mockk<Response<Void>>()
-      mockkObject(ZosmfApi)
-      every { ZosmfApi.getService() } returns mockk {
-        every { getApi(any<Class<DataAPI>>(), any()) } returns mockk {
-          every {
-            moveUssFile(authorizationToken = any(), body = any(), filePath = any())
-          } answers {
-            didMoveUssFileCall = true
-            mockk {
-              every {
-                execute()
-              } answers {
-                didCallExecute = true
-                responseMock
-              }
+
+      val zosmfApi = ZosmfApi.getService()
+      every { zosmfApi.getApi(DataAPI::class.java, any()) } returns mockk {
+        every {
+          moveUssFile(authorizationToken = any(), body = any(), filePath = any())
+        } answers {
+          didMoveUssFileCall = true
+          mockk {
+            every {
+              execute()
+            } answers {
+              didCallExecute = true
+              responseMock
             }
           }
         }
       }
 
-      mockkStatic(ProgressManager::getInstance)
-      every { ProgressManager.getInstance() } returns mockk {
-        every { run(any<com.intellij.openapi.progress.Task.WithResult<*, *>>()) } returns "test_auth_token"
-      }
+      val credentialService = CredentialService.getService()
+      every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+      every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
 
-      val applicationMock = mockk<Application> {
-        every { runWriteAction(any<Computable<Unit>>()) } answers { firstArg<Computable<Unit>>().compute() }
+      mockkStatic(::runInEdtAndWait)
+
+      beforeEach {
+        every { runInEdtAndWait(any()) } answers { callOriginal() }
       }
-      mockkStatic(ApplicationManager::getApplication)
-      every { ApplicationManager.getApplication() } returns applicationMock
 
       beforeEach {
         didMoveUssFileCall = false
@@ -142,7 +134,6 @@ class RenameOperationRunnerTestSpec : ShouldSpec({
 
       should("run operation successfully for USS entities") {
         every { responseMock.isSuccessful } returns true
-        every { applicationMock.invokeAndWait(any()) } answers { firstArg<Runnable>().run() }
 
         val renameOperationRunner = RenameOperationRunner<ConnectionConfigOldStruct>()
 
@@ -155,7 +146,6 @@ class RenameOperationRunnerTestSpec : ShouldSpec({
 
       should("process non-successful response for run operation") {
         every { responseMock.isSuccessful } returns false
-        every { applicationMock.invokeAndWait(any()) } answers { firstArg<Runnable>().run() }
 
         val renameOperationRunner = RenameOperationRunner<ConnectionConfigOldStruct>()
 
@@ -170,7 +160,7 @@ class RenameOperationRunnerTestSpec : ShouldSpec({
 
       should("fail the run operation with RuntimeException") {
         every { responseMock.isSuccessful } returns true
-        every { applicationMock.invokeAndWait(any()) } throws Exception("Test exception")
+        every { runInEdtAndWait(any()) } throws Exception("Test exception")
 
         val renameOperationRunner = RenameOperationRunner<ConnectionConfigOldStruct>()
 

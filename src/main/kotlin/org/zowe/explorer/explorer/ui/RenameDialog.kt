@@ -24,7 +24,6 @@ import com.intellij.ui.dsl.builder.panel
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
 import org.zowe.explorer.explorer.actions.DuplicateMemberAction
-import org.zowe.explorer.explorer.actions.RenameAction
 import org.zowe.explorer.utils.*
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -68,7 +67,7 @@ class RenameDialog(
    */
   init {
     title = if (currentAction is DuplicateMemberAction) "Duplicate $type" else "Rename $type"
-    initialize { init() }
+    init()
   }
 
   /**

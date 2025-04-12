@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.zowe.service
@@ -19,30 +20,16 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.unmockkAll
+import io.mockk.*
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.zowe.ZOWE_CONFIG_NAME
 
-class ZoweConfigServiceImplCompanionTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("zowe/service/ZoweConfigServiceImpl.Companion") {
-    lateinit var configServiceMock: ConfigService
-    lateinit var configServiceCrudableMock: Crudable
-    lateinit var notificationsServiceMock: TestNotificationsServiceImpl
-
+class ZoweConfigServiceImplCompanionTestSpec : AppInitShouldSpec("zowe/service/ZoweConfigServiceImpl.Companion", {
+  context("all functions") {
     var errorNotificationTrigerredCount = 0
 
     val projectMock = mockk<Project> {
@@ -50,29 +37,25 @@ class ZoweConfigServiceImplCompanionTestSpec : WithApplicationShouldSpec({
       every { basePath } returns "test/project/base/path"
     }
 
+    val configServiceCrudable = mockk<Crudable>()
+    val configService = ConfigService.getService()
+    every { configService.crudable } returns configServiceCrudable
+
+    val notificationsService = NotificationsService.getService()
+
     beforeEach {
       errorNotificationTrigerredCount = 0
 
-      configServiceMock = ConfigService.getService() as TestConfigServiceImpl
-      configServiceCrudableMock = configServiceMock.crudable
       every {
-        configServiceCrudableMock.getAll(any<Class<out ConnectionConfig>>())
+        configServiceCrudable.getAll(any<Class<out ConnectionConfig>>())
       } answers {
         emptyList<ConnectionConfig>().stream()
       }
 
-      notificationsServiceMock = NotificationsService.getService() as TestNotificationsServiceImpl
-
-      notificationsServiceMock.testInstance = object : TestNotificationsServiceImpl() {
-        override fun notifyError(
-          t: Throwable,
-          project: Project?,
-          custTitle: String?,
-          custDetailsShort: String?,
-          custDetailsLong: String?
-        ) {
-          errorNotificationTrigerredCount += 1
-        }
+      every {
+        notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+      } answers {
+        errorNotificationTrigerredCount += 1
       }
     }
 
@@ -98,7 +81,7 @@ class ZoweConfigServiceImplCompanionTestSpec : WithApplicationShouldSpec({
 
       should("return a new Zowe connection name when there is a duplicating connection name already saved") {
         every {
-          configServiceCrudableMock.getAll(any<Class<out ConnectionConfig>>())
+          configServiceCrudable.getAll(any<Class<out ConnectionConfig>>())
         } answers {
           listOf<ConnectionConfig>(
             mockk { every { name } returns "$ZOWE_PROJECT_PREFIX${ZoweConfigType.GLOBAL}-zosmf" },
