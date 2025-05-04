@@ -30,9 +30,10 @@ import tests.utils.uidefinitions.ActionMenuPoints
 import tests.utils.uidefinitions.FilesExplorerPanel
 import tests.utils.uidefinitions.dialogs.AddWorkingSetDialog
 import workingset.invalidAllocateScenarios
+import workingset.invalidAllocateScenariosOnServer
 import java.util.stream.Stream
 
-private val dsTemplate =
+private const val dsTemplate =
   "{" +
   "\"dsname\": \"###dsname###\"," +
   "\"blksz\": \"###blksz###\"," +
@@ -74,6 +75,13 @@ class AllocateDatasetTest {
     @JvmStatic
     fun getInvalidDatasetConfigs(): Stream<Arguments> {
       return invalidAllocateScenarios.stream().map{
+        Arguments.of(it.first, it.second)
+      }
+    }
+
+    @JvmStatic
+    fun getInvalidDatasetConfigsForServerValidation(): Stream<Arguments> {
+      return invalidAllocateScenariosOnServer.stream().map{
         Arguments.of(it.first, it.second)
       }
     }
@@ -274,6 +282,44 @@ class AllocateDatasetTest {
     allocateDatasetDialog.fillDialog(allocationParams)
     allocateDatasetDialog.okButton.click()
     val uiErrorMsg = allocateDatasetDialog.errorMsg.allTextAsString()
-    assert(uiErrorMsg==expectedMsg){"Incorrect error msg. expected '$expectedMsg', in ui: $uiErrorMsg"}
+    assert(uiErrorMsg==expectedMsg){"Incorrect error msg. expected '$expectedMsg', in ui: '$uiErrorMsg'"}
   }
+
+  /**
+   * @see
+   * <a href="https://github.com/zowe/zowe-explorer-intellij/wiki/Manual-and-automated-test-cases-consistency#Allocating-data-sets-with-invalid-parameters">
+   *   Regression: Allocate data sets
+   * </a>
+   */
+  @Tag("New")
+  @ParameterizedTest
+  @MethodSource("getInvalidDatasetConfigsForServerValidation")
+  fun testServerDatasetConfigValidation(allocationParams: AllocateDatasetParams, expectedMsg: String, testInfo: TestInfo) {
+    MockWebServerManager.injectEndpoint(
+      "${testInfo.displayName}_dslevel",
+      endpointResolver = { it?.requestLine?.contains("POST /zosmf/restfiles/ds/${allocationParams.name}") ?: false },
+      customHandler = {
+        MockResponse()
+          .setResponseCode(500)
+          .setBody(
+            "{\n" +
+              "\"category\":\"1\"," +
+              "\"rc\":\"4\"," +
+              "\"reason\":13," +
+              "\"message\": \"For a V file, the LRECL must be greater than 4 bytes.\"\n" +
+              "}"
+          )
+      }
+    )
+    filesExplorerPanel.selectRightClickMenuItem(0, "New", "Dataset")
+    allocateDatasetDialog.fillDialog(allocationParams)
+    allocateDatasetDialog.okButton.click()
+
+    val uiErrorMsg = allocateDatasetDialog.errorDialogMsg.allTextAsString()
+    allocateDatasetDialog.cancelButton.click()
+    assert(uiErrorMsg==expectedMsg){"Incorrect error msg. expected '$expectedMsg', in ui: '$uiErrorMsg'"}
+  }
+
+
+
 }

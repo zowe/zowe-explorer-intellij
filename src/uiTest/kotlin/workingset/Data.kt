@@ -144,20 +144,6 @@ const val HMIGRATE_MIGRATE_OPTIONS = "hmigrate"
 
 
 //bad alloc params cases
-data class InvalidAllocate(
-  val wsName: String,
-  val datasetName: String,
-  val datasetOrganization: DatasetOrganization,
-  val allocationUnit: String,
-  val primaryAllocation: Int,
-  val secondaryAllocation: Int,
-  val directory: Int,
-  val recordFormat: String,
-  val recordLength: Int,
-  val blockSize: Int,
-  val averageBlockLength: Int,
-  val message: String
-)
 
 val invalidDatasetNameParams = Pair(AllocateDatasetParams(
   name="A23456789.A", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "1",
@@ -254,7 +240,6 @@ val invalidAllocateScenarios = listOf(
   invalidRecordLengthParams,
   invalidSecondaryAllocationParams,
   invalidBlockSizeParams,
-
   invalidAverageBlockLengthParams,
   textInRecordLengthParams,
   specSymbolsInRecordLengthParams,
@@ -271,6 +256,38 @@ val invalidAllocateScenarios = listOf(
 
 )
 
+val invalidLrecInCustom = Pair(AllocateDatasetParams(
+  name="A23.A2", preset="Custom Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "1",
+  recfm=RecFM.V, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="1"
+), "Cannot allocate dataset A23.A2 on CON00001 Code: 500 CATEGORY: 1 MESSAGE: For a V file, the LRECL must be greater than 4 bytes. RETURN CODE: 4 DETAILS: null REASON: 13.0 ")
+
+val invalidLrecInSequence = Pair(AllocateDatasetParams(
+  name="A23.A2", preset="Sequential Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "1",
+  recfm=RecFM.V, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="1"
+), "Cannot allocate dataset A23.A2 on CON00001 Code: 500 CATEGORY: 1 MESSAGE: For a V file, the LRECL must be greater than 4 bytes. RETURN CODE: 4 DETAILS: null REASON: 13.0 ")
+
+val invalidLrecInPds = Pair(AllocateDatasetParams(
+  name="A23.A2", preset="PDS Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "1",
+  recfm=RecFM.V, blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="1"
+), "Cannot allocate dataset A23.A2 on CON00001 Code: 500 CATEGORY: 1 MESSAGE: For a V file, the LRECL must be greater than 4 bytes. RETURN CODE: 4 DETAILS: null REASON: 13.0 ")
+
+val invalidLrecInPdwWithMember = Pair(AllocateDatasetParams(
+  name="A23.A2", preset="PDS with empty member Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "1",
+  recfm=RecFM.V, memberName="TEST", blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="1"
+), "Cannot allocate dataset A23.A2 on CON00001 Code: 500 CATEGORY: 1 MESSAGE: For a V file, the LRECL must be greater than 4 bytes. RETURN CODE: 4 DETAILS: null REASON: 13.0 ")
+
+val invalidLrecInPdsWithJcl = Pair(AllocateDatasetParams(
+  name="A23.A2", preset="PDS with sample JCL member Dataset", dsOrg=DsOrg.PO, unit=AllocUnit.TRK, primAlloc = "10", secAlloc = "1",
+  recfm=RecFM.V, memberName="TEST", blksz="3200", avgBlkLen = "0", dirBlock="1", lrecl="1"
+), "Cannot allocate dataset A23.A2 on CON00001 Code: 500 CATEGORY: 1 MESSAGE: For a V file, the LRECL must be greater than 4 bytes. RETURN CODE: 4 DETAILS: null REASON: 13.0 ")
+
+val invalidAllocateScenariosOnServer = listOf(
+  invalidLrecInCustom,
+  invalidLrecInSequence,
+  invalidLrecInPds,
+  invalidLrecInPdwWithMember,
+  invalidLrecInPdsWithJcl
+)
 //rename members constants
 
 const val TOO_LONG_MEMBER_NAME = "123456789"
