@@ -54,7 +54,7 @@ val inputToIdx = mapOf(
 
 class AllocateDatasetDialog(val driver: Driver) {
 
-  lateinit var dialogComponent: DialogUiComponent
+  private lateinit var dialogComponent: DialogUiComponent
 
   private val datasetNameInput: JTextFieldUI by lazy { dialogComponent.textField("//div[@class='JBTextField']") }
   private val choosePresetButton: JComboBoxUiComponent by lazy { dialogComponent.comboBox("(//div[@class='ComboBox'])[1]") }
@@ -64,6 +64,7 @@ class AllocateDatasetDialog(val driver: Driver) {
   private val datasetParameterExpand: UiComponent by lazy { dialogComponent.x { byText("Dataset Parameters") } }
   private val advancedParameterExpand: UiComponent by lazy { dialogComponent.x { byText("Advanced Parameters") } }
   val errorMsg: UiComponent by lazy { dialogComponent.x { byClass("MyContentPanel") } }
+  val errorDialogMsg: UiComponent by lazy { dialogComponent.x { byClass("ErrorText") } }
 
   val okButton: ActionButtonUi by lazy { dialogComponent.actionButton { byVisibleText("OK") } }
   val cancelButton: ActionButtonUi by lazy { dialogComponent.actionButton { byVisibleText("Cancel") } }
