@@ -4,6 +4,11 @@ All notable changes to the Zowe Explorer plug-in for IntelliJ IDEA will be docum
 
 ## [Unreleased]
 
+### Bugfixes
+
+* Bugfix: Fixed a bug with a long name of a USS item ([b648f835](https://github.com/zowe/zowe-explorer-intellij/commit/b648f835))
+* Bugfix: Fixed an issue with a USS file creation in a directory that has no read permissions ([302a5ab1](https://github.com/zowe/zowe-explorer-intellij/commit/302a5ab1))
+
 ## [2.1.1] (2024-03-17)
 
 ### Bugfixes
