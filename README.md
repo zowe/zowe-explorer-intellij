@@ -133,4 +133,4 @@ some of the communication chanels:
 * Email to: <a href="mailto:ukalesnikau@ibagroup.eu">Uladzislau Kalesnikau (Team Lead of the IJMP)</a>
 
 **Note: GitHub issue is the preferred way of communicating in case of creating some bug/feature/request for enhancement.
-If you need direct consulting or you have any related questions, please, reach us out using Slack channels or E-mail**
+If you need direct consulting, or you have any related questions, please, reach us out using Slack channels or E-mail**
