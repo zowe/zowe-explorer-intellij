@@ -10,17 +10,18 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.tso.ui
 
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.*
@@ -51,13 +52,15 @@ import javax.swing.JComponent
  */
 class TSOConsoleView(
   private val project: Project,
-  private var tsoSession: TSOConfigWrapper
+  tsoSession: TSOConfigWrapper
 ) : ExecutionConsole, JBPanel<TSOConsoleView>() {
 
   private lateinit var tsoMessageTypeBox: ComboBox<MessageType>
   private lateinit var tsoDataTypeBox: ComboBox<MessageData>
   private lateinit var cancelCommandButton: JButton
   private lateinit var reopenSessionButton: JButton
+  private lateinit var inputRecognizer: InputRecognizer
+
   private val tsoWidthGroup: String = "TSO_WIDTH_GROUP"
 
   private val tsoMessageTypes: List<MessageType> =
@@ -67,24 +70,35 @@ class TSOConsoleView(
 
   private var tsoMessageTypeComboBoxModel = CollectionComboBoxModel(tsoMessageTypes)
   private var tsoDataTypeComboBoxModel = CollectionComboBoxModel(tsoDataTypes)
-  private var inputRecognizer: InputRecognizer
 
-  private val consoleView: TerminalExecutionConsole = object : TerminalExecutionConsole(project, null) {
-    override fun isOutputPaused(): Boolean {
-      return tsoSession.unresponsive
-    }
-  }
-  private val terminalCommandReceiver: TerminalCommandReceiver = TerminalCommandReceiver(consoleView)
-  private val processHandler: ProcessHandler = terminalCommandReceiver.processHandler
+  private val terminalCommandReceiver: TerminalCommandReceiver by lazy { TerminalCommandReceiver(consoleView) }
 
   private val log = log<TSOConsoleView>()
 
   private val debugMode = isDebugModeEnabled()
 
+  /** Setter also it sets input recognizer for every TSO session initialized */
+  var tsoSession: TSOConfigWrapper = tsoSession
+    set(value) {
+      field = value
+      updateSessionForInputRecognizer(value)
+      terminalCommandReceiver.inputRecognizer = inputRecognizer
+    }
+
+  private val consoleView: TerminalExecutionConsole by lazy {
+    object : TerminalExecutionConsole(project, null) {
+      override fun isOutputPaused(): Boolean {
+        return (this@TSOConsoleView).tsoSession.unresponsive
+      }
+    }
+  }
+
+  val processHandler by lazy { terminalCommandReceiver.processHandler }
+
   /**
    * UI panel which contains 2 combo boxes of TSO message type and message data type
    */
-  private val tsoPanel by lazy {
+  private val tsoPanel: DialogPanel by lazy {
     panel {
       row {
         label("TSO message type").widthGroup(tsoWidthGroup)
@@ -182,42 +196,11 @@ class TSOConsoleView(
   }
 
   /**
-   * Getter for TSO session wrapper class for each TSO session created
-   */
-  fun getTsoSession(): TSOConfigWrapper {
-    return tsoSession
-  }
-
-  /**
-   * Setter for TSO session wrapper class for each TSO session.
-   * Also it sets input recognizer for every TSO session initialized
-   */
-  fun setTsoSession(session: TSOConfigWrapper) {
-    tsoSession = session
-    updateSessionForInputRecognizer(session)
-    terminalCommandReceiver.inputRecognizer = inputRecognizer
-  }
-
-  /**
    * Function to update the session for input recognizer when the session was broken
    * @param session - new session after reconnect
    */
   private fun updateSessionForInputRecognizer(session: TSOConfigWrapper) {
     inputRecognizer = InputRecognizer(project, session)
-  }
-
-  /**
-   * Getter for console view
-   */
-  fun getTerminalConsole() : TerminalExecutionConsole {
-    return consoleView
-  }
-
-  /**
-   * Getter for process handler object instance
-   */
-  fun getProcessHandler(): ProcessHandler {
-    return processHandler
   }
 
   /**

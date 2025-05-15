@@ -10,6 +10,8 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Katsiaryna Tsytsenia
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.dataops.operations
@@ -18,43 +20,30 @@ import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.connect.authToken
-import org.zowe.explorer.dataops.attributes.MaskedRequester
-import org.zowe.explorer.dataops.attributes.UssRequester
 import org.zowe.explorer.dataops.exceptions.CallException
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import org.zowe.explorer.utils.cancelByIndicator
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.config.connect.CredentialService
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.ChangeOwner
 import org.zowe.kotlinsdk.DataAPI
 import org.zowe.kotlinsdk.FilePath
 import retrofit2.Response
 
-class UssChangeOwnerTestSpec : WithApplicationShouldSpec({
-  beforeSpec {
-    clearAllMocks()
-  }
-
+class UssChangeOwnerTestSpec : AppInitShouldSpec("dataops/operations/UssChangeOwnerTestSpec", {
   context("UssChangeOwnerOperationRunner common spec") {
-
     val dataApi = mockk<DataAPI>()
-    val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
-    zosmfApi.testInstance = object : TestZosmfApiImpl() {
-      override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
-        @Suppress("UNCHECKED_CAST") return dataApi as Api
-      }
-    }
+    val zosmfApi = ZosmfApi.getService()
+    every { zosmfApi.getApi(DataAPI::class.java, any<ConnectionConfig>()) } returns dataApi
 
     val classUnderTest = spyk(UssChangeOwner())
     val operation = mockk<UssChangeOwnerOperation>()
 
     context("canRun") {
-
       should("returnTrue_whenCanRun_givenRemoteMemberAttributes") {
-
         val canRun = classUnderTest.canRun(operation)
 
         assertSoftly {
@@ -63,7 +52,6 @@ class UssChangeOwnerTestSpec : WithApplicationShouldSpec({
       }
 
       should("returnTrue_whenCanRun_givenRemoteDatasetAttributes") {
-
         val canRun = classUnderTest.canRun(operation)
 
         assertSoftly {
@@ -72,7 +60,6 @@ class UssChangeOwnerTestSpec : WithApplicationShouldSpec({
       }
 
       should("returnTrue_whenCanRun_givenRemoteUssAttributes") {
-
         val canRun = classUnderTest.canRun(operation)
 
         assertSoftly {
@@ -82,24 +69,20 @@ class UssChangeOwnerTestSpec : WithApplicationShouldSpec({
     }
 
     context("run operation") {
+      val credentialService = CredentialService.getService()
+      every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+      every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
 
-      val progressIndicator = mockk<ProgressIndicator>()
-      val datasetRequester = mockk<MaskedRequester>()
-      val ussRequester = mockk<UssRequester>()
-      val connectionConfig = mockk<ConnectionConfig>()
-      val ussChangeOwnerParams = UssChangeOwnerParams(
-        ChangeOwner(
-          owner = "owner", group = "group"
-        ), "attributes/path"
-      )
-
-      mockkStatic("org.zowe.explorer.config.connect.CredentialServiceKt")
-      every { connectionConfig.uuid } returns "00000000"
-      every { connectionConfig.authToken } returns "TEST_TOKEN"
-      every { datasetRequester.connectionConfig } returns connectionConfig
-      every { ussRequester.connectionConfig } returns connectionConfig
-      every { progressIndicator.checkCanceled() } just Runs
-      every { operation.connectionConfig } returns connectionConfig
+      val progressIndicator = mockk<ProgressIndicator> {
+        every { checkCanceled() } just Runs
+      }
+      val changeOwnerBodyReqParams = ChangeOwner(owner = "owner", group = "group")
+      val ussFilePath = "attributes/path"
+      val ussChangeOwnerParams = UssChangeOwnerParams(changeOwnerBodyReqParams, ussFilePath)
+      val connectionConfigMock = mockk<ConnectionConfig> {
+        every { uuid } returns "00000000"
+      }
+      every { operation.connectionConfig } returns connectionConfigMock
       every { operation.request } returns ussChangeOwnerParams
       val apiResponse = mockk<Response<Void>>()
       every {
@@ -112,11 +95,7 @@ class UssChangeOwnerTestSpec : WithApplicationShouldSpec({
         classUnderTest.run(operation, progressIndicator)
 
         verify(exactly = 1) {
-          dataApi.changeFileOwner(
-            "TEST_TOKEN", null, ChangeOwner(
-              owner = "owner", group = "group"
-            ), FilePath("attributes/path")
-          )
+          dataApi.changeFileOwner(any<String>(), null, changeOwnerBodyReqParams, FilePath(ussFilePath))
         }
       }
 
@@ -130,9 +109,6 @@ class UssChangeOwnerTestSpec : WithApplicationShouldSpec({
           exception.message shouldBe "Cannot change file owner on attributes/path\nCode: 500"
         }
       }
-
     }
-
-
   }
 })

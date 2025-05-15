@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.config.connect
@@ -17,26 +18,21 @@ package org.zowe.explorer.config.connect
 import com.intellij.openapi.progress.ProgressIndicator
 import org.zowe.explorer.api.ZosmfApi
 import org.zowe.explorer.dataops.DataOpsManager
-import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.operations.TsoOperation
 import org.zowe.explorer.dataops.operations.TsoOperationMode
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestZosmfApiImpl
 import org.zowe.explorer.tso.getTsoMessageQueue
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.fail
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.kotlinsdk.*
 import org.zowe.kotlinsdk.annotations.ZVersion
 import retrofit2.Call
 import retrofit2.Response
 
-class ConnectUtilsTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-  context("config/connect/connectUtils") {
+class ConnectUtilsTestSpec : AppInitShouldSpec("config/connect/connectUtils", {
+  context("all functions") {
     // z/OS > 2.3 call setup
     fun setupTsoEnhancedCall(
       tsoResultBody: MutableList<TsoCmdResult>,
@@ -44,27 +40,30 @@ class ConnectUtilsTestSpec : WithApplicationShouldSpec({
       success: Boolean
     ) {
       val responseBody = TsoCmdResponse(cmdResponse = tsoResultBody)
-      val tsoApi = mockk<TsoApi>()
-      val call = mockk<Call<TsoCmdResponse>>()
-      val response = mockk<Response<TsoCmdResponse>>()
-
-      val zosmfApi = ZosmfApi.getService() as TestZosmfApiImpl
-      zosmfApi.testInstance = object : TestZosmfApiImpl() {
-        override fun <Api : Any> getApi(apiClass: Class<out Api>, connectionConfig: ConnectionConfig): Api {
-          return if (apiClass == TsoApi::class.java) {
-            tsoApi as Api
-          } else {
-            super.getApi(apiClass, connectionConfig)
-          }
+      val response = mockk<Response<TsoCmdResponse>> {
+        every { isSuccessful } returns success
+        every { body() } returns responseBody
+      }
+      val call = mockk<Call<TsoCmdResponse>> {
+        every { execute() } answers {
+          if (shouldThrowException) throw IllegalStateException("Test call failed") else response
         }
       }
-
-      every { tsoApi.executeTsoCommand(any(), any(), any()) } returns call
-      every { call.execute() } answers {
-        if (shouldThrowException) throw IllegalStateException("Test call failed") else response
+      val tsoApi = mockk<TsoApi> {
+        every { executeTsoCommand(any(), any(), any()) } returns call
       }
-      every { response.isSuccessful } returns success
-      every { response.body() } returns responseBody
+
+      val zosmfApi = ZosmfApi.getService()
+      every {
+        zosmfApi.getApi(any<Class<*>>(), any<ConnectionConfig>())
+      } answers {
+        val apiClass = firstArg<Class<*>>()
+        if (apiClass == TsoApi::class.java) {
+          tsoApi
+        } else {
+          fail("Unknown API class: $apiClass")
+        }
+      }
     }
 
     val connectionConfigZOS23 = ConnectionConfig()
@@ -72,44 +71,39 @@ class ConnectUtilsTestSpec : WithApplicationShouldSpec({
     val connectionConfigZOS24 = ConnectionConfig()
     connectionConfigZOS24.zVersion = ZVersion.ZOS_2_4
 
-    val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+    lateinit var dataOpsManagerService: DataOpsManager
+
+    val credentialService = CredentialService.getService()
+    every { credentialService.getUsernameByKey(any<String>()) } returns "ZOSMF"
+    every { credentialService.getPasswordByKey(any<String>()) } returns "TEST".toCharArray()
 
     beforeEach {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          val tsoResponse = TsoResponse(
-            servletKey = "servletKey",
-            tsoData = listOf(TsoData())
+      dataOpsManagerService = DataOpsManager.getService()
+      every {
+        dataOpsManagerService.performOperation(any<TsoOperation>(), any<ProgressIndicator>())
+      } answers {
+        val operation = firstArg<TsoOperation>()
+        val tsoResponse = TsoResponse(servletKey = "servletKey", tsoData = listOf(TsoData()))
+        if (operation.mode == TsoOperationMode.SEND_MESSAGE) {
+          tsoResponse.tsoData = listOf(
+            TsoData(tsoMessage = MessageType("", "ZOSMFAD  "))
           )
-          if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
-            tsoResponse.tsoData = listOf(
-              TsoData(tsoMessage = MessageType("", "ZOSMFAD  "))
-            )
-          }
-          @Suppress("UNCHECKED_CAST")
-          return tsoResponse as R
         }
+        tsoResponse
       }
 
       mockkStatic("org.zowe.explorer.tso.TSOWindowFactoryKt")
-      every { getTsoMessageQueue(any()) } answers {
+      every {
+        getTsoMessageQueue(any())
+      } answers {
         TsoResponse(
-          tsoData = listOf(
-            TsoData(tsoPrompt = MessageType(""))
-          )
+          tsoData = listOf(TsoData(tsoPrompt = MessageType("")))
         )
       }
-
-      mockkObject(CredentialService.Companion)
-      every { CredentialService.getUsername(any<ConnectionConfig>()) } returns "ZOSMF"
-    }
-    afterEach {
-      unmockkAll()
     }
 
     // whoAmI
     should("get the owner by TSO request if z/OS version = 2.4") {
-
       val tsoResultBody = mutableListOf(TsoCmdResult(message = "ZOSMFAD"))
       setupTsoEnhancedCall(tsoResultBody, success = true, shouldThrowException = false)
 
@@ -119,7 +113,6 @@ class ConnectUtilsTestSpec : WithApplicationShouldSpec({
     }
 
     should("return empty owner by TSO request if z/OS version = 2.4 and owner cannot be retrieved") {
-
       val tsoResultBody = mutableListOf(
         TsoCmdResult(message = ""),
         TsoCmdResult(message = "OSHELL RC = 2020"),
@@ -133,7 +126,6 @@ class ConnectUtilsTestSpec : WithApplicationShouldSpec({
     }
 
     should("return empty owner by TSO request if z/OS version = 2.4 and tso request fails") {
-
       setupTsoEnhancedCall(mutableListOf(), success = false, shouldThrowException = true)
 
       val actual = whoAmI(connectionConfigZOS24)
@@ -142,27 +134,23 @@ class ConnectUtilsTestSpec : WithApplicationShouldSpec({
     }
 
     should("get the owner by TSO request if z/OS version = 2.3") {
-
       val actual = whoAmI(connectionConfigZOS23)
 
       assertSoftly { actual shouldBe "ZOSMFAD" }
     }
 
     should("return empty owner if TSO request returns empty data") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          val tsoResponse = TsoResponse(
-            servletKey = "servletKey",
-            tsoData = listOf(TsoData())
+      every {
+        dataOpsManagerService.performOperation(any<TsoOperation>(), any<ProgressIndicator>())
+      } answers {
+        val operation = firstArg<TsoOperation>()
+        val tsoResponse = TsoResponse(servletKey = "servletKey", tsoData = listOf(TsoData()))
+        if (operation.mode == TsoOperationMode.SEND_MESSAGE) {
+          tsoResponse.tsoData = listOf(
+            TsoData(tsoMessage = MessageType("", ""))
           )
-          if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
-            tsoResponse.tsoData = listOf(
-              TsoData(tsoMessage = MessageType("", ""))
-            )
-          }
-          @Suppress("UNCHECKED_CAST")
-          return tsoResponse as R
         }
+        tsoResponse
       }
 
       val actual = whoAmI(connectionConfigZOS23)
@@ -172,20 +160,17 @@ class ConnectUtilsTestSpec : WithApplicationShouldSpec({
 
 
     should("return empty owner if TSO request returns READY") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          val tsoResponse = TsoResponse(
-            servletKey = "servletKey",
-            tsoData = listOf(TsoData())
+      every {
+        dataOpsManagerService.performOperation(any<TsoOperation>(), any<ProgressIndicator>())
+      } answers {
+        val operation = firstArg<TsoOperation>()
+        val tsoResponse = TsoResponse(servletKey = "servletKey", tsoData = listOf(TsoData()))
+        if (operation.mode == TsoOperationMode.SEND_MESSAGE) {
+          tsoResponse.tsoData = listOf(
+            TsoData(tsoMessage = MessageType("", "READY "))
           )
-          if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
-            tsoResponse.tsoData = listOf(
-              TsoData(tsoMessage = MessageType("", "READY "))
-            )
-          }
-          @Suppress("UNCHECKED_CAST")
-          return tsoResponse as R
         }
+        tsoResponse
       }
 
       val actual = whoAmI(connectionConfigZOS23)
@@ -194,20 +179,17 @@ class ConnectUtilsTestSpec : WithApplicationShouldSpec({
     }
 
     should("return empty owner if TSO request returns error message in TSO data") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          val tsoResponse = TsoResponse(
-            servletKey = "servletKey",
-            tsoData = listOf(TsoData())
+      every {
+        dataOpsManagerService.performOperation(any<TsoOperation>(), any<ProgressIndicator>())
+      } answers {
+        val operation = firstArg<TsoOperation>()
+        val tsoResponse = TsoResponse(servletKey = "servletKey", tsoData = listOf(TsoData()))
+        if (operation.mode == TsoOperationMode.SEND_MESSAGE) {
+          tsoResponse.tsoData = listOf(
+            TsoData(tsoMessage = MessageType("", "OSHELL RC = 65210"))
           )
-          if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
-            tsoResponse.tsoData = listOf(
-              TsoData(tsoMessage = MessageType("", "OSHELL RC = 65210"))
-            )
-          }
-          @Suppress("UNCHECKED_CAST")
-          return tsoResponse as R
         }
+        tsoResponse
       }
 
       val actual = whoAmI(connectionConfigZOS23)
@@ -216,42 +198,33 @@ class ConnectUtilsTestSpec : WithApplicationShouldSpec({
     }
 
     should("return empty owner by TSO request if servlet key is null") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          @Suppress("UNCHECKED_CAST")
-          return TsoResponse() as R
-        }
-      }
+      every {
+        dataOpsManagerService.performOperation(any<TsoOperation>(), any<ProgressIndicator>())
+      } returns TsoResponse()
 
       val actual = whoAmI(connectionConfigZOS23)
 
       assertSoftly { actual shouldBe "" }
     }
     should("return empty owner by TSO request if servlet key is empty") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          @Suppress("UNCHECKED_CAST")
-          return TsoResponse(servletKey = "") as R
-        }
-      }
+      every {
+        dataOpsManagerService.performOperation(any<TsoOperation>(), any<ProgressIndicator>())
+      } returns TsoResponse(servletKey = "")
 
       val actual = whoAmI(connectionConfigZOS23)
 
       assertSoftly { actual shouldBe "" }
     }
     should("return empty owner by TSO request if request fails") {
-      dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-        override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-          val tsoResponse = TsoResponse(
-            servletKey = "servletKey",
-            tsoData = listOf(TsoData())
-          )
-          if ((operation as TsoOperation).mode == TsoOperationMode.SEND_MESSAGE) {
-            throw Exception("Failed to send message")
-          }
-          @Suppress("UNCHECKED_CAST")
-          return tsoResponse as R
+      every {
+        dataOpsManagerService.performOperation(any<TsoOperation>(), any<ProgressIndicator>())
+      } answers {
+        val operation = firstArg<TsoOperation>()
+        val tsoResponse = TsoResponse(servletKey = "servletKey", tsoData = listOf(TsoData()))
+        if (operation.mode == TsoOperationMode.SEND_MESSAGE) {
+          throw Exception("Failed to send message")
         }
+        tsoResponse
       }
 
       val actual = whoAmI(connectionConfigZOS23)

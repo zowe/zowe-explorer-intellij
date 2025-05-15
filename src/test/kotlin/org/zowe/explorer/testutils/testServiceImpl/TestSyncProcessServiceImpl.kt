@@ -10,58 +10,13 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Dzianis Lisiankou
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.testutils.testServiceImpl
 
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vfs.VirtualFile
+import io.mockk.mockk
 import org.zowe.explorer.dataops.content.service.SyncProcessService
 
-open class TestSyncProcessServiceImpl : SyncProcessService {
-
-  var testInstance = object : SyncProcessService {
-
-    override fun startFileSync(file: VirtualFile, progressIndicator: ProgressIndicator) {
-      TODO("Not yet implemented")
-    }
-
-    override fun stopFileSync(file: VirtualFile) {
-      TODO("Not yet implemented")
-    }
-
-    override fun isFileSyncingNow(file: VirtualFile): Boolean {
-      return false
-    }
-
-    override fun areDependentFilesSyncingNow(file: VirtualFile): Boolean {
-      return false
-    }
-
-    override fun isAnyFileSyncingNow(): Boolean {
-      return false
-    }
-
-  }
-
-  override fun startFileSync(file: VirtualFile, progressIndicator: ProgressIndicator) {
-    testInstance.startFileSync(file, progressIndicator)
-  }
-
-  override fun stopFileSync(file: VirtualFile) {
-    testInstance.stopFileSync(file)
-  }
-
-  override fun isFileSyncingNow(file: VirtualFile): Boolean {
-    return testInstance.isFileSyncingNow(file)
-  }
-
-  override fun areDependentFilesSyncingNow(file: VirtualFile): Boolean {
-    return testInstance.areDependentFilesSyncingNow(file)
-  }
-
-  override fun isAnyFileSyncingNow(): Boolean {
-    return testInstance.isAnyFileSyncingNow()
-  }
-
-}
+open class TestSyncProcessServiceImpl : SyncProcessService by mockk()

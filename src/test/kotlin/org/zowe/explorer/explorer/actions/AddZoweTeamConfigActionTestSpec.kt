@@ -10,6 +10,8 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Katsiaryna Tsytsenia
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -17,7 +19,6 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -27,31 +28,23 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.zowe.explorer.common.ui.StatefulDialog
 import org.zowe.explorer.common.ui.showUntilDone
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.config.connect.ConnectionConfig
+import org.zowe.explorer.config.connect.CredentialService
 import org.zowe.explorer.config.connect.ui.zosmf.ConnectionDialogState
 import org.zowe.explorer.config.connect.ui.zosmf.ZoweTeamConfigDialog
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestConfigServiceImpl
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.crudable.Crudable
+import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.explorer.zowe.service.ZoweConfigServiceImpl
 import java.nio.file.Path
 import java.util.*
 import kotlin.reflect.KFunction
 
-class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
-
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
+class AddZoweTeamConfigActionTestSpec : AppInitShouldSpec("explorer/actions/AddZoweTeamConfigAction", {
   var isFindFileByNioPathCalled = false
   var isShowUntilDoneSucceeded = false
   var isErrorNotificationProduced = false
@@ -63,29 +56,25 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
   }
 
   context("AddZoweTeamConfigAction") {
-    val notificationsServiceMock = NotificationsService.getService() as TestNotificationsServiceImpl
-    notificationsServiceMock.testInstance = object : TestNotificationsServiceImpl() {
-      override fun notifyError(
-        t: Throwable,
-        project: Project?,
-        custTitle: String?,
-        custDetailsShort: String?,
-        custDetailsLong: String?
-      ) {
-        isErrorNotificationProduced = true
-      }
+    val notificationsService = NotificationsService.getService()
+    every {
+      notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+    } answers {
+      isErrorNotificationProduced = true
     }
 
     val addZoweTeamConfigAction = spyk<AddZoweTeamConfigAction>(recordPrivateCalls = true)
-    val event = mockk<AnActionEvent>()
-    every { event.project } returns ProjectManager.getInstance().defaultProject
-    every { event.presentation } returns Presentation()
+    val event = mockk<AnActionEvent> {
+      every { project } returns ProjectManager.getInstance().defaultProject
+      every { presentation } returns Presentation()
+    }
 
-    val vfMock = mockk<VirtualFile>()
-    every { vfMock.refresh(any(), any()) } returns Unit
-    every { vfMock.isValid } returns true
-    every { vfMock.isDirectory } returns false
-    every { vfMock.fileType } returns com.intellij.openapi.fileTypes.FileTypes.PLAIN_TEXT
+    val vfMock = mockk<VirtualFile> {
+      every { refresh(any(), any()) } returns Unit
+      every { isValid } returns true
+      every { isDirectory } returns false
+      every { fileType } returns com.intellij.openapi.fileTypes.FileTypes.PLAIN_TEXT
+    }
     mockkConstructor(OpenFileDescriptor::class)
     every { anyConstructed<OpenFileDescriptor>().navigate(any<Boolean>()) } returns Unit
 
@@ -97,24 +86,34 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
       vfMock
     }
 
-    val configService = ConfigService.getService() as TestConfigServiceImpl
-    every { configService.crudable.nextUniqueValue<ConnectionConfig, String>(ConnectionConfig::class.java) } returns "uuid"
-    every {
-      configService.crudable.find(
-        ConnectionConfig::class.java,
-        any()
-      )
-    } answers { listOf(ConnectionConfig()).stream() }
-    every { configService.crudable.getAll(ConnectionConfig::class.java) } answers { listOf(ConnectionConfig()).stream() }
-    every { configService.crudable.add(any()) } returns Optional.of(ConnectionConfig::class.java)
+    val configServiceCrudable = mockk<Crudable> {
+      every { nextUniqueValue<ConnectionConfig, String>(ConnectionConfig::class.java) } returns "uuid"
+      every {
+        find(ConnectionConfig::class.java, any())
+      } answers {
+        listOf(ConnectionConfig()).stream()
+      }
+      every {
+        getAll(ConnectionConfig::class.java)
+      } answers {
+        listOf(ConnectionConfig()).stream()
+      }
+      every { add(any()) } returns Optional.of(ConnectionConfig::class.java)
+    }
+    val configService = ConfigService.getService()
+    every { configService.crudable } returns configServiceCrudable
+
+    val credentialService = CredentialService.getService()
+    every { credentialService.getUsernameByKey(any<String>()) } returns "test"
+    every { credentialService.getPasswordByKey(any<String>()) } returns "test".toCharArray()
+    every { credentialService.setCredentials(any<String>(), any<String>(), any<CharArray>()) } returns Unit
 
     mockkConstructor(ZoweConfigServiceImpl::class)
-    every { anyConstructed<ZoweConfigServiceImpl>().addZoweConfigFile(any<ConnectionDialogState>()) } returns
-
-      mockkConstructor(ZoweTeamConfigDialog::class)
+    every {
+      anyConstructed<ZoweConfigServiceImpl>().addZoweConfigFile(any<ConnectionDialogState>())
+    } returns mockkConstructor(ZoweTeamConfigDialog::class)
     every { anyConstructed<ZoweTeamConfigDialog>().showAndGet() } returns true
-    var initState = ConnectionDialogState()
-
+    lateinit var initState: ConnectionDialogState
 
     val showUntilDoneMockk: (
       ConnectionDialogState, (ConnectionDialogState) -> StatefulDialog<ConnectionDialogState>, (ConnectionDialogState) -> Boolean
@@ -135,7 +134,9 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
     }
 
     mockkObject(MessageDialogBuilder)
-    every { MessageDialogBuilder.yesNo(any<String>(), any<String>()) } returns mockk {
+    every {
+      MessageDialogBuilder.yesNo(any<String>(), any<String>())
+    } returns mockk {
       every { icon(any()) } returns this
       every { asWarning() } returns this
       every { ask(any<Project>()) } returns true
@@ -143,7 +144,7 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
 
     should("getActionUpdateThread") {
       addZoweTeamConfigAction.actionUpdateThread shouldBe ActionUpdateThread.EDT
-      
+
       assertSoftly { isErrorNotificationProduced shouldBe false }
     }
 
@@ -185,13 +186,10 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
     }
 
     should("actionPerformed") {
-
-
-      runBlocking {
-        withContext(Dispatchers.EDT) {
-          addZoweTeamConfigAction.actionPerformed(event)
-        }
+      runInEdtAndWait {
+        addZoweTeamConfigAction.actionPerformed(event)
       }
+
       isFindFileByNioPathCalled shouldBe true
       isShowUntilDoneSucceeded shouldBe false
 
@@ -200,11 +198,10 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
 
     should("actionPerformed null project and file exists") {
       every { event.project } returns null
-      runBlocking {
-        withContext(Dispatchers.EDT) {
-          addZoweTeamConfigAction.actionPerformed(event)
-        }
+      runInEdtAndWait {
+        addZoweTeamConfigAction.actionPerformed(event)
       }
+
       isShowUntilDoneSucceeded shouldBe false
       isFindFileByNioPathCalled shouldBe true
       every { event.project } returns ProjectManager.getInstance().defaultProject
@@ -218,11 +215,10 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
         null
       }
       every { event.project } returns null
-      runBlocking {
-        withContext(Dispatchers.EDT) {
-          addZoweTeamConfigAction.actionPerformed(event)
-        }
+      runInEdtAndWait {
+        addZoweTeamConfigAction.actionPerformed(event)
       }
+
       isShowUntilDoneSucceeded shouldBe true
       isFindFileByNioPathCalled shouldBe true
       every { event.project } returns ProjectManager.getInstance().defaultProject
@@ -239,11 +235,10 @@ class AddZoweTeamConfigActionTestSpec : WithApplicationShouldSpec({
         isFindFileByNioPathCalled = true
         null
       }
-      runBlocking {
-        withContext(Dispatchers.EDT) {
-          addZoweTeamConfigAction.actionPerformed(event)
-        }
+      runInEdtAndWait {
+        addZoweTeamConfigAction.actionPerformed(event)
       }
+
       isFindFileByNioPathCalled shouldBe true
       isShowUntilDoneSucceeded shouldBe true
       every { vfmMock.findFileByNioPath(any<Path>()) } answers {

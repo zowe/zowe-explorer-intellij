@@ -10,24 +10,19 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.state.config
 
 import org.zowe.explorer.v3.state.config.connection.HttpConnectionConfig
 import org.zowe.explorer.v3.state.config.files.FilesWorkingSetConfig
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import io.mockk.*
+import org.zowe.explorer.testutils.MockkAwareShouldSpec
 
-class ConfigStateManagerTestSpec : ShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
+class ConfigStateManagerTestSpec : MockkAwareShouldSpec({
   context("v3/state/config/ConfigStateManager") {
     context("addConfig") {
       should("not add a config to the state manager when the state does not have the configs list by the type") {

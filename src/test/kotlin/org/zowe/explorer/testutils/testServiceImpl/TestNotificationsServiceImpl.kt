@@ -10,37 +10,12 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.testutils.testServiceImpl
 
-import com.intellij.openapi.project.Project
+import io.mockk.mockk
 import org.zowe.explorer.telemetry.NotificationsService
 
-open class TestNotificationsServiceImpl : NotificationsService {
-
-  var testInstance = object : NotificationsService {
-
-    override fun notifyError(
-      t: Throwable,
-      project: Project?,
-      custTitle: String?,
-      custDetailsShort: String?,
-      custDetailsLong: String?
-    ) {
-      TODO("Not yet implemented")
-    }
-
-  }
-
-  override fun notifyError(
-    t: Throwable,
-    project: Project?,
-    custTitle: String?,
-    custDetailsShort: String?,
-    custDetailsLong: String?
-  ) {
-    return this.testInstance.notifyError(t, project, custTitle, custDetailsShort, custDetailsLong)
-  }
-
-}
+open class TestNotificationsServiceImpl : NotificationsService by mockk()

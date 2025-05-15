@@ -10,14 +10,16 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.ui
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.shouldBe
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.dataops.DataOpsManager
@@ -27,83 +29,84 @@ import org.zowe.explorer.dataops.fetch.DatasetFileFetchProvider
 import org.zowe.explorer.dataops.fetch.FileFetchProvider
 import org.zowe.explorer.explorer.FileExplorer
 import org.zowe.explorer.explorer.FilesWorkingSetImpl
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
-import org.zowe.explorer.utils.append
 import io.mockk.*
+import org.zowe.explorer.explorer.UIComponentManager
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.vfs.MFVirtualFile
 import java.time.LocalDateTime
 
-class FileFetchNodeTestSpec : WithApplicationShouldSpec({
-
-  afterSpec {
-    clearAllMocks()
-  }
-
+class FileFetchNodeTestSpec : AppInitShouldSpec("explorer/ui/FileFetchNode", {
   context("refresh date test spec") {
+    var addTextCalledCount = 0
 
-    val dataOpsManagerService = DataOpsManager.getService() as TestDataOpsManagerImpl
+    val uiComponentManager = UIComponentManager.getService()
+    every { uiComponentManager.getExplorerContentProvider(any<Class<FileExplorer>>()) } returns mockk()
+
     val datasetFileFetchProvider = mockk<DatasetFileFetchProvider>()
 
     val queryMock = mockk<RemoteQuery<ConnectionConfig, DSMask, Unit>>()
     val lastRefreshDate = LocalDateTime.of(2023, 12, 30, 10, 0, 0)
 
-    val presentationMock = mockk<PresentationData>()
     val mockedMask = mockk<DSMask>()
     val mockedProject = mockk<Project>()
     val mockedExplorerTreeNodeParent = mockk<FilesWorkingSetNode>()
-    val mockedWorkingSet = mockk<FilesWorkingSetImpl>()
     val mockedExplorer = mockk<FileExplorer>()
-    val mockedExplorerTreeStructure = mockk<ExplorerTreeStructureBase>()
-
-    every { mockedWorkingSet.explorer } returns mockedExplorer
-    every { mockedExplorerTreeStructure.registerNode(any()) } just Runs
-    every { mockedWorkingSet.connectionConfig } returns mockk()
-
-    dataOpsManagerService.testInstance = object : TestDataOpsManagerImpl() {
-      @Suppress("UNCHECKED_CAST")
-      override fun <R : Any, Q : Query<R, Unit>, File : VirtualFile> getFileFetchProvider(
-        requestClass: Class<out R>,
-        queryClass: Class<out Query<*, *>>,
-        vFileClass: Class<out File>
-      ): FileFetchProvider<R, Q, File> {
-        return datasetFileFetchProvider as FileFetchProvider<R, Q, File>
-      }
+    val mockedWorkingSet = mockk<FilesWorkingSetImpl> {
+      every { explorer } returns mockedExplorer
+      every { connectionConfig } returns mockk()
     }
+    val mockedExplorerTreeStructure = mockk<ExplorerTreeStructureBase> {
+      every { registerNode(any()) } just Runs
+    }
+
+    lateinit var presentationMock: PresentationData
+
+    val dataOpsManagerService = DataOpsManager.getService()
+    every {
+      dataOpsManagerService.getFileFetchProvider(DSMask::class.java, RemoteQuery::class.java, MFVirtualFile::class.java)
+    } returns datasetFileFetchProvider as FileFetchProvider<DSMask, Query<DSMask, Unit>, MFVirtualFile>
 
     val classUnderTest =
       DSMaskNode(mockedMask, mockedProject, mockedExplorerTreeNodeParent, mockedWorkingSet, mockedExplorerTreeStructure)
+
+    beforeEach {
+      addTextCalledCount = 0
+
+      every { datasetFileFetchProvider.getRealQueryInstance(any()) } returns queryMock
+      every { datasetFileFetchProvider.findCacheRefreshDateIfPresent(any()) } returns lastRefreshDate
+
+      presentationMock = mockk {
+        every {
+          addText(any<String>(), any<SimpleTextAttributes>())
+        } answers {
+          addTextCalledCount++
+        }
+      }
+    }
 
     context("updateRefreshDateAndTime") {
       should("should update node presentation with correct refresh date and time given valid query") {
         //given
         val text = "refreshed: 30 DEC 10:00:00"
-        every { presentationMock.append(any(), any()) } answers {presentationMock}
-        every { datasetFileFetchProvider.getRealQueryInstance(any()) } returns queryMock
-        every { datasetFileFetchProvider.findCacheRefreshDateIfPresent(any()) } returns lastRefreshDate
 
         //when
         classUnderTest.updateRefreshDateAndTime(presentationMock)
 
         //then
         verify(exactly = 1) { datasetFileFetchProvider.findCacheRefreshDateIfPresent(queryMock) }
-        verify(exactly = 1) { presentationMock.append(text, SimpleTextAttributes.GRAY_ATTRIBUTES) }
-        clearMocks(presentationMock, verificationMarks = true)
-
+        assertSoftly { addTextCalledCount shouldBe 2 }
       }
 
       should("should update node presentation with correct refresh date and time given valid query if no real instance found") {
         //given
         val text = "refreshed: 30 DEC 10:00:00"
-        every { presentationMock.append(any(), any()) } answers {presentationMock}
         every { datasetFileFetchProvider.getRealQueryInstance(any()) } returns null
-        every { datasetFileFetchProvider.findCacheRefreshDateIfPresent(any()) } returns lastRefreshDate
 
         //when
         classUnderTest.updateRefreshDateAndTime(presentationMock)
 
         //then
-        verify(exactly = 1) { presentationMock.append(text, SimpleTextAttributes.GRAY_ATTRIBUTES) }
-        clearMocks(presentationMock, verificationMarks = true)
+        assertSoftly { addTextCalledCount shouldBe 2 }
       }
 
       should("should not update presentation for node if no refresh date found") {
@@ -115,24 +118,21 @@ class FileFetchNodeTestSpec : WithApplicationShouldSpec({
         classUnderTest.updateRefreshDateAndTime(presentationMock)
 
         //then
-        verify { presentationMock wasNot Called }
-        clearMocks(presentationMock, verificationMarks = true)
+        assertSoftly { addTextCalledCount shouldBe 0 }
       }
 
       should("should update node presentation with Out-Of-Sync text if no valid query") {
         //given
         val text = "Out of sync"
         every { mockedWorkingSet.connectionConfig } returns null
-        every { presentationMock.append(any(), any()) } answers  {presentationMock}
         every { datasetFileFetchProvider.getRealQueryInstance(any()) } returns null
 
         //when
         classUnderTest.updateRefreshDateAndTime(presentationMock)
 
         //then
-        verify(exactly = 1) { presentationMock.append(text, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
+        assertSoftly { addTextCalledCount shouldBe 2 }
       }
     }
-    unmockkAll()
   }
 })

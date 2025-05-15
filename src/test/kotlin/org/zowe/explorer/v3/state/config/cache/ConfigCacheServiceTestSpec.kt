@@ -10,15 +10,13 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.v3.state.config.cache
 
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.messages.Topic
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.utils.castOrNull
 import org.zowe.explorer.v3.state.config.Config
 import org.zowe.explorer.v3.state.config.ConfigEventListener
 import org.zowe.explorer.v3.state.config.ConfigType
@@ -27,29 +25,22 @@ import org.zowe.explorer.v3.state.config.files.FilesWorkingSetConfig
 import org.zowe.explorer.v3.state.storage.StableStorage
 import org.zowe.explorer.v3.state.storage.StorageService
 import io.kotest.assertions.assertSoftly
-import io.kotest.assertions.fail
-import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.testutils.getPrivateFieldValue
+import org.zowe.explorer.utils.sendTopic
+import org.zowe.explorer.utils.subscribe
 
 @OptIn(StableStorage::class)
-class ConfigCacheServiceTestSpec : ShouldSpec({
-  afterSpec {
-    clearAllMocks()
-    unmockkAll()
-  }
-
-  context("v3/state/settings/ConfigCacheService") {
+class ConfigCacheServiceTestSpec : AppInitShouldSpec("v3/state/settings/ConfigCacheService", {
+  context("all functions") {
     var configTypeRegisterCount = 0
     var configsReloadCount = 0
     var configAddedCount = 0
     var configUpdatedCount = 0
     var configDeletedCount = 0
     var isErrorNotificationTriggered = false
-
-    lateinit var storageServiceMock: StorageService
-    lateinit var subscriptionObj: ConfigEventListener
-    lateinit var configCacheService: ConfigCacheService
 
     mockkObject(NotificationsService)
     every {
@@ -58,83 +49,57 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
       isErrorNotificationTriggered = true
     }
 
+    mockkConstructor(Application::class)
+
+    // Needed or companion object initialization
+    StorageService.Companion
+    val storageServiceMock = mockk<StorageService>()
+    val configCacheService = ConfigCacheService()
+    val state = getPrivateFieldValue(configCacheService, "state") as ConfigCacheState
+
+    every { anyConstructed<Application>().getService(ConfigCacheService::class.java) } returns configCacheService
+    every { anyConstructed<Application>().getService(StorageService::class.java) } returns storageServiceMock
+
+    mockkObject(StorageService.Companion)
+    every { StorageService.getService() } returns storageServiceMock
+
+    subscribe(
+      ConfigCacheService.TOPIC,
+      object : ConfigEventListener {
+        override fun registered(configType: ConfigType) {
+          configTypeRegisterCount += 1
+        }
+        override fun added(config: Config) {
+          configAddedCount += 1
+        }
+        override fun updated(oldConfig: Config, newConfig: Config) {
+          configUpdatedCount += 1
+        }
+        override fun deleted(config: Config) {
+          configDeletedCount += 1
+        }
+        override fun reloaded(configType: ConfigType, reloadedConfigs: List<Config>) {
+          configsReloadCount += 1
+        }
+      }
+    )
+
     beforeEach {
       configTypeRegisterCount = 0
       configsReloadCount = 0
       configAddedCount = 0
       configUpdatedCount = 0
       configDeletedCount = 0
+
       isErrorNotificationTriggered = false
 
-      // Needed or companion object initialization
-      StorageService.Companion
-      storageServiceMock = mockk<StorageService>()
-      val applicationMockk = mockk<Application> {
-        every { getService(StorageService::class.java) } returns storageServiceMock
-        every { messageBus } returns mockk {
-          every { connect() } returns mockk {
-            every {
-              subscribe(any<Topic<ConfigEventListener>>(), any<ConfigEventListener>())
-            } answers {
-              subscriptionObj = secondArg<ConfigEventListener>()
-            }
-          }
-          every {
-            syncPublisher(any<Topic<*>>())
-          } answers {
-            val topic = value as Topic<*>
-            if (topic.displayName.contains("ConfigEventListener")) {
-              val configEventListener = value.castOrNull<Topic<ConfigEventListener>>()
-              if (configEventListener != null) {
-                mockk<ConfigEventListener> {
-                  every {
-                    registered(any<ConfigType>())
-                  } answers {
-                    configTypeRegisterCount += 1
-                  }
-                  every {
-                    reloaded(any<ConfigType>(), any<List<Config>>())
-                  } answers {
-                    configsReloadCount += 1
-                  }
-                  every {
-                    added(any<Config>())
-                  } answers {
-                    configAddedCount += 1
-                  }
-                  every {
-                    updated(any<Config>(), any<Config>())
-                  } answers {
-                    configUpdatedCount += 1
-                  }
-                  every {
-                    deleted(any<Config>())
-                  } answers {
-                    configDeletedCount += 1
-                  }
-                }
-              } else {
-                fail("Topic is impossible to cast to Topic<ConfigEventListener>")
-              }
-            } else {
-              fail("Unrecognized event listener")
-            }
-          }
-        }
-      }
-
-      mockkStatic(ApplicationManager::getApplication)
-      every { ApplicationManager.getApplication() } returns applicationMockk
-
-      configCacheService = ConfigCacheService()
-
-      every { applicationMockk.getService(ConfigCacheService::class.java) } returns configCacheService
+      state.configs = mutableMapOf()
     }
 
     context("init") {
       should("not register new config type cause it is already registered") {
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
         assertSoftly { configsReloadCount shouldBe 0 }
@@ -145,8 +110,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
       }
 
       should("reload configs by their type") {
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf())
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf())
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
         assertSoftly { configsReloadCount shouldBe 1 }
@@ -157,7 +122,7 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
       }
 
       should("not reload configs by their type cause the type is not registered yet") {
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf())
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf())
 
         assertSoftly { configTypeRegisterCount shouldBe 0 }
         assertSoftly { configsReloadCount shouldBe 0 }
@@ -168,8 +133,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
       }
 
       should("add a new config") {
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.added(FilesWorkingSetConfig())
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).added(FilesWorkingSetConfig())
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
         assertSoftly { configsReloadCount shouldBe 0 }
@@ -181,9 +146,9 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
 
       should("not add a new config cause it is already there") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.added(config)
-        subscriptionObj.added(config)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).added(config)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).added(config)
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
         assertSoftly { configsReloadCount shouldBe 0 }
@@ -195,10 +160,10 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
 
       should("update a config") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
         val newConfig = FilesWorkingSetConfig(uuid = config.uuid, name = "test")
-        subscriptionObj.updated(config, newConfig)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).updated(config, newConfig)
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
         assertSoftly { configsReloadCount shouldBe 1 }
@@ -210,9 +175,9 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
 
       should("not update a config cause it is the same as the stored one") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
-        subscriptionObj.updated(config, config)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).updated(config, config)
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
         assertSoftly { configsReloadCount shouldBe 1 }
@@ -224,9 +189,9 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
 
       should("delete a config") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
-        subscriptionObj.deleted(config)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).deleted(config)
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
         assertSoftly { configsReloadCount shouldBe 1 }
@@ -237,8 +202,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
       }
 
       should("not delete a config cause there is no such instance") {
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.deleted(FilesWorkingSetConfig())
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).deleted(FilesWorkingSetConfig())
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
         assertSoftly { configsReloadCount shouldBe 0 }
@@ -262,12 +227,11 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
       should("return true cause the cache is modified") {
         val config = FilesWorkingSetConfig()
         val configsInStorage = listOf(config as Config)
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj
-          .reloaded(
-            ConfigType.FILES_WORKING_SET_CONFIG_V1,
-            listOf(FilesWorkingSetConfig(uuid = config.uuid, connectionConfigUuid = "test"))
-          )
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(
+          ConfigType.FILES_WORKING_SET_CONFIG_V1,
+          listOf(FilesWorkingSetConfig(uuid = config.uuid, connectionConfigUuid = "test"))
+        )
 
         every { storageServiceMock.getConfigsFromStorage(any<ConfigType>()) } returns configsInStorage.stream()
 
@@ -279,8 +243,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
       should("return false cause the cache is the same as the storage") {
         val config = FilesWorkingSetConfig()
         val configsInStorage = listOf(config as Config)
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, configsInStorage)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, configsInStorage)
 
         every { storageServiceMock.getConfigsFromStorage(any<ConfigType>()) } returns configsInStorage.stream()
 
@@ -306,15 +270,14 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
         val configToAdd = FilesWorkingSetConfig()
         val configToUpdate = FilesWorkingSetConfig()
 
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj
-          .reloaded(
-            ConfigType.FILES_WORKING_SET_CONFIG_V1,
-            listOf(
-              configToAdd,
-              FilesWorkingSetConfig(uuid = configToUpdate.uuid, dsMasks = mutableListOf(DatasetMaskConfigItem("TEST")))
-            )
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(
+          ConfigType.FILES_WORKING_SET_CONFIG_V1,
+          listOf(
+            configToAdd,
+            FilesWorkingSetConfig(uuid = configToUpdate.uuid, dsMasks = mutableListOf(DatasetMaskConfigItem("TEST")))
           )
+        )
 
         every {
           storageServiceMock.getConfigsFromStorage(any<ConfigType>())
@@ -347,8 +310,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
       should("not save config state to storage state cause the cache state is the same as the storage state") {
         val config = FilesWorkingSetConfig()
 
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
 
         every {
           storageServiceMock.getConfigsFromStorage(any<ConfigType>())
@@ -382,8 +345,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
     context("getConfigFromCache") {
       should("get config from cache by it's UUID") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
 
         val result = configCacheService.getConfigFromCache(ConfigType.FILES_WORKING_SET_CONFIG_V1, config.uuid)
 
@@ -392,8 +355,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
 
       should("not get config from cache cause there is no config for the provided UUID") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
 
         val result = configCacheService.getConfigFromCache(ConfigType.FILES_WORKING_SET_CONFIG_V1, "wrong_uuid")
 
@@ -403,7 +366,7 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
 
     context("addConfigToCache") {
       should("add a new config") {
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
         configCacheService.addConfigToCache(FilesWorkingSetConfig())
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
@@ -416,7 +379,7 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
 
       should("not add a new config cause it is already there") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
         configCacheService.addConfigToCache(config)
         configCacheService.addConfigToCache(config)
 
@@ -432,8 +395,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
     context("updateConfigInCache") {
       should("update a config") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
         val newConfig = FilesWorkingSetConfig(uuid = config.uuid, name = "test")
         configCacheService.updateConfigInCache(newConfig)
 
@@ -447,8 +410,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
 
       should("not update a config cause it is the same as the stored one") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
         configCacheService.updateConfigInCache(config)
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
@@ -463,8 +426,8 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
     context("deleteConfigFromCache") {
       should("delete a config") {
         val config = FilesWorkingSetConfig()
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
-        subscriptionObj.reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).reloaded(ConfigType.FILES_WORKING_SET_CONFIG_V1, listOf(config))
         configCacheService.deleteConfigFromCache(config)
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }
@@ -476,7 +439,7 @@ class ConfigCacheServiceTestSpec : ShouldSpec({
       }
 
       should("not delete a config cause there is no such instance") {
-        subscriptionObj.registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
+        sendTopic(StorageService.STORAGE_CONFIGS_TOPIC).registered(ConfigType.FILES_WORKING_SET_CONFIG_V1)
         configCacheService.deleteConfigFromCache(FilesWorkingSetConfig())
 
         assertSoftly { configTypeRegisterCount shouldBe 1 }

@@ -28,7 +28,6 @@ import com.intellij.ui.dsl.builder.*
 import org.zowe.explorer.common.ui.StatefulComponent
 import org.zowe.explorer.config.ws.JobFilterStateWithMultipleWS
 import org.zowe.explorer.explorer.JesWorkingSet
-import org.zowe.explorer.utils.initialize
 import org.zowe.explorer.utils.validateJobFilter
 import javax.swing.JComponent
 
@@ -43,7 +42,7 @@ class AddJobsFilterDialog(
 
   init {
     title = "Create Jobs Filter"
-    initialize { init() }
+    init()
   }
 
   override fun createCenterPanel(): JComponent {

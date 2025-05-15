@@ -18,7 +18,6 @@ package org.zowe.explorer.explorer.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,35 +29,27 @@ import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.Operation
 import org.zowe.explorer.dataops.attributes.*
-import org.zowe.explorer.dataops.content.synchronizer.ContentSynchronizer
 import org.zowe.explorer.explorer.Explorer
 import org.zowe.explorer.explorer.ExplorerUnit
 import org.zowe.explorer.explorer.FilesWorkingSet
 import org.zowe.explorer.explorer.ui.*
 import org.zowe.explorer.explorer.ui.NodeData
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
-import org.zowe.explorer.testutils.testServiceImpl.TestDataOpsManagerImpl
 import org.zowe.explorer.vfs.MFVirtualFile
 import io.mockk.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assertions.*
 import org.zowe.explorer.dataops.operations.UssChangeModeOperation
 import org.zowe.explorer.dataops.operations.UssChangeOwnerOperation
 import org.zowe.explorer.telemetry.NotificationsService
-import org.zowe.explorer.testutils.testServiceImpl.TestNotificationsServiceImpl
+import org.zowe.explorer.testutils.AppInitShouldSpec
 import org.zowe.explorer.utils.clone
 import org.zowe.explorer.utils.changeFileEncodingAction
-import org.zowe.explorer.utils.initialize
+import org.zowe.explorer.utils.runInEdtAndWait
 import org.zowe.kotlinsdk.*
 import java.nio.charset.Charset
 
-class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-  context("explorer module: actions/GetFilePropertiesAction") {
+class GetFilePropertiesActionTestSpec : AppInitShouldSpec("explorer/actions/GetFilePropertiesAction", {
+  context("all functions") {
+    var didProduceErrorNotification = false
+
     val mockConnectionConfig = mockk<ConnectionConfig> {
       every { uuid } returns "uuid"
     }
@@ -71,8 +62,15 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
       every { project } returns mockProject
       every { getData(EXPLORER_VIEW) } returns fileView
     }
-    val dataOpsManager = DataOpsManager.getService() as TestDataOpsManagerImpl
-    val notificationsService = NotificationsService.getService() as TestNotificationsServiceImpl
+
+    val dataOpsManager = DataOpsManager.getService()
+
+    val notificationsService = NotificationsService.getService()
+    every {
+      notificationsService.notifyError(any<Throwable>(), any<Project>(), any<String>(), any<String>(), any<String>())
+    } answers {
+      didProduceErrorNotification = true
+    }
 
     val genericDatasetMock = mockk<Dataset> {
       every { name } returns "name"
@@ -97,8 +95,14 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
     }
 
     beforeEach {
-      dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {}
-      notificationsService.testInstance = object : TestNotificationsServiceImpl() {}
+      didProduceErrorNotification = false
+
+      every { dataOpsManager.getContentSynchronizer(any<VirtualFile>()) } returns mockk()
+      every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns mockk<FileAttributes>()
+      every {
+        dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+      } throws NotImplementedError("Unexpected call of the 'performOperation'")
+
       every { getPropertiesEvent.getData(EXPLORER_VIEW) } returns fileView
       every { fileUnit.connectionConfig } returns mockConnectionConfig
     }
@@ -138,7 +142,6 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
           val nodeData = spyk(NodeData(fileLikeDsNode, mockVirtualFile, null))
           every { fileUnit.connectionConfig } returns null
           every { fileView.mySelectedNodesData } returns listOf(nodeData)
-          every { getPropertiesEvent.getData(EXPLORER_VIEW) } returns fileView
 
           GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
 
@@ -155,26 +158,34 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
         val nodeData = spyk(NodeData(fileLikeDsNode, mockVirtualFile, null))
         val queryMask = spyk(DSMask("mask", mutableListOf("excl_name")))
+        val attributes = spyk(
+          RemoteDatasetAttributes(
+            genericDatasetMock,
+            "test",
+            mutableListOf(MaskedRequester(mockConnectionConfig, queryMask))
+          )
+        )
 
-        mockkStatic(::initialize)
-        every { initialize(any()) } returns Unit
+        mockkConstructor(DatasetPropertiesDialog::class)
 
         beforeEach {
-          mockkConstructor(DatasetPropertiesDialog::class)
           every { anyConstructed<DatasetPropertiesDialog>().showAndGet() } returns true
 
           every { fileView.mySelectedNodesData } returns listOf(nodeData)
+
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
+
+          clearMocks(fileLikeDsNode, answers = false, childMocks = false)
+          clearConstructorMockk(DatasetPropertiesDialog::class, answers = false, childMocks = false)
         }
 
         should("not open the properties dialog when attributes are not of RemoteDatasetAttributes, RemoteUssAttributes or RemoteMemberAttributes types") {
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return mockk<FileAttributes>()
-            }
-          }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns mockk<FileAttributes>()
 
           // Simulate the action
-          GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
+          }
 
           // Verify node.fetchAttributesForNodeIfMissing() is NOT called
           verify(exactly = 0) { fileLikeDsNode.fetchAttributesForNodeIfMissing(any(), any(), any(), any()) }
@@ -182,20 +193,6 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("just open the properties dialog when the node is FileLikeDatasetNode and fetch is not needed") {
-          val attributes = spyk(
-            RemoteDatasetAttributes(
-              genericDatasetMock,
-              "test",
-              mutableListOf(MaskedRequester(mockConnectionConfig, queryMask))
-            )
-          )
-
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-          }
-
           every {
             fileLikeDsNode
               .fetchAttributesForNodeIfMissing(
@@ -205,15 +202,15 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
                 any<() -> Unit>()
               )
           } answers {
-            runBlocking {
-              withContext(Dispatchers.EDT) {
-                thirdArg<() -> Unit>()()
-              }
+            runInEdtAndWait {
+              thirdArg<() -> Unit>()()
             }
           }
 
           // Simulate the action
-          GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
+          }
 
           verify(exactly = 1) {
             fileLikeDsNode.fetchAttributesForNodeIfMissing(
@@ -227,20 +224,6 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("fetch attributes for a node when the node is FileLikeDatasetNode and fetch is needed") {
-          val attributes = spyk(
-            RemoteDatasetAttributes(
-              genericDatasetMock,
-              "test",
-              mutableListOf(MaskedRequester(mockConnectionConfig, queryMask))
-            )
-          )
-
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-          }
-
           every {
             fileLikeDsNode
               .fetchAttributesForNodeIfMissing(
@@ -250,15 +233,15 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
                 any<() -> Unit>()
               )
           } answers {
-            runBlocking {
-              withContext(Dispatchers.EDT) {
-                arg<() -> Unit>(3)()
-              }
+            runInEdtAndWait {
+              arg<() -> Unit>(3)()
             }
           }
 
           // Simulate the action
-          GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
+          }
 
           verify(exactly = 1) {
             fileLikeDsNode.fetchAttributesForNodeIfMissing(
@@ -272,23 +255,7 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("not fetch attributes for a node when the node is FileLikeDatasetNode and a content synchronizer is null") {
-          val attributes = spyk(
-            RemoteDatasetAttributes(
-              genericDatasetMock,
-              "test",
-              mutableListOf(MaskedRequester(mockConnectionConfig, queryMask))
-            )
-          )
-
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-
-            override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
-              return null
-            }
-          }
+          every { dataOpsManager.getContentSynchronizer(any<VirtualFile>()) } returns null
 
           every {
             fileLikeDsNode
@@ -299,17 +266,13 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
                 any<() -> Unit>()
               )
           } answers {
-            runBlocking {
-              withContext(Dispatchers.EDT) {
-                arg<() -> Unit>(3)()
-              }
+            runInEdtAndWait {
+              arg<() -> Unit>(3)()
             }
           }
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 0) {
@@ -332,23 +295,8 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
             every { explorer } returns mockExplorer
           }
           val libraryNodeData = spyk(NodeData(libraryNode, mockVirtualFile, null))
-          val attributes = spyk(
-            RemoteDatasetAttributes(
-              genericDatasetMock,
-              "test",
-              mutableListOf(MaskedRequester(mockConnectionConfig, queryMask))
-            )
-          )
 
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-
-            override fun getContentSynchronizer(file: VirtualFile): ContentSynchronizer? {
-              return null
-            }
-          }
+          every { dataOpsManager.getContentSynchronizer(any<VirtualFile>()) } returns null
 
           every {
             fileLikeDsNode
@@ -359,18 +307,14 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
                 any<() -> Unit>()
               )
           } answers {
-            runBlocking {
-              withContext(Dispatchers.EDT) {
-                arg<() -> Unit>(3)()
-              }
+            runInEdtAndWait {
+              arg<() -> Unit>(3)()
             }
           }
           every { fileView.mySelectedNodesData } returns listOf(libraryNodeData)
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 0) {
@@ -396,34 +340,27 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
 
         every { fileView.mySelectedNodesData } returns listOf(nodeData)
 
-        mockkStatic(::initialize)
-        every { initialize(any()) } returns Unit
         mockkConstructor(MemberPropertiesDialog::class)
         every { anyConstructed<MemberPropertiesDialog>().showAndGet() } returns true
 
         should("get member properties") {
-          val member = mockk<Member>()
+          val member = Member()
           val fileAttr =
             spyk(RemoteMemberAttributes(member, mockVirtualFile, XIBMDataType(XIBMDataType.Type.TEXT)))
 
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return fileAttr
-            }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns fileAttr
+
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
+
+            verify(exactly = 1) { anyConstructed<DatasetPropertiesDialog>().showAndGet() }
           }
-
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-
-              verify(exactly = 1) { anyConstructed<DatasetPropertiesDialog>().showAndGet() }
-            }
-          }
-
         }
       }
 
       context("USS file attributes") {
+        var didChangeEncoding = false
+
         var mockVirtualFile: MFVirtualFile = mockk<MFVirtualFile>()
         val ussFileNode = mockk<UssFileNode> {
           every { virtualFile } returns mockVirtualFile
@@ -452,21 +389,30 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
 
         every { fileView.mySelectedNodesData } returns listOf(nodeData)
 
-        mockkStatic(::initialize)
-        every { initialize(any()) } returns Unit
-
-        mockkStatic(::initialize)
-        every { initialize(any()) } returns Unit
         mockkConstructor(ChangeEncodingDialog::class)
         every { anyConstructed<ChangeEncodingDialog>().show() } returns Unit
 
+        mockkStatic(::changeFileEncodingAction)
+
         beforeEach {
+          didChangeEncoding = false
+
           mockVirtualFile = mockk<MFVirtualFile>()
+
           every { ussFileNode.virtualFile } returns mockVirtualFile
           every { ussFileNode.parent } returns mockk()
+
           nodeData = spyk(NodeData(ussFileNode, mockVirtualFile, null))
+
           mockkConstructor(UssFilePropertiesDialog::class)
           every { anyConstructed<UssFilePropertiesDialog>().showAndGet() } returns true
+
+          every {
+            changeFileEncodingAction(any(), any(), any(), any())
+          } answers {
+            didChangeEncoding = true
+            true
+          }
         }
 
         should("change file owner") {
@@ -493,27 +439,18 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
           }
           every { mockVirtualFile.isDirectory } returns false
 
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-
-            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-              if (operation is UssChangeOwnerOperation) {
-                if (operation.request.parameters.owner == newOwner) {
-                  didChangeOwner = true
-                }
-              } else {
-                throw IllegalStateException("Unknown operation: $operation")
-              }
-              return Unit as R
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
+          every {
+            dataOpsManager.performOperation(any<UssChangeOwnerOperation>(), any<ProgressIndicator>())
+          } answers {
+            val operation = firstArg<UssChangeOwnerOperation>()
+            if (operation.request.parameters.owner == newOwner) {
+              didChangeOwner = true
             }
           }
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -522,8 +459,6 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("produce an error notification when attempting to change owner") {
-          var didProduceErrorNotification = false
-
           val oldOwner = "TESTOLD"
           val newOwner = "TESTNEW"
           val testUssFile = UssFile(
@@ -545,32 +480,13 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
           }
           every { mockVirtualFile.isDirectory } returns false
 
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
+          every {
+            dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+          } throws Exception("Test exception")
 
-            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-              throw Exception("Test exception")
-            }
-          }
-
-          notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-            override fun notifyError(
-              t: Throwable,
-              project: Project?,
-              custTitle: String?,
-              custDetailsShort: String?,
-              custDetailsLong: String?
-            ) {
-              didProduceErrorNotification = true
-            }
-          }
-
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -602,27 +518,18 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
           }
           every { mockVirtualFile.isDirectory } returns false
 
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-
-            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-              if (operation is UssChangeOwnerOperation) {
-                if (operation.request.parameters.group == newGroupId) {
-                  didChangeGroupId = true
-                }
-              } else {
-                throw IllegalStateException("Unknown operation: $operation")
-              }
-              return Unit as R
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
+          every {
+            dataOpsManager.performOperation(any<UssChangeOwnerOperation>(), any<ProgressIndicator>())
+          } answers {
+            val operation = firstArg<UssChangeOwnerOperation>()
+            if (operation.request.parameters.group == newGroupId) {
+              didChangeGroupId = true
             }
           }
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -631,8 +538,6 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("produce an error notification when attempting to change group ID") {
-          var didProduceErrorNotification = false
-
           val oldGroupId = "TESTGROUPOLD"
           val newGroupId = "TESTGROUPNEW"
           val testUssFile = UssFile(
@@ -654,32 +559,13 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
           }
           every { mockVirtualFile.isDirectory } returns false
 
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
+          every {
+            dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+          } throws Exception("Test exception")
 
-            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-              throw Exception("Test exception")
-            }
-          }
-
-          notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-            override fun notifyError(
-              t: Throwable,
-              project: Project?,
-              custTitle: String?,
-              custDetailsShort: String?,
-              custDetailsLong: String?
-            ) {
-              didProduceErrorNotification = true
-            }
-          }
-
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -713,6 +599,7 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
               didCleanCache = true
             }
           } as ExplorerTreeNode<ConnectionConfig, *>
+
           every {
             anyConstructed<UssFilePropertiesDialog>().showAndGet()
           } answers {
@@ -723,31 +610,22 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
           }
           every { mockVirtualFile.isDirectory } returns false
 
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-
-            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-              if (operation is UssChangeModeOperation) {
-                if (
-                  operation.request.parameters.mode.owner == newFileMode.owner
-                  && operation.request.parameters.mode.group == newFileMode.group
-                  && operation.request.parameters.mode.all == newFileMode.all
-                ) {
-                  didChangeFileMode = true
-                }
-              } else {
-                throw IllegalStateException("Unknown operation: $operation")
-              }
-              return Unit as R
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
+          every {
+            dataOpsManager.performOperation(any<UssChangeModeOperation>(), any<ProgressIndicator>())
+          } answers {
+            val operation = firstArg<UssChangeModeOperation>()
+            if (
+              operation.request.parameters.mode.owner == newFileMode.owner
+              && operation.request.parameters.mode.group == newFileMode.group
+              && operation.request.parameters.mode.all == newFileMode.all
+            ) {
+              didChangeFileMode = true
             }
           }
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -762,8 +640,6 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("produce an error notification trying to change file mode") {
-          var didProduceErrorNotification = false
-
           val newFileMode = FileMode(owner = 7, group = 7, all = 7)
 
           val testUssFile = UssFile(
@@ -789,66 +665,35 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
           }
           every { mockVirtualFile.isDirectory } returns false
 
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
+          every {
+            dataOpsManager.performOperation(any<Operation<Any>>(), any<ProgressIndicator>())
+          } throws Exception("Test exception")
 
-            override fun <R : Any> performOperation(operation: Operation<R>, progressIndicator: ProgressIndicator): R {
-              throw Exception("Test exception")
-            }
-          }
-
-          notificationsService.testInstance = object : TestNotificationsServiceImpl() {
-            override fun notifyError(
-              t: Throwable,
-              project: Project?,
-              custTitle: String?,
-              custDetailsShort: String?,
-              custDetailsLong: String?
-            ) {
-              didProduceErrorNotification = true
-            }
-          }
-
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
-          assertSoftly { didProduceErrorNotification shouldBe true }
-          assertSoftly { attributes.fileMode?.owner shouldNotBe newFileMode.owner }
-          assertSoftly { attributes.fileMode?.group shouldNotBe newFileMode.group }
-          assertSoftly { attributes.fileMode?.all shouldNotBe newFileMode.all }
-          assertSoftly { attributes.fileMode?.owner shouldBe oldFileMode?.owner }
-          assertSoftly { attributes.fileMode?.group shouldBe oldFileMode?.group }
-          assertSoftly { attributes.fileMode?.all shouldBe oldFileMode?.all }
+          assertSoftly {
+            didProduceErrorNotification shouldBe true
+            attributes.fileMode?.owner shouldNotBe newFileMode.owner
+            attributes.fileMode?.group shouldNotBe newFileMode.group
+            attributes.fileMode?.all shouldNotBe newFileMode.all
+            attributes.fileMode?.owner shouldBe oldFileMode?.owner
+            attributes.fileMode?.group shouldBe oldFileMode?.group
+            attributes.fileMode?.all shouldBe oldFileMode?.all
+          }
         }
 
         should("get USS file properties and do not change charset") {
-          var didChangeEncoding = false
-
           val oldCharset = Charset.forName("IBM-1047")
           val attributes = spyk(RemoteUssAttributes("rootPath", ussFile, "url", mockConnectionConfig)) {
             every { path } returns "path"
           }
           attributes.charset = oldCharset
 
-          mockkStatic(::changeFileEncodingAction)
-          every {
-            changeFileEncodingAction(any(), any(), any(), any())
-          } answers {
-            didChangeEncoding = true
-            true
-          }
-
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-          }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
 
           every { mockVirtualFile.isDirectory } returns false
           every {
@@ -857,10 +702,8 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
             true
           }
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -869,8 +712,6 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("get USS file properties and change charset") {
-          var didChangeEncoding = false
-
           val oldCharset = Charset.forName("IBM-1047")
           val newCharset = Charset.forName("IBM-500")
           val attributes = spyk(RemoteUssAttributes("rootPath", ussFile, "url", mockConnectionConfig)) {
@@ -878,19 +719,7 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
           }
           attributes.charset = oldCharset
 
-          mockkStatic(::changeFileEncodingAction)
-          every {
-            changeFileEncodingAction(any(), any(), any(), any())
-          } answers {
-            didChangeEncoding = true
-            true
-          }
-
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-          }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
 
           every { mockVirtualFile.isDirectory } returns false
           every {
@@ -900,10 +729,8 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
             true
           }
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -912,28 +739,13 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("get USS file properties try to change charset for directory") {
-          var didChangeEncoding = false
-
           val oldCharset = Charset.forName("IBM-1047")
-          val newCharset = Charset.forName("IBM-500")
           val attributes = spyk(RemoteUssAttributes("rootPath", ussFile, "url", mockConnectionConfig)) {
             every { path } returns "path"
           }
           attributes.charset = oldCharset
 
-          mockkStatic(::changeFileEncodingAction)
-          every {
-            changeFileEncodingAction(any(), any(), any(), any())
-          } answers {
-            didChangeEncoding = true
-            true
-          }
-
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-          }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
 
           every { mockVirtualFile.isDirectory } returns true
           every {
@@ -942,10 +754,8 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
             true
           }
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -954,28 +764,13 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
 
         should("open and cancel a properties dialog trying to change charset") {
-          var didChangeEncoding = false
-
           val oldCharset = Charset.forName("IBM-1047")
-          val newCharset = Charset.forName("IBM-500")
           val attributes = spyk(RemoteUssAttributes("rootPath", ussFile, "url", mockConnectionConfig)) {
             every { path } returns "path"
           }
           attributes.charset = oldCharset
 
-          mockkStatic(::changeFileEncodingAction)
-          every {
-            changeFileEncodingAction(any(), any(), any(), any())
-          } answers {
-            didChangeEncoding = true
-            true
-          }
-
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-          }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
 
           every { mockVirtualFile.isDirectory } returns false
           every {
@@ -984,10 +779,8 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
             false
           }
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -1003,18 +796,9 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
           }
           attributes.charset = oldCharset
 
-          mockkStatic(::changeFileEncodingAction)
-          every {
-            changeFileEncodingAction(any(), any(), any(), any())
-          } answers {
-            false
-          }
+          every { changeFileEncodingAction(any(), any(), any(), any()) } returns false
 
-          dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-            override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-              return attributes
-            }
-          }
+          every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns attributes
 
           every { mockVirtualFile.isDirectory } returns false
           every {
@@ -1024,10 +808,8 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
             true
           }
 
-          runBlocking {
-            withContext(Dispatchers.EDT) {
-              GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
-            }
+          runInEdtAndWait {
+            GetFilePropertiesAction().actionPerformed(getPropertiesEvent)
           }
 
           verify(exactly = 1) { anyConstructed<UssFilePropertiesDialog>().showAndGet() }
@@ -1057,6 +839,7 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
       beforeEach {
         testIsEnabled = true
         testIsVisible = true
+
         every { fileView.mySelectedNodesData } returns listOf()
       }
 
@@ -1111,12 +894,8 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
         every { fileView.mySelectedNodesData } returns listOf(mockNodeData)
 
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-            return mockk<RemoteDatasetAttributes> {
-              every { isMigrated } returns false
-            }
-          }
+        every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns mockk<RemoteDatasetAttributes> {
+          every { isMigrated } returns false
         }
 
         GetFilePropertiesAction().update(getPropertiesEvent)
@@ -1134,12 +913,8 @@ class GetFilePropertiesActionTestSpec : WithApplicationShouldSpec({
         }
         every { fileView.mySelectedNodesData } returns listOf(mockNodeData)
 
-        dataOpsManager.testInstance = object : TestDataOpsManagerImpl() {
-          override fun tryToGetAttributes(file: VirtualFile): FileAttributes {
-            return mockk<RemoteDatasetAttributes> {
-              every { isMigrated } returns true
-            }
-          }
+        every { dataOpsManager.tryToGetAttributes(any<VirtualFile>()) } returns mockk<RemoteDatasetAttributes> {
+          every { isMigrated } returns true
         }
 
         GetFilePropertiesAction().update(getPropertiesEvent)

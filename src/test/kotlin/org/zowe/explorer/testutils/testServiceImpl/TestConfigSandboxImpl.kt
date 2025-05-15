@@ -10,71 +10,12 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.testutils.testServiceImpl
 
 import org.zowe.explorer.config.ConfigSandbox
-import org.zowe.explorer.utils.crudable.Crudable
 import io.mockk.mockk
 
-open class TestConfigSandboxImpl : ConfigSandbox {
-
-  var testInstance = object : ConfigSandbox {
-
-    override val crudable: Crudable
-      get() = TODO("Not yet implemented")
-
-    override fun <T> registerConfigClass(clazz: Class<out T>) {
-      TODO("Not yet implemented")
-    }
-
-    override fun updateState() {
-      TODO("Not yet implemented")
-    }
-
-    override fun <T : Any> apply(clazz: Class<out T>) {
-      TODO("Not yet implemented")
-    }
-
-    override fun fetch() {
-      TODO("Not yet implemented")
-    }
-
-    override fun <T> rollback(clazz: Class<out T>) {
-      TODO("Not yet implemented")
-    }
-
-    override fun <T> isModified(clazz: Class<out T>): Boolean {
-      TODO("Not yet implemented")
-    }
-
-  }
-
-  override val crudable = mockk<Crudable>()
-
-  override fun <T> registerConfigClass(clazz: Class<out T>) {
-    testInstance.registerConfigClass(clazz)
-  }
-
-  override fun updateState() {
-    testInstance.updateState()
-  }
-
-  override fun <T : Any> apply(clazz: Class<out T>) {
-    testInstance.apply(clazz)
-  }
-
-  override fun fetch() {
-    testInstance.fetch()
-  }
-
-  override fun <T> rollback(clazz: Class<out T>) {
-    testInstance.rollback(clazz)
-  }
-
-  override fun <T> isModified(clazz: Class<out T>): Boolean {
-    return testInstance.isModified(clazz)
-  }
-
-}
+open class TestConfigSandboxImpl : ConfigSandbox by mockk(relaxed = true)

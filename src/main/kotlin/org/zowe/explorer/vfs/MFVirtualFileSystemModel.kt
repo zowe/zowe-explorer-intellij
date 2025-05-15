@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.vfs
@@ -524,14 +525,15 @@ class MFVirtualFileSystemModel {
   }
 
   /**
-   * Resolve and get symbolic link for the virtual file
-   * @param file virtual file to check
+   * Resolve and get the virtual file by the symbolic link
+   * @param file the [MFVirtualFile] link, pointing to the real file
+   * @return the real [MFVirtualFile] instance
    */
   fun resolveAndGetSymlink(file: MFVirtualFile): MFVirtualFile? {
     return file.validReadLock(null) {
-      fsGraph.outgoingEdgesOf(file).firstOrNull { it.type.isSymlink() }?.let {
-        fsGraph.getEdgeTarget(it)
-      }
+      fsGraph.outgoingEdgesOf(file)
+        .firstOrNull { it.type.isSymlink() }
+        ?.let { fsGraph.getEdgeTarget(it) }
     }
   }
 

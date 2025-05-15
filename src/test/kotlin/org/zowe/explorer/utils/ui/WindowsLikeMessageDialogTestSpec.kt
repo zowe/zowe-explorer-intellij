@@ -10,90 +10,71 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.utils.ui
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.Project
 import com.intellij.ui.UiInterceptors
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockkObject
-import io.mockk.mockkStatic
-import io.mockk.spyk
-import io.mockk.unmockkAll
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import java.awt.EventQueue
+import io.mockk.*
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.runInEdtAndWait
+import org.zowe.explorer.utils.runWriteActionInEdtAndWait
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JPanel
 
-class WindowsLikeMessageDialogTestSpec : WithApplicationShouldSpec({
+class WindowsLikeMessageDialogTestSpec : AppInitShouldSpec("utils/ui/WindowsLikeMessageDialog", {
+  val actions = arrayOf(
+    "Skip the conflicting file(s)",
+    "Replace the file(s) in the destination",
+    "Decide for each file"
+  )
 
-  afterSpec {
-    clearAllMocks()
-  }
+  val mockProject = mockk<Project>()
 
-  context("Windows dialog common spec") {
-    val application = ApplicationManager.getApplication()
-    val project = ProjectManager.getInstance().defaultProject
-    mockkStatic(EventQueue::class)
-    mockkObject(application)
-    every { EventQueue.isDispatchThread() } returns true
-    every { application.isDispatchThread } returns true
-
-    val actions = arrayOf(
-      "Skip the conflicting file(s)",
-      "Replace the file(s) in the destination",
-      "Decide for each file"
-    )
-
-    val customDialog = runBlocking {
-      withContext(Dispatchers.EDT) {
-        WindowsLikeMessageDialog(
-          project,
-          null,
-          "The destination already has file(s) with\nthe same name.\n" +
-            "Please, select an action.",
-          "Name conflicts in 1 file(s)",
-          actions,
-          0,
-          0,
-          null,
-          null,
-          false,
-          "helpId"
-        )
-      }
+  context("common functions") {
+    val customDialog = runWriteActionInEdtAndWait {
+      WindowsLikeMessageDialog(
+        mockProject,
+        null,
+        "The destination already has file(s) with\nthe same name.\n" +
+          "Please, select an action.",
+        "Name conflicts in 1 file(s)",
+        actions,
+        0,
+        0,
+        null,
+        null,
+        false,
+        "helpId"
+      )
     }
-
-    val classUnderTest = spyk(customDialog, "testDialog")
 
     should("create right side empty actions of the dialog") {
       val classUnderTest = spyk(customDialog, "testDialog")
       val methodToTest = classUnderTest::class.java.declaredMethods.single { it.name == "createActions" }
-      val result = methodToTest.invoke(classUnderTest)
+
       val expected = mutableListOf<Action>().toTypedArray()
-      assertSoftly {
-        result as Array<*> shouldBe expected
-      }
+      val result = methodToTest.invoke(classUnderTest)
+
+      assertSoftly { result as Array<*> shouldBe expected }
     }
 
     should("create left side actions of the dialog") {
       val classUnderTest = spyk(customDialog, "testDialog")
       val methodToTest = classUnderTest::class.java.declaredMethods.single { it.name == "createLeftSideActions" }
+
       val result = methodToTest.invoke(classUnderTest) as Array<*>
       val actionToPerform = (result[0] as Action)
 
       // Call default action to be able to cover lambda expression
-      actionToPerform.actionPerformed(null)
+      runInEdtAndWait {
+        actionToPerform.actionPerformed(null)
+      }
 
       assertSoftly {
         // Plus help action, because helpId is not null
@@ -108,49 +89,34 @@ class WindowsLikeMessageDialogTestSpec : WithApplicationShouldSpec({
       val result = methodToTest.invoke(classUnderTest, arguments) as JPanel
 
       assertSoftly {
-        ((result.getComponent(0) as JPanel).getComponent(0) as JButton).text shouldBe "Skip the conflicting file(s)"
-        ((result.getComponent(1) as JPanel).getComponent(0) as JButton).text shouldBe "Replace the file(s) in the destination"
-        ((result.getComponent(2) as JPanel).getComponent(0) as JButton).text shouldBe "Decide for each file"
+        ((result.getComponent(0) as JPanel).getComponent(0) as JButton).text shouldBe actions[0]
+        ((result.getComponent(1) as JPanel).getComponent(0) as JButton).text shouldBe actions[1]
+        ((result.getComponent(2) as JPanel).getComponent(0) as JButton).text shouldBe actions[2]
       }
     }
   }
 
-  context("test showWindowsLikeMessageDialog static function") {
-    val project = ProjectManager.getInstance().defaultProject
-    mockkStatic(EventQueue::class)
-    every { EventQueue.isDispatchThread() } returns true
-
-    val actions = arrayOf(
-      "Skip the conflicting file(s)",
-      "Replace the file(s) in the destination",
-      "Decide for each file"
-    )
-
+  context("WindowsLikeMessageDialog.showWindowsLikeMessageDialog") {
     should("call showWindowsLikeMessageDialog") {
       mockkStatic(UiInterceptors::class)
       every { UiInterceptors.tryIntercept(any()) } returns true
-      val exitCode = runBlocking {
-        withContext(Dispatchers.EDT) {
-          WindowsLikeMessageDialog.showWindowsLikeMessageDialog(
-            project,
-            null,
-            "The destination already has file(s) with\nthe same name.\n" +
-              "Please, select an action.",
-            "Name conflicts in 1 file(s)",
-            actions,
-            0,
-            0,
-            null,
-            null,
-            false,
-            null
-          )
-        }
+      val exitCode = runWriteActionInEdtAndWait {
+        WindowsLikeMessageDialog.showWindowsLikeMessageDialog(
+          mockProject,
+          null,
+          "The destination already has file(s) with\nthe same name.\n" +
+            "Please, select an action.",
+          "Name conflicts in 1 file(s)",
+          actions,
+          0,
+          0,
+          null,
+          null,
+          false,
+          null
+        )
       }
-      assertSoftly {
-        exitCode shouldBe 1
-      }
+      assertSoftly { exitCode shouldBe 1 }
     }
-    unmockkAll()
   }
 })

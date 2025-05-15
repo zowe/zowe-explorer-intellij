@@ -162,7 +162,7 @@ abstract class AbstractWsDialog<Connection : ConnectionConfigBase, WSConfig : Wo
 
   /** Register validator that enables OK action if validation map is empty */
   override fun init() {
-    initialize { super.init() }
+    super.init()
     panel.registerValidators(myDisposable) { map ->
       isOKActionEnabled = map.isEmpty()
     }

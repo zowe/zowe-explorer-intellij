@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions.rexx
@@ -29,14 +30,11 @@ import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.tso.config.TSOSessionConfig
 import org.zowe.explorer.utils.crudable.Crudable
 import org.zowe.explorer.utils.crudable.getAll
-import org.zowe.explorer.utils.initialize
 import org.zowe.explorer.utils.nullable
 import org.zowe.explorer.utils.validateRexxArguments
 import org.zowe.explorer.utils.validateTsoSessionSelection
 import java.awt.Dimension
 import javax.swing.*
-import kotlin.streams.toList
-
 
 /**
  * Execute REXX dialog represents selection for TSO session config and REXX arguments list (if any)
@@ -114,7 +112,7 @@ class ExecuteRexxDialog(
 
   init {
     title = "Execute REXX Dialog"
-    initialize { init() }
+    init()
   }
 }
 

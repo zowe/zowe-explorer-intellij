@@ -22,65 +22,75 @@ import org.zowe.explorer.config.makeCrudableWithoutListeners
 import org.zowe.explorer.config.ws.DSMask
 import org.zowe.explorer.config.ws.FilesWorkingSetConfig
 import org.zowe.explorer.config.ws.UssPath
-import org.zowe.explorer.testutils.WithApplicationShouldSpec
 import org.zowe.explorer.utils.gson
 import org.zowe.explorer.utils.optional
 import org.zowe.explorer.utils.toMutableList
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.spyk
-import io.mockk.unmockkAll
+import org.zowe.explorer.testutils.AppInitShouldSpec
+import org.zowe.explorer.utils.crudable.Crudable
 import java.util.*
 import java.util.stream.Stream
 
-class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
-  afterSpec {
-    clearAllMocks()
-  }
-  context("explorer module: FilesWorkingSetImpl") {
+class FilesWorkingSetImplTestSpec : AppInitShouldSpec("explorer/FilesWorkingSetImpl", {
+  context("all functions") {
+    val uuid1 = "uuid1"
+    val mockedFilesWSConfig = mockk<FilesWorkingSetConfig> {
+      every { uuid } returns uuid1
+      every { name } returns "filesWSuuid1"
+      every { connectionConfigUuid } returns "connUuid"
+      every { dsMasks } returns mutableListOf(DSMask("ZOSMFAD.*", mutableListOf()))
+    }
+    val mockedCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
+
+    mockkObject(gson)
+
+    val clonedConfig = FilesWorkingSetConfig(
+      uuid1,
+      "filesWSuuid1",
+      "connUuid",
+      mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+      mutableListOf()
+    )
+
+    every { gson.toJson(any<FilesWorkingSetConfig>()) } returns "mocked_config_to_copy"
+    every { gson.fromJson(any<String>(), FilesWorkingSetConfig::class.java) } returns clonedConfig
+
+    val configService = ConfigService.getService()
+    val configServiceCrudableMock = mockk<Crudable>()
+    every { configService.crudable } returns configServiceCrudableMock
+
+    beforeEach {
+      clonedConfig.ussPaths = spyk(mutableListOf())
+
+      every { configServiceCrudableMock.update(any()) } returns null
+    }
 
     context("addUssPath") {
-      val mockedCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
-      val uuid1 = "uuid1"
-      mockkObject(gson)
-
-      val mockedFilesWSConfig = mockk<FilesWorkingSetConfig>()
-      every { mockedFilesWSConfig.uuid } returns uuid1
-      every { mockedFilesWSConfig.name } returns "filesWSuuid1"
-      every { mockedFilesWSConfig.connectionConfigUuid } returns "connUuid"
-      every { mockedFilesWSConfig.dsMasks } returns mutableListOf(DSMask("ZOSMFAD.*", mutableListOf()))
-      every { mockedFilesWSConfig.ussPaths } returns mutableListOf()
-
-      every { gson.toJson(any() as FilesWorkingSetConfig) } returns "mocked_config_to_copy"
-
-      val clonedConfig = FilesWorkingSetConfig(
-        uuid1, "filesWSuuid1", "connUuid",
-        mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-        mutableListOf()
-      )
-      every { gson.fromJson(any() as String, FilesWorkingSetConfig::class.java) } returns clonedConfig
-      mockkObject(clonedConfig)
-
-      every { mockedCrud.getAll(FilesWorkingSetConfig::class.java) } returns Stream.of(
-        FilesWorkingSetConfig(
-          uuid1,
-          "filesWSuuid1",
-          "connUuid",
-          mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-          mutableListOf(UssPath("/u/test1"))
-        ),
-        FilesWorkingSetConfig(
-          uuid1,
-          "filesWSuuid1",
-          "connUuid",
-          mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-          mutableListOf()
+      every {
+        mockedCrud.getAll(FilesWorkingSetConfig::class.java)
+      } answers {
+        Stream.of(
+          FilesWorkingSetConfig(
+            uuid1,
+            "filesWSuuid1",
+            "connUuid",
+            mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+            mutableListOf(UssPath("/u/test1"))
+          ),
+          FilesWorkingSetConfig(
+            uuid1,
+            "filesWSuuid1",
+            "connUuid",
+            mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+            mutableListOf()
+          )
         )
-      )
+      }
 
       fun getMockedFilesWorkingSetConfigNotNull(): FilesWorkingSetConfig {
         return mockedFilesWSConfig
@@ -96,16 +106,25 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
       val expectedValues = mockedCrud.getAll(FilesWorkingSetConfig::class.java).toMutableList()
 
       var actual1: Optional<FilesWorkingSetConfig>? = null
-      every { ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>()) } answers {
-        actual1 =
-          FilesWorkingSetConfig(
-            uuid1,
-            "filesWSuuid1",
-            "connUuid",
-            mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-            mutableListOf(UssPath("/u/test1"))
-          ).optional
-        actual1
+
+      beforeEach {
+        clonedConfig.ussPaths = spyk(mutableListOf())
+
+        every { mockedFilesWSConfig.ussPaths } returns mutableListOf()
+
+        every {
+          configServiceCrudableMock.update(any<FilesWorkingSetConfig>())
+        } answers {
+          actual1 =
+            FilesWorkingSetConfig(
+              uuid1,
+              "filesWSuuid1",
+              "connUuid",
+              mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+              mutableListOf(UssPath("/u/test1"))
+            ).optional
+          actual1
+        }
       }
 
       // addUssPath when clone and collection.add succeeds
@@ -118,7 +137,9 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
           )
         )
 
-        every { clonedConfig.ussPaths.add(any() as UssPath) } answers {
+        every {
+          clonedConfig.ussPaths.add(any<UssPath>())
+        } answers {
           true
         }
 
@@ -126,9 +147,7 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
 
         val expected = expectedValues[0].optional
 
-        assertSoftly {
-          actual1 shouldBe expected
-        }
+        assertSoftly { actual1 shouldBe expected }
       }
 
       // addUssPath when clone succeeds but collection.add is not
@@ -140,7 +159,9 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
             mockedDisposable
           )
         )
-        every { clonedConfig.ussPaths.add(any() as UssPath) } answers {
+        every {
+          clonedConfig.ussPaths.add(any<UssPath>())
+        } answers {
           false
         }
 
@@ -148,9 +169,7 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
         val actual2 = clonedConfig.optional
         val expected = expectedValues[1].optional
 
-        assertSoftly {
-          actual2 shouldBe expected
-        }
+        assertSoftly { actual2 shouldBe expected }
       }
 
       // addUssPath with null config
@@ -167,48 +186,27 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
         val actual3 = clonedConfig.optional
         val expected = expectedValues[1].optional
 
-        assertSoftly {
-          actual3 shouldBe expected
-        }
+        assertSoftly { actual3 shouldBe expected }
       }
     }
 
     context("removeUssPath") {
-      val mockedCrud = spyk(makeCrudableWithoutListeners(false) { ConfigStateV2() })
-      val uuid1 = "uuid1"
-      mockkObject(gson)
-
-      val mockedFilesWSConfig = mockk<FilesWorkingSetConfig>()
-      every { mockedFilesWSConfig.uuid } returns uuid1
-      every { mockedFilesWSConfig.name } returns "filesWSuuid1"
-      every { mockedFilesWSConfig.connectionConfigUuid } returns "connUuid"
-      every { mockedFilesWSConfig.dsMasks } returns mutableListOf(DSMask("ZOSMFAD.*", mutableListOf()))
-      every { mockedFilesWSConfig.ussPaths } returns mutableListOf(UssPath("/u/uss_path_to_remove"))
-
-      every { gson.toJson(any() as FilesWorkingSetConfig) } returns "mocked_config_to_copy"
-
-      val clonedConfig = FilesWorkingSetConfig(
-        uuid1,
-        "filesWSuuid1",
-        "connUuid",
-        mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-        mutableListOf(UssPath("/u/uss_path_to_remove"))
-      )
-      every { gson.fromJson(any() as String, FilesWorkingSetConfig::class.java) } returns clonedConfig
-      mockkObject(clonedConfig)
-
-      every { mockedCrud.getAll(FilesWorkingSetConfig::class.java) } returns Stream.of(
-        FilesWorkingSetConfig(
-          uuid1, "filesWSuuid1", "connUuid",
-          mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-          mutableListOf()
-        ),
-        FilesWorkingSetConfig(
-          uuid1, "filesWSuuid1", "connUuid",
-          mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-          mutableListOf(UssPath("/u/uss_path_to_remove"))
+      every {
+        mockedCrud.getAll(FilesWorkingSetConfig::class.java)
+      } answers {
+        Stream.of(
+          FilesWorkingSetConfig(
+            uuid1, "filesWSuuid1", "connUuid",
+            mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+            mutableListOf()
+          ),
+          FilesWorkingSetConfig(
+            uuid1, "filesWSuuid1", "connUuid",
+            mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+            mutableListOf(UssPath("/u/uss_path_to_remove"))
+          )
         )
-      )
+      }
 
       fun getMockedFilesWorkingSetConfigNotNull(): FilesWorkingSetConfig {
         return mockedFilesWSConfig
@@ -224,16 +222,25 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
       val expectedValues = mockedCrud.getAll(FilesWorkingSetConfig::class.java).toMutableList()
 
       var actual4: Optional<FilesWorkingSetConfig>? = null
-      every { ConfigService.getService().crudable.update(any<FilesWorkingSetConfig>()) } answers {
-        actual4 =
-          FilesWorkingSetConfig(
-            uuid1,
-            "filesWSuuid1",
-            "connUuid",
-            mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
-            mutableListOf()
-          ).optional
-        actual4
+
+      beforeEach {
+        clonedConfig.ussPaths = spyk(mutableListOf(UssPath("/u/uss_path_to_remove")))
+
+        every { mockedFilesWSConfig.ussPaths } returns mutableListOf(UssPath("/u/uss_path_to_remove"))
+
+        every {
+          configServiceCrudableMock.update(any<FilesWorkingSetConfig>())
+        } answers {
+          actual4 =
+            FilesWorkingSetConfig(
+              uuid1,
+              "filesWSuuid1",
+              "connUuid",
+              mutableListOf(DSMask("ZOSMFAD.*", mutableListOf())),
+              mutableListOf()
+            ).optional
+          actual4
+        }
       }
 
       // removeUssPath when clone and collection.remove succeeds
@@ -246,7 +253,9 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
           )
         )
 
-        every { clonedConfig.ussPaths.remove(any() as UssPath) } answers {
+        every {
+          clonedConfig.ussPaths.remove(any<UssPath>())
+        } answers {
           true
         }
 
@@ -254,9 +263,7 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
 
         val expected = expectedValues[0].optional
 
-        assertSoftly {
-          actual4 shouldBe expected
-        }
+        assertSoftly { actual4 shouldBe expected }
       }
 
       // removeUssPath when clone succeeds but collection.remove is not
@@ -268,7 +275,9 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
             mockedDisposable
           )
         )
-        every { clonedConfig.ussPaths.remove(any() as UssPath) } answers {
+        every {
+          clonedConfig.ussPaths.remove(any<UssPath>())
+        } answers {
           false
         }
 
@@ -276,9 +285,7 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
         val actual5 = clonedConfig.optional
         val expected = expectedValues[1].optional
 
-        assertSoftly {
-          actual5 shouldBe expected
-        }
+        assertSoftly { actual5 shouldBe expected }
       }
 
       // removeUssPath with null config
@@ -295,12 +302,8 @@ class FilesWorkingSetImplTestSpec : WithApplicationShouldSpec({
         val actual6 = clonedConfig.optional
         val expected = expectedValues[1].optional
 
-        assertSoftly {
-          actual6 shouldBe expected
-        }
+        assertSoftly { actual6 shouldBe expected }
       }
     }
-
-    unmockkAll()
   }
 })
