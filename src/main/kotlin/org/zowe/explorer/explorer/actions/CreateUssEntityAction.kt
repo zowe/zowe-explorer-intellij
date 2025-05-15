@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -67,11 +68,10 @@ abstract class CreateUssEntityAction : AnAction() {
     val selected = view.mySelectedNodesData[0]
     val selectedNode = selected.node
     val project = e.project
-    val node: UssDirNode = if (selectedNode is UssFileNode) {
-      selectedNode.parent as? UssDirNode
-    } else {
-      selectedNode as UssDirNode
-    } ?: return
+    val node: UssDirNode = (
+      if (selectedNode is UssFileNode) selectedNode.parent.castOrNull<UssDirNode>()
+      else selectedNode.castOrNull<UssDirNode>()
+    ) ?: return
     val file = node.virtualFile
     val connectionConfig = node.unit.connectionConfig.castOrNull<ConnectionConfig>() ?: return
     try {
@@ -120,8 +120,8 @@ abstract class CreateUssEntityAction : AnAction() {
 
           changeFileModeIfNeeded(file, allocationParams, connectionConfig, indicator)
         }.onSuccess {
-          ussDirNode?.let {
-            view.myFsTreeStructure.findByPredicate { node -> node is FetchNode && node.query == it.query }
+          ussDirNode?.let { dirNode ->
+            view.myFsTreeStructure.findByPredicate { node -> node is FetchNode && node.query == dirNode.query }
               .forEach { node ->
                 attributes?.fileMode?.let { ussFileMode ->
                   if (checkReadPermissionsBeforeReload(ussFileMode.owner)) {
@@ -157,7 +157,7 @@ abstract class CreateUssEntityAction : AnAction() {
     val fileMode = params.parameters.mode
     val filePath = params.path + "/" + params.fileName
     attributes?.let { attr ->
-      if (attr.fileMode != fileMode) {
+      if (attr.fileMode.toString() != fileMode.toString()) {
         dataOpsManager.performOperation(
           operation = UssChangeModeOperation(
             request = UssChangeModeParams(
@@ -172,9 +172,7 @@ abstract class CreateUssEntityAction : AnAction() {
     }
   }
 
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun isDumbAware() = true
 
   /**
    * Makes action visible only if one node (uss file or uss directory) is selected.

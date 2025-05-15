@@ -16,8 +16,8 @@
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import org.zowe.explorer.config.connect.ConnectionConfig
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
@@ -33,7 +33,7 @@ import org.zowe.explorer.explorer.ui.SpoolFileState
 import org.zowe.explorer.explorer.ui.getExplorerView
 
 /** Action to get job or spool file properties*/
-class GetJobPropertiesAction : AnAction() {
+class GetJobPropertiesAction : DumbAwareAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
@@ -59,10 +59,6 @@ class GetJobPropertiesAction : AnAction() {
       }
     }
 
-  }
-
-  override fun isDumbAware(): Boolean {
-    return true
   }
 
   /** Make action visible only for JES explorer*/

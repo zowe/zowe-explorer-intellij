@@ -10,15 +10,16 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.DumbAwareAction
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteJobAttributes
 import org.zowe.explorer.dataops.operations.jobs.SubmitJobJclOperationParams
@@ -30,7 +31,7 @@ import org.zowe.explorer.utils.sendTopic
 /**
  * Action to submit job using the button in editor when edit JCL
  */
-class SubmitJobToolbarAction : AnAction() {
+class SubmitJobToolbarAction : DumbAwareAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
@@ -86,9 +87,5 @@ class SubmitJobToolbarAction : AnAction() {
     e.presentation.isEnabledAndVisible = attributes == null &&
       parentAttributes is RemoteJobAttributes &&
       file.isWritable
-  }
-
-  override fun isDumbAware(): Boolean {
-    return true
   }
 }

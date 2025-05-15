@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
@@ -37,9 +38,7 @@ import javax.swing.event.HyperlinkEvent
  */
 class AddConnectionAction : AnAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /** Shows connection dialog */
   override fun actionPerformed(e: AnActionEvent) {
@@ -58,9 +57,7 @@ class AddConnectionAction : AnAction() {
     }
   }
 
-  override fun isDumbAware(): Boolean {
-    return true
-  }
+  override fun isDumbAware() = true
 }
 
 /**

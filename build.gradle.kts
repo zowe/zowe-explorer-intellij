@@ -206,6 +206,8 @@ kover {
       excludes {
         classes(providers.provider { "org.zowe.explorer.vfs.MFVFileCreateEvent" })
         classes(providers.provider { "org.zowe.explorer.vfs.MFVFilePropertyChangeEvent" })
+        classes(providers.provider { "org.zowe.explorer.utils.KoverIgnore" })
+        annotatedBy("org.zowe.explorer.utils.KoverIgnore")
       }
     }
   }

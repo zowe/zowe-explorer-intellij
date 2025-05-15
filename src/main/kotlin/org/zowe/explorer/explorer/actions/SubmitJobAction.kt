@@ -10,17 +10,19 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.explorer.explorer.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.DumbAwareAction
 import org.zowe.explorer.config.ConfigService
 import org.zowe.explorer.dataops.DataOpsManager
 import org.zowe.explorer.dataops.attributes.RemoteDatasetAttributes
+import org.zowe.explorer.dataops.attributes.RemoteMemberAttributes
 import org.zowe.explorer.dataops.content.synchronizer.DocumentedSyncProvider
 import org.zowe.explorer.dataops.content.synchronizer.SaveStrategy
 import org.zowe.explorer.dataops.content.synchronizer.checkFileForSync
@@ -38,66 +40,51 @@ import org.zowe.explorer.utils.sendTopic
 /**
  * Action class for executing submit job on mainframe
  */
-class SubmitJobAction : AnAction() {
+class SubmitJobAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   /**
    * Called when submit option is chosen from context menu,
    * runs the submit operation
    */
   override fun actionPerformed(e: AnActionEvent) {
-    val view = e.getExplorerView<FileExplorerView>() ?: let {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
+    val view = e.getExplorerView<FileExplorerView>() ?: return
     val project = e.project
     val selected = view.mySelectedNodesData
     val node = selected.getOrNull(0)?.node ?: return
+    val requestData = getRequestDataForNode(node) ?: return
+    val file = requestData.first
+    if (checkFileForSync(e.project, file)) return
+    runBackgroundableTask("Preparing for job submission") {
+      val dataOpsManager = DataOpsManager.getService()
+      if (ConfigService.getService().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
+        val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
+        contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)
+      }
+      it.text = "Submitting job from file ${file.name}"
 
-    val requestData = getRequestDataForNode(node)
-    if (requestData != null) {
-      val file = requestData.first
-      if (checkFileForSync(e.project, file)) return
-      runBackgroundableTask("Preparing for job submission") {
-        val dataOpsManager = DataOpsManager.getService()
-        if (ConfigService.getService().isAutoSyncEnabled && dataOpsManager.isSyncSupported(file)) {
-          val contentSynchronizer = dataOpsManager.getContentSynchronizer(file)
-          contentSynchronizer?.synchronizeWithRemote(DocumentedSyncProvider(file, SaveStrategy.default(e.project)), it)
-        }
-        it.text = "Submitting job from file ${file.name}"
+      runCatching {
+        val attributes = DataOpsManager.getService().tryToGetAttributes(requestData.first)
+          ?: throw IllegalArgumentException("Cannot find attributes for specified file.")
 
-        runCatching {
-          val attributes = DataOpsManager.getService().tryToGetAttributes(requestData.first)
-            ?: throw IllegalArgumentException("Cannot find attributes for specified file.")
-
-          val submitFilePath = attributes.formMfPath()
-          DataOpsManager.getService().performOperation(
-            operation = SubmitJobOperation(
-              request = SubmitFilePathOperationParams(submitFilePath),
-              connectionConfig = requestData.second
-            ), it
-          ).also { result ->
-            e.project?.let { project ->
-              sendTopic(JOB_ADDED_TOPIC, project).submitted(project, requestData.second, submitFilePath, result)
-            }
+        val submitFilePath = attributes.formMfPath()
+        DataOpsManager.getService().performOperation(
+          operation = SubmitJobOperation(
+            request = SubmitFilePathOperationParams(submitFilePath),
+            connectionConfig = requestData.second
+          ), it
+        ).also { result ->
+          e.project?.let { project ->
+            sendTopic(JOB_ADDED_TOPIC, project).submitted(project, requestData.second, submitFilePath, result)
           }
-        }.onSuccess {
-          view.explorer.showNotification("Job ${it.jobname} has been submitted", "$it", project = project)
-        }.onFailure {
-          NotificationsService.errorNotification(it, project)
         }
+      }.onSuccess {
+        view.explorer.showNotification("Job ${it.jobname} has been submitted", "$it", project = project)
+      }.onFailure {
+        NotificationsService.errorNotification(it, project)
       }
     }
-  }
-
-  /**
-   * This method is needed for interface implementation
-   */
-  override fun isDumbAware(): Boolean {
-    return true
   }
 
   /**
@@ -115,8 +102,8 @@ class SubmitJobAction : AnAction() {
     }
     val node = selected[0].node
     val attr = selected[0].attributes
-    e.presentation.isVisible =
-      (node is FileLikeDatasetNode || node is UssFileNode)
-        && !(attr is RemoteDatasetAttributes && !attr.hasDsOrg)
+    val isNonMigratedDatasetOrMember = node is FileLikeDatasetNode
+      && (attr is RemoteMemberAttributes || (attr is RemoteDatasetAttributes && attr.hasDsOrg))
+    e.presentation.isVisible = isNonMigratedDatasetOrMember || node is UssFileNode
   }
 }
